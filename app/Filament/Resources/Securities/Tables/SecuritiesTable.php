@@ -6,12 +6,11 @@ use App\Exceptions\TickerResolutionException;
 use App\Models\Security;
 use App\Services\YahooFinanceService;
 use Filament\Actions\Action;
-use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Table;
 
 class SecuritiesTable
@@ -49,11 +48,13 @@ class SecuritiesTable
             ])
             ->recordActions([
                 Action::make('toggleVisibility')
-                    ->label('Visibilité')
+                    ->label('')
                     ->icon(fn (Security $record, $livewire) => in_array($record->id, $livewire->shownSecurityIds) ? 'heroicon-o-eye' : 'heroicon-o-eye-slash')
+                    ->iconButton()
                     ->color(fn (Security $record, $livewire) => in_array($record->id, $livewire->shownSecurityIds) ? 'primary' : 'gray')
                     ->action(fn (Security $record, $livewire) => $livewire->toggleSecurity($record->id)),
             ])
+            ->recordActionsPosition(RecordActionsPosition::BeforeColumns)
             ->headerActions([
                 CreateAction::make()
                     ->model(Security::class)
@@ -93,10 +94,6 @@ class SecuritiesTable
                             ->send();
                     }),
             ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
-            ]);
+            ->toolbarActions([]);
     }
 }
