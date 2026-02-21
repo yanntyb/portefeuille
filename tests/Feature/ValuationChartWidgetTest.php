@@ -65,6 +65,39 @@ it('computes valuation from transactions and prices', function () {
         ->and($data['datasets'][1]['data'])->each->toBeGreaterThan(0);
 });
 
+it('excludes prices before the first transaction date', function () {
+    $security = Security::factory()->create();
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+        'quantity' => 10,
+        'unit_price' => 100,
+        'date' => '2024-06-01',
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2024-01-01',
+        'close' => 50,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2024-06-03',
+        'close' => 105,
+    ]);
+
+    $widget = livewire(ValuationChartWidget::class, [
+        'tablePageClass' => ListPeaSecurities::class,
+    ]);
+
+    $data = invade($widget->instance())->getData();
+
+    expect($data['labels'])->toHaveCount(1)
+        ->and($data['datasets'][0]['data'])->toHaveCount(1)
+        ->and($data['datasets'][0]['data'][0])->toBe(1050.0);
+});
+
 it('returns empty data when no securities exist', function () {
     $widget = livewire(ValuationChartWidget::class, [
         'tablePageClass' => ListPeaSecurities::class,

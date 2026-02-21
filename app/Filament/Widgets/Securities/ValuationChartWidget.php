@@ -66,8 +66,11 @@ class ValuationChartWidget extends ChartWidget
 
         [$cumulativeQuantities, $cumulativeInvested] = $this->buildCumulatives($transactions);
 
+        $firstTransactionDate = $transactions->first()->date;
+
         $prices = SecurityPrice::query()
             ->whereIn('security_id', $securityIds)
+            ->where('date', '>=', $firstTransactionDate)
             ->orderBy('date')
             ->get(['security_id', 'date', 'close']);
 
