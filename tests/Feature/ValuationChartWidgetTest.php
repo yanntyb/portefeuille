@@ -1,0 +1,79 @@
+<?php
+
+use App\Filament\Resources\CtoSecurities\Pages\ListCtoSecurities;
+use App\Filament\Resources\PeaSecurities\Pages\ListPeaSecurities;
+use App\Filament\Widgets\Securities\ValuationChartWidget;
+use App\Models\Security;
+use App\Models\SecurityPrice;
+use App\Models\Transaction;
+
+use function Pest\Livewire\livewire;
+
+it('can render on the PEA list page', function () {
+    $security = Security::factory()->create();
+    Transaction::factory()->pea()->create(['security_id' => $security->id]);
+
+    livewire(ListPeaSecurities::class)
+        ->assertOk()
+        ->assertSeeLivewire(ValuationChartWidget::class);
+});
+
+it('can render on the CTO list page', function () {
+    $security = Security::factory()->create();
+    Transaction::factory()->cto()->create(['security_id' => $security->id]);
+
+    livewire(ListCtoSecurities::class)
+        ->assertOk()
+        ->assertSeeLivewire(ValuationChartWidget::class);
+});
+
+it('computes valuation from transactions and prices', function () {
+    $security = Security::factory()->create();
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+        'quantity' => 10,
+        'unit_price' => 100,
+        'date' => '2024-01-15',
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2024-01-15',
+        'close' => 105,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2024-02-15',
+        'close' => 110,
+    ]);
+
+    $widget = livewire(ValuationChartWidget::class, [
+        'tablePageClass' => ListPeaSecurities::class,
+    ]);
+
+    $widget->assertOk();
+
+    $data = invade($widget->instance())->getData();
+
+    expect($data['datasets'])->toHaveCount(2)
+        ->and($data['labels'])->not->toBeEmpty()
+        ->and($data['datasets'][0]['label'])->toBe('Valorisation')
+        ->and($data['datasets'][0]['data'])->each->toBeGreaterThan(0)
+        ->and($data['datasets'][1]['label'])->toBe('Investi')
+        ->and($data['datasets'][1]['data'])->each->toBeGreaterThan(0);
+});
+
+it('returns empty data when no securities exist', function () {
+    $widget = livewire(ValuationChartWidget::class, [
+        'tablePageClass' => ListPeaSecurities::class,
+    ]);
+
+    $widget->assertOk();
+
+    $data = invade($widget->instance())->getData();
+
+    expect($data['datasets'])->toBeEmpty()
+        ->and($data['labels'])->toBeEmpty();
+});
