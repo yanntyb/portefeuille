@@ -57,6 +57,7 @@ class SecuritiesTable
             ->recordActionsPosition(RecordActionsPosition::BeforeColumns)
             ->headerActions([
                 CreateAction::make()
+                    ->label('Nouveau titre')
                     ->model(Security::class)
                     ->form([
                         TextInput::make('isin')
