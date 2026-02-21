@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PeaSecurities\Pages;
 
 use App\Filament\Resources\PeaSecurities\PeaSecurityResource;
+use App\Filament\Widgets\Securities\AllocationChartWidget;
 use App\Filament\Widgets\Securities\SecurityStatsOverview;
 use App\Filament\Widgets\Securities\ValuationChartWidget;
 use Filament\Pages\Concerns\ExposesTableToWidgets;
@@ -39,6 +40,11 @@ class ListPeaSecurities extends ListRecords
         $this->dispatch('security-visibility-changed', shownSecurityIds: $this->shownSecurityIds);
     }
 
+    public function getHeaderWidgetsColumns(): int|array
+    {
+        return 3;
+    }
+
     protected function getHeaderWidgets(): array
     {
         return [
@@ -47,6 +53,10 @@ class ListPeaSecurities extends ListRecords
                 'shownSecurityIds' => $this->shownSecurityIds,
             ]),
             ValuationChartWidget::make([
+                'tablePageClass' => static::class,
+                'shownSecurityIds' => $this->shownSecurityIds,
+            ]),
+            AllocationChartWidget::make([
                 'tablePageClass' => static::class,
                 'shownSecurityIds' => $this->shownSecurityIds,
             ]),

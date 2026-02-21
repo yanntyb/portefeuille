@@ -17,7 +17,7 @@ class ValuationChartWidget extends ChartWidget
 
     protected ?string $heading = 'Evolution de la valorisation';
 
-    protected int|string|array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 2;
 
     protected ?string $pollingInterval = null;
 
