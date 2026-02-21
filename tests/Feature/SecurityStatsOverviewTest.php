@@ -56,6 +56,34 @@ it('computes valuation and plus-value correctly', function () {
         ->and($stats[1]->getValue())->toContain('195');
 });
 
+it('displays percentage alongside plus-value', function () {
+    $security = Security::factory()->create();
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+        'quantity' => 10,
+        'unit_price' => 100,
+        'fees' => 0,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => now(),
+        'close' => 120,
+    ]);
+
+    $widget = livewire(SecurityStatsOverview::class, [
+        'tablePageClass' => ListPeaSecurities::class,
+    ]);
+
+    $stats = invade($widget->instance())->getStats();
+
+    // Plus-value = 1200 - 1000 = 200, percentage = 20%
+    expect($stats[1]->getValue())->toContain('200')
+        ->and($stats[1]->getValue())->toContain('20.00')
+        ->and($stats[1]->getValue())->toContain('%');
+});
+
 it('shows success color when plus-value is positive', function () {
     $security = Security::factory()->create();
 

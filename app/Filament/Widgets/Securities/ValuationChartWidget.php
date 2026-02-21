@@ -9,6 +9,7 @@ use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageTable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Livewire\Attributes\On;
 
 class ValuationChartWidget extends ChartWidget
 {
@@ -25,9 +26,18 @@ class ValuationChartWidget extends ChartWidget
     /** @var class-string|null */
     public ?string $tablePageClass = null;
 
+    /** @var list<int>|null */
+    public ?array $shownSecurityIds = null;
+
     protected function getTablePage(): string
     {
         return $this->tablePageClass;
+    }
+
+    #[On('security-visibility-changed')]
+    public function updateShownSecurityIds(array $shownSecurityIds): void
+    {
+        $this->shownSecurityIds = $shownSecurityIds;
     }
 
     protected function getData(): array
@@ -50,6 +60,10 @@ class ValuationChartWidget extends ChartWidget
             ->reorder()
             ->pluck('securities.id')
             ->toArray();
+
+        if ($this->shownSecurityIds !== null) {
+            $securityIds = array_values(array_intersect($securityIds, $this->shownSecurityIds));
+        }
 
         if (empty($securityIds)) {
             return ['datasets' => [], 'labels' => []];
@@ -110,6 +124,26 @@ class ValuationChartWidget extends ChartWidget
         return RawJs::make(<<<'JS'
             {
                 scales: {
+                    x: {
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 0,
+                            callback: function(value, index, ticks) {
+                                const label = this.getLabelForValue(value);
+                                const date = new Date(label);
+                                const month = date.toLocaleDateString('fr-FR', { month: 'short' });
+                                const year = date.toLocaleDateString('fr-FR', { year: '2-digit' });
+                                const key = month + year;
+                                if (index > 0) {
+                                    const prevLabel = this.getLabelForValue(ticks[index - 1].value);
+                                    const prevDate = new Date(prevLabel);
+                                    const prevKey = prevDate.toLocaleDateString('fr-FR', { month: 'short' }) + prevDate.toLocaleDateString('fr-FR', { year: '2-digit' });
+                                    if (key === prevKey) return '';
+                                }
+                                return month + ' ' + year;
+                            },
+                        },
+                    },
                     y: {
                         ticks: {
                             callback: (value) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value),
@@ -119,6 +153,10 @@ class ValuationChartWidget extends ChartWidget
                 plugins: {
                     tooltip: {
                         callbacks: {
+                            title: (items) => {
+                                const date = new Date(items[0].label);
+                                return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+                            },
                             label: (context) => context.dataset.label + ' : ' + new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(context.parsed.y),
                         },
                     },
@@ -193,7 +231,7 @@ class ValuationChartWidget extends ChartWidget
                 $valuation += $quantity * (float) $price->close;
             }
 
-            $labels[] = Carbon::parse($day)->format('d/m/Y');
+            $labels[] = $day;
             $valuations[] = round($valuation, 2);
             $invested[] = round($this->getInvestedAtDate($cumulativeInvested, $day), 2);
         }

@@ -59,8 +59,8 @@ it('computes valuation from transactions and prices', function () {
 
     expect($data['datasets'])->toHaveCount(2)
         ->and($data['labels'])->toHaveCount(2)
-        ->and($data['labels'][0])->toBe('15/01/2024')
-        ->and($data['labels'][1])->toBe('15/02/2024')
+        ->and($data['labels'][0])->toBe('2024-01-15')
+        ->and($data['labels'][1])->toBe('2024-02-15')
         ->and($data['datasets'][0]['label'])->toBe('Valorisation')
         ->and($data['datasets'][0]['data'])->each->toBeGreaterThan(0)
         ->and($data['datasets'][1]['label'])->toBe('Investi')

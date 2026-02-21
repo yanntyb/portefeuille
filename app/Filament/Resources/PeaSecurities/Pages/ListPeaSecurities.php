@@ -5,7 +5,6 @@ namespace App\Filament\Resources\PeaSecurities\Pages;
 use App\Filament\Resources\PeaSecurities\PeaSecurityResource;
 use App\Filament\Widgets\Securities\SecurityStatsOverview;
 use App\Filament\Widgets\Securities\ValuationChartWidget;
-use Filament\Actions\CreateAction;
 use Filament\Pages\Concerns\ExposesTableToWidgets;
 use Filament\Resources\Pages\ListRecords;
 
@@ -17,18 +16,40 @@ class ListPeaSecurities extends ListRecords
 
     protected static ?string $title = 'PEA';
 
-    protected function getHeaderActions(): array
+    /** @var list<int> */
+    public array $shownSecurityIds = [];
+
+    public function mount(): void
     {
-        return [
-            CreateAction::make(),
-        ];
+        parent::mount();
+
+        $this->shownSecurityIds = static::getResource()::getEloquentQuery()
+            ->pluck('securities.id')
+            ->all();
+    }
+
+    public function toggleSecurity(int $id): void
+    {
+        if (in_array($id, $this->shownSecurityIds)) {
+            $this->shownSecurityIds = array_values(array_diff($this->shownSecurityIds, [$id]));
+        } else {
+            $this->shownSecurityIds[] = $id;
+        }
+
+        $this->dispatch('security-visibility-changed', shownSecurityIds: $this->shownSecurityIds);
     }
 
     protected function getHeaderWidgets(): array
     {
         return [
-            SecurityStatsOverview::make(['tablePageClass' => static::class]),
-            ValuationChartWidget::make(['tablePageClass' => static::class]),
+            SecurityStatsOverview::make([
+                'tablePageClass' => static::class,
+                'shownSecurityIds' => $this->shownSecurityIds,
+            ]),
+            ValuationChartWidget::make([
+                'tablePageClass' => static::class,
+                'shownSecurityIds' => $this->shownSecurityIds,
+            ]),
         ];
     }
 }

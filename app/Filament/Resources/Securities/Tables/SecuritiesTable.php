@@ -7,7 +7,9 @@ use App\Models\Security;
 use App\Services\YahooFinanceService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -46,9 +48,29 @@ class SecuritiesTable
                 //
             ])
             ->recordActions([
-                //
+                Action::make('toggleVisibility')
+                    ->label('Visibilité')
+                    ->icon(fn (Security $record, $livewire) => in_array($record->id, $livewire->shownSecurityIds) ? 'heroicon-o-eye' : 'heroicon-o-eye-slash')
+                    ->color(fn (Security $record, $livewire) => in_array($record->id, $livewire->shownSecurityIds) ? 'primary' : 'gray')
+                    ->action(fn (Security $record, $livewire) => $livewire->toggleSecurity($record->id)),
             ])
             ->headerActions([
+                CreateAction::make()
+                    ->model(Security::class)
+                    ->form([
+                        TextInput::make('isin')
+                            ->label('ISIN')
+                            ->required()
+                            ->unique(Security::class)
+                            ->maxLength(12)
+                            ->placeholder('FR0011871110'),
+                        TextInput::make('name')
+                            ->label('Nom')
+                            ->maxLength(255)
+                            ->placeholder('Nom du titre'),
+                        TextInput::make('ticker')
+                            ->label('Ticker'),
+                    ]),
                 Action::make('fetchAllPrices')
                     ->label('MAJ tous les prix')
                     ->icon('heroicon-o-arrow-path')

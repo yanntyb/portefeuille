@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\CtoSecurities;
 
 use App\Enums\AccountType;
-use App\Filament\Resources\CtoSecurities\Pages\CreateCtoSecurity;
 use App\Filament\Resources\CtoSecurities\Pages\EditCtoSecurity;
 use App\Filament\Resources\CtoSecurities\Pages\ListCtoSecurities;
 use App\Filament\Resources\Securities\RelationManagers\TransactionsRelationManager;
@@ -65,7 +64,6 @@ class CtoSecurityResource extends Resource
     {
         return [
             'index' => ListCtoSecurities::route('/'),
-            'create' => CreateCtoSecurity::route('/create'),
             'edit' => EditCtoSecurity::route('/{record}/edit'),
         ];
     }

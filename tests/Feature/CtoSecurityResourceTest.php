@@ -1,6 +1,5 @@
 <?php
 
-use App\Filament\Resources\CtoSecurities\Pages\CreateCtoSecurity;
 use App\Filament\Resources\CtoSecurities\Pages\EditCtoSecurity;
 use App\Filament\Resources\CtoSecurities\Pages\ListCtoSecurities;
 use App\Models\Security;
@@ -9,20 +8,16 @@ use App\Models\Transaction;
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Livewire\livewire;
 
-it('can render the CTO create page', function () {
-    livewire(CreateCtoSecurity::class)
-        ->assertOk();
-});
+it('can create a security from the CTO table header action', function () {
+    $security = Security::factory()->create();
+    Transaction::factory()->cto()->create(['security_id' => $security->id]);
 
-it('can create a security from CTO', function () {
-    livewire(CreateCtoSecurity::class)
-        ->fillForm([
+    livewire(ListCtoSecurities::class)
+        ->callTableAction('create', data: [
             'isin' => 'US0378331005',
             'name' => 'Apple Inc.',
         ])
-        ->call('create')
-        ->assertNotified()
-        ->assertRedirect();
+        ->assertNotified();
 
     assertDatabaseHas(Security::class, [
         'isin' => 'US0378331005',

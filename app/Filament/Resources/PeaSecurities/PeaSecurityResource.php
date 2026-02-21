@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\PeaSecurities;
 
 use App\Enums\AccountType;
-use App\Filament\Resources\PeaSecurities\Pages\CreatePeaSecurity;
 use App\Filament\Resources\PeaSecurities\Pages\EditPeaSecurity;
 use App\Filament\Resources\PeaSecurities\Pages\ListPeaSecurities;
 use App\Filament\Resources\Securities\RelationManagers\TransactionsRelationManager;
@@ -65,7 +64,6 @@ class PeaSecurityResource extends Resource
     {
         return [
             'index' => ListPeaSecurities::route('/'),
-            'create' => CreatePeaSecurity::route('/create'),
             'edit' => EditPeaSecurity::route('/{record}/edit'),
         ];
     }

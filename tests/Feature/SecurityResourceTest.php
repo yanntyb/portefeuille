@@ -1,8 +1,6 @@
 <?php
 
-use App\Filament\Resources\CtoSecurities\Pages\CreateCtoSecurity;
 use App\Filament\Resources\CtoSecurities\Pages\ListCtoSecurities;
-use App\Filament\Resources\PeaSecurities\Pages\CreatePeaSecurity;
 use App\Filament\Resources\PeaSecurities\Pages\EditPeaSecurity;
 use App\Filament\Resources\PeaSecurities\Pages\ListPeaSecurities;
 use App\Models\Security;
@@ -59,20 +57,16 @@ it('displays aggregated columns for a PEA security', function () {
         ->assertTableColumnStateSet('total_quantity', '30.0000', $security);
 });
 
-it('can render the PEA create page', function () {
-    livewire(CreatePeaSecurity::class)
-        ->assertOk();
-});
+it('can create a security from the table header action', function () {
+    $security = Security::factory()->create();
+    Transaction::factory()->pea()->create(['security_id' => $security->id]);
 
-it('can create a security from PEA', function () {
-    livewire(CreatePeaSecurity::class)
-        ->fillForm([
+    livewire(ListPeaSecurities::class)
+        ->callTableAction('create', data: [
             'isin' => 'FR0011871110',
             'name' => 'Amundi MSCI World',
         ])
-        ->call('create')
-        ->assertNotified()
-        ->assertRedirect();
+        ->assertNotified();
 
     assertDatabaseHas(Security::class, [
         'isin' => 'FR0011871110',
@@ -107,24 +101,6 @@ it('can update a security from PEA', function () {
         'isin' => 'US1667641005',
         'name' => 'Chevron Corporation',
     ]);
-});
-
-it('validates that isin is required', function () {
-    livewire(CreatePeaSecurity::class)
-        ->fillForm(['isin' => null])
-        ->call('create')
-        ->assertHasFormErrors(['isin' => 'required'])
-        ->assertNotNotified();
-});
-
-it('validates that isin is unique', function () {
-    Security::factory()->create(['isin' => 'FR0011871110']);
-
-    livewire(CreateCtoSecurity::class)
-        ->fillForm(['isin' => 'FR0011871110'])
-        ->call('create')
-        ->assertHasFormErrors(['isin' => 'unique'])
-        ->assertNotNotified();
 });
 
 it('can search PEA securities by name', function () {
