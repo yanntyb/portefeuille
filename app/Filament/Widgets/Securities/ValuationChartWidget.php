@@ -16,18 +16,27 @@ class ValuationChartWidget extends ChartWidget
 
     protected ?string $heading = 'Evolution de la valorisation';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected ?string $pollingInterval = null;
 
     protected ?string $maxHeight = '300px';
 
-    /** @var class-string */
-    public string $tablePageClass;
+    /** @var class-string|null */
+    public ?string $tablePageClass = null;
 
     protected function getTablePage(): string
     {
         return $this->tablePageClass;
+    }
+
+    protected function getData(): array
+    {
+        if ($this->tablePageClass === null) {
+            return ['datasets' => [], 'labels' => []];
+        }
+
+        return $this->resolveData();
     }
 
     protected function getType(): string
@@ -35,7 +44,7 @@ class ValuationChartWidget extends ChartWidget
         return 'line';
     }
 
-    protected function getData(): array
+    private function resolveData(): array
     {
         $securityIds = $this->getPageTableQuery()
             ->reorder()
@@ -154,7 +163,7 @@ class ValuationChartWidget extends ChartWidget
     private function computeValuations(Collection $prices, array $cumulativeQuantities, array $cumulativeInvested, array $securityIds): array
     {
         $weeklyPrices = $prices
-            ->groupBy(fn ($price) => $price->security_id . '-' . Carbon::parse($price->date)->startOfWeek()->format('Y-m-d'))
+            ->groupBy(fn ($price) => $price->security_id.'-'.Carbon::parse($price->date)->startOfWeek()->format('Y-m-d'))
             ->map(fn (Collection $group) => $group->last());
 
         $weeks = $weeklyPrices

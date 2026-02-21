@@ -13,8 +13,8 @@ class SecurityStatsOverview extends StatsOverviewWidget
 
     protected ?string $pollingInterval = null;
 
-    /** @var class-string */
-    public string $tablePageClass;
+    /** @var class-string|null */
+    public ?string $tablePageClass = null;
 
     protected function getTablePage(): string
     {
@@ -23,6 +23,10 @@ class SecurityStatsOverview extends StatsOverviewWidget
 
     protected function getStats(): array
     {
+        if ($this->tablePageClass === null) {
+            return [];
+        }
+
         $records = $this->getPageTableQuery()->with('latestPrice')->get();
 
         $totalInvested = $records->sum(fn ($record) => (float) ($record->total_invested ?? 0));

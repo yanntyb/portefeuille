@@ -134,7 +134,6 @@ it('validates that account_type is required', function () {
         ->assertHasFormErrors(['account_type' => 'required']);
 });
 
-
 it('can filter transactions by account type', function () {
     $peaTransactions = Transaction::factory()->pea()->count(2)->create();
     $livretTransactions = Transaction::factory()->livret()->count(2)->create();

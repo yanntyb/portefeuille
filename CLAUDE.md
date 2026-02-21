@@ -38,6 +38,8 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 ## Verification Scripts
 
+- CRITICAL: After every code modification, you MUST run `composer run check` to validate lint (Pint) and tests (Pest). Do not consider a task done until this command passes.
+- CRITICAL: Every behavior you add or modify MUST be covered by tests. Write or update tests for all new features, bug fixes, and changed logic before running `composer run check`.
 - Do not create verification scripts or tinker when tests cover that functionality and prove they work. Unit and feature tests are more important.
 
 ## Application Structure & Architecture
