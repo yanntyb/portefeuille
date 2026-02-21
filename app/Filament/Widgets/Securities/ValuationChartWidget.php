@@ -165,41 +165,37 @@ class ValuationChartWidget extends ChartWidget
      */
     private function computeValuations(Collection $prices, array $cumulativeQuantities, array $cumulativeInvested, array $securityIds): array
     {
-        $weeklyPrices = $prices
-            ->groupBy(fn ($price) => $price->security_id.'-'.Carbon::parse($price->date)->startOfWeek()->format('Y-m-d'))
-            ->map(fn (Collection $group) => $group->last());
-
-        $weeks = $weeklyPrices
-            ->map(fn ($price) => Carbon::parse($price->date)->startOfWeek()->format('Y-m-d'))
+        $days = $prices
+            ->map(fn ($price) => Carbon::parse($price->date)->format('Y-m-d'))
             ->unique()
             ->sort()
             ->values();
 
-        $pricesByWeekAndSecurity = $weeklyPrices->groupBy(
-            fn ($p) => Carbon::parse($p->date)->startOfWeek()->format('Y-m-d'),
+        $pricesByDayAndSecurity = $prices->groupBy(
+            fn ($p) => Carbon::parse($p->date)->format('Y-m-d'),
         )->map(fn (Collection $group) => $group->keyBy('security_id'));
 
         $labels = [];
         $valuations = [];
         $invested = [];
 
-        foreach ($weeks as $week) {
+        foreach ($days as $day) {
             $valuation = 0;
-            $pricesForWeek = $pricesByWeekAndSecurity->get($week, collect());
+            $pricesForDay = $pricesByDayAndSecurity->get($day, collect());
 
             foreach ($securityIds as $securityId) {
-                $price = $pricesForWeek->get($securityId);
+                $price = $pricesForDay->get($securityId);
                 if (! $price) {
                     continue;
                 }
 
-                $quantity = $this->getQuantityAtDate($cumulativeQuantities, $securityId, Carbon::parse($price->date)->format('Y-m-d'));
+                $quantity = $this->getQuantityAtDate($cumulativeQuantities, $securityId, $day);
                 $valuation += $quantity * (float) $price->close;
             }
 
-            $labels[] = Carbon::parse($week)->format('d/m/Y');
+            $labels[] = Carbon::parse($day)->format('d/m/Y');
             $valuations[] = round($valuation, 2);
-            $invested[] = round($this->getInvestedAtDate($cumulativeInvested, $week), 2);
+            $invested[] = round($this->getInvestedAtDate($cumulativeInvested, $day), 2);
         }
 
         return [$labels, $valuations, $invested];

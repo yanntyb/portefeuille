@@ -58,7 +58,9 @@ it('computes valuation from transactions and prices', function () {
     $data = invade($widget->instance())->getData();
 
     expect($data['datasets'])->toHaveCount(2)
-        ->and($data['labels'])->not->toBeEmpty()
+        ->and($data['labels'])->toHaveCount(2)
+        ->and($data['labels'][0])->toBe('15/01/2024')
+        ->and($data['labels'][1])->toBe('15/02/2024')
         ->and($data['datasets'][0]['label'])->toBe('Valorisation')
         ->and($data['datasets'][0]['data'])->each->toBeGreaterThan(0)
         ->and($data['datasets'][1]['label'])->toBe('Investi')
@@ -95,6 +97,36 @@ it('excludes prices before the first transaction date', function () {
 
     expect($data['labels'])->toHaveCount(1)
         ->and($data['datasets'][0]['data'])->toHaveCount(1)
+        ->and($data['datasets'][0]['data'][0])->toBe(1050.0);
+});
+
+it('invested reflects mid-week transactions in the same week', function () {
+    $security = Security::factory()->create();
+
+    // Transaction on Wednesday 2024-01-10 (week starts Monday 2024-01-08)
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+        'quantity' => 10,
+        'unit_price' => 100,
+        'fees' => 0,
+        'date' => '2024-01-10',
+    ]);
+
+    // Price on Friday of the same week
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2024-01-12',
+        'close' => 105,
+    ]);
+
+    $widget = livewire(ValuationChartWidget::class, [
+        'tablePageClass' => ListPeaSecurities::class,
+    ]);
+
+    $data = invade($widget->instance())->getData();
+
+    // Invested should be 1000 (10 * 100) in the same week as the transaction
+    expect($data['datasets'][1]['data'][0])->toBe(1000.0)
         ->and($data['datasets'][0]['data'][0])->toBe(1050.0);
 });
 
