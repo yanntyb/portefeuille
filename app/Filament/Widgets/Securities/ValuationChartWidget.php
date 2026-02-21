@@ -140,6 +140,11 @@ class ValuationChartWidget extends ChartWidget
                                     const prevKey = prevDate.toLocaleDateString('fr-FR', { month: 'short' }) + prevDate.toLocaleDateString('fr-FR', { year: '2-digit' });
                                     if (key === prevKey) return '';
                                 }
+                                const isMobile = this.chart.width < 500;
+                                if (isMobile) {
+                                    const monthIndex = date.getMonth();
+                                    if (monthIndex % 2 !== 0) return '';
+                                }
                                 return month + ' ' + year;
                             },
                         },
