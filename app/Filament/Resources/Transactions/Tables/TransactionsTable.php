@@ -19,7 +19,7 @@ class TransactionsTable
             ->columns([
                 TextColumn::make('date')
                     ->label('Date')
-                    ->date('M Y')
+                    ->isoDate('MMM YYYY')
                     ->sortable(),
                 TextColumn::make('account_type')
                     ->label('Compte')
