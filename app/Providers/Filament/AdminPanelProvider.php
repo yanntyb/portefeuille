@@ -47,8 +47,9 @@ class AdminPanelProvider extends PanelProvider
                 NavigationItem::make('Logs')
                     ->url('/log-viewer', shouldOpenInNewTab: true)
                     ->icon('heroicon-o-document-text')
-                    ->group('Système')
-                    ->sort(100),
+                    ->group('Administration')
+                    ->sort(100)
+                    ->visible(fn () => auth()->user()?->isAdmin()),
             ])
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
