@@ -41,6 +41,41 @@ it('can search ticker from ISIN on security edit page', function () {
         ]);
 });
 
+it('can search ticker from ISIN FR0010359430 on security edit page', function () {
+    Process::fake([
+        '*search_ticker.py*' => Process::result(output: json_encode([
+            'status' => 'ok',
+            'data' => [
+                ['symbol' => 'AEEM.PA', 'name' => 'Amundi MSCI Emerging Markets', 'exchange' => 'Paris', 'type' => 'ETF'],
+            ],
+        ])),
+    ]);
+
+    $security = Security::factory()->create([
+        'isin' => 'FR0010359430',
+        'name' => null,
+        'ticker' => null,
+    ]);
+
+    $options = json_encode([
+        'AEEM.PA|Amundi MSCI Emerging Markets' => 'AEEM.PA — Amundi MSCI Emerging Markets (Paris)',
+    ]);
+
+    livewire(EditPeaSecurity::class, ['record' => $security->id])
+        ->callAction(
+            'updateFromIsin',
+            data: [
+                'search_options' => $options,
+                'selected_result' => 'AEEM.PA|Amundi MSCI Emerging Markets',
+            ],
+        )
+        ->assertHasNoActionErrors()
+        ->assertSchemaStateSet([
+            'ticker' => 'AEEM.PA',
+            'name' => 'Amundi MSCI Emerging Markets',
+        ]);
+});
+
 it('shows warning notification when ISIN is empty on security edit page', function () {
     $security = Security::factory()->create([
         'isin' => 'FR0000447591',
