@@ -8,28 +8,12 @@ use App\Models\Transaction;
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Livewire\livewire;
 
-it('can select an existing security from the CTO table header action', function () {
-    $existing = Security::factory()->create();
-    Transaction::factory()->cto()->create(['security_id' => $existing->id]);
-
-    $target = Security::factory()->create(['name' => 'Apple Inc.']);
-
-    livewire(ListCtoSecurities::class)
-        ->callTableAction('create', data: [
-            'security_id' => $target->id,
-        ])
-        ->assertNotified();
-});
-
-it('requires a security to be selected in the CTO table header action', function () {
+it('does not have a create action in the CTO list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
 
     livewire(ListCtoSecurities::class)
-        ->callTableAction('create', data: [
-            'security_id' => null,
-        ])
-        ->assertHasTableActionErrors(['security_id' => 'required']);
+        ->assertTableActionDoesNotExist('create');
 });
 
 it('can render the CTO edit page', function () {

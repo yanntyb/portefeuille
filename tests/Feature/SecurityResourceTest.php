@@ -57,28 +57,12 @@ it('displays aggregated columns for a PEA security', function () {
         ->assertTableColumnStateSet('total_quantity', '30.0000', $security);
 });
 
-it('can select an existing security from the table header action', function () {
-    $existing = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $existing->id]);
-
-    $target = Security::factory()->create(['name' => 'Amundi MSCI World']);
-
-    livewire(ListPeaSecurities::class)
-        ->callTableAction('create', data: [
-            'security_id' => $target->id,
-        ])
-        ->assertNotified();
-});
-
-it('requires a security to be selected in the table header action', function () {
+it('does not have a create action in the PEA list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
 
     livewire(ListPeaSecurities::class)
-        ->callTableAction('create', data: [
-            'security_id' => null,
-        ])
-        ->assertHasTableActionErrors(['security_id' => 'required']);
+        ->assertTableActionDoesNotExist('create');
 });
 
 it('can render the PEA edit page', function () {

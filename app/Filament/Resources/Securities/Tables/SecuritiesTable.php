@@ -6,8 +6,6 @@ use App\Exceptions\TickerResolutionException;
 use App\Models\Security;
 use App\Services\YahooFinanceService;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\RecordActionsPosition;
@@ -56,42 +54,6 @@ class SecuritiesTable
             ])
             ->recordActionsPosition(RecordActionsPosition::BeforeColumns)
             ->headerActions([
-                Action::make('create')
-                    ->label('Nouveau titre')
-                    ->form([
-                        Select::make('security_id')
-                            ->label('Titre')
-                            ->searchable()
-                            ->getSearchResultsUsing(fn (string $search): array => Security::query()
-                                ->where('name', 'like', "%{$search}%")
-                                ->orWhere('isin', 'like', "%{$search}%")
-                                ->orWhere('ticker', 'like', "%{$search}%")
-                                ->limit(50)
-                                ->get()
-                                ->mapWithKeys(fn (Security $s): array => [$s->id => "{$s->name} ({$s->isin})"])
-                                ->all())
-                            ->getOptionLabelUsing(fn ($value): ?string => Security::find($value)?->name)
-                            ->createOptionForm([
-                                TextInput::make('isin')
-                                    ->label('ISIN')
-                                    ->required()
-                                    ->unique(Security::class)
-                                    ->maxLength(12)
-                                    ->placeholder('FR0011871110'),
-                                TextInput::make('name')
-                                    ->label('Nom')
-                                    ->maxLength(255)
-                                    ->placeholder('Nom du titre'),
-                                TextInput::make('ticker')
-                                    ->label('Ticker'),
-                            ])
-                            ->createOptionUsing(fn (array $data): int => Security::create($data)->getKey())
-                            ->required(),
-                    ])
-                    ->action(fn () => Notification::make()
-                        ->success()
-                        ->title('Titre ajouté')
-                        ->send()),
                 Action::make('fetchAllPrices')
                     ->label('MAJ tous les prix')
                     ->icon('heroicon-o-arrow-path')
