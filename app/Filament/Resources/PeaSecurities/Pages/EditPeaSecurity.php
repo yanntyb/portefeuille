@@ -3,19 +3,9 @@
 namespace App\Filament\Resources\PeaSecurities\Pages;
 
 use App\Filament\Resources\PeaSecurities\PeaSecurityResource;
-use App\Filament\Resources\Securities\Schemas\SecurityForm;
-use Filament\Actions\DeleteAction;
-use Filament\Resources\Pages\EditRecord;
+use App\Filament\Resources\Securities\Pages\EditSecurity;
 
-class EditPeaSecurity extends EditRecord
+class EditPeaSecurity extends EditSecurity
 {
     protected static string $resource = PeaSecurityResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            SecurityForm::updateFromIsinAction(),
-            DeleteAction::make(),
-        ];
-    }
 }

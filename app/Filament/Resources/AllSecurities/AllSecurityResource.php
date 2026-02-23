@@ -2,7 +2,10 @@
 
 namespace App\Filament\Resources\AllSecurities;
 
+use App\Filament\Resources\AllSecurities\Pages\EditAllSecurity;
 use App\Filament\Resources\AllSecurities\Pages\ListAllSecurities;
+use App\Filament\Resources\Securities\RelationManagers\PricesRelationManager;
+use App\Filament\Resources\Securities\Schemas\SecurityForm;
 use App\Models\Security;
 use App\Services\YahooFinanceService;
 use BackedEnum;
@@ -33,6 +36,11 @@ class AllSecurityResource extends Resource
     protected static ?string $navigationLabel = 'Tous les titres';
 
     protected static ?string $breadcrumb = 'Titres';
+
+    public static function form(Schema $schema): Schema
+    {
+        return SecurityForm::configure($schema);
+    }
 
     public static function table(Table $table): Table
     {
@@ -135,10 +143,18 @@ class AllSecurityResource extends Resource
             });
     }
 
+    public static function getRelations(): array
+    {
+        return [
+            PricesRelationManager::class,
+        ];
+    }
+
     public static function getPages(): array
     {
         return [
             'index' => ListAllSecurities::route('/'),
+            'edit' => EditAllSecurity::route('/{record}/edit'),
         ];
     }
 }

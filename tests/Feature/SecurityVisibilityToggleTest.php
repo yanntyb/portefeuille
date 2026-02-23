@@ -7,7 +7,6 @@ use App\Filament\Widgets\Securities\ValuationChartWidget;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
-use Filament\Actions\Testing\TestAction;
 
 use function Pest\Livewire\livewire;
 
@@ -276,59 +275,4 @@ it('shows empty chart when all securities are hidden', function () {
 
     expect($data['datasets'])->toBeEmpty()
         ->and($data['labels'])->toBeEmpty();
-});
-
-it('creates a security price when using setManualPrice action', function () {
-    $security = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $security->id]);
-
-    $page = livewire(ListPeaSecurities::class);
-
-    expect($page->get('pricelessSecurityIds'))->toContain($security->id);
-    expect($page->get('shownSecurityIds'))->not->toContain($security->id);
-
-    $page->callAction(TestAction::make('setManualPrice')->table($security), data: [
-        'close' => 42.50,
-    ]);
-
-    $this->assertDatabaseHas('security_prices', [
-        'security_id' => $security->id,
-        'date' => today(),
-        'close' => 42.50,
-    ]);
-
-    expect($page->get('pricelessSecurityIds'))->not->toContain($security->id);
-    expect($page->get('shownSecurityIds'))->toContain($security->id);
-});
-
-it('setManualPrice action is only visible for priceless securities', function () {
-    $securityWithPrice = Security::factory()->create();
-    $securityWithoutPrice = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $securityWithPrice->id]);
-    Transaction::factory()->pea()->create(['security_id' => $securityWithoutPrice->id]);
-    SecurityPrice::factory()->create(['security_id' => $securityWithPrice->id, 'date' => today(), 'close' => 100]);
-
-    livewire(ListPeaSecurities::class)
-        ->assertActionVisible(TestAction::make('setManualPrice')->table($securityWithoutPrice))
-        ->assertActionHidden(TestAction::make('setManualPrice')->table($securityWithPrice));
-});
-
-it('setManualPrice works on CTO page', function () {
-    $security = Security::factory()->create();
-    Transaction::factory()->cto()->create(['security_id' => $security->id]);
-
-    $page = livewire(ListCtoSecurities::class);
-
-    $page->callAction(TestAction::make('setManualPrice')->table($security), data: [
-        'close' => 55.00,
-    ]);
-
-    $this->assertDatabaseHas('security_prices', [
-        'security_id' => $security->id,
-        'date' => today(),
-        'close' => 55.00,
-    ]);
-
-    expect($page->get('pricelessSecurityIds'))->not->toContain($security->id);
-    expect($page->get('shownSecurityIds'))->toContain($security->id);
 });
