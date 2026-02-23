@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Plugins\PwaPlugin;
 use App\Filament\Widgets\Dashboard\PortfolioAllocationChartWidget;
 use App\Filament\Widgets\Dashboard\PortfolioStatsOverview;
+use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationItem;
@@ -29,6 +30,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->login()
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -64,6 +66,9 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+            ])
+            ->authMiddleware([
+                Authenticate::class,
             ]);
     }
 }

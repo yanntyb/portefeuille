@@ -5,12 +5,13 @@ namespace Database\Seeders;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 
 class TransactionSeeder extends Seeder
 {
-    public function run(): void
+    public function run(User $user): void
     {
         $amundi = Security::factory()->create([
             'isin' => 'FR0011871110',
@@ -62,11 +63,12 @@ class TransactionSeeder extends Seeder
         ];
 
         foreach ($peaTransactions as $tx) {
-            Transaction::factory()->pea()->create($tx);
+            Transaction::factory()->pea()->create([...$tx, 'user_id' => $user->id]);
         }
 
         // CTO : janv.-26
         Transaction::factory()->cto()->create([
+            'user_id' => $user->id,
             'date' => '2026-01-15',
             'security_id' => $chevron->id,
             'quantity' => 1,
@@ -83,6 +85,7 @@ class TransactionSeeder extends Seeder
 
         foreach ($livretDates as $date) {
             Transaction::factory()->livret()->create([
+                'user_id' => $user->id,
                 'date' => $date,
                 'notes' => 'Versement mensuel',
             ]);

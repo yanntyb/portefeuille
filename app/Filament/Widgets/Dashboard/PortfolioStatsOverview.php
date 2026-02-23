@@ -24,7 +24,7 @@ class PortfolioStatsOverview extends StatsOverviewWidget
 
         foreach ($accountTypes as $accountType) {
             $securities = Security::query()
-                ->forAccountType($accountType)
+                ->forAccountType($accountType, auth()->id())
                 ->with('latestPrice')
                 ->get();
 

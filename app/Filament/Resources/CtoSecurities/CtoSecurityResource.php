@@ -42,7 +42,7 @@ class CtoSecurityResource extends Resource
     public static function table(Table $table): Table
     {
         return SecuritiesTable::configure($table)
-            ->modifyQueryUsing(fn (Builder $query) => $query->forAccountType(AccountType::Cto));
+            ->modifyQueryUsing(fn (Builder $query) => $query->forAccountType(AccountType::Cto, auth()->id()));
     }
 
     public static function getRelations(): array

@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int|null $user_id
+ */
 class Transaction extends Model
 {
     /** @use HasFactory<\Database\Factories\TransactionFactory> */
@@ -14,6 +17,7 @@ class Transaction extends Model
 
     /** @var list<string> */
     protected $fillable = [
+        'user_id',
         'date',
         'account_type',
         'security_id',
@@ -39,5 +43,10 @@ class Transaction extends Model
     public function security(): BelongsTo
     {
         return $this->belongsTo(Security::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

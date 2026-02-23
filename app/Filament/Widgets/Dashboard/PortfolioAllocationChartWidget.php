@@ -32,7 +32,7 @@ class PortfolioAllocationChartWidget extends ChartWidget
 
         foreach ($accountTypes as $index => $accountType) {
             $securities = Security::query()
-                ->forAccountType($accountType)
+                ->forAccountType($accountType, auth()->id())
                 ->with('latestPrice')
                 ->get();
 

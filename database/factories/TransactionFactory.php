@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Enums\AccountType;
 use App\Models\Security;
 use App\Models\Transaction;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,6 +17,7 @@ class TransactionFactory extends Factory
     public function definition(): array
     {
         return [
+            'user_id' => auth()->id() ?? User::factory(),
             'date' => fake()->dateTimeBetween('-2 years', 'now'),
             'account_type' => fake()->randomElement(AccountType::cases()),
             'security_id' => Security::factory(),

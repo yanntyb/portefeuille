@@ -38,7 +38,7 @@ class Security extends Model
     }
 
     /** @param Builder<self> $query */
-    public function scopeForAccountType(Builder $query, AccountType $accountType): void
+    public function scopeForAccountType(Builder $query, AccountType $accountType, ?int $userId = null): void
     {
         $query
             ->select([
@@ -52,6 +52,7 @@ class Security extends Model
             ])
             ->join('transactions', 'transactions.security_id', '=', 'securities.id')
             ->where('transactions.account_type', $accountType->value)
+            ->when($userId, fn (Builder $q) => $q->where('transactions.user_id', $userId))
             ->groupBy('securities.id', 'securities.isin', 'securities.name');
     }
 }

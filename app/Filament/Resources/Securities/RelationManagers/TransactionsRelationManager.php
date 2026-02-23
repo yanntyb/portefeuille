@@ -81,6 +81,7 @@ class TransactionsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (\Illuminate\Database\Eloquent\Builder $query) => $query->where('user_id', auth()->id()))
             ->recordTitleAttribute('date')
             ->defaultSort('date', 'desc')
             ->columns([
@@ -118,7 +119,12 @@ class TransactionsRelationManager extends RelationManager
                     ->options(AccountType::class),
             ])
             ->headerActions([
-                CreateAction::make(),
+                CreateAction::make()
+                    ->mutateFormDataUsing(function (array $data): array {
+                        $data['user_id'] = auth()->id();
+
+                        return $data;
+                    }),
             ])
             ->recordActions([
                 EditAction::make(),
