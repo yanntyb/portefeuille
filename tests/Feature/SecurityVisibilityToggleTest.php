@@ -7,20 +7,26 @@ use App\Filament\Widgets\Securities\ValuationChartWidget;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
+use Filament\Actions\Testing\TestAction;
 
 use function Pest\Livewire\livewire;
 
-it('initializes shownSecurityIds with all security ids on mount', function () {
+it('initializes shownSecurityIds with only securities that have today price', function () {
     $security1 = Security::factory()->create();
     $security2 = Security::factory()->create();
+    $securityNoPrice = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security1->id]);
     Transaction::factory()->pea()->create(['security_id' => $security2->id]);
+    Transaction::factory()->pea()->create(['security_id' => $securityNoPrice->id]);
+    SecurityPrice::factory()->create(['security_id' => $security1->id, 'date' => today(), 'close' => 100]);
+    SecurityPrice::factory()->create(['security_id' => $security2->id, 'date' => today(), 'close' => 200]);
 
     $page = livewire(ListPeaSecurities::class);
 
     expect($page->get('shownSecurityIds'))
         ->toContain($security1->id)
-        ->toContain($security2->id);
+        ->toContain($security2->id)
+        ->not->toContain($securityNoPrice->id);
 });
 
 it('removes a security id when toggling a visible security', function () {
@@ -28,6 +34,8 @@ it('removes a security id when toggling a visible security', function () {
     $security2 = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security1->id]);
     Transaction::factory()->pea()->create(['security_id' => $security2->id]);
+    SecurityPrice::factory()->create(['security_id' => $security1->id, 'date' => today(), 'close' => 100]);
+    SecurityPrice::factory()->create(['security_id' => $security2->id, 'date' => today(), 'close' => 200]);
 
     $page = livewire(ListPeaSecurities::class)
         ->call('toggleSecurity', $security1->id);
@@ -40,6 +48,7 @@ it('removes a security id when toggling a visible security', function () {
 it('adds back a security id when toggling a hidden security', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
+    SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => today(), 'close' => 100]);
 
     $page = livewire(ListPeaSecurities::class)
         ->call('toggleSecurity', $security->id)
@@ -61,6 +70,7 @@ it('dispatches security-visibility-changed event on toggle', function () {
 it('works on CTO page as well', function () {
     $security = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
+    SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => today(), 'close' => 100]);
 
     $page = livewire(ListCtoSecurities::class);
 
@@ -183,6 +193,63 @@ it('shows empty stats when all securities are hidden', function () {
     expect($stats[0]->getValue())->toContain('0');
 });
 
+it('displays error icon for securities without today price', function () {
+    $securityWithPrice = Security::factory()->create();
+    $securityWithoutPrice = Security::factory()->create();
+    Transaction::factory()->pea()->create(['security_id' => $securityWithPrice->id]);
+    Transaction::factory()->pea()->create(['security_id' => $securityWithoutPrice->id]);
+    SecurityPrice::factory()->create(['security_id' => $securityWithPrice->id, 'date' => today(), 'close' => 100]);
+
+    $page = livewire(ListPeaSecurities::class);
+
+    $page->assertCanRenderTableColumn('name');
+
+    $nameColumn = $page->instance()->getTable()->getColumn('name');
+
+    $nameColumn->record($securityWithoutPrice);
+    expect($nameColumn->getIcon($securityWithoutPrice->name))->toBe('heroicon-o-exclamation-triangle');
+    expect($nameColumn->getTooltip())->toContain('prix');
+
+    $nameColumn->record($securityWithPrice);
+    expect($nameColumn->getIcon($securityWithPrice->name))->toBeNull();
+    expect($nameColumn->getTooltip())->toBeNull();
+});
+
+it('keeps error icon after toggling a priceless security to visible', function () {
+    $securityWithoutPrice = Security::factory()->create();
+    Transaction::factory()->pea()->create(['security_id' => $securityWithoutPrice->id]);
+
+    $page = livewire(ListPeaSecurities::class);
+
+    expect($page->get('pricelessSecurityIds'))->toContain($securityWithoutPrice->id);
+
+    $page->call('toggleSecurity', $securityWithoutPrice->id);
+
+    expect($page->get('shownSecurityIds'))->toContain($securityWithoutPrice->id);
+    expect($page->get('pricelessSecurityIds'))->toContain($securityWithoutPrice->id);
+
+    $nameColumn = $page->instance()->getTable()->getColumn('name');
+    $nameColumn->record($securityWithoutPrice);
+    expect($nameColumn->getIcon($securityWithoutPrice->name))->toBe('heroicon-o-exclamation-triangle');
+});
+
+it('does not show error icon after toggling a priced security to hidden', function () {
+    $securityWithPrice = Security::factory()->create();
+    Transaction::factory()->pea()->create(['security_id' => $securityWithPrice->id]);
+    SecurityPrice::factory()->create(['security_id' => $securityWithPrice->id, 'date' => today(), 'close' => 100]);
+
+    $page = livewire(ListPeaSecurities::class);
+
+    $page->call('toggleSecurity', $securityWithPrice->id);
+
+    expect($page->get('shownSecurityIds'))->not->toContain($securityWithPrice->id);
+    expect($page->get('pricelessSecurityIds'))->not->toContain($securityWithPrice->id);
+
+    $nameColumn = $page->instance()->getTable()->getColumn('name');
+    $nameColumn->record($securityWithPrice);
+    expect($nameColumn->getIcon($securityWithPrice->name))->toBeNull();
+});
+
 it('shows empty chart when all securities are hidden', function () {
     $security = Security::factory()->create();
 
@@ -209,4 +276,59 @@ it('shows empty chart when all securities are hidden', function () {
 
     expect($data['datasets'])->toBeEmpty()
         ->and($data['labels'])->toBeEmpty();
+});
+
+it('creates a security price when using setManualPrice action', function () {
+    $security = Security::factory()->create();
+    Transaction::factory()->pea()->create(['security_id' => $security->id]);
+
+    $page = livewire(ListPeaSecurities::class);
+
+    expect($page->get('pricelessSecurityIds'))->toContain($security->id);
+    expect($page->get('shownSecurityIds'))->not->toContain($security->id);
+
+    $page->callAction(TestAction::make('setManualPrice')->table($security), data: [
+        'close' => 42.50,
+    ]);
+
+    $this->assertDatabaseHas('security_prices', [
+        'security_id' => $security->id,
+        'date' => today(),
+        'close' => 42.50,
+    ]);
+
+    expect($page->get('pricelessSecurityIds'))->not->toContain($security->id);
+    expect($page->get('shownSecurityIds'))->toContain($security->id);
+});
+
+it('setManualPrice action is only visible for priceless securities', function () {
+    $securityWithPrice = Security::factory()->create();
+    $securityWithoutPrice = Security::factory()->create();
+    Transaction::factory()->pea()->create(['security_id' => $securityWithPrice->id]);
+    Transaction::factory()->pea()->create(['security_id' => $securityWithoutPrice->id]);
+    SecurityPrice::factory()->create(['security_id' => $securityWithPrice->id, 'date' => today(), 'close' => 100]);
+
+    livewire(ListPeaSecurities::class)
+        ->assertActionVisible(TestAction::make('setManualPrice')->table($securityWithoutPrice))
+        ->assertActionHidden(TestAction::make('setManualPrice')->table($securityWithPrice));
+});
+
+it('setManualPrice works on CTO page', function () {
+    $security = Security::factory()->create();
+    Transaction::factory()->cto()->create(['security_id' => $security->id]);
+
+    $page = livewire(ListCtoSecurities::class);
+
+    $page->callAction(TestAction::make('setManualPrice')->table($security), data: [
+        'close' => 55.00,
+    ]);
+
+    $this->assertDatabaseHas('security_prices', [
+        'security_id' => $security->id,
+        'date' => today(),
+        'close' => 55.00,
+    ]);
+
+    expect($page->get('pricelessSecurityIds'))->not->toContain($security->id);
+    expect($page->get('shownSecurityIds'))->toContain($security->id);
 });

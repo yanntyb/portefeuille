@@ -2,10 +2,13 @@
 
 namespace App\Filament\Resources\CtoSecurities\Pages;
 
+use App\Exceptions\TickerResolutionException;
 use App\Filament\Resources\CtoSecurities\CtoSecurityResource;
 use App\Filament\Widgets\Securities\AllocationChartWidget;
 use App\Filament\Widgets\Securities\SecurityStatsOverview;
 use App\Filament\Widgets\Securities\ValuationChartWidget;
+use App\Models\SecurityPrice;
+use App\Services\YahooFinanceService;
 use Filament\Pages\Concerns\ExposesTableToWidgets;
 use Filament\Resources\Pages\ListRecords;
 
@@ -20,13 +23,63 @@ class ListCtoSecurities extends ListRecords
     /** @var list<int> */
     public array $shownSecurityIds = [];
 
+    /** @var list<int> */
+    public array $pricelessSecurityIds = [];
+
     public function mount(): void
     {
         parent::mount();
 
-        $this->shownSecurityIds = static::getResource()::getEloquentQuery()
+        $allIds = static::getResource()::getEloquentQuery()
             ->pluck('securities.id')
             ->all();
+
+        $idsWithPrice = SecurityPrice::query()
+            ->whereIn('security_id', $allIds)
+            ->whereDate('date', today())
+            ->pluck('security_id')
+            ->all();
+
+        $this->shownSecurityIds = $idsWithPrice;
+        $this->pricelessSecurityIds = array_values(array_diff($allIds, $idsWithPrice));
+
+        $this->js('$wire.refreshPrices()');
+    }
+
+    public function refreshPrices(): void
+    {
+        $service = app(YahooFinanceService::class);
+        $securities = static::getResource()::getEloquentQuery()->get();
+
+        foreach ($securities as $security) {
+            try {
+                $service->fetchAndStorePrices($security);
+            } catch (TickerResolutionException) {
+                // Skip securities without resolvable ticker
+            }
+        }
+
+        $allIds = $securities->pluck('id')->all();
+
+        $idsWithPrice = SecurityPrice::query()
+            ->whereIn('security_id', $allIds)
+            ->whereDate('date', today())
+            ->pluck('security_id')
+            ->all();
+
+        $this->shownSecurityIds = $idsWithPrice;
+        $this->pricelessSecurityIds = array_values(array_diff($allIds, $idsWithPrice));
+    }
+
+    public function onManualPriceSet(int $id): void
+    {
+        $this->pricelessSecurityIds = array_values(array_diff($this->pricelessSecurityIds, [$id]));
+
+        if (! in_array($id, $this->shownSecurityIds)) {
+            $this->shownSecurityIds[] = $id;
+        }
+
+        $this->dispatch('security-visibility-changed', shownSecurityIds: $this->shownSecurityIds);
     }
 
     public function toggleSecurity(int $id): void

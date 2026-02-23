@@ -4,8 +4,10 @@ namespace App\Filament\Resources\Securities\Tables;
 
 use App\Exceptions\TickerResolutionException;
 use App\Models\Security;
+use App\Models\SecurityPrice;
 use App\Services\YahooFinanceService;
 use Filament\Actions\Action;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\RecordActionsPosition;
@@ -19,7 +21,10 @@ class SecuritiesTable
             ->columns([
                 TextColumn::make('name')
                     ->label('Nom')
-                    ->searchable(),
+                    ->searchable()
+                    ->icon(fn (Security $record, $livewire) => in_array($record->id, $livewire->pricelessSecurityIds) ? 'heroicon-o-exclamation-triangle' : null)
+                    ->iconColor('danger')
+                    ->tooltip(fn (Security $record, $livewire) => in_array($record->id, $livewire->pricelessSecurityIds) ? 'Ce titre est masqué car les prix n\'ont pas pu être récupérés automatiquement' : null),
                 TextColumn::make('total_quantity')
                     ->label('Quantité')
                     ->numeric(decimalPlaces: 4)
@@ -51,6 +56,27 @@ class SecuritiesTable
                     ->iconButton()
                     ->color(fn (Security $record, $livewire) => in_array($record->id, $livewire->shownSecurityIds) ? 'primary' : 'gray')
                     ->action(fn (Security $record, $livewire) => $livewire->toggleSecurity($record->id)),
+                Action::make('setManualPrice')
+                    ->label('')
+                    ->icon('heroicon-o-currency-euro')
+                    ->iconButton()
+                    ->color('warning')
+                    ->visible(fn (Security $record, $livewire) => in_array($record->id, $livewire->pricelessSecurityIds))
+                    ->modalHeading('Saisir le prix du jour')
+                    ->schema([
+                        TextInput::make('close')
+                            ->label('Prix de clôture')
+                            ->numeric()
+                            ->required(),
+                    ])
+                    ->action(function (Security $record, array $data, $livewire): void {
+                        SecurityPrice::updateOrCreate(
+                            ['security_id' => $record->id, 'date' => today()],
+                            ['close' => $data['close']],
+                        );
+
+                        $livewire->onManualPriceSet($record->id);
+                    }),
             ])
             ->recordActionsPosition(RecordActionsPosition::BeforeColumns)
             ->headerActions([
