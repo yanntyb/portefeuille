@@ -4,50 +4,91 @@ use App\Exceptions\TickerResolutionException;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Services\YahooFinanceService;
-use Scheb\YahooFinanceApi\ApiClient;
-use Scheb\YahooFinanceApi\Results\HistoricalData;
-use Scheb\YahooFinanceApi\Results\SearchResult;
-
-use function Pest\Laravel\mock;
+use Illuminate\Support\Facades\Process;
 
 it('resolves a ticker from an ISIN', function () {
-    $apiClient = mock(ApiClient::class);
-    $apiClient->shouldReceive('search')
-        ->with('FR0011871110')
-        ->once()
-        ->andReturn([
-            new SearchResult('CW8.PA', 'Amundi MSCI World', 'PAR', 'ETF', 'Paris', 'ETF'),
-        ]);
+    Process::fake([
+        '*search_ticker.py*' => Process::result(output: json_encode([
+            'status' => 'ok',
+            'data' => [
+                ['symbol' => 'CW8.PA', 'name' => 'Amundi MSCI World', 'exchange' => 'Paris', 'type' => 'ETF'],
+            ],
+        ])),
+    ]);
 
-    $service = new YahooFinanceService($apiClient);
+    $service = new YahooFinanceService;
 
     expect($service->resolveTickerFromIsin('FR0011871110'))->toBe('CW8.PA');
 });
 
-it('throws TickerResolutionException when no result', function () {
-    $apiClient = mock(ApiClient::class);
-    $apiClient->shouldReceive('search')
-        ->with('XX0000000000')
-        ->once()
-        ->andReturn([]);
+it('resolves a ticker using name as fallback', function () {
+    Process::fake([
+        '*search_ticker.py*' => Process::result(output: json_encode([
+            'status' => 'ok',
+            'data' => [
+                ['symbol' => '0P00000FMT.F', 'name' => 'CM-AM Dynamique International C', 'exchange' => 'Frankfurt', 'type' => 'Fund'],
+            ],
+        ])),
+    ]);
 
-    $service = new YahooFinanceService($apiClient);
+    $service = new YahooFinanceService;
+
+    expect($service->resolveTickerFromIsin('FR0007005181', 'CM-AM Dynamique International'))->toBe('0P00000FMT.F');
+
+    Process::assertRan(function ($process) {
+        $input = json_decode($process->input, true);
+
+        return $input['query'] === 'FR0007005181'
+            && $input['fallback_query'] === 'CM-AM Dynamique International';
+    });
+});
+
+it('throws TickerResolutionException when no result', function () {
+    Process::fake([
+        '*search_ticker.py*' => Process::result(output: json_encode([
+            'status' => 'ok',
+            'data' => [],
+        ])),
+    ]);
+
+    $service = new YahooFinanceService;
 
     $service->resolveTickerFromIsin('XX0000000000');
 })->throws(TickerResolutionException::class);
 
+it('returns search results from searchTicker', function () {
+    $expectedData = [
+        ['symbol' => 'CW8.PA', 'name' => 'Amundi MSCI World', 'exchange' => 'Paris', 'type' => 'ETF'],
+        ['symbol' => 'CW8.DE', 'name' => 'Amundi MSCI World', 'exchange' => 'Frankfurt', 'type' => 'ETF'],
+    ];
+
+    Process::fake([
+        '*search_ticker.py*' => Process::result(output: json_encode([
+            'status' => 'ok',
+            'data' => $expectedData,
+        ])),
+    ]);
+
+    $service = new YahooFinanceService;
+    $results = $service->searchTicker('FR0011871110');
+
+    expect($results)->toBe($expectedData);
+});
+
 it('fetches and stores prices for a security', function () {
     $security = Security::factory()->create(['isin' => 'FR0011871110', 'ticker' => 'CW8.PA']);
 
-    $apiClient = mock(ApiClient::class);
-    $apiClient->shouldReceive('getHistoricalQuoteData')
-        ->once()
-        ->andReturn([
-            new HistoricalData(new DateTime('2026-02-19'), 100.0, 105.0, 99.0, 103.0, 103.0, 50000),
-            new HistoricalData(new DateTime('2026-02-20'), 103.0, 107.0, 102.0, 106.0, 106.0, 60000),
-        ]);
+    Process::fake([
+        '*fetch_prices.py*' => Process::result(output: json_encode([
+            'status' => 'ok',
+            'data' => [
+                ['date' => '2026-02-19', 'open' => 100.0, 'high' => 105.0, 'low' => 99.0, 'close' => 103.0, 'volume' => 50000],
+                ['date' => '2026-02-20', 'open' => 103.0, 'high' => 107.0, 'low' => 102.0, 'close' => 106.0, 'volume' => 60000],
+            ],
+        ])),
+    ]);
 
-    $service = new YahooFinanceService($apiClient);
+    $service = new YahooFinanceService;
     $count = $service->fetchAndStorePrices($security);
 
     expect($count)->toBe(2);
@@ -63,18 +104,20 @@ it('fetches and stores prices for a security', function () {
 it('resolves the ticker if not set and saves it', function () {
     $security = Security::factory()->create(['isin' => 'FR0011871110', 'ticker' => null]);
 
-    $apiClient = mock(ApiClient::class);
-    $apiClient->shouldReceive('search')
-        ->with('FR0011871110')
-        ->once()
-        ->andReturn([
-            new SearchResult('CW8.PA', 'Amundi MSCI World', 'PAR', 'ETF', 'Paris', 'ETF'),
-        ]);
-    $apiClient->shouldReceive('getHistoricalQuoteData')
-        ->once()
-        ->andReturn([]);
+    Process::fake([
+        '*search_ticker.py*' => Process::result(output: json_encode([
+            'status' => 'ok',
+            'data' => [
+                ['symbol' => 'CW8.PA', 'name' => 'Amundi MSCI World', 'exchange' => 'Paris', 'type' => 'ETF'],
+            ],
+        ])),
+        '*fetch_prices.py*' => Process::result(output: json_encode([
+            'status' => 'ok',
+            'data' => [],
+        ])),
+    ]);
 
-    $service = new YahooFinanceService($apiClient);
+    $service = new YahooFinanceService;
     $service->fetchAndStorePrices($security);
 
     expect($security->fresh()->ticker)->toBe('CW8.PA');
@@ -89,19 +132,43 @@ it('fetches incrementally from the last stored date', function () {
         'close' => 100.0,
     ]);
 
-    $apiClient = mock(ApiClient::class);
-    $apiClient->shouldReceive('getHistoricalQuoteData')
-        ->withArgs(function (string $symbol, string $interval, DateTimeInterface $start) {
-            return $start->format('Y-m-d') === '2026-02-19';
-        })
-        ->once()
-        ->andReturn([
-            new HistoricalData(new DateTime('2026-02-19'), 100.0, 105.0, 99.0, 103.0, 103.0, 50000),
-        ]);
+    Process::fake([
+        '*fetch_prices.py*' => Process::result(output: json_encode([
+            'status' => 'ok',
+            'data' => [
+                ['date' => '2026-02-19', 'open' => 100.0, 'high' => 105.0, 'low' => 99.0, 'close' => 103.0, 'volume' => 50000],
+            ],
+        ])),
+    ]);
 
-    $service = new YahooFinanceService($apiClient);
+    $service = new YahooFinanceService;
     $count = $service->fetchAndStorePrices($security);
 
     expect($count)->toBe(1);
     expect(SecurityPrice::where('security_id', $security->id)->count())->toBe(2);
+
+    Process::assertRan(function ($process) {
+        $input = json_decode($process->input, true);
+
+        return ($input['start_date'] ?? null) === '2026-02-19';
+    });
+});
+
+it('calls fetch_prices.py with 60s timeout', function () {
+    $security = Security::factory()->create(['ticker' => 'CW8.PA']);
+
+    Process::fake([
+        '*fetch_prices.py*' => Process::result(output: json_encode([
+            'status' => 'ok',
+            'data' => [],
+        ])),
+    ]);
+
+    $service = new YahooFinanceService;
+    $service->fetchAndStorePrices($security);
+
+    Process::assertRan(function ($process) {
+        return str_contains($process->command, 'fetch_prices.py')
+            && $process->timeout === 60;
+    });
 });

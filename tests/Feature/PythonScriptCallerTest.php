@@ -48,20 +48,26 @@ test('it throws exception when python returns invalid json', function () {
     PythonScriptCaller::call('test.py', ['hello' => 'world']);
 })->throws(RuntimeException::class, 'Invalid JSON returned from Python script');
 
-test('python-test route returns expected json', function () {
+test('it uses custom timeout when provided', function () {
     Process::fake([
-        '*' => Process::result(output: json_encode([
-            'status' => 'ok',
-            'python_version' => '3.12.0',
-            'received_input' => ['hello' => 'from Laravel'],
-        ])),
+        '*' => Process::result(output: json_encode(['status' => 'ok'])),
     ]);
 
-    $response = $this->get('/python-test');
+    PythonScriptCaller::call('test.py', ['hello' => 'world'], timeout: 60);
 
-    $response->assertSuccessful()
-        ->assertJson([
-            'status' => 'ok',
-            'received_input' => ['hello' => 'from Laravel'],
-        ]);
+    Process::assertRan(function ($process) {
+        return $process->timeout === 60;
+    });
+});
+
+test('it uses default 30s timeout', function () {
+    Process::fake([
+        '*' => Process::result(output: json_encode(['status' => 'ok'])),
+    ]);
+
+    PythonScriptCaller::call('test.py');
+
+    Process::assertRan(function ($process) {
+        return $process->timeout === 30;
+    });
 });

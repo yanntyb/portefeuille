@@ -5,25 +5,39 @@ namespace App\Services;
 use App\Exceptions\TickerResolutionException;
 use App\Models\Security;
 use App\Models\SecurityPrice;
+use App\Support\PythonScriptCaller;
 use DateTimeInterface;
-use Scheb\YahooFinanceApi\ApiClient;
 
 class YahooFinanceService
 {
-    public function __construct(private readonly ApiClient $apiClient) {}
-
     /**
      * @throws TickerResolutionException
      */
-    public function resolveTickerFromIsin(string $isin): string
+    public function resolveTickerFromIsin(string $isin, ?string $name = null): string
     {
-        $results = $this->apiClient->search($isin);
+        $results = $this->searchTicker($isin, $name);
 
         if ($results === []) {
             throw TickerResolutionException::noResultForIsin($isin);
         }
 
-        return $results[0]->getSymbol();
+        return $results[0]['symbol'];
+    }
+
+    /**
+     * @return list<array{symbol: string, name: string, exchange: string, type: string}>
+     */
+    public function searchTicker(string $query, ?string $fallbackQuery = null): array
+    {
+        $input = ['query' => $query];
+
+        if ($fallbackQuery !== null) {
+            $input['fallback_query'] = $fallbackQuery;
+        }
+
+        $result = PythonScriptCaller::call('search_ticker.py', $input);
+
+        return $result['data'] ?? [];
     }
 
     /**
@@ -32,7 +46,7 @@ class YahooFinanceService
     public function fetchAndStorePrices(Security $security, ?DateTimeInterface $startDate = null): int
     {
         if ($security->ticker === null) {
-            $security->ticker = $this->resolveTickerFromIsin($security->isin);
+            $security->ticker = $this->resolveTickerFromIsin($security->isin, $security->name);
             $security->save();
         }
 
@@ -49,25 +63,26 @@ class YahooFinanceService
             return 0;
         }
 
-        $historicalData = $this->apiClient->getHistoricalQuoteData(
-            $security->ticker,
-            ApiClient::INTERVAL_1_DAY,
-            $startDate,
-            $endDate,
-        );
+        $result = PythonScriptCaller::call('fetch_prices.py', [
+            'ticker' => $security->ticker,
+            'start_date' => $startDate->format('Y-m-d'),
+            'end_date' => $endDate->format('Y-m-d'),
+        ], timeout: 60);
+
+        $historicalData = $result['data'] ?? [];
 
         if ($historicalData === []) {
             return 0;
         }
 
-        $rows = array_map(fn ($data) => [
+        $rows = array_map(fn (array $data) => [
             'security_id' => $security->id,
-            'date' => $data->getDate()->format('Y-m-d'),
-            'open' => $data->getOpen(),
-            'high' => $data->getHigh(),
-            'low' => $data->getLow(),
-            'close' => $data->getClose(),
-            'volume' => $data->getVolume(),
+            'date' => $data['date'],
+            'open' => $data['open'],
+            'high' => $data['high'],
+            'low' => $data['low'],
+            'close' => $data['close'],
+            'volume' => $data['volume'],
         ], $historicalData);
 
         SecurityPrice::upsert(

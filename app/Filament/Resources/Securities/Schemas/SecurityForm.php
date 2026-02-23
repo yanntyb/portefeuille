@@ -2,8 +2,16 @@
 
 namespace App\Filament\Resources\Securities\Schemas;
 
+use App\Services\YahooFinanceService;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Resources\Pages\EditRecord;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 
 class SecurityForm
 {
@@ -16,7 +24,8 @@ class SecurityForm
                     ->required()
                     ->unique(ignoreRecord: true)
                     ->maxLength(12)
-                    ->placeholder('FR0011871110'),
+                    ->placeholder('FR0011871110')
+                    ->live(onBlur: true),
                 TextInput::make('name')
                     ->label('Nom')
                     ->maxLength(255)
@@ -24,5 +33,70 @@ class SecurityForm
                 TextInput::make('ticker')
                     ->label('Ticker'),
             ]);
+    }
+
+    public static function updateFromIsinAction(): Action
+    {
+        return Action::make('updateFromIsin')
+            ->label('Mise à jour')
+            ->icon(Heroicon::ArrowPath)
+            ->color('gray')
+            ->schema([
+                Hidden::make('search_options'),
+                Select::make('selected_result')
+                    ->label('Résultats')
+                    ->options(function (Get $get): array {
+                        $json = $get('search_options');
+
+                        return $json ? json_decode($json, true) : [];
+                    })
+                    ->required()
+                    ->searchable(),
+            ])
+            ->mountUsing(function (Action $action, Schema $schema, EditRecord $livewire): void {
+                $isin = $livewire->data['isin'] ?? null;
+
+                if (empty($isin)) {
+                    Notification::make()
+                        ->title('Veuillez renseigner un ISIN')
+                        ->warning()
+                        ->send();
+
+                    $action->cancel();
+
+                    return;
+                }
+
+                $service = app(YahooFinanceService::class);
+                $results = $service->searchTicker($isin);
+
+                if ($results === []) {
+                    Notification::make()
+                        ->title('Aucun résultat trouvé')
+                        ->warning()
+                        ->send();
+
+                    $action->cancel();
+
+                    return;
+                }
+
+                $options = [];
+                foreach ($results as $result) {
+                    $value = $result['symbol'].'|'.$result['name'];
+                    $label = "{$result['symbol']} — {$result['name']} ({$result['exchange']})";
+                    $options[$value] = $label;
+                }
+
+                $schema->fill(['search_options' => json_encode($options)]);
+            })
+            ->action(function (array $data, EditRecord $livewire): void {
+                [$symbol, $name] = explode('|', $data['selected_result'], 2);
+
+                $state = $livewire->data;
+                $state['ticker'] = $symbol;
+                $state['name'] = $name;
+                $livewire->data = $state;
+            });
     }
 }

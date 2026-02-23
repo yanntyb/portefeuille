@@ -11,7 +11,7 @@ class PythonScriptCaller
      * @param  array<string, mixed>  $input
      * @return array<string, mixed>
      */
-    public static function call(string $script, array $input = []): array
+    public static function call(string $script, array $input = [], int $timeout = 30): array
     {
         $scriptPath = storage_path("python/scripts/{$script}");
 
@@ -21,7 +21,7 @@ class PythonScriptCaller
 
         $pythonBin = base_path('.venv/bin/python');
 
-        $result = Process::timeout(30)
+        $result = Process::timeout($timeout)
             ->env(['PYTHONUNBUFFERED' => '1'])
             ->input(json_encode($input))
             ->run("{$pythonBin} {$scriptPath}");

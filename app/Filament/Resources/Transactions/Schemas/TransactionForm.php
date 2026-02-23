@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Transactions\Schemas;
 
 use App\Enums\AccountType;
+use App\Filament\Resources\Securities\Schemas\SecurityForm;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -55,10 +56,13 @@ class TransactionForm
                                     ->label('ISIN')
                                     ->required()
                                     ->unique()
-                                    ->maxLength(12),
+                                    ->maxLength(12)
+                                    ->afterContent(SecurityForm::searchFromIsinAction()),
                                 TextInput::make('name')
                                     ->label('Nom')
                                     ->maxLength(255),
+                                TextInput::make('ticker')
+                                    ->label('Ticker'),
                             ]),
 
                         TextInput::make('broker')
