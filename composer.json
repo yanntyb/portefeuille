@@ -58,6 +58,11 @@
             "vendor/bin/pint --format agent",
             "@php artisan test --compact"
         ],
+        "post-install-cmd": [
+            "bash -lc '[ -x \"$HOME/.local/bin/uv\" ] || (curl -LsSf https://astral.sh/uv/install.sh | sh)'",
+            "bash -lc 'export PATH=\"$HOME/.local/bin:$PATH\"; test -d .venv || uv venv'",
+            "bash -lc 'export PATH=\"$HOME/.local/bin:$PATH\"; uv pip install -r storage/python/requirements.txt --quiet'"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi",
