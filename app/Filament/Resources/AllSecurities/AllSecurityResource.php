@@ -16,6 +16,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class AllSecurityResource extends Resource
 {
@@ -49,15 +50,17 @@ class AllSecurityResource extends Resource
                     ->label('Ticker')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('transactions_count')
+                TextColumn::make('user_transactions_count')
                     ->label('Transactions')
-                    ->counts('transactions')
                     ->sortable(),
                 TextColumn::make('latestPrice.close')
                     ->label('Dernier prix')
                     ->money('eur')
                     ->sortable(),
             ])
+            ->modifyQueryUsing(fn (Builder $query) => $query->withCount([
+                'transactions as user_transactions_count' => fn (Builder $q) => $q->where('user_id', auth()->id()),
+            ]))
             ->recordActions([
                 self::updateFromIsinAction(),
             ]);

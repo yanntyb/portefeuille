@@ -2,6 +2,8 @@
 
 use App\Filament\Resources\AllSecurities\Pages\ListAllSecurities;
 use App\Models\Security;
+use App\Models\Transaction;
+use App\Models\User;
 use Illuminate\Support\Facades\Process;
 
 use function Pest\Laravel\assertDatabaseHas;
@@ -13,6 +15,19 @@ it('can render the all securities list page', function () {
     livewire(ListAllSecurities::class)
         ->assertOk()
         ->assertCanSeeTableRecords(collect([$security]));
+});
+
+it('shows only the authenticated user transaction count', function () {
+    $user = auth()->user();
+    $otherUser = User::factory()->create();
+
+    $security = Security::factory()->create();
+
+    Transaction::factory()->count(3)->create(['security_id' => $security->id, 'user_id' => $user->id]);
+    Transaction::factory()->count(5)->create(['security_id' => $security->id, 'user_id' => $otherUser->id]);
+
+    livewire(ListAllSecurities::class)
+        ->assertTableColumnStateSet('user_transactions_count', 3, $security);
 });
 
 it('can search securities by name', function () {
