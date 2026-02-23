@@ -6,6 +6,7 @@ use App\Enums\AccountType;
 use App\Models\Security;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
+use Livewire\Attributes\On;
 
 class PortfolioAllocationChartWidget extends ChartWidget
 {
@@ -21,6 +22,12 @@ class PortfolioAllocationChartWidget extends ChartWidget
         'rgb(16, 185, 129)',
         'rgb(245, 158, 11)',
     ];
+
+    #[On('prices-updated')]
+    public function refreshChart(): void
+    {
+        $this->updateChartData();
+    }
 
     protected function getData(): array
     {

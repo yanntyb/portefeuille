@@ -37,6 +37,11 @@ class Security extends Model
         return $this->hasOne(SecurityPrice::class)->latestOfMany('date');
     }
 
+    public function todayPrice(): HasOne
+    {
+        return $this->hasOne(SecurityPrice::class)->whereDate('date', today());
+    }
+
     /** @param Builder<self> $query */
     public function scopeForAccountType(Builder $query, AccountType $accountType, ?int $userId = null): void
     {

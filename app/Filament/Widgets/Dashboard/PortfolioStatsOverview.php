@@ -7,10 +7,17 @@ use App\Models\Security;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Number;
+use Livewire\Attributes\On;
 
 class PortfolioStatsOverview extends StatsOverviewWidget
 {
     protected ?string $pollingInterval = null;
+
+    #[On('prices-updated')]
+    public function refreshStats(): void
+    {
+        // Re-renders the widget by calling getStats() again
+    }
 
     protected function getStats(): array
     {
