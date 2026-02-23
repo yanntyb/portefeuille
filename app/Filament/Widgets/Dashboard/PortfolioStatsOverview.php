@@ -18,6 +18,7 @@ class PortfolioStatsOverview extends StatsOverviewWidget
 
         $totalValuation = 0;
         $totalInvested = 0;
+        $totalFees = 0;
 
         /** @var array<string, float> */
         $valuationByAccount = [];
@@ -39,16 +40,20 @@ class PortfolioStatsOverview extends StatsOverviewWidget
             });
 
             $accountInvested = $securities->sum(fn ($security) => (float) ($security->total_invested ?? 0));
+            $accountFees = $securities->sum(fn ($security) => (float) ($security->total_fees ?? 0));
 
             $valuationByAccount[$accountType->getLabel()] = $accountValuation;
             $totalValuation += $accountValuation;
             $totalInvested += $accountInvested;
+            $totalFees += $accountFees;
         }
 
         $plusValue = $totalValuation - $totalInvested;
-        $percentage = $totalInvested > 0 ? ($plusValue / $totalInvested) * 100 : 0;
+        $plusValuePercentage = $totalInvested > 0 ? ($plusValue / $totalInvested) * 100 : 0;
+        $feesPercentage = $totalInvested > 0 ? ($totalFees / $totalInvested) * 100 : 0;
 
-        $plusValueLabel = Number::currency($plusValue, 'EUR').' ('.Number::format($percentage, 2).' %)';
+        $plusValueLabel = Number::currency($plusValue, 'EUR').' ('.Number::format($plusValuePercentage, 2).' %)';
+        $feesLabel = Number::currency($totalFees, 'EUR').' ('.Number::format($feesPercentage, 2).' %)';
 
         $repartitionDescription = collect($valuationByAccount)
             ->map(fn (float $value, string $label) => $label.' : '.Number::currency($value, 'EUR'))
@@ -60,6 +65,8 @@ class PortfolioStatsOverview extends StatsOverviewWidget
             Stat::make('Total investi', Number::currency($totalInvested, 'EUR')),
             Stat::make('Plus-value globale', $plusValueLabel)
                 ->color($plusValue >= 0 ? 'success' : 'danger'),
+            Stat::make('Frais totaux', $feesLabel)
+                ->color('danger'),
         ];
     }
 }

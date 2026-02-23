@@ -57,14 +57,59 @@ it('computes valuation from transactions and prices', function () {
 
     $data = invade($widget->instance())->getData();
 
-    expect($data['datasets'])->toHaveCount(2)
+    expect($data['datasets'])->toHaveCount(3)
         ->and($data['labels'])->toHaveCount(2)
         ->and($data['labels'][0])->toBe('2024-01-15')
         ->and($data['labels'][1])->toBe('2024-02-15')
         ->and($data['datasets'][0]['label'])->toBe('Valorisation')
         ->and($data['datasets'][0]['data'])->each->toBeGreaterThan(0)
         ->and($data['datasets'][1]['label'])->toBe('Investi')
-        ->and($data['datasets'][1]['data'])->each->toBeGreaterThan(0);
+        ->and($data['datasets'][1]['data'])->each->toBeGreaterThan(0)
+        ->and($data['datasets'][2]['label'])->toBe('Frais')
+        ->and($data['datasets'][2]['hidden'])->toBeTrue();
+});
+
+it('computes cumulative fees from transactions', function () {
+    $security = Security::factory()->create();
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+        'quantity' => 10,
+        'unit_price' => 100,
+        'fees' => 5,
+        'date' => '2024-01-15',
+    ]);
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+        'quantity' => 5,
+        'unit_price' => 110,
+        'fees' => 3,
+        'date' => '2024-02-10',
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2024-01-15',
+        'close' => 105,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2024-02-15',
+        'close' => 110,
+    ]);
+
+    $widget = livewire(ValuationChartWidget::class, [
+        'tablePageClass' => ListPeaSecurities::class,
+    ]);
+
+    $data = invade($widget->instance())->getData();
+
+    expect($data['datasets'][2]['label'])->toBe('Frais')
+        ->and($data['datasets'][2]['data'][0])->toBe(5.0)
+        ->and($data['datasets'][2]['data'][1])->toBe(8.0)
+        ->and($data['datasets'][2]['hidden'])->toBeTrue();
 });
 
 it('excludes prices before the first transaction date', function () {

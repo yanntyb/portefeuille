@@ -28,10 +28,12 @@ it('computes valuation, invested, and plus-value correctly', function () {
 
     $stats = invade($widget->instance())->getStats();
 
-    expect($stats)->toHaveCount(3)
+    expect($stats)->toHaveCount(4)
         ->and($stats[0]->getValue())->toContain('1,200')
         ->and($stats[1]->getValue())->toContain('1,005')
-        ->and($stats[2]->getValue())->toContain('195');
+        ->and($stats[2]->getValue())->toContain('195')
+        ->and($stats[3]->getLabel())->toBe('Frais totaux')
+        ->and($stats[3]->getValue())->toContain('5');
 });
 
 it('aggregates across PEA and CTO accounts', function () {
@@ -138,9 +140,34 @@ it('shows description with repartition by account type', function () {
         ->and($stats[0]->getDescription())->toContain('1,200');
 });
 
+it('displays total fees with percentage', function () {
+    $security = Security::factory()->create();
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+        'quantity' => 10,
+        'unit_price' => 100,
+        'fees' => 15,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => now(),
+        'close' => 120,
+    ]);
+
+    $stats = invade(livewire(PortfolioStatsOverview::class)->instance())->getStats();
+
+    // Fees = 15, totalInvested = 10*100 + 15 = 1015, percentage = 15/1015 * 100 ≈ 1.48%
+    expect($stats[3]->getLabel())->toBe('Frais totaux')
+        ->and($stats[3]->getValue())->toContain('15')
+        ->and($stats[3]->getValue())->toContain('%')
+        ->and($stats[3]->getColor())->toBe('danger');
+});
+
 it('returns zero values when no data exists', function () {
     $stats = invade(livewire(PortfolioStatsOverview::class)->instance())->getStats();
 
-    expect($stats)->toHaveCount(3)
+    expect($stats)->toHaveCount(4)
         ->and($stats[0]->getValue())->toContain('0');
 });

@@ -79,7 +79,7 @@ class ValuationChartWidget extends ChartWidget
             return ['datasets' => [], 'labels' => []];
         }
 
-        [$cumulativeQuantities, $cumulativeInvested] = $this->buildCumulatives($transactions);
+        [$cumulativeQuantities, $cumulativeInvested, $cumulativeFees] = $this->buildCumulatives($transactions);
 
         $firstTransactionDate = $transactions->first()->date;
 
@@ -93,7 +93,7 @@ class ValuationChartWidget extends ChartWidget
             return ['datasets' => [], 'labels' => []];
         }
 
-        [$labels, $valuations, $invested] = $this->computeValuations($prices, $cumulativeQuantities, $cumulativeInvested, $securityIds);
+        [$labels, $valuations, $invested, $fees] = $this->computeValuations($prices, $cumulativeQuantities, $cumulativeInvested, $cumulativeFees, $securityIds);
 
         return [
             'datasets' => [
@@ -114,6 +114,16 @@ class ValuationChartWidget extends ChartWidget
                     'borderDash' => [5, 5],
                     'tension' => 0.3,
                     'pointRadius' => 0,
+                ],
+                [
+                    'label' => 'Frais',
+                    'data' => $fees,
+                    'borderColor' => 'rgb(239, 68, 68)',
+                    'fill' => false,
+                    'borderDash' => [5, 5],
+                    'tension' => 0.3,
+                    'pointRadius' => 0,
+                    'hidden' => true,
                 ],
             ],
             'labels' => $labels,
@@ -172,13 +182,15 @@ class ValuationChartWidget extends ChartWidget
     }
 
     /**
-     * @return array{0: array<int, list<array{date: string, quantity: float}>>, 1: list<array{date: string, invested: float}>}
+     * @return array{0: array<int, list<array{date: string, quantity: float}>>, 1: list<array{date: string, invested: float}>, 2: list<array{date: string, fees: float}>}
      */
     private function buildCumulatives(Collection $transactions): array
     {
         $quantities = [];
         $invested = [];
+        $fees = [];
         $totalInvested = 0;
+        $totalFees = 0;
 
         foreach ($transactions as $transaction) {
             $date = $transaction->date->format('Y-m-d');
@@ -199,15 +211,21 @@ class ValuationChartWidget extends ChartWidget
                 'date' => $date,
                 'invested' => $totalInvested,
             ];
+
+            $totalFees += (float) $transaction->fees;
+            $fees[] = [
+                'date' => $date,
+                'fees' => $totalFees,
+            ];
         }
 
-        return [$quantities, $invested];
+        return [$quantities, $invested, $fees];
     }
 
     /**
-     * @return array{0: list<string>, 1: list<float>, 2: list<float>}
+     * @return array{0: list<string>, 1: list<float>, 2: list<float>, 3: list<float>}
      */
-    private function computeValuations(Collection $prices, array $cumulativeQuantities, array $cumulativeInvested, array $securityIds): array
+    private function computeValuations(Collection $prices, array $cumulativeQuantities, array $cumulativeInvested, array $cumulativeFees, array $securityIds): array
     {
         $days = $prices
             ->map(fn ($price) => Carbon::parse($price->date)->format('Y-m-d'))
@@ -222,6 +240,7 @@ class ValuationChartWidget extends ChartWidget
         $labels = [];
         $valuations = [];
         $invested = [];
+        $fees = [];
 
         foreach ($days as $day) {
             $valuation = 0;
@@ -240,9 +259,10 @@ class ValuationChartWidget extends ChartWidget
             $labels[] = $day;
             $valuations[] = round($valuation, 2);
             $invested[] = round($this->getInvestedAtDate($cumulativeInvested, $day), 2);
+            $fees[] = round($this->getFeesAtDate($cumulativeFees, $day), 2);
         }
 
-        return [$labels, $valuations, $invested];
+        return [$labels, $valuations, $invested, $fees];
     }
 
     private function getQuantityAtDate(array $cumulativeQuantities, int $securityId, string $date): float
@@ -273,5 +293,18 @@ class ValuationChartWidget extends ChartWidget
         }
 
         return $invested;
+    }
+
+    private function getFeesAtDate(array $cumulativeFees, string $date): float
+    {
+        $fees = 0;
+        foreach ($cumulativeFees as $entry) {
+            if ($entry['date'] > $date) {
+                break;
+            }
+            $fees = $entry['fees'];
+        }
+
+        return $fees;
     }
 }

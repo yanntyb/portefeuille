@@ -46,6 +46,7 @@ class SecurityStatsOverview extends StatsOverviewWidget
         $records = $query->with('latestPrice')->get();
 
         $totalInvested = $records->sum(fn ($record) => (float) ($record->total_invested ?? 0));
+        $totalFees = $records->sum(fn ($record) => (float) ($record->total_fees ?? 0));
 
         $valuation = $records->sum(function ($record) {
             $close = $record->latestPrice?->close;
@@ -58,14 +59,18 @@ class SecurityStatsOverview extends StatsOverviewWidget
         });
 
         $plusValue = $valuation - $totalInvested;
-        $percentage = $totalInvested > 0 ? ($plusValue / $totalInvested) * 100 : 0;
+        $plusValuePercentage = $totalInvested > 0 ? ($plusValue / $totalInvested) * 100 : 0;
+        $feesPercentage = $totalInvested > 0 ? ($totalFees / $totalInvested) * 100 : 0;
 
-        $plusValueLabel = Number::currency($plusValue, 'EUR').' ('.Number::format($percentage, 2).' %)';
+        $plusValueLabel = Number::currency($plusValue, 'EUR').' ('.Number::format($plusValuePercentage, 2).' %)';
+        $feesLabel = Number::currency($totalFees, 'EUR').' ('.Number::format($feesPercentage, 2).' %)';
 
         return [
             Stat::make('Valorisation', Number::currency($valuation, 'EUR')),
             Stat::make('Plus-value', $plusValueLabel)
                 ->color($plusValue >= 0 ? 'success' : 'danger'),
+            Stat::make('Frais', $feesLabel)
+                ->color('danger'),
         ];
     }
 }
