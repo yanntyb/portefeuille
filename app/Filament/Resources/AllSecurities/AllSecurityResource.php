@@ -20,12 +20,13 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 class AllSecurityResource extends Resource
 {
     protected static ?string $model = Security::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBookOpen;
 
     protected static ?string $slug = 'securities';
 
@@ -33,9 +34,16 @@ class AllSecurityResource extends Resource
 
     protected static ?string $pluralModelLabel = 'titres';
 
-    protected static ?string $navigationLabel = 'Tous les titres';
+    protected static ?string $navigationLabel = 'Titres';
 
     protected static ?string $breadcrumb = 'Titres';
+
+    protected static string|UnitEnum|null $navigationGroup = 'Administration';
+
+    public static function canAccess(): bool
+    {
+        return auth()->user()->isAdmin();
+    }
 
     public static function form(Schema $schema): Schema
     {

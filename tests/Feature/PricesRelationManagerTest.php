@@ -4,8 +4,14 @@ use App\Filament\Resources\AllSecurities\Pages\EditAllSecurity;
 use App\Filament\Resources\Securities\RelationManagers\PricesRelationManager;
 use App\Models\Security;
 use App\Models\SecurityPrice;
+use App\Models\User;
 
+use function Pest\Laravel\actingAs;
 use function Pest\Livewire\livewire;
+
+beforeEach(function () {
+    actingAs(User::factory()->admin()->create());
+});
 
 it('can render the relation manager on the edit page', function () {
     $security = Security::factory()->create();

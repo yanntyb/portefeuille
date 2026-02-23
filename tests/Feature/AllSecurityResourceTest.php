@@ -6,8 +6,13 @@ use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Support\Facades\Process;
 
+use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Livewire\livewire;
+
+beforeEach(function () {
+    actingAs(User::factory()->admin()->create());
+});
 
 it('can render the all securities list page', function () {
     $security = Security::factory()->create();

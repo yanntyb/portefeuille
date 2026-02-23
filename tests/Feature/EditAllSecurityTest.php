@@ -2,9 +2,15 @@
 
 use App\Filament\Resources\AllSecurities\Pages\EditAllSecurity;
 use App\Models\Security;
+use App\Models\User;
 
+use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Livewire\livewire;
+
+beforeEach(function () {
+    actingAs(User::factory()->admin()->create());
+});
 
 it('can render the edit page', function () {
     $security = Security::factory()->create();
