@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Securities\RelationManagers;
 use App\Enums\AccountType;
 use App\Models\SecurityPrice;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -118,14 +117,7 @@ class TransactionsRelationManager extends RelationManager
                     ->label('Compte')
                     ->options(AccountType::class),
             ])
-            ->headerActions([
-                CreateAction::make()
-                    ->mutateFormDataUsing(function (array $data): array {
-                        $data['user_id'] = auth()->id();
-
-                        return $data;
-                    }),
-            ])
+            ->headerActions([])
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make(),
