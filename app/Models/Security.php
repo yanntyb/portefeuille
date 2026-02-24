@@ -37,6 +37,13 @@ class Security extends Model
         return $this->hasOne(SecurityPrice::class)->latestOfMany('date');
     }
 
+    public function currentPrice(): HasOne
+    {
+        return $this->hasOne(SecurityPrice::class)
+            ->where('date', '>=', today()->subDays(4))
+            ->latestOfMany('date');
+    }
+
     public function todayPrice(): HasOne
     {
         return $this->hasOne(SecurityPrice::class)->whereDate('date', today());

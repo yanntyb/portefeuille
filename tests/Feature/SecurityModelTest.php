@@ -78,6 +78,72 @@ it('does not include securities without transactions for the account type', func
     expect($peaResults)->toBeEmpty();
 });
 
+it('has a current price when price exists within last 4 days', function () {
+    $security = Security::factory()->create();
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => today()->subDays(2),
+        'close' => 120,
+    ]);
+
+    expect($security->currentPrice)->not->toBeNull()
+        ->and($security->currentPrice->close)->toBe('120.0000');
+});
+
+it('does not have a current price when price is older than 4 days', function () {
+    $security = Security::factory()->create();
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => today()->subDays(5),
+        'close' => 120,
+    ]);
+
+    expect($security->currentPrice)->toBeNull();
+});
+
+it('current price returns the most recent price within 4 days', function () {
+    $security = Security::factory()->create();
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => today()->subDays(3),
+        'close' => 100,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => today()->subDays(1),
+        'close' => 130,
+    ]);
+
+    expect($security->currentPrice->close)->toBe('130.0000');
+});
+
+it('has a today price only for today', function () {
+    $security = Security::factory()->create();
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => today()->subDays(1),
+        'close' => 120,
+    ]);
+
+    expect($security->todayPrice)->toBeNull();
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => today(),
+        'close' => 125,
+    ]);
+
+    $security->refresh();
+
+    expect($security->todayPrice)->not->toBeNull()
+        ->and($security->todayPrice->close)->toBe('125.0000');
+});
+
 it('computes PRU correctly', function () {
     $security = Security::factory()->create();
 

@@ -31,8 +31,9 @@ abstract class ListSecurities extends ListRecords
 
         $idsWithPrice = SecurityPrice::query()
             ->whereIn('security_id', $allIds)
-            ->whereDate('date', today())
+            ->where('date', '>=', today()->subDays(4))
             ->pluck('security_id')
+            ->unique()
             ->all();
 
         $this->shownSecurityIds = $idsWithPrice;
@@ -58,8 +59,9 @@ abstract class ListSecurities extends ListRecords
 
         $idsWithPrice = SecurityPrice::query()
             ->whereIn('security_id', $allIds)
-            ->whereDate('date', today())
+            ->where('date', '>=', today()->subDays(4))
             ->pluck('security_id')
+            ->unique()
             ->all();
 
         $this->shownSecurityIds = $idsWithPrice;
