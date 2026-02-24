@@ -23,6 +23,8 @@ class SectorAllocationChartWidget extends ChartWidget
 
     protected ?string $maxHeight = '300px';
 
+    private ?\Illuminate\Database\Eloquent\Builder $cachedPageTableQuery = null;
+
     private const COLORS = [
         'rgb(59, 130, 246)',
         'rgb(16, 185, 129)',
@@ -49,6 +51,11 @@ class SectorAllocationChartWidget extends ChartWidget
         return $this->tablePageClass;
     }
 
+    private function getCachedPageTableQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return $this->cachedPageTableQuery ??= $this->getPageTableQuery()->reorder();
+    }
+
     public function getDescription(): ?string
     {
         $oldestUpdatedAt = $this->getOldestSectorUpdate();
@@ -69,7 +76,7 @@ class SectorAllocationChartWidget extends ChartWidget
         }
 
         if ($this->tablePageClass !== null) {
-            $securityIds = $this->getPageTableQuery()->reorder()->pluck('securities.id');
+            $securityIds = $this->getCachedPageTableQuery()->clone()->pluck('securities.id');
 
             if ($securityIds->isEmpty()) {
                 return null;
@@ -138,7 +145,7 @@ class SectorAllocationChartWidget extends ChartWidget
 
     private function getDataForAccountList(): array
     {
-        $query = $this->getPageTableQuery()->reorder();
+        $query = $this->getCachedPageTableQuery()->clone();
 
         if ($this->shownSecurityIds !== null) {
             $query->whereIn('securities.id', $this->shownSecurityIds);

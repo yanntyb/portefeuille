@@ -25,7 +25,7 @@ abstract class ListSecurities extends ListRecords
     /** @var list<int> */
     public array $pricelessSecurityIds = [];
 
-    protected function scopedSecuritiesQuery(): Builder
+    public function scopedSecuritiesQuery(): Builder
     {
         return Security::query()->forAccountType(static::getResource()::accountType(), auth()->id());
     }
@@ -34,6 +34,12 @@ abstract class ListSecurities extends ListRecords
     {
         parent::mount();
 
+        $this->computeSecurityVisibility();
+        $this->js('$wire.refreshPrices()');
+    }
+
+    private function computeSecurityVisibility(): void
+    {
         $allIds = $this->scopedSecuritiesQuery()
             ->pluck('securities.id')
             ->all();
@@ -47,8 +53,6 @@ abstract class ListSecurities extends ListRecords
 
         $this->shownSecurityIds = $idsWithPrice;
         $this->pricelessSecurityIds = array_values(array_diff($allIds, $idsWithPrice));
-
-        $this->js('$wire.refreshPrices()');
     }
 
     public function refreshPrices(): void
@@ -57,18 +61,7 @@ abstract class ListSecurities extends ListRecords
 
         app(YahooFinanceService::class)->fetchAndStorePricesBulk($securities);
 
-        $allIds = $securities->pluck('id')->all();
-
-        $idsWithPrice = SecurityPrice::query()
-            ->whereIn('security_id', $allIds)
-            ->where('date', '>=', today()->subDays(4))
-            ->pluck('security_id')
-            ->unique()
-            ->all();
-
-        $this->shownSecurityIds = $idsWithPrice;
-        $this->pricelessSecurityIds = array_values(array_diff($allIds, $idsWithPrice));
-
+        $this->computeSecurityVisibility();
         $this->dispatch('prices-updated');
     }
 

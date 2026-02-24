@@ -15,9 +15,10 @@ class Dashboard extends BaseDashboard
         $securities = Security::query()
             ->whereHas('transactions')
             ->whereNotNull('ticker')
+            ->with('currentPrice')
             ->get();
 
-        $pricelessSecurities = $securities->filter(fn (Security $security) => $security->currentPrice()->doesntExist());
+        $pricelessSecurities = $securities->filter(fn (Security $security) => $security->currentPrice === null);
 
         if ($pricelessSecurities->isEmpty()) {
             return;

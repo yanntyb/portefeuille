@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Securities\Tables;
 
-use App\Exceptions\TickerResolutionException;
 use App\Models\Security;
 use App\Services\YahooFinanceService;
 use Filament\Actions\Action;
@@ -30,6 +29,7 @@ class SecuritiesTable
                 TextColumn::make('latestPrice.close')
                     ->label('Prix')
                     ->money('eur')
+                    ->description(fn (Security $record): ?string => $record->latestPrice?->date?->translatedFormat('d M Y'))
                     ->sortable(),
                 TextColumn::make('valuation')
                     ->label('Valorisation')
@@ -60,21 +60,12 @@ class SecuritiesTable
                 Action::make('fetchAllPrices')
                     ->label('MAJ tous les prix')
                     ->icon('heroicon-o-arrow-path')
-                    ->action(function (YahooFinanceService $service): void {
-                        $securities = Security::whereHas('transactions')->get();
-                        $totalInserted = 0;
-                        $errors = 0;
-
-                        foreach ($securities as $security) {
-                            try {
-                                $totalInserted += $service->fetchAndStorePrices($security);
-                            } catch (TickerResolutionException) {
-                                $errors++;
-                            }
-                        }
+                    ->action(function (YahooFinanceService $service, $livewire): void {
+                        $securities = $livewire->scopedSecuritiesQuery()->get();
+                        $totalInserted = $service->fetchAndStorePricesBulk($securities);
 
                         Notification::make()
-                            ->title("{$totalInserted} prix mis à jour, {$errors} erreur(s)")
+                            ->title("{$totalInserted} prix mis à jour")
                             ->success()
                             ->send();
                     }),

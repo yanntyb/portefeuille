@@ -3,7 +3,7 @@
 namespace App\Filament\Widgets\Dashboard;
 
 use App\Enums\AccountType;
-use App\Models\Security;
+use App\Services\DashboardDataProvider;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 use Livewire\Attributes\On;
@@ -31,6 +31,7 @@ class PortfolioAllocationChartWidget extends ChartWidget
 
     protected function getData(): array
     {
+        $provider = app(DashboardDataProvider::class);
         $accountTypes = [AccountType::Pea, AccountType::Cto];
 
         $labels = [];
@@ -38,10 +39,7 @@ class PortfolioAllocationChartWidget extends ChartWidget
         $colors = [];
 
         foreach ($accountTypes as $index => $accountType) {
-            $securities = Security::query()
-                ->forAccountType($accountType, auth()->id())
-                ->with('latestPrice')
-                ->get();
+            $securities = $provider->securitiesForAccount($accountType);
 
             $valuation = $securities->sum(function ($security) {
                 $close = $security->latestPrice?->close;

@@ -105,9 +105,15 @@ class YahooFinanceService
      */
     public function fetchAndStorePricesBulk(Collection $securities): int
     {
-        $pythonBin = base_path('.venv/bin/python');
-        $scriptPath = storage_path('python/scripts/fetch_prices.py');
+        $pythonBin = PythonScriptCaller::pythonBin();
+        $scriptPath = PythonScriptCaller::scriptPath('fetch_prices.py');
         $endDate = new \DateTimeImmutable('now');
+
+        $latestDates = SecurityPrice::query()
+            ->selectRaw('security_id, MAX(date) as latest_date')
+            ->whereIn('security_id', $securities->pluck('id'))
+            ->groupBy('security_id')
+            ->pluck('latest_date', 'security_id');
 
         /** @var array<int, array{security: Security, startDate: string}> */
         $tasks = [];
@@ -124,7 +130,7 @@ class YahooFinanceService
                 }
             }
 
-            $latestDate = $security->prices()->max('date');
+            $latestDate = $latestDates->get($security->id);
             $startDate = $latestDate
                 ? (new \DateTimeImmutable($latestDate))->modify('+1 day')
                 : new \DateTimeImmutable('-5 years');

@@ -3,7 +3,7 @@
 namespace App\Filament\Widgets\Dashboard;
 
 use App\Enums\AccountType;
-use App\Models\Security;
+use App\Services\DashboardDataProvider;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Number;
@@ -21,6 +21,7 @@ class PortfolioStatsOverview extends StatsOverviewWidget
 
     protected function getStats(): array
     {
+        $provider = app(DashboardDataProvider::class);
         $accountTypes = [AccountType::Pea, AccountType::Cto];
 
         $totalValuation = 0;
@@ -31,10 +32,7 @@ class PortfolioStatsOverview extends StatsOverviewWidget
         $valuationByAccount = [];
 
         foreach ($accountTypes as $accountType) {
-            $securities = Security::query()
-                ->forAccountType($accountType, auth()->id())
-                ->with('latestPrice')
-                ->get();
+            $securities = $provider->securitiesForAccount($accountType);
 
             $accountValuation = $securities->sum(function ($security) {
                 $close = $security->latestPrice?->close;
