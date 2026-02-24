@@ -57,13 +57,7 @@ class SectorAllocationChartWidget extends ChartWidget
             return null;
         }
 
-        $nextRefresh = $oldestUpdatedAt->copy()->addDays(7);
-
-        if ($nextRefresh->isPast()) {
-            return 'Prochain rechargement : imminent';
-        }
-
-        return 'Prochain rechargement : '.$nextRefresh->diffForHumans();
+        return 'Maj le : '.$oldestUpdatedAt->translatedFormat('d M Y à H\hi');
     }
 
     private function getOldestSectorUpdate(): ?Carbon
