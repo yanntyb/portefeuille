@@ -7,6 +7,8 @@ use App\Filament\Resources\Securities\RelationManagers\TransactionsRelationManag
 use App\Filament\Resources\Securities\Schemas\SecurityForm;
 use App\Filament\Resources\Securities\Tables\SecuritiesTable;
 use App\Filament\Widgets\Securities\SecurityStatsOverview;
+use App\Filament\Widgets\Securities\SingleSecurityStatsOverview;
+use App\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
 use App\Filament\Widgets\Securities\ValuationChartWidget;
 use App\Models\Security;
 use Filament\Resources\Resource;
@@ -43,6 +45,8 @@ abstract class AccountSecurityResource extends Resource
         return [
             SecurityStatsOverview::class,
             ValuationChartWidget::class,
+            SingleSecurityStatsOverview::class,
+            SingleSecurityValuationChartWidget::class,
         ];
     }
 }

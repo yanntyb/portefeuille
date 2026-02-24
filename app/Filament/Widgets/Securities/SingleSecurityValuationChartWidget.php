@@ -7,13 +7,11 @@ use App\Models\SecurityPrice;
 use App\Models\Transaction;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
-use Filament\Widgets\Concerns\InteractsWithPageTable;
-use Livewire\Attributes\On;
+use Illuminate\Database\Eloquent\Model;
 
-class ValuationChartWidget extends ChartWidget
+class SingleSecurityValuationChartWidget extends ChartWidget
 {
     use ComputesValuationChart;
-    use InteractsWithPageTable;
 
     protected ?string $heading = 'Evolution de la valorisation';
 
@@ -23,57 +21,28 @@ class ValuationChartWidget extends ChartWidget
 
     protected ?string $maxHeight = '300px';
 
-    /** @var class-string|null */
-    public ?string $tablePageClass = null;
+    public ?Model $record = null;
 
-    /** @var list<int>|null */
-    public ?array $shownSecurityIds = null;
-
-    protected function getTablePage(): string
-    {
-        return $this->tablePageClass;
-    }
-
-    #[On('security-visibility-changed')]
-    public function updateShownSecurityIds(array $shownSecurityIds): void
-    {
-        $this->shownSecurityIds = $shownSecurityIds;
-    }
+    public ?string $accountType = null;
 
     protected function getData(): array
     {
-        if ($this->tablePageClass === null) {
+        if (! $this->record) {
             return ['datasets' => [], 'labels' => []];
         }
 
-        return $this->resolveData();
-    }
+        $securityIds = [$this->record->id];
 
-    protected function getType(): string
-    {
-        return 'line';
-    }
-
-    private function resolveData(): array
-    {
-        $securityIds = $this->getPageTableQuery()
-            ->reorder()
-            ->pluck('securities.id')
-            ->toArray();
-
-        if ($this->shownSecurityIds !== null) {
-            $securityIds = array_values(array_intersect($securityIds, $this->shownSecurityIds));
-        }
-
-        if (empty($securityIds)) {
-            return ['datasets' => [], 'labels' => []];
-        }
-
-        $transactions = Transaction::query()
+        $transactionsQuery = Transaction::query()
             ->whereIn('security_id', $securityIds)
-            ->where('user_id', auth()->id())
             ->orderBy('date')
-            ->get(['security_id', 'date', 'quantity', 'unit_price', 'fees']);
+            ->select(['security_id', 'date', 'quantity', 'unit_price', 'fees']);
+
+        if ($this->accountType) {
+            $transactionsQuery->where('account_type', $this->accountType);
+        }
+
+        $transactions = $transactionsQuery->get();
 
         if ($transactions->isEmpty()) {
             return ['datasets' => [], 'labels' => []];
@@ -96,6 +65,11 @@ class ValuationChartWidget extends ChartWidget
         [$labels, $valuations, $invested, $fees] = $this->computeValuations($prices, $cumulativeQuantities, $cumulativeInvested, $cumulativeFees, $securityIds);
 
         return $this->buildChartDatasets($valuations, $invested, $fees, $labels);
+    }
+
+    protected function getType(): string
+    {
+        return 'line';
     }
 
     protected function getOptions(): RawJs
