@@ -3,7 +3,6 @@
 use App\Filament\Pages\Dashboard;
 use App\Models\Security;
 use App\Models\SecurityPrice;
-use App\Models\SecuritySector;
 use App\Models\Transaction;
 use App\Services\YahooFinanceService;
 
@@ -23,12 +22,13 @@ it('updates prices when securities are missing today price', function () {
     ]);
 
     $mock = $this->mock(YahooFinanceService::class);
-    $mock->shouldReceive('fetchAndStorePrices')
+    $mock->shouldReceive('fetchAndStorePricesBulk')
         ->once()
-        ->with(\Mockery::on(fn ($s) => $s->id === $security->id));
-    $mock->shouldReceive('fetchAndStoreSectors');
+        ->andReturn(1);
 
-    livewire(Dashboard::class)->call('loadPrices');
+    livewire(Dashboard::class)
+        ->call('loadPrices')
+        ->assertDispatched('prices-updated');
 });
 
 it('skips price update when all securities have today price', function () {
@@ -45,10 +45,11 @@ it('skips price update when all securities have today price', function () {
     ]);
 
     $mock = $this->mock(YahooFinanceService::class);
-    $mock->shouldNotReceive('fetchAndStorePrices');
-    $mock->shouldReceive('fetchAndStoreSectors');
+    $mock->shouldNotReceive('fetchAndStorePricesBulk');
 
-    livewire(Dashboard::class)->call('loadPrices');
+    livewire(Dashboard::class)
+        ->call('loadPrices')
+        ->assertNotDispatched('prices-updated');
 });
 
 it('skips securities without ticker', function () {
@@ -64,12 +65,16 @@ it('skips securities without ticker', function () {
     ]);
 
     $mock = $this->mock(YahooFinanceService::class);
-    $mock->shouldReceive('fetchAndStorePrices')
+    $mock->shouldReceive('fetchAndStorePricesBulk')
         ->once()
-        ->with(\Mockery::on(fn ($s) => $s->id === $securityWithTicker->id));
-    $mock->shouldReceive('fetchAndStoreSectors');
+        ->withArgs(function ($securities) use ($securityWithTicker) {
+            return $securities->count() === 1 && $securities->first()->id === $securityWithTicker->id;
+        })
+        ->andReturn(1);
 
-    livewire(Dashboard::class)->call('loadPrices');
+    livewire(Dashboard::class)
+        ->call('loadPrices')
+        ->assertDispatched('prices-updated');
 });
 
 it('dispatches prices-updated event after updating prices', function () {
@@ -80,29 +85,7 @@ it('dispatches prices-updated event after updating prices', function () {
     ]);
 
     $mock = $this->mock(YahooFinanceService::class);
-    $mock->shouldReceive('fetchAndStorePrices');
-    $mock->shouldReceive('fetchAndStoreSectors');
-
-    livewire(Dashboard::class)
-        ->call('loadPrices')
-        ->assertDispatched('prices-updated');
-});
-
-it('dispatches prices-updated event after updating sectors only', function () {
-    $security = Security::factory()->create(['ticker' => 'AAPL']);
-
-    Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
-    ]);
-
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
-        'date' => now(),
-        'close' => 100,
-    ]);
-
-    $mock = $this->mock(YahooFinanceService::class);
-    $mock->shouldReceive('fetchAndStoreSectors')->once();
+    $mock->shouldReceive('fetchAndStorePricesBulk')->andReturn(1);
 
     livewire(Dashboard::class)
         ->call('loadPrices')
@@ -122,53 +105,7 @@ it('does not dispatch event when no update needed', function () {
         'close' => 100,
     ]);
 
-    SecuritySector::factory()->create([
-        'security_id' => $security->id,
-        'updated_at' => now(),
-    ]);
-
     livewire(Dashboard::class)
         ->call('loadPrices')
         ->assertNotDispatched('prices-updated');
-});
-
-it('fetches sectors independently from prices', function () {
-    $security = Security::factory()->create(['ticker' => 'AAPL']);
-
-    Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
-    ]);
-
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
-        'date' => now(),
-        'close' => 100,
-    ]);
-
-    $mock = $this->mock(YahooFinanceService::class);
-    $mock->shouldNotReceive('fetchAndStorePrices');
-    $mock->shouldReceive('fetchAndStoreSectors')
-        ->once()
-        ->with(\Mockery::on(fn ($s) => $s->id === $security->id));
-
-    livewire(Dashboard::class)->call('loadPrices');
-});
-
-it('skips sectors when recently updated', function () {
-    $security = Security::factory()->create(['ticker' => 'AAPL']);
-
-    Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
-    ]);
-
-    SecuritySector::factory()->create([
-        'security_id' => $security->id,
-        'updated_at' => now()->subDays(3),
-    ]);
-
-    $mock = $this->mock(YahooFinanceService::class);
-    $mock->shouldReceive('fetchAndStorePrices');
-    $mock->shouldNotReceive('fetchAndStoreSectors');
-
-    livewire(Dashboard::class)->call('loadPrices');
 });

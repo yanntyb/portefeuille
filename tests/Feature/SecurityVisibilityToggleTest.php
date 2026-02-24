@@ -63,8 +63,7 @@ it('dispatches prices-updated event after refreshPrices', function () {
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
 
     $mock = test()->mock(YahooFinanceService::class);
-    $mock->shouldReceive('fetchAndStorePrices');
-    $mock->shouldReceive('fetchAndStoreSectors');
+    $mock->shouldReceive('fetchAndStorePricesBulk')->once()->andReturn(0);
 
     livewire(ListPeaSecurities::class)
         ->call('refreshPrices')

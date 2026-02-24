@@ -3,10 +3,12 @@
 namespace App\Filament\Widgets\Securities;
 
 use App\Enums\Sector;
+use App\Models\SecuritySector;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageTable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Livewire\Attributes\On;
 
 class SectorAllocationChartWidget extends ChartWidget
@@ -45,6 +47,48 @@ class SectorAllocationChartWidget extends ChartWidget
     protected function getTablePage(): string
     {
         return $this->tablePageClass;
+    }
+
+    public function getDescription(): ?string
+    {
+        $oldestUpdatedAt = $this->getOldestSectorUpdate();
+
+        if ($oldestUpdatedAt === null) {
+            return null;
+        }
+
+        $nextRefresh = $oldestUpdatedAt->copy()->addDays(7);
+
+        if ($nextRefresh->isPast()) {
+            return 'Prochain rechargement : imminent';
+        }
+
+        return 'Prochain rechargement : '.$nextRefresh->diffForHumans();
+    }
+
+    private function getOldestSectorUpdate(): ?Carbon
+    {
+        if ($this->record !== null) {
+            $date = $this->record->sectors()->min('updated_at');
+
+            return $date ? Carbon::parse($date) : null;
+        }
+
+        if ($this->tablePageClass !== null) {
+            $securityIds = $this->getPageTableQuery()->reorder()->pluck('securities.id');
+
+            if ($securityIds->isEmpty()) {
+                return null;
+            }
+
+            $date = SecuritySector::query()
+                ->whereIn('security_id', $securityIds)
+                ->min('updated_at');
+
+            return $date ? Carbon::parse($date) : null;
+        }
+
+        return null;
     }
 
     #[On('security-visibility-changed')]

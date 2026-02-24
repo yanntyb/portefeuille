@@ -6,15 +6,18 @@ use App\Filament\Widgets\Securities\AllocationChartWidget;
 use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
 use App\Filament\Widgets\Securities\SecurityStatsOverview;
 use App\Filament\Widgets\Securities\ValuationChartWidget;
+use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Services\YahooFinanceService;
 use Filament\Pages\Concerns\ExposesTableToWidgets;
 use Filament\Resources\Pages\ListRecords;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Builder;
 
 abstract class ListSecurities extends ListRecords
 {
     use ExposesTableToWidgets;
+
+    protected string $view = 'filament.resources.securities.pages.list-securities';
 
     /** @var list<int> */
     public array $shownSecurityIds = [];
@@ -22,11 +25,16 @@ abstract class ListSecurities extends ListRecords
     /** @var list<int> */
     public array $pricelessSecurityIds = [];
 
+    protected function scopedSecuritiesQuery(): Builder
+    {
+        return Security::query()->forAccountType(static::getResource()::accountType(), auth()->id());
+    }
+
     public function mount(): void
     {
         parent::mount();
 
-        $allIds = static::getResource()::getEloquentQuery()
+        $allIds = $this->scopedSecuritiesQuery()
             ->pluck('securities.id')
             ->all();
 
@@ -45,30 +53,9 @@ abstract class ListSecurities extends ListRecords
 
     public function refreshPrices(): void
     {
-        $service = app(YahooFinanceService::class);
-        $securities = static::getResource()::getEloquentQuery()->get();
+        $securities = $this->scopedSecuritiesQuery()->get();
 
-        foreach ($securities as $security) {
-            try {
-                $service->fetchAndStorePrices($security);
-            } catch (\Throwable $e) {
-                Log::warning("Failed to update prices for {$security->name}: {$e->getMessage()}");
-            }
-        }
-
-        foreach ($securities as $security) {
-            $needsSectorRefresh = $security->sectors()
-                ->where('updated_at', '>=', now()->subDays(7))
-                ->doesntExist();
-
-            if ($needsSectorRefresh) {
-                try {
-                    $service->fetchAndStoreSectors($security);
-                } catch (\Throwable $e) {
-                    Log::warning("Failed to update sectors for {$security->name}: {$e->getMessage()}");
-                }
-            }
-        }
+        app(YahooFinanceService::class)->fetchAndStorePricesBulk($securities);
 
         $allIds = $securities->pluck('id')->all();
 
