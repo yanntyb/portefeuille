@@ -61,7 +61,7 @@ it('scopes securities by account type with aggregations', function () {
         'fees' => 3,
     ]);
 
-    $peaResults = Security::query()->forAccountType(AccountType::Pea)->get();
+    $peaResults = Security::query()->forAccountType(AccountType::Pea, auth()->id())->get();
 
     expect($peaResults)->toHaveCount(1)
         ->and((float) $peaResults->first()->total_quantity)->toBe(30.0)
@@ -73,7 +73,7 @@ it('does not include securities without transactions for the account type', func
     $security = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
 
-    $peaResults = Security::query()->forAccountType(AccountType::Pea)->get();
+    $peaResults = Security::query()->forAccountType(AccountType::Pea, auth()->id())->get();
 
     expect($peaResults)->toBeEmpty();
 });
@@ -161,7 +161,7 @@ it('computes PRU correctly', function () {
         'fees' => 0,
     ]);
 
-    $result = Security::query()->forAccountType(AccountType::Pea)->first();
+    $result = Security::query()->forAccountType(AccountType::Pea, auth()->id())->first();
 
     expect((float) $result->pru)->toBe(150.0);
 });

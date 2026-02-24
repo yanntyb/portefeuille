@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Securities\Schemas;
 
+use App\Models\Security;
 use App\Services\YahooFinanceService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
@@ -41,18 +42,7 @@ class SecurityForm
             ->label('Mise à jour')
             ->icon(Heroicon::ArrowPath)
             ->color('gray')
-            ->schema([
-                Hidden::make('search_options'),
-                Select::make('selected_result')
-                    ->label('Résultats')
-                    ->options(function (Get $get): array {
-                        $json = $get('search_options');
-
-                        return $json ? json_decode($json, true) : [];
-                    })
-                    ->required()
-                    ->searchable(),
-            ])
+            ->schema(self::searchSchema())
             ->mountUsing(function (Action $action, Schema $schema, EditRecord $livewire): void {
                 $isin = $livewire->data['isin'] ?? null;
 
@@ -67,28 +57,7 @@ class SecurityForm
                     return;
                 }
 
-                $service = app(YahooFinanceService::class);
-                $results = $service->searchTicker($isin);
-
-                if ($results === []) {
-                    Notification::make()
-                        ->title('Aucun résultat trouvé')
-                        ->warning()
-                        ->send();
-
-                    $action->cancel();
-
-                    return;
-                }
-
-                $options = [];
-                foreach ($results as $result) {
-                    $value = $result['symbol'].'|'.$result['name'];
-                    $label = "{$result['symbol']} — {$result['name']} ({$result['exchange']})";
-                    $options[$value] = $label;
-                }
-
-                $schema->fill(['search_options' => json_encode($options)]);
+                self::mountSearchAction($action, $schema, $isin);
             })
             ->action(function (array $data, EditRecord $livewire): void {
                 [$symbol, $name] = explode('|', $data['selected_result'], 2);
@@ -98,5 +67,87 @@ class SecurityForm
                 $state['name'] = $name;
                 $livewire->data = $state;
             });
+    }
+
+    public static function updateFromIsinTableAction(): Action
+    {
+        return Action::make('updateFromIsin')
+            ->label('Mise à jour')
+            ->icon(Heroicon::ArrowPath)
+            ->color('gray')
+            ->iconButton()
+            ->schema(self::searchSchema())
+            ->mountUsing(function (Action $action, Schema $schema, Security $record): void {
+                if (empty($record->isin)) {
+                    Notification::make()
+                        ->title('ISIN manquant')
+                        ->warning()
+                        ->send();
+
+                    $action->cancel();
+
+                    return;
+                }
+
+                self::mountSearchAction($action, $schema, $record->isin);
+            })
+            ->action(function (array $data, Security $record): void {
+                [$symbol, $name] = explode('|', $data['selected_result'], 2);
+
+                $record->update([
+                    'ticker' => $symbol,
+                    'name' => $name,
+                ]);
+
+                Notification::make()
+                    ->title('Titre mis à jour')
+                    ->success()
+                    ->send();
+            });
+    }
+
+    /**
+     * @return array<int, \Filament\Schemas\Components\Component>
+     */
+    private static function searchSchema(): array
+    {
+        return [
+            Hidden::make('search_options'),
+            Select::make('selected_result')
+                ->label('Résultats')
+                ->options(function (Get $get): array {
+                    $json = $get('search_options');
+
+                    return $json ? json_decode($json, true) : [];
+                })
+                ->required()
+                ->searchable(),
+        ];
+    }
+
+    private static function mountSearchAction(Action $action, Schema $schema, string $isin): void
+    {
+        $service = app(YahooFinanceService::class);
+        $results = $service->searchTicker($isin);
+
+        if ($results === []) {
+            Notification::make()
+                ->title('Aucun résultat trouvé')
+                ->warning()
+                ->send();
+
+            $action->cancel();
+
+            return;
+        }
+
+        $options = [];
+        foreach ($results as $result) {
+            $value = $result['symbol'].'|'.$result['name'];
+            $label = "{$result['symbol']} — {$result['name']} ({$result['exchange']})";
+            $options[$value] = $label;
+        }
+
+        $schema->fill(['search_options' => json_encode($options)]);
     }
 }

@@ -12,6 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withSchedule(function (Schedule $schedule): void {
+        $schedule->command('securities:fetch-prices')->daily();
         $schedule->command('securities:fetch-sectors')->daily();
     })
     ->withMiddleware(function (Middleware $middleware): void {

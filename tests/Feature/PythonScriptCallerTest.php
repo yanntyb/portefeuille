@@ -71,3 +71,13 @@ test('it uses default 30s timeout', function () {
         return $process->timeout === 30;
     });
 });
+
+test('pythonBin returns the venv python binary path', function () {
+    expect(PythonScriptCaller::pythonBin())
+        ->toBe(base_path('.venv/bin/python'));
+});
+
+test('scriptPath returns the full path to a python script', function () {
+    expect(PythonScriptCaller::scriptPath('fetch_prices.py'))
+        ->toBe(storage_path('python/scripts/fetch_prices.py'));
+});

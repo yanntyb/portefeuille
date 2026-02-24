@@ -14,7 +14,7 @@ it('can fetch all prices via header action', function () {
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
 
     $service = mock(YahooFinanceService::class);
-    $service->shouldReceive('fetchAndStorePrices')
+    $service->shouldReceive('fetchAndStorePricesBulk')
         ->once()
         ->andReturn(5);
 

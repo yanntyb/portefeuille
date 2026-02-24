@@ -37,3 +37,24 @@ it('casts decimal fields correctly', function () {
         ->and($transaction->unit_price)->toBe('99.1234')
         ->and($transaction->fees)->toBe('5.50');
 });
+
+it('filters transactions by authenticated user via global scope', function () {
+    $otherUser = \App\Models\User::factory()->create();
+
+    Transaction::factory()->pea()->create(['user_id' => auth()->id()]);
+    Transaction::factory()->pea()->create(['user_id' => auth()->id()]);
+    Transaction::factory()->pea()->create(['user_id' => $otherUser->id]);
+
+    expect(Transaction::query()->count())->toBe(2);
+});
+
+it('does not apply global scope when no user is authenticated', function () {
+    $otherUser = \App\Models\User::factory()->create();
+
+    Transaction::factory()->pea()->create(['user_id' => auth()->id()]);
+    Transaction::factory()->pea()->create(['user_id' => $otherUser->id]);
+
+    auth()->logout();
+
+    expect(Transaction::query()->count())->toBe(2);
+});

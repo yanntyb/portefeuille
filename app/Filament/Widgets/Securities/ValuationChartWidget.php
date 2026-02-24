@@ -77,7 +77,6 @@ class ValuationChartWidget extends ChartWidget
 
         $transactions = Transaction::query()
             ->whereIn('security_id', $securityIds)
-            ->where('user_id', auth()->id())
             ->orderBy('date')
             ->get(['security_id', 'date', 'quantity', 'unit_price', 'fees']);
 

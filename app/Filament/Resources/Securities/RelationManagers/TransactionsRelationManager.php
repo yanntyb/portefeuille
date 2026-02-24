@@ -80,7 +80,6 @@ class TransactionsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (\Illuminate\Database\Eloquent\Builder $query) => $query->where('user_id', auth()->id()))
             ->recordTitleAttribute('date')
             ->defaultSort('date', 'desc')
             ->columns([

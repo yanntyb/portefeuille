@@ -7,19 +7,29 @@ use RuntimeException;
 
 class PythonScriptCaller
 {
+    public static function pythonBin(): string
+    {
+        return base_path('.venv/bin/python');
+    }
+
+    public static function scriptPath(string $script): string
+    {
+        return storage_path("python/scripts/{$script}");
+    }
+
     /**
      * @param  array<string, mixed>  $input
      * @return array<string, mixed>
      */
     public static function call(string $script, array $input = [], int $timeout = 30): array
     {
-        $scriptPath = storage_path("python/scripts/{$script}");
+        $scriptPath = self::scriptPath($script);
 
         if (! file_exists($scriptPath)) {
             throw new RuntimeException("Python script not found: {$scriptPath}");
         }
 
-        $pythonBin = base_path('.venv/bin/python');
+        $pythonBin = self::pythonBin();
 
         $result = Process::timeout($timeout)
             ->env(['PYTHONUNBUFFERED' => '1'])

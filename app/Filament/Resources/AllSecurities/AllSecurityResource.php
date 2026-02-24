@@ -7,14 +7,8 @@ use App\Filament\Resources\AllSecurities\Pages\ListAllSecurities;
 use App\Filament\Resources\Securities\RelationManagers\PricesRelationManager;
 use App\Filament\Resources\Securities\Schemas\SecurityForm;
 use App\Models\Security;
-use App\Services\YahooFinanceService;
 use BackedEnum;
-use Filament\Actions\Action;
-use Filament\Forms\Components\Hidden;
-use Filament\Forms\Components\Select;
-use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -75,80 +69,11 @@ class AllSecurityResource extends Resource
                     ->sortable(),
             ])
             ->modifyQueryUsing(fn (Builder $query) => $query->withCount([
-                'transactions as user_transactions_count' => fn (Builder $q) => $q->where('user_id', auth()->id()),
+                'transactions as user_transactions_count',
             ]))
             ->recordActions([
-                self::updateFromIsinAction(),
+                SecurityForm::updateFromIsinTableAction(),
             ]);
-    }
-
-    public static function updateFromIsinAction(): Action
-    {
-        return Action::make('updateFromIsin')
-            ->label('Mise à jour')
-            ->icon(Heroicon::ArrowPath)
-            ->color('gray')
-            ->iconButton()
-            ->schema([
-                Hidden::make('search_options'),
-                Select::make('selected_result')
-                    ->label('Résultats')
-                    ->options(function (Get $get): array {
-                        $json = $get('search_options');
-
-                        return $json ? json_decode($json, true) : [];
-                    })
-                    ->required()
-                    ->searchable(),
-            ])
-            ->mountUsing(function (Action $action, Schema $schema, Security $record): void {
-                if (empty($record->isin)) {
-                    Notification::make()
-                        ->title('ISIN manquant')
-                        ->warning()
-                        ->send();
-
-                    $action->cancel();
-
-                    return;
-                }
-
-                $service = app(YahooFinanceService::class);
-                $results = $service->searchTicker($record->isin);
-
-                if ($results === []) {
-                    Notification::make()
-                        ->title('Aucun résultat trouvé')
-                        ->warning()
-                        ->send();
-
-                    $action->cancel();
-
-                    return;
-                }
-
-                $options = [];
-                foreach ($results as $result) {
-                    $value = $result['symbol'].'|'.$result['name'];
-                    $label = "{$result['symbol']} — {$result['name']} ({$result['exchange']})";
-                    $options[$value] = $label;
-                }
-
-                $schema->fill(['search_options' => json_encode($options)]);
-            })
-            ->action(function (array $data, Security $record): void {
-                [$symbol, $name] = explode('|', $data['selected_result'], 2);
-
-                $record->update([
-                    'ticker' => $symbol,
-                    'name' => $name,
-                ]);
-
-                Notification::make()
-                    ->title('Titre mis à jour')
-                    ->success()
-                    ->send();
-            });
     }
 
     public static function getRelations(): array
