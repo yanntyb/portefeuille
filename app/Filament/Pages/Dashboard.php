@@ -12,17 +12,18 @@ class Dashboard extends BaseDashboard
 
     public function loadPrices(): void
     {
-        $pricelessSecurities = Security::query()
+        $securities = Security::query()
             ->whereHas('transactions')
             ->whereNotNull('ticker')
-            ->get()
-            ->filter(fn (Security $security) => $security->todayPrice()->doesntExist());
+            ->get();
+
+        $pricelessSecurities = $securities->filter(fn (Security $security) => $security->currentPrice()->doesntExist());
 
         if ($pricelessSecurities->isEmpty()) {
             return;
         }
 
-        app(YahooFinanceService::class)->fetchAndStorePricesBulk($pricelessSecurities);
+        app(YahooFinanceService::class)->fetchAndStorePricesBulk($securities);
 
         $this->dispatch('prices-updated');
     }

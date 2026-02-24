@@ -8,7 +8,30 @@ use App\Services\YahooFinanceService;
 
 use function Pest\Livewire\livewire;
 
-it('updates prices when securities are missing today price', function () {
+it('updates prices when securities have no recent price', function () {
+    $security = Security::factory()->create(['ticker' => 'AAPL']);
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => now()->subDays(5),
+        'close' => 100,
+    ]);
+
+    $mock = $this->mock(YahooFinanceService::class);
+    $mock->shouldReceive('fetchAndStorePricesBulk')
+        ->once()
+        ->andReturn(1);
+
+    livewire(Dashboard::class)
+        ->call('loadPrices')
+        ->assertDispatched('prices-updated');
+});
+
+it('skips price update when securities have a recent price within 4 days', function () {
     $security = Security::factory()->create(['ticker' => 'AAPL']);
 
     Transaction::factory()->pea()->create([
@@ -22,13 +45,11 @@ it('updates prices when securities are missing today price', function () {
     ]);
 
     $mock = $this->mock(YahooFinanceService::class);
-    $mock->shouldReceive('fetchAndStorePricesBulk')
-        ->once()
-        ->andReturn(1);
+    $mock->shouldNotReceive('fetchAndStorePricesBulk');
 
     livewire(Dashboard::class)
         ->call('loadPrices')
-        ->assertDispatched('prices-updated');
+        ->assertNotDispatched('prices-updated');
 });
 
 it('skips price update when all securities have today price', function () {
