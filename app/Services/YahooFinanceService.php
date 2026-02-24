@@ -143,7 +143,7 @@ class YahooFinanceService
             return 0;
         }
 
-        $results = Process::timeout(60)->concurrently(function (Pool $pool) use ($tasks, $pythonBin, $scriptPath, $endDate): void {
+        $results = Process::concurrently(function (Pool $pool) use ($tasks, $pythonBin, $scriptPath, $endDate): void {
             foreach ($tasks as $index => $task) {
                 $input = json_encode([
                     'ticker' => $task['security']->ticker,
@@ -152,6 +152,7 @@ class YahooFinanceService
                 ]);
 
                 $pool->as((string) $index)
+                    ->timeout(60)
                     ->env(['PYTHONUNBUFFERED' => '1'])
                     ->input($input)
                     ->command("{$pythonBin} {$scriptPath}");
