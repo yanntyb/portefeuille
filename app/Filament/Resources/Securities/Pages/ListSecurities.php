@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Securities\Pages;
 
-use App\Exceptions\TickerResolutionException;
 use App\Filament\Widgets\Securities\AllocationChartWidget;
 use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
 use App\Filament\Widgets\Securities\SecurityStatsOverview;
@@ -11,6 +10,7 @@ use App\Models\SecurityPrice;
 use App\Services\YahooFinanceService;
 use Filament\Pages\Concerns\ExposesTableToWidgets;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Support\Facades\Log;
 
 abstract class ListSecurities extends ListRecords
 {
@@ -51,8 +51,8 @@ abstract class ListSecurities extends ListRecords
         foreach ($securities as $security) {
             try {
                 $service->fetchAndStorePrices($security);
-            } catch (TickerResolutionException) {
-                // Skip securities without resolvable ticker
+            } catch (\Throwable $e) {
+                Log::warning("Failed to update prices for {$security->name}: {$e->getMessage()}");
             }
         }
 
@@ -64,8 +64,8 @@ abstract class ListSecurities extends ListRecords
             if ($needsSectorRefresh) {
                 try {
                     $service->fetchAndStoreSectors($security);
-                } catch (TickerResolutionException) {
-                    // Skip securities without resolvable ticker
+                } catch (\Throwable $e) {
+                    Log::warning("Failed to update sectors for {$security->name}: {$e->getMessage()}");
                 }
             }
         }
