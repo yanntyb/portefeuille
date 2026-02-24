@@ -13,7 +13,7 @@ class AllocationChartWidget extends ChartWidget
 
     protected ?string $heading = 'Répartition par titre';
 
-    protected int|string|array $columnSpan = 1;
+    protected int|string|array $columnSpan = 2;
 
     protected ?string $pollingInterval = null;
 
@@ -47,6 +47,12 @@ class AllocationChartWidget extends ChartWidget
     public function updateShownSecurityIds(array $shownSecurityIds): void
     {
         $this->shownSecurityIds = $shownSecurityIds;
+    }
+
+    #[On('prices-updated')]
+    public function refreshChart(): void
+    {
+        $this->updateChartData();
     }
 
     protected function getData(): array

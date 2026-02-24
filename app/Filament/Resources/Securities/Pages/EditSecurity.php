@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Securities\Pages;
 
 use App\Filament\Resources\Securities\AccountSecurityResource;
 use App\Filament\Resources\Securities\Schemas\SecurityForm;
+use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
 use App\Filament\Widgets\Securities\SingleSecurityStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
 use Filament\Resources\Pages\EditRecord;
@@ -32,6 +33,7 @@ abstract class EditSecurity extends EditRecord
             SingleSecurityValuationChartWidget::make([
                 'accountType' => $resource::accountType()->value,
             ]),
+            SectorAllocationChartWidget::make(),
         ];
     }
 

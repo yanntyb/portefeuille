@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Securities\Pages;
 
 use App\Exceptions\TickerResolutionException;
 use App\Filament\Widgets\Securities\AllocationChartWidget;
+use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
 use App\Filament\Widgets\Securities\SecurityStatsOverview;
 use App\Filament\Widgets\Securities\ValuationChartWidget;
 use App\Models\SecurityPrice;
@@ -55,6 +56,20 @@ abstract class ListSecurities extends ListRecords
             }
         }
 
+        foreach ($securities as $security) {
+            $needsSectorRefresh = $security->sectors()
+                ->where('updated_at', '>=', now()->subDays(7))
+                ->doesntExist();
+
+            if ($needsSectorRefresh) {
+                try {
+                    $service->fetchAndStoreSectors($security);
+                } catch (TickerResolutionException) {
+                    // Skip securities without resolvable ticker
+                }
+            }
+        }
+
         $allIds = $securities->pluck('id')->all();
 
         $idsWithPrice = SecurityPrice::query()
@@ -66,6 +81,8 @@ abstract class ListSecurities extends ListRecords
 
         $this->shownSecurityIds = $idsWithPrice;
         $this->pricelessSecurityIds = array_values(array_diff($allIds, $idsWithPrice));
+
+        $this->dispatch('prices-updated');
     }
 
     public function toggleSecurity(int $id): void
@@ -81,7 +98,7 @@ abstract class ListSecurities extends ListRecords
 
     public function getHeaderWidgetsColumns(): int|array
     {
-        return 3;
+        return 4;
     }
 
     protected function getHeaderWidgets(): array
@@ -96,6 +113,10 @@ abstract class ListSecurities extends ListRecords
                 'shownSecurityIds' => $this->shownSecurityIds,
             ]),
             AllocationChartWidget::make([
+                'tablePageClass' => static::class,
+                'shownSecurityIds' => $this->shownSecurityIds,
+            ]),
+            SectorAllocationChartWidget::make([
                 'tablePageClass' => static::class,
                 'shownSecurityIds' => $this->shownSecurityIds,
             ]),

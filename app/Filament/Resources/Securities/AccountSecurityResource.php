@@ -6,6 +6,7 @@ use App\Enums\AccountType;
 use App\Filament\Resources\Securities\RelationManagers\TransactionsRelationManager;
 use App\Filament\Resources\Securities\Schemas\SecurityForm;
 use App\Filament\Resources\Securities\Tables\SecuritiesTable;
+use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
 use App\Filament\Widgets\Securities\SecurityStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
@@ -45,6 +46,7 @@ abstract class AccountSecurityResource extends Resource
         return [
             SecurityStatsOverview::class,
             ValuationChartWidget::class,
+            SectorAllocationChartWidget::class,
             SingleSecurityStatsOverview::class,
             SingleSecurityValuationChartWidget::class,
         ];

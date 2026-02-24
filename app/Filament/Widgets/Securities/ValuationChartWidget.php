@@ -17,7 +17,7 @@ class ValuationChartWidget extends ChartWidget
 
     protected ?string $heading = 'Evolution de la valorisation';
 
-    protected int|string|array $columnSpan = 2;
+    protected int|string|array $columnSpan = 'full';
 
     protected ?string $pollingInterval = null;
 
@@ -38,6 +38,12 @@ class ValuationChartWidget extends ChartWidget
     public function updateShownSecurityIds(array $shownSecurityIds): void
     {
         $this->shownSecurityIds = $shownSecurityIds;
+    }
+
+    #[On('prices-updated')]
+    public function refreshChart(): void
+    {
+        $this->updateChartData();
     }
 
     protected function getData(): array

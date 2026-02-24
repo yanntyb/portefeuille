@@ -7,6 +7,7 @@ use App\Filament\Widgets\Securities\ValuationChartWidget;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
+use App\Services\YahooFinanceService;
 
 use function Pest\Livewire\livewire;
 
@@ -55,6 +56,19 @@ it('adds back a security id when toggling a hidden security', function () {
 
     expect($page->get('shownSecurityIds'))
         ->toContain($security->id);
+});
+
+it('dispatches prices-updated event after refreshPrices', function () {
+    $security = Security::factory()->create(['ticker' => 'AAPL']);
+    Transaction::factory()->pea()->create(['security_id' => $security->id]);
+
+    $mock = test()->mock(YahooFinanceService::class);
+    $mock->shouldReceive('fetchAndStorePrices');
+    $mock->shouldReceive('fetchAndStoreSectors');
+
+    livewire(ListPeaSecurities::class)
+        ->call('refreshPrices')
+        ->assertDispatched('prices-updated');
 });
 
 it('dispatches security-visibility-changed event on toggle', function () {

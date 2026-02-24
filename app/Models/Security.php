@@ -32,6 +32,11 @@ class Security extends Model
         return $this->hasMany(SecurityPrice::class);
     }
 
+    public function sectors(): HasMany
+    {
+        return $this->hasMany(SecuritySector::class);
+    }
+
     public function latestPrice(): HasOne
     {
         return $this->hasOne(SecurityPrice::class)->latestOfMany('date');

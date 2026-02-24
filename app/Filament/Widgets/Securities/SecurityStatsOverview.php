@@ -31,6 +31,12 @@ class SecurityStatsOverview extends StatsOverviewWidget
         $this->shownSecurityIds = $shownSecurityIds;
     }
 
+    #[On('prices-updated')]
+    public function refreshStats(): void
+    {
+        // Triggers re-render with fresh data
+    }
+
     protected function getStats(): array
     {
         if ($this->tablePageClass === null) {

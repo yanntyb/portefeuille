@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\Sector;
 use App\Exceptions\TickerResolutionException;
 use App\Models\Security;
 use App\Models\SecurityPrice;
+use App\Models\SecuritySector;
 use App\Support\PythonScriptCaller;
 use DateTimeInterface;
 
@@ -90,6 +92,53 @@ class YahooFinanceService
             ['security_id', 'date'],
             ['open', 'high', 'low', 'close', 'volume'],
         );
+
+        return count($rows);
+    }
+
+    /**
+     * @throws TickerResolutionException
+     */
+    public function fetchAndStoreSectors(Security $security): int
+    {
+        if ($security->ticker === null) {
+            $security->ticker = $this->resolveTickerFromIsin($security->isin, $security->name);
+            $security->save();
+        }
+
+        $result = PythonScriptCaller::call('fetch_sectors.py', [
+            'ticker' => $security->ticker,
+        ], timeout: 30);
+
+        $sectorsData = $result['data'] ?? [];
+
+        if ($sectorsData === []) {
+            return 0;
+        }
+
+        $sectorValues = array_column(Sector::cases(), 'value');
+
+        $rows = [];
+        foreach ($sectorsData as $key => $weight) {
+            $sector = in_array($key, $sectorValues) ? $key : Sector::Other->value;
+
+            $rows[] = [
+                'security_id' => $security->id,
+                'sector' => $sector,
+                'weight' => $weight,
+            ];
+        }
+
+        SecuritySector::upsert(
+            $rows,
+            ['security_id', 'sector'],
+            ['weight'],
+        );
+
+        $sectorKeys = array_column($rows, 'sector');
+        $security->sectors()
+            ->whereNotIn('sector', $sectorKeys)
+            ->delete();
 
         return count($rows);
     }
