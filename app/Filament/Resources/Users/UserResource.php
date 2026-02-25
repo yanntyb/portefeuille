@@ -83,7 +83,8 @@ class UserResource extends Resource
                     ->sortable(),
             ])
             ->actions([
-                Impersonate::make(),
+                Impersonate::make()
+                    ->redirectTo('/admin'),
             ]);
     }
 
