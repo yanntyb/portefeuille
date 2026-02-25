@@ -39,9 +39,9 @@ class SecurityForm
     public static function updateFromIsinAction(): Action
     {
         return Action::make('updateFromIsin')
-            ->label('Mise à jour')
+            ->label('Mise à jour & rechargement des prix')
             ->icon(Heroicon::ArrowPath)
-            ->color('gray')
+            ->color('danger')
             ->schema(self::searchSchema())
             ->mountUsing(function (Action $action, Schema $schema, EditRecord $livewire): void {
                 $isin = $livewire->data['isin'] ?? null;
@@ -57,15 +57,30 @@ class SecurityForm
                     return;
                 }
 
-                self::mountSearchAction($action, $schema, $isin);
+                $ticker = $livewire->data['ticker'] ?? null;
+                self::mountSearchAction($action, $schema, $isin, $ticker);
             })
             ->action(function (array $data, EditRecord $livewire): void {
                 [$symbol, $name] = explode('|', $data['selected_result'], 2);
+
+                /** @var Security $security */
+                $security = $livewire->getRecord();
+                $security->update(['ticker' => $symbol, 'name' => $name]);
 
                 $state = $livewire->data;
                 $state['ticker'] = $symbol;
                 $state['name'] = $name;
                 $livewire->data = $state;
+
+                $security->prices()->delete();
+
+                $count = app(YahooFinanceService::class)
+                    ->fetchAndStorePrices($security, new \DateTimeImmutable('-5 years'));
+
+                Notification::make()
+                    ->title("Titre mis à jour — {$count} prix rechargés")
+                    ->success()
+                    ->send();
             });
     }
 
@@ -89,7 +104,7 @@ class SecurityForm
                     return;
                 }
 
-                self::mountSearchAction($action, $schema, $record->isin);
+                self::mountSearchAction($action, $schema, $record->isin, $record->ticker);
             })
             ->action(function (array $data, Security $record): void {
                 [$symbol, $name] = explode('|', $data['selected_result'], 2);
@@ -125,10 +140,10 @@ class SecurityForm
         ];
     }
 
-    private static function mountSearchAction(Action $action, Schema $schema, string $isin): void
+    private static function mountSearchAction(Action $action, Schema $schema, string $isin, ?string $ticker = null): void
     {
         $service = app(YahooFinanceService::class);
-        $results = $service->searchTicker($isin);
+        $results = $service->searchTicker($isin, $ticker);
 
         if ($results === []) {
             Notification::make()

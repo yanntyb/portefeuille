@@ -70,6 +70,34 @@ it('dispatches prices-updated event after refreshPrices', function () {
         ->assertDispatched('prices-updated');
 });
 
+it('skips fetch when all securities have current prices', function () {
+    $security = Security::factory()->create(['ticker' => 'AAPL']);
+    Transaction::factory()->pea()->create(['security_id' => $security->id]);
+    SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => today(), 'close' => 150]);
+
+    $mock = test()->mock(YahooFinanceService::class);
+    $mock->shouldNotReceive('fetchAndStorePricesBulk');
+
+    livewire(ListPeaSecurities::class)
+        ->call('refreshPrices')
+        ->assertDispatched('prices-updated');
+});
+
+it('fetches prices when at least one security lacks current price', function () {
+    $securityWithPrice = Security::factory()->create(['ticker' => 'AAPL']);
+    $securityWithoutPrice = Security::factory()->create(['ticker' => 'MSFT']);
+    Transaction::factory()->pea()->create(['security_id' => $securityWithPrice->id]);
+    Transaction::factory()->pea()->create(['security_id' => $securityWithoutPrice->id]);
+    SecurityPrice::factory()->create(['security_id' => $securityWithPrice->id, 'date' => today(), 'close' => 150]);
+
+    $mock = test()->mock(YahooFinanceService::class);
+    $mock->shouldReceive('fetchAndStorePricesBulk')->once()->andReturn(1);
+
+    livewire(ListPeaSecurities::class)
+        ->call('refreshPrices')
+        ->assertDispatched('prices-updated');
+});
+
 it('dispatches security-visibility-changed event on toggle', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);

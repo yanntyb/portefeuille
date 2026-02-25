@@ -9,6 +9,7 @@ use App\Filament\Widgets\Securities\ValuationChartWidget;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Services\YahooFinanceService;
+use App\Support\MarketCalendar;
 use Filament\Pages\Concerns\ExposesTableToWidgets;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
@@ -46,7 +47,7 @@ abstract class ListSecurities extends ListRecords
 
         $idsWithPrice = SecurityPrice::query()
             ->whereIn('security_id', $allIds)
-            ->where('date', '>=', today()->subDays(4))
+            ->where('date', '>=', MarketCalendar::lastTradingDate()->toDateString())
             ->pluck('security_id')
             ->unique()
             ->all();
@@ -57,7 +58,24 @@ abstract class ListSecurities extends ListRecords
 
     public function refreshPrices(): void
     {
-        $securities = $this->scopedSecuritiesQuery()->get();
+        $securityIds = $this->scopedSecuritiesQuery()
+            ->pluck('securities.id')
+            ->all();
+
+        $securities = Security::query()
+            ->whereIn('id', $securityIds)
+            ->whereNotNull('ticker')
+            ->get();
+
+        $hasPriceless = $securities->load('currentPrice')
+            ->contains(fn (Security $s) => $s->currentPrice === null);
+
+        if (! $hasPriceless) {
+            $this->computeSecurityVisibility();
+            $this->dispatch('prices-updated');
+
+            return;
+        }
 
         app(YahooFinanceService::class)->fetchAndStorePricesBulk($securities);
 

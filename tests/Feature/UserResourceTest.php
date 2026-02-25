@@ -6,6 +6,7 @@ use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Models\User;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\Testing\TestAction;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseHas;
@@ -82,4 +83,22 @@ it('allows an admin to delete a user', function () {
         ->assertRedirect();
 
     assertDatabaseMissing($user);
+});
+
+it('shows impersonate action for admin users on non-admin targets', function () {
+    actingAs(User::factory()->admin()->create());
+
+    $target = User::factory()->create();
+
+    livewire(ListUsers::class)
+        ->assertTableActionVisible('impersonate', $target);
+});
+
+it('hides impersonate action for admin targets', function () {
+    actingAs(User::factory()->admin()->create());
+
+    $adminTarget = User::factory()->admin()->create();
+
+    livewire(ListUsers::class)
+        ->assertTableActionHidden('impersonate', $adminTarget);
 });

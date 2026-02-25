@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\AccountType;
+use App\Support\MarketCalendar;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -45,7 +46,7 @@ class Security extends Model
     public function currentPrice(): HasOne
     {
         return $this->hasOne(SecurityPrice::class)
-            ->where('date', '>=', today()->subDays(4))
+            ->where('date', '>=', MarketCalendar::lastTradingDate()->toDateString())
             ->latestOfMany('date');
     }
 

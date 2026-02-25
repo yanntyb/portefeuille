@@ -4,6 +4,8 @@ use App\Enums\AccountType;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
+use App\Support\MarketCalendar;
+use Carbon\Carbon;
 
 it('has many transactions', function () {
     $security = Security::factory()->create();
@@ -78,12 +80,12 @@ it('does not include securities without transactions for the account type', func
     expect($peaResults)->toBeEmpty();
 });
 
-it('has a current price when price exists within last 4 days', function () {
+it('has a current price when price is on last trading date', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
         'security_id' => $security->id,
-        'date' => today()->subDays(2),
+        'date' => MarketCalendar::lastTradingDate(),
         'close' => 120,
     ]);
 
@@ -91,30 +93,31 @@ it('has a current price when price exists within last 4 days', function () {
         ->and($security->currentPrice->close)->toBe('120.0000');
 });
 
-it('does not have a current price when price is older than 4 days', function () {
+it('does not have a current price when price is before last trading date', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
         'security_id' => $security->id,
-        'date' => today()->subDays(5),
+        'date' => MarketCalendar::lastTradingDate()->subDay(),
         'close' => 120,
     ]);
 
     expect($security->currentPrice)->toBeNull();
 });
 
-it('current price returns the most recent price within 4 days', function () {
+it('current price returns the most recent price since last trading date', function () {
+    Carbon::setTestNow('2026-02-28'); // Saturday, lastTradingDate = Friday 27
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
         'security_id' => $security->id,
-        'date' => today()->subDays(3),
+        'date' => '2026-02-27',
         'close' => 100,
     ]);
 
     SecurityPrice::factory()->create([
         'security_id' => $security->id,
-        'date' => today()->subDays(1),
+        'date' => '2026-02-28',
         'close' => 130,
     ]);
 

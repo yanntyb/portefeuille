@@ -5,6 +5,7 @@ use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
 use App\Services\YahooFinanceService;
+use App\Support\MarketCalendar;
 
 use function Pest\Livewire\livewire;
 
@@ -17,7 +18,7 @@ it('updates prices when securities have no recent price', function () {
 
     SecurityPrice::factory()->create([
         'security_id' => $security->id,
-        'date' => now()->subDays(5),
+        'date' => MarketCalendar::lastTradingDate()->subDay(),
         'close' => 100,
     ]);
 
@@ -31,7 +32,7 @@ it('updates prices when securities have no recent price', function () {
         ->assertDispatched('prices-updated');
 });
 
-it('skips price update when securities have a recent price within 4 days', function () {
+it('skips price update when securities have a price on last trading date', function () {
     $security = Security::factory()->create(['ticker' => 'AAPL']);
 
     Transaction::factory()->pea()->create([
@@ -40,7 +41,7 @@ it('skips price update when securities have a recent price within 4 days', funct
 
     SecurityPrice::factory()->create([
         'security_id' => $security->id,
-        'date' => now()->subDay(),
+        'date' => MarketCalendar::lastTradingDate(),
         'close' => 100,
     ]);
 
