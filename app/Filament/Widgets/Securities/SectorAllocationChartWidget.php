@@ -5,23 +5,27 @@ namespace App\Filament\Widgets\Securities;
 use App\Enums\Sector;
 use App\Models\SecuritySector;
 use Filament\Support\RawJs;
+use Filament\Tables\Contracts\HasTable;
 use Filament\Widgets\ChartWidget;
-use Filament\Widgets\Concerns\InteractsWithPageTable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Reactive;
+
+use function Livewire\trigger;
 
 class SectorAllocationChartWidget extends ChartWidget
 {
-    use InteractsWithPageTable;
-
     protected ?string $heading = 'Répartition sectorielle';
 
-    protected int|string|array $columnSpan = 2;
+    protected int|string|array $columnSpan = 'full';
 
     protected ?string $pollingInterval = null;
 
-    private ?\Illuminate\Database\Eloquent\Builder $cachedPageTableQuery = null;
+    private ?Builder $cachedPageTableQuery = null;
+
+    private ?HasTable $tablePage = null;
 
     private const COLORS = [
         'rgb(59, 130, 246)',
@@ -44,12 +48,75 @@ class SectorAllocationChartWidget extends ChartWidget
 
     public ?Model $record = null;
 
-    protected function getTablePage(): string
+    /** @var array<string, int> */
+    #[Reactive]
+    public ?array $paginators = [];
+
+    /** @var array<string, string | array<string, string | null> | null> */
+    #[Reactive]
+    public ?array $tableColumnSearches = [];
+
+    /** @var array<string, mixed> | null */
+    #[Reactive]
+    public ?array $tableFilters = null;
+
+    #[Reactive]
+    public ?string $tableSearch = '';
+
+    #[Reactive]
+    public ?string $tableSort = null;
+
+    #[Reactive]
+    public ?string $tableGrouping = null;
+
+    #[Reactive]
+    public int|string|null $tableRecordsPerPage = null;
+
+    #[Reactive]
+    public ?string $activeTab = null;
+
+    #[Reactive]
+    public ?int $tableRecordsCount = null;
+
+    #[Reactive]
+    public ?Model $parentRecord = null;
+
+    private function getTablePageInstance(): HasTable
     {
-        return $this->tablePageClass;
+        if ($this->tablePage !== null) {
+            return $this->tablePage;
+        }
+
+        /** @var HasTable $page */
+        $page = app('livewire')->new($this->tablePageClass);
+
+        trigger('mount', $page, [], null, null, []);
+
+        foreach ([
+            'activeTab' => $this->activeTab,
+            'paginators' => $this->paginators ?? [],
+            'parentRecord' => $this->parentRecord,
+            'tableColumnSearches' => $this->tableColumnSearches ?? [],
+            'tableFilters' => $this->tableFilters,
+            'tableGrouping' => $this->tableGrouping,
+            'tableRecordsPerPage' => $this->tableRecordsPerPage,
+            'tableSearch' => $this->tableSearch,
+            'tableSort' => $this->tableSort,
+        ] as $property => $value) {
+            $page->{$property} = $value;
+        }
+
+        $page->bootedInteractsWithTable();
+
+        return $this->tablePage = $page;
     }
 
-    private function getCachedPageTableQuery(): \Illuminate\Database\Eloquent\Builder
+    private function getPageTableQuery(): Builder
+    {
+        return $this->getTablePageInstance()->getFilteredSortedTableQuery();
+    }
+
+    private function getCachedPageTableQuery(): Builder
     {
         return $this->cachedPageTableQuery ??= $this->getPageTableQuery()->reorder();
     }

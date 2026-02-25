@@ -188,6 +188,7 @@ class ValuationChartWidget extends ChartWidget
         $valuationsBySecurity = [];
         $invested = [];
         $fees = [];
+        $lastCloseBySecurityId = [];
 
         foreach ($securityIds as $securityId) {
             $valuationsBySecurity[$securityId] = [];
@@ -198,8 +199,13 @@ class ValuationChartWidget extends ChartWidget
 
             foreach ($securityIds as $securityId) {
                 $price = $pricesForDay->get($securityId);
+                if ($price) {
+                    $lastCloseBySecurityId[$securityId] = (float) $price->close;
+                }
+
+                $close = $lastCloseBySecurityId[$securityId] ?? null;
                 $quantity = $this->getQuantityAtDate($cumulativeQuantities, $securityId, $day);
-                $value = $price ? round($quantity * (float) $price->close, 2) : 0;
+                $value = $close !== null ? round($quantity * $close, 2) : 0;
                 $valuationsBySecurity[$securityId][] = $value;
             }
 

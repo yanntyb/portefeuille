@@ -15,7 +15,7 @@ class SingleSecurityValuationChartWidget extends ChartWidget
 
     protected ?string $heading = 'Evolution de la valorisation';
 
-    protected int|string|array $columnSpan = 2;
+    protected int|string|array $columnSpan = 'full';
 
     protected ?string $pollingInterval = null;
 

@@ -68,6 +68,7 @@ trait ComputesValuationChart
         $valuations = [];
         $invested = [];
         $fees = [];
+        $lastCloseBySecurityId = [];
 
         foreach ($days as $day) {
             $valuation = 0;
@@ -75,12 +76,17 @@ trait ComputesValuationChart
 
             foreach ($securityIds as $securityId) {
                 $price = $pricesForDay->get($securityId);
-                if (! $price) {
+                if ($price) {
+                    $lastCloseBySecurityId[$securityId] = (float) $price->close;
+                }
+
+                $close = $lastCloseBySecurityId[$securityId] ?? null;
+                if ($close === null) {
                     continue;
                 }
 
                 $quantity = $this->getQuantityAtDate($cumulativeQuantities, $securityId, $day);
-                $valuation += $quantity * (float) $price->close;
+                $valuation += $quantity * $close;
             }
 
             $labels[] = $day;

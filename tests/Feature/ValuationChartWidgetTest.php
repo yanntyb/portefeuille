@@ -225,6 +225,112 @@ it('invested reflects mid-week transactions in the same week', function () {
         ->and($data['datasets'][0]['data'][0])->toBe(1050.0);
 });
 
+it('extrapolates missing prices using the last known close in total mode', function () {
+    $securityA = Security::factory()->create();
+    $securityB = Security::factory()->create();
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $securityA->id,
+        'quantity' => 10,
+        'unit_price' => 100,
+        'date' => '2024-01-10',
+    ]);
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $securityB->id,
+        'quantity' => 5,
+        'unit_price' => 200,
+        'date' => '2024-01-10',
+    ]);
+
+    // Both have prices on day 1
+    SecurityPrice::factory()->create([
+        'security_id' => $securityA->id,
+        'date' => '2024-01-15',
+        'close' => 100,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $securityB->id,
+        'date' => '2024-01-15',
+        'close' => 200,
+    ]);
+
+    // Only securityA has a price on day 2
+    SecurityPrice::factory()->create([
+        'security_id' => $securityA->id,
+        'date' => '2024-01-16',
+        'close' => 110,
+    ]);
+
+    $widget = livewire(ValuationChartWidget::class, [
+        'tablePageClass' => ListPeaSecurities::class,
+    ]);
+
+    $data = invade($widget->instance())->getData();
+
+    // Day 1: 10*100 + 5*200 = 2000
+    // Day 2: 10*110 + 5*200 (extrapolated) = 2100
+    expect($data['labels'])->toHaveCount(2)
+        ->and($data['datasets'][0]['data'][0])->toBe(2000.0)
+        ->and($data['datasets'][0]['data'][1])->toBe(2100.0);
+});
+
+it('extrapolates missing prices using the last known close in per_security mode', function () {
+    $securityA = Security::factory()->create(['name' => 'ETF A']);
+    $securityB = Security::factory()->create(['name' => 'ETF B']);
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $securityA->id,
+        'quantity' => 10,
+        'unit_price' => 100,
+        'date' => '2024-01-10',
+    ]);
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $securityB->id,
+        'quantity' => 5,
+        'unit_price' => 200,
+        'date' => '2024-01-10',
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $securityA->id,
+        'date' => '2024-01-15',
+        'close' => 100,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $securityB->id,
+        'date' => '2024-01-15',
+        'close' => 200,
+    ]);
+
+    // Only securityA has a price on day 2
+    SecurityPrice::factory()->create([
+        'security_id' => $securityA->id,
+        'date' => '2024-01-16',
+        'close' => 110,
+    ]);
+
+    $widget = livewire(ValuationChartWidget::class, [
+        'tablePageClass' => ListPeaSecurities::class,
+    ]);
+
+    $widget->set('filters.mode', 'per_security');
+
+    $data = invade($widget->instance())->getData();
+
+    $etfADataset = collect($data['datasets'])->firstWhere('label', 'ETF A');
+    $etfBDataset = collect($data['datasets'])->firstWhere('label', 'ETF B');
+
+    // Day 2: ETF B should use last known price (200)
+    expect($etfADataset['data'][0])->toBe(1000.0)
+        ->and($etfADataset['data'][1])->toBe(1100.0)
+        ->and($etfBDataset['data'][0])->toBe(1000.0)
+        ->and($etfBDataset['data'][1])->toBe(1000.0);
+});
+
 it('returns empty data when no securities exist', function () {
     $widget = livewire(ValuationChartWidget::class, [
         'tablePageClass' => ListPeaSecurities::class,
