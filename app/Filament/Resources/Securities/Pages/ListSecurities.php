@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Securities\Pages;
 
 use App\Filament\Widgets\Securities\AllocationChartWidget;
+use App\Filament\Widgets\Securities\PerformanceStatsOverview;
 use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
 use App\Filament\Widgets\Securities\SecurityStatsOverview;
 use App\Filament\Widgets\Securities\ValuationChartWidget;
@@ -103,6 +104,10 @@ abstract class ListSecurities extends ListRecords
     {
         return [
             SecurityStatsOverview::make([
+                'tablePageClass' => static::class,
+                'shownSecurityIds' => $this->shownSecurityIds,
+            ]),
+            PerformanceStatsOverview::make([
                 'tablePageClass' => static::class,
                 'shownSecurityIds' => $this->shownSecurityIds,
             ]),

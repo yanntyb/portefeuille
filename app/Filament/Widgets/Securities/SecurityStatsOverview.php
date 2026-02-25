@@ -68,14 +68,13 @@ class SecurityStatsOverview extends StatsOverviewWidget
         $plusValuePercentage = $totalInvested > 0 ? ($plusValue / $totalInvested) * 100 : 0;
         $feesPercentage = $totalInvested > 0 ? ($totalFees / $totalInvested) * 100 : 0;
 
-        $plusValueLabel = Number::currency($plusValue, 'EUR').' ('.Number::format($plusValuePercentage, 2).' %)';
-        $feesLabel = Number::currency($totalFees, 'EUR').' ('.Number::format($feesPercentage, 2).' %)';
-
         return [
             Stat::make('Valorisation', Number::currency($valuation, 'EUR')),
-            Stat::make('Plus-value', $plusValueLabel)
+            Stat::make('Plus-value', Number::currency($plusValue, 'EUR'))
+                ->description(Number::format($plusValuePercentage, 2).' %')
                 ->color($plusValue >= 0 ? 'success' : 'danger'),
-            Stat::make('Frais', $feesLabel)
+            Stat::make('Frais', Number::currency($totalFees, 'EUR'))
+                ->description(Number::format($feesPercentage, 2).' %')
                 ->color('danger'),
         ];
     }

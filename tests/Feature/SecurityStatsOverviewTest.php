@@ -82,8 +82,8 @@ it('displays percentage alongside plus-value', function () {
 
     // Plus-value = 1200 - 1000 = 200, percentage = 20%
     expect($stats[1]->getValue())->toContain('200')
-        ->and($stats[1]->getValue())->toContain('20.00')
-        ->and($stats[1]->getValue())->toContain('%');
+        ->and($stats[1]->getDescription())->toContain('20.00')
+        ->and($stats[1]->getDescription())->toContain('%');
 });
 
 it('shows success color when plus-value is positive', function () {
@@ -161,7 +161,7 @@ it('displays fees with percentage', function () {
     // Fees = 10, totalInvested = 10*100 + 10 = 1010, percentage = 10/1010 * 100 ≈ 0.99%
     expect($stats[2]->getLabel())->toBe('Frais')
         ->and($stats[2]->getValue())->toContain('10')
-        ->and($stats[2]->getValue())->toContain('%')
+        ->and($stats[2]->getDescription())->toContain('%')
         ->and($stats[2]->getColor())->toBe('danger');
 });
 

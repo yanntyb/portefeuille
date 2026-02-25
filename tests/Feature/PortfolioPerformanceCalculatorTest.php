@@ -1,0 +1,163 @@
+<?php
+
+use App\Models\Security;
+use App\Models\SecurityPrice;
+use App\Models\Transaction;
+use App\Services\PortfolioPerformanceCalculator;
+use Illuminate\Support\Carbon;
+
+it('computes basic return without cash flows', function () {
+    Carbon::setTestNow('2025-06-15');
+
+    $security = Security::factory()->create();
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+        'date' => '2025-01-01',
+        'quantity' => 10,
+        'unit_price' => 100,
+        'fees' => 0,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2025-01-15',
+        'close' => 100,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2025-06-15',
+        'close' => 120,
+    ]);
+
+    $securities = Security::query()
+        ->forAccountType(\App\Enums\AccountType::Pea, auth()->id())
+        ->with('latestPrice')
+        ->get();
+
+    $returns = app(PortfolioPerformanceCalculator::class)->computeReturns($securities);
+
+    // Valo début (3 mois) = 10 * 100 = 1000, Valo fin = 10 * 120 = 1200
+    // Flux nets = 0, Return = (1200 - 1000 - 0) / (1000 + 0) * 100 = 20%
+    expect($returns['3m'])->toBe(20.0);
+});
+
+it('computes return with cash flows during period', function () {
+    Carbon::setTestNow('2025-06-15');
+
+    $security = Security::factory()->create();
+
+    // Transaction initiale avant la période de 6 mois (2024-12-15)
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+        'date' => '2024-11-01',
+        'quantity' => 10,
+        'unit_price' => 100,
+        'fees' => 0,
+    ]);
+
+    // Achat supplémentaire pendant la période
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+        'date' => '2025-04-01',
+        'quantity' => 5,
+        'unit_price' => 110,
+        'fees' => 5,
+    ]);
+
+    // Prix au début de la période 6m (proche du 2024-12-15)
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2024-12-15',
+        'close' => 100,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2025-06-15',
+        'close' => 120,
+    ]);
+
+    $securities = Security::query()
+        ->forAccountType(\App\Enums\AccountType::Pea, auth()->id())
+        ->with('latestPrice')
+        ->get();
+
+    $returns = app(PortfolioPerformanceCalculator::class)->computeReturns($securities);
+
+    // Valo début (6 mois) = 10 * 100 = 1000
+    // Valo fin = 15 * 120 = 1800
+    // Flux nets = 5 * 110 + 5 = 555
+    // Return = (1800 - 1000 - 555) / (1000 + 555) * 100 = 245 / 1555 * 100 ≈ 15.76%
+    expect($returns['6m'])->toBe(15.76);
+});
+
+it('returns null when period predates first transaction', function () {
+    Carbon::setTestNow('2025-06-15');
+
+    $security = Security::factory()->create();
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+        'date' => '2025-05-01',
+        'quantity' => 10,
+        'unit_price' => 100,
+        'fees' => 0,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2025-06-15',
+        'close' => 120,
+    ]);
+
+    $securities = Security::query()
+        ->forAccountType(\App\Enums\AccountType::Pea, auth()->id())
+        ->with('latestPrice')
+        ->get();
+
+    $returns = app(PortfolioPerformanceCalculator::class)->computeReturns($securities);
+
+    // 1 an = 2024-06-15, aucune transaction ni prix avant ça → null
+    expect($returns['1y'])->toBeNull();
+});
+
+it('uses closest available price when exact start date has no price', function () {
+    Carbon::setTestNow('2025-06-15');
+
+    $security = Security::factory()->create();
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+        'date' => '2025-01-01',
+        'quantity' => 10,
+        'unit_price' => 100,
+        'fees' => 0,
+    ]);
+
+    // Pas de prix au 2025-03-15 exactement, mais un prix au 2025-03-10
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2025-03-10',
+        'close' => 105,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2025-06-15',
+        'close' => 120,
+    ]);
+
+    $securities = Security::query()
+        ->forAccountType(\App\Enums\AccountType::Pea, auth()->id())
+        ->with('latestPrice')
+        ->get();
+
+    $returns = app(PortfolioPerformanceCalculator::class)->computeReturns($securities);
+
+    // 3 mois = 2025-03-15, prix le plus proche <= 2025-03-15 est le 2025-03-10 (close=105)
+    // Valo début = 10 * 105 = 1050, Valo fin = 10 * 120 = 1200
+    // Return = (1200 - 1050) / 1050 * 100 ≈ 14.29%
+    expect($returns['3m'])->toBe(14.29);
+});

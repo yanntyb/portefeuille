@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Securities\Pages;
 use App\Filament\Resources\Securities\AccountSecurityResource;
 use App\Filament\Resources\Securities\Schemas\SecurityForm;
 use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
+use App\Filament\Widgets\Securities\SingleSecurityPerformanceStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityPriceChartWidget;
 use App\Filament\Widgets\Securities\SingleSecurityStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
@@ -35,6 +36,9 @@ abstract class EditSecurity extends EditRecord
 
         $widgets = [
             SingleSecurityStatsOverview::make([
+                'accountType' => $accountType,
+            ]),
+            SingleSecurityPerformanceStatsOverview::make([
                 'accountType' => $accountType,
             ]),
             SingleSecurityPriceChartWidget::make(),

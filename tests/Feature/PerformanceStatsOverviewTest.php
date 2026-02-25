@@ -1,0 +1,151 @@
+<?php
+
+use App\Filament\Resources\CtoSecurities\Pages\ListCtoSecurities;
+use App\Filament\Resources\PeaSecurities\Pages\ListPeaSecurities;
+use App\Filament\Widgets\Securities\PerformanceStatsOverview;
+use App\Models\Security;
+use App\Models\SecurityPrice;
+use App\Models\Transaction;
+use Illuminate\Support\Carbon;
+
+use function Pest\Livewire\livewire;
+
+it('can render on the PEA list page', function () {
+    $security = Security::factory()->create();
+    Transaction::factory()->pea()->create(['security_id' => $security->id]);
+
+    livewire(ListPeaSecurities::class)
+        ->assertOk()
+        ->assertSeeLivewire(PerformanceStatsOverview::class);
+});
+
+it('can render on the CTO list page', function () {
+    $security = Security::factory()->create();
+    Transaction::factory()->cto()->create(['security_id' => $security->id]);
+
+    livewire(ListCtoSecurities::class)
+        ->assertOk()
+        ->assertSeeLivewire(PerformanceStatsOverview::class);
+});
+
+it('displays performance stats with correct values', function () {
+    Carbon::setTestNow('2025-06-15');
+
+    $security = Security::factory()->create();
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+        'date' => '2025-01-01',
+        'quantity' => 10,
+        'unit_price' => 100,
+        'fees' => 0,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2025-01-15',
+        'close' => 100,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2025-06-15',
+        'close' => 120,
+    ]);
+
+    $widget = livewire(PerformanceStatsOverview::class, [
+        'tablePageClass' => ListPeaSecurities::class,
+    ]);
+
+    $widget->assertOk();
+
+    $stats = $widget->instance()->getPerformanceData();
+
+    // 3 mois: Valo début = 10 * 100 = 1000, Valo fin = 10 * 120 = 1200 → +20%
+    $threeMonths = collect($stats)->firstWhere('label', '3 mois');
+    expect($threeMonths['value'])->toBe('+20.00 %')
+        ->and($threeMonths['color'])->toBe('success');
+});
+
+it('displays dash for periods without data', function () {
+    Carbon::setTestNow('2025-06-15');
+
+    $security = Security::factory()->create();
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+        'date' => '2025-05-01',
+        'quantity' => 10,
+        'unit_price' => 100,
+        'fees' => 0,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2025-06-15',
+        'close' => 120,
+    ]);
+
+    $widget = livewire(PerformanceStatsOverview::class, [
+        'tablePageClass' => ListPeaSecurities::class,
+    ]);
+
+    $stats = $widget->instance()->getPerformanceData();
+
+    // 1 an: pas de position à cette date → dash
+    $oneYear = collect($stats)->firstWhere('label', '1 an');
+    expect($oneYear['value'])->toBe('—')
+        ->and($oneYear['color'])->toBe('gray');
+});
+
+it('shows danger color for negative returns', function () {
+    Carbon::setTestNow('2025-06-15');
+
+    $security = Security::factory()->create();
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+        'date' => '2025-01-01',
+        'quantity' => 10,
+        'unit_price' => 100,
+        'fees' => 0,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2025-01-15',
+        'close' => 100,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => '2025-06-15',
+        'close' => 80,
+    ]);
+
+    $widget = livewire(PerformanceStatsOverview::class, [
+        'tablePageClass' => ListPeaSecurities::class,
+    ]);
+
+    $stats = $widget->instance()->getPerformanceData();
+
+    $threeMonths = collect($stats)->firstWhere('label', '3 mois');
+    expect($threeMonths['value'])->toBe('-20.00 %')
+        ->and($threeMonths['color'])->toBe('danger');
+});
+
+it('returns seven period stats', function () {
+    $security = Security::factory()->create();
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+    ]);
+
+    $widget = livewire(PerformanceStatsOverview::class, [
+        'tablePageClass' => ListPeaSecurities::class,
+    ]);
+
+    $stats = $widget->instance()->getPerformanceData();
+
+    expect($stats)->toHaveCount(7);
+});
