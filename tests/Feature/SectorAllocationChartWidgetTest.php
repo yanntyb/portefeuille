@@ -87,19 +87,20 @@ it('aggregates sector data weighted by valuation for account list', function () 
 
     // Technology = 1000*0.3 (World) + 1000*0.8 (Tech) = 1100 total
     // Healthcare = 1000*0.2 (World only) = 200 total
+    // Grand total = 1300
     expect($data['labels'])->toHaveCount(2)
         ->and($data['datasets'])->toHaveCount(2);
 
     $indexTech = array_search('Technologie', $data['labels']);
     $indexHealth = array_search('Santé', $data['labels']);
 
-    // Dataset 0 = ETF World, Dataset 1 = ETF Tech
+    // Dataset 0 = ETF World, Dataset 1 = ETF Tech (values as % of grand total 1300)
     $worldDataset = collect($data['datasets'])->firstWhere('label', 'ETF World');
     $techDataset = collect($data['datasets'])->firstWhere('label', 'ETF Tech');
 
-    expect($worldDataset['data'][$indexTech])->toBe(300.0)
-        ->and($worldDataset['data'][$indexHealth])->toBe(200.0)
-        ->and($techDataset['data'][$indexTech])->toBe(800.0)
+    expect($worldDataset['data'][$indexTech])->toBe(23.1)
+        ->and($worldDataset['data'][$indexHealth])->toBe(15.4)
+        ->and($techDataset['data'][$indexTech])->toBe(61.5)
         ->and($techDataset['data'][$indexHealth])->toBe(0.0);
 });
 

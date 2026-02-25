@@ -58,7 +58,7 @@ class SecuritiesTable
             ->recordActionsPosition(RecordActionsPosition::BeforeColumns)
             ->headerActions([
                 Action::make('fetchAllPrices')
-                    ->label('MAJ tous les prix')
+                    ->label('MAJ prix')
                     ->icon('heroicon-o-arrow-path')
                     ->action(function (YahooFinanceService $service, $livewire): void {
                         $securities = $livewire->scopedSecuritiesQuery()->get();

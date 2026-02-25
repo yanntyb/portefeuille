@@ -27,7 +27,7 @@ it('can render on the CTO list page', function () {
         ->assertSeeLivewire(AllocationChartWidget::class);
 });
 
-it('returns labels and valuations per security', function () {
+it('returns labels and percentages per security', function () {
     $securityA = Security::factory()->create(['name' => 'Action A']);
     $securityB = Security::factory()->create(['name' => 'Action B']);
 
@@ -70,8 +70,9 @@ it('returns labels and valuations per security', function () {
     $indexA = array_search('Action A', $data['labels']);
     $indexB = array_search('Action B', $data['labels']);
 
-    expect($data['datasets'][0]['data'][$indexA])->toBe(1200.0)
-        ->and($data['datasets'][0]['data'][$indexB])->toBe(1250.0);
+    // Action A: 10 * 120 = 1200, Action B: 5 * 250 = 1250, total = 2450
+    expect($data['datasets'][0]['data'][$indexA])->toBe(49.0)
+        ->and($data['datasets'][0]['data'][$indexB])->toBe(51.0);
 });
 
 it('excludes securities with no latest price', function () {

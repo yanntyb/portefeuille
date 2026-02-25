@@ -27,7 +27,7 @@ it('can render on the CTO list page', function () {
         ->assertSeeLivewire(ValuationChartWidget::class);
 });
 
-it('computes valuation from transactions and prices', function () {
+it('defaults to total mode with aggregated valuation', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
@@ -57,16 +57,69 @@ it('computes valuation from transactions and prices', function () {
 
     $data = invade($widget->instance())->getData();
 
+    // Total mode: Valorisation + Investi + Frais = 3 datasets
     expect($data['datasets'])->toHaveCount(3)
         ->and($data['labels'])->toHaveCount(2)
         ->and($data['labels'][0])->toBe('2024-01-15')
         ->and($data['labels'][1])->toBe('2024-02-15')
         ->and($data['datasets'][0]['label'])->toBe('Valorisation')
-        ->and($data['datasets'][0]['data'])->each->toBeGreaterThan(0)
+        ->and($data['datasets'][0]['stack'])->toBe('total')
+        ->and($data['datasets'][0]['data'][0])->toBe(1050.0)
+        ->and($data['datasets'][0]['data'][1])->toBe(1100.0)
         ->and($data['datasets'][1]['label'])->toBe('Investi')
-        ->and($data['datasets'][1]['data'])->each->toBeGreaterThan(0)
         ->and($data['datasets'][2]['label'])->toBe('Frais')
         ->and($data['datasets'][2]['hidden'])->toBeTrue();
+});
+
+it('shows stacked areas per security in per_security mode', function () {
+    $securityA = Security::factory()->create(['name' => 'ETF World']);
+    $securityB = Security::factory()->create(['name' => 'ETF SP500']);
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $securityA->id,
+        'quantity' => 10,
+        'unit_price' => 100,
+        'date' => '2024-01-15',
+    ]);
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $securityB->id,
+        'quantity' => 5,
+        'unit_price' => 200,
+        'date' => '2024-01-15',
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $securityA->id,
+        'date' => '2024-01-15',
+        'close' => 105,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $securityB->id,
+        'date' => '2024-01-15',
+        'close' => 210,
+    ]);
+
+    $widget = livewire(ValuationChartWidget::class, [
+        'tablePageClass' => ListPeaSecurities::class,
+    ]);
+
+    $widget->set('filters.mode', 'per_security');
+
+    $data = invade($widget->instance())->getData();
+
+    // 2 security areas + Investi + Frais = 4 datasets
+    $securityDatasets = collect($data['datasets'])->filter(fn ($d) => ($d['fill'] ?? false) === true);
+    expect($securityDatasets)->toHaveCount(2);
+
+    $worldDataset = collect($data['datasets'])->firstWhere('label', 'ETF World');
+    $sp500Dataset = collect($data['datasets'])->firstWhere('label', 'ETF SP500');
+
+    expect($worldDataset['data'][0])->toBe(1050.0)
+        ->and($worldDataset['fill'])->toBeTrue()
+        ->and($sp500Dataset['data'][0])->toBe(1050.0)
+        ->and($sp500Dataset['fill'])->toBeTrue();
 });
 
 it('computes cumulative fees from transactions', function () {
@@ -148,7 +201,6 @@ it('excludes prices before the first transaction date', function () {
 it('invested reflects mid-week transactions in the same week', function () {
     $security = Security::factory()->create();
 
-    // Transaction on Wednesday 2024-01-10 (week starts Monday 2024-01-08)
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
         'quantity' => 10,
@@ -157,7 +209,6 @@ it('invested reflects mid-week transactions in the same week', function () {
         'date' => '2024-01-10',
     ]);
 
-    // Price on Friday of the same week
     SecurityPrice::factory()->create([
         'security_id' => $security->id,
         'date' => '2024-01-12',
@@ -170,7 +221,6 @@ it('invested reflects mid-week transactions in the same week', function () {
 
     $data = invade($widget->instance())->getData();
 
-    // Invested should be 1000 (10 * 100) in the same week as the transaction
     expect($data['datasets'][1]['data'][0])->toBe(1000.0)
         ->and($data['datasets'][0]['data'][0])->toBe(1050.0);
 });

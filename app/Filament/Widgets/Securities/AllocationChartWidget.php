@@ -70,7 +70,7 @@ class AllocationChartWidget extends ChartWidget
         $securities = $query->with('latestPrice')->get();
 
         $labels = [];
-        $data = [];
+        $valuations = [];
         $colors = [];
         $colorIndex = 0;
 
@@ -83,10 +83,15 @@ class AllocationChartWidget extends ChartWidget
             }
 
             $labels[] = $security->name;
-            $data[] = round($quantity * (float) $price, 2);
+            $valuations[] = $quantity * (float) $price;
             $colors[] = self::COLORS[$colorIndex % count(self::COLORS)];
             $colorIndex++;
         }
+
+        $total = array_sum($valuations);
+        $data = $total > 0
+            ? array_map(fn (float $v): float => round(($v / $total) * 100, 1), $valuations)
+            : [];
 
         return [
             'datasets' => [
@@ -112,10 +117,7 @@ class AllocationChartWidget extends ChartWidget
                     tooltip: {
                         callbacks: {
                             label: (context) => {
-                                const value = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(context.parsed);
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((context.parsed / total) * 100).toFixed(1);
-                                return context.label + ' : ' + value + ' (' + percentage + '%)';
+                                return context.label + ' : ' + context.parsed + ' %';
                             },
                         },
                     },

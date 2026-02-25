@@ -21,8 +21,6 @@ class SectorAllocationChartWidget extends ChartWidget
 
     protected ?string $pollingInterval = null;
 
-    protected ?string $maxHeight = '300px';
-
     private ?\Illuminate\Database\Eloquent\Builder $cachedPageTableQuery = null;
 
     private const COLORS = [
@@ -107,14 +105,19 @@ class SectorAllocationChartWidget extends ChartWidget
     protected function getData(): array
     {
         if ($this->record !== null) {
-            return $this->getDataForSingleSecurity();
+            $data = $this->getDataForSingleSecurity();
+        } elseif ($this->tablePageClass !== null) {
+            $data = $this->getDataForAccountList();
+        } else {
+            $data = ['datasets' => [], 'labels' => []];
         }
 
-        if ($this->tablePageClass !== null) {
-            return $this->getDataForAccountList();
-        }
+        $labelCount = count($data['labels'] ?? []);
+        $this->maxHeight = $labelCount > 0
+            ? ($labelCount * 40 + 60).'px'
+            : '300px';
 
-        return ['datasets' => [], 'labels' => []];
+        return $data;
     }
 
     private function getDataForSingleSecurity(): array
@@ -182,6 +185,8 @@ class SectorAllocationChartWidget extends ChartWidget
             return ['datasets' => [], 'labels' => []];
         }
 
+        $grandTotal = array_sum($sectorTotals);
+
         arsort($sectorTotals);
         $sortedSectorKeys = array_keys($sectorTotals);
 
@@ -193,7 +198,8 @@ class SectorAllocationChartWidget extends ChartWidget
         foreach ($securityIds as $securityId) {
             $data = [];
             foreach ($sortedSectorKeys as $sectorKey) {
-                $data[] = round($sectorBySecurity[$sectorKey][$securityId] ?? 0, 2);
+                $amount = $sectorBySecurity[$sectorKey][$securityId] ?? 0;
+                $data[] = $grandTotal > 0 ? round(($amount / $grandTotal) * 100, 1) : 0;
             }
 
             $datasets[] = [
@@ -238,6 +244,15 @@ class SectorAllocationChartWidget extends ChartWidget
                                 callback: (value) => value + ' %',
                             },
                         },
+                        y: {
+                            ticks: {
+                                crossAlign: 'far',
+                                callback: function(value) {
+                                    const label = this.getLabelForValue(value);
+                                    return label.length > 18 ? label.substring(0, 17) + '…' : label;
+                                },
+                            },
+                        },
                     },
                 }
             JS);
@@ -251,10 +266,7 @@ class SectorAllocationChartWidget extends ChartWidget
                     tooltip: {
                         callbacks: {
                             label: (context) => {
-                                const value = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(context.parsed.x);
-                                const total = context.chart.data.datasets.reduce((sum, ds) => sum + (ds.data[context.dataIndex] || 0), 0);
-                                const percentage = total > 0 ? ((context.parsed.x / total) * 100).toFixed(1) : '0.0';
-                                return context.dataset.label + ' : ' + value + ' (' + percentage + '%)';
+                                return context.dataset.label + ' : ' + context.parsed.x + ' %';
                             },
                         },
                     },
@@ -263,11 +275,18 @@ class SectorAllocationChartWidget extends ChartWidget
                     x: {
                         stacked: true,
                         ticks: {
-                            callback: (value) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value),
+                            callback: (value) => value + ' %',
                         },
                     },
                     y: {
                         stacked: true,
+                        ticks: {
+                            crossAlign: 'far',
+                            callback: function(value) {
+                                const label = this.getLabelForValue(value);
+                                return label.length > 18 ? label.substring(0, 17) + '…' : label;
+                            },
+                        },
                     },
                 },
             }
