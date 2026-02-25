@@ -56,14 +56,17 @@ class YahooFinanceService
             $security->save();
         }
 
+        $endDate = new \DateTimeImmutable('now');
+
         if ($startDate === null) {
             $latestDate = $security->prices()->max('date');
-            $startDate = $latestDate
-                ? (new \DateTimeImmutable($latestDate))->modify('+1 day')
-                : new \DateTimeImmutable('-5 years');
+            $latestDateObj = $latestDate ? new \DateTimeImmutable($latestDate) : null;
+            $startDate = $latestDateObj === null
+                ? new \DateTimeImmutable('-5 years')
+                : ($latestDateObj->format('Y-m-d') === $endDate->format('Y-m-d')
+                    ? $latestDateObj
+                    : $latestDateObj->modify('+1 day'));
         }
-
-        $endDate = new \DateTimeImmutable('now');
 
         if ($startDate > $endDate) {
             return 0;
@@ -72,7 +75,7 @@ class YahooFinanceService
         $result = PythonScriptCaller::call('fetch_prices.py', [
             'ticker' => $security->ticker,
             'start_date' => $startDate->format('Y-m-d'),
-            'end_date' => $endDate->format('Y-m-d'),
+            'end_date' => $endDate->modify('+1 day')->format('Y-m-d'),
         ], timeout: 60);
 
         $historicalData = $result['data'] ?? [];
@@ -131,9 +134,12 @@ class YahooFinanceService
             }
 
             $latestDate = $latestDates->get($security->id);
-            $startDate = $latestDate
-                ? (new \DateTimeImmutable($latestDate))->modify('+1 day')
-                : new \DateTimeImmutable('-5 years');
+            $latestDateObj = $latestDate ? new \DateTimeImmutable($latestDate) : null;
+            $startDate = $latestDateObj === null
+                ? new \DateTimeImmutable('-5 years')
+                : ($latestDateObj->format('Y-m-d') === $endDate->format('Y-m-d')
+                    ? $latestDateObj
+                    : $latestDateObj->modify('+1 day'));
 
             if ($startDate > $endDate) {
                 continue;
@@ -154,7 +160,7 @@ class YahooFinanceService
                 $input = json_encode([
                     'ticker' => $task['security']->ticker,
                     'start_date' => $task['startDate'],
-                    'end_date' => $endDate->format('Y-m-d'),
+                    'end_date' => $endDate->modify('+1 day')->format('Y-m-d'),
                 ]);
 
                 $pool->as((string) $index)
