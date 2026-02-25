@@ -10,9 +10,8 @@ use App\Models\SecuritySector;
 use App\Support\PythonScriptCaller;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Process\Pool;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Process;
 
 class YahooFinanceService
 {
@@ -61,11 +60,21 @@ class YahooFinanceService
         if ($startDate === null) {
             $latestDate = $security->prices()->max('date');
             $latestDateObj = $latestDate ? new \DateTimeImmutable($latestDate) : null;
-            $startDate = $latestDateObj === null
-                ? new \DateTimeImmutable('-5 years')
-                : ($latestDateObj->format('Y-m-d') === $endDate->format('Y-m-d')
-                    ? $latestDateObj
-                    : $latestDateObj->modify('+1 day'));
+
+            $earliestTransactionDate = DB::table('transactions')
+                ->where('security_id', $security->id)
+                ->min('date');
+            $earliestPriceDate = $security->prices()->min('date');
+
+            if ($latestDateObj !== null && $earliestTransactionDate !== null && $earliestTransactionDate < $earliestPriceDate) {
+                $startDate = new \DateTimeImmutable($earliestTransactionDate);
+            } else {
+                $startDate = $latestDateObj === null
+                    ? new \DateTimeImmutable('-5 years')
+                    : ($latestDateObj->format('Y-m-d') === $endDate->format('Y-m-d')
+                        ? $latestDateObj
+                        : $latestDateObj->modify('+1 day'));
+            }
         }
 
         if ($startDate > $endDate) {
@@ -108,15 +117,27 @@ class YahooFinanceService
      */
     public function fetchAndStorePricesBulk(Collection $securities): int
     {
-        $pythonBin = PythonScriptCaller::pythonBin();
-        $scriptPath = PythonScriptCaller::scriptPath('fetch_prices.py');
         $endDate = new \DateTimeImmutable('now');
+
+        $securityIds = $securities->pluck('id');
 
         $latestDates = SecurityPrice::query()
             ->selectRaw('security_id, MAX(date) as latest_date')
-            ->whereIn('security_id', $securities->pluck('id'))
+            ->whereIn('security_id', $securityIds)
             ->groupBy('security_id')
             ->pluck('latest_date', 'security_id');
+
+        $earliestTransactionDates = DB::table('transactions')
+            ->selectRaw('security_id, MIN(date) as earliest_date')
+            ->whereIn('security_id', $securityIds)
+            ->groupBy('security_id')
+            ->pluck('earliest_date', 'security_id');
+
+        $earliestPriceDates = SecurityPrice::query()
+            ->selectRaw('security_id, MIN(date) as earliest_date')
+            ->whereIn('security_id', $securityIds)
+            ->groupBy('security_id')
+            ->pluck('earliest_date', 'security_id');
 
         /** @var array<int, array{security: Security, startDate: string}> */
         $tasks = [];
@@ -135,11 +156,19 @@ class YahooFinanceService
 
             $latestDate = $latestDates->get($security->id);
             $latestDateObj = $latestDate ? new \DateTimeImmutable($latestDate) : null;
-            $startDate = $latestDateObj === null
-                ? new \DateTimeImmutable('-5 years')
-                : ($latestDateObj->format('Y-m-d') === $endDate->format('Y-m-d')
-                    ? $latestDateObj
-                    : $latestDateObj->modify('+1 day'));
+
+            $earliestTransaction = $earliestTransactionDates->get($security->id);
+            $earliestPrice = $earliestPriceDates->get($security->id);
+
+            if ($latestDateObj !== null && $earliestTransaction !== null && $earliestTransaction < $earliestPrice) {
+                $startDate = new \DateTimeImmutable($earliestTransaction);
+            } else {
+                $startDate = $latestDateObj === null
+                    ? new \DateTimeImmutable('-5 years')
+                    : ($latestDateObj->format('Y-m-d') === $endDate->format('Y-m-d')
+                        ? $latestDateObj
+                        : $latestDateObj->modify('+1 day'));
+            }
 
             if ($startDate > $endDate) {
                 continue;
@@ -155,42 +184,23 @@ class YahooFinanceService
             return 0;
         }
 
-        $results = Process::concurrently(function (Pool $pool) use ($tasks, $pythonBin, $scriptPath, $endDate): void {
-            foreach ($tasks as $index => $task) {
-                $input = json_encode([
-                    'ticker' => $task['security']->ticker,
-                    'start_date' => $task['startDate'],
-                    'end_date' => $endDate->modify('+1 day')->format('Y-m-d'),
-                ]);
+        $tickersInput = array_map(fn (array $task) => [
+            'ticker' => $task['security']->ticker,
+            'start_date' => $task['startDate'],
+            'end_date' => $endDate->modify('+1 day')->format('Y-m-d'),
+        ], $tasks);
 
-                $pool->as((string) $index)
-                    ->timeout(60)
-                    ->env(['PYTHONUNBUFFERED' => '1'])
-                    ->input($input)
-                    ->command("{$pythonBin} {$scriptPath}");
-            }
-        });
+        $result = PythonScriptCaller::call('fetch_prices_bulk.py', [
+            'tickers' => $tickersInput,
+        ], timeout: 120);
+
+        $allData = $result['data'] ?? [];
 
         $totalInserted = 0;
 
-        foreach ($tasks as $index => $task) {
-            $result = $results[(string) $index];
-
-            if (! $result->successful()) {
-                Log::warning("Failed to fetch prices for {$task['security']->name}: {$result->errorOutput()}");
-
-                continue;
-            }
-
-            $decoded = json_decode($result->output(), true);
-
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                Log::warning("Invalid JSON for {$task['security']->name}: ".json_last_error_msg());
-
-                continue;
-            }
-
-            $historicalData = $decoded['data'] ?? [];
+        foreach ($tasks as $task) {
+            $ticker = $task['security']->ticker;
+            $historicalData = $allData[$ticker] ?? [];
 
             if ($historicalData === []) {
                 continue;
