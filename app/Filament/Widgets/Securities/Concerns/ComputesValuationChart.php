@@ -142,25 +142,14 @@ trait ComputesValuationChart
                 scales: {
                     x: {
                         ticks: {
-                            autoSkip: false,
+                            autoSkip: true,
+                            maxTicksLimit: 12,
                             maxRotation: 0,
-                            callback: function(value, index, ticks) {
+                            callback: function(value) {
                                 const label = this.getLabelForValue(value);
                                 const date = new Date(label);
                                 const month = date.toLocaleDateString('fr-FR', { month: 'short' });
                                 const year = date.toLocaleDateString('fr-FR', { year: '2-digit' });
-                                const key = month + year;
-                                if (index > 0) {
-                                    const prevLabel = this.getLabelForValue(ticks[index - 1].value);
-                                    const prevDate = new Date(prevLabel);
-                                    const prevKey = prevDate.toLocaleDateString('fr-FR', { month: 'short' }) + prevDate.toLocaleDateString('fr-FR', { year: '2-digit' });
-                                    if (key === prevKey) return '';
-                                }
-                                const isMobile = this.chart.width < 500;
-                                if (isMobile) {
-                                    const monthIndex = date.getMonth();
-                                    if (monthIndex % 2 !== 0) return '';
-                                }
                                 return month + ' ' + year;
                             },
                         },
