@@ -28,7 +28,7 @@ class ValuationChartWidget extends ChartWidget
 
     protected ?string $pollingInterval = null;
 
-    protected ?string $maxHeight = '300px';
+    protected ?string $maxHeight = null;
 
     private const COLORS = [
         ['border' => 'rgb(59, 130, 246)', 'bg' => 'rgba(59, 130, 246, 0.4)'],
