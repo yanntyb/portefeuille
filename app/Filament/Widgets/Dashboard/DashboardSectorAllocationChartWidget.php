@@ -17,6 +17,8 @@ class DashboardSectorAllocationChartWidget extends ChartWidget
 
     protected ?string $pollingInterval = null;
 
+    protected string $view = 'filament.widgets.scrollable-chart-widget';
+
     private const COLORS = [
         'rgb(59, 130, 246)',
         'rgb(16, 185, 129)',
@@ -156,11 +158,8 @@ class DashboardSectorAllocationChartWidget extends ChartWidget
                     y: {
                         stacked: true,
                         ticks: {
+                            autoSkip: false,
                             crossAlign: 'far',
-                            callback: function(value) {
-                                const label = this.getLabelForValue(value);
-                                return label.length > 18 ? label.substring(0, 17) + '…' : label;
-                            },
                         },
                     },
                 },

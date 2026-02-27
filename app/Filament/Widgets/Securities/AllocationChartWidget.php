@@ -114,6 +114,13 @@ class AllocationChartWidget extends ChartWidget
         return RawJs::make(<<<'JS'
             {
                 plugins: {
+                    legend: {
+                        position: 'bottom',
+                        align: 'start',
+                        labels: {
+                            padding: 8,
+                        },
+                    },
                     tooltip: {
                         callbacks: {
                             label: (context) => {

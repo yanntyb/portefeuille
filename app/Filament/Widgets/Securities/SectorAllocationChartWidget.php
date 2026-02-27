@@ -23,6 +23,8 @@ class SectorAllocationChartWidget extends ChartWidget
 
     protected ?string $pollingInterval = null;
 
+    protected string $view = 'filament.widgets.scrollable-chart-widget';
+
     private ?Builder $cachedPageTableQuery = null;
 
     private ?HasTable $tablePage = null;
@@ -313,11 +315,8 @@ class SectorAllocationChartWidget extends ChartWidget
                         },
                         y: {
                             ticks: {
+                                autoSkip: false,
                                 crossAlign: 'far',
-                                callback: function(value) {
-                                    const label = this.getLabelForValue(value);
-                                    return label.length > 18 ? label.substring(0, 17) + '…' : label;
-                                },
                             },
                         },
                     },
@@ -348,11 +347,8 @@ class SectorAllocationChartWidget extends ChartWidget
                     y: {
                         stacked: true,
                         ticks: {
+                            autoSkip: false,
                             crossAlign: 'far',
-                            callback: function(value) {
-                                const label = this.getLabelForValue(value);
-                                return label.length > 18 ? label.substring(0, 17) + '…' : label;
-                            },
                         },
                     },
                 },

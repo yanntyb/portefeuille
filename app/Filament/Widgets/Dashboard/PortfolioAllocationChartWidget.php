@@ -77,6 +77,16 @@ class PortfolioAllocationChartWidget extends ChartWidget
         return RawJs::make(<<<'JS'
             {
                 plugins: {
+                    legend: {
+                        position: 'bottom',
+                        align: 'start',
+                        labels: {
+                            boxWidth: 12,
+                            boxHeight: 12,
+                            padding: 8,
+                            font: { size: 12 },
+                        },
+                    },
                     tooltip: {
                         callbacks: {
                             label: (context) => {
