@@ -1,0 +1,38 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class AllocationProfileItem extends Model
+{
+    /** @use HasFactory<\Database\Factories\AllocationProfileItemFactory> */
+    use HasFactory;
+
+    /** @var list<string> */
+    protected $fillable = [
+        'allocation_profile_id',
+        'security_id',
+        'target_percentage',
+    ];
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return [
+            'target_percentage' => 'decimal:2',
+        ];
+    }
+
+    public function allocationProfile(): BelongsTo
+    {
+        return $this->belongsTo(AllocationProfile::class);
+    }
+
+    public function security(): BelongsTo
+    {
+        return $this->belongsTo(Security::class);
+    }
+}
