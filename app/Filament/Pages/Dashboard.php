@@ -10,6 +10,11 @@ class Dashboard extends BaseDashboard
 {
     protected string $view = 'filament.pages.dashboard';
 
+    public function getColumns(): int|array
+    {
+        return 2;
+    }
+
     public function loadPrices(): void
     {
         $securities = Security::query()

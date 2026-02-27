@@ -3,6 +3,8 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Plugins\PwaPlugin;
+use App\Filament\Widgets\Dashboard\DashboardPerformanceStatsOverview;
+use App\Filament\Widgets\Dashboard\DashboardSectorAllocationChartWidget;
 use App\Filament\Widgets\Dashboard\PortfolioAllocationChartWidget;
 use App\Filament\Widgets\Dashboard\PortfolioStatsOverview;
 use Filament\Http\Middleware\Authenticate;
@@ -39,7 +41,9 @@ class AdminPanelProvider extends PanelProvider
             ->pages([])
             ->widgets([
                 PortfolioStatsOverview::class,
+                DashboardPerformanceStatsOverview::class,
                 PortfolioAllocationChartWidget::class,
+                DashboardSectorAllocationChartWidget::class,
             ])
             ->navigationItems([
                 NavigationItem::make('Logs')

@@ -28,13 +28,10 @@ class PortfolioStatsOverview extends StatsOverviewWidget
         $totalInvested = 0;
         $totalFees = 0;
 
-        /** @var array<string, float> */
-        $valuationByAccount = [];
-
         foreach ($accountTypes as $accountType) {
             $securities = $provider->securitiesForAccount($accountType);
 
-            $accountValuation = $securities->sum(function ($security) {
+            $totalValuation += $securities->sum(function ($security) {
                 $close = $security->latestPrice?->close;
 
                 if ($close === null || $security->total_quantity === null) {
@@ -44,33 +41,21 @@ class PortfolioStatsOverview extends StatsOverviewWidget
                 return (float) $security->total_quantity * (float) $close;
             });
 
-            $accountInvested = $securities->sum(fn ($security) => (float) ($security->total_invested ?? 0));
-            $accountFees = $securities->sum(fn ($security) => (float) ($security->total_fees ?? 0));
-
-            $valuationByAccount[$accountType->getLabel()] = $accountValuation;
-            $totalValuation += $accountValuation;
-            $totalInvested += $accountInvested;
-            $totalFees += $accountFees;
+            $totalInvested += $securities->sum(fn ($security) => (float) ($security->total_invested ?? 0));
+            $totalFees += $securities->sum(fn ($security) => (float) ($security->total_fees ?? 0));
         }
 
         $plusValue = $totalValuation - $totalInvested;
         $plusValuePercentage = $totalInvested > 0 ? ($plusValue / $totalInvested) * 100 : 0;
         $feesPercentage = $totalInvested > 0 ? ($totalFees / $totalInvested) * 100 : 0;
 
-        $plusValueLabel = Number::currency($plusValue, 'EUR').' ('.Number::format($plusValuePercentage, 2).' %)';
-        $feesLabel = Number::currency($totalFees, 'EUR').' ('.Number::format($feesPercentage, 2).' %)';
-
-        $repartitionDescription = collect($valuationByAccount)
-            ->map(fn (float $value, string $label) => $label.' : '.Number::currency($value, 'EUR'))
-            ->implode(' | ');
-
         return [
-            Stat::make('Valorisation totale', Number::currency($totalValuation, 'EUR'))
-                ->description($repartitionDescription),
-            Stat::make('Total investi', Number::currency($totalInvested, 'EUR')),
-            Stat::make('Plus-value globale', $plusValueLabel)
+            Stat::make('Valorisation', Number::currency($totalValuation, 'EUR')),
+            Stat::make('Plus-value', Number::currency($plusValue, 'EUR'))
+                ->description(Number::format($plusValuePercentage, 2).' %')
                 ->color($plusValue >= 0 ? 'success' : 'danger'),
-            Stat::make('Frais totaux', $feesLabel)
+            Stat::make('Frais', Number::currency($totalFees, 'EUR'))
+                ->description(Number::format($feesPercentage, 2).' %')
                 ->color('danger'),
         ];
     }

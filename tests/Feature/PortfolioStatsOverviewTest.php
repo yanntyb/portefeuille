@@ -7,7 +7,7 @@ use App\Models\Transaction;
 
 use function Pest\Livewire\livewire;
 
-it('computes valuation, invested, and plus-value correctly', function () {
+it('computes valuation, plus-value, and fees correctly', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
@@ -28,12 +28,13 @@ it('computes valuation, invested, and plus-value correctly', function () {
 
     $stats = invade($widget->instance())->getStats();
 
-    expect($stats)->toHaveCount(4)
+    expect($stats)->toHaveCount(3)
+        ->and($stats[0]->getLabel())->toBe('Valorisation')
         ->and($stats[0]->getValue())->toContain('1,200')
-        ->and($stats[1]->getValue())->toContain('1,005')
-        ->and($stats[2]->getValue())->toContain('195')
-        ->and($stats[3]->getLabel())->toBe('Frais totaux')
-        ->and($stats[3]->getValue())->toContain('5');
+        ->and($stats[1]->getLabel())->toBe('Plus-value')
+        ->and($stats[1]->getValue())->toContain('195')
+        ->and($stats[2]->getLabel())->toBe('Frais')
+        ->and($stats[2]->getValue())->toContain('5');
 });
 
 it('aggregates across PEA and CTO accounts', function () {
@@ -70,10 +71,8 @@ it('aggregates across PEA and CTO accounts', function () {
 
     // Valuation = (10 * 120) + (5 * 250) = 1200 + 1250 = 2450
     expect($stats[0]->getValue())->toContain('2,450')
-        // Invested = (10 * 100) + (5 * 200) = 1000 + 1000 = 2000
-        ->and($stats[1]->getValue())->toContain('2,000')
         // Plus-value = 2450 - 2000 = 450
-        ->and($stats[2]->getValue())->toContain('450');
+        ->and($stats[1]->getValue())->toContain('450');
 });
 
 it('shows success color when plus-value is positive', function () {
@@ -94,7 +93,7 @@ it('shows success color when plus-value is positive', function () {
 
     $stats = invade(livewire(PortfolioStatsOverview::class)->instance())->getStats();
 
-    expect($stats[2]->getColor())->toBe('success');
+    expect($stats[1]->getColor())->toBe('success');
 });
 
 it('shows danger color when plus-value is negative', function () {
@@ -115,10 +114,10 @@ it('shows danger color when plus-value is negative', function () {
 
     $stats = invade(livewire(PortfolioStatsOverview::class)->instance())->getStats();
 
-    expect($stats[2]->getColor())->toBe('danger');
+    expect($stats[1]->getColor())->toBe('danger');
 });
 
-it('shows description with repartition by account type', function () {
+it('displays plus-value percentage in description', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
@@ -136,11 +135,12 @@ it('shows description with repartition by account type', function () {
 
     $stats = invade(livewire(PortfolioStatsOverview::class)->instance())->getStats();
 
-    expect($stats[0]->getDescription())->toContain('PEA')
-        ->and($stats[0]->getDescription())->toContain('1,200');
+    // Plus-value = 200, invested = 1000, percentage = 20%
+    expect($stats[1]->getDescription())->toContain('20.00')
+        ->and($stats[1]->getDescription())->toContain('%');
 });
 
-it('displays total fees with percentage', function () {
+it('displays fees percentage in description', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
@@ -158,16 +158,15 @@ it('displays total fees with percentage', function () {
 
     $stats = invade(livewire(PortfolioStatsOverview::class)->instance())->getStats();
 
-    // Fees = 15, totalInvested = 10*100 + 15 = 1015, percentage = 15/1015 * 100 ≈ 1.48%
-    expect($stats[3]->getLabel())->toBe('Frais totaux')
-        ->and($stats[3]->getValue())->toContain('15')
-        ->and($stats[3]->getValue())->toContain('%')
-        ->and($stats[3]->getColor())->toBe('danger');
+    expect($stats[2]->getLabel())->toBe('Frais')
+        ->and($stats[2]->getValue())->toContain('15')
+        ->and($stats[2]->getDescription())->toContain('%')
+        ->and($stats[2]->getColor())->toBe('danger');
 });
 
 it('returns zero values when no data exists', function () {
     $stats = invade(livewire(PortfolioStatsOverview::class)->instance())->getStats();
 
-    expect($stats)->toHaveCount(4)
+    expect($stats)->toHaveCount(3)
         ->and($stats[0]->getValue())->toContain('0');
 });

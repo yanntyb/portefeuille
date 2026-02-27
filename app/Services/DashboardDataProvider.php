@@ -27,4 +27,18 @@ class DashboardDataProvider
 
         return $this->securitiesByAccount[$key];
     }
+
+    /**
+     * @return Collection<int, Security>
+     */
+    public function allSecurities(): Collection
+    {
+        $all = new Collection;
+
+        foreach ([AccountType::Pea, AccountType::Cto] as $accountType) {
+            $all = $all->merge($this->securitiesForAccount($accountType));
+        }
+
+        return $all;
+    }
 }
