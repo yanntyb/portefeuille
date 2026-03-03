@@ -3,7 +3,7 @@
         <div class="flex items-center gap-3 rounded-xl bg-white px-6 py-4 shadow-lg dark:bg-gray-800">
             <x-filament::loading-indicator class="h-6 w-6 text-primary-500" />
             <span class="text-sm font-medium text-gray-700 dark:text-gray-200">
-                Mise à jour des prix en cours…
+                Mise à jour en cours…
             </span>
         </div>
     </div>

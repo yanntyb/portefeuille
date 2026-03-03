@@ -39,7 +39,7 @@ class SecurityForm
     public static function updateFromIsinAction(): Action
     {
         return Action::make('updateFromIsin')
-            ->label('Mise à jour & rechargement des prix')
+            ->label('Mise à jour')
             ->icon(Heroicon::ArrowPath)
             ->color('danger')
             ->schema(self::searchSchema())
@@ -72,13 +72,16 @@ class SecurityForm
                 $state['name'] = $name;
                 $livewire->data = $state;
 
-                $security->prices()->delete();
+                $service = app(YahooFinanceService::class);
 
-                $count = app(YahooFinanceService::class)
-                    ->fetchAndStorePrices($security, new \DateTimeImmutable('-5 years'));
+                $security->prices()->delete();
+                $priceCount = $service->fetchAndStorePrices($security, new \DateTimeImmutable('-5 years'));
+
+                $security->sectors()->delete();
+                $sectorCount = $service->fetchAndStoreSectors($security);
 
                 Notification::make()
-                    ->title("Titre mis à jour — {$count} prix rechargés")
+                    ->title("Titre mis à jour — {$priceCount} prix, {$sectorCount} secteurs rechargés")
                     ->success()
                     ->send();
             });
@@ -114,8 +117,16 @@ class SecurityForm
                     'name' => $name,
                 ]);
 
+                $service = app(YahooFinanceService::class);
+
+                $record->prices()->delete();
+                $priceCount = $service->fetchAndStorePrices($record, new \DateTimeImmutable('-5 years'));
+
+                $record->sectors()->delete();
+                $sectorCount = $service->fetchAndStoreSectors($record);
+
                 Notification::make()
-                    ->title('Titre mis à jour')
+                    ->title("Titre mis à jour — {$priceCount} prix, {$sectorCount} secteurs rechargés")
                     ->success()
                     ->send();
             });
