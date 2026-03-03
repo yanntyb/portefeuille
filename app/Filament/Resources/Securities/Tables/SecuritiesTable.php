@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\Securities\Tables;
 
+use App\Jobs\UpdateSecuritiesJob;
 use App\Models\Security;
-use App\Services\YahooFinanceService;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
@@ -60,17 +60,15 @@ class SecuritiesTable
                 Action::make('fetchAllPrices')
                     ->label('Mise à jour')
                     ->icon('heroicon-o-arrow-path')
-                    ->action(function (YahooFinanceService $service, $livewire): void {
-                        $securities = $livewire->scopedSecuritiesQuery()->get();
-                        $totalPrices = $service->fetchAndStorePricesBulk($securities);
+                    ->action(function ($livewire): void {
+                        $securityIds = $livewire->scopedSecuritiesQuery()
+                            ->pluck('securities.id')
+                            ->all();
 
-                        $totalSectors = 0;
-                        foreach ($securities as $security) {
-                            $totalSectors += $service->fetchAndStoreSectors($security);
-                        }
+                        UpdateSecuritiesJob::dispatch($securityIds);
 
                         Notification::make()
-                            ->title("{$totalPrices} prix, {$totalSectors} secteurs mis à jour")
+                            ->title('Mise à jour lancée en arrière-plan')
                             ->success()
                             ->send();
                     }),
