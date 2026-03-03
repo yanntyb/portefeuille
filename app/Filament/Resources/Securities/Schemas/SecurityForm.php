@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\Securities\Schemas;
 
+use App\Jobs\UpdateSecurityJob;
 use App\Models\Security;
-use App\Services\YahooFinanceService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
@@ -13,6 +13,7 @@ use Filament\Resources\Pages\EditRecord;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\Cache;
 
 class SecurityForm
 {
@@ -39,9 +40,11 @@ class SecurityForm
     public static function updateFromIsinAction(): Action
     {
         return Action::make('updateFromIsin')
-            ->label('Mise à jour')
+            ->label(fn (EditRecord $livewire) => $livewire->isUpdating ? 'Mise à jour en cours…' : 'Mise à jour')
             ->icon(Heroicon::ArrowPath)
             ->color('danger')
+            ->disabled(fn (EditRecord $livewire) => $livewire->isUpdating)
+            ->extraAttributes(fn (EditRecord $livewire) => $livewire->isUpdating ? ['class' => '[&_svg]:animate-spin'] : [])
             ->schema(self::searchSchema())
             ->mountUsing(function (Action $action, Schema $schema, EditRecord $livewire): void {
                 $isin = $livewire->data['isin'] ?? null;
@@ -65,23 +68,20 @@ class SecurityForm
 
                 /** @var Security $security */
                 $security = $livewire->getRecord();
-                $security->update(['ticker' => $symbol, 'name' => $name]);
 
                 $state = $livewire->data;
                 $state['ticker'] = $symbol;
                 $state['name'] = $name;
                 $livewire->data = $state;
 
-                $service = app(YahooFinanceService::class);
+                $cacheKey = UpdateSecurityJob::cacheKeyFor($security->id);
+                Cache::put($cacheKey, true, now()->addMinutes(10));
+                UpdateSecurityJob::dispatch($security->id, $symbol, $name);
 
-                $security->prices()->delete();
-                $priceCount = $service->fetchAndStorePrices($security, new \DateTimeImmutable('-5 years'));
-
-                $security->sectors()->delete();
-                $sectorCount = $service->fetchAndStoreSectors($security);
+                $livewire->isUpdating = true;
 
                 Notification::make()
-                    ->title("Titre mis à jour — {$priceCount} prix, {$sectorCount} secteurs rechargés")
+                    ->title('Mise à jour lancée en arrière-plan')
                     ->success()
                     ->send();
             });
@@ -112,21 +112,12 @@ class SecurityForm
             ->action(function (array $data, Security $record): void {
                 [$symbol, $name] = explode('|', $data['selected_result'], 2);
 
-                $record->update([
-                    'ticker' => $symbol,
-                    'name' => $name,
-                ]);
-
-                $service = app(YahooFinanceService::class);
-
-                $record->prices()->delete();
-                $priceCount = $service->fetchAndStorePrices($record, new \DateTimeImmutable('-5 years'));
-
-                $record->sectors()->delete();
-                $sectorCount = $service->fetchAndStoreSectors($record);
+                $cacheKey = UpdateSecurityJob::cacheKeyFor($record->id);
+                Cache::put($cacheKey, true, now()->addMinutes(10));
+                UpdateSecurityJob::dispatch($record->id, $symbol, $name);
 
                 Notification::make()
-                    ->title("Titre mis à jour — {$priceCount} prix, {$sectorCount} secteurs rechargés")
+                    ->title('Mise à jour lancée en arrière-plan')
                     ->success()
                     ->send();
             });
@@ -153,7 +144,7 @@ class SecurityForm
 
     private static function mountSearchAction(Action $action, Schema $schema, string $isin, ?string $ticker = null): void
     {
-        $service = app(YahooFinanceService::class);
+        $service = app(\App\Services\YahooFinanceService::class);
         $results = $service->searchTicker($isin, $ticker);
 
         if ($results === []) {
