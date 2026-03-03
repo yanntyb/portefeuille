@@ -31,7 +31,7 @@ abstract class EditSecurity extends EditRecord
         $this->isUpdating = Cache::has(UpdateSecurityJob::cacheKeyFor($this->record->id));
     }
 
-    public function dehydrate(): void
+    public function checkUpdateStatus(): void
     {
         $wasUpdating = $this->isUpdating;
         $this->isUpdating = Cache::has(UpdateSecurityJob::cacheKeyFor($this->record->id));

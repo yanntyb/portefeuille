@@ -1,7 +1,7 @@
 <x-filament-panels::page>
     <div
         @if ($this->isUpdating)
-            wire:poll.5s="dehydrate"
+            wire:poll.5s="checkUpdateStatus"
         @endif
     >
         @if ($this->isUpdating)
