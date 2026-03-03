@@ -58,14 +58,19 @@ class SecuritiesTable
             ->recordActionsPosition(RecordActionsPosition::BeforeColumns)
             ->headerActions([
                 Action::make('fetchAllPrices')
-                    ->label('MAJ prix')
+                    ->label('Mise à jour')
                     ->icon('heroicon-o-arrow-path')
                     ->action(function (YahooFinanceService $service, $livewire): void {
                         $securities = $livewire->scopedSecuritiesQuery()->get();
-                        $totalInserted = $service->fetchAndStorePricesBulk($securities);
+                        $totalPrices = $service->fetchAndStorePricesBulk($securities);
+
+                        $totalSectors = 0;
+                        foreach ($securities as $security) {
+                            $totalSectors += $service->fetchAndStoreSectors($security);
+                        }
 
                         Notification::make()
-                            ->title("{$totalInserted} prix mis à jour")
+                            ->title("{$totalPrices} prix, {$totalSectors} secteurs mis à jour")
                             ->success()
                             ->send();
                     }),

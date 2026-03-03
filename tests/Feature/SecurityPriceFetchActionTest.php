@@ -17,6 +17,9 @@ it('can fetch all prices via header action', function () {
     $service->shouldReceive('fetchAndStorePricesBulk')
         ->once()
         ->andReturn(5);
+    $service->shouldReceive('fetchAndStoreSectors')
+        ->once()
+        ->andReturn(3);
 
     livewire(ListPeaSecurities::class)
         ->callAction(TestAction::make('fetchAllPrices')->table())
