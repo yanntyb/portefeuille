@@ -7,6 +7,7 @@ use App\Filament\Widgets\Securities\PerformanceStatsOverview;
 use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
 use App\Filament\Widgets\Securities\SecurityStatsOverview;
 use App\Filament\Widgets\Securities\ValuationChartWidget;
+use App\Jobs\UpdateSecuritiesJob;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Services\YahooFinanceService;
@@ -14,6 +15,7 @@ use App\Support\MarketCalendar;
 use Filament\Pages\Concerns\ExposesTableToWidgets;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 
 abstract class ListSecurities extends ListRecords
 {
@@ -27,6 +29,8 @@ abstract class ListSecurities extends ListRecords
     /** @var list<int> */
     public array $pricelessSecurityIds = [];
 
+    public bool $isUpdating = false;
+
     public function scopedSecuritiesQuery(): Builder
     {
         return Security::query()->forAccountType(static::getResource()::accountType(), auth()->id());
@@ -36,8 +40,28 @@ abstract class ListSecurities extends ListRecords
     {
         parent::mount();
 
+        $cacheKey = UpdateSecuritiesJob::cacheKeyFor(static::getResource()::accountType()->value);
+        $this->isUpdating = Cache::has($cacheKey);
+
         $this->computeSecurityVisibility();
         $this->js('$wire.refreshPrices()');
+    }
+
+    public function getTablePollingInterval(): ?string
+    {
+        return $this->isUpdating ? '5s' : null;
+    }
+
+    public function dehydrate(): void
+    {
+        $cacheKey = UpdateSecuritiesJob::cacheKeyFor(static::getResource()::accountType()->value);
+        $wasUpdating = $this->isUpdating;
+        $this->isUpdating = Cache::has($cacheKey);
+
+        if ($wasUpdating && ! $this->isUpdating) {
+            $this->computeSecurityVisibility();
+            $this->dispatch('prices-updated');
+        }
     }
 
     private function computeSecurityVisibility(): void

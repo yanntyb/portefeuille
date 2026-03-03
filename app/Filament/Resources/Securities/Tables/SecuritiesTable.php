@@ -9,6 +9,7 @@ use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Cache;
 
 class SecuritiesTable
 {
@@ -58,14 +59,22 @@ class SecuritiesTable
             ->recordActionsPosition(RecordActionsPosition::BeforeColumns)
             ->headerActions([
                 Action::make('fetchAllPrices')
-                    ->label('Mise à jour')
+                    ->label(fn ($livewire) => $livewire->isUpdating ? 'Mise à jour en cours…' : 'Mise à jour')
                     ->icon('heroicon-o-arrow-path')
+                    ->disabled(fn ($livewire) => $livewire->isUpdating)
+                    ->extraAttributes(fn ($livewire) => $livewire->isUpdating ? ['class' => '[&_svg]:animate-spin'] : [])
                     ->action(function ($livewire): void {
+                        $accountType = $livewire::getResource()::accountType()->value;
+                        $cacheKey = UpdateSecuritiesJob::cacheKeyFor($accountType);
+
                         $securityIds = $livewire->scopedSecuritiesQuery()
                             ->pluck('securities.id')
                             ->all();
 
-                        UpdateSecuritiesJob::dispatch($securityIds);
+                        Cache::put($cacheKey, true, now()->addMinutes(10));
+                        UpdateSecuritiesJob::dispatch($securityIds, $cacheKey);
+
+                        $livewire->isUpdating = true;
 
                         Notification::make()
                             ->title('Mise à jour lancée en arrière-plan')

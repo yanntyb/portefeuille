@@ -5,6 +5,7 @@ use App\Jobs\UpdateSecuritiesJob;
 use App\Models\Security;
 use App\Models\Transaction;
 use Filament\Actions\Testing\TestAction;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
 
 use function Pest\Livewire\livewire;
@@ -20,6 +21,9 @@ it('dispatches update job via header action', function () {
         ->assertNotified();
 
     Queue::assertPushed(UpdateSecuritiesJob::class, function (UpdateSecuritiesJob $job) use ($security) {
-        return $job->securityIds === [$security->id];
+        return $job->securityIds === [$security->id]
+            && $job->cacheKey === UpdateSecuritiesJob::cacheKeyFor('pea');
     });
+
+    expect(Cache::has(UpdateSecuritiesJob::cacheKeyFor('pea')))->toBeTrue();
 });
