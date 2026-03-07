@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets\Securities;
 
+use App\Enums\TransactionType;
 use App\Models\Transaction;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -31,12 +32,20 @@ class SingleSecurityStatsOverview extends StatsOverviewWidget
 
         $transactions = $transactionsQuery->get();
 
-        $totalQuantity = (float) $transactions->sum('quantity');
+        $buyTransactions = $transactions->where('type', TransactionType::Buy);
+        $sellTransactions = $transactions->where('type', TransactionType::Sell);
+
+        $totalBuyQuantity = (float) $buyTransactions->sum('quantity');
+        $totalSellQuantity = (float) $sellTransactions->sum('quantity');
+        $totalQuantity = $totalBuyQuantity - $totalSellQuantity;
+
+        $totalBuyCost = $buyTransactions->sum(fn ($t) => (float) $t->quantity * (float) $t->unit_price);
+        $pru = $totalBuyQuantity > 0 ? $totalBuyCost / $totalBuyQuantity : 0;
+
         $totalFees = (float) $transactions->sum('fees');
-        $totalInvested = $transactions->sum(fn ($t) => (float) $t->quantity * (float) $t->unit_price) + $totalFees;
-        $pru = $totalQuantity > 0
-            ? $transactions->sum(fn ($t) => (float) $t->quantity * (float) $t->unit_price) / $totalQuantity
-            : 0;
+        $totalInvested = $totalQuantity * $pru + $totalFees;
+
+        $totalRealizedGain = (float) $sellTransactions->sum('realized_gain');
 
         $this->record->loadMissing('latestPrice');
         $close = $this->record->latestPrice?->close;
@@ -46,15 +55,21 @@ class SingleSecurityStatsOverview extends StatsOverviewWidget
         $plusValuePercentage = $totalInvested > 0 ? ($plusValue / $totalInvested) * 100 : 0;
         $feesPercentage = $totalInvested > 0 ? ($totalFees / $totalInvested) * 100 : 0;
 
+        $priceDate = $this->record->latestPrice?->date?->translatedFormat('d M Y');
+
         return [
+            Stat::make('Prix actuel', $close !== null ? Number::currency($close, 'EUR') : '—')
+                ->description($priceDate),
             Stat::make('Valorisation', Number::currency($valuation, 'EUR')),
-            Stat::make('Plus-value', Number::currency($plusValue, 'EUR'))
+            Stat::make('Plus-value latente', Number::currency($plusValue, 'EUR'))
                 ->description(Number::format($plusValuePercentage, 2).' %')
                 ->color($plusValue >= 0 ? 'success' : 'danger'),
             Stat::make('PRU', Number::currency($pru, 'EUR')),
             Stat::make('Frais', Number::currency($totalFees, 'EUR'))
                 ->description(Number::format($feesPercentage, 2).' %')
                 ->color('danger'),
+            Stat::make('Plus-value réalisée', Number::currency($totalRealizedGain, 'EUR'))
+                ->color($totalRealizedGain >= 0 ? 'success' : 'danger'),
         ];
     }
 }

@@ -64,18 +64,22 @@ class SecurityStatsOverview extends StatsOverviewWidget
             return (float) $record->total_quantity * (float) $close;
         });
 
+        $totalRealizedGain = $records->sum(fn ($record) => (float) ($record->total_realized_gain ?? 0));
+
         $plusValue = $valuation - $totalInvested;
         $plusValuePercentage = $totalInvested > 0 ? ($plusValue / $totalInvested) * 100 : 0;
         $feesPercentage = $totalInvested > 0 ? ($totalFees / $totalInvested) * 100 : 0;
 
         return [
             Stat::make('Valorisation', Number::currency($valuation, 'EUR')),
-            Stat::make('Plus-value', Number::currency($plusValue, 'EUR'))
+            Stat::make('Plus-value latente', Number::currency($plusValue, 'EUR'))
                 ->description(Number::format($plusValuePercentage, 2).' %')
                 ->color($plusValue >= 0 ? 'success' : 'danger'),
             Stat::make('Frais', Number::currency($totalFees, 'EUR'))
                 ->description(Number::format($feesPercentage, 2).' %')
                 ->color('danger'),
+            Stat::make('Plus-value réalisée', Number::currency($totalRealizedGain, 'EUR'))
+                ->color($totalRealizedGain >= 0 ? 'success' : 'danger'),
         ];
     }
 }

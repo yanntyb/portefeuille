@@ -18,14 +18,10 @@ class DashboardDataProvider
     {
         $key = $accountType->value;
 
-        if (! isset($this->securitiesByAccount[$key])) {
-            $this->securitiesByAccount[$key] = Security::query()
-                ->forAccountType($accountType, auth()->id())
-                ->with('latestPrice')
-                ->get();
-        }
-
-        return $this->securitiesByAccount[$key];
+        return $this->securitiesByAccount[$key] ??= Security::query()
+            ->forAccountType($accountType, auth()->id())
+            ->with('latestPrice')
+            ->get();
     }
 
     /**

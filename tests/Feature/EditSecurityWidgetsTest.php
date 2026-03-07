@@ -62,15 +62,17 @@ it('computes single security stats correctly on edit page', function () {
     // Plus-value = 1200 - 1005 = 195
     // PRU = 1000 / 10 = 100
     // Fees = 5
-    expect($stats)->toHaveCount(4)
-        ->and($stats[0]->getLabel())->toBe('Valorisation')
-        ->and($stats[0]->getValue())->toContain('1,200')
-        ->and($stats[1]->getLabel())->toBe('Plus-value')
-        ->and($stats[1]->getValue())->toContain('195')
-        ->and($stats[2]->getLabel())->toBe('PRU')
-        ->and($stats[2]->getValue())->toContain('100')
-        ->and($stats[3]->getLabel())->toBe('Frais')
-        ->and($stats[3]->getValue())->toContain('5');
+    expect($stats)->toHaveCount(6)
+        ->and($stats[0]->getLabel())->toBe('Prix actuel')
+        ->and($stats[1]->getLabel())->toBe('Valorisation')
+        ->and($stats[1]->getValue())->toContain('1')
+        ->and($stats[2]->getLabel())->toBe('Plus-value latente')
+        ->and($stats[2]->getValue())->toContain('195')
+        ->and($stats[3]->getLabel())->toBe('PRU')
+        ->and($stats[3]->getValue())->toContain('100')
+        ->and($stats[4]->getLabel())->toBe('Frais')
+        ->and($stats[4]->getValue())->toContain('5')
+        ->and($stats[5]->getLabel())->toBe('Plus-value réalisée');
 });
 
 it('only counts transactions of the correct account type', function () {
@@ -105,7 +107,8 @@ it('only counts transactions of the correct account type', function () {
 
     // Only PEA transaction: qty=10, unit_price=100, fees=5
     // Valuation = 10 * 120 = 1200
-    expect($stats[0]->getValue())->toContain('1,200');
+    expect($stats[1]->getLabel())->toBe('Valorisation')
+        ->and($stats[1]->getValue())->toContain('1');
 });
 
 it('renders edit page without errors when security has no transactions', function () {

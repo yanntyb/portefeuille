@@ -68,7 +68,7 @@ it('scopes securities by account type with aggregations', function () {
     expect($peaResults)->toHaveCount(1)
         ->and((float) $peaResults->first()->total_quantity)->toBe(30.0)
         ->and((float) $peaResults->first()->total_fees)->toBe(13.0)
-        ->and((float) $peaResults->first()->total_invested)->toBe(4013.0);
+        ->and(round((float) $peaResults->first()->total_invested, 2))->toBe(4013.0);
 });
 
 it('does not include securities without transactions for the account type', function () {

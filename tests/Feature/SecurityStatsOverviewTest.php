@@ -51,7 +51,7 @@ it('computes valuation and plus-value correctly', function () {
 
     $stats = invade($widget->instance())->getStats();
 
-    expect($stats)->toHaveCount(3)
+    expect($stats)->toHaveCount(4)
         ->and($stats[0]->getValue())->toContain('1,200')
         ->and($stats[1]->getValue())->toContain('195')
         ->and($stats[2]->getLabel())->toBe('Frais')
@@ -174,6 +174,6 @@ it('returns empty stats when no securities exist', function () {
 
     $stats = invade($widget->instance())->getStats();
 
-    expect($stats)->toHaveCount(3)
+    expect($stats)->toHaveCount(4)
         ->and($stats[0]->getValue())->toContain('0');
 });
