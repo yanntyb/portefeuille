@@ -2,11 +2,9 @@
 
 namespace App\Filament\Widgets\Securities;
 
-use App\Enums\PerformancePeriod;
 use App\Services\PortfolioPerformanceCalculator;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Number;
 
 class SingleSecurityPerformanceStatsOverview extends Widget
 {
@@ -27,33 +25,10 @@ class SingleSecurityPerformanceStatsOverview extends Widget
             return [];
         }
 
-        $returns = app(PortfolioPerformanceCalculator::class)
-            ->computeReturnsForSecurity($this->record, $this->accountType);
+        $calculator = app(PortfolioPerformanceCalculator::class);
 
-        $stats = [];
-
-        foreach (PerformancePeriod::cases() as $period) {
-            $value = $returns[$period->value];
-
-            if ($value === null) {
-                $stats[] = [
-                    'label' => $period->getLabel(),
-                    'value' => '—',
-                    'color' => 'gray',
-                ];
-
-                continue;
-            }
-
-            $formatted = ($value >= 0 ? '+' : '').Number::format($value, 2).' %';
-
-            $stats[] = [
-                'label' => $period->getLabel(),
-                'value' => $formatted,
-                'color' => $value >= 0 ? 'success' : 'danger',
-            ];
-        }
-
-        return $stats;
+        return PortfolioPerformanceCalculator::formatReturnsAsStats(
+            $calculator->computeReturnsForSecurity($this->record, $this->accountType),
+        );
     }
 }

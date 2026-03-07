@@ -22,11 +22,20 @@
         >
             @foreach ($this->getPerformanceData() as $stat)
                 <div @class([
-                    'fi-wi-stats-overview-stat min-w-[calc(33.333%-0.667rem)] shrink-0 snap-start',
+                    'fi-wi-stats-overview-stat relative min-w-[calc(33.333%-0.667rem)] shrink-0 snap-start',
                     'fi-color fi-color-success' => $stat['color'] === 'success',
                     'fi-color fi-color-danger' => $stat['color'] === 'danger',
                     'fi-color fi-color-gray' => $stat['color'] === 'gray',
                 ])>
+                    <div class="absolute top-1 right-1">
+                        <x-filament::icon-button
+                            icon="heroicon-o-information-circle"
+                            size="xs"
+                            color="gray"
+                            tooltip="Performance TWR : mesure le rendement pur de vos actifs, sans être influencé par vos achats ou ventes. Seule l'évolution des prix compte."
+                        />
+                    </div>
+
                     <div class="fi-wi-stats-overview-stat-content">
                         <div class="fi-wi-stats-overview-stat-label-ctn">
                             <span class="fi-wi-stats-overview-stat-label">

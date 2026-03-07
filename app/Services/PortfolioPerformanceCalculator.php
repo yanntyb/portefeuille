@@ -2,15 +2,23 @@
 
 namespace App\Services;
 
+use App\Data\PortfolioContext;
 use App\Enums\PerformancePeriod;
+use App\Enums\TransactionType;
+use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Number;
 
 class PortfolioPerformanceCalculator
 {
+    public function __construct(
+        private TransactionAggregator $aggregator,
+    ) {}
+
     /**
-     * @param  Collection<int, \App\Models\Security>  $securities  Securities with total_quantity and latestPrice loaded
+     * @param  Collection<int, Security>  $securities  Securities with total_quantity and latestPrice loaded
      * @return array<string, float|null> Keyed by PerformancePeriod value
      */
     public function computeReturns(Collection $securities): array
@@ -22,19 +30,22 @@ class PortfolioPerformanceCalculator
             ->orderBy('date')
             ->get();
 
-        $results = [];
+        $context = new PortfolioContext(
+            securities: $securities,
+            transactions: $transactions,
+            priceMap: $this->loadPriceMap($securityIds),
+            cumulativeQuantities: $this->aggregator->buildCumulatives($transactions)->quantities,
+        );
 
-        foreach (PerformancePeriod::cases() as $period) {
-            $results[$period->value] = $this->computeReturnForPeriod($securities, $transactions, $period);
-        }
+        $endValuation = $this->computeCurrentValuation($securities);
 
-        return $results;
+        return $this->computeAllPeriodReturns($context, $endValuation);
     }
 
     /**
      * @return array<string, float|null> Keyed by PerformancePeriod value
      */
-    public function computeReturnsForSecurity(\App\Models\Security $security, ?string $accountType = null): array
+    public function computeReturnsForSecurity(Security $security, ?string $accountType = null): array
     {
         $transactionsQuery = Transaction::query()
             ->where('security_id', $security->id)
@@ -46,131 +57,184 @@ class PortfolioPerformanceCalculator
 
         $transactions = $transactionsQuery->get();
 
-        $totalQuantity = (float) $transactions->sum('quantity');
+        $totalQuantity = (float) $transactions
+            ->sum(fn (Transaction $t) => $t->type === TransactionType::Sell ? -(float) $t->quantity : (float) $t->quantity);
 
         $security->loadMissing('latestPrice');
         $close = $security->latestPrice?->close;
-        $currentValuation = ($close !== null) ? $totalQuantity * (float) $close : 0;
+        $endValuation = ($close !== null) ? $totalQuantity * (float) $close : 0;
 
+        $context = new PortfolioContext(
+            securities: collect([$security]),
+            transactions: $transactions,
+            priceMap: $this->loadPriceMap([$security->id]),
+            cumulativeQuantities: $this->aggregator->buildCumulatives($transactions)->quantities,
+        );
+
+        return $this->computeAllPeriodReturns($context, $endValuation);
+    }
+
+    /**
+     * @return array<string, float|null> Keyed by PerformancePeriod value
+     */
+    private function computeAllPeriodReturns(PortfolioContext $context, float $endValuation): array
+    {
         $results = [];
 
         foreach (PerformancePeriod::cases() as $period) {
-            $results[$period->value] = $this->computeReturnForSingleSecurity(
-                $security,
-                $transactions,
-                $period,
-                $currentValuation,
-            );
+            $results[$period->value] = $this->computeReturnForPeriod($context, $period, $endValuation);
         }
 
         return $results;
     }
 
-    private function computeReturnForSingleSecurity(
-        \App\Models\Security $security,
-        Collection $transactions,
-        PerformancePeriod $period,
-        float $currentValuation,
-    ): ?float {
+    private function computeReturnForPeriod(PortfolioContext $context, PerformancePeriod $period, float $endValuation): ?float
+    {
         $startDate = $period->startDate()->format('Y-m-d');
-        $cumulativeQuantities = $this->buildCumulativeQuantities($transactions);
 
-        $quantity = $this->getQuantityAtDate($cumulativeQuantities, $security->id, $startDate);
+        $startValuation = $this->computeValuation($context, $startDate);
 
-        if ($quantity <= 0) {
+        if ($startValuation <= 0) {
             return null;
         }
 
-        $price = SecurityPrice::query()
-            ->where('security_id', $security->id)
-            ->whereDate('date', '<=', $startDate)
-            ->orderByDesc('date')
-            ->first();
+        $flowDates = $context->transactions
+            ->filter(fn (Transaction $t) => $t->date->format('Y-m-d') > $startDate)
+            ->groupBy(fn (Transaction $t) => $t->date->format('Y-m-d'));
 
-        if ($price === null) {
-            return null;
-        }
+        $getValuation = fn (string $date, bool $excludeDate): float => $this->computeValuation($context, $date, $excludeDate);
 
-        $startValuation = $quantity * (float) $price->close;
-        $netFlows = $this->computeNetFlows($transactions, $startDate);
-        $denominator = $startValuation + $netFlows;
-
-        if ($denominator <= 0) {
-            return null;
-        }
-
-        return round(($currentValuation - $startValuation - $netFlows) / $denominator * 100, 2);
+        return $this->chainSubPeriodReturns($startValuation, $endValuation, $flowDates, $getValuation);
     }
 
     /**
-     * @param  Collection<int, \App\Models\Security>  $securities
-     * @param  Collection<int, Transaction>  $transactions
+     * @param  Collection<string, Collection<int, Transaction>>  $flowDates  Transactions grouped by date
+     * @param  callable(string, bool): float  $getValuation  Returns valuation at date (second param: excludeDate)
      */
-    private function computeReturnForPeriod(Collection $securities, Collection $transactions, PerformancePeriod $period): ?float
+    private function chainSubPeriodReturns(float $startValuation, float $endValuation, Collection $flowDates, callable $getValuation): float
     {
-        $startDate = $period->startDate()->format('Y-m-d');
-        $securityIds = $securities->pluck('id')->all();
+        $product = 1.0;
+        $subPeriodStartValuation = $startValuation;
 
-        $startValuation = $this->computeValuationAtDate($securities, $transactions, $startDate, $securityIds);
+        foreach ($flowDates as $date => $dayTransactions) {
+            $valuationBeforeFlows = $getValuation($date, true);
 
-        if ($startValuation === null) {
-            return null;
+            if ($subPeriodStartValuation > 0) {
+                $product *= $valuationBeforeFlows / $subPeriodStartValuation;
+            }
+
+            $subPeriodStartValuation = $getValuation($date, false);
         }
 
-        $endValuation = $this->computeCurrentValuation($securities);
-
-        $netFlows = $this->computeNetFlows($transactions, $startDate);
-
-        $denominator = $startValuation + $netFlows;
-
-        if ($denominator <= 0) {
-            return null;
+        if ($subPeriodStartValuation > 0) {
+            $product *= $endValuation / $subPeriodStartValuation;
         }
 
-        return round(($endValuation - $startValuation - $netFlows) / $denominator * 100, 2);
+        return round(($product - 1) * 100, 2);
     }
 
-    /**
-     * @param  Collection<int, \App\Models\Security>  $securities
-     * @param  Collection<int, Transaction>  $transactions
-     * @param  list<int>  $securityIds
-     */
-    private function computeValuationAtDate(Collection $securities, Collection $transactions, string $date, array $securityIds): ?float
+    private function computeValuation(PortfolioContext $context, string $date, bool $excludeDate = false): float
     {
-        $cumulativeQuantities = $this->buildCumulativeQuantities($transactions);
-
-        $prices = SecurityPrice::query()
-            ->whereIn('security_id', $securityIds)
-            ->whereDate('date', '<=', $date)
-            ->orderByDesc('date')
-            ->get()
-            ->groupBy('security_id');
-
         $valuation = 0;
-        $hasAnyPosition = false;
 
-        foreach ($securities as $security) {
-            $quantity = $this->getQuantityAtDate($cumulativeQuantities, $security->id, $date);
+        foreach ($context->securities as $security) {
+            $quantity = $this->aggregator->getQuantityAtDate($context->cumulativeQuantities, $security->id, $date, $excludeDate);
 
             if ($quantity <= 0) {
                 continue;
             }
 
-            $price = $prices->get($security->id)?->first();
+            $price = $this->getClosestPrice($context->priceMap, $security->id, $date);
 
             if ($price === null) {
                 continue;
             }
 
-            $hasAnyPosition = true;
-            $valuation += $quantity * (float) $price->close;
+            $valuation += $quantity * $price;
         }
 
-        return $hasAnyPosition ? $valuation : null;
+        return $valuation;
     }
 
     /**
-     * @param  Collection<int, \App\Models\Security>  $securities
+     * @param  array<string, float|null>  $returns  Keyed by PerformancePeriod value
+     * @return list<array{label: string, value: string, color: string}>
+     */
+    public static function formatReturnsAsStats(array $returns): array
+    {
+        $stats = [];
+
+        foreach (PerformancePeriod::cases() as $period) {
+            $value = $returns[$period->value];
+
+            if ($value === null) {
+                $stats[] = [
+                    'label' => $period->getLabel(),
+                    'value' => '—',
+                    'color' => 'gray',
+                ];
+
+                continue;
+            }
+
+            $formatted = ($value >= 0 ? '+' : '').Number::format($value, 2).' %';
+
+            $stats[] = [
+                'label' => $period->getLabel(),
+                'value' => $formatted,
+                'color' => $value >= 0 ? 'success' : 'danger',
+            ];
+        }
+
+        return $stats;
+    }
+
+    /**
+     * @param  list<int>  $securityIds
+     * @return array<int, list<array{date: string, close: float}>>
+     */
+    private function loadPriceMap(array $securityIds): array
+    {
+        $prices = SecurityPrice::query()
+            ->whereIn('security_id', $securityIds)
+            ->orderBy('date')
+            ->get(['security_id', 'date', 'close']);
+
+        $map = [];
+
+        foreach ($prices as $price) {
+            $map[$price->security_id][] = [
+                'date' => $price->date->format('Y-m-d'),
+                'close' => (float) $price->close,
+            ];
+        }
+
+        return $map;
+    }
+
+    /**
+     * @param  array<int, list<array{date: string, close: float}>>  $priceMap
+     */
+    private function getClosestPrice(array $priceMap, int $securityId, string $date): ?float
+    {
+        if (! isset($priceMap[$securityId])) {
+            return null;
+        }
+
+        $closestClose = null;
+
+        foreach ($priceMap[$securityId] as $entry) {
+            if ($entry['date'] > $date) {
+                break;
+            }
+            $closestClose = $entry['close'];
+        }
+
+        return $closestClose;
+    }
+
+    /**
+     * @param  Collection<int, Security>  $securities
      */
     private function computeCurrentValuation(Collection $securities): float
     {
@@ -183,61 +247,5 @@ class PortfolioPerformanceCalculator
 
             return (float) $security->total_quantity * (float) $close;
         });
-    }
-
-    /**
-     * @param  Collection<int, Transaction>  $transactions
-     */
-    private function computeNetFlows(Collection $transactions, string $startDate): float
-    {
-        return $transactions
-            ->filter(fn (Transaction $t) => $t->date->format('Y-m-d') > $startDate)
-            ->sum(fn (Transaction $t) => (float) $t->quantity * (float) $t->unit_price + (float) $t->fees);
-    }
-
-    /**
-     * @param  Collection<int, Transaction>  $transactions
-     * @return array<int, list<array{date: string, quantity: float}>>
-     */
-    private function buildCumulativeQuantities(Collection $transactions): array
-    {
-        $quantities = [];
-
-        foreach ($transactions as $transaction) {
-            $date = $transaction->date->format('Y-m-d');
-            $securityId = $transaction->security_id;
-
-            if (! isset($quantities[$securityId])) {
-                $quantities[$securityId] = [];
-            }
-
-            $previous = end($quantities[$securityId]) ?: ['quantity' => 0];
-            $quantities[$securityId][] = [
-                'date' => $date,
-                'quantity' => $previous['quantity'] + (float) $transaction->quantity,
-            ];
-        }
-
-        return $quantities;
-    }
-
-    /**
-     * @param  array<int, list<array{date: string, quantity: float}>>  $cumulativeQuantities
-     */
-    private function getQuantityAtDate(array $cumulativeQuantities, int $securityId, string $date): float
-    {
-        if (! isset($cumulativeQuantities[$securityId])) {
-            return 0;
-        }
-
-        $quantity = 0;
-        foreach ($cumulativeQuantities[$securityId] as $entry) {
-            if ($entry['date'] > $date) {
-                break;
-            }
-            $quantity = $entry['quantity'];
-        }
-
-        return $quantity;
     }
 }

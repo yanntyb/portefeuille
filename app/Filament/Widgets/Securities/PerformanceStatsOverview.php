@@ -2,11 +2,9 @@
 
 namespace App\Filament\Widgets\Securities;
 
-use App\Enums\PerformancePeriod;
 use App\Services\PortfolioPerformanceCalculator;
 use Filament\Widgets\Concerns\InteractsWithPageTable;
 use Filament\Widgets\Widget;
-use Illuminate\Support\Number;
 use Livewire\Attributes\On;
 
 class PerformanceStatsOverview extends Widget
@@ -57,34 +55,10 @@ class PerformanceStatsOverview extends Widget
             $query->whereIn('securities.id', $this->shownSecurityIds);
         }
 
-        $securities = $query->with('latestPrice')->get();
+        $calculator = app(PortfolioPerformanceCalculator::class);
 
-        $returns = app(PortfolioPerformanceCalculator::class)->computeReturns($securities);
-
-        $stats = [];
-
-        foreach (PerformancePeriod::cases() as $period) {
-            $value = $returns[$period->value];
-
-            if ($value === null) {
-                $stats[] = [
-                    'label' => $period->getLabel(),
-                    'value' => '—',
-                    'color' => 'gray',
-                ];
-
-                continue;
-            }
-
-            $formatted = ($value >= 0 ? '+' : '').Number::format($value, 2).' %';
-
-            $stats[] = [
-                'label' => $period->getLabel(),
-                'value' => $formatted,
-                'color' => $value >= 0 ? 'success' : 'danger',
-            ];
-        }
-
-        return $stats;
+        return PortfolioPerformanceCalculator::formatReturnsAsStats(
+            $calculator->computeReturns($query->with('latestPrice')->get()),
+        );
     }
 }

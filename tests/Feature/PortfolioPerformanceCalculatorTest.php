@@ -86,11 +86,11 @@ it('computes return with cash flows during period', function () {
 
     $returns = app(PortfolioPerformanceCalculator::class)->computeReturns($securities);
 
-    // Valo début (6 mois) = 10 * 100 = 1000
-    // Valo fin = 15 * 120 = 1800
-    // Flux nets = 5 * 110 + 5 = 555
-    // Return = (1800 - 1000 - 555) / (1000 + 555) * 100 = 245 / 1555 * 100 ≈ 15.76%
-    expect($returns['6m'])->toBe(15.76);
+    // TWR : prix passe de 100 à 120 = +20%, indépendamment de l'achat supplémentaire
+    // Sous-période 1 : r1 = (10*100)/(10*100) - 1 = 0%
+    // Sous-période 2 : r2 = (15*120)/(15*100) - 1 = 20%
+    // TWR = (1+0)(1+0.20) - 1 = 20%
+    expect($returns['6m'])->toBe(20.0);
 });
 
 it('returns null when period predates first transaction', function () {
