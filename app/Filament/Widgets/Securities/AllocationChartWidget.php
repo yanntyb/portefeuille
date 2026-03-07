@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets\Securities;
 
+use App\Support\ChartColors;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageTable;
@@ -24,19 +25,6 @@ class AllocationChartWidget extends ChartWidget
 
     /** @var list<int>|null */
     public ?array $shownSecurityIds = null;
-
-    private const COLORS = [
-        'rgb(59, 130, 246)',
-        'rgb(16, 185, 129)',
-        'rgb(245, 158, 11)',
-        'rgb(239, 68, 68)',
-        'rgb(139, 92, 246)',
-        'rgb(236, 72, 153)',
-        'rgb(20, 184, 166)',
-        'rgb(249, 115, 22)',
-        'rgb(99, 102, 241)',
-        'rgb(34, 197, 94)',
-    ];
 
     protected function getTablePage(): string
     {
@@ -84,7 +72,7 @@ class AllocationChartWidget extends ChartWidget
 
             $labels[] = $security->name;
             $valuations[] = $quantity * (float) $price;
-            $colors[] = self::COLORS[$colorIndex % count(self::COLORS)];
+            $colors[] = ChartColors::at($colorIndex);
             $colorIndex++;
         }
 
