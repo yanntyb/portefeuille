@@ -5,6 +5,7 @@ namespace App\Filament\Widgets\Securities;
 use App\Filament\Widgets\Securities\Concerns\ComputesValuationChart;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
+use App\Services\TransactionAggregator;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Database\Eloquent\Model;
@@ -35,8 +36,7 @@ class SingleSecurityValuationChartWidget extends ChartWidget
 
         $transactionsQuery = Transaction::query()
             ->whereIn('security_id', $securityIds)
-            ->orderBy('date')
-            ->select(['security_id', 'date', 'quantity', 'unit_price', 'fees']);
+            ->orderBy('date');
 
         if ($this->accountType) {
             $transactionsQuery->where('account_type', $this->accountType);
@@ -48,7 +48,9 @@ class SingleSecurityValuationChartWidget extends ChartWidget
             return ['datasets' => [], 'labels' => []];
         }
 
-        [$cumulativeQuantities, $cumulativeInvested, $cumulativeFees] = $this->buildCumulatives($transactions);
+        $aggregator = app(TransactionAggregator::class);
+
+        $cumulative = $aggregator->buildCumulatives($transactions);
 
         $firstTransactionDate = $transactions->first()->date;
 
@@ -62,9 +64,9 @@ class SingleSecurityValuationChartWidget extends ChartWidget
             return ['datasets' => [], 'labels' => []];
         }
 
-        [$labels, $valuations, $invested, $fees] = $this->computeValuations($prices, $cumulativeQuantities, $cumulativeInvested, $cumulativeFees, $securityIds);
+        $result = $aggregator->computeDailyValuations($prices, $cumulative, $securityIds);
 
-        return $this->buildChartDatasets($valuations, $invested, $fees, $labels);
+        return $this->buildChartDatasets($result->valuations, $result->invested, $result->fees, $result->labels);
     }
 
     protected function getType(): string

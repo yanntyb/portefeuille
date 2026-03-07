@@ -2,10 +2,12 @@
 
 namespace App\Filament\Widgets\Securities;
 
-use App\Filament\Widgets\Securities\Concerns\ComputesValuationChart;
+use App\Data\CumulativeData;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
+use App\Services\TransactionAggregator;
+use App\Support\ChartColors;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Schema;
 use Filament\Support\RawJs;
@@ -18,7 +20,6 @@ use Livewire\Attributes\On;
 
 class ValuationChartWidget extends ChartWidget
 {
-    use ComputesValuationChart;
     use HasFiltersSchema;
     use InteractsWithPageTable;
 
@@ -29,19 +30,6 @@ class ValuationChartWidget extends ChartWidget
     protected ?string $pollingInterval = null;
 
     protected ?string $maxHeight = null;
-
-    private const COLORS = [
-        ['border' => 'rgb(59, 130, 246)', 'bg' => 'rgba(59, 130, 246, 0.4)'],
-        ['border' => 'rgb(16, 185, 129)', 'bg' => 'rgba(16, 185, 129, 0.4)'],
-        ['border' => 'rgb(245, 158, 11)', 'bg' => 'rgba(245, 158, 11, 0.4)'],
-        ['border' => 'rgb(239, 68, 68)', 'bg' => 'rgba(239, 68, 68, 0.4)'],
-        ['border' => 'rgb(139, 92, 246)', 'bg' => 'rgba(139, 92, 246, 0.4)'],
-        ['border' => 'rgb(236, 72, 153)', 'bg' => 'rgba(236, 72, 153, 0.4)'],
-        ['border' => 'rgb(20, 184, 166)', 'bg' => 'rgba(20, 184, 166, 0.4)'],
-        ['border' => 'rgb(249, 115, 22)', 'bg' => 'rgba(249, 115, 22, 0.4)'],
-        ['border' => 'rgb(99, 102, 241)', 'bg' => 'rgba(99, 102, 241, 0.4)'],
-        ['border' => 'rgb(34, 197, 94)', 'bg' => 'rgba(34, 197, 94, 0.4)'],
-    ];
 
     /** @var class-string|null */
     public ?string $tablePageClass = null;
@@ -117,13 +105,15 @@ class ValuationChartWidget extends ChartWidget
         $transactions = Transaction::query()
             ->whereIn('security_id', $securityIds)
             ->orderBy('date')
-            ->get(['security_id', 'date', 'quantity', 'unit_price', 'fees']);
+            ->get();
 
         if ($transactions->isEmpty()) {
             return ['datasets' => [], 'labels' => []];
         }
 
-        [$cumulativeQuantities, $cumulativeInvested, $cumulativeFees] = $this->buildCumulatives($transactions);
+        $aggregator = app(TransactionAggregator::class);
+
+        $cumulative = $aggregator->buildCumulatives($transactions);
 
         $firstTransactionDate = $transactions->first()->date;
 
@@ -143,35 +133,27 @@ class ValuationChartWidget extends ChartWidget
                 ->pluck('name', 'id');
 
             [$labels, $valuationsBySecurity, $invested, $fees] = $this->computeValuationsPerSecurity(
+                $aggregator,
                 $prices,
-                $cumulativeQuantities,
-                $cumulativeInvested,
-                $cumulativeFees,
+                $cumulative,
                 $securityIds,
             );
 
             return $this->buildStackedAreaDatasets($valuationsBySecurity, $invested, $fees, $labels, $securityNames, $securityIds);
         }
 
-        [$labels, $valuations, $invested, $fees] = $this->computeValuations(
-            $prices,
-            $cumulativeQuantities,
-            $cumulativeInvested,
-            $cumulativeFees,
-            $securityIds,
-        );
+        $result = $aggregator->computeDailyValuations($prices, $cumulative, $securityIds);
 
-        return $this->buildTotalDatasets($valuations, $invested, $fees, $labels);
+        return $this->buildTotalDatasets($result->valuations, $result->invested, $result->fees, $result->labels);
     }
 
     /**
      * @return array{0: list<string>, 1: array<int, list<float>>, 2: list<float>, 3: list<float>}
      */
     private function computeValuationsPerSecurity(
+        TransactionAggregator $aggregator,
         Collection $prices,
-        array $cumulativeQuantities,
-        array $cumulativeInvested,
-        array $cumulativeFees,
+        CumulativeData $cumulative,
         array $securityIds,
     ): array {
         $days = $prices
@@ -204,14 +186,14 @@ class ValuationChartWidget extends ChartWidget
                 }
 
                 $close = $lastCloseBySecurityId[$securityId] ?? null;
-                $quantity = $this->getQuantityAtDate($cumulativeQuantities, $securityId, $day);
+                $quantity = $aggregator->getQuantityAtDate($cumulative->quantities, $securityId, $day);
                 $value = $close !== null ? round($quantity * $close, 2) : 0;
                 $valuationsBySecurity[$securityId][] = $value;
             }
 
             $labels[] = $day;
-            $invested[] = round($this->getInvestedAtDate($cumulativeInvested, $day), 2);
-            $fees[] = round($this->getFeesAtDate($cumulativeFees, $day), 2);
+            $invested[] = round($aggregator->getValueAtDate($cumulative->invested, $day), 2);
+            $fees[] = round($aggregator->getValueAtDate($cumulative->fees, $day), 2);
         }
 
         return [$labels, $valuationsBySecurity, $invested, $fees];
@@ -280,7 +262,7 @@ class ValuationChartWidget extends ChartWidget
                 continue;
             }
 
-            $color = self::COLORS[$colorIndex % count(self::COLORS)];
+            $color = ChartColors::withAlpha($colorIndex);
 
             $datasets[] = [
                 'label' => $securityNames->get($securityId, "Titre #{$securityId}"),
