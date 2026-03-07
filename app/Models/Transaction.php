@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use App\Enums\AccountType;
+use App\Enums\TransactionType;
+use App\Observers\TransactionObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property int|null $user_id
  */
+#[ObservedBy(TransactionObserver::class)]
 class Transaction extends Model
 {
     /** @use HasFactory<\Database\Factories\TransactionFactory> */
@@ -30,11 +34,13 @@ class Transaction extends Model
         'user_id',
         'date',
         'account_type',
+        'type',
         'security_id',
         'broker',
         'quantity',
         'unit_price',
         'fees',
+        'realized_gain',
         'notes',
     ];
 
@@ -44,9 +50,11 @@ class Transaction extends Model
         return [
             'date' => 'date',
             'account_type' => AccountType::class,
+            'type' => TransactionType::class,
             'quantity' => 'decimal:4',
             'unit_price' => 'decimal:4',
             'fees' => 'decimal:2',
+            'realized_gain' => 'decimal:2',
         ];
     }
 

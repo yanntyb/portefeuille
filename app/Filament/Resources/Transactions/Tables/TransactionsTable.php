@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Transactions\Tables;
 
 use App\Enums\AccountType;
+use App\Enums\TransactionType;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -23,6 +24,10 @@ class TransactionsTable
                     ->sortable(),
                 TextColumn::make('account_type')
                     ->label('Compte')
+                    ->badge()
+                    ->sortable(),
+                TextColumn::make('type')
+                    ->label('Type')
                     ->badge()
                     ->sortable(),
                 TextColumn::make('security.isin')
@@ -48,11 +53,21 @@ class TransactionsTable
                     ->label('Frais')
                     ->money('EUR')
                     ->sortable(),
+                TextColumn::make('realized_gain')
+                    ->label('PV réalisée')
+                    ->money('EUR')
+                    ->sortable()
+                    ->placeholder('—')
+                    ->color(fn ($state) => $state >= 0 ? 'success' : 'danger')
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('account_type')
                     ->label('Compte')
                     ->options(AccountType::class),
+                SelectFilter::make('type')
+                    ->label('Type')
+                    ->options(TransactionType::class),
             ])
             ->recordActions([
                 EditAction::make(),

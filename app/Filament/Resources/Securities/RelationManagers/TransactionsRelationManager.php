@@ -3,7 +3,10 @@
 namespace App\Filament\Resources\Securities\RelationManagers;
 
 use App\Enums\AccountType;
+use App\Enums\TransactionType;
 use App\Models\SecurityPrice;
+use App\Models\Transaction;
+use Closure;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -12,7 +15,9 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -34,6 +39,14 @@ class TransactionsRelationManager extends RelationManager
                     ->required()
                     ->live(),
 
+                ToggleButtons::make('type')
+                    ->label('Type')
+                    ->options(TransactionType::class)
+                    ->default(TransactionType::Buy)
+                    ->required()
+                    ->inline()
+                    ->live(),
+
                 DatePicker::make('date')
                     ->label('Date')
                     ->required()
@@ -48,7 +61,37 @@ class TransactionsRelationManager extends RelationManager
                 TextInput::make('quantity')
                     ->label('Quantité')
                     ->numeric()
-                    ->minValue(0),
+                    ->minValue(0)
+                    ->rules([
+                        fn (Get $get, ?Transaction $record, RelationManager $livewire): Closure => function (string $attribute, $value, Closure $fail) use ($get, $record, $livewire): void {
+                            $type = $get('type');
+
+                            if ($type !== TransactionType::Sell->value && $type !== TransactionType::Sell) {
+                                return;
+                            }
+
+                            $accountType = $get('account_type');
+
+                            if (! $accountType) {
+                                return;
+                            }
+
+                            $accountTypeValue = $accountType instanceof AccountType ? $accountType->value : $accountType;
+                            $securityId = $livewire->getOwnerRecord()->id;
+
+                            $ownedQuantity = (float) Transaction::withoutGlobalScopes()
+                                ->where('security_id', $securityId)
+                                ->where('account_type', $accountTypeValue)
+                                ->where('user_id', auth()->id())
+                                ->when($record, fn ($query) => $query->where('id', '!=', $record->id))
+                                ->selectRaw("SUM(CASE WHEN type = 'buy' THEN quantity ELSE -quantity END) as total")
+                                ->value('total');
+
+                            if ((float) $value > $ownedQuantity) {
+                                $fail("Vous ne pouvez pas vendre plus de {$ownedQuantity} actions (quantité possédée).");
+                            }
+                        },
+                    ]),
 
                 TextInput::make('unit_price')
                     ->label('Prix unitaire')
@@ -91,6 +134,10 @@ class TransactionsRelationManager extends RelationManager
                     ->label('Compte')
                     ->badge()
                     ->sortable(),
+                TextColumn::make('type')
+                    ->label('Type')
+                    ->badge()
+                    ->sortable(),
                 TextColumn::make('broker')
                     ->label('Courtier')
                     ->searchable()
@@ -110,11 +157,21 @@ class TransactionsRelationManager extends RelationManager
                     ->label('Frais')
                     ->money('EUR')
                     ->sortable(),
+                TextColumn::make('realized_gain')
+                    ->label('PV réalisée')
+                    ->money('EUR')
+                    ->sortable()
+                    ->placeholder('—')
+                    ->color(fn ($state) => $state >= 0 ? 'success' : 'danger')
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('account_type')
                     ->label('Compte')
                     ->options(AccountType::class),
+                SelectFilter::make('type')
+                    ->label('Type')
+                    ->options(TransactionType::class),
             ])
             ->headerActions([])
             ->recordActions([

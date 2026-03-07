@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\AccountType;
+use App\Enums\TransactionType;
 use App\Models\Security;
 use App\Models\Transaction;
 use App\Models\User;
@@ -23,6 +24,7 @@ class TransactionFactory extends Factory
             'security_id' => Security::factory(),
             'quantity' => fake()->randomFloat(4, 1, 100),
             'unit_price' => fake()->randomFloat(4, 5, 500),
+            'type' => TransactionType::Buy,
             'fees' => fake()->randomFloat(2, 0, 10),
             'notes' => fake()->optional(0.3)->sentence(),
         ];
@@ -41,6 +43,13 @@ class TransactionFactory extends Factory
         return $this->state(fn (): array => [
             'account_type' => AccountType::Cto,
             'broker' => fake()->randomElement(['Degiro', 'Trade Republic', 'Interactive Brokers', 'Boursorama']),
+        ]);
+    }
+
+    public function sell(): static
+    {
+        return $this->state(fn (): array => [
+            'type' => TransactionType::Sell,
         ]);
     }
 

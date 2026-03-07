@@ -3,10 +3,14 @@
 namespace App\Filament\Resources\Transactions\Schemas;
 
 use App\Enums\AccountType;
+use App\Enums\TransactionType;
+use App\Models\Transaction;
+use Closure;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
@@ -31,6 +35,17 @@ class TransactionForm
                     ->required()
                     ->live(),
 
+                ToggleButtons::make('type')
+                    ->label('Type')
+                    ->options(TransactionType::class)
+                    ->default(TransactionType::Buy)
+                    ->required()
+                    ->inline()
+                    ->live()
+                    ->hiddenJs(<<<'JS'
+                        ! ['pea', 'cto'].includes($get('account_type'))
+                        JS),
+
                 DatePicker::make('date')
                     ->label('Date')
                     ->required()
@@ -49,6 +64,7 @@ class TransactionForm
                                 : $record->isin)
                             ->searchable(['isin', 'name'])
                             ->preload()
+                            ->live()
                             ->columnSpanFull()
                             ->createOptionForm([
                                 TextInput::make('isin')
@@ -72,7 +88,37 @@ class TransactionForm
                         TextInput::make('quantity')
                             ->label('Quantité')
                             ->numeric()
-                            ->minValue(0),
+                            ->minValue(0)
+                            ->rules([
+                                fn (Get $get, ?Transaction $record): Closure => function (string $attribute, $value, Closure $fail) use ($get, $record): void {
+                                    $type = $get('type');
+
+                                    if ($type !== TransactionType::Sell->value && $type !== TransactionType::Sell) {
+                                        return;
+                                    }
+
+                                    $securityId = $get('security_id');
+                                    $accountType = $get('account_type');
+
+                                    if (! $securityId || ! $accountType) {
+                                        return;
+                                    }
+
+                                    $accountTypeValue = $accountType instanceof AccountType ? $accountType->value : $accountType;
+
+                                    $ownedQuantity = (float) Transaction::withoutGlobalScopes()
+                                        ->where('security_id', $securityId)
+                                        ->where('account_type', $accountTypeValue)
+                                        ->where('user_id', auth()->id())
+                                        ->when($record, fn ($query) => $query->where('id', '!=', $record->id))
+                                        ->selectRaw("SUM(CASE WHEN type = 'buy' THEN quantity ELSE -quantity END) as total")
+                                        ->value('total');
+
+                                    if ((float) $value > $ownedQuantity) {
+                                        $fail("Vous ne pouvez pas vendre plus de {$ownedQuantity} actions (quantité possédée).");
+                                    }
+                                },
+                            ]),
 
                         TextInput::make('unit_price')
                             ->label('Prix unitaire')
