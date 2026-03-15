@@ -20,8 +20,6 @@ class SingleSecurityValuationChartWidget extends ChartWidget
 
     protected ?string $pollingInterval = null;
 
-    protected string $view = 'filament.widgets.flat-chart-widget';
-
     protected ?string $maxHeight = '200px';
 
     public ?Model $record = null;
