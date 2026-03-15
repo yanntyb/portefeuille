@@ -138,20 +138,12 @@ abstract class EditSecurity extends EditRecord
             ])->key('single-security-valuation-chart');
         }
 
-        $components[] = Section::make('Détails')
-            ->collapsible()
-            ->collapsed()
-            ->persistCollapsed()
-            ->id('single-security-details')
-            ->extraAttributes(['class' => 'fi-section-no-content-padding'])
-            ->schema([
-                Livewire::make(SingleSecurityPriceChartWidget::class, [
-                    'record' => $record,
-                ])->key('single-security-price-chart'),
-                Livewire::make(SectorAllocationChartWidget::class, [
-                    'record' => $record,
-                ])->key('single-security-sector-allocation'),
-            ]);
+        $components[] = Livewire::make(SingleSecurityPriceChartWidget::class, [
+            'record' => $record,
+        ])->key('single-security-price-chart');
+        $components[] = Livewire::make(SectorAllocationChartWidget::class, [
+            'record' => $record,
+        ])->key('single-security-sector-allocation');
 
         $components[] = Section::make('Modifier le titre')
             ->collapsible()
