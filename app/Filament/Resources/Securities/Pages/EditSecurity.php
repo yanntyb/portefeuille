@@ -118,17 +118,22 @@ abstract class EditSecurity extends EditRecord
         $isAccountResource = is_subclass_of($resource, AccountSecurityResource::class);
         $accountType = $isAccountResource ? $resource::accountType()->value : null;
 
+        $record = $this->record;
+
         $components = [
             Livewire::make(SingleSecurityPerformanceStatsOverview::class, [
+                'record' => $record,
                 'accountType' => $accountType,
             ])->key('single-security-performance-stats'),
             Livewire::make(SingleSecurityGainStatsOverview::class, [
+                'record' => $record,
                 'accountType' => $accountType,
             ])->key('single-security-gain-stats'),
         ];
 
         if ($isAccountResource) {
             $components[] = Livewire::make(SingleSecurityValuationChartWidget::class, [
+                'record' => $record,
                 'accountType' => $accountType,
             ])->key('single-security-valuation-chart');
         }
@@ -140,10 +145,12 @@ abstract class EditSecurity extends EditRecord
             ->id('single-security-details')
             ->extraAttributes(['class' => 'fi-section-no-content-padding'])
             ->schema([
-                Livewire::make(SingleSecurityPriceChartWidget::class)
-                    ->key('single-security-price-chart'),
-                Livewire::make(SectorAllocationChartWidget::class)
-                    ->key('single-security-sector-allocation'),
+                Livewire::make(SingleSecurityPriceChartWidget::class, [
+                    'record' => $record,
+                ])->key('single-security-price-chart'),
+                Livewire::make(SectorAllocationChartWidget::class, [
+                    'record' => $record,
+                ])->key('single-security-sector-allocation'),
             ]);
 
         $components[] = Section::make('Modifier le titre')
