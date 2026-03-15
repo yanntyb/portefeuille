@@ -11,10 +11,13 @@ use App\Filament\Widgets\Securities\SingleSecurityPriceChartWidget;
 use App\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
 use App\Jobs\UpdateSecurityJob;
 use App\Models\Security;
+use Filament\Actions\Action;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Schemas\Components\Livewire;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\HtmlString;
@@ -103,6 +106,35 @@ abstract class EditSecurity extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('editSecurity')
+                ->label('Modifier')
+                ->icon(Heroicon::PencilSquare)
+                ->color('gray')
+                ->fillForm(fn (): array => [
+                    'isin' => $this->record->isin,
+                    'name' => $this->record->name,
+                    'ticker' => $this->record->ticker,
+                ])
+                ->schema([
+                    TextInput::make('isin')
+                        ->label('ISIN')
+                        ->required()
+                        ->maxLength(12),
+                    TextInput::make('name')
+                        ->label('Nom')
+                        ->maxLength(255),
+                    TextInput::make('ticker')
+                        ->label('Ticker'),
+                ])
+                ->action(function (array $data): void {
+                    $this->record->update($data);
+                    $this->fillForm();
+
+                    Notification::make()
+                        ->title('Titre mis à jour')
+                        ->success()
+                        ->send();
+                }),
             SecurityForm::updateFromIsinAction(),
         ];
     }
@@ -144,15 +176,6 @@ abstract class EditSecurity extends EditRecord
         $components[] = Livewire::make(SectorAllocationChartWidget::class, [
             'record' => $record,
         ])->key('single-security-sector-allocation');
-
-        $components[] = Section::make('Modifier le titre')
-            ->collapsible()
-            ->collapsed()
-            ->persistCollapsed()
-            ->id('single-security-form')
-            ->schema([
-                $this->getFormContentComponent(),
-            ]);
 
         $components[] = $this->getRelationManagersContentComponent();
 

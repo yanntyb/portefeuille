@@ -71,21 +71,18 @@ it('can render the PEA edit page', function () {
 
     livewire(EditPeaSecurity::class, ['record' => $security->id])
         ->assertOk()
-        ->assertSchemaStateSet([
-            'isin' => $security->isin,
-            'name' => $security->name,
-        ]);
+        ->assertActionExists('editSecurity');
 });
 
 it('can update a security from PEA', function () {
     $security = Security::factory()->create();
 
     livewire(EditPeaSecurity::class, ['record' => $security->id])
-        ->fillForm([
+        ->callAction('editSecurity', [
             'isin' => 'US1667641005',
             'name' => 'Chevron Corporation',
+            'ticker' => $security->ticker,
         ])
-        ->call('save')
         ->assertNotified();
 
     assertDatabaseHas(Security::class, [

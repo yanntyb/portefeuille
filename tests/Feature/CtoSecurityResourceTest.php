@@ -21,21 +21,18 @@ it('can render the CTO edit page', function () {
 
     livewire(EditCtoSecurity::class, ['record' => $security->id])
         ->assertOk()
-        ->assertSchemaStateSet([
-            'isin' => $security->isin,
-            'name' => $security->name,
-        ]);
+        ->assertActionExists('editSecurity');
 });
 
 it('can update a security from CTO', function () {
     $security = Security::factory()->create();
 
     livewire(EditCtoSecurity::class, ['record' => $security->id])
-        ->fillForm([
+        ->callAction('editSecurity', [
             'isin' => 'US5949181045',
             'name' => 'Microsoft Corporation',
+            'ticker' => $security->ticker,
         ])
-        ->call('save')
         ->assertNotified();
 
     assertDatabaseHas(Security::class, [
