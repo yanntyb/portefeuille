@@ -6,7 +6,6 @@ use App\Services\DashboardDataProvider;
 use App\Services\SectorAggregator;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
-use Illuminate\Support\Carbon;
 use Livewire\Attributes\On;
 
 class DashboardSectorAllocationChartWidget extends ChartWidget
@@ -17,27 +16,11 @@ class DashboardSectorAllocationChartWidget extends ChartWidget
 
     protected ?string $pollingInterval = null;
 
-    protected string $view = 'filament.widgets.scrollable-chart-widget';
+    protected bool $isCollapsible = true;
 
-    public function getDescription(): ?string
-    {
-        $securities = app(DashboardDataProvider::class)->allSecurities();
-        $securityIds = $securities->pluck('id');
+    protected bool $isCollapsed = true;
 
-        if ($securityIds->isEmpty()) {
-            return null;
-        }
-
-        $date = \App\Models\SecuritySector::query()
-            ->whereIn('security_id', $securityIds)
-            ->min('updated_at');
-
-        if ($date === null) {
-            return null;
-        }
-
-        return 'Maj le : '.Carbon::parse($date)->translatedFormat('d M Y à H\hi');
-    }
+    protected string $view = 'filament.widgets.collapsible-chart-widget';
 
     #[On('prices-updated')]
     public function refreshChart(): void

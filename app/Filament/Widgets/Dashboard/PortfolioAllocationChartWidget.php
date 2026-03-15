@@ -18,6 +18,12 @@ class PortfolioAllocationChartWidget extends ChartWidget
 
     protected ?string $maxHeight = '300px';
 
+    protected bool $isCollapsible = true;
+
+    protected bool $isCollapsed = true;
+
+    protected string $view = 'filament.widgets.collapsible-chart-widget';
+
     private const COLORS = [
         'rgb(16, 185, 129)',
         'rgb(245, 158, 11)',

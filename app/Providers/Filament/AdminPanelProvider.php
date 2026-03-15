@@ -3,10 +3,6 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Plugins\PwaPlugin;
-use App\Filament\Widgets\Dashboard\DashboardPerformanceStatsOverview;
-use App\Filament\Widgets\Dashboard\DashboardSectorAllocationChartWidget;
-use App\Filament\Widgets\Dashboard\PortfolioAllocationChartWidget;
-use App\Filament\Widgets\Dashboard\PortfolioStatsOverview;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -40,12 +36,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([])
-            ->widgets([
-                PortfolioStatsOverview::class,
-                DashboardPerformanceStatsOverview::class,
-                PortfolioAllocationChartWidget::class,
-                DashboardSectorAllocationChartWidget::class,
-            ])
+            ->widgets([])
             ->navigationItems([
                 NavigationItem::make('Logs')
                     ->url('/log-viewer', shouldOpenInNewTab: true)

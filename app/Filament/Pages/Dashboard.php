@@ -2,13 +2,91 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\AccountType;
+use App\Filament\Widgets\Dashboard\DashboardGainStatsOverview;
+use App\Filament\Widgets\Dashboard\DashboardPerformanceStatsOverview;
+use App\Filament\Widgets\Dashboard\DashboardSectorAllocationChartWidget;
+use App\Filament\Widgets\Dashboard\DashboardSecuritiesTableWidget;
+use App\Filament\Widgets\Dashboard\PortfolioAllocationChartWidget;
 use App\Models\Security;
+use App\Services\DashboardDataProvider;
 use App\Services\YahooFinanceService;
 use Filament\Pages\Dashboard as BaseDashboard;
+use Filament\Schemas\Components\Livewire;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Number;
 
 class Dashboard extends BaseDashboard
 {
     protected string $view = 'filament.pages.dashboard';
+
+    public function getTitle(): string|Htmlable
+    {
+        return new HtmlString($this->getFormattedValuation());
+    }
+
+    private function getFormattedValuation(): string
+    {
+        $provider = app(DashboardDataProvider::class);
+        $accountTypes = [AccountType::Pea, AccountType::Cto];
+
+        $totalValuation = 0;
+        $totalInvested = 0;
+
+        foreach ($accountTypes as $accountType) {
+            $securities = $provider->securitiesForAccount($accountType);
+
+            $totalValuation += $securities->sum(function ($security) {
+                $close = $security->latestPrice?->close;
+
+                if ($close === null || $security->total_quantity === null) {
+                    return 0;
+                }
+
+                return (float) $security->total_quantity * (float) $close;
+            });
+
+            $totalInvested += $securities->sum(fn ($security) => (float) ($security->total_invested ?? 0));
+        }
+
+        $isPositive = $totalValuation >= $totalInvested;
+        $colorClass = $isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+
+        return '<span class="'.$colorClass.'">'.Number::currency($totalValuation, 'EUR').'</span>';
+    }
+
+    public function content(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Livewire::make(DashboardPerformanceStatsOverview::class)
+                    ->key('dashboard-performance-stats'),
+                Livewire::make(DashboardGainStatsOverview::class)
+                    ->key('dashboard-gain-stats'),
+                Section::make('Diversification')
+                    ->collapsible()
+                    ->collapsed()
+                    ->persistCollapsed()
+                    ->id('dashboard-diversification')
+                    ->extraAttributes(['class' => 'fi-section-no-content-padding'])
+                    ->schema([
+                        Livewire::make(DashboardSecuritiesTableWidget::class)
+                            ->key('dashboard-securities-table'),
+                        Livewire::make(DashboardSectorAllocationChartWidget::class)
+                            ->key('dashboard-sector-allocation-chart'),
+                        Livewire::make(PortfolioAllocationChartWidget::class)
+                            ->key('portfolio-allocation-chart'),
+                    ]),
+            ]);
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [];
+    }
 
     public function loadPrices(): void
     {
