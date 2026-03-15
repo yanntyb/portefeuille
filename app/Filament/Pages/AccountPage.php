@@ -2,7 +2,9 @@
 
 namespace App\Filament\Pages;
 
+use App\Data\AccountPageData;
 use App\Enums\AccountType;
+use App\Extensions\Store;
 use App\Filament\Resources\Securities\Tables\SecuritiesTable;
 use App\Filament\Widgets\Securities\AllocationChartWidget;
 use App\Filament\Widgets\Securities\GainStatsOverview;
@@ -64,6 +66,9 @@ abstract class AccountPage extends Page implements HasTable
         $this->isUpdating = Cache::has($cacheKey);
 
         $this->computeSecurityVisibility();
+
+        Store::add('account', AccountPageData::from($this));
+
         $this->js('$wire.refreshPrices()');
     }
 

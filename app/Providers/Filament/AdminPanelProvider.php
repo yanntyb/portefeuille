@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Extensions\Debug;
 use App\Extensions\Pwa;
+use App\Extensions\Store;
 use App\Extensions\Style;
 use App\Extensions\Transition;
 use Filament\Actions\Action;
@@ -68,6 +69,7 @@ class AdminPanelProvider extends PanelProvider
                 Style::make(),
                 Debug::make(),
                 Transition::make(),
+                Store::make(),
             ])
             ->middleware([
                 EncryptCookies::class,
