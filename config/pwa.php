@@ -8,7 +8,7 @@ return [
 
     'description' => env('PWA_DESCRIPTION', 'Dashboard de suivi des investissements'),
 
-    'theme_color' => env('PWA_THEME_COLOR', '#f59e0b'),
+    'theme_color' => env('PWA_THEME_COLOR', '#000000'),
 
     'background_color' => env('PWA_BACKGROUND_COLOR', '#ffffff'),
 
