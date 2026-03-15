@@ -3,8 +3,11 @@
 use App\Enums\AccountType;
 use App\Filament\Resources\CtoSecurities\Pages\EditCtoSecurity;
 use App\Filament\Resources\PeaSecurities\Pages\EditPeaSecurity;
-use App\Filament\Widgets\Securities\SingleSecurityStatsOverview;
+use App\Filament\Widgets\Securities\SingleSecurityFeesStatsWidget;
+use App\Filament\Widgets\Securities\SingleSecurityPlusValueWidget;
+use App\Filament\Widgets\Securities\SingleSecurityPriceStatsWidget;
 use App\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
+use App\Filament\Widgets\Securities\SingleSecurityValuationStatsWidget;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
@@ -17,7 +20,10 @@ it('renders stats and chart widgets on the PEA edit page', function () {
 
     livewire(EditPeaSecurity::class, ['record' => $security->id])
         ->assertOk()
-        ->assertSeeLivewire(SingleSecurityStatsOverview::class)
+        ->assertSeeLivewire(SingleSecurityPlusValueWidget::class)
+        ->assertSeeLivewire(SingleSecurityValuationStatsWidget::class)
+        ->assertSeeLivewire(SingleSecurityFeesStatsWidget::class)
+        ->assertSeeLivewire(SingleSecurityPriceStatsWidget::class)
         ->assertSeeLivewire(SingleSecurityValuationChartWidget::class);
 });
 
@@ -27,7 +33,10 @@ it('renders stats and chart widgets on the CTO edit page', function () {
 
     livewire(EditCtoSecurity::class, ['record' => $security->id])
         ->assertOk()
-        ->assertSeeLivewire(SingleSecurityStatsOverview::class)
+        ->assertSeeLivewire(SingleSecurityPlusValueWidget::class)
+        ->assertSeeLivewire(SingleSecurityValuationStatsWidget::class)
+        ->assertSeeLivewire(SingleSecurityFeesStatsWidget::class)
+        ->assertSeeLivewire(SingleSecurityPriceStatsWidget::class)
         ->assertSeeLivewire(SingleSecurityValuationChartWidget::class);
 });
 
@@ -47,32 +56,59 @@ it('computes single security stats correctly on edit page', function () {
         'close' => 120,
     ]);
 
-    // Pass the plain record (like Filament does after Livewire hydration)
-    $widget = livewire(SingleSecurityStatsOverview::class, [
+    // Test plus-value widget
+    $plusValueWidget = livewire(SingleSecurityPlusValueWidget::class, [
         'record' => $security,
         'accountType' => AccountType::Pea->value,
     ]);
-
-    $widget->assertOk();
-
-    $stats = invade($widget->instance())->getStats();
+    $plusValueWidget->assertOk();
+    $plusValueStats = invade($plusValueWidget->instance())->getStats();
 
     // Valuation = 10 * 120 = 1200
     // Invested = 10 * 100 + 5 = 1005
     // Plus-value = 1200 - 1005 = 195
+    expect($plusValueStats)->toHaveCount(2)
+        ->and($plusValueStats[0]->getLabel())->toBe('Plus-value latente')
+        ->and($plusValueStats[0]->getValue())->toContain('195')
+        ->and($plusValueStats[1]->getLabel())->toBe('Plus-value réalisée');
+
+    // Test valuation widget
+    $valuationWidget = livewire(SingleSecurityValuationStatsWidget::class, [
+        'record' => $security,
+        'accountType' => AccountType::Pea->value,
+    ]);
+    $valuationWidget->assertOk();
+    $valuationStats = invade($valuationWidget->instance())->getStats();
+
+    expect($valuationStats)->toHaveCount(1)
+        ->and($valuationStats[0]->getLabel())->toBe('Valorisation')
+        ->and($valuationStats[0]->getValue())->toContain('1');
+
+    // Test fees widget
+    $feesWidget = livewire(SingleSecurityFeesStatsWidget::class, [
+        'record' => $security,
+        'accountType' => AccountType::Pea->value,
+    ]);
+    $feesWidget->assertOk();
+    $feesStats = invade($feesWidget->instance())->getStats();
+
+    expect($feesStats)->toHaveCount(1)
+        ->and($feesStats[0]->getLabel())->toBe('Frais')
+        ->and($feesStats[0]->getValue())->toContain('5');
+
+    // Test price widget
+    $priceWidget = livewire(SingleSecurityPriceStatsWidget::class, [
+        'record' => $security,
+        'accountType' => AccountType::Pea->value,
+    ]);
+    $priceWidget->assertOk();
+    $priceStats = invade($priceWidget->instance())->getStats();
+
     // PRU = 1000 / 10 = 100
-    // Fees = 5
-    expect($stats)->toHaveCount(6)
-        ->and($stats[0]->getLabel())->toBe('Prix actuel')
-        ->and($stats[1]->getLabel())->toBe('Valorisation')
-        ->and($stats[1]->getValue())->toContain('1')
-        ->and($stats[2]->getLabel())->toBe('Plus-value latente')
-        ->and($stats[2]->getValue())->toContain('195')
-        ->and($stats[3]->getLabel())->toBe('PRU')
-        ->and($stats[3]->getValue())->toContain('100')
-        ->and($stats[4]->getLabel())->toBe('Frais')
-        ->and($stats[4]->getValue())->toContain('5')
-        ->and($stats[5]->getLabel())->toBe('Plus-value réalisée');
+    expect($priceStats)->toHaveCount(2)
+        ->and($priceStats[0]->getLabel())->toBe('Prix actuel')
+        ->and($priceStats[1]->getLabel())->toBe('PRU')
+        ->and($priceStats[1]->getValue())->toContain('100');
 });
 
 it('only counts transactions of the correct account type', function () {
@@ -98,7 +134,7 @@ it('only counts transactions of the correct account type', function () {
         'close' => 120,
     ]);
 
-    $widget = livewire(SingleSecurityStatsOverview::class, [
+    $widget = livewire(SingleSecurityValuationStatsWidget::class, [
         'record' => $security,
         'accountType' => AccountType::Pea->value,
     ]);
@@ -107,8 +143,9 @@ it('only counts transactions of the correct account type', function () {
 
     // Only PEA transaction: qty=10, unit_price=100, fees=5
     // Valuation = 10 * 120 = 1200
-    expect($stats[1]->getLabel())->toBe('Valorisation')
-        ->and($stats[1]->getValue())->toContain('1');
+    expect($stats)->toHaveCount(1)
+        ->and($stats[0]->getLabel())->toBe('Valorisation')
+        ->and($stats[0]->getValue())->toContain('1');
 });
 
 it('renders edit page without errors when security has no transactions', function () {

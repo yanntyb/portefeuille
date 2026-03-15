@@ -5,10 +5,13 @@ namespace App\Filament\Resources\Securities\Pages;
 use App\Filament\Resources\Securities\AccountSecurityResource;
 use App\Filament\Resources\Securities\Schemas\SecurityForm;
 use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
+use App\Filament\Widgets\Securities\SingleSecurityFeesStatsWidget;
 use App\Filament\Widgets\Securities\SingleSecurityPerformanceStatsOverview;
+use App\Filament\Widgets\Securities\SingleSecurityPlusValueWidget;
 use App\Filament\Widgets\Securities\SingleSecurityPriceChartWidget;
-use App\Filament\Widgets\Securities\SingleSecurityStatsOverview;
+use App\Filament\Widgets\Securities\SingleSecurityPriceStatsWidget;
 use App\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
+use App\Filament\Widgets\Securities\SingleSecurityValuationStatsWidget;
 use App\Jobs\UpdateSecurityJob;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Cache;
@@ -59,19 +62,28 @@ abstract class EditSecurity extends EditRecord
             : null;
 
         $widgets = [
-            SingleSecurityStatsOverview::make([
-                'accountType' => $accountType,
-            ]),
             SingleSecurityPerformanceStatsOverview::make([
                 'accountType' => $accountType,
             ]),
-            SingleSecurityPriceChartWidget::make(),
+            SingleSecurityValuationStatsWidget::make([
+                'accountType' => $accountType,
+            ]),
+            SingleSecurityPlusValueWidget::make([
+                'accountType' => $accountType,
+            ]),
         ];
 
         if ($isAccountResource) {
             $widgets[] = SingleSecurityValuationChartWidget::make(['accountType' => $accountType]);
         }
 
+        $widgets[] = SingleSecurityPriceStatsWidget::make([
+            'accountType' => $accountType,
+        ]);
+        $widgets[] = SingleSecurityPriceChartWidget::make();
+        $widgets[] = SingleSecurityFeesStatsWidget::make([
+            'accountType' => $accountType,
+        ]);
         $widgets[] = SectorAllocationChartWidget::make();
 
         return $widgets;

@@ -8,8 +8,11 @@ use App\Filament\Resources\Securities\Schemas\SecurityForm;
 use App\Filament\Resources\Securities\Tables\SecuritiesTable;
 use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
 use App\Filament\Widgets\Securities\SecurityStatsOverview;
-use App\Filament\Widgets\Securities\SingleSecurityStatsOverview;
+use App\Filament\Widgets\Securities\SingleSecurityFeesStatsWidget;
+use App\Filament\Widgets\Securities\SingleSecurityPlusValueWidget;
+use App\Filament\Widgets\Securities\SingleSecurityPriceStatsWidget;
 use App\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
+use App\Filament\Widgets\Securities\SingleSecurityValuationStatsWidget;
 use App\Filament\Widgets\Securities\ValuationChartWidget;
 use App\Models\Security;
 use Filament\Resources\Resource;
@@ -47,7 +50,10 @@ abstract class AccountSecurityResource extends Resource
             SecurityStatsOverview::class,
             ValuationChartWidget::class,
             SectorAllocationChartWidget::class,
-            SingleSecurityStatsOverview::class,
+            SingleSecurityPlusValueWidget::class,
+            SingleSecurityValuationStatsWidget::class,
+            SingleSecurityFeesStatsWidget::class,
+            SingleSecurityPriceStatsWidget::class,
             SingleSecurityValuationChartWidget::class,
         ];
     }

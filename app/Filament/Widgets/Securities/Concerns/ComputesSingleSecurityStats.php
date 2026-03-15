@@ -1,28 +1,33 @@
 <?php
 
-namespace App\Filament\Widgets\Securities;
+namespace App\Filament\Widgets\Securities\Concerns;
 
 use App\Enums\TransactionType;
 use App\Models\Transaction;
-use Filament\Widgets\StatsOverviewWidget;
-use Filament\Widgets\StatsOverviewWidget\Stat;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Number;
 
-class SingleSecurityStatsOverview extends StatsOverviewWidget
+/**
+ * @property ?\Illuminate\Database\Eloquent\Model $record
+ * @property ?string $accountType
+ */
+trait ComputesSingleSecurityStats
 {
-    protected ?string $pollingInterval = null;
-
-    public ?Model $record = null;
-
-    public ?string $accountType = null;
-
-    protected function getStats(): array
+    /**
+     * @return array{
+     *     totalQuantity: float,
+     *     pru: float,
+     *     totalFees: float,
+     *     totalInvested: float,
+     *     totalRealizedGain: float,
+     *     valuation: float,
+     *     plusValue: float,
+     *     plusValuePercentage: float,
+     *     feesPercentage: float,
+     *     close: ?float,
+     *     priceDate: ?string,
+     * }
+     */
+    protected function computeStats(): array
     {
-        if (! $this->record) {
-            return [];
-        }
-
         $transactionsQuery = Transaction::query()
             ->where('security_id', $this->record->id);
 
@@ -58,18 +63,17 @@ class SingleSecurityStatsOverview extends StatsOverviewWidget
         $priceDate = $this->record->latestPrice?->date?->translatedFormat('d M Y');
 
         return [
-            Stat::make('Prix actuel', $close !== null ? Number::currency($close, 'EUR') : '—')
-                ->description($priceDate),
-            Stat::make('Valorisation', Number::currency($valuation, 'EUR')),
-            Stat::make('Plus-value latente', Number::currency($plusValue, 'EUR'))
-                ->description(Number::format($plusValuePercentage, 2).' %')
-                ->color($plusValue >= 0 ? 'success' : 'danger'),
-            Stat::make('PRU', Number::currency($pru, 'EUR')),
-            Stat::make('Frais', Number::currency($totalFees, 'EUR'))
-                ->description(Number::format($feesPercentage, 2).' %')
-                ->color('danger'),
-            Stat::make('Plus-value réalisée', Number::currency($totalRealizedGain, 'EUR'))
-                ->color($totalRealizedGain >= 0 ? 'success' : 'danger'),
+            'totalQuantity' => $totalQuantity,
+            'pru' => $pru,
+            'totalFees' => $totalFees,
+            'totalInvested' => $totalInvested,
+            'totalRealizedGain' => $totalRealizedGain,
+            'valuation' => $valuation,
+            'plusValue' => $plusValue,
+            'plusValuePercentage' => $plusValuePercentage,
+            'feesPercentage' => $feesPercentage,
+            'close' => $close !== null ? (float) $close : null,
+            'priceDate' => $priceDate,
         ];
     }
 }
