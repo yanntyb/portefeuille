@@ -26,7 +26,7 @@ class PortfolioSecurityResource extends Resource
 
     protected static ?string $navigationLabel = 'Titres';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Portefeuille';
+    protected static string|UnitEnum|null $navigationGroup = 'Administration';
 
     protected static ?int $navigationSort = 5;
 
