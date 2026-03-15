@@ -8,5 +8,14 @@
         </div>
     </div>
 
+    @if ($this->isUpdating)
+        <div class="absolute top-3 right-4 flex items-center gap-2">
+            <x-filament::loading-indicator class="h-5 w-5 text-primary-500" />
+            <span class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Mise à jour…
+            </span>
+        </div>
+    @endif
+
     {{ $this->content }}
 </x-filament-panels::page>

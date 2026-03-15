@@ -2,14 +2,11 @@
 
 namespace App\Filament\Resources\Securities\Tables;
 
-use App\Jobs\UpdateSecuritiesJob;
 use App\Models\Security;
 use Filament\Actions\Action;
-use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Cache;
 
 class SecuritiesTable
 {
@@ -57,31 +54,6 @@ class SecuritiesTable
                     ->action(fn (Security $record, $livewire) => $livewire->toggleSecurity($record->id)),
             ])
             ->recordActionsPosition(RecordActionsPosition::BeforeColumns)
-            ->headerActions([
-                Action::make('fetchAllPrices')
-                    ->label(fn ($livewire) => $livewire->isUpdating ? 'Mise à jour en cours…' : 'Mise à jour')
-                    ->icon('heroicon-o-arrow-path')
-                    ->disabled(fn ($livewire) => $livewire->isUpdating)
-                    ->extraAttributes(fn ($livewire) => $livewire->isUpdating ? ['class' => '[&_svg]:animate-spin'] : [])
-                    ->action(function ($livewire): void {
-                        $accountType = $livewire::getResource()::accountType()->value;
-                        $cacheKey = UpdateSecuritiesJob::cacheKeyFor($accountType);
-
-                        $securityIds = $livewire->scopedSecuritiesQuery()
-                            ->pluck('securities.id')
-                            ->all();
-
-                        Cache::put($cacheKey, true, now()->addMinutes(10));
-                        UpdateSecuritiesJob::dispatch($securityIds, $cacheKey);
-
-                        $livewire->isUpdating = true;
-
-                        Notification::make()
-                            ->title('Mise à jour lancée en arrière-plan')
-                            ->success()
-                            ->send();
-                    }),
-            ])
-            ->toolbarActions([]);
+            ->headerActions([]);
     }
 }

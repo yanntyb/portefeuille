@@ -2,3 +2,56 @@
 
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
+
+.fi-sc-section.fi-section-no-content-padding > .fi-section > .fi-section-content-ctn > .fi-section-content {
+    padding: 0 !important;
+    gap: 0 !important;
+}
+
+.fi-sc-section.fi-section-no-content-padding > .fi-section,
+.fi-sc-section.fi-section-no-content-padding > .fi-section > .fi-section-content-ctn .fi-section,
+.fi-sc-section.fi-section-no-content-padding > .fi-section > .fi-section-content-ctn .fi-ta-ctn,
+.fi-sc-section.fi-section-no-content-padding > .fi-section > .fi-section-content-ctn .fi-wi-stats-overview-stat {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    background: transparent !important;
+}
+
+/* Titres de la section parente */
+.fi-sc-section.fi-section-no-content-padding > .fi-section > .fi-section-header {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* Wrappers de sous-sections */
+.fi-sc-section.fi-section-no-content-padding > .fi-section > .fi-section-content-ctn > .fi-section-content > .fi-sc-section {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Sous-sections : headers et contenu */
+.fi-sc-section.fi-section-no-content-padding .fi-section > .fi-section-content-ctn > .fi-section-content,
+.fi-sc-section.fi-section-no-content-padding .fi-section > .fi-section-header {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* Table : header, toolbar, recherche, pagination, contenu */
+.fi-sc-section.fi-section-no-content-padding .fi-ta-header,
+.fi-sc-section.fi-section-no-content-padding .fi-ta-header-toolbar,
+.fi-sc-section.fi-section-no-content-padding .fi-ta-reorder-indicator,
+.fi-sc-section.fi-section-no-content-padding .fi-ta-selection-indicator,
+.fi-sc-section.fi-section-no-content-padding .fi-ta-filter-indicators,
+.fi-sc-section.fi-section-no-content-padding .fi-ta-filters-above-content-ctn,
+.fi-sc-section.fi-section-no-content-padding .fi-ta-filters-below-content,
+.fi-sc-section.fi-section-no-content-padding .fi-pagination {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* Widgets Livewire imbriqués */
+.fi-sc-section.fi-section-no-content-padding .fi-wi-chart .fi-section > .fi-section-content-ctn > .fi-section-content {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
