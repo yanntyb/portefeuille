@@ -5,16 +5,20 @@ namespace App\Filament\Resources\Securities\Pages;
 use App\Filament\Resources\Securities\AccountSecurityResource;
 use App\Filament\Resources\Securities\Schemas\SecurityForm;
 use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
-use App\Filament\Widgets\Securities\SingleSecurityFeesStatsWidget;
+use App\Filament\Widgets\Securities\SingleSecurityGainStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityPerformanceStatsOverview;
-use App\Filament\Widgets\Securities\SingleSecurityPlusValueWidget;
 use App\Filament\Widgets\Securities\SingleSecurityPriceChartWidget;
-use App\Filament\Widgets\Securities\SingleSecurityPriceStatsWidget;
 use App\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
-use App\Filament\Widgets\Securities\SingleSecurityValuationStatsWidget;
 use App\Jobs\UpdateSecurityJob;
+use App\Models\Security;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Schemas\Components\Livewire;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Number;
 
 abstract class EditSecurity extends EditRecord
 {
@@ -22,9 +26,60 @@ abstract class EditSecurity extends EditRecord
 
     public bool $isUpdating = false;
 
-    public function getHeading(): string
+    public function getTitle(): string|Htmlable
     {
-        return $this->record->name ?? parent::getHeading();
+        return new HtmlString($this->record->name.' '.$this->getFormattedValuation());
+    }
+
+    public function getHeading(): string|Htmlable
+    {
+        return $this->getTitle();
+    }
+
+    private function getFormattedValuation(): string
+    {
+        $record = $this->record;
+        $record->loadMissing('latestPrice');
+
+        $close = $record->latestPrice?->close;
+
+        if ($close === null) {
+            return '';
+        }
+
+        $resource = static::getResource();
+        $isAccountResource = is_subclass_of($resource, AccountSecurityResource::class);
+
+        if ($isAccountResource) {
+            $accountType = $resource::accountType();
+            $security = Security::query()
+                ->forAccountType($accountType, auth()->id())
+                ->where('securities.id', $record->id)
+                ->with('latestPrice')
+                ->first();
+
+            $totalQuantity = $security?->total_quantity;
+            $totalInvested = $security?->total_invested;
+        } else {
+            $security = Security::query()
+                ->forAuth()
+                ->where('securities.id', $record->id)
+                ->with('latestPrice')
+                ->first();
+
+            $totalQuantity = $security?->total_quantity;
+            $totalInvested = $security?->total_invested;
+        }
+
+        if ($totalQuantity === null) {
+            return '';
+        }
+
+        $valuation = (float) $totalQuantity * (float) $close;
+        $isPositive = $valuation >= (float) ($totalInvested ?? 0);
+        $colorClass = $isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+
+        return '<span class="'.$colorClass.'">'.Number::currency($valuation, 'EUR').'</span>';
     }
 
     public function mount(int|string $record): void
@@ -54,43 +109,54 @@ abstract class EditSecurity extends EditRecord
 
     protected function getHeaderWidgets(): array
     {
+        return [];
+    }
+
+    public function content(Schema $schema): Schema
+    {
         $resource = static::getResource();
         $isAccountResource = is_subclass_of($resource, AccountSecurityResource::class);
+        $accountType = $isAccountResource ? $resource::accountType()->value : null;
 
-        $accountType = $isAccountResource
-            ? $resource::accountType()->value
-            : null;
-
-        $widgets = [
-            SingleSecurityPerformanceStatsOverview::make([
+        $components = [
+            Livewire::make(SingleSecurityPerformanceStatsOverview::class, [
                 'accountType' => $accountType,
-            ]),
-            SingleSecurityValuationStatsWidget::make([
+            ])->key('single-security-performance-stats'),
+            Livewire::make(SingleSecurityGainStatsOverview::class, [
                 'accountType' => $accountType,
-            ]),
-            SingleSecurityPlusValueWidget::make([
-                'accountType' => $accountType,
-            ]),
+            ])->key('single-security-gain-stats'),
         ];
 
         if ($isAccountResource) {
-            $widgets[] = SingleSecurityValuationChartWidget::make(['accountType' => $accountType]);
+            $components[] = Livewire::make(SingleSecurityValuationChartWidget::class, [
+                'accountType' => $accountType,
+            ])->key('single-security-valuation-chart');
         }
 
-        $widgets[] = SingleSecurityPriceStatsWidget::make([
-            'accountType' => $accountType,
-        ]);
-        $widgets[] = SingleSecurityPriceChartWidget::make();
-        $widgets[] = SingleSecurityFeesStatsWidget::make([
-            'accountType' => $accountType,
-        ]);
-        $widgets[] = SectorAllocationChartWidget::make();
+        $components[] = Section::make('Détails')
+            ->collapsible()
+            ->collapsed()
+            ->persistCollapsed()
+            ->id('single-security-details')
+            ->extraAttributes(['class' => 'fi-section-no-content-padding'])
+            ->schema([
+                Livewire::make(SingleSecurityPriceChartWidget::class)
+                    ->key('single-security-price-chart'),
+                Livewire::make(SectorAllocationChartWidget::class)
+                    ->key('single-security-sector-allocation'),
+            ]);
 
-        return $widgets;
-    }
+        $components[] = Section::make('Modifier le titre')
+            ->collapsible()
+            ->collapsed()
+            ->persistCollapsed()
+            ->id('single-security-form')
+            ->schema([
+                $this->getFormContentComponent(),
+            ]);
 
-    public function getHeaderWidgetsColumns(): int|array
-    {
-        return 3;
+        $components[] = $this->getRelationManagersContentComponent();
+
+        return $schema->components($components);
     }
 }
