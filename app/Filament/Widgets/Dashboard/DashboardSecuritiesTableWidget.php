@@ -30,8 +30,8 @@ class DashboardSecuritiesTableWidget extends TableWidget
     private function computeSecurityVisibility(): void
     {
         $allIds = Security::query()
-            ->forAuth()
-            ->pluck('securities.id')
+            ->whereHas('transactions', fn ($q) => $q->where('user_id', auth()->id()))
+            ->pluck('id')
             ->all();
 
         $idsWithPrice = SecurityPrice::query()
