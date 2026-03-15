@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets\Securities;
 
 use App\Data\CumulativeData;
+use App\Filament\Widgets\Securities\Concerns\HasReactiveTableProperties;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
@@ -13,7 +14,6 @@ use Filament\Schemas\Schema;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\ChartWidget\Concerns\HasFiltersSchema;
-use Filament\Widgets\Concerns\InteractsWithPageTable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\On;
@@ -21,18 +21,17 @@ use Livewire\Attributes\On;
 class ValuationChartWidget extends ChartWidget
 {
     use HasFiltersSchema;
-    use InteractsWithPageTable;
+    use HasReactiveTableProperties;
 
-    protected ?string $heading = 'Evolution de la valorisation';
+    protected ?string $heading = null;
 
     protected int|string|array $columnSpan = 'full';
 
     protected ?string $pollingInterval = null;
 
-    protected ?string $maxHeight = null;
+    protected string $view = 'filament.widgets.flat-chart-widget';
 
-    /** @var class-string|null */
-    public ?string $tablePageClass = null;
+    protected ?string $maxHeight = '200px';
 
     /** @var list<int>|null */
     public ?array $shownSecurityIds = null;
@@ -49,11 +48,6 @@ class ValuationChartWidget extends ChartWidget
                 ->default('total')
                 ->grouped(),
         ]);
-    }
-
-    protected function getTablePage(): string
-    {
-        return $this->tablePageClass;
     }
 
     #[On('security-visibility-changed')]
@@ -334,6 +328,7 @@ class ValuationChartWidget extends ChartWidget
                     },
                 },
                 plugins: {
+                    legend: { display: false },
                     tooltip: {
                         callbacks: {
                             title: (items) => {

@@ -2,14 +2,14 @@
 
 namespace App\Filament\Widgets\Securities;
 
+use App\Filament\Widgets\Securities\Concerns\HasReactiveTableProperties;
 use App\Services\PortfolioPerformanceCalculator;
-use Filament\Widgets\Concerns\InteractsWithPageTable;
 use Filament\Widgets\Widget;
 use Livewire\Attributes\On;
 
 class PerformanceStatsOverview extends Widget
 {
-    use InteractsWithPageTable;
+    use HasReactiveTableProperties;
 
     protected string $view = 'filament.widgets.performance-stats-overview';
 
@@ -17,16 +17,8 @@ class PerformanceStatsOverview extends Widget
 
     protected int|string|array $columnSpan = 'full';
 
-    /** @var class-string|null */
-    public ?string $tablePageClass = null;
-
     /** @var list<int>|null */
     public ?array $shownSecurityIds = null;
-
-    protected function getTablePage(): string
-    {
-        return $this->tablePageClass;
-    }
 
     #[On('security-visibility-changed')]
     public function updateShownSecurityIds(array $shownSecurityIds): void

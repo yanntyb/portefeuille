@@ -2,108 +2,38 @@
 
 namespace App\Filament\Widgets\Securities;
 
+use App\Filament\Widgets\Securities\Concerns\HasReactiveTableProperties;
 use App\Models\SecuritySector;
 use App\Services\SectorAggregator;
 use Filament\Support\RawJs;
-use Filament\Tables\Contracts\HasTable;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\On;
-use Livewire\Attributes\Reactive;
-
-use function Livewire\trigger;
 
 class SectorAllocationChartWidget extends ChartWidget
 {
+    use HasReactiveTableProperties;
+
     protected ?string $heading = 'Répartition sectorielle';
 
     protected int|string|array $columnSpan = 'full';
 
     protected ?string $pollingInterval = null;
 
-    protected string $view = 'filament.widgets.scrollable-chart-widget';
+    protected bool $isCollapsible = true;
+
+    protected bool $isCollapsed = true;
+
+    protected string $view = 'filament.widgets.collapsible-chart-widget';
 
     private ?Builder $cachedPageTableQuery = null;
-
-    private ?HasTable $tablePage = null;
-
-    /** @var class-string|null */
-    public ?string $tablePageClass = null;
 
     /** @var list<int>|null */
     public ?array $shownSecurityIds = null;
 
     public ?Model $record = null;
-
-    /** @var array<string, int> */
-    #[Reactive]
-    public ?array $paginators = [];
-
-    /** @var array<string, string | array<string, string | null> | null> */
-    #[Reactive]
-    public ?array $tableColumnSearches = [];
-
-    /** @var array<string, mixed> | null */
-    #[Reactive]
-    public ?array $tableFilters = null;
-
-    #[Reactive]
-    public ?string $tableSearch = '';
-
-    #[Reactive]
-    public ?string $tableSort = null;
-
-    #[Reactive]
-    public ?string $tableGrouping = null;
-
-    #[Reactive]
-    public int|string|null $tableRecordsPerPage = null;
-
-    #[Reactive]
-    public ?string $activeTab = null;
-
-    #[Reactive]
-    public ?int $tableRecordsCount = null;
-
-    #[Reactive]
-    public ?Model $parentRecord = null;
-
-    private function getTablePageInstance(): HasTable
-    {
-        if ($this->tablePage !== null) {
-            return $this->tablePage;
-        }
-
-        /** @var HasTable $page */
-        $page = app('livewire')->new($this->tablePageClass);
-
-        trigger('mount', $page, [], null, null, []);
-
-        foreach ([
-            'activeTab' => $this->activeTab,
-            'paginators' => $this->paginators ?? [],
-            'parentRecord' => $this->parentRecord,
-            'tableColumnSearches' => $this->tableColumnSearches ?? [],
-            'tableFilters' => $this->tableFilters,
-            'tableGrouping' => $this->tableGrouping,
-            'tableRecordsPerPage' => $this->tableRecordsPerPage,
-            'tableSearch' => $this->tableSearch,
-            'tableSort' => $this->tableSort,
-        ] as $property => $value) {
-            $page->{$property} = $value;
-        }
-
-        $page->bootedInteractsWithTable();
-
-        return $this->tablePage = $page;
-    }
-
-    private function getPageTableQuery(): Builder
-    {
-        return $this->getTablePageInstance()->getFilteredSortedTableQuery();
-    }
 
     private function getCachedPageTableQuery(): Builder
     {
@@ -112,13 +42,7 @@ class SectorAllocationChartWidget extends ChartWidget
 
     public function getDescription(): ?string
     {
-        $oldestUpdatedAt = $this->getOldestSectorUpdate();
-
-        if ($oldestUpdatedAt === null) {
-            return null;
-        }
-
-        return 'Maj le : '.$oldestUpdatedAt->translatedFormat('d M Y à H\hi');
+        return null;
     }
 
     private function getOldestSectorUpdate(): ?Carbon

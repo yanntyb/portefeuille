@@ -2,15 +2,15 @@
 
 namespace App\Filament\Widgets\Securities;
 
+use App\Filament\Widgets\Securities\Concerns\HasReactiveTableProperties;
 use App\Support\ChartColors;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
-use Filament\Widgets\Concerns\InteractsWithPageTable;
 use Livewire\Attributes\On;
 
 class AllocationChartWidget extends ChartWidget
 {
-    use InteractsWithPageTable;
+    use HasReactiveTableProperties;
 
     protected ?string $heading = 'Répartition par titre';
 
@@ -20,16 +20,14 @@ class AllocationChartWidget extends ChartWidget
 
     protected ?string $maxHeight = '300px';
 
-    /** @var class-string|null */
-    public ?string $tablePageClass = null;
+    protected bool $isCollapsible = true;
+
+    protected bool $isCollapsed = true;
+
+    protected string $view = 'filament.widgets.collapsible-chart-widget';
 
     /** @var list<int>|null */
     public ?array $shownSecurityIds = null;
-
-    protected function getTablePage(): string
-    {
-        return $this->tablePageClass;
-    }
 
     #[On('security-visibility-changed')]
     public function updateShownSecurityIds(array $shownSecurityIds): void
