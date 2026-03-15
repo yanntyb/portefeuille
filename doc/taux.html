@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taux — Vue d'ensemble</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-white min-h-screen flex items-center justify-center p-8">
+
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+
+        <!-- Charges salariales -->
+        <div class="w-44 h-44 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 flex flex-col items-center justify-center shadow-lg">
+            <span class="text-sm text-blue-200 mb-1">Charges salariales</span>
+            <span class="text-3xl font-bold">828,64 €</span>
+            <span class="text-sm text-blue-300 mt-1">21,45 %</span>
+        </div>
+
+        <!-- Charges patronales -->
+        <div class="w-44 h-44 rounded-2xl bg-gradient-to-br from-purple-600 to-purple-800 flex flex-col items-center justify-center shadow-lg">
+            <span class="text-sm text-purple-200 mb-1">Charges patronales</span>
+            <span class="text-3xl font-bold">1 781,15 €</span>
+            <span class="text-sm text-purple-300 mt-1">46,11 %</span>
+        </div>
+
+        <!-- Prélèvement à la source -->
+        <div class="w-44 h-44 rounded-2xl bg-gradient-to-br from-amber-600 to-amber-800 flex flex-col items-center justify-center shadow-lg">
+            <span class="text-sm text-amber-200 mb-1">Prélèvement source</span>
+            <span class="text-3xl font-bold">7,9 %</span>
+            <span class="text-xs text-amber-300 mt-1">sur net avant impôt</span>
+        </div>
+
+        <!-- IS taux réduit -->
+        <div class="w-44 h-44 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 flex flex-col items-center justify-center shadow-lg">
+            <span class="text-sm text-emerald-200 mb-1">IS réduit</span>
+            <span class="text-3xl font-bold">15 %</span>
+            <span class="text-sm text-emerald-300 mt-1">≤ 42 500 €</span>
+        </div>
+
+        <!-- IS taux normal -->
+        <div class="w-44 h-44 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 flex flex-col items-center justify-center shadow-lg">
+            <span class="text-sm text-red-200 mb-1">IS normal</span>
+            <span class="text-3xl font-bold">25 %</span>
+            <span class="text-sm text-red-300 mt-1">&gt; 42 500 €</span>
+        </div>
+
+        <!-- PFU (flat tax) -->
+        <div class="w-44 h-44 rounded-2xl bg-gradient-to-br from-cyan-600 to-cyan-800 flex flex-col items-center justify-center shadow-lg">
+            <span class="text-sm text-cyan-200 mb-1">PFU (flat tax)</span>
+            <span class="text-3xl font-bold">30 %</span>
+            <span class="text-sm text-cyan-300 mt-1">sur dividendes</span>
+        </div>
+
+    </div>
+
+</body>
+</html>

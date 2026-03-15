@@ -1,0 +1,184 @@
+Description fonctionnelle
+Prévision de passage en indépendant (SASU)
+Yann TYBURCZY — Mars 2026
+
+================================================================================
+CONTRAT CDI — Situation de référence (janvier 2026)
+================================================================================
+
+salaire_brut = object { value: 3 862,50 € }
+
+charges_salariales = object {
+    value: {
+        taux => 21,45 %
+        montant => 828,64 €
+    }
+}
+
+charges_patronales = object {
+    value: {
+        taux => 46,11 %
+        montant => 1 781,15 €
+    }
+}
+
+prelevement_source = object {
+    value: { taux => 7,9 % }
+}
+
+net_avant_impot = salaire_brut
+    |> soustraire(charges_salariales.montant)
+    => 3 033,86 €
+
+net_paye = net_avant_impot
+    |> retenir(prelevement_source.taux)
+    => 2 793,19 €
+
+cout_employeur = additionner(salaire_brut, charges_patronales)
+    => 5 643,65 €
+
+contrat_cdi = object {
+    value: {
+        type => CDI
+        entreprise => UVI
+        salaire_brut => salaire_brut
+        charges_salariales => charges_salariales
+        charges_patronales => charges_patronales
+        prelevement_source => prelevement_source
+        net_avant_impot => net_avant_impot
+        net_paye => net_paye
+        cout_employeur => cout_employeur
+    }
+}
+
+================================================================================
+CONTRAT SASU — Simulation freelance
+================================================================================
+
+--- Paramètres fixes (scalaires) ---
+
+frais_fixes = object { value: 400 € }
+jours_par_mois = object { value: 20 }
+salaire_sasu_brut = object { value: 1 500 € }
+taux_charges_patronales_sasu = object { value: 45 % }
+taux_charges_salariales_sasu = object { value: 23 % }
+
+taux_is = object {
+    value: {
+        taux_reduit => 15 %
+        seuil_reduit => 42 500 €
+        taux_normal => 25 %
+    }
+}
+
+taux_pfu = object { value: 30 % }
+
+--- TJM (variable) ---
+
+tjm = object { value: x €/j }
+
+--- Chaîne de calcul SASU (pipe) ---
+
+chiffre_affaires = tjm
+    |> proxy(value * jours_par_mois.value)
+
+benefice_avant_is = chiffre_affaires
+    |> proxy(value
+        - frais_fixes.value
+        - salaire_sasu_brut.value
+        - salaire_sasu_brut.value * taux_charges_patronales_sasu.value
+    )
+
+impot_societes = benefice_avant_is
+    |> proxy(value * taux_is.taux_reduit)
+
+benefice_distribuable = benefice_avant_is
+    |> soustraire(impot_societes.value)
+
+dividendes_nets = benefice_distribuable
+    |> retenir(taux_pfu.value)
+
+net_salarial_sasu = salaire_sasu_brut
+    |> retenir(taux_charges_salariales_sasu.value)
+    |> retenir(prelevement_source.taux)
+
+total_net_en_poche = additionner(dividendes_nets, net_salarial_sasu)
+
+--- Scénarios TJM (intervale discret) ---
+
+scenarios = intervale(tjm, [320, 350, 450]) => {
+    320 => total_net_en_poche => ~2 960 €
+    350 => total_net_en_poche => ~3 270 €
+    450 => total_net_en_poche => ~4 883 €
+}
+
+gain_vs_cdi = scenarios
+    |> proxy(each(value - contrat_cdi.net_paye)) => {
+        320 => +281 €
+        350 => +591 €
+        450 => +2 204 €
+    }
+
+contrat_sasu = object {
+    value: {
+        type => SASU Freelance
+        client => UVI
+        tjm => tjm
+        jours_par_mois => jours_par_mois
+        frais_fixes => frais_fixes
+        salaire_sasu_brut => salaire_sasu_brut
+        taux_charges_patronales => taux_charges_patronales_sasu
+        taux_charges_salariales => taux_charges_salariales_sasu
+        taux_is => taux_is
+        taux_pfu => taux_pfu
+        chiffre_affaires => chiffre_affaires
+        benefice_avant_is => benefice_avant_is
+        benefice_distribuable => benefice_distribuable
+        dividendes_nets => dividendes_nets
+        net_salarial => net_salarial_sasu
+        total_net_en_poche => total_net_en_poche
+        scenarios => scenarios
+    }
+}
+
+================================================================================
+COMPARAISON
+================================================================================
+
+comparaison = link(contrat_cdi, contrat_sasu) => {
+    cdi => contrat_cdi
+    sasu => contrat_sasu
+    gain => gain_vs_cdi
+    variation_cout_uvi => scenarios
+        |> proxy(each(
+            (chiffre_affaires - cout_employeur.value) / cout_employeur.value * 100
+        )) => {
+            320 => +15,4 %
+            350 => +26,3 %
+            450 => +62,4 %
+        }
+}
+
+================================================================================
+STRATÉGIE RECOMMANDÉE
+================================================================================
+
+phases = intervale(tjm, [0-6, 6-18, 18+]) => {
+    0-6   => tjm = 350 €/j  // démarrage, accord UVI
+    6-18  => tjm = 400 €/j  // consolidation, diversification clients
+    18+   => tjm = 450 €/j  // maturité, tarif marché senior
+}
+
+================================================================================
+POINTS D'ATTENTION
+================================================================================
+
+risques = object {
+    value: {
+        requalification => client unique UVI, critères de subordination
+        protection_sociale => salaire 1 500 € = faibles droits retraite, pas d'ARE
+        conges => 20j/mois facturés, CA réel ~8 063 €/mois avec 5 sem congés
+        seuil_is => 15% limité à 42 500 € bénéfice/an, 25% au-delà
+        distribution => simulation = distribution totale, en pratique garder réserve
+    }
+}

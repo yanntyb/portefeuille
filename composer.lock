@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "72fd97e46c61043b62991b44cdc065f0",
+    "content-hash": "fb7733ffb6987cefe191787f491c5b80",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -8368,6 +8368,107 @@
         }
     ],
     "packages-dev": [
+        {
+            "name": "421c/autodoc-laravel",
+            "version": "v1.10.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/421C/autodoc-laravel.git",
+                "reference": "41ef53230eb4e55f60f76fd52edc7c6af63830ee"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/421C/autodoc-laravel/zipball/41ef53230eb4e55f60f76fd52edc7c6af63830ee",
+                "reference": "41ef53230eb4e55f60f76fd52edc7c6af63830ee",
+                "shasum": ""
+            },
+            "require": {
+                "421c/autodoc-php": "^1.15.4",
+                "illuminate/database": "^6.0||^7.0||^8.0||^9.0||^10.0||^11.0||^12.0",
+                "illuminate/routing": "^6.0||^7.0||^8.0||^9.0||^10.0||^11.0||^12.0",
+                "illuminate/support": "^6.0||^7.0||^8.0||^9.0||^10.0||^11.0||^12.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.64",
+                "larastan/larastan": "^3.0",
+                "orchestra/testbench": "^9.5",
+                "phpunit/phpunit": "^11.4",
+                "symfony/var-dumper": "^7.1"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "AutoDoc\\Laravel\\Providers\\AutoDocServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "AutoDoc\\Laravel\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Automatic OpenApi documentation and TypeScript generation tool for Laravel projects",
+            "support": {
+                "issues": "https://github.com/421C/autodoc-laravel/issues",
+                "source": "https://github.com/421C/autodoc-laravel/tree/v1.10.0"
+            },
+            "time": "2026-03-04T21:07:59+00:00"
+        },
+        {
+            "name": "421c/autodoc-php",
+            "version": "v1.16.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/421C/autodoc-php.git",
+                "reference": "97396a8cafa8834e5c21646dc0190ba84a6b868c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/421C/autodoc-php/zipball/97396a8cafa8834e5c21646dc0190ba84a6b868c",
+                "reference": "97396a8cafa8834e5c21646dc0190ba84a6b868c",
+                "shasum": ""
+            },
+            "require": {
+                "nikic/php-parser": "^5.2",
+                "php": "^8.1",
+                "phpstan/phpdoc-parser": "^2.1"
+            },
+            "conflict": {
+                "phpstan/phpstan": "<2.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.64",
+                "phpstan/phpstan": "^2.1",
+                "phpunit/phpunit": "^11.4",
+                "symfony/var-dumper": "^7.1"
+            },
+            "bin": [
+                "bin/openapi-export",
+                "bin/ts-sync",
+                "bin/autodoc-debug"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "AutoDoc\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Automatic OpenApi documentation and TypeScript generation tool for PHP projects",
+            "support": {
+                "issues": "https://github.com/421C/autodoc-php/issues",
+                "source": "https://github.com/421C/autodoc-php/tree/v1.16.1"
+            },
+            "time": "2026-02-10T16:30:03+00:00"
+        },
         {
             "name": "brianium/paratest",
             "version": "v7.19.0",
