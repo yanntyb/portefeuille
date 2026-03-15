@@ -94,7 +94,7 @@ class DashboardSecuritiesTableWidget extends TableWidget
                             'securities.id',
                             'lp.security_id',
                         )
-                        ->orderByRaw('(COALESCE(total_quantity, 0) * COALESCE(lp.close, 0)) '.$direction)
+                        ->orderByRaw('(COALESCE(total_quantity, 0) * COALESCE(MAX(lp.close), 0)) '.$direction)
                     ),
                 TextColumn::make('performance')
                     ->label('Performances')
@@ -131,7 +131,7 @@ class DashboardSecuritiesTableWidget extends TableWidget
                             'securities.id',
                             'lp_perf.security_id',
                         )
-                        ->orderByRaw('CASE WHEN total_invested > 0 THEN (COALESCE(total_quantity, 0) * COALESCE(lp_perf.close, 0) - total_invested) / total_invested ELSE 0 END '.$direction)
+                        ->orderByRaw('CASE WHEN total_invested > 0 THEN (COALESCE(total_quantity, 0) * COALESCE(MAX(lp_perf.close), 0) - total_invested) / total_invested ELSE 0 END '.$direction)
                     ),
                 TextColumn::make('isin')
                     ->label('ISIN')
