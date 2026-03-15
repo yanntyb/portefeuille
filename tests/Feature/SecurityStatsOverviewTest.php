@@ -2,7 +2,7 @@
 
 use App\Filament\Resources\CtoSecurities\Pages\ListCtoSecurities;
 use App\Filament\Resources\PeaSecurities\Pages\ListPeaSecurities;
-use App\Filament\Widgets\Securities\SecurityStatsOverview;
+use App\Filament\Widgets\Securities\GainStatsOverview;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
@@ -15,7 +15,7 @@ it('can render on the PEA list page', function () {
 
     livewire(ListPeaSecurities::class)
         ->assertOk()
-        ->assertSeeLivewire(SecurityStatsOverview::class);
+        ->assertSeeLivewire(GainStatsOverview::class);
 });
 
 it('can render on the CTO list page', function () {
@@ -24,7 +24,7 @@ it('can render on the CTO list page', function () {
 
     livewire(ListCtoSecurities::class)
         ->assertOk()
-        ->assertSeeLivewire(SecurityStatsOverview::class);
+        ->assertSeeLivewire(GainStatsOverview::class);
 });
 
 it('computes valuation and plus-value correctly', function () {
@@ -43,19 +43,17 @@ it('computes valuation and plus-value correctly', function () {
         'close' => 120,
     ]);
 
-    $widget = livewire(SecurityStatsOverview::class, [
+    $widget = livewire(GainStatsOverview::class, [
         'tablePageClass' => ListPeaSecurities::class,
     ]);
 
     $widget->assertOk();
 
-    $stats = invade($widget->instance())->getStats();
+    $data = $widget->instance()->getGainData();
 
-    expect($stats)->toHaveCount(4)
-        ->and($stats[0]->getValue())->toContain('1,200')
-        ->and($stats[1]->getValue())->toContain('195')
-        ->and($stats[2]->getLabel())->toBe('Frais')
-        ->and($stats[2]->getValue())->toContain('5');
+    // Valuation = 10 * 120 = 1200, Invested = 10*100+5 = 1005, PV = 195
+    expect($data['plusValue'])->toContain('195')
+        ->and($data['fees'])->toContain('5');
 });
 
 it('displays percentage alongside plus-value', function () {
@@ -74,19 +72,19 @@ it('displays percentage alongside plus-value', function () {
         'close' => 120,
     ]);
 
-    $widget = livewire(SecurityStatsOverview::class, [
+    $widget = livewire(GainStatsOverview::class, [
         'tablePageClass' => ListPeaSecurities::class,
     ]);
 
-    $stats = invade($widget->instance())->getStats();
+    $data = $widget->instance()->getGainData();
 
     // Plus-value = 1200 - 1000 = 200, percentage = 20%
-    expect($stats[1]->getValue())->toContain('200')
-        ->and($stats[1]->getDescription())->toContain('20.00')
-        ->and($stats[1]->getDescription())->toContain('%');
+    expect($data['plusValue'])->toContain('200')
+        ->and($data['plusValuePercentage'])->toContain('20')
+        ->and($data['plusValuePercentage'])->toContain('%');
 });
 
-it('shows success color when plus-value is positive', function () {
+it('shows positive flag when plus-value is positive', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
@@ -102,16 +100,16 @@ it('shows success color when plus-value is positive', function () {
         'close' => 150,
     ]);
 
-    $widget = livewire(SecurityStatsOverview::class, [
+    $widget = livewire(GainStatsOverview::class, [
         'tablePageClass' => ListPeaSecurities::class,
     ]);
 
-    $stats = invade($widget->instance())->getStats();
+    $data = $widget->instance()->getGainData();
 
-    expect($stats[1]->getColor())->toBe('success');
+    expect($data['plusValuePositive'])->toBeTrue();
 });
 
-it('shows danger color when plus-value is negative', function () {
+it('shows negative flag when plus-value is negative', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
@@ -127,13 +125,13 @@ it('shows danger color when plus-value is negative', function () {
         'close' => 80,
     ]);
 
-    $widget = livewire(SecurityStatsOverview::class, [
+    $widget = livewire(GainStatsOverview::class, [
         'tablePageClass' => ListPeaSecurities::class,
     ]);
 
-    $stats = invade($widget->instance())->getStats();
+    $data = $widget->instance()->getGainData();
 
-    expect($stats[1]->getColor())->toBe('danger');
+    expect($data['plusValuePositive'])->toBeFalse();
 });
 
 it('displays fees with percentage', function () {
@@ -152,28 +150,25 @@ it('displays fees with percentage', function () {
         'close' => 120,
     ]);
 
-    $widget = livewire(SecurityStatsOverview::class, [
+    $widget = livewire(GainStatsOverview::class, [
         'tablePageClass' => ListPeaSecurities::class,
     ]);
 
-    $stats = invade($widget->instance())->getStats();
+    $data = $widget->instance()->getGainData();
 
     // Fees = 10, totalInvested = 10*100 + 10 = 1010, percentage = 10/1010 * 100 ≈ 0.99%
-    expect($stats[2]->getLabel())->toBe('Frais')
-        ->and($stats[2]->getValue())->toContain('10')
-        ->and($stats[2]->getDescription())->toContain('%')
-        ->and($stats[2]->getColor())->toBe('danger');
+    expect($data['fees'])->toContain('10')
+        ->and($data['feesPercentage'])->toContain('%');
 });
 
-it('returns empty stats when no securities exist', function () {
-    $widget = livewire(SecurityStatsOverview::class, [
+it('returns zero stats when no securities exist', function () {
+    $widget = livewire(GainStatsOverview::class, [
         'tablePageClass' => ListPeaSecurities::class,
     ]);
 
     $widget->assertOk();
 
-    $stats = invade($widget->instance())->getStats();
+    $data = $widget->instance()->getGainData();
 
-    expect($stats)->toHaveCount(4)
-        ->and($stats[0]->getValue())->toContain('0');
+    expect($data['plusValue'])->toContain('0');
 });

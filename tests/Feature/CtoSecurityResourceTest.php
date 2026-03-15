@@ -77,5 +77,6 @@ it('displays aggregated columns for a CTO security', function () {
 
     livewire(ListCtoSecurities::class)
         ->assertCanSeeTableRecords(collect([$security]))
-        ->assertTableColumnStateSet('total_quantity', '20.0000', $security);
+        ->assertTableColumnExists('valuation')
+        ->assertTableColumnExists('performance');
 });

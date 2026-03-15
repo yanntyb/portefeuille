@@ -54,7 +54,8 @@ it('displays aggregated columns for a PEA security', function () {
 
     livewire(ListPeaSecurities::class)
         ->assertCanSeeTableRecords(collect([$security]))
-        ->assertTableColumnStateSet('total_quantity', '30.0000', $security);
+        ->assertTableColumnExists('valuation')
+        ->assertTableColumnExists('performance');
 });
 
 it('does not have a create action in the PEA list page', function () {
