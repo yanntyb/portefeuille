@@ -42,7 +42,7 @@ class SecurityForm
         return Action::make('updateFromIsin')
             ->label(fn (EditRecord $livewire) => $livewire->isUpdating ? 'Mise à jour en cours…' : 'Mettre à jour')
             ->icon(Heroicon::ArrowPath)
-            ->color('danger')
+            ->color('gray')
             ->disabled(fn (EditRecord $livewire) => $livewire->isUpdating)
             ->extraAttributes(fn (EditRecord $livewire) => $livewire->isUpdating ? ['class' => '[&_svg]:animate-spin'] : [])
             ->schema(self::searchSchema())

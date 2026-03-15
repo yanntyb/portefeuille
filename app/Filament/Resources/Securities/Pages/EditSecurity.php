@@ -16,6 +16,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Schemas\Components\Livewire;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
@@ -173,11 +174,21 @@ abstract class EditSecurity extends EditRecord
         $components[] = Livewire::make(SingleSecurityPriceChartWidget::class, [
             'record' => $record,
         ])->key('single-security-price-chart');
+
         $components[] = Livewire::make(SectorAllocationChartWidget::class, [
             'record' => $record,
+            'bareView' => true,
         ])->key('single-security-sector-allocation');
 
-        $components[] = $this->getRelationManagersContentComponent();
+        $components[] = Section::make('Transactions')
+            ->collapsible()
+            ->collapsed()
+            ->persistCollapsed()
+            ->id('transactions')
+            ->extraAttributes(['class' => 'fi-section-no-content-padding'])
+            ->schema([
+                $this->getRelationManagersContentComponent(),
+            ]);
 
         return $schema->components($components);
     }

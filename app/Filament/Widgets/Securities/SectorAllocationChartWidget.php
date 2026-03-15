@@ -28,6 +28,15 @@ class SectorAllocationChartWidget extends ChartWidget
 
     protected string $view = 'filament.widgets.collapsible-chart-widget';
 
+    public bool $bareView = false;
+
+    public function booted(): void
+    {
+        if ($this->bareView) {
+            $this->view = 'filament.widgets.bare-chart-widget';
+        }
+    }
+
     private ?Builder $cachedPageTableQuery = null;
 
     /** @var list<int>|null */

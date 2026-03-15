@@ -18,6 +18,7 @@ class PricesRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->heading('')
             ->recordTitleAttribute('date')
             ->defaultSort('date', 'desc')
             ->columns([
