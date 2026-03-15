@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Securities\RelationManagers;
 
 use App\Enums\AccountType;
 use App\Enums\TransactionType;
+use App\Filament\Resources\Transactions\Tables\TransactionsTable;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
 use Closure;
@@ -19,8 +20,6 @@ use Filament\Forms\Components\ToggleButtons;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class TransactionsRelationManager extends RelationManager
@@ -122,59 +121,9 @@ class TransactionsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        return $table
-            ->heading('')
-            ->recordTitleAttribute('date')
-            ->defaultSort('date', 'desc')
-            ->columns([
-                TextColumn::make('date')
-                    ->label('Date')
-                    ->isoDate('MMM YYYY')
-                    ->sortable(),
-                TextColumn::make('account_type')
-                    ->label('Compte')
-                    ->badge()
-                    ->sortable(),
-                TextColumn::make('type')
-                    ->label('Type')
-                    ->badge()
-                    ->sortable(),
-                TextColumn::make('broker')
-                    ->label('Courtier')
-                    ->searchable()
-                    ->placeholder('—')
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('quantity')
-                    ->label('Quantité')
-                    ->numeric(decimalPlaces: 4)
-                    ->sortable()
-                    ->placeholder('—'),
-                TextColumn::make('unit_price')
-                    ->label('Prix unitaire')
-                    ->money('EUR')
-                    ->sortable()
-                    ->placeholder('—'),
-                TextColumn::make('fees')
-                    ->label('Frais')
-                    ->money('EUR')
-                    ->sortable(),
-                TextColumn::make('realized_gain')
-                    ->label('PV réalisée')
-                    ->money('EUR')
-                    ->sortable()
-                    ->placeholder('—')
-                    ->color(fn ($state) => $state >= 0 ? 'success' : 'danger')
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ])
-            ->filters([
-                SelectFilter::make('account_type')
-                    ->label('Compte')
-                    ->options(AccountType::class),
-                SelectFilter::make('type')
-                    ->label('Type')
-                    ->options(TransactionType::class),
-            ])
-            ->headerActions([])
+        return TransactionsTable::configure(
+            $table->heading('')
+        )
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make(),

@@ -50,6 +50,11 @@
     padding-right: 0 !important;
 }
 
+/* Masquer l'indicateur de sélection dans tous les tableaux */
+.fi-ta-selection-indicator {
+    display: none !important;
+}
+
 /* Widgets Livewire imbriqués */
 .fi-sc-section.fi-section-no-content-padding .fi-wi-chart .fi-section > .fi-section-content-ctn > .fi-section-content {
     padding-left: 0 !important;

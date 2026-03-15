@@ -33,7 +33,8 @@ class TransactionsTable
                 TextColumn::make('security.isin')
                     ->label('ISIN')
                     ->searchable()
-                    ->placeholder('—'),
+                    ->placeholder('—')
+                    ->toggleable(),
                 TextColumn::make('broker')
                     ->label('Courtier')
                     ->searchable()

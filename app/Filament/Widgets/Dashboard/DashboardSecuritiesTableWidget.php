@@ -2,12 +2,10 @@
 
 namespace App\Filament\Widgets\Dashboard;
 
+use App\Filament\Resources\Securities\Tables\SecuritiesTable;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Support\MarketCalendar;
-use Filament\Actions\Action;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 use Illuminate\Database\Eloquent\Builder;
@@ -58,96 +56,10 @@ class DashboardSecuritiesTableWidget extends TableWidget
 
     public function table(Table $table): Table
     {
-        return $table
-            ->heading(null)
-            ->query(fn (): Builder => Security::query()->forAuth())
-            ->columns([
-                TextColumn::make('name')
-                    ->label('Nom')
-                    ->searchable()
-                    ->sortable()
-                    ->icon(fn (Security $record) => in_array($record->id, $this->pricelessSecurityIds) ? 'heroicon-o-exclamation-triangle' : null)
-                    ->iconColor('danger')
-                    ->tooltip(fn (Security $record) => in_array($record->id, $this->pricelessSecurityIds) ? 'Ce titre est masqué car les prix n\'ont pas pu être récupérés automatiquement' : null),
-                TextColumn::make('valuation')
-                    ->label('Valorisation')
-                    ->state(function (Security $record): ?float {
-                        $close = $record->latestPrice?->close;
-
-                        if ($close === null || $record->total_quantity === null) {
-                            return null;
-                        }
-
-                        return (float) $record->total_quantity * (float) $close;
-                    })
-                    ->money('eur')
-                    ->sortable(query: fn (Builder $query, string $direction): Builder => $query
-                        ->leftJoinSub(
-                            SecurityPrice::query()
-                                ->select('security_id', 'close')
-                                ->whereIn('id', function ($sub) {
-                                    $sub->selectRaw('MAX(id)')
-                                        ->from('security_prices')
-                                        ->groupBy('security_id');
-                                }),
-                            'lp',
-                            'securities.id',
-                            'lp.security_id',
-                        )
-                        ->orderByRaw('(COALESCE(total_quantity, 0) * COALESCE(MAX(lp.close), 0)) '.$direction)
-                    ),
-                TextColumn::make('performance')
-                    ->label('Performance')
-                    ->state(function (Security $record): ?float {
-                        $close = $record->latestPrice?->close;
-                        $pru = $record->pru;
-
-                        if ($close === null || $pru === null || (float) $pru === 0.0) {
-                            return null;
-                        }
-
-                        return ((float) $close - (float) $pru) / (float) $pru * 100;
-                    })
-                    ->numeric(decimalPlaces: 2)
-                    ->suffix(' %')
-                    ->color(fn ($state) => match (true) {
-                        $state === null => null,
-                        $state > 0 => 'success',
-                        $state < 0 => 'danger',
-                        default => null,
-                    })
-                    ->sortable(query: fn (Builder $query, string $direction): Builder => $query
-                        ->leftJoinSub(
-                            SecurityPrice::query()
-                                ->select('security_id', 'close')
-                                ->whereIn('id', function ($sub) {
-                                    $sub->selectRaw('MAX(id)')
-                                        ->from('security_prices')
-                                        ->groupBy('security_id');
-                                }),
-                            'lp_perf',
-                            'securities.id',
-                            'lp_perf.security_id',
-                        )
-                        ->orderByRaw('CASE WHEN pru > 0 THEN (COALESCE(MAX(lp_perf.close), 0) - pru) / pru ELSE 0 END '.$direction)
-                    ),
-                TextColumn::make('isin')
-                    ->label('ISIN')
-                    ->searchable(),
-                TextColumn::make('ticker')
-                    ->label('Ticker')
-                    ->searchable(),
-            ])
-            ->defaultSort('valuation', 'desc')
-            ->recordActions([
-                Action::make('toggleVisibility')
-                    ->label('')
-                    ->icon(fn (Security $record) => in_array($record->id, $this->shownSecurityIds) ? 'heroicon-o-eye' : 'heroicon-o-eye-slash')
-                    ->iconButton()
-                    ->color(fn (Security $record) => in_array($record->id, $this->shownSecurityIds) ? 'primary' : 'gray')
-                    ->action(fn (Security $record) => $this->toggleSecurity($record->id)),
-            ])
-            ->recordActionsPosition(RecordActionsPosition::BeforeColumns)
-            ->headerActions([]);
+        return SecuritiesTable::configure(
+            $table
+                ->heading(null)
+                ->query(fn (): Builder => Security::query()->forAuth())
+        );
     }
 }
