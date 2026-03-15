@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class TransactionResource extends Resource
 {
@@ -25,6 +26,10 @@ class TransactionResource extends Resource
     protected static ?string $pluralModelLabel = 'transactions';
 
     protected static ?string $navigationLabel = 'Transactions';
+
+    protected static string|UnitEnum|null $navigationGroup = 'Portefeuille';
+
+    protected static ?int $navigationSort = 4;
 
     public static function form(Schema $schema): Schema
     {

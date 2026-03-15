@@ -15,7 +15,7 @@
         }"
         class="relative"
     >
-        <div class="flex items-center gap-1 px-1">
+        <div class="flex items-center gap-1">
             <span class="text-sm font-medium text-gray-950 dark:text-white">Performance</span>
             <x-filament::icon-button
                 icon="heroicon-o-information-circle"
@@ -27,7 +27,7 @@
 
         <div
             x-ref="scroller"
-            class="flex gap-4 overflow-x-auto px-1 py-1 snap-x snap-mandatory scroll-px-1"
+            class="flex gap-4 overflow-x-auto py-1 snap-x snap-mandatory"
             style="-ms-overflow-style: none; scrollbar-width: none;"
         >
             @foreach ($this->getPerformanceData() as $stat)

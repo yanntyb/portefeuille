@@ -6,6 +6,7 @@ use App\Filament\Plugins\PwaPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -37,6 +38,11 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([])
             ->widgets([])
+            ->navigationGroups([
+                NavigationGroup::make('Portefeuille'),
+                NavigationGroup::make('Outils'),
+                NavigationGroup::make('Administration'),
+            ])
             ->navigationItems([
                 NavigationItem::make('Logs')
                     ->url('/log-viewer', shouldOpenInNewTab: true)

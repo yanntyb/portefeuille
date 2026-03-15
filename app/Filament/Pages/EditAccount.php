@@ -24,7 +24,9 @@ class EditAccount extends Page
 
     protected static ?string $title = 'Mon Compte';
 
-    protected static ?int $navigationSort = 100;
+    protected static string|\UnitEnum|null $navigationGroup = 'Administration';
+
+    protected static ?int $navigationSort = 1;
 
     protected string $view = 'filament.pages.edit-account';
 

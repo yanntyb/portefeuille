@@ -38,7 +38,9 @@ class RebalancingCalculator extends Page implements HasTable
 
     protected static ?string $title = 'Calculateur de Rééquilibrage';
 
-    protected static ?int $navigationSort = 50;
+    protected static string|\UnitEnum|null $navigationGroup = 'Outils';
+
+    protected static ?int $navigationSort = 1;
 
     protected string $view = 'filament.pages.rebalancing-calculator';
 

@@ -8,6 +8,7 @@ use App\Filament\Resources\CtoSecurities\Pages\ListCtoSecurities;
 use App\Filament\Resources\Securities\AccountSecurityResource;
 use BackedEnum;
 use Filament\Support\Icons\Heroicon;
+use UnitEnum;
 
 class CtoSecurityResource extends AccountSecurityResource
 {
@@ -22,6 +23,10 @@ class CtoSecurityResource extends AccountSecurityResource
     protected static ?string $navigationLabel = 'CTO';
 
     protected static ?string $breadcrumb = 'CTO';
+
+    protected static string|UnitEnum|null $navigationGroup = 'Portefeuille';
+
+    protected static ?int $navigationSort = 3;
 
     public static function accountType(): AccountType
     {

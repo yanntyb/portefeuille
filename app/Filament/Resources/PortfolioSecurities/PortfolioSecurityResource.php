@@ -28,6 +28,8 @@ class PortfolioSecurityResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Portefeuille';
 
+    protected static ?int $navigationSort = 5;
+
     public static function table(Table $table): Table
     {
         return $table

@@ -15,20 +15,20 @@ use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Contracts\Support\Htmlable;
-use Illuminate\Support\HtmlString;
 use Illuminate\Support\Number;
 
 class Dashboard extends BaseDashboard
 {
+    protected static ?int $navigationSort = -1;
+
     protected string $view = 'filament.pages.dashboard';
 
-    public function getTitle(): string|Htmlable
-    {
-        return new HtmlString($this->getFormattedValuation());
-    }
+    protected static ?string $title = 'Tableau de bord';
 
-    private function getFormattedValuation(): string
+    /**
+     * @return array{valuation: string, color: string}
+     */
+    public function getValuationData(): array
     {
         $provider = app(DashboardDataProvider::class);
         $accountTypes = [AccountType::Pea, AccountType::Cto];
@@ -52,10 +52,10 @@ class Dashboard extends BaseDashboard
             $totalInvested += $securities->sum(fn ($security) => (float) ($security->total_invested ?? 0));
         }
 
-        $isPositive = $totalValuation >= $totalInvested;
-        $colorClass = $isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
-
-        return '<span class="'.$colorClass.'">'.Number::currency($totalValuation, 'EUR').'</span>';
+        return [
+            'valuation' => Number::currency($totalValuation, 'EUR'),
+            'color' => $totalValuation >= $totalInvested ? 'success' : 'danger',
+        ];
     }
 
     public function content(Schema $schema): Schema
