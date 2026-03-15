@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Enums\AccountType;
+use App\Filament\Resources\PeaSecurities\PeaSecurityResource;
 use BackedEnum;
 use Filament\Support\Icons\Heroicon;
 
@@ -19,5 +20,10 @@ class PeaPage extends AccountPage
     public static function accountType(): AccountType
     {
         return AccountType::Pea;
+    }
+
+    public static function securityResourceClass(): string
+    {
+        return PeaSecurityResource::class;
     }
 }

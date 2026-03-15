@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Enums\AccountType;
+use App\Filament\Resources\CtoSecurities\CtoSecurityResource;
 use BackedEnum;
 use Filament\Support\Icons\Heroicon;
 
@@ -19,5 +20,10 @@ class CtoPage extends AccountPage
     public static function accountType(): AccountType
     {
         return AccountType::Cto;
+    }
+
+    public static function securityResourceClass(): string
+    {
+        return CtoSecurityResource::class;
     }
 }

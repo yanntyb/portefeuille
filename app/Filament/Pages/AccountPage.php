@@ -2,9 +2,11 @@
 
 namespace App\Filament\Pages;
 
+use App\Concerns\HasTableStore;
+use App\Contracts\TableStoreable;
 use App\Data\AccountPageData;
 use App\Enums\AccountType;
-use App\Extensions\Store;
+use App\Filament\Resources\Securities\AccountSecurityResource;
 use App\Filament\Resources\Securities\Tables\SecuritiesTable;
 use App\Filament\Widgets\Securities\AllocationChartWidget;
 use App\Filament\Widgets\Securities\GainStatsOverview;
@@ -16,6 +18,7 @@ use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Services\YahooFinanceService;
 use App\Support\MarketCalendar;
+use Filament\Actions\Action;
 use Filament\Pages\Concerns\ExposesTableToWidgets;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Livewire;
@@ -32,9 +35,10 @@ use Illuminate\Support\HtmlString;
 use Illuminate\Support\Number;
 use UnitEnum;
 
-abstract class AccountPage extends Page implements HasTable
+abstract class AccountPage extends Page implements HasTable, TableStoreable
 {
     use ExposesTableToWidgets;
+    use HasTableStore;
     use InteractsWithTable;
 
     protected static string|UnitEnum|null $navigationGroup = 'Portefeuille';
@@ -53,7 +57,12 @@ abstract class AccountPage extends Page implements HasTable
 
     public bool $isUpdating = false;
 
+    public int $tableRecordLimit = 10;
+
     abstract public static function accountType(): AccountType;
+
+    /** @return class-string<AccountSecurityResource> */
+    abstract public static function securityResourceClass(): string;
 
     public function scopedSecuritiesQuery(): Builder
     {
@@ -66,21 +75,24 @@ abstract class AccountPage extends Page implements HasTable
         $this->isUpdating = Cache::has($cacheKey);
 
         $this->computeSecurityVisibility();
-        $this->restoreShownSecurityIds();
-
-        Store::add('account', AccountPageData::from($this), persist: true);
 
         $this->js('$wire.refreshPrices()');
     }
 
-    private function sessionKey(): string
+    public function tableStoreName(): string
     {
-        return 'account_shown_ids_'.static::accountType()->value.'_'.auth()->id();
+        return 'account';
     }
 
-    private function restoreShownSecurityIds(): void
+    public function toTableStore(): array
     {
-        $savedIds = session($this->sessionKey());
+        return AccountPageData::from($this)->toStore();
+    }
+
+    /** @param array<string, mixed> $data */
+    public function fromTableStore(array $data): void
+    {
+        $savedIds = $data['shownSecurityIds'] ?? null;
 
         if ($savedIds === null) {
             return;
@@ -159,8 +171,6 @@ abstract class AccountPage extends Page implements HasTable
             $this->shownSecurityIds[] = $id;
         }
 
-        session([$this->sessionKey() => $this->shownSecurityIds]);
-
         $this->dispatch('security-visibility-changed', shownSecurityIds: $this->shownSecurityIds);
     }
 
@@ -196,10 +206,28 @@ abstract class AccountPage extends Page implements HasTable
         return '<span class="'.$colorClass.'">'.Number::currency($valuation, 'EUR').'</span>';
     }
 
+    public function hasMoreRecords(): bool
+    {
+        return $this->scopedSecuritiesQuery()->count() > $this->tableRecordLimit;
+    }
+
+    public function loadMoreAction(): Action
+    {
+        return Action::make('loadMore')
+            ->label('Charger plus')
+            ->action(function (): void {
+                $this->tableRecordLimit += 2;
+                $this->resetTable();
+            });
+    }
+
     public function table(Table $table): Table
     {
         return SecuritiesTable::configure(
-            $table->query(fn (): Builder => Security::query()->forAccountType(static::accountType(), auth()->id()))
+            $table
+                ->query(fn (): Builder => Security::query()->forAccountType(static::accountType(), auth()->id())->limit($this->tableRecordLimit))
+                ->paginated(false)
+                ->recordUrl(fn (Security $record): string => static::securityResourceClass()::getUrl('edit', ['record' => $record]))
         );
     }
 
