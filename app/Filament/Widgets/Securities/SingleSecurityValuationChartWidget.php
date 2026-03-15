@@ -14,7 +14,7 @@ class SingleSecurityValuationChartWidget extends ChartWidget
 {
     use ComputesValuationChart;
 
-    protected ?string $heading = null;
+    protected ?string $heading = 'Valorisation';
 
     protected int|string|array $columnSpan = 'full';
 
