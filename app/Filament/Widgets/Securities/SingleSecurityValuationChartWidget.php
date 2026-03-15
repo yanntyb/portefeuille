@@ -20,6 +20,8 @@ class SingleSecurityValuationChartWidget extends ChartWidget
 
     protected ?string $pollingInterval = null;
 
+    protected string $view = 'filament.widgets.bare-chart-widget';
+
     protected ?string $maxHeight = '200px';
 
     public ?Model $record = null;
@@ -76,6 +78,42 @@ class SingleSecurityValuationChartWidget extends ChartWidget
 
     protected function getOptions(): RawJs
     {
-        return $this->getChartOptions();
+        return RawJs::make(<<<'JS'
+            {
+                scales: {
+                    x: {
+                        ticks: {
+                            autoSkip: true,
+                            maxTicksLimit: 12,
+                            maxRotation: 0,
+                            callback: function(value) {
+                                const label = this.getLabelForValue(value);
+                                const date = new Date(label);
+                                const month = date.toLocaleDateString('fr-FR', { month: 'short' });
+                                const year = date.toLocaleDateString('fr-FR', { year: '2-digit' });
+                                return month + ' ' + year;
+                            },
+                        },
+                    },
+                    y: {
+                        ticks: {
+                            callback: (value) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value),
+                        },
+                    },
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: (items) => {
+                                const date = new Date(items[0].label);
+                                return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+                            },
+                            label: (context) => context.dataset.label + ' : ' + new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(context.parsed.y),
+                        },
+                    },
+                },
+            }
+        JS);
     }
 }
