@@ -24,10 +24,20 @@ class PortfolioAllocationChartWidget extends ChartWidget
 
     protected string $view = 'filament.widgets.collapsible-chart-widget';
 
+    /** @var list<int>|null */
+    public ?array $shownSecurityIds = null;
+
     private const COLORS = [
         'rgb(16, 185, 129)',
         'rgb(245, 158, 11)',
     ];
+
+    #[On('security-visibility-changed')]
+    public function updateShownSecurityIds(array $shownSecurityIds): void
+    {
+        $this->shownSecurityIds = $shownSecurityIds;
+        $this->updateChartData();
+    }
 
     #[On('prices-updated')]
     public function refreshChart(): void
@@ -46,6 +56,10 @@ class PortfolioAllocationChartWidget extends ChartWidget
 
         foreach ($accountTypes as $index => $accountType) {
             $securities = $provider->securitiesForAccount($accountType);
+
+            if ($this->shownSecurityIds !== null) {
+                $securities = $securities->whereIn('id', $this->shownSecurityIds);
+            }
 
             $valuation = $securities->sum(function ($security) {
                 $close = $security->latestPrice?->close;

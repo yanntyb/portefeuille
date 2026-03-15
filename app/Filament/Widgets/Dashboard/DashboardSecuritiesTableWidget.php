@@ -4,7 +4,10 @@ namespace App\Filament\Widgets\Dashboard;
 
 use App\Models\Security;
 use App\Models\SecurityPrice;
+use App\Support\MarketCalendar;
+use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,6 +15,46 @@ use Illuminate\Database\Eloquent\Builder;
 class DashboardSecuritiesTableWidget extends TableWidget
 {
     protected int|string|array $columnSpan = 'full';
+
+    /** @var list<int> */
+    public array $shownSecurityIds = [];
+
+    /** @var list<int> */
+    public array $pricelessSecurityIds = [];
+
+    public function mount(): void
+    {
+        $this->computeSecurityVisibility();
+    }
+
+    private function computeSecurityVisibility(): void
+    {
+        $allIds = Security::query()
+            ->forAuth()
+            ->pluck('securities.id')
+            ->all();
+
+        $idsWithPrice = SecurityPrice::query()
+            ->whereIn('security_id', $allIds)
+            ->where('date', '>=', MarketCalendar::lastTradingDate()->toDateString())
+            ->pluck('security_id')
+            ->unique()
+            ->all();
+
+        $this->shownSecurityIds = $idsWithPrice;
+        $this->pricelessSecurityIds = array_values(array_diff($allIds, $idsWithPrice));
+    }
+
+    public function toggleSecurity(int $id): void
+    {
+        if (in_array($id, $this->shownSecurityIds)) {
+            $this->shownSecurityIds = array_values(array_diff($this->shownSecurityIds, [$id]));
+        } else {
+            $this->shownSecurityIds[] = $id;
+        }
+
+        $this->dispatch('security-visibility-changed', shownSecurityIds: $this->shownSecurityIds);
+    }
 
     public function table(Table $table): Table
     {
@@ -22,7 +65,10 @@ class DashboardSecuritiesTableWidget extends TableWidget
                 TextColumn::make('name')
                     ->label('Nom')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->icon(fn (Security $record) => in_array($record->id, $this->pricelessSecurityIds) ? 'heroicon-o-exclamation-triangle' : null)
+                    ->iconColor('danger')
+                    ->tooltip(fn (Security $record) => in_array($record->id, $this->pricelessSecurityIds) ? 'Ce titre est masqué car les prix n\'ont pas pu être récupérés automatiquement' : null),
                 TextColumn::make('valuation')
                     ->label('Valorisation')
                     ->state(function (Security $record): ?float {
@@ -95,7 +141,15 @@ class DashboardSecuritiesTableWidget extends TableWidget
                     ->searchable(),
             ])
             ->defaultSort('valuation', 'desc')
-            ->headerActions([])
-            ->recordActions([]);
+            ->recordActions([
+                Action::make('toggleVisibility')
+                    ->label('')
+                    ->icon(fn (Security $record) => in_array($record->id, $this->shownSecurityIds) ? 'heroicon-o-eye' : 'heroicon-o-eye-slash')
+                    ->iconButton()
+                    ->color(fn (Security $record) => in_array($record->id, $this->shownSecurityIds) ? 'primary' : 'gray')
+                    ->action(fn (Security $record) => $this->toggleSecurity($record->id)),
+            ])
+            ->recordActionsPosition(RecordActionsPosition::BeforeColumns)
+            ->headerActions([]);
     }
 }

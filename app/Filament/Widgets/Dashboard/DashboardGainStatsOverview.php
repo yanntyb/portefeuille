@@ -16,6 +16,15 @@ class DashboardGainStatsOverview extends Widget
 
     protected int|string|array $columnSpan = 'full';
 
+    /** @var list<int>|null */
+    public ?array $shownSecurityIds = null;
+
+    #[On('security-visibility-changed')]
+    public function updateShownSecurityIds(array $shownSecurityIds): void
+    {
+        $this->shownSecurityIds = $shownSecurityIds;
+    }
+
     #[On('prices-updated')]
     public function refreshStats(): void
     {
@@ -45,6 +54,10 @@ class DashboardGainStatsOverview extends Widget
 
         foreach ($accountTypes as $accountType) {
             $securities = $provider->securitiesForAccount($accountType);
+
+            if ($this->shownSecurityIds !== null) {
+                $securities = $securities->whereIn('id', $this->shownSecurityIds);
+            }
 
             $totalValuation += $securities->sum(function ($security) {
                 $close = $security->latestPrice?->close;

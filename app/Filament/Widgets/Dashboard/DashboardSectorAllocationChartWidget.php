@@ -22,6 +22,16 @@ class DashboardSectorAllocationChartWidget extends ChartWidget
 
     protected string $view = 'filament.widgets.collapsible-chart-widget';
 
+    /** @var list<int>|null */
+    public ?array $shownSecurityIds = null;
+
+    #[On('security-visibility-changed')]
+    public function updateShownSecurityIds(array $shownSecurityIds): void
+    {
+        $this->shownSecurityIds = $shownSecurityIds;
+        $this->updateChartData();
+    }
+
     #[On('prices-updated')]
     public function refreshChart(): void
     {
@@ -31,6 +41,10 @@ class DashboardSectorAllocationChartWidget extends ChartWidget
     protected function getData(): array
     {
         $securities = app(DashboardDataProvider::class)->allSecurities()->load('sectors');
+
+        if ($this->shownSecurityIds !== null) {
+            $securities = $securities->whereIn('id', $this->shownSecurityIds);
+        }
 
         $data = app(SectorAggregator::class)->buildStackedSectorData($securities);
 

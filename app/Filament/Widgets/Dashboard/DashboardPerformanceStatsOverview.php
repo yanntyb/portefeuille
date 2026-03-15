@@ -15,6 +15,15 @@ class DashboardPerformanceStatsOverview extends Widget
 
     protected int|string|array $columnSpan = 'full';
 
+    /** @var list<int>|null */
+    public ?array $shownSecurityIds = null;
+
+    #[On('security-visibility-changed')]
+    public function updateShownSecurityIds(array $shownSecurityIds): void
+    {
+        $this->shownSecurityIds = $shownSecurityIds;
+    }
+
     #[On('prices-updated')]
     public function refreshStats(): void
     {
@@ -27,6 +36,11 @@ class DashboardPerformanceStatsOverview extends Widget
     public function getPerformanceData(): array
     {
         $securities = app(DashboardDataProvider::class)->allSecurities();
+
+        if ($this->shownSecurityIds !== null) {
+            $securities = $securities->whereIn('id', $this->shownSecurityIds);
+        }
+
         $calculator = app(PortfolioPerformanceCalculator::class);
 
         return PortfolioPerformanceCalculator::formatReturnsAsStats(
