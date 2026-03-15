@@ -7,6 +7,12 @@
 @endphp
 
 <x-filament-widgets::widget class="fi-wi-chart">
+    @if ($this->getHeading())
+        <div class="px-1 pb-2">
+            <span class="text-sm font-medium text-gray-950 dark:text-white">{{ $this->getHeading() }}</span>
+        </div>
+    @endif
+
     <div
         x-data="{
             datasets: [],
