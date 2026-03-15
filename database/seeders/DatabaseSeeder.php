@@ -21,5 +21,6 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(TransactionSeeder::class, parameters: ['user' => $user]);
+        $this->call(FeedbackSeeder::class, parameters: ['user' => $user]);
     }
 }
