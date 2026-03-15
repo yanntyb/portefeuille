@@ -66,10 +66,28 @@ abstract class AccountPage extends Page implements HasTable
         $this->isUpdating = Cache::has($cacheKey);
 
         $this->computeSecurityVisibility();
+        $this->restoreShownSecurityIds();
 
-        Store::add('account', AccountPageData::from($this));
+        Store::add('account', AccountPageData::from($this), persist: true);
 
         $this->js('$wire.refreshPrices()');
+    }
+
+    private function sessionKey(): string
+    {
+        return 'account_shown_ids_'.static::accountType()->value.'_'.auth()->id();
+    }
+
+    private function restoreShownSecurityIds(): void
+    {
+        $savedIds = session($this->sessionKey());
+
+        if ($savedIds === null) {
+            return;
+        }
+
+        $allIds = array_merge($this->shownSecurityIds, $this->pricelessSecurityIds);
+        $this->shownSecurityIds = array_values(array_intersect($savedIds, $allIds));
     }
 
     public function getTablePollingInterval(): ?string
@@ -140,6 +158,8 @@ abstract class AccountPage extends Page implements HasTable
         } else {
             $this->shownSecurityIds[] = $id;
         }
+
+        session([$this->sessionKey() => $this->shownSecurityIds]);
 
         $this->dispatch('security-visibility-changed', shownSecurityIds: $this->shownSecurityIds);
     }
