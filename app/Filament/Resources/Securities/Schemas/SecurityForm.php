@@ -40,7 +40,7 @@ class SecurityForm
     public static function updateFromIsinAction(): Action
     {
         return Action::make('updateFromIsin')
-            ->label(fn (EditRecord $livewire) => $livewire->isUpdating ? 'Mise à jour en cours…' : 'Mise à jour')
+            ->label(fn (EditRecord $livewire) => $livewire->isUpdating ? 'Mise à jour en cours…' : 'Mettre à jour')
             ->icon(Heroicon::ArrowPath)
             ->color('danger')
             ->disabled(fn (EditRecord $livewire) => $livewire->isUpdating)
