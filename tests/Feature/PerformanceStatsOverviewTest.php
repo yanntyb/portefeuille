@@ -1,7 +1,7 @@
 <?php
 
-use App\Filament\Resources\CtoSecurities\Pages\ListCtoSecurities;
-use App\Filament\Resources\PeaSecurities\Pages\ListPeaSecurities;
+use App\Filament\Pages\CtoPage;
+use App\Filament\Pages\PeaPage;
 use App\Filament\Widgets\Securities\PerformanceStatsOverview;
 use App\Models\Security;
 use App\Models\SecurityPrice;
@@ -14,7 +14,7 @@ it('can render on the PEA list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
 
-    livewire(ListPeaSecurities::class)
+    livewire(PeaPage::class)
         ->assertOk()
         ->assertSeeLivewire(PerformanceStatsOverview::class);
 });
@@ -23,7 +23,7 @@ it('can render on the CTO list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
 
-    livewire(ListCtoSecurities::class)
+    livewire(CtoPage::class)
         ->assertOk()
         ->assertSeeLivewire(PerformanceStatsOverview::class);
 });
@@ -54,7 +54,7 @@ it('displays performance stats with correct values', function () {
     ]);
 
     $widget = livewire(PerformanceStatsOverview::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $widget->assertOk();
@@ -87,7 +87,7 @@ it('displays dash for periods without data', function () {
     ]);
 
     $widget = livewire(PerformanceStatsOverview::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $stats = $widget->instance()->getPerformanceData();
@@ -124,7 +124,7 @@ it('shows danger color for negative returns', function () {
     ]);
 
     $widget = livewire(PerformanceStatsOverview::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $stats = $widget->instance()->getPerformanceData();
@@ -142,7 +142,7 @@ it('returns seven period stats', function () {
     ]);
 
     $widget = livewire(PerformanceStatsOverview::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $stats = $widget->instance()->getPerformanceData();

@@ -1,7 +1,7 @@
 <?php
 
-use App\Filament\Resources\CtoSecurities\Pages\ListCtoSecurities;
-use App\Filament\Resources\PeaSecurities\Pages\ListPeaSecurities;
+use App\Filament\Pages\CtoPage;
+use App\Filament\Pages\PeaPage;
 use App\Filament\Widgets\Securities\ValuationChartWidget;
 use App\Models\Security;
 use App\Models\SecurityPrice;
@@ -13,7 +13,7 @@ it('can render on the PEA list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
 
-    livewire(ListPeaSecurities::class)
+    livewire(PeaPage::class)
         ->assertOk()
         ->assertSeeLivewire(ValuationChartWidget::class);
 });
@@ -22,7 +22,7 @@ it('can render on the CTO list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
 
-    livewire(ListCtoSecurities::class)
+    livewire(CtoPage::class)
         ->assertOk()
         ->assertSeeLivewire(ValuationChartWidget::class);
 });
@@ -50,7 +50,7 @@ it('defaults to total mode with aggregated valuation', function () {
     ]);
 
     $widget = livewire(ValuationChartWidget::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $widget->assertOk();
@@ -102,7 +102,7 @@ it('shows stacked areas per security in per_security mode', function () {
     ]);
 
     $widget = livewire(ValuationChartWidget::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $widget->set('filters.mode', 'per_security');
@@ -154,7 +154,7 @@ it('computes cumulative fees from transactions', function () {
     ]);
 
     $widget = livewire(ValuationChartWidget::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $data = invade($widget->instance())->getData();
@@ -188,7 +188,7 @@ it('excludes prices before the first transaction date', function () {
     ]);
 
     $widget = livewire(ValuationChartWidget::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $data = invade($widget->instance())->getData();
@@ -216,7 +216,7 @@ it('invested reflects mid-week transactions in the same week', function () {
     ]);
 
     $widget = livewire(ValuationChartWidget::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $data = invade($widget->instance())->getData();
@@ -264,7 +264,7 @@ it('extrapolates missing prices using the last known close in total mode', funct
     ]);
 
     $widget = livewire(ValuationChartWidget::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $data = invade($widget->instance())->getData();
@@ -314,7 +314,7 @@ it('extrapolates missing prices using the last known close in per_security mode'
     ]);
 
     $widget = livewire(ValuationChartWidget::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $widget->set('filters.mode', 'per_security');
@@ -333,7 +333,7 @@ it('extrapolates missing prices using the last known close in per_security mode'
 
 it('returns empty data when no securities exist', function () {
     $widget = livewire(ValuationChartWidget::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $widget->assertOk();

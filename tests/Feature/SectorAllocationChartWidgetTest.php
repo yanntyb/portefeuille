@@ -1,8 +1,8 @@
 <?php
 
 use App\Enums\Sector;
-use App\Filament\Resources\CtoSecurities\Pages\ListCtoSecurities;
-use App\Filament\Resources\PeaSecurities\Pages\ListPeaSecurities;
+use App\Filament\Pages\CtoPage;
+use App\Filament\Pages\PeaPage;
 use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
 use App\Models\Security;
 use App\Models\SecurityPrice;
@@ -15,7 +15,7 @@ it('can render on the PEA list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
 
-    livewire(ListPeaSecurities::class)
+    livewire(PeaPage::class)
         ->assertOk()
         ->assertSeeLivewire(SectorAllocationChartWidget::class);
 });
@@ -24,7 +24,7 @@ it('can render on the CTO list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
 
-    livewire(ListCtoSecurities::class)
+    livewire(CtoPage::class)
         ->assertOk()
         ->assertSeeLivewire(SectorAllocationChartWidget::class);
 });
@@ -78,7 +78,7 @@ it('aggregates sector data weighted by valuation for account list', function () 
     ]);
 
     $widget = livewire(SectorAllocationChartWidget::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $widget->assertOk();
@@ -139,7 +139,7 @@ it('shows sector weights as percentages for a single security', function () {
 
 it('returns empty data when no sectors exist', function () {
     $widget = livewire(SectorAllocationChartWidget::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $widget->assertOk();

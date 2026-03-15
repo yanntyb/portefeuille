@@ -3,10 +3,11 @@
 namespace App\Filament\Resources\PeaSecurities;
 
 use App\Enums\AccountType;
+use App\Filament\Pages\PeaPage;
 use App\Filament\Resources\PeaSecurities\Pages\EditPeaSecurity;
-use App\Filament\Resources\PeaSecurities\Pages\ListPeaSecurities;
 use App\Filament\Resources\Securities\AccountSecurityResource;
 use BackedEnum;
+use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use UnitEnum;
 
@@ -28,15 +29,22 @@ class PeaSecurityResource extends AccountSecurityResource
 
     protected static ?int $navigationSort = 2;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function accountType(): AccountType
     {
         return AccountType::Pea;
     }
 
+    /** @return class-string<Page> */
+    public static function listPage(): string
+    {
+        return PeaPage::class;
+    }
+
     public static function getPages(): array
     {
         return [
-            'index' => ListPeaSecurities::route('/'),
             'edit' => EditPeaSecurity::route('/{record}/edit'),
         ];
     }

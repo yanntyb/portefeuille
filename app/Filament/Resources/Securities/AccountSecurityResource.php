@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Securities;
 use App\Enums\AccountType;
 use App\Filament\Resources\Securities\RelationManagers\TransactionsRelationManager;
 use App\Filament\Resources\Securities\Schemas\SecurityForm;
-use App\Filament\Resources\Securities\Tables\SecuritiesTable;
 use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
 use App\Filament\Widgets\Securities\SecurityStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityFeesStatsWidget;
@@ -15,10 +14,9 @@ use App\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
 use App\Filament\Widgets\Securities\SingleSecurityValuationStatsWidget;
 use App\Filament\Widgets\Securities\ValuationChartWidget;
 use App\Models\Security;
+use Filament\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 
 abstract class AccountSecurityResource extends Resource
 {
@@ -26,15 +24,12 @@ abstract class AccountSecurityResource extends Resource
 
     abstract public static function accountType(): AccountType;
 
+    /** @return class-string<Page> */
+    abstract public static function listPage(): string;
+
     public static function form(Schema $schema): Schema
     {
         return SecurityForm::configure($schema);
-    }
-
-    public static function table(Table $table): Table
-    {
-        return SecuritiesTable::configure($table)
-            ->modifyQueryUsing(fn (Builder $query) => $query->forAccountType(static::accountType(), auth()->id()));
     }
 
     public static function getRelations(): array

@@ -1,7 +1,7 @@
 <?php
 
-use App\Filament\Resources\CtoSecurities\Pages\ListCtoSecurities;
-use App\Filament\Resources\PeaSecurities\Pages\ListPeaSecurities;
+use App\Filament\Pages\CtoPage;
+use App\Filament\Pages\PeaPage;
 use App\Filament\Widgets\Securities\AllocationChartWidget;
 use App\Models\Security;
 use App\Models\SecurityPrice;
@@ -13,7 +13,7 @@ it('can render on the PEA list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
 
-    livewire(ListPeaSecurities::class)
+    livewire(PeaPage::class)
         ->assertOk()
         ->assertSeeLivewire(AllocationChartWidget::class);
 });
@@ -22,7 +22,7 @@ it('can render on the CTO list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
 
-    livewire(ListCtoSecurities::class)
+    livewire(CtoPage::class)
         ->assertOk()
         ->assertSeeLivewire(AllocationChartWidget::class);
 });
@@ -56,7 +56,7 @@ it('returns labels and percentages per security', function () {
     ]);
 
     $widget = livewire(AllocationChartWidget::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $widget->assertOk();
@@ -85,7 +85,7 @@ it('excludes securities with no latest price', function () {
     ]);
 
     $widget = livewire(AllocationChartWidget::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $data = invade($widget->instance())->getData();
@@ -96,7 +96,7 @@ it('excludes securities with no latest price', function () {
 
 it('returns empty data when no securities exist', function () {
     $widget = livewire(AllocationChartWidget::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $widget->assertOk();

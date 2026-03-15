@@ -104,6 +104,22 @@ abstract class EditSecurity extends EditRecord
         }
     }
 
+    public function getBreadcrumbs(): array
+    {
+        $resource = static::getResource();
+
+        if (! is_subclass_of($resource, AccountSecurityResource::class)) {
+            return parent::getBreadcrumbs();
+        }
+
+        $listPage = $resource::listPage();
+
+        return [
+            $listPage::getUrl() => $resource::getNavigationLabel(),
+            $this->record->name,
+        ];
+    }
+
     protected function getHeaderActions(): array
     {
         return [

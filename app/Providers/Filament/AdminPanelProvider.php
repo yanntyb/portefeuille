@@ -2,7 +2,11 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Plugins\PwaPlugin;
+use App\Extensions\Debug;
+use App\Extensions\Pwa;
+use App\Extensions\Style;
+use App\Extensions\Transition;
+use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -11,13 +15,11 @@ use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -44,6 +46,11 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('Administration'),
             ])
             ->navigationItems([
+                NavigationItem::make('Simulation')
+                    ->url('#')
+                    ->icon('heroicon-o-calculator')
+                    ->group('Outils')
+                    ->sort(1),
                 NavigationItem::make('Logs')
                     ->url('/log-viewer', shouldOpenInNewTab: true)
                     ->icon('heroicon-o-document-text')
@@ -51,12 +58,16 @@ class AdminPanelProvider extends PanelProvider
                     ->sort(100)
                     ->visible(fn () => auth()->user()?->isAdmin()),
             ])
-            ->renderHook(
-                PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
-                fn (): string => Blade::render('<x-filament-panels::theme-switcher />'),
-            )
+            ->brandName('')
+            ->darkMode(isForced: true)
+            ->userMenuItems([
+                'profile' => fn (Action $action) => $action->hidden(),
+            ])
             ->plugins([
-                PwaPlugin::make(),
+                Pwa::make(),
+                Style::make(),
+                Debug::make(),
+                Transition::make(),
             ])
             ->middleware([
                 EncryptCookies::class,

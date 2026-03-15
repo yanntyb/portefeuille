@@ -3,10 +3,11 @@
 namespace App\Filament\Resources\CtoSecurities;
 
 use App\Enums\AccountType;
+use App\Filament\Pages\CtoPage;
 use App\Filament\Resources\CtoSecurities\Pages\EditCtoSecurity;
-use App\Filament\Resources\CtoSecurities\Pages\ListCtoSecurities;
 use App\Filament\Resources\Securities\AccountSecurityResource;
 use BackedEnum;
+use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use UnitEnum;
 
@@ -28,15 +29,22 @@ class CtoSecurityResource extends AccountSecurityResource
 
     protected static ?int $navigationSort = 3;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function accountType(): AccountType
     {
         return AccountType::Cto;
     }
 
+    /** @return class-string<Page> */
+    public static function listPage(): string
+    {
+        return CtoPage::class;
+    }
+
     public static function getPages(): array
     {
         return [
-            'index' => ListCtoSecurities::route('/'),
             'edit' => EditCtoSecurity::route('/{record}/edit'),
         ];
     }

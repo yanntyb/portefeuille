@@ -1,7 +1,7 @@
 <?php
 
-use App\Filament\Resources\CtoSecurities\Pages\ListCtoSecurities;
-use App\Filament\Resources\PeaSecurities\Pages\ListPeaSecurities;
+use App\Filament\Pages\CtoPage;
+use App\Filament\Pages\PeaPage;
 use App\Filament\Widgets\Securities\GainStatsOverview;
 use App\Models\Security;
 use App\Models\SecurityPrice;
@@ -13,7 +13,7 @@ it('can render on the PEA list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
 
-    livewire(ListPeaSecurities::class)
+    livewire(PeaPage::class)
         ->assertOk()
         ->assertSeeLivewire(GainStatsOverview::class);
 });
@@ -22,7 +22,7 @@ it('can render on the CTO list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
 
-    livewire(ListCtoSecurities::class)
+    livewire(CtoPage::class)
         ->assertOk()
         ->assertSeeLivewire(GainStatsOverview::class);
 });
@@ -44,7 +44,7 @@ it('computes valuation and plus-value correctly', function () {
     ]);
 
     $widget = livewire(GainStatsOverview::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $widget->assertOk();
@@ -73,7 +73,7 @@ it('displays percentage alongside plus-value', function () {
     ]);
 
     $widget = livewire(GainStatsOverview::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $data = $widget->instance()->getGainData();
@@ -101,7 +101,7 @@ it('shows positive flag when plus-value is positive', function () {
     ]);
 
     $widget = livewire(GainStatsOverview::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $data = $widget->instance()->getGainData();
@@ -126,7 +126,7 @@ it('shows negative flag when plus-value is negative', function () {
     ]);
 
     $widget = livewire(GainStatsOverview::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $data = $widget->instance()->getGainData();
@@ -151,7 +151,7 @@ it('displays fees with percentage', function () {
     ]);
 
     $widget = livewire(GainStatsOverview::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $data = $widget->instance()->getGainData();
@@ -163,7 +163,7 @@ it('displays fees with percentage', function () {
 
 it('returns zero stats when no securities exist', function () {
     $widget = livewire(GainStatsOverview::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
     ]);
 
     $widget->assertOk();

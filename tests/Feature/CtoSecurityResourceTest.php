@@ -1,7 +1,7 @@
 <?php
 
+use App\Filament\Pages\CtoPage;
 use App\Filament\Resources\CtoSecurities\Pages\EditCtoSecurity;
-use App\Filament\Resources\CtoSecurities\Pages\ListCtoSecurities;
 use App\Models\Security;
 use App\Models\Transaction;
 
@@ -12,7 +12,7 @@ it('does not have a create action in the CTO list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
 
-    livewire(ListCtoSecurities::class)
+    livewire(CtoPage::class)
         ->assertTableActionDoesNotExist('create');
 });
 
@@ -49,7 +49,7 @@ it('can search CTO securities by name', function () {
     $other = Security::factory()->create(['name' => 'Amazon']);
     Transaction::factory()->cto()->create(['security_id' => $other->id]);
 
-    livewire(ListCtoSecurities::class)
+    livewire(CtoPage::class)
         ->searchTable('Tesla')
         ->assertCanSeeTableRecords(collect([$target]))
         ->assertCanNotSeeTableRecords(collect([$other]));
@@ -72,7 +72,7 @@ it('displays aggregated columns for a CTO security', function () {
         'fees' => 7.00,
     ]);
 
-    livewire(ListCtoSecurities::class)
+    livewire(CtoPage::class)
         ->assertCanSeeTableRecords(collect([$security]))
         ->assertTableColumnExists('valuation')
         ->assertTableColumnExists('performance');

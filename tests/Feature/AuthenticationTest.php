@@ -1,8 +1,8 @@
 <?php
 
 use App\Enums\AccountType;
-use App\Filament\Resources\CtoSecurities\Pages\ListCtoSecurities;
-use App\Filament\Resources\PeaSecurities\Pages\ListPeaSecurities;
+use App\Filament\Pages\CtoPage;
+use App\Filament\Pages\PeaPage;
 use App\Filament\Resources\Transactions\Pages\CreateTransaction;
 use App\Filament\Resources\Transactions\Pages\ListTransactions;
 use App\Models\Security;
@@ -50,7 +50,7 @@ it('scopes PEA securities to the authenticated user', function () {
         'security_id' => $otherSecurity->id,
     ]);
 
-    livewire(ListPeaSecurities::class)
+    livewire(PeaPage::class)
         ->assertCanSeeTableRecords(collect([$security]))
         ->assertCanNotSeeTableRecords(collect([$otherSecurity]));
 });
@@ -70,7 +70,7 @@ it('scopes CTO securities to the authenticated user', function () {
         'security_id' => $otherSecurity->id,
     ]);
 
-    livewire(ListCtoSecurities::class)
+    livewire(CtoPage::class)
         ->assertCanSeeTableRecords(collect([$security]))
         ->assertCanNotSeeTableRecords(collect([$otherSecurity]));
 });

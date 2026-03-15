@@ -1,6 +1,6 @@
 <?php
 
-use App\Filament\Resources\PeaSecurities\Pages\ListPeaSecurities;
+use App\Filament\Pages\PeaPage;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
@@ -27,7 +27,7 @@ it('fetches missing prices on page load via refreshPrices', function () {
 
     app()->instance(YahooFinanceService::class, $mock);
 
-    livewire(ListPeaSecurities::class)
+    livewire(PeaPage::class)
         ->assertOk()
         ->call('refreshPrices')
         ->assertDispatched('prices-updated');

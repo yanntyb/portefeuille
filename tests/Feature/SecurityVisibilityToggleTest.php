@@ -1,7 +1,7 @@
 <?php
 
-use App\Filament\Resources\CtoSecurities\Pages\ListCtoSecurities;
-use App\Filament\Resources\PeaSecurities\Pages\ListPeaSecurities;
+use App\Filament\Pages\CtoPage;
+use App\Filament\Pages\PeaPage;
 use App\Filament\Widgets\Securities\SecurityStatsOverview;
 use App\Filament\Widgets\Securities\ValuationChartWidget;
 use App\Models\Security;
@@ -21,7 +21,7 @@ it('initializes shownSecurityIds with only securities that have today price', fu
     SecurityPrice::factory()->create(['security_id' => $security1->id, 'date' => today(), 'close' => 100]);
     SecurityPrice::factory()->create(['security_id' => $security2->id, 'date' => today(), 'close' => 200]);
 
-    $page = livewire(ListPeaSecurities::class);
+    $page = livewire(PeaPage::class);
 
     expect($page->get('shownSecurityIds'))
         ->toContain($security1->id)
@@ -37,7 +37,7 @@ it('removes a security id when toggling a visible security', function () {
     SecurityPrice::factory()->create(['security_id' => $security1->id, 'date' => today(), 'close' => 100]);
     SecurityPrice::factory()->create(['security_id' => $security2->id, 'date' => today(), 'close' => 200]);
 
-    $page = livewire(ListPeaSecurities::class)
+    $page = livewire(PeaPage::class)
         ->call('toggleSecurity', $security1->id);
 
     expect($page->get('shownSecurityIds'))
@@ -50,7 +50,7 @@ it('adds back a security id when toggling a hidden security', function () {
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
     SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => today(), 'close' => 100]);
 
-    $page = livewire(ListPeaSecurities::class)
+    $page = livewire(PeaPage::class)
         ->call('toggleSecurity', $security->id)
         ->call('toggleSecurity', $security->id);
 
@@ -65,7 +65,7 @@ it('dispatches prices-updated event after refreshPrices', function () {
     $mock = test()->mock(YahooFinanceService::class);
     $mock->shouldReceive('fetchAndStorePricesBulk')->once()->andReturn(0);
 
-    livewire(ListPeaSecurities::class)
+    livewire(PeaPage::class)
         ->call('refreshPrices')
         ->assertDispatched('prices-updated');
 });
@@ -78,7 +78,7 @@ it('skips fetch when all securities have current prices', function () {
     $mock = test()->mock(YahooFinanceService::class);
     $mock->shouldNotReceive('fetchAndStorePricesBulk');
 
-    livewire(ListPeaSecurities::class)
+    livewire(PeaPage::class)
         ->call('refreshPrices')
         ->assertDispatched('prices-updated');
 });
@@ -93,7 +93,7 @@ it('fetches prices when at least one security lacks current price', function () 
     $mock = test()->mock(YahooFinanceService::class);
     $mock->shouldReceive('fetchAndStorePricesBulk')->once()->andReturn(1);
 
-    livewire(ListPeaSecurities::class)
+    livewire(PeaPage::class)
         ->call('refreshPrices')
         ->assertDispatched('prices-updated');
 });
@@ -102,7 +102,7 @@ it('dispatches security-visibility-changed event on toggle', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
 
-    livewire(ListPeaSecurities::class)
+    livewire(PeaPage::class)
         ->call('toggleSecurity', $security->id)
         ->assertDispatched('security-visibility-changed');
 });
@@ -112,7 +112,7 @@ it('works on CTO page as well', function () {
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
     SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => today(), 'close' => 100]);
 
-    $page = livewire(ListCtoSecurities::class);
+    $page = livewire(CtoPage::class);
 
     expect($page->get('shownSecurityIds'))
         ->toContain($security->id);
@@ -154,7 +154,7 @@ it('filters stats widget to only shown securities', function () {
     ]);
 
     $widget = livewire(SecurityStatsOverview::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
         'shownSecurityIds' => [$security1->id],
     ]);
 
@@ -197,7 +197,7 @@ it('filters chart widget to only shown securities', function () {
     ]);
 
     $widget = livewire(ValuationChartWidget::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
         'shownSecurityIds' => [$security1->id],
     ]);
 
@@ -224,7 +224,7 @@ it('shows empty stats when all securities are hidden', function () {
     ]);
 
     $widget = livewire(SecurityStatsOverview::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
         'shownSecurityIds' => [],
     ]);
 
@@ -240,7 +240,7 @@ it('displays error icon for securities without today price', function () {
     Transaction::factory()->pea()->create(['security_id' => $securityWithoutPrice->id]);
     SecurityPrice::factory()->create(['security_id' => $securityWithPrice->id, 'date' => today(), 'close' => 100]);
 
-    $page = livewire(ListPeaSecurities::class);
+    $page = livewire(PeaPage::class);
 
     $page->assertCanRenderTableColumn('name');
 
@@ -259,7 +259,7 @@ it('keeps error icon after toggling a priceless security to visible', function (
     $securityWithoutPrice = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $securityWithoutPrice->id]);
 
-    $page = livewire(ListPeaSecurities::class);
+    $page = livewire(PeaPage::class);
 
     expect($page->get('pricelessSecurityIds'))->toContain($securityWithoutPrice->id);
 
@@ -278,7 +278,7 @@ it('does not show error icon after toggling a priced security to hidden', functi
     Transaction::factory()->pea()->create(['security_id' => $securityWithPrice->id]);
     SecurityPrice::factory()->create(['security_id' => $securityWithPrice->id, 'date' => today(), 'close' => 100]);
 
-    $page = livewire(ListPeaSecurities::class);
+    $page = livewire(PeaPage::class);
 
     $page->call('toggleSecurity', $securityWithPrice->id);
 
@@ -308,7 +308,7 @@ it('shows empty chart when all securities are hidden', function () {
     ]);
 
     $widget = livewire(ValuationChartWidget::class, [
-        'tablePageClass' => ListPeaSecurities::class,
+        'tablePageClass' => PeaPage::class,
         'shownSecurityIds' => [],
     ]);
 

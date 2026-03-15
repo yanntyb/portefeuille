@@ -1,8 +1,8 @@
 <?php
 
-use App\Filament\Resources\CtoSecurities\Pages\ListCtoSecurities;
+use App\Filament\Pages\CtoPage;
+use App\Filament\Pages\PeaPage;
 use App\Filament\Resources\PeaSecurities\Pages\EditPeaSecurity;
-use App\Filament\Resources\PeaSecurities\Pages\ListPeaSecurities;
 use App\Models\Security;
 use App\Models\Transaction;
 
@@ -16,7 +16,7 @@ it('can render the PEA list page with only PEA securities', function () {
     $ctoSecurity = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $ctoSecurity->id]);
 
-    livewire(ListPeaSecurities::class)
+    livewire(PeaPage::class)
         ->assertOk()
         ->assertCanSeeTableRecords(collect([$peaSecurity]))
         ->assertCanNotSeeTableRecords(collect([$ctoSecurity]));
@@ -29,7 +29,7 @@ it('can render the CTO list page with only CTO securities', function () {
     $ctoSecurity = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $ctoSecurity->id]);
 
-    livewire(ListCtoSecurities::class)
+    livewire(CtoPage::class)
         ->assertOk()
         ->assertCanSeeTableRecords(collect([$ctoSecurity]))
         ->assertCanNotSeeTableRecords(collect([$peaSecurity]));
@@ -52,7 +52,7 @@ it('displays aggregated columns for a PEA security', function () {
         'fees' => 8.00,
     ]);
 
-    livewire(ListPeaSecurities::class)
+    livewire(PeaPage::class)
         ->assertCanSeeTableRecords(collect([$security]))
         ->assertTableColumnExists('valuation')
         ->assertTableColumnExists('performance');
@@ -62,7 +62,7 @@ it('does not have a create action in the PEA list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
 
-    livewire(ListPeaSecurities::class)
+    livewire(PeaPage::class)
         ->assertTableActionDoesNotExist('create');
 });
 
@@ -99,7 +99,7 @@ it('can search PEA securities by name', function () {
     $other = Security::factory()->create(['name' => 'Chevron Corporation']);
     Transaction::factory()->pea()->create(['security_id' => $other->id]);
 
-    livewire(ListPeaSecurities::class)
+    livewire(PeaPage::class)
         ->searchTable('Amundi')
         ->assertCanSeeTableRecords(collect([$target]))
         ->assertCanNotSeeTableRecords(collect([$other]));

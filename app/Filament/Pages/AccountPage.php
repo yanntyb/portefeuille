@@ -1,7 +1,9 @@
 <?php
 
-namespace App\Filament\Resources\Securities\Pages;
+namespace App\Filament\Pages;
 
+use App\Enums\AccountType;
+use App\Filament\Resources\Securities\Tables\SecuritiesTable;
 use App\Filament\Widgets\Securities\AllocationChartWidget;
 use App\Filament\Widgets\Securities\GainStatsOverview;
 use App\Filament\Widgets\Securities\PerformanceStatsOverview;
@@ -13,22 +15,33 @@ use App\Models\SecurityPrice;
 use App\Services\YahooFinanceService;
 use App\Support\MarketCalendar;
 use Filament\Pages\Concerns\ExposesTableToWidgets;
-use Filament\Resources\Pages\ListRecords;
-use Filament\Schemas\Components\EmbeddedTable;
+use Filament\Pages\Page;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Number;
+use UnitEnum;
 
-abstract class ListSecurities extends ListRecords
+abstract class AccountPage extends Page implements HasTable
 {
     use ExposesTableToWidgets;
+    use InteractsWithTable;
 
-    protected string $view = 'filament.resources.securities.pages.list-securities';
+    protected static string|UnitEnum|null $navigationGroup = 'Portefeuille';
+
+    protected string $view = 'filament.pages.account-page';
+
+    public ?string $activeTab = null;
+
+    public ?Model $parentRecord = null;
 
     /** @var list<int> */
     public array $shownSecurityIds = [];
@@ -38,16 +51,16 @@ abstract class ListSecurities extends ListRecords
 
     public bool $isUpdating = false;
 
+    abstract public static function accountType(): AccountType;
+
     public function scopedSecuritiesQuery(): Builder
     {
-        return Security::query()->forAccountType(static::getResource()::accountType(), auth()->id());
+        return Security::query()->forAccountType(static::accountType(), auth()->id());
     }
 
     public function mount(): void
     {
-        parent::mount();
-
-        $cacheKey = UpdateSecuritiesJob::cacheKeyFor(static::getResource()::accountType()->value);
+        $cacheKey = UpdateSecuritiesJob::cacheKeyFor(static::accountType()->value);
         $this->isUpdating = Cache::has($cacheKey);
 
         $this->computeSecurityVisibility();
@@ -61,7 +74,7 @@ abstract class ListSecurities extends ListRecords
 
     public function dehydrate(): void
     {
-        $cacheKey = UpdateSecuritiesJob::cacheKeyFor(static::getResource()::accountType()->value);
+        $cacheKey = UpdateSecuritiesJob::cacheKeyFor(static::accountType()->value);
         $wasUpdating = $this->isUpdating;
         $this->isUpdating = Cache::has($cacheKey);
 
@@ -128,9 +141,7 @@ abstract class ListSecurities extends ListRecords
 
     public function getTitle(): string|Htmlable
     {
-        $title = static::$title ?? static::getResource()::navigationLabel();
-
-        return new HtmlString($title.' '.$this->getFormattedValuation());
+        return new HtmlString(static::getNavigationLabel().' '.$this->getFormattedValuation());
     }
 
     private function getFormattedValuation(): string
@@ -160,9 +171,11 @@ abstract class ListSecurities extends ListRecords
         return '<span class="'.$colorClass.'">'.Number::currency($valuation, 'EUR').'</span>';
     }
 
-    protected function getHeaderWidgets(): array
+    public function table(Table $table): Table
     {
-        return [];
+        return SecuritiesTable::configure(
+            $table->query(fn (): Builder => Security::query()->forAccountType(static::accountType(), auth()->id()))
+        );
     }
 
     public function content(Schema $schema): Schema
@@ -188,7 +201,6 @@ abstract class ListSecurities extends ListRecords
                     ->id('diversification')
                     ->extraAttributes(['class' => 'fi-section-no-content-padding'])
                     ->schema([
-                        EmbeddedTable::make(),
                         Livewire::make(AllocationChartWidget::class, [
                             'tablePageClass' => static::class,
                             'shownSecurityIds' => $this->shownSecurityIds,

@@ -18,4 +18,5 @@
     @endif
 
     {{ $this->content }}
+    {{ $this->table }}
 </x-filament-panels::page>
