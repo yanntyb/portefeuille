@@ -97,18 +97,16 @@ class DashboardSecuritiesTableWidget extends TableWidget
                         ->orderByRaw('(COALESCE(total_quantity, 0) * COALESCE(MAX(lp.close), 0)) '.$direction)
                     ),
                 TextColumn::make('performance')
-                    ->label('Performances')
+                    ->label('Performance')
                     ->state(function (Security $record): ?float {
                         $close = $record->latestPrice?->close;
+                        $pru = $record->pru;
 
-                        if ($close === null || $record->total_quantity === null || ! $record->total_invested) {
+                        if ($close === null || $pru === null || (float) $pru === 0.0) {
                             return null;
                         }
 
-                        $valuation = (float) $record->total_quantity * (float) $close;
-                        $totalInvested = (float) $record->total_invested;
-
-                        return ($valuation - $totalInvested) / $totalInvested * 100;
+                        return ((float) $close - (float) $pru) / (float) $pru * 100;
                     })
                     ->numeric(decimalPlaces: 2)
                     ->suffix(' %')
@@ -131,7 +129,7 @@ class DashboardSecuritiesTableWidget extends TableWidget
                             'securities.id',
                             'lp_perf.security_id',
                         )
-                        ->orderByRaw('CASE WHEN total_invested > 0 THEN (COALESCE(total_quantity, 0) * COALESCE(MAX(lp_perf.close), 0) - total_invested) / total_invested ELSE 0 END '.$direction)
+                        ->orderByRaw('CASE WHEN pru > 0 THEN (COALESCE(MAX(lp_perf.close), 0) - pru) / pru ELSE 0 END '.$direction)
                     ),
                 TextColumn::make('isin')
                     ->label('ISIN')
