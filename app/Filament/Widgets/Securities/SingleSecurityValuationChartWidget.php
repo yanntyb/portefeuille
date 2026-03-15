@@ -14,13 +14,15 @@ class SingleSecurityValuationChartWidget extends ChartWidget
 {
     use ComputesValuationChart;
 
-    protected ?string $heading = 'Evolution de la valorisation';
+    protected ?string $heading = null;
 
     protected int|string|array $columnSpan = 'full';
 
     protected ?string $pollingInterval = null;
 
-    protected ?string $maxHeight = '300px';
+    protected string $view = 'filament.widgets.flat-chart-widget';
+
+    protected ?string $maxHeight = '200px';
 
     public ?Model $record = null;
 
