@@ -6,6 +6,7 @@ use App\Models\Security;
 use App\Models\SecurityPrice;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Table;
@@ -107,29 +108,31 @@ class SecuritiesTable
             ->recordActionsPosition(RecordActionsPosition::BeforeColumns)
             ->headerActions([])
             ->toolbarActions([
-                BulkAction::make('showSelected')
-                    ->label('Afficher')
-                    ->icon('heroicon-o-eye')
-                    ->action(function (Collection $records, $livewire): void {
-                        foreach ($records as $record) {
-                            if (! in_array($record->id, $livewire->shownSecurityIds)) {
-                                $livewire->shownSecurityIds[] = $record->id;
+                BulkActionGroup::make([
+                    BulkAction::make('showSelected')
+                        ->label('Afficher')
+                        ->icon('heroicon-o-eye')
+                        ->action(function (Collection $records, $livewire): void {
+                            foreach ($records as $record) {
+                                if (! in_array($record->id, $livewire->shownSecurityIds)) {
+                                    $livewire->shownSecurityIds[] = $record->id;
+                                }
                             }
-                        }
-                        $livewire->dispatch('security-visibility-changed', shownSecurityIds: $livewire->shownSecurityIds);
-                    })
-                    ->deselectRecordsAfterCompletion(),
-                BulkAction::make('hideSelected')
-                    ->label('Masquer')
-                    ->icon('heroicon-o-eye-slash')
-                    ->action(function (Collection $records, $livewire): void {
-                        $livewire->shownSecurityIds = array_values(array_diff(
-                            $livewire->shownSecurityIds,
-                            $records->pluck('id')->all()
-                        ));
-                        $livewire->dispatch('security-visibility-changed', shownSecurityIds: $livewire->shownSecurityIds);
-                    })
-                    ->deselectRecordsAfterCompletion(),
+                            $livewire->dispatch('security-visibility-changed', shownSecurityIds: $livewire->shownSecurityIds);
+                        })
+                        ->deselectRecordsAfterCompletion(),
+                    BulkAction::make('hideSelected')
+                        ->label('Masquer')
+                        ->icon('heroicon-o-eye-slash')
+                        ->action(function (Collection $records, $livewire): void {
+                            $livewire->shownSecurityIds = array_values(array_diff(
+                                $livewire->shownSecurityIds,
+                                $records->pluck('id')->all()
+                            ));
+                            $livewire->dispatch('security-visibility-changed', shownSecurityIds: $livewire->shownSecurityIds);
+                        })
+                        ->deselectRecordsAfterCompletion(),
+                ]),
             ]);
     }
 }
