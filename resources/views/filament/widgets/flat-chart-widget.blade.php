@@ -7,12 +7,6 @@
 @endphp
 
 <x-filament-widgets::widget class="fi-wi-chart">
-    @if ($this->getHeading())
-        <div class="px-1 pb-2">
-            <span class="text-sm font-medium text-gray-950 dark:text-white">{{ $this->getHeading() }}</span>
-        </div>
-    @endif
-
     <div
         x-data="{
             datasets: [],
@@ -55,7 +49,13 @@
             $wire.$on('updateChartData', () => setTimeout(() => initDatasets(), 400));
         })"
     >
-        <div class="flex justify-end">
+        <div class="flex items-center justify-between">
+            @if ($this->getHeading())
+                <span class="text-sm font-medium text-gray-950 dark:text-white px-1">{{ $this->getHeading() }}</span>
+            @else
+                <span></span>
+            @endif
+
             <x-filament::dropdown
                 placement="bottom-end"
                 shift
