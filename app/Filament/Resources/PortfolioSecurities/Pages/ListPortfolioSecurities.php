@@ -10,4 +10,10 @@ class ListPortfolioSecurities extends ListRecords
     protected static string $resource = PortfolioSecurityResource::class;
 
     protected static ?string $title = 'Titres';
+
+    /** @var list<int> */
+    public array $shownSecurityIds = [];
+
+    /** @var list<int> */
+    public array $pricelessSecurityIds = [];
 }
