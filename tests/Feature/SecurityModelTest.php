@@ -168,3 +168,27 @@ it('computes PRU correctly', function () {
 
     expect((float) $result->pru)->toBe(150.0);
 });
+
+it('scopes securities for authenticated user across all account types', function () {
+    $security = Security::factory()->create();
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+        'quantity' => 10,
+        'unit_price' => 100,
+        'fees' => 5,
+    ]);
+
+    Transaction::factory()->cto()->create([
+        'security_id' => $security->id,
+        'quantity' => 5,
+        'unit_price' => 200,
+        'fees' => 3,
+    ]);
+
+    $results = Security::query()->forAuth()->get();
+
+    expect($results)->toHaveCount(1)
+        ->and((float) $results->first()->total_quantity)->toBe(15.0)
+        ->and((float) $results->first()->total_fees)->toBe(8.0);
+});
