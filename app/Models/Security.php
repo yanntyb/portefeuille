@@ -83,6 +83,7 @@ class Security extends Model
                 'securities.id',
                 'securities.isin',
                 'securities.name',
+                'securities.ticker',
                 DB::raw("SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity ELSE -transactions.quantity END) as total_quantity"),
                 DB::raw("1.0 * SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity * transactions.unit_price ELSE 0 END) / NULLIF(SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity ELSE 0 END), 0) as pru"),
                 DB::raw('SUM(transactions.fees) as total_fees'),
@@ -92,6 +93,6 @@ class Security extends Model
             ->join('transactions', 'transactions.security_id', '=', 'securities.id')
             ->where('transactions.account_type', $accountType->value)
             ->where('transactions.user_id', $userId)
-            ->groupBy('securities.id', 'securities.isin', 'securities.name');
+            ->groupBy('securities.id', 'securities.isin', 'securities.name', 'securities.ticker');
     }
 }
