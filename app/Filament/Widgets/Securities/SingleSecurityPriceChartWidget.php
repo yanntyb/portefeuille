@@ -15,7 +15,9 @@ class SingleSecurityPriceChartWidget extends ChartWidget
 
     protected ?string $pollingInterval = null;
 
-    protected ?string $maxHeight = '300px';
+    protected string $view = 'filament.widgets.bare-chart-widget';
+
+    protected ?string $maxHeight = '200px';
 
     public ?Model $record = null;
 
@@ -80,6 +82,7 @@ class SingleSecurityPriceChartWidget extends ChartWidget
                     },
                 },
                 plugins: {
+                    legend: { display: false },
                     tooltip: {
                         callbacks: {
                             title: (items) => {
