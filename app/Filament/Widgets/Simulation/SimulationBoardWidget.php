@@ -41,7 +41,8 @@ class SimulationBoardWidget extends Widget implements HasActions, HasSchemas, Ha
 
     protected ?string $pollingInterval = null;
 
-    public string $currentSimulationName = '';
+    /** @var class-string */
+    public string $currentSimulationClass = '';
 
     /** @var list<array{nom: string, value: string, pipeline: ?string, source: ?string, steps: list<array{label: string, type: string}>}> */
     public array $objects = [];
@@ -64,14 +65,13 @@ class SimulationBoardWidget extends Widget implements HasActions, HasSchemas, Ha
 
     public function mount(): void
     {
-        $this->loadSimulation(Simulation::default());
+        $this->switchSimulation(array_key_first(Simulation::available()));
     }
 
     public function loadSimulation(Simulation $simulation): void
     {
         $engine = app(SimulationEngine::class);
 
-        $this->currentSimulationName = $simulation->nom;
         $this->pipelineNames = $simulation->pipelineNames;
         $this->hiddenFromScenario = $simulation->hiddenFromScenario;
 
@@ -85,21 +85,22 @@ class SimulationBoardWidget extends Widget implements HasActions, HasSchemas, Ha
         $this->computeAllScenarios();
     }
 
-    public function switchSimulation(string $name): void
+    public function switchSimulation(string $class): void
     {
         $simulations = Simulation::available();
 
-        if (! isset($simulations[$name])) {
+        if (! isset($simulations[$class])) {
             return;
         }
 
-        $this->loadSimulation($simulations[$name]);
+        $this->currentSimulationClass = $class;
+        $this->loadSimulation($simulations[$class]);
         $this->resetTable();
-        $this->dispatch('simulation-changed', name: $name);
+        $this->dispatch('simulation-changed', scenario: $class);
     }
 
     /**
-     * @return array<string, string>
+     * @return array<class-string, string>
      */
     public function getSimulationOptions(): array
     {
@@ -112,7 +113,7 @@ class SimulationBoardWidget extends Widget implements HasActions, HasSchemas, Ha
     {
         return $schema
             ->components([
-                Select::make('currentSimulationName')
+                Select::make('currentSimulationClass')
                     ->label('Simulation')
                     ->options($this->getSimulationOptions())
                     ->live()

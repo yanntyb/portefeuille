@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets\Securities;
 
 use App\Data\CumulativeData;
+use App\Filament\Widgets\ChartWidget;
 use App\Filament\Widgets\Securities\Concerns\HasReactiveTableProperties;
 use App\Models\Security;
 use App\Models\SecurityPrice;
@@ -12,7 +13,6 @@ use App\Support\ChartColors;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Schema;
 use Filament\Support\RawJs;
-use Filament\Widgets\ChartWidget;
 use Filament\Widgets\ChartWidget\Concerns\HasFiltersSchema;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;

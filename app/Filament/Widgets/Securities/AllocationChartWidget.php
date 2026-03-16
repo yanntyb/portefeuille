@@ -2,10 +2,10 @@
 
 namespace App\Filament\Widgets\Securities;
 
+use App\Filament\Widgets\ChartWidget;
 use App\Filament\Widgets\Securities\Concerns\HasReactiveTableProperties;
 use App\Support\ChartColors;
 use Filament\Support\RawJs;
-use Filament\Widgets\ChartWidget;
 use Livewire\Attributes\On;
 
 class AllocationChartWidget extends ChartWidget
@@ -19,12 +19,6 @@ class AllocationChartWidget extends ChartWidget
     protected ?string $pollingInterval = null;
 
     protected ?string $maxHeight = '300px';
-
-    protected bool $isCollapsible = true;
-
-    protected bool $isCollapsed = true;
-
-    protected string $view = 'filament.widgets.collapsible-chart-widget';
 
     /** @var list<int>|null */
     public ?array $shownSecurityIds = null;
@@ -68,7 +62,8 @@ class AllocationChartWidget extends ChartWidget
                 continue;
             }
 
-            $labels[] = $security->name;
+            $name = $security->name;
+            $labels[] = mb_strlen($name) > 20 ? mb_substr($name, 0, 20).'…' : $name;
             $valuations[] = $quantity * (float) $price;
             $colors[] = ChartColors::at($colorIndex);
             $colorIndex++;
@@ -101,8 +96,8 @@ class AllocationChartWidget extends ChartWidget
             {
                 plugins: {
                     legend: {
-                        position: 'bottom',
-                        align: 'start',
+                        position: 'left',
+                        align: 'center',
                         labels: {
                             padding: 8,
                         },

@@ -2,10 +2,10 @@
 
 namespace App\Filament\Widgets\Dashboard;
 
+use App\Filament\Widgets\ChartWidget;
 use App\Services\DashboardDataProvider;
 use App\Services\SectorAggregator;
 use Filament\Support\RawJs;
-use Filament\Widgets\ChartWidget;
 use Livewire\Attributes\On;
 
 class DashboardSectorAllocationChartWidget extends ChartWidget
@@ -15,12 +15,6 @@ class DashboardSectorAllocationChartWidget extends ChartWidget
     protected int|string|array $columnSpan = 'full';
 
     protected ?string $pollingInterval = null;
-
-    protected bool $isCollapsible = true;
-
-    protected bool $isCollapsed = true;
-
-    protected string $view = 'filament.widgets.collapsible-chart-widget';
 
     /** @var list<int>|null */
     public ?array $shownSecurityIds = null;

@@ -19,14 +19,25 @@ readonly class Simulation
     ) {}
 
     /**
-     * @return array<string, self>
+     * @return array<class-string, self>
      */
     public static function available(): array
     {
-        return collect([
-            CdiVsSasuSimulation::build(),
-            InvestissementLocatifSimulation::build(),
-        ])->keyBy(fn (self $s): string => $s->nom)->all();
+        $builders = [
+            CdiVsSasuSimulation::class,
+            InvestissementLocatifSimulation::class,
+            ProjectionMonteCarlo::class,
+        ];
+
+        return collect($builders)
+            ->mapWithKeys(fn (string $class): array => [$class => $class::build()])
+            ->all();
+    }
+
+    /** @param class-string $class */
+    public static function buildFromClass(string $class): self
+    {
+        return $class::build();
     }
 
     public static function default(): self

@@ -2,9 +2,15 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\Simulation\SimulationSectionWidget;
 use App\Models\Wallet;
 use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Forms\Components\TextInput;
 use Filament\Navigation\NavigationItem;
+use Filament\Schemas\Components\Callout;
+use Filament\Schemas\Components\Livewire;
+use Filament\Schemas\Components\Section;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\HtmlString;
@@ -20,6 +26,10 @@ class WalletPage extends AccountPage
     #[Url]
     public ?int $walletId = null;
 
+    public float $versementMensuel = 500;
+
+    public int $nbSimulations = 500;
+
     public function mount(): void
     {
         if ($this->walletId === null) {
@@ -28,6 +38,128 @@ class WalletPage extends AccountPage
 
         $this->wallet = Wallet::findOrFail($this->walletId);
         parent::mount();
+    }
+
+    public function reloadSimulationAction(): Action
+    {
+        return Action::make('reloadSimulation')
+            ->label('Relancer')
+            ->icon('heroicon-m-arrow-path')
+            ->iconButton()
+            ->color('gray')
+            ->action(function (): void {
+                $this->dispatch('simulation-settings-updated',
+                    versementMensuel: $this->versementMensuel,
+                    tauxMoyen: $this->computeAnnualizedReturn(),
+                    volatilite: $this->computePortfolioVolatility(),
+                    nbSimulations: $this->nbSimulations,
+                );
+            });
+    }
+
+    public function infoProjectionMonteCarloAction(): Action
+    {
+        return Action::make('infoProjectionMonteCarlo')
+            ->label('Informations')
+            ->icon('heroicon-m-information-circle')
+            ->iconButton()
+            ->color('gray')
+            ->modalHeading('Projection Monte Carlo')
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Fermer')
+            ->schema([
+                Callout::make('Cette valeur est estimée à partir de l\'historique de vos titres.')
+                    ->warning()
+                    ->description('C\'est une hypothèse de départ : votre portefeuille pourrait être plus ou moins agité dans les années à venir. Vous pouvez ajuster cette valeur pour tester différents scénarios.'),
+                Callout::make('Comment sont calculées les 3 courbes ?')
+                    ->info()
+                    ->description('Le simulateur rejoue 500 fois l\'évolution de votre portefeuille sur la durée choisie, avec des rendements aléatoires cohérents avec vos hypothèses. Les 3 courbes résument l\'ensemble des résultats : 10 % des simulations finissent sous la courbe pessimiste, 50 % sous la médiane, et 90 % sous la courbe optimiste.'),
+            ]);
+    }
+
+    public function configureSimulationAction(): Action
+    {
+        return Action::make('configureSimulation')
+            ->label('Paramètres')
+            ->icon('heroicon-m-cog-6-tooth')
+            ->iconButton()
+            ->color('gray')
+            ->modalHeading('Paramètres de la projection')
+            ->fillForm(fn (): array => [
+                'versementMensuel' => $this->versementMensuel,
+                'tauxMoyen' => $this->computeAnnualizedReturn(),
+                'volatilite' => $this->computePortfolioVolatility(),
+                'nbSimulations' => $this->nbSimulations,
+            ])
+            ->schema([
+                TextInput::make('versementMensuel')
+                    ->label('Versement mensuel')
+                    ->numeric()
+                    ->suffix('€')
+                    ->required()
+                    ->minValue(0),
+                TextInput::make('tauxMoyen')
+                    ->label('Taux de rendement annuel moyen')
+                    ->numeric()
+                    ->suffix('%')
+                    ->required()
+                    ->minValue(0)
+                    ->maxValue(50),
+                TextInput::make('volatilite')
+                    ->label('Volatilité annuelle')
+                    ->numeric()
+                    ->suffix('%')
+                    ->required()
+                    ->minValue(0)
+                    ->maxValue(100),
+                TextInput::make('nbSimulations')
+                    ->label('Nombre de simulations')
+                    ->numeric()
+                    ->required()
+                    ->minValue(100)
+                    ->maxValue(5000)
+                    ->helperText('Plus le nombre est élevé, plus le résultat est précis, mais le calcul est plus lent. Entre 200 et 1000 est un bon compromis.'),
+            ])
+            ->action(function (array $data): void {
+                $this->versementMensuel = (float) $data['versementMensuel'];
+                $this->nbSimulations = (int) $data['nbSimulations'];
+
+                $this->dispatch('simulation-settings-updated',
+                    versementMensuel: $this->versementMensuel,
+                    tauxMoyen: (float) $data['tauxMoyen'],
+                    volatilite: (float) $data['volatilite'],
+                    nbSimulations: $this->nbSimulations,
+                );
+            });
+    }
+
+    protected function getExtraContentComponents(): array
+    {
+        return [
+            Section::make('Simulation')
+                ->collapsible()
+                ->collapsed()
+                ->persistCollapsed()
+                ->id('wallet-simulation')
+                ->afterHeader(fn () => [$this->configureSimulationAction()])
+                ->schema([
+                    Section::make('Projection Monte Carlo')
+                        ->collapsible()
+                        ->collapsed()
+                        ->persistCollapsed()
+                        ->id('wallet-simulation-montecarlo')
+                        ->afterHeader(fn () => [$this->reloadSimulationAction(), $this->infoProjectionMonteCarloAction()])
+                        ->schema([
+                            Livewire::make(SimulationSectionWidget::class, [
+                                'capitalInitial' => $this->getTotalValuation(),
+                                'tauxMoyen' => $this->computeAnnualizedReturn(),
+                                'volatilite' => $this->computePortfolioVolatility(),
+                                'versementMensuel' => $this->versementMensuel,
+                                'nbSimulations' => $this->nbSimulations,
+                            ])->key('wallet-simulation-section'),
+                        ]),
+                ]),
+        ];
     }
 
     public function getTitle(): string|Htmlable

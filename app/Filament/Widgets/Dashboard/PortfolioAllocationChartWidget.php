@@ -2,10 +2,10 @@
 
 namespace App\Filament\Widgets\Dashboard;
 
+use App\Filament\Widgets\ChartWidget;
 use App\Models\Wallet;
 use App\Services\DashboardDataProvider;
 use Filament\Support\RawJs;
-use Filament\Widgets\ChartWidget;
 use Livewire\Attributes\On;
 
 class PortfolioAllocationChartWidget extends ChartWidget
@@ -17,12 +17,6 @@ class PortfolioAllocationChartWidget extends ChartWidget
     protected ?string $pollingInterval = null;
 
     protected ?string $maxHeight = '300px';
-
-    protected bool $isCollapsible = true;
-
-    protected bool $isCollapsed = true;
-
-    protected string $view = 'filament.widgets.collapsible-chart-widget';
 
     /** @var list<int>|null */
     public ?array $shownSecurityIds = null;

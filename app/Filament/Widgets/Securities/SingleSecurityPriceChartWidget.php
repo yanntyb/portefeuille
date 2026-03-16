@@ -2,9 +2,9 @@
 
 namespace App\Filament\Widgets\Securities;
 
+use App\Filament\Widgets\ChartWidget;
 use App\Models\SecurityPrice;
 use Filament\Support\RawJs;
-use Filament\Widgets\ChartWidget;
 use Illuminate\Database\Eloquent\Model;
 
 class SingleSecurityPriceChartWidget extends ChartWidget

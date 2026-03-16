@@ -3,13 +3,14 @@
 namespace App\Filament\Widgets\Simulation;
 
 use App\Data\Simulation\CrossoverPoint;
+use App\Data\Simulation\ProjectionMonteCarlo;
 use App\Data\Simulation\Simulation;
 use App\Data\Simulation\SimulationObject;
 use App\Data\Simulation\SimulationValue;
+use App\Filament\Widgets\ChartWidget;
 use App\Services\SimulationEngine;
 use App\Support\ChartColors;
 use Filament\Support\RawJs;
-use Filament\Widgets\ChartWidget;
 
 class SimulationScenarioChartWidget extends ChartWidget
 {
@@ -24,12 +25,13 @@ class SimulationScenarioChartWidget extends ChartWidget
     /** @var list<string> */
     protected array $seriesNames = [];
 
-    public ?string $selectedSimulation = null;
+    /** @var class-string */
+    public string $scenario = ProjectionMonteCarlo::class;
 
     #[\Livewire\Attributes\On('simulation-changed')]
-    public function onSimulationChanged(string $name): void
+    public function onSimulationChanged(string $scenario): void
     {
-        $this->selectedSimulation = $name;
+        $this->scenario = $scenario;
         $this->updateChartData();
     }
 
@@ -37,16 +39,17 @@ class SimulationScenarioChartWidget extends ChartWidget
     {
         $simulation = $this->resolveSimulation();
 
+        if (empty($simulation->scenarios)) {
+            return $simulation->nom;
+        }
+
         return $simulation->nom.' — Scénarios';
     }
 
     protected function resolveSimulation(): Simulation
     {
-        if ($this->selectedSimulation !== null) {
-            $simulations = Simulation::available();
-            if (isset($simulations[$this->selectedSimulation])) {
-                return $simulations[$this->selectedSimulation];
-            }
+        if (class_exists($this->scenario)) {
+            return Simulation::buildFromClass($this->scenario);
         }
 
         return Simulation::default();

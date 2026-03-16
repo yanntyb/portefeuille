@@ -2,11 +2,11 @@
 
 namespace App\Filament\Widgets\Securities;
 
+use App\Filament\Widgets\ChartWidget;
 use App\Filament\Widgets\Securities\Concerns\HasReactiveTableProperties;
 use App\Models\SecuritySector;
 use App\Services\SectorAggregator;
 use Filament\Support\RawJs;
-use Filament\Widgets\ChartWidget;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -21,21 +21,6 @@ class SectorAllocationChartWidget extends ChartWidget
     protected int|string|array $columnSpan = 'full';
 
     protected ?string $pollingInterval = null;
-
-    protected bool $isCollapsible = true;
-
-    protected bool $isCollapsed = true;
-
-    protected string $view = 'filament.widgets.collapsible-chart-widget';
-
-    public bool $bareView = false;
-
-    public function booted(): void
-    {
-        if ($this->bareView) {
-            $this->view = 'filament.widgets.bare-chart-widget';
-        }
-    }
 
     private ?Builder $cachedPageTableQuery = null;
 
