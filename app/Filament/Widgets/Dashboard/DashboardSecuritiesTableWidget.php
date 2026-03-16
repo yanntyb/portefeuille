@@ -18,6 +18,9 @@ class DashboardSecuritiesTableWidget extends TableWidget
     public array $shownSecurityIds = [];
 
     /** @var list<int> */
+    public array $hiddenSecurityIds = [];
+
+    /** @var list<int> */
     public array $pricelessSecurityIds = [];
 
     public function mount(): void
@@ -39,18 +42,19 @@ class DashboardSecuritiesTableWidget extends TableWidget
             ->unique()
             ->all();
 
-        $this->shownSecurityIds = $idsWithPrice;
         $this->pricelessSecurityIds = array_values(array_diff($allIds, $idsWithPrice));
+        $this->shownSecurityIds = array_values(array_diff($allIds, $this->hiddenSecurityIds));
     }
 
     public function toggleSecurity(int $id): void
     {
-        if (in_array($id, $this->shownSecurityIds)) {
-            $this->shownSecurityIds = array_values(array_diff($this->shownSecurityIds, [$id]));
+        if (in_array($id, $this->hiddenSecurityIds)) {
+            $this->hiddenSecurityIds = array_values(array_diff($this->hiddenSecurityIds, [$id]));
         } else {
-            $this->shownSecurityIds[] = $id;
+            $this->hiddenSecurityIds[] = $id;
         }
 
+        $this->computeSecurityVisibility();
         $this->dispatch('security-visibility-changed', shownSecurityIds: $this->shownSecurityIds);
     }
 
