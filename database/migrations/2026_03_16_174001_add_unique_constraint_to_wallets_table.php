@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('wallets', function (Blueprint $table) {
-            $table->dropIndex('wallets_user_id_name_index');
             $table->unique(['user_id', 'name']);
+            $table->dropIndex('wallets_user_id_name_index');
         });
     }
 
