@@ -6,6 +6,7 @@ use App\Extensions\Debug;
 use App\Extensions\Pwa;
 use App\Extensions\Store;
 use App\Extensions\Style;
+use App\Extensions\TablePersistence;
 use App\Extensions\Transition;
 use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
@@ -70,6 +71,7 @@ class AdminPanelProvider extends PanelProvider
                 Debug::make(),
                 Transition::make(),
                 Store::make(),
+                TablePersistence::make(),
             ])
             ->middleware([
                 EncryptCookies::class,

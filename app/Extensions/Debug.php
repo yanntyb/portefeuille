@@ -2,10 +2,9 @@
 
 namespace App\Extensions;
 
+use App\Filament\Pages\DebugPage;
+use Filament\Navigation\NavigationItem;
 use Filament\Panel;
-use Filament\Support\Facades\FilamentView;
-use Filament\View\PanelsRenderHook;
-use Illuminate\Support\Facades\Blade;
 
 class Debug extends Extension
 {
@@ -20,9 +19,12 @@ class Debug extends Extension
             return;
         }
 
-        FilamentView::registerRenderHook(
-            PanelsRenderHook::SIDEBAR_NAV_END,
-            fn (): string => Blade::render('<livewire:debug-button />'),
-        );
+        $panel->navigationItems([
+            NavigationItem::make('Debug')
+                ->url(fn (): string => DebugPage::getUrl())
+                ->icon('heroicon-o-bug-ant')
+                ->badge(fn (): ?string => session('debug.simulate_user') ? 'Utilisateur' : null)
+                ->sort(999),
+        ]);
     }
 }

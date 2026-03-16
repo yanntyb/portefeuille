@@ -39,6 +39,9 @@ class Style extends Extension
                     .fi-user-menu {
                         display: none !important;
                     }
+                    .fi-pagination-records-per-page-select {
+                        display: none !important;
+                    }
                 </style>
             HTML,
         );
