@@ -9,7 +9,7 @@ use Filament\Support\RawJs;
 
 class PortfolioAllocationChartWidget extends ChartWidget
 {
-    protected ?string $heading = 'Répartition par compte';
+    protected ?string $heading = 'Poids des portefeuilles';
 
     protected int|string|array $columnSpan = 1;
 
