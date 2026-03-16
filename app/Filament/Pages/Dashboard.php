@@ -73,7 +73,6 @@ class Dashboard extends BaseDashboard
                     ->collapsed()
                     ->persistCollapsed()
                     ->id('dashboard-diversification')
-                    ->extraAttributes(['class' => 'fi-section-no-content-padding'])
                     ->schema([
                         Livewire::make(DashboardSecuritiesTableWidget::class)
                             ->key('dashboard-securities-table'),

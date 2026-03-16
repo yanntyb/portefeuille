@@ -98,7 +98,6 @@ class EditWalletSecurity extends EditSecurity
                 ->collapsed()
                 ->persistCollapsed()
                 ->id('transactions')
-                ->extraAttributes(['class' => 'fi-section-no-content-padding'])
                 ->schema([
                     $this->getRelationManagersContentComponent(),
                 ]),

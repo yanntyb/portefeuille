@@ -50,6 +50,12 @@
     padding-right: 0 !important;
 }
 
+/* Section Diversification : pas de bordure en bas */
+#diversification > .fi-section {
+    border-bottom: none !important;
+    box-shadow: none !important;
+}
+
 /* Masquer l'indicateur de sélection dans tous les tableaux */
 .fi-ta-selection-indicator {
     display: none !important;

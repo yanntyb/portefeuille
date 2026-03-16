@@ -25,7 +25,7 @@ class SecuritiesTable
                     ->sortable()
                     ->icon(fn (Security $record, $livewire) => in_array($record->id, $livewire->pricelessSecurityIds) ? 'heroicon-o-exclamation-triangle' : null)
                     ->iconColor('danger')
-                    ->tooltip(fn (Security $record, $livewire) => in_array($record->id, $livewire->pricelessSecurityIds) ? 'Ce titre est masqué car les prix n\'ont pas pu être récupérés automatiquement' : null),
+                    ->tooltip(fn (Security $record, $livewire) => in_array($record->id, $livewire->pricelessSecurityIds) ? 'Les prix de ce titre n\'ont pas pu être récupérés automatiquement' : null),
                 TextColumn::make('valuation')
                     ->label('Valorisation')
                     ->state(function (Security $record): ?float {

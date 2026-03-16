@@ -153,7 +153,6 @@ abstract class EditSecurity extends EditRecord
                 ->collapsed()
                 ->persistCollapsed()
                 ->id('transactions')
-                ->extraAttributes(['class' => 'fi-section-no-content-padding'])
                 ->schema([
                     $this->getRelationManagersContentComponent(),
                 ]),
