@@ -15,6 +15,7 @@ use App\Filament\Widgets\Securities\ValuationChartWidget;
 use App\Jobs\UpdateSecuritiesJob;
 use App\Models\Security;
 use App\Models\SecurityPrice;
+use App\Models\Transaction;
 use App\Models\Wallet;
 use App\Services\YahooFinanceService;
 use App\Support\MarketCalendar;
@@ -30,6 +31,8 @@ use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Number;
@@ -51,6 +54,9 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
 
     /** @var list<int> */
     public array $shownSecurityIds = [];
+
+    /** @var list<int> */
+    public array $hiddenSecurityIds = [];
 
     /** @var list<int> */
     public array $pricelessSecurityIds = [];
@@ -97,14 +103,15 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
     /** @param array<string, mixed> $data */
     public function fromTableStore(array $data): void
     {
-        $savedIds = $data['shownSecurityIds'] ?? null;
+        $hiddenIds = $data['hiddenSecurityIds'] ?? null;
 
-        if ($savedIds === null) {
+        if ($hiddenIds === null) {
             return;
         }
 
         $allIds = array_merge($this->shownSecurityIds, $this->pricelessSecurityIds);
-        $this->shownSecurityIds = array_values(array_intersect($savedIds, $allIds));
+        $this->hiddenSecurityIds = array_values(array_intersect($hiddenIds, $allIds));
+        $this->computeSecurityVisibility();
     }
 
     public function getTablePollingInterval(): ?string
@@ -141,8 +148,8 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
             ->unique()
             ->all();
 
-        $this->shownSecurityIds = $idsWithPrice;
         $this->pricelessSecurityIds = array_values(array_diff($allIds, $idsWithPrice));
+        $this->shownSecurityIds = array_values(array_diff($allIds, $this->hiddenSecurityIds));
     }
 
     public function refreshPrices(): void
@@ -174,18 +181,167 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
 
     public function toggleSecurity(int $id): void
     {
-        if (in_array($id, $this->shownSecurityIds)) {
-            $this->shownSecurityIds = array_values(array_diff($this->shownSecurityIds, [$id]));
+        if (in_array($id, $this->hiddenSecurityIds)) {
+            $this->hiddenSecurityIds = array_values(array_diff($this->hiddenSecurityIds, [$id]));
         } else {
-            $this->shownSecurityIds[] = $id;
+            $this->hiddenSecurityIds[] = $id;
         }
 
+        $this->computeSecurityVisibility();
         $this->dispatch('security-visibility-changed', shownSecurityIds: $this->shownSecurityIds);
     }
 
     public function getTitle(): string|Htmlable
     {
         return new HtmlString(static::getNavigationLabel().' '.$this->getFormattedValuation());
+    }
+
+    protected function getTotalValuation(): float
+    {
+        $query = $this->scopedSecuritiesQuery();
+
+        if ($this->shownSecurityIds) {
+            $query->whereIn('securities.id', $this->shownSecurityIds);
+        }
+
+        return (float) $query->with('latestPrice')->get()->sum(function ($record) {
+            $close = $record->latestPrice?->close;
+
+            if ($close === null || $record->total_quantity === null) {
+                return 0;
+            }
+
+            return (float) $record->total_quantity * (float) $close;
+        });
+    }
+
+    protected function computeAnnualizedReturn(): float
+    {
+        if ($this->wallet === null) {
+            return 7.0;
+        }
+
+        $records = $this->scopedSecuritiesQuery()->with('latestPrice')->get();
+
+        $valuation = (float) $records->sum(function ($record) {
+            $close = $record->latestPrice?->close;
+
+            if ($close === null || $record->total_quantity === null) {
+                return 0;
+            }
+
+            return (float) $record->total_quantity * (float) $close;
+        });
+
+        $totalInvested = (float) $records->sum(fn ($record) => (float) ($record->total_invested ?? 0));
+
+        if ($totalInvested <= 0 || $valuation <= 0) {
+            return 7.0;
+        }
+
+        $firstDate = Transaction::query()
+            ->where('wallet_id', $this->wallet->id)
+            ->where('type', 'buy')
+            ->min('date');
+
+        if ($firstDate === null) {
+            return 7.0;
+        }
+
+        $years = Carbon::parse($firstDate)->diffInDays(now()) / 365.25;
+
+        if ($years < 0.5) {
+            return 7.0;
+        }
+
+        $cagr = (($valuation / $totalInvested) ** (1 / $years) - 1) * 100;
+
+        return round((float) max(0, min(50, $cagr)), 2);
+    }
+
+    protected function computePortfolioVolatility(): float
+    {
+        if ($this->wallet === null) {
+            return 15.0;
+        }
+
+        $records = $this->scopedSecuritiesQuery()->with('latestPrice')->get();
+
+        $totalValuation = (float) $records->sum(function ($record) {
+            $close = $record->latestPrice?->close;
+
+            if ($close === null || $record->total_quantity === null) {
+                return 0;
+            }
+
+            return (float) $record->total_quantity * (float) $close;
+        });
+
+        if ($totalValuation <= 0) {
+            return 15.0;
+        }
+
+        $weightedVolatility = 0.0;
+
+        foreach ($records as $record) {
+            $close = $record->latestPrice?->close;
+
+            if ($close === null || $record->total_quantity === null || (float) $record->total_quantity <= 0) {
+                continue;
+            }
+
+            $weight = ((float) $record->total_quantity * (float) $close) / $totalValuation;
+
+            $prices = SecurityPrice::query()
+                ->where('security_id', $record->id)
+                ->orderBy('date')
+                ->pluck('close')
+                ->map(fn ($v) => (float) $v)
+                ->values();
+
+            $sigma = $this->annualizedVolatility($prices);
+
+            if ($sigma === null) {
+                continue;
+            }
+
+            $weightedVolatility += $weight * $sigma;
+        }
+
+        return $weightedVolatility > 0
+            ? round($weightedVolatility, 2)
+            : 15.0;
+    }
+
+    /** @param Collection<int, float> $prices */
+    private function annualizedVolatility(Collection $prices): ?float
+    {
+        if ($prices->count() < 30) {
+            return null;
+        }
+
+        $returns = [];
+
+        for ($i = 1; $i < $prices->count(); $i++) {
+            $prev = $prices[$i - 1];
+
+            if ($prev == 0.0) {
+                continue;
+            }
+
+            $returns[] = ($prices[$i] - $prev) / $prev;
+        }
+
+        $n = count($returns);
+
+        if ($n < 2) {
+            return null;
+        }
+
+        $mean = array_sum($returns) / $n;
+        $variance = array_sum(array_map(fn (float $r) => ($r - $mean) ** 2, $returns)) / ($n - 1);
+
+        return sqrt($variance) * sqrt(252) * 100;
     }
 
     protected function getFormattedValuation(): string
@@ -245,6 +401,14 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
         );
     }
 
+    /**
+     * @return list<\Filament\Schemas\Components\Component>
+     */
+    protected function getExtraContentComponents(): array
+    {
+        return [];
+    }
+
     public function content(Schema $schema): Schema
     {
         return $schema
@@ -269,7 +433,6 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
                     ->collapsed()
                     ->persistCollapsed()
                     ->id('diversification')
-                    ->extraAttributes(['class' => 'fi-section-no-content-padding'])
                     ->schema([
                         Livewire::make(AllocationChartWidget::class, [
                             'tablePageClass' => static::class,
@@ -282,6 +445,7 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
                             'walletId' => $this->wallet?->id,
                         ])->key('sector-allocation-chart'),
                     ]),
+                ...$this->getExtraContentComponents(),
             ]);
     }
 }

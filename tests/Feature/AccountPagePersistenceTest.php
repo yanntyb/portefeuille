@@ -20,7 +20,7 @@ it('restores shown security ids from store for PEA page', function () {
     SecurityPrice::factory()->create(['security_id' => $securityB->id, 'date' => now()]);
 
     $component = livewire(WalletPage::class, ['walletId' => $peaWallet->id]);
-    $component->call('restoreFromTableStore', ['shownSecurityIds' => [$securityA->id]]);
+    $component->call('restoreFromTableStore', ['hiddenSecurityIds' => [$securityB->id]]);
 
     expect($component->instance()->shownSecurityIds)
         ->toContain($securityA->id)
@@ -55,10 +55,11 @@ it('ignores persisted ids that no longer exist', function () {
     SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => now()]);
 
     $component = livewire(WalletPage::class, ['walletId' => $peaWallet->id]);
-    $component->call('restoreFromTableStore', ['shownSecurityIds' => [99999]]);
+    $component->call('restoreFromTableStore', ['hiddenSecurityIds' => [99999]]);
 
     expect($component->instance()->shownSecurityIds)
-        ->not->toContain(99999);
+        ->not->toContain(99999)
+        ->toContain($security->id);
 });
 
 it('restores independently per wallet', function () {
@@ -77,9 +78,11 @@ it('restores independently per wallet', function () {
     $peaComponent = livewire(WalletPage::class, ['walletId' => $peaWallet->id]);
     $ctoComponent = livewire(WalletPage::class, ['walletId' => $ctoWallet->id]);
 
-    $peaComponent->call('restoreFromTableStore', ['shownSecurityIds' => []]);
-    $ctoComponent->call('restoreFromTableStore', ['shownSecurityIds' => [$ctoSecurity->id]]);
+    $peaComponent->call('restoreFromTableStore', ['hiddenSecurityIds' => [$peaSecurity->id]]);
+    $ctoComponent->call('restoreFromTableStore', ['hiddenSecurityIds' => []]);
 
-    expect($peaComponent->instance()->shownSecurityIds)->toBeEmpty()
-        ->and($ctoComponent->instance()->shownSecurityIds)->toContain($ctoSecurity->id);
+    expect($peaComponent->instance()->shownSecurityIds)
+        ->not->toContain($peaSecurity->id)
+        ->and($ctoComponent->instance()->shownSecurityIds)
+        ->toContain($ctoSecurity->id);
 });

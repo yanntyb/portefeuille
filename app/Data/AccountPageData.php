@@ -8,13 +8,11 @@ use App\Filament\Pages\AccountPage;
 readonly class AccountPageData implements Storeable
 {
     /**
-     * @param  list<int>  $shownSecurityIds
-     * @param  list<int>  $pricelessSecurityIds
+     * @param  list<int>  $hiddenSecurityIds
      */
     public function __construct(
         public ?int $walletId,
-        public array $shownSecurityIds,
-        public array $pricelessSecurityIds,
+        public array $hiddenSecurityIds,
         public bool $isUpdating,
     ) {}
 
@@ -22,8 +20,7 @@ readonly class AccountPageData implements Storeable
     {
         return new self(
             walletId: $page->wallet?->id,
-            shownSecurityIds: $page->shownSecurityIds,
-            pricelessSecurityIds: $page->pricelessSecurityIds,
+            hiddenSecurityIds: $page->hiddenSecurityIds,
             isUpdating: $page->isUpdating,
         );
     }
@@ -32,8 +29,7 @@ readonly class AccountPageData implements Storeable
     {
         return [
             'walletId' => $this->walletId,
-            'shownSecurityIds' => $this->shownSecurityIds,
-            'pricelessSecurityIds' => $this->pricelessSecurityIds,
+            'hiddenSecurityIds' => $this->hiddenSecurityIds,
             'isUpdating' => $this->isUpdating,
         ];
     }
