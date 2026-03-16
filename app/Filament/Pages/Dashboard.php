@@ -6,7 +6,6 @@ use App\Filament\Widgets\Dashboard\DashboardGainStatsOverview;
 use App\Filament\Widgets\Dashboard\DashboardPerformanceStatsOverview;
 use App\Filament\Widgets\Dashboard\DashboardSectorAllocationChartWidget;
 use App\Filament\Widgets\Dashboard\DashboardSecuritiesTableWidget;
-use App\Filament\Widgets\Dashboard\PortfolioAllocationChartWidget;
 use App\Models\Security;
 use App\Models\Wallet;
 use App\Services\DashboardDataProvider;
@@ -78,8 +77,6 @@ class Dashboard extends BaseDashboard
                             ->key('dashboard-securities-table'),
                         Livewire::make(DashboardSectorAllocationChartWidget::class)
                             ->key('dashboard-sector-allocation-chart'),
-                        Livewire::make(PortfolioAllocationChartWidget::class)
-                            ->key('portfolio-allocation-chart'),
                     ]),
             ]);
     }
