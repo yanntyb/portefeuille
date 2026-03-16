@@ -6,7 +6,6 @@ use App\Filament\Widgets\ChartWidget;
 use App\Models\Wallet;
 use App\Services\DashboardDataProvider;
 use Filament\Support\RawJs;
-use Livewire\Attributes\On;
 
 class PortfolioAllocationChartWidget extends ChartWidget
 {
@@ -18,22 +17,12 @@ class PortfolioAllocationChartWidget extends ChartWidget
 
     protected ?string $maxHeight = '300px';
 
-    /** @var list<int>|null */
-    public ?array $shownSecurityIds = null;
-
     private const COLORS = [
         'rgb(16, 185, 129)',
         'rgb(245, 158, 11)',
         'rgb(59, 130, 246)',
         'rgb(168, 85, 247)',
     ];
-
-    #[On('security-visibility-changed')]
-    public function updateShownSecurityIds(array $shownSecurityIds): void
-    {
-        $this->shownSecurityIds = $shownSecurityIds;
-        $this->updateChartData();
-    }
 
     #[On('prices-updated')]
     public function refreshChart(): void
@@ -55,10 +44,6 @@ class PortfolioAllocationChartWidget extends ChartWidget
 
         foreach ($wallets as $index => $wallet) {
             $securities = $provider->securitiesForWallet($wallet);
-
-            if ($this->shownSecurityIds !== null) {
-                $securities = $securities->whereIn('id', $this->shownSecurityIds);
-            }
 
             $valuation = $securities->sum(function ($security) {
                 $close = $security->latestPrice?->close;
