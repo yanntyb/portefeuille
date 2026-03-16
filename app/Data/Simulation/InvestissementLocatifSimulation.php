@@ -17,7 +17,7 @@ class InvestissementLocatifSimulation
 
         // -- Calculs partages --
         $sharedCalcs = [
-            new SimulationObject('duree_credit_mois', SimulationValue::plain(0), [
+            new SimulationObject('duree_credit_mois', SimulationValue::plain(0), null, [
                 new SimulationStep('duree_credit_annees', 'reference'),
                 new SimulationStep('*', 'operator'),
                 new SimulationStep('12', 'value'),
