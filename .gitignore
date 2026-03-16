@@ -25,3 +25,5 @@ Homestead.yaml
 Thumbs.db
 /.claude/settings.local.json
 /.mcp.json
+/.playwright-mcp/
+*.png
