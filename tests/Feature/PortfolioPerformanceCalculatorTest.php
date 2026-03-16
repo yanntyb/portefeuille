@@ -3,6 +3,7 @@
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
+use App\Models\Wallet;
 use App\Services\PortfolioPerformanceCalculator;
 use Illuminate\Support\Carbon;
 
@@ -32,7 +33,7 @@ it('computes basic return without cash flows', function () {
     ]);
 
     $securities = Security::query()
-        ->forAccountType(\App\Enums\AccountType::Pea, auth()->id())
+        ->forWallet(Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']))
         ->with('latestPrice')
         ->get();
 
@@ -80,7 +81,7 @@ it('computes return with cash flows during period', function () {
     ]);
 
     $securities = Security::query()
-        ->forAccountType(\App\Enums\AccountType::Pea, auth()->id())
+        ->forWallet(Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']))
         ->with('latestPrice')
         ->get();
 
@@ -113,7 +114,7 @@ it('returns null when period predates first transaction', function () {
     ]);
 
     $securities = Security::query()
-        ->forAccountType(\App\Enums\AccountType::Pea, auth()->id())
+        ->forWallet(Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']))
         ->with('latestPrice')
         ->get();
 
@@ -150,7 +151,7 @@ it('uses closest available price when exact start date has no price', function (
     ]);
 
     $securities = Security::query()
-        ->forAccountType(\App\Enums\AccountType::Pea, auth()->id())
+        ->forWallet(Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']))
         ->with('latestPrice')
         ->get();
 

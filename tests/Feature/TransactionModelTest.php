@@ -1,8 +1,8 @@
 <?php
 
-use App\Enums\AccountType;
 use App\Models\Security;
 use App\Models\Transaction;
+use App\Models\Wallet;
 
 it('belongs to a security', function () {
     $security = Security::factory()->create();
@@ -18,10 +18,12 @@ it('casts date to Carbon instance', function () {
         ->and($transaction->date->format('Y-m-d'))->toBe('2024-06-15');
 });
 
-it('casts account_type to AccountType enum', function () {
-    $transaction = Transaction::factory()->pea()->create();
+it('belongs to a wallet', function () {
+    $wallet = Wallet::factory()->pea()->create();
+    $transaction = Transaction::factory()->create(['wallet_id' => $wallet->id]);
 
-    expect($transaction->account_type)->toBe(AccountType::Pea);
+    expect($transaction->wallet->id)->toBe($wallet->id)
+        ->and($transaction->wallet->name)->toBe('PEA');
 });
 
 it('casts decimal fields correctly', function () {
@@ -43,7 +45,9 @@ it('filters transactions by authenticated user via global scope', function () {
 
     Transaction::factory()->pea()->create(['user_id' => auth()->id()]);
     Transaction::factory()->pea()->create(['user_id' => auth()->id()]);
-    Transaction::factory()->pea()->create(['user_id' => $otherUser->id]);
+
+    $otherWallet = Wallet::factory()->pea()->create(['user_id' => $otherUser->id]);
+    Transaction::factory()->create(['user_id' => $otherUser->id, 'wallet_id' => $otherWallet->id]);
 
     expect(Transaction::query()->count())->toBe(2);
 });
@@ -52,7 +56,9 @@ it('does not apply global scope when no user is authenticated', function () {
     $otherUser = \App\Models\User::factory()->create();
 
     Transaction::factory()->pea()->create(['user_id' => auth()->id()]);
-    Transaction::factory()->pea()->create(['user_id' => $otherUser->id]);
+
+    $otherWallet = Wallet::factory()->pea()->create(['user_id' => $otherUser->id]);
+    Transaction::factory()->create(['user_id' => $otherUser->id, 'wallet_id' => $otherWallet->id]);
 
     auth()->logout();
 

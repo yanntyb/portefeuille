@@ -1,19 +1,20 @@
 <?php
 
-use App\Filament\Pages\CtoPage;
-use App\Filament\Pages\PeaPage;
+use App\Filament\Pages\WalletPage;
 use App\Filament\Widgets\Securities\ValuationChartWidget;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
+use App\Models\Wallet;
 
 use function Pest\Livewire\livewire;
 
 it('can render on the PEA list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
 
-    livewire(PeaPage::class)
+    livewire(WalletPage::class, ['walletId' => $peaWallet->id])
         ->assertOk()
         ->assertSeeLivewire(ValuationChartWidget::class);
 });
@@ -21,8 +22,9 @@ it('can render on the PEA list page', function () {
 it('can render on the CTO list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
+    $ctoWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'CTO']);
 
-    livewire(CtoPage::class)
+    livewire(WalletPage::class, ['walletId' => $ctoWallet->id])
         ->assertOk()
         ->assertSeeLivewire(ValuationChartWidget::class);
 });
@@ -49,8 +51,11 @@ it('defaults to total mode with aggregated valuation', function () {
         'close' => 110,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
     $widget = livewire(ValuationChartWidget::class, [
-        'tablePageClass' => PeaPage::class,
+        'tablePageClass' => WalletPage::class,
+        'walletId' => $peaWallet->id,
     ]);
 
     $widget->assertOk();
@@ -101,8 +106,11 @@ it('shows stacked areas per security in per_security mode', function () {
         'close' => 210,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
     $widget = livewire(ValuationChartWidget::class, [
-        'tablePageClass' => PeaPage::class,
+        'tablePageClass' => WalletPage::class,
+        'walletId' => $peaWallet->id,
     ]);
 
     $widget->set('filters.mode', 'per_security');
@@ -153,8 +161,11 @@ it('computes cumulative fees from transactions', function () {
         'close' => 110,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
     $widget = livewire(ValuationChartWidget::class, [
-        'tablePageClass' => PeaPage::class,
+        'tablePageClass' => WalletPage::class,
+        'walletId' => $peaWallet->id,
     ]);
 
     $data = invade($widget->instance())->getData();
@@ -187,8 +198,11 @@ it('excludes prices before the first transaction date', function () {
         'close' => 105,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
     $widget = livewire(ValuationChartWidget::class, [
-        'tablePageClass' => PeaPage::class,
+        'tablePageClass' => WalletPage::class,
+        'walletId' => $peaWallet->id,
     ]);
 
     $data = invade($widget->instance())->getData();
@@ -215,8 +229,11 @@ it('invested reflects mid-week transactions in the same week', function () {
         'close' => 105,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
     $widget = livewire(ValuationChartWidget::class, [
-        'tablePageClass' => PeaPage::class,
+        'tablePageClass' => WalletPage::class,
+        'walletId' => $peaWallet->id,
     ]);
 
     $data = invade($widget->instance())->getData();
@@ -263,8 +280,11 @@ it('extrapolates missing prices using the last known close in total mode', funct
         'close' => 110,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
     $widget = livewire(ValuationChartWidget::class, [
-        'tablePageClass' => PeaPage::class,
+        'tablePageClass' => WalletPage::class,
+        'walletId' => $peaWallet->id,
     ]);
 
     $data = invade($widget->instance())->getData();
@@ -313,8 +333,11 @@ it('extrapolates missing prices using the last known close in per_security mode'
         'close' => 110,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
     $widget = livewire(ValuationChartWidget::class, [
-        'tablePageClass' => PeaPage::class,
+        'tablePageClass' => WalletPage::class,
+        'walletId' => $peaWallet->id,
     ]);
 
     $widget->set('filters.mode', 'per_security');
@@ -332,8 +355,11 @@ it('extrapolates missing prices using the last known close in per_security mode'
 });
 
 it('returns empty data when no securities exist', function () {
+    $peaWallet = Wallet::factory()->pea()->create();
+
     $widget = livewire(ValuationChartWidget::class, [
-        'tablePageClass' => PeaPage::class,
+        'tablePageClass' => WalletPage::class,
+        'walletId' => $peaWallet->id,
     ]);
 
     $widget->assertOk();

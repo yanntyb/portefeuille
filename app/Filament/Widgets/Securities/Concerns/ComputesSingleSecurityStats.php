@@ -7,7 +7,7 @@ use App\Models\Transaction;
 
 /**
  * @property ?\Illuminate\Database\Eloquent\Model $record
- * @property ?string $accountType
+ * @property ?int $walletId
  */
 trait ComputesSingleSecurityStats
 {
@@ -31,8 +31,8 @@ trait ComputesSingleSecurityStats
         $transactionsQuery = Transaction::query()
             ->where('security_id', $this->record->id);
 
-        if ($this->accountType) {
-            $transactionsQuery->where('account_type', $this->accountType);
+        if ($this->walletId) {
+            $transactionsQuery->where('wallet_id', $this->walletId);
         }
 
         $transactions = $transactionsQuery->get();

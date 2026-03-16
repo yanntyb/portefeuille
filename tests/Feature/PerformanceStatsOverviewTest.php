@@ -1,11 +1,11 @@
 <?php
 
-use App\Filament\Pages\CtoPage;
-use App\Filament\Pages\PeaPage;
+use App\Filament\Pages\WalletPage;
 use App\Filament\Widgets\Securities\PerformanceStatsOverview;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
+use App\Models\Wallet;
 use Illuminate\Support\Carbon;
 
 use function Pest\Livewire\livewire;
@@ -13,8 +13,9 @@ use function Pest\Livewire\livewire;
 it('can render on the PEA list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
 
-    livewire(PeaPage::class)
+    livewire(WalletPage::class, ['walletId' => $peaWallet->id])
         ->assertOk()
         ->assertSeeLivewire(PerformanceStatsOverview::class);
 });
@@ -22,8 +23,9 @@ it('can render on the PEA list page', function () {
 it('can render on the CTO list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
+    $ctoWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'CTO']);
 
-    livewire(CtoPage::class)
+    livewire(WalletPage::class, ['walletId' => $ctoWallet->id])
         ->assertOk()
         ->assertSeeLivewire(PerformanceStatsOverview::class);
 });
@@ -53,8 +55,11 @@ it('displays performance stats with correct values', function () {
         'close' => 120,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
     $widget = livewire(PerformanceStatsOverview::class, [
-        'tablePageClass' => PeaPage::class,
+        'tablePageClass' => WalletPage::class,
+        'walletId' => $peaWallet->id,
     ]);
 
     $widget->assertOk();
@@ -86,8 +91,11 @@ it('displays dash for periods without data', function () {
         'close' => 120,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
     $widget = livewire(PerformanceStatsOverview::class, [
-        'tablePageClass' => PeaPage::class,
+        'tablePageClass' => WalletPage::class,
+        'walletId' => $peaWallet->id,
     ]);
 
     $stats = $widget->instance()->getPerformanceData();
@@ -123,8 +131,11 @@ it('shows danger color for negative returns', function () {
         'close' => 80,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
     $widget = livewire(PerformanceStatsOverview::class, [
-        'tablePageClass' => PeaPage::class,
+        'tablePageClass' => WalletPage::class,
+        'walletId' => $peaWallet->id,
     ]);
 
     $stats = $widget->instance()->getPerformanceData();
@@ -141,8 +152,11 @@ it('returns seven period stats', function () {
         'security_id' => $security->id,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
     $widget = livewire(PerformanceStatsOverview::class, [
-        'tablePageClass' => PeaPage::class,
+        'tablePageClass' => WalletPage::class,
+        'walletId' => $peaWallet->id,
     ]);
 
     $stats = $widget->instance()->getPerformanceData();

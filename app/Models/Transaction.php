@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\AccountType;
 use App\Enums\TransactionType;
 use App\Observers\TransactionObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -32,8 +31,8 @@ class Transaction extends Model
     /** @var list<string> */
     protected $fillable = [
         'user_id',
+        'wallet_id',
         'date',
-        'account_type',
         'type',
         'security_id',
         'broker',
@@ -49,13 +48,17 @@ class Transaction extends Model
     {
         return [
             'date' => 'date',
-            'account_type' => AccountType::class,
             'type' => TransactionType::class,
             'quantity' => 'decimal:4',
             'unit_price' => 'decimal:4',
             'fees' => 'decimal:2',
             'realized_gain' => 'decimal:2',
         ];
+    }
+
+    public function wallet(): BelongsTo
+    {
+        return $this->belongsTo(Wallet::class);
     }
 
     public function security(): BelongsTo

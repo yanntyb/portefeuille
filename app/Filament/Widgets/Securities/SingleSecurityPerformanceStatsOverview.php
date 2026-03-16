@@ -14,7 +14,7 @@ class SingleSecurityPerformanceStatsOverview extends Widget
 
     public ?Model $record = null;
 
-    public ?string $accountType = null;
+    public ?int $walletId = null;
 
     /**
      * @return list<array{label: string, value: string, color: string}>
@@ -28,7 +28,7 @@ class SingleSecurityPerformanceStatsOverview extends Widget
         $calculator = app(PortfolioPerformanceCalculator::class);
 
         return PortfolioPerformanceCalculator::formatReturnsAsStats(
-            $calculator->computeReturnsForSecurity($this->record, $this->accountType),
+            $calculator->computeReturnsForSecurity($this->record, $this->walletId),
         );
     }
 }

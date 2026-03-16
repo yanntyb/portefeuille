@@ -1,12 +1,12 @@
 <?php
 
-use App\Enums\AccountType;
 use App\Filament\Pages\RebalancingCalculator;
 use App\Models\AllocationProfile;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\Wallet;
 use App\Services\RebalancingCalculator as RebalancingService;
 
 use function Pest\Livewire\livewire;
@@ -225,7 +225,7 @@ it('can save and load a profile', function () {
     livewire(RebalancingCalculator::class)
         ->fillForm([
             'amount' => 500,
-            'account_type' => '',
+            'wallet_id' => null,
             'allocations' => [
                 ['security_id' => $security->id, 'target_percentage' => 100],
             ],
@@ -242,22 +242,25 @@ it('can save and load a profile', function () {
         ->and((float) $profile->items->first()->target_percentage)->toBe(100.0);
 });
 
-it('considers account type when calculating quantities', function () {
+it('considers wallet when calculating quantities', function () {
     $user = User::factory()->create();
     $security = Security::factory()->create();
     SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 100.0]);
 
+    $peaWallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
+    $ctoWallet = Wallet::factory()->cto()->create(['user_id' => $user->id]);
+
     Transaction::factory()->create([
         'user_id' => $user->id,
+        'wallet_id' => $peaWallet->id,
         'security_id' => $security->id,
-        'account_type' => AccountType::Pea,
         'quantity' => 5,
     ]);
 
     Transaction::factory()->create([
         'user_id' => $user->id,
+        'wallet_id' => $ctoWallet->id,
         'security_id' => $security->id,
-        'account_type' => AccountType::Cto,
         'quantity' => 3,
     ]);
 
@@ -266,7 +269,7 @@ it('considers account type when calculating quantities', function () {
     $componentPea = livewire(RebalancingCalculator::class)
         ->fillForm([
             'amount' => 500,
-            'account_type' => 'pea',
+            'wallet_id' => $peaWallet->id,
             'allocations' => [
                 ['security_id' => $security->id, 'target_percentage' => 100],
             ],
@@ -278,7 +281,7 @@ it('considers account type when calculating quantities', function () {
     $componentGlobal = livewire(RebalancingCalculator::class)
         ->fillForm([
             'amount' => 500,
-            'account_type' => '',
+            'wallet_id' => null,
             'allocations' => [
                 ['security_id' => $security->id, 'target_percentage' => 100],
             ],

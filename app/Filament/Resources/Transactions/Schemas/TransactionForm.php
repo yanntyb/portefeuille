@@ -2,12 +2,13 @@
 
 namespace App\Filament\Resources\Transactions\Schemas;
 
-use App\Enums\AccountType;
 use App\Enums\TransactionType;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
+use App\Models\Wallet;
 use Closure;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -18,14 +19,6 @@ use Filament\Schemas\Schema;
 
 class TransactionForm
 {
-    private static function isSecurityAccount(Get $get): bool
-    {
-        return in_array($get('account_type'), [
-            AccountType::Pea->value,
-            AccountType::Cto->value,
-        ]);
-    }
-
     private static function fillUnitPrice(Get $get, Set $set): void
     {
         $securityId = $get('security_id');
@@ -46,6 +39,18 @@ class TransactionForm
         }
     }
 
+    private static function syncWalletType(Set $set, ?string $walletId): void
+    {
+        if (! $walletId) {
+            $set('wallet_type', null);
+
+            return;
+        }
+
+        $name = Wallet::withoutGlobalScope('user')->where('id', $walletId)->value('name');
+        $set('wallet_type', $name ? strtolower($name) : null);
+    }
+
     public static function configure(Schema $schema): Schema
     {
         return $schema
@@ -58,11 +63,16 @@ class TransactionForm
                     ->inline()
                     ->live(),
 
-                Select::make('account_type')
-                    ->label('Type de compte')
-                    ->options(AccountType::class)
+                Hidden::make('wallet_type')
+                    ->dehydrated(false),
+
+                Select::make('wallet_id')
+                    ->label('Compte')
+                    ->options(fn (): array => Wallet::query()->pluck('name', 'id')->all())
                     ->required()
-                    ->live(),
+                    ->live()
+                    ->afterStateUpdated(fn (Set $set, ?string $state) => self::syncWalletType($set, $state))
+                    ->afterStateHydrated(fn (Set $set, ?string $state) => self::syncWalletType($set, $state)),
 
                 DatePicker::make('date')
                     ->label('Date')
@@ -94,13 +104,13 @@ class TransactionForm
                             ->label('Ticker'),
                     ])
                     ->hiddenJs(<<<'JS'
-                        ! ['pea', 'cto'].includes($get('account_type'))
+                        ! ['pea', 'cto'].includes($get('wallet_type'))
                         JS),
 
                 TextInput::make('broker')
                     ->label('Courtier')
                     ->hiddenJs(<<<'JS'
-                        $get('account_type') !== 'cto'
+                        $get('wallet_type') !== 'cto'
                         JS),
 
                 TextInput::make('quantity')
@@ -109,7 +119,7 @@ class TransactionForm
                     ->default(1)
                     ->minValue(0)
                     ->hiddenJs(<<<'JS'
-                        ! ['pea', 'cto'].includes($get('account_type'))
+                        ! ['pea', 'cto'].includes($get('wallet_type'))
                         JS)
                     ->rules([
                         fn (Get $get, ?Transaction $record): Closure => function (string $attribute, $value, Closure $fail) use ($get, $record): void {
@@ -120,17 +130,15 @@ class TransactionForm
                             }
 
                             $securityId = $get('security_id');
-                            $accountType = $get('account_type');
+                            $walletId = $get('wallet_id');
 
-                            if (! $securityId || ! $accountType) {
+                            if (! $securityId || ! $walletId) {
                                 return;
                             }
 
-                            $accountTypeValue = $accountType instanceof AccountType ? $accountType->value : $accountType;
-
                             $ownedQuantity = (float) Transaction::withoutGlobalScopes()
                                 ->where('security_id', $securityId)
-                                ->where('account_type', $accountTypeValue)
+                                ->where('wallet_id', $walletId)
                                 ->where('user_id', auth()->id())
                                 ->when($record, fn ($query) => $query->where('id', '!=', $record->id))
                                 ->selectRaw("SUM(CASE WHEN type = 'buy' THEN quantity ELSE -quantity END) as total")
@@ -148,7 +156,7 @@ class TransactionForm
                     ->prefix('€')
                     ->minValue(0)
                     ->hiddenJs(<<<'JS'
-                        ! ['pea', 'cto'].includes($get('account_type'))
+                        ! ['pea', 'cto'].includes($get('wallet_type'))
                         JS),
 
                 TextInput::make('fees')
@@ -158,7 +166,7 @@ class TransactionForm
                     ->default(0)
                     ->minValue(0)
                     ->hiddenJs(<<<'JS'
-                        ! ['pea', 'cto'].includes($get('account_type'))
+                        ! ['pea', 'cto'].includes($get('wallet_type'))
                         JS),
 
                 Textarea::make('notes')

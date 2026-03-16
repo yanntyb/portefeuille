@@ -1,6 +1,6 @@
 <?php
 
-use App\Filament\Resources\PeaSecurities\Pages\EditPeaSecurity;
+use App\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
 use App\Models\Security;
 use App\Models\Transaction;
 
@@ -10,6 +10,6 @@ it('displays the update from isin action on edit page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
 
-    livewire(EditPeaSecurity::class, ['record' => $security->getRouteKey()])
+    livewire(EditWalletSecurity::class, ['record' => $security->getRouteKey()])
         ->assertActionVisible('updateFromIsin');
 });

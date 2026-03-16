@@ -2,23 +2,25 @@
 
 namespace App\Filament\Resources\Securities\RelationManagers;
 
-use App\Enums\AccountType;
 use App\Enums\TransactionType;
 use App\Filament\Resources\Transactions\Tables\TransactionsTable;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
+use App\Models\Wallet;
 use Closure;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 
@@ -28,15 +30,32 @@ class TransactionsRelationManager extends RelationManager
 
     protected static ?string $title = 'Transactions';
 
+    private static function syncWalletType(Set $set, ?string $walletId): void
+    {
+        if (! $walletId) {
+            $set('wallet_type', null);
+
+            return;
+        }
+
+        $name = Wallet::withoutGlobalScope('user')->where('id', $walletId)->value('name');
+        $set('wallet_type', $name ? strtolower($name) : null);
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Select::make('account_type')
-                    ->label('Type de compte')
-                    ->options(AccountType::class)
+                Hidden::make('wallet_type')
+                    ->dehydrated(false),
+
+                Select::make('wallet_id')
+                    ->label('Compte')
+                    ->options(fn (): array => Wallet::query()->pluck('name', 'id')->all())
                     ->required()
-                    ->live(),
+                    ->live()
+                    ->afterStateUpdated(fn (Set $set, ?string $state) => self::syncWalletType($set, $state))
+                    ->afterStateHydrated(fn (Set $set, ?string $state) => self::syncWalletType($set, $state)),
 
                 ToggleButtons::make('type')
                     ->label('Type')
@@ -54,7 +73,7 @@ class TransactionsRelationManager extends RelationManager
                 TextInput::make('broker')
                     ->label('Courtier')
                     ->hiddenJs(<<<'JS'
-                        $get('account_type') !== 'cto'
+                        $get('wallet_type') !== 'cto'
                         JS),
 
                 TextInput::make('quantity')
@@ -69,18 +88,17 @@ class TransactionsRelationManager extends RelationManager
                                 return;
                             }
 
-                            $accountType = $get('account_type');
+                            $walletId = $get('wallet_id');
 
-                            if (! $accountType) {
+                            if (! $walletId) {
                                 return;
                             }
 
-                            $accountTypeValue = $accountType instanceof AccountType ? $accountType->value : $accountType;
                             $securityId = $livewire->getOwnerRecord()->id;
 
                             $ownedQuantity = (float) Transaction::withoutGlobalScopes()
                                 ->where('security_id', $securityId)
-                                ->where('account_type', $accountTypeValue)
+                                ->where('wallet_id', $walletId)
                                 ->where('user_id', auth()->id())
                                 ->when($record, fn ($query) => $query->where('id', '!=', $record->id))
                                 ->selectRaw("SUM(CASE WHEN type = 'buy' THEN quantity ELSE -quantity END) as total")

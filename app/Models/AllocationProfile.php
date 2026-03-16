@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\AccountType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,17 +15,9 @@ class AllocationProfile extends Model
     /** @var list<string> */
     protected $fillable = [
         'name',
-        'account_type',
+        'wallet_id',
         'user_id',
     ];
-
-    /** @return array<string, string> */
-    protected function casts(): array
-    {
-        return [
-            'account_type' => AccountType::class,
-        ];
-    }
 
     public function items(): HasMany
     {
@@ -36,5 +27,10 @@ class AllocationProfile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function wallet(): BelongsTo
+    {
+        return $this->belongsTo(Wallet::class);
     }
 }

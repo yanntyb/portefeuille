@@ -1,13 +1,12 @@
 <?php
 
-use App\Enums\AccountType;
-use App\Filament\Pages\CtoPage;
-use App\Filament\Pages\PeaPage;
+use App\Filament\Pages\WalletPage;
 use App\Filament\Resources\Transactions\Pages\CreateTransaction;
 use App\Filament\Resources\Transactions\Pages\ListTransactions;
 use App\Models\Security;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\Wallet;
 
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\get;
@@ -21,66 +20,80 @@ it('redirects to login when not authenticated', function () {
 });
 
 it('scopes transactions to the authenticated user', function () {
-    $myTransaction = Transaction::factory()->pea()->create([
+    $myWallet = Wallet::factory()->pea()->create();
+    $myTransaction = Transaction::factory()->create([
         'user_id' => auth()->id(),
+        'wallet_id' => $myWallet->id,
     ]);
 
     $otherUser = User::factory()->create();
-    $otherTransaction = Transaction::factory()->pea()->create([
+    $otherWallet = Wallet::factory()->pea()->create(['user_id' => $otherUser->id]);
+    $otherTransaction = Transaction::factory()->create([
         'user_id' => $otherUser->id,
+        'wallet_id' => $otherWallet->id,
     ]);
 
     livewire(ListTransactions::class)
+        ->loadTable()
         ->assertCanSeeTableRecords(collect([$myTransaction]))
         ->assertCanNotSeeTableRecords(collect([$otherTransaction]));
 });
 
 it('scopes PEA securities to the authenticated user', function () {
+    $myWallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
-
-    Transaction::factory()->pea()->create([
+    Transaction::factory()->create([
         'user_id' => auth()->id(),
+        'wallet_id' => $myWallet->id,
         'security_id' => $security->id,
     ]);
 
-    $otherSecurity = Security::factory()->create();
     $otherUser = User::factory()->create();
-    Transaction::factory()->pea()->create([
+    $otherWallet = Wallet::factory()->pea()->create(['user_id' => $otherUser->id]);
+    $otherSecurity = Security::factory()->create();
+    Transaction::factory()->create([
         'user_id' => $otherUser->id,
+        'wallet_id' => $otherWallet->id,
         'security_id' => $otherSecurity->id,
     ]);
 
-    livewire(PeaPage::class)
+    livewire(WalletPage::class, ['walletId' => $myWallet->id])
+        ->loadTable()
         ->assertCanSeeTableRecords(collect([$security]))
         ->assertCanNotSeeTableRecords(collect([$otherSecurity]));
 });
 
 it('scopes CTO securities to the authenticated user', function () {
+    $myWallet = Wallet::factory()->cto()->create();
     $security = Security::factory()->create();
-
-    Transaction::factory()->cto()->create([
+    Transaction::factory()->create([
         'user_id' => auth()->id(),
+        'wallet_id' => $myWallet->id,
         'security_id' => $security->id,
     ]);
 
-    $otherSecurity = Security::factory()->create();
     $otherUser = User::factory()->create();
-    Transaction::factory()->cto()->create([
+    $otherWallet = Wallet::factory()->cto()->create(['user_id' => $otherUser->id]);
+    $otherSecurity = Security::factory()->create();
+    Transaction::factory()->create([
         'user_id' => $otherUser->id,
+        'wallet_id' => $otherWallet->id,
         'security_id' => $otherSecurity->id,
     ]);
 
-    livewire(CtoPage::class)
+    livewire(WalletPage::class, ['walletId' => $myWallet->id])
+        ->loadTable()
         ->assertCanSeeTableRecords(collect([$security]))
         ->assertCanNotSeeTableRecords(collect([$otherSecurity]));
 });
 
 it('assigns user_id when creating a transaction', function () {
+    $wallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
 
     livewire(CreateTransaction::class)
         ->fillForm([
-            'account_type' => AccountType::Pea->value,
+            'wallet_id' => $wallet->id,
             'date' => '2025-06-15',
             'security_id' => $security->id,
             'quantity' => 10,

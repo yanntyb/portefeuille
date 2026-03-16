@@ -2,7 +2,7 @@
 
 namespace App\Filament\Widgets\Securities;
 
-use Filament\Widgets\Concerns\InteractsWithPageTable;
+use App\Filament\Widgets\Securities\Concerns\HasReactiveTableProperties;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Number;
@@ -10,20 +10,12 @@ use Livewire\Attributes\On;
 
 class SecurityStatsOverview extends StatsOverviewWidget
 {
-    use InteractsWithPageTable;
+    use HasReactiveTableProperties;
 
     protected ?string $pollingInterval = null;
 
-    /** @var class-string|null */
-    public ?string $tablePageClass = null;
-
     /** @var list<int>|null */
     public ?array $shownSecurityIds = null;
-
-    protected function getTablePage(): string
-    {
-        return $this->tablePageClass;
-    }
 
     #[On('security-visibility-changed')]
     public function updateShownSecurityIds(array $shownSecurityIds): void

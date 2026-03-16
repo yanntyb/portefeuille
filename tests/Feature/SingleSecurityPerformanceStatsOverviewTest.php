@@ -1,10 +1,11 @@
 <?php
 
-use App\Filament\Resources\PeaSecurities\Pages\EditPeaSecurity;
+use App\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
 use App\Filament\Widgets\Securities\SingleSecurityPerformanceStatsOverview;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
+use App\Models\Wallet;
 use Illuminate\Support\Carbon;
 
 use function Pest\Livewire\livewire;
@@ -12,8 +13,9 @@ use function Pest\Livewire\livewire;
 it('can render on the edit security page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
 
-    livewire(EditPeaSecurity::class, ['record' => $security->id])
+    livewire(EditWalletSecurity::class, ['record' => $security->id, 'walletId' => $peaWallet->id])
         ->assertOk()
         ->assertSeeLivewire(SingleSecurityPerformanceStatsOverview::class);
 });
@@ -43,9 +45,11 @@ it('computes returns for a single security', function () {
         'close' => 120,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
     $widget = livewire(SingleSecurityPerformanceStatsOverview::class, [
         'record' => $security,
-        'accountType' => 'pea',
+        'walletId' => $peaWallet->id,
     ]);
 
     $widget->assertOk();
@@ -64,9 +68,11 @@ it('returns seven period stats for a single security', function () {
         'security_id' => $security->id,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
     $widget = livewire(SingleSecurityPerformanceStatsOverview::class, [
         'record' => $security,
-        'accountType' => 'pea',
+        'walletId' => $peaWallet->id,
     ]);
 
     $stats = $widget->instance()->getPerformanceData();
@@ -74,7 +80,7 @@ it('returns seven period stats for a single security', function () {
     expect($stats)->toHaveCount(7);
 });
 
-it('filters transactions by account type', function () {
+it('filters transactions by wallet', function () {
     Carbon::setTestNow('2025-06-15');
 
     $security = Security::factory()->create();
@@ -107,14 +113,17 @@ it('filters transactions by account type', function () {
         'close' => 120,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $ctoWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'CTO']);
+
     $peaWidget = livewire(SingleSecurityPerformanceStatsOverview::class, [
         'record' => $security,
-        'accountType' => 'pea',
+        'walletId' => $peaWallet->id,
     ]);
 
     $ctoWidget = livewire(SingleSecurityPerformanceStatsOverview::class, [
         'record' => $security,
-        'accountType' => 'cto',
+        'walletId' => $ctoWallet->id,
     ]);
 
     $peaStats = $peaWidget->instance()->getPerformanceData();

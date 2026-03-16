@@ -1,19 +1,20 @@
 <?php
 
-use App\Filament\Pages\CtoPage;
-use App\Filament\Pages\PeaPage;
+use App\Filament\Pages\WalletPage;
 use App\Filament\Widgets\Securities\AllocationChartWidget;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
+use App\Models\Wallet;
 
 use function Pest\Livewire\livewire;
 
 it('can render on the PEA list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
 
-    livewire(PeaPage::class)
+    livewire(WalletPage::class, ['walletId' => $peaWallet->id])
         ->assertOk()
         ->assertSeeLivewire(AllocationChartWidget::class);
 });
@@ -21,8 +22,9 @@ it('can render on the PEA list page', function () {
 it('can render on the CTO list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
+    $ctoWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'CTO']);
 
-    livewire(CtoPage::class)
+    livewire(WalletPage::class, ['walletId' => $ctoWallet->id])
         ->assertOk()
         ->assertSeeLivewire(AllocationChartWidget::class);
 });
@@ -55,8 +57,11 @@ it('returns labels and percentages per security', function () {
         'close' => 250,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
     $widget = livewire(AllocationChartWidget::class, [
-        'tablePageClass' => PeaPage::class,
+        'tablePageClass' => WalletPage::class,
+        'walletId' => $peaWallet->id,
     ]);
 
     $widget->assertOk();
@@ -84,8 +89,11 @@ it('excludes securities with no latest price', function () {
         'unit_price' => 100,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
     $widget = livewire(AllocationChartWidget::class, [
-        'tablePageClass' => PeaPage::class,
+        'tablePageClass' => WalletPage::class,
+        'walletId' => $peaWallet->id,
     ]);
 
     $data = invade($widget->instance())->getData();
@@ -95,8 +103,11 @@ it('excludes securities with no latest price', function () {
 });
 
 it('returns empty data when no securities exist', function () {
+    $peaWallet = Wallet::factory()->pea()->create();
+
     $widget = livewire(AllocationChartWidget::class, [
-        'tablePageClass' => PeaPage::class,
+        'tablePageClass' => WalletPage::class,
+        'walletId' => $peaWallet->id,
     ]);
 
     $widget->assertOk();

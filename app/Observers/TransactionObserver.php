@@ -27,7 +27,7 @@ class TransactionObserver
 
         $buyTransactions = Transaction::query()
             ->where('security_id', $transaction->security_id)
-            ->where('account_type', $transaction->account_type)
+            ->where('wallet_id', $transaction->wallet_id)
             ->where('type', TransactionType::Buy)
             ->get();
 

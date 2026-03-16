@@ -1,8 +1,6 @@
 <?php
 
-use App\Enums\AccountType;
-use App\Filament\Resources\CtoSecurities\Pages\EditCtoSecurity;
-use App\Filament\Resources\PeaSecurities\Pages\EditPeaSecurity;
+use App\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
 use App\Filament\Widgets\Securities\SingleSecurityGainStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityPerformanceStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityPriceChartWidget;
@@ -10,14 +8,16 @@ use App\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
+use App\Models\Wallet;
 
 use function Pest\Livewire\livewire;
 
 it('renders stats and chart widgets on the PEA edit page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
 
-    livewire(EditPeaSecurity::class, ['record' => $security->id])
+    livewire(EditWalletSecurity::class, ['record' => $security->id, 'walletId' => $peaWallet->id])
         ->assertOk()
         ->assertSeeLivewire(SingleSecurityPerformanceStatsOverview::class)
         ->assertSeeLivewire(SingleSecurityGainStatsOverview::class)
@@ -28,8 +28,9 @@ it('renders stats and chart widgets on the PEA edit page', function () {
 it('renders stats and chart widgets on the CTO edit page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
+    $ctoWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'CTO']);
 
-    livewire(EditCtoSecurity::class, ['record' => $security->id])
+    livewire(EditWalletSecurity::class, ['record' => $security->id, 'walletId' => $ctoWallet->id])
         ->assertOk()
         ->assertSeeLivewire(SingleSecurityPerformanceStatsOverview::class)
         ->assertSeeLivewire(SingleSecurityGainStatsOverview::class)
@@ -53,9 +54,11 @@ it('computes single security gain data correctly on edit page', function () {
         'close' => 120,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
     $widget = livewire(SingleSecurityGainStatsOverview::class, [
         'record' => $security,
-        'accountType' => AccountType::Pea->value,
+        'walletId' => $peaWallet->id,
     ]);
     $widget->assertOk();
 
@@ -92,9 +95,11 @@ it('only counts transactions of the correct account type', function () {
         'close' => 120,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
     $widget = livewire(SingleSecurityGainStatsOverview::class, [
         'record' => $security,
-        'accountType' => AccountType::Pea->value,
+        'walletId' => $peaWallet->id,
     ]);
 
     $data = $widget->instance()->getGainData();
@@ -108,6 +113,6 @@ it('only counts transactions of the correct account type', function () {
 it('renders edit page without errors when security has no transactions', function () {
     $security = Security::factory()->create();
 
-    livewire(EditPeaSecurity::class, ['record' => $security->id])
+    livewire(EditWalletSecurity::class, ['record' => $security->id])
         ->assertOk();
 });

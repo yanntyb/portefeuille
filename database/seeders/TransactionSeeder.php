@@ -7,6 +7,7 @@ use App\Models\SecurityPrice;
 use App\Models\SecuritySector;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\Wallet;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 
@@ -141,13 +142,18 @@ class TransactionSeeder extends Seeder
             $this->seedSectors($security, $etf['sectors']);
         }
 
-        $this->seedDcaTransactions($user, $securities, $startDate, $endDate, $monthlyBudget);
+        $peaWallet = Wallet::create([
+            'user_id' => $user->id,
+            'name' => 'PEA',
+        ]);
+
+        $this->seedDcaTransactions($user, $peaWallet, $securities, $startDate, $endDate, $monthlyBudget);
     }
 
     /**
      * @param  array<string, Security>  $securities
      */
-    private function seedDcaTransactions(User $user, array $securities, CarbonImmutable $startDate, CarbonImmutable $endDate, float $monthlyBudget): void
+    private function seedDcaTransactions(User $user, Wallet $peaWallet, array $securities, CarbonImmutable $startDate, CarbonImmutable $endDate, float $monthlyBudget): void
     {
         $budgetPerEtf = $monthlyBudget / count($securities);
         $date = $startDate;
@@ -186,8 +192,8 @@ class TransactionSeeder extends Seeder
 
                 $transactions[] = [
                     'user_id' => $user->id,
+                    'wallet_id' => $peaWallet->id,
                     'date' => $investDate->toDateString(),
-                    'account_type' => 'pea',
                     'security_id' => $security->id,
                     'broker' => null,
                     'quantity' => $quantity,

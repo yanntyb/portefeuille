@@ -1,6 +1,6 @@
 <?php
 
-use App\Filament\Resources\PeaSecurities\Pages\EditPeaSecurity;
+use App\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
 use App\Models\Security;
 use Illuminate\Support\Facades\Process;
 
@@ -26,7 +26,7 @@ it('can search ticker from ISIN on security edit page', function () {
         '0P00000FMT.F|CM-AM Dynamique International C' => '0P00000FMT.F — CM-AM Dynamique International C (Frankfurt)',
     ]);
 
-    livewire(EditPeaSecurity::class, ['record' => $security->id])
+    livewire(EditWalletSecurity::class, ['record' => $security->id])
         ->callAction(
             'updateFromIsin',
             data: [
@@ -61,7 +61,7 @@ it('can search ticker from ISIN FR0010359430 on security edit page', function ()
         'AEEM.PA|Amundi MSCI Emerging Markets' => 'AEEM.PA — Amundi MSCI Emerging Markets (Paris)',
     ]);
 
-    livewire(EditPeaSecurity::class, ['record' => $security->id])
+    livewire(EditWalletSecurity::class, ['record' => $security->id])
         ->callAction(
             'updateFromIsin',
             data: [
@@ -83,7 +83,7 @@ it('shows warning notification when ISIN is empty on security edit page', functi
         'ticker' => null,
     ]);
 
-    livewire(EditPeaSecurity::class, ['record' => $security->id])
+    livewire(EditWalletSecurity::class, ['record' => $security->id])
         ->fillForm(['isin' => ''])
         ->callAction('updateFromIsin')
         ->assertNotified('Veuillez renseigner un ISIN');
@@ -103,7 +103,7 @@ it('shows warning notification when no results found', function () {
         'ticker' => null,
     ]);
 
-    livewire(EditPeaSecurity::class, ['record' => $security->id])
+    livewire(EditWalletSecurity::class, ['record' => $security->id])
         ->callAction('updateFromIsin')
         ->assertNotified('Aucun résultat trouvé');
 });

@@ -17,6 +17,24 @@
         </div>
     @endif
 
-    {{ $this->content }}
+    <div
+        x-data
+        x-init="$nextTick(() => {
+            const store = $store['{{ $this->tableStoreName() }}'];
+            if (store) {
+                $wire.restoreFromTableStore(store);
+            }
+        })"
+    ></div>
+
+    <div class="-mt-4">
+        {{ $this->content }}
+    </div>
     {{ $this->table }}
+
+    @if ($this->hasMoreRecords())
+        <div class="flex justify-center">
+            {{ $this->loadMoreAction }}
+        </div>
+    @endif
 </x-filament-panels::page>

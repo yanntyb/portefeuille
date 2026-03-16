@@ -1,83 +1,96 @@
 <?php
 
-use App\Filament\Pages\CtoPage;
-use App\Filament\Pages\PeaPage;
-use App\Filament\Resources\PeaSecurities\Pages\EditPeaSecurity;
+use App\Filament\Pages\WalletPage;
+use App\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
 use App\Models\Security;
 use App\Models\Transaction;
+use App\Models\Wallet;
 
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Livewire\livewire;
 
-it('can render the PEA list page with only PEA securities', function () {
+it('can render the PEA wallet page with only PEA securities', function () {
+    $peaWallet = Wallet::factory()->pea()->create();
     $peaSecurity = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $peaSecurity->id]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $peaSecurity->id]);
 
+    $ctoWallet = Wallet::factory()->cto()->create();
     $ctoSecurity = Security::factory()->create();
-    Transaction::factory()->cto()->create(['security_id' => $ctoSecurity->id]);
+    Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'security_id' => $ctoSecurity->id]);
 
-    livewire(PeaPage::class)
+    livewire(WalletPage::class, ['walletId' => $peaWallet->id])
         ->assertOk()
+        ->loadTable()
         ->assertCanSeeTableRecords(collect([$peaSecurity]))
         ->assertCanNotSeeTableRecords(collect([$ctoSecurity]));
 });
 
-it('can render the CTO list page with only CTO securities', function () {
+it('can render the CTO wallet page with only CTO securities', function () {
+    $peaWallet = Wallet::factory()->pea()->create();
     $peaSecurity = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $peaSecurity->id]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $peaSecurity->id]);
 
+    $ctoWallet = Wallet::factory()->cto()->create();
     $ctoSecurity = Security::factory()->create();
-    Transaction::factory()->cto()->create(['security_id' => $ctoSecurity->id]);
+    Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'security_id' => $ctoSecurity->id]);
 
-    livewire(CtoPage::class)
+    livewire(WalletPage::class, ['walletId' => $ctoWallet->id])
         ->assertOk()
+        ->loadTable()
         ->assertCanSeeTableRecords(collect([$ctoSecurity]))
         ->assertCanNotSeeTableRecords(collect([$peaSecurity]));
 });
 
-it('displays aggregated columns for a PEA security', function () {
+it('displays aggregated columns for a wallet security', function () {
+    $peaWallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
 
-    Transaction::factory()->pea()->create([
+    Transaction::factory()->create([
+        'wallet_id' => $peaWallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 5.00,
     ]);
 
-    Transaction::factory()->pea()->create([
+    Transaction::factory()->create([
+        'wallet_id' => $peaWallet->id,
         'security_id' => $security->id,
         'quantity' => 20,
         'unit_price' => 150,
         'fees' => 8.00,
     ]);
 
-    livewire(PeaPage::class)
+    livewire(WalletPage::class, ['walletId' => $peaWallet->id])
+        ->loadTable()
         ->assertCanSeeTableRecords(collect([$security]))
         ->assertTableColumnExists('valuation')
         ->assertTableColumnExists('performance');
 });
 
-it('does not have a create action in the PEA list page', function () {
+it('does not have a create action in the wallet list page', function () {
+    $peaWallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $security->id]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $security->id]);
 
-    livewire(PeaPage::class)
+    livewire(WalletPage::class, ['walletId' => $peaWallet->id])
         ->assertTableActionDoesNotExist('create');
 });
 
-it('can render the PEA edit page', function () {
+it('can render the wallet security edit page', function () {
+    $peaWallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
 
-    livewire(EditPeaSecurity::class, ['record' => $security->id])
+    livewire(EditWalletSecurity::class, ['record' => $security->id, 'walletId' => $peaWallet->id])
         ->assertOk()
         ->assertActionExists('editSecurity');
 });
 
-it('can update a security from PEA', function () {
+it('can update a security from wallet', function () {
+    $peaWallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
 
-    livewire(EditPeaSecurity::class, ['record' => $security->id])
+    livewire(EditWalletSecurity::class, ['record' => $security->id, 'walletId' => $peaWallet->id])
         ->callAction('editSecurity', [
             'isin' => 'US1667641005',
             'name' => 'Chevron Corporation',
@@ -92,14 +105,16 @@ it('can update a security from PEA', function () {
     ]);
 });
 
-it('can search PEA securities by name', function () {
+it('can search wallet securities by name', function () {
+    $peaWallet = Wallet::factory()->pea()->create();
     $target = Security::factory()->create(['name' => 'Amundi MSCI World']);
-    Transaction::factory()->pea()->create(['security_id' => $target->id]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $target->id]);
 
     $other = Security::factory()->create(['name' => 'Chevron Corporation']);
-    Transaction::factory()->pea()->create(['security_id' => $other->id]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $other->id]);
 
-    livewire(PeaPage::class)
+    livewire(WalletPage::class, ['walletId' => $peaWallet->id])
+        ->loadTable()
         ->searchTable('Amundi')
         ->assertCanSeeTableRecords(collect([$target]))
         ->assertCanNotSeeTableRecords(collect([$other]));

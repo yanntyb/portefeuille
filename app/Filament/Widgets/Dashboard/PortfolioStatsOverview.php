@@ -2,7 +2,7 @@
 
 namespace App\Filament\Widgets\Dashboard;
 
-use App\Enums\AccountType;
+use App\Models\Wallet;
 use App\Services\DashboardDataProvider;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -22,14 +22,16 @@ class PortfolioStatsOverview extends StatsOverviewWidget
     protected function getStats(): array
     {
         $provider = app(DashboardDataProvider::class);
-        $accountTypes = [AccountType::Pea, AccountType::Cto];
+        $wallets = Wallet::withoutGlobalScope('user')
+            ->where('user_id', auth()->id())
+            ->get();
 
         $totalValuation = 0;
         $totalInvested = 0;
         $totalFees = 0;
 
-        foreach ($accountTypes as $accountType) {
-            $securities = $provider->securitiesForAccount($accountType);
+        foreach ($wallets as $wallet) {
+            $securities = $provider->securitiesForWallet($wallet);
 
             $totalValuation += $securities->sum(function ($security) {
                 $close = $security->latestPrice?->close;

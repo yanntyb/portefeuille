@@ -6,7 +6,6 @@ use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Models\User;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\Testing\TestAction;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseHas;
@@ -20,6 +19,7 @@ it('allows an admin to access the user list page', function () {
 
     livewire(ListUsers::class)
         ->assertOk()
+        ->loadTable()
         ->assertCanSeeTableRecords($users);
 });
 

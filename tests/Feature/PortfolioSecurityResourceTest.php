@@ -4,8 +4,14 @@ use App\Filament\Resources\PortfolioSecurities\Pages\ListPortfolioSecurities;
 use App\Models\Security;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\Wallet;
 
+use function Pest\Laravel\actingAs;
 use function Pest\Livewire\livewire;
+
+beforeEach(function () {
+    actingAs(User::factory()->admin()->create());
+});
 
 it('can render the portfolio list page with securities from all account types', function () {
     $peaSecurity = Security::factory()->create();
@@ -16,6 +22,7 @@ it('can render the portfolio list page with securities from all account types', 
 
     livewire(ListPortfolioSecurities::class)
         ->assertOk()
+        ->loadTable()
         ->assertCanSeeTableRecords(collect([$peaSecurity, $ctoSecurity]));
 });
 
@@ -27,6 +34,7 @@ it('does not show securities without transactions', function () {
 
     livewire(ListPortfolioSecurities::class)
         ->assertOk()
+        ->loadTable()
         ->assertCanSeeTableRecords(collect([$securityWithTx]))
         ->assertCanNotSeeTableRecords(collect([$securityWithoutTx]));
 });
@@ -35,14 +43,18 @@ it('does not show securities from other users', function () {
     $mySecurity = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $mySecurity->id]);
 
+    $otherUser = User::factory()->create();
+    $otherWallet = Wallet::factory()->pea()->create(['user_id' => $otherUser->id]);
     $otherSecurity = Security::factory()->create();
-    Transaction::factory()->pea()->create([
+    Transaction::factory()->create([
         'security_id' => $otherSecurity->id,
-        'user_id' => User::factory()->create()->id,
+        'user_id' => $otherUser->id,
+        'wallet_id' => $otherWallet->id,
     ]);
 
     livewire(ListPortfolioSecurities::class)
         ->assertOk()
+        ->loadTable()
         ->assertCanSeeTableRecords(collect([$mySecurity]))
         ->assertCanNotSeeTableRecords(collect([$otherSecurity]));
 });

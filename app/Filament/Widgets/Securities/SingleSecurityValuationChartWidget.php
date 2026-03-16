@@ -26,7 +26,7 @@ class SingleSecurityValuationChartWidget extends ChartWidget
 
     public ?Model $record = null;
 
-    public ?string $accountType = null;
+    public ?int $walletId = null;
 
     protected function getData(): array
     {
@@ -40,8 +40,8 @@ class SingleSecurityValuationChartWidget extends ChartWidget
             ->whereIn('security_id', $securityIds)
             ->orderBy('date');
 
-        if ($this->accountType) {
-            $transactionsQuery->where('account_type', $this->accountType);
+        if ($this->walletId) {
+            $transactionsQuery->where('wallet_id', $this->walletId);
         }
 
         $transactions = $transactionsQuery->get();

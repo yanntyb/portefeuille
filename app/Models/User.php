@@ -53,6 +53,10 @@ class User extends Authenticatable implements FilamentUser
 
     public function isAdmin(): bool
     {
+        if (app()->isLocal() && session('debug.simulate_user', false)) {
+            return false;
+        }
+
         return $this->role === Role::Admin;
     }
 
@@ -69,6 +73,16 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         return true;
+    }
+
+    public function wallets(): HasMany
+    {
+        return $this->hasMany(Wallet::class);
+    }
+
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(Invitation::class, 'created_by');
     }
 
     public function transactions(): HasMany

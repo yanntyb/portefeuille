@@ -2,24 +2,24 @@
 
 namespace App\Services;
 
-use App\Enums\AccountType;
 use App\Models\Security;
+use App\Models\Wallet;
 use Illuminate\Database\Eloquent\Collection;
 
 class DashboardDataProvider
 {
     /** @var array<string, Collection<int, Security>> */
-    private array $securitiesByAccount = [];
+    private array $securitiesByWallet = [];
 
     /**
      * @return Collection<int, Security>
      */
-    public function securitiesForAccount(AccountType $accountType): Collection
+    public function securitiesForWallet(Wallet $wallet): Collection
     {
-        $key = $accountType->value;
+        $key = (string) $wallet->id;
 
-        return $this->securitiesByAccount[$key] ??= Security::query()
-            ->forAccountType($accountType, auth()->id())
+        return $this->securitiesByWallet[$key] ??= Security::query()
+            ->forWallet($wallet)
             ->with('latestPrice')
             ->get();
     }
@@ -31,8 +31,12 @@ class DashboardDataProvider
     {
         $all = new Collection;
 
-        foreach ([AccountType::Pea, AccountType::Cto] as $accountType) {
-            $all = $all->merge($this->securitiesForAccount($accountType));
+        $wallets = Wallet::withoutGlobalScope('user')
+            ->where('user_id', auth()->id())
+            ->get();
+
+        foreach ($wallets as $wallet) {
+            $all = $all->merge($this->securitiesForWallet($wallet));
         }
 
         return $all;

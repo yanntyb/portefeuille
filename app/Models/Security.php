@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\AccountType;
 use App\Support\MarketCalendar;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -76,7 +75,7 @@ class Security extends Model
     }
 
     /** @param Builder<self> $query */
-    public function scopeForAccountType(Builder $query, AccountType $accountType, int $userId): void
+    public function scopeForWallet(Builder $query, Wallet $wallet): void
     {
         $query
             ->select([
@@ -91,8 +90,7 @@ class Security extends Model
                 DB::raw('SUM(COALESCE(transactions.realized_gain, 0)) as total_realized_gain'),
             ])
             ->join('transactions', 'transactions.security_id', '=', 'securities.id')
-            ->where('transactions.account_type', $accountType->value)
-            ->where('transactions.user_id', $userId)
+            ->where('transactions.wallet_id', $wallet->id)
             ->groupBy('securities.id', 'securities.isin', 'securities.name', 'securities.ticker');
     }
 }

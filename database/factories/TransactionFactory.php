@@ -2,11 +2,11 @@
 
 namespace Database\Factories;
 
-use App\Enums\AccountType;
 use App\Enums\TransactionType;
 use App\Models\Security;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\Wallet;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -19,8 +19,8 @@ class TransactionFactory extends Factory
     {
         return [
             'user_id' => auth()->id() ?? User::factory(),
+            'wallet_id' => Wallet::factory(),
             'date' => fake()->dateTimeBetween('-2 years', 'now'),
-            'account_type' => fake()->randomElement(AccountType::cases()),
             'security_id' => Security::factory(),
             'quantity' => fake()->randomFloat(4, 1, 100),
             'unit_price' => fake()->randomFloat(4, 5, 500),
@@ -33,7 +33,9 @@ class TransactionFactory extends Factory
     public function pea(): static
     {
         return $this->state(fn (): array => [
-            'account_type' => AccountType::Pea,
+            'wallet_id' => auth()->check()
+                ? Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA'])->id
+                : Wallet::factory()->pea(),
             'broker' => null,
         ]);
     }
@@ -41,7 +43,9 @@ class TransactionFactory extends Factory
     public function cto(): static
     {
         return $this->state(fn (): array => [
-            'account_type' => AccountType::Cto,
+            'wallet_id' => auth()->check()
+                ? Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'CTO'])->id
+                : Wallet::factory()->cto(),
             'broker' => fake()->randomElement(['Degiro', 'Trade Republic', 'Interactive Brokers', 'Boursorama']),
         ]);
     }
@@ -56,7 +60,9 @@ class TransactionFactory extends Factory
     public function livret(): static
     {
         return $this->state(fn (): array => [
-            'account_type' => AccountType::Livret,
+            'wallet_id' => auth()->check()
+                ? Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'Livret'])->id
+                : Wallet::factory()->livret(),
             'security_id' => null,
             'broker' => null,
             'quantity' => null,

@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Enums\AccountType;
 use App\Models\AllocationProfile;
 use App\Models\User;
+use App\Models\Wallet;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +17,9 @@ class AllocationProfileFactory extends Factory
     {
         return [
             'name' => fake()->words(2, true),
-            'account_type' => fake()->optional(0.5)->randomElement(AccountType::cases()),
+            'wallet_id' => fake()->optional(0.5)->randomElement(
+                Wallet::query()->pluck('id')->all()
+            ),
             'user_id' => auth()->id() ?? User::factory(),
         ];
     }
@@ -25,21 +27,21 @@ class AllocationProfileFactory extends Factory
     public function pea(): static
     {
         return $this->state(fn (): array => [
-            'account_type' => AccountType::Pea,
+            'wallet_id' => Wallet::factory()->pea(),
         ]);
     }
 
     public function cto(): static
     {
         return $this->state(fn (): array => [
-            'account_type' => AccountType::Cto,
+            'wallet_id' => Wallet::factory()->cto(),
         ]);
     }
 
     public function global(): static
     {
         return $this->state(fn (): array => [
-            'account_type' => null,
+            'wallet_id' => null,
         ]);
     }
 }

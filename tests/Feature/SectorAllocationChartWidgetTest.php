@@ -1,21 +1,22 @@
 <?php
 
 use App\Enums\Sector;
-use App\Filament\Pages\CtoPage;
-use App\Filament\Pages\PeaPage;
+use App\Filament\Pages\WalletPage;
 use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\SecuritySector;
 use App\Models\Transaction;
+use App\Models\Wallet;
 
 use function Pest\Livewire\livewire;
 
 it('can render on the PEA list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
 
-    livewire(PeaPage::class)
+    livewire(WalletPage::class, ['walletId' => $peaWallet->id])
         ->assertOk()
         ->assertSeeLivewire(SectorAllocationChartWidget::class);
 });
@@ -23,8 +24,9 @@ it('can render on the PEA list page', function () {
 it('can render on the CTO list page', function () {
     $security = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
+    $ctoWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'CTO']);
 
-    livewire(CtoPage::class)
+    livewire(WalletPage::class, ['walletId' => $ctoWallet->id])
         ->assertOk()
         ->assertSeeLivewire(SectorAllocationChartWidget::class);
 });
@@ -77,8 +79,11 @@ it('aggregates sector data weighted by valuation for account list', function () 
         'weight' => 0.8,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
     $widget = livewire(SectorAllocationChartWidget::class, [
-        'tablePageClass' => PeaPage::class,
+        'tablePageClass' => WalletPage::class,
+        'walletId' => $peaWallet->id,
     ]);
 
     $widget->assertOk();
@@ -138,8 +143,11 @@ it('shows sector weights as percentages for a single security', function () {
 });
 
 it('returns empty data when no sectors exist', function () {
+    $peaWallet = Wallet::factory()->pea()->create();
+
     $widget = livewire(SectorAllocationChartWidget::class, [
-        'tablePageClass' => PeaPage::class,
+        'tablePageClass' => WalletPage::class,
+        'walletId' => $peaWallet->id,
     ]);
 
     $widget->assertOk();

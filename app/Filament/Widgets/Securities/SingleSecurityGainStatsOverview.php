@@ -19,7 +19,7 @@ class SingleSecurityGainStatsOverview extends Widget
 
     public ?Model $record = null;
 
-    public ?string $accountType = null;
+    public ?int $walletId = null;
 
     /**
      * @return array{

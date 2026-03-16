@@ -45,14 +45,14 @@ class PortfolioPerformanceCalculator
     /**
      * @return array<string, float|null> Keyed by PerformancePeriod value
      */
-    public function computeReturnsForSecurity(Security $security, ?string $accountType = null): array
+    public function computeReturnsForSecurity(Security $security, ?int $walletId = null): array
     {
         $transactionsQuery = Transaction::query()
             ->where('security_id', $security->id)
             ->orderBy('date');
 
-        if ($accountType) {
-            $transactionsQuery->where('account_type', $accountType);
+        if ($walletId) {
+            $transactionsQuery->where('wallet_id', $walletId);
         }
 
         $transactions = $transactionsQuery->get();

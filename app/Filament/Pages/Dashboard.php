@@ -2,13 +2,13 @@
 
 namespace App\Filament\Pages;
 
-use App\Enums\AccountType;
 use App\Filament\Widgets\Dashboard\DashboardGainStatsOverview;
 use App\Filament\Widgets\Dashboard\DashboardPerformanceStatsOverview;
 use App\Filament\Widgets\Dashboard\DashboardSectorAllocationChartWidget;
 use App\Filament\Widgets\Dashboard\DashboardSecuritiesTableWidget;
 use App\Filament\Widgets\Dashboard\PortfolioAllocationChartWidget;
 use App\Models\Security;
+use App\Models\Wallet;
 use App\Services\DashboardDataProvider;
 use App\Services\YahooFinanceService;
 use Filament\Pages\Dashboard as BaseDashboard;
@@ -31,13 +31,15 @@ class Dashboard extends BaseDashboard
     public function getValuationData(): array
     {
         $provider = app(DashboardDataProvider::class);
-        $accountTypes = [AccountType::Pea, AccountType::Cto];
+        $wallets = Wallet::withoutGlobalScope('user')
+            ->where('user_id', auth()->id())
+            ->get();
 
         $totalValuation = 0;
         $totalInvested = 0;
 
-        foreach ($accountTypes as $accountType) {
-            $securities = $provider->securitiesForAccount($accountType);
+        foreach ($wallets as $wallet) {
+            $securities = $provider->securitiesForWallet($wallet);
 
             $totalValuation += $securities->sum(function ($security) {
                 $close = $security->latestPrice?->close;

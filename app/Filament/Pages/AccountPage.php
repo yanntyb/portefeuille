@@ -5,9 +5,8 @@ namespace App\Filament\Pages;
 use App\Concerns\HasTableStore;
 use App\Contracts\TableStoreable;
 use App\Data\AccountPageData;
-use App\Enums\AccountType;
-use App\Filament\Resources\Securities\AccountSecurityResource;
 use App\Filament\Resources\Securities\Tables\SecuritiesTable;
+use App\Filament\Resources\WalletSecurities\WalletSecurityResource;
 use App\Filament\Widgets\Securities\AllocationChartWidget;
 use App\Filament\Widgets\Securities\GainStatsOverview;
 use App\Filament\Widgets\Securities\PerformanceStatsOverview;
@@ -16,6 +15,7 @@ use App\Filament\Widgets\Securities\ValuationChartWidget;
 use App\Jobs\UpdateSecuritiesJob;
 use App\Models\Security;
 use App\Models\SecurityPrice;
+use App\Models\Wallet;
 use App\Services\YahooFinanceService;
 use App\Support\MarketCalendar;
 use Filament\Actions\Action;
@@ -59,19 +59,24 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
 
     public int $tableRecordLimit = 10;
 
-    abstract public static function accountType(): AccountType;
-
-    /** @return class-string<AccountSecurityResource> */
-    abstract public static function securityResourceClass(): string;
+    public ?Wallet $wallet = null;
 
     public function scopedSecuritiesQuery(): Builder
     {
-        return Security::query()->forAccountType(static::accountType(), auth()->id());
+        if ($this->wallet === null) {
+            return Security::query()->forAuth()->whereRaw('0 = 1');
+        }
+
+        return Security::query()->forWallet($this->wallet);
     }
 
     public function mount(): void
     {
-        $cacheKey = UpdateSecuritiesJob::cacheKeyFor(static::accountType()->value);
+        if ($this->wallet === null) {
+            return;
+        }
+
+        $cacheKey = UpdateSecuritiesJob::cacheKeyFor((string) $this->wallet->id);
         $this->isUpdating = Cache::has($cacheKey);
 
         $this->computeSecurityVisibility();
@@ -109,7 +114,11 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
 
     public function dehydrate(): void
     {
-        $cacheKey = UpdateSecuritiesJob::cacheKeyFor(static::accountType()->value);
+        if ($this->wallet === null) {
+            return;
+        }
+
+        $cacheKey = UpdateSecuritiesJob::cacheKeyFor((string) $this->wallet->id);
         $wasUpdating = $this->isUpdating;
         $this->isUpdating = Cache::has($cacheKey);
 
@@ -179,7 +188,7 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
         return new HtmlString(static::getNavigationLabel().' '.$this->getFormattedValuation());
     }
 
-    private function getFormattedValuation(): string
+    protected function getFormattedValuation(): string
     {
         $query = $this->scopedSecuritiesQuery();
 
@@ -225,9 +234,14 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
     {
         return SecuritiesTable::configure(
             $table
-                ->query(fn (): Builder => Security::query()->forAccountType(static::accountType(), auth()->id())->limit($this->tableRecordLimit))
+                ->query(fn (): Builder => $this->wallet
+                    ? Security::query()->forWallet($this->wallet)->limit($this->tableRecordLimit)
+                    : Security::query()->forAuth()->whereRaw('0 = 1'))
                 ->paginated(false)
-                ->recordUrl(fn (Security $record): string => static::securityResourceClass()::getUrl('edit', ['record' => $record]))
+                ->recordUrl(fn (Security $record): string => WalletSecurityResource::getUrl('edit', [
+                    'record' => $record,
+                    'walletId' => $this->wallet?->id,
+                ]))
         );
     }
 
@@ -238,14 +252,17 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
                 Livewire::make(PerformanceStatsOverview::class, [
                     'tablePageClass' => static::class,
                     'shownSecurityIds' => $this->shownSecurityIds,
+                    'walletId' => $this->wallet?->id,
                 ])->key('performance-stats-overview'),
                 Livewire::make(GainStatsOverview::class, [
                     'tablePageClass' => static::class,
                     'shownSecurityIds' => $this->shownSecurityIds,
+                    'walletId' => $this->wallet?->id,
                 ])->key('gain-stats-overview'),
                 Livewire::make(ValuationChartWidget::class, [
                     'tablePageClass' => static::class,
                     'shownSecurityIds' => $this->shownSecurityIds,
+                    'walletId' => $this->wallet?->id,
                 ])->key('valuation-chart'),
                 Section::make('Diversification')
                     ->collapsible()
@@ -257,10 +274,12 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
                         Livewire::make(AllocationChartWidget::class, [
                             'tablePageClass' => static::class,
                             'shownSecurityIds' => $this->shownSecurityIds,
+                            'walletId' => $this->wallet?->id,
                         ])->key('allocation-chart'),
                         Livewire::make(SectorAllocationChartWidget::class, [
                             'tablePageClass' => static::class,
                             'shownSecurityIds' => $this->shownSecurityIds,
+                            'walletId' => $this->wallet?->id,
                         ])->key('sector-allocation-chart'),
                     ]),
             ]);

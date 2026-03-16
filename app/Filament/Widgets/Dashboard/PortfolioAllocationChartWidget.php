@@ -2,7 +2,7 @@
 
 namespace App\Filament\Widgets\Dashboard;
 
-use App\Enums\AccountType;
+use App\Models\Wallet;
 use App\Services\DashboardDataProvider;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
@@ -30,6 +30,8 @@ class PortfolioAllocationChartWidget extends ChartWidget
     private const COLORS = [
         'rgb(16, 185, 129)',
         'rgb(245, 158, 11)',
+        'rgb(59, 130, 246)',
+        'rgb(168, 85, 247)',
     ];
 
     #[On('security-visibility-changed')]
@@ -48,14 +50,17 @@ class PortfolioAllocationChartWidget extends ChartWidget
     protected function getData(): array
     {
         $provider = app(DashboardDataProvider::class);
-        $accountTypes = [AccountType::Pea, AccountType::Cto];
+        $wallets = Wallet::withoutGlobalScope('user')
+            ->where('user_id', auth()->id())
+            ->orderBy('id')
+            ->get();
 
         $labels = [];
         $data = [];
         $colors = [];
 
-        foreach ($accountTypes as $index => $accountType) {
-            $securities = $provider->securitiesForAccount($accountType);
+        foreach ($wallets as $index => $wallet) {
+            $securities = $provider->securitiesForWallet($wallet);
 
             if ($this->shownSecurityIds !== null) {
                 $securities = $securities->whereIn('id', $this->shownSecurityIds);
@@ -71,9 +76,9 @@ class PortfolioAllocationChartWidget extends ChartWidget
                 return (float) $security->total_quantity * (float) $close;
             });
 
-            $labels[] = $accountType->getLabel();
+            $labels[] = $wallet->name;
             $data[] = round($valuation, 2);
-            $colors[] = self::COLORS[$index];
+            $colors[] = self::COLORS[$index % count(self::COLORS)];
         }
 
         return [

@@ -1,26 +1,29 @@
 <?php
 
-use App\Enums\AccountType;
 use App\Enums\TransactionType;
 use App\Filament\Resources\Transactions\Pages\CreateTransaction;
 use App\Filament\Resources\Transactions\Pages\EditTransaction;
 use App\Models\Security;
 use App\Models\Transaction;
+use App\Models\Wallet;
 
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Livewire\livewire;
 
 it('computes PRU correctly with only buy transactions', function () {
+    $wallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
 
-    Transaction::factory()->pea()->create([
+    Transaction::factory()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
     ]);
 
-    Transaction::factory()->pea()->create([
+    Transaction::factory()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 200,
@@ -40,16 +43,19 @@ it('computes PRU correctly with only buy transactions', function () {
 });
 
 it('computes realized gain on sell transaction', function () {
+    $wallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
 
-    Transaction::factory()->pea()->create([
+    Transaction::factory()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
     ]);
 
-    $sell = Transaction::factory()->pea()->sell()->create([
+    $sell = Transaction::factory()->sell()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 5,
         'unit_price' => 150,
@@ -61,16 +67,19 @@ it('computes realized gain on sell transaction', function () {
 });
 
 it('computes negative realized gain on sell at loss', function () {
+    $wallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
 
-    Transaction::factory()->pea()->create([
+    Transaction::factory()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
     ]);
 
-    $sell = Transaction::factory()->pea()->sell()->create([
+    $sell = Transaction::factory()->sell()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 5,
         'unit_price' => 80,
@@ -82,9 +91,11 @@ it('computes negative realized gain on sell at loss', function () {
 });
 
 it('can create a sell transaction via Filament', function () {
+    $wallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
 
-    Transaction::factory()->pea()->create([
+    Transaction::factory()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
@@ -93,7 +104,7 @@ it('can create a sell transaction via Filament', function () {
 
     livewire(CreateTransaction::class)
         ->fillForm([
-            'account_type' => AccountType::Pea->value,
+            'wallet_id' => $wallet->id,
             'type' => TransactionType::Sell->value,
             'date' => '2026-03-07',
             'security_id' => $security->id,
@@ -106,7 +117,7 @@ it('can create a sell transaction via Filament', function () {
         ->assertRedirect();
 
     assertDatabaseHas(Transaction::class, [
-        'account_type' => 'pea',
+        'wallet_id' => $wallet->id,
         'type' => 'sell',
         'security_id' => $security->id,
         'quantity' => 5,
@@ -122,9 +133,11 @@ it('can create a sell transaction via Filament', function () {
 });
 
 it('does not set realized_gain for buy transactions', function () {
+    $wallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
 
-    $buy = Transaction::factory()->pea()->create([
+    $buy = Transaction::factory()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
@@ -134,24 +147,29 @@ it('does not set realized_gain for buy transactions', function () {
     expect($buy->realized_gain)->toBeNull();
 });
 
-it('computes PRU from correct account type only', function () {
+it('computes PRU from correct wallet only', function () {
+    $peaWallet = Wallet::factory()->pea()->create();
+    $ctoWallet = Wallet::factory()->cto()->create();
     $security = Security::factory()->create();
 
-    Transaction::factory()->pea()->create([
+    Transaction::factory()->create([
+        'wallet_id' => $peaWallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
     ]);
 
-    Transaction::factory()->cto()->create([
+    Transaction::factory()->create([
+        'wallet_id' => $ctoWallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 200,
         'fees' => 0,
     ]);
 
-    $sell = Transaction::factory()->pea()->sell()->create([
+    $sell = Transaction::factory()->sell()->create([
+        'wallet_id' => $peaWallet->id,
         'security_id' => $security->id,
         'quantity' => 5,
         'unit_price' => 150,
@@ -163,16 +181,19 @@ it('computes PRU from correct account type only', function () {
 });
 
 it('recalculates realized gain when updating a sell transaction', function () {
+    $wallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
 
-    Transaction::factory()->pea()->create([
+    Transaction::factory()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
     ]);
 
-    $sell = Transaction::factory()->pea()->sell()->create([
+    $sell = Transaction::factory()->sell()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 5,
         'unit_price' => 150,
@@ -189,16 +210,19 @@ it('recalculates realized gain when updating a sell transaction', function () {
 });
 
 it('clears realized gain when changing type from sell to buy', function () {
+    $wallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
 
-    Transaction::factory()->pea()->create([
+    Transaction::factory()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
     ]);
 
-    $sell = Transaction::factory()->pea()->sell()->create([
+    $sell = Transaction::factory()->sell()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 5,
         'unit_price' => 150,
@@ -213,16 +237,19 @@ it('clears realized gain when changing type from sell to buy', function () {
 });
 
 it('can update a sell transaction via Filament', function () {
+    $wallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
 
-    Transaction::factory()->pea()->create([
+    Transaction::factory()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
     ]);
 
-    $sell = Transaction::factory()->pea()->sell()->create([
+    $sell = Transaction::factory()->sell()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 5,
         'unit_price' => 150,
@@ -241,16 +268,19 @@ it('can update a sell transaction via Filament', function () {
 });
 
 it('computes realized gain on CTO sell transaction', function () {
+    $wallet = Wallet::factory()->cto()->create();
     $security = Security::factory()->create();
 
-    Transaction::factory()->cto()->create([
+    Transaction::factory()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 20,
         'unit_price' => 50,
         'fees' => 3,
     ]);
 
-    $sell = Transaction::factory()->cto()->sell()->create([
+    $sell = Transaction::factory()->sell()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 70,
@@ -262,9 +292,11 @@ it('computes realized gain on CTO sell transaction', function () {
 });
 
 it('can create a CTO sell transaction via Filament', function () {
+    $wallet = Wallet::factory()->cto()->create();
     $security = Security::factory()->create();
 
-    Transaction::factory()->cto()->create([
+    Transaction::factory()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 15,
         'unit_price' => 80,
@@ -273,7 +305,7 @@ it('can create a CTO sell transaction via Filament', function () {
 
     livewire(CreateTransaction::class)
         ->fillForm([
-            'account_type' => AccountType::Cto->value,
+            'wallet_id' => $wallet->id,
             'type' => TransactionType::Sell->value,
             'date' => '2026-03-07',
             'security_id' => $security->id,
@@ -298,9 +330,11 @@ it('can create a CTO sell transaction via Filament', function () {
 });
 
 it('cannot sell more than owned quantity via Filament', function () {
+    $wallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
 
-    Transaction::factory()->pea()->create([
+    Transaction::factory()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
@@ -309,7 +343,7 @@ it('cannot sell more than owned quantity via Filament', function () {
 
     livewire(CreateTransaction::class)
         ->fillForm([
-            'account_type' => AccountType::Pea->value,
+            'wallet_id' => $wallet->id,
             'type' => TransactionType::Sell->value,
             'date' => '2026-03-07',
             'security_id' => $security->id,
@@ -322,9 +356,11 @@ it('cannot sell more than owned quantity via Filament', function () {
 });
 
 it('can sell exact owned quantity via Filament', function () {
+    $wallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
 
-    Transaction::factory()->pea()->create([
+    Transaction::factory()->create([
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
@@ -333,7 +369,7 @@ it('can sell exact owned quantity via Filament', function () {
 
     livewire(CreateTransaction::class)
         ->fillForm([
-            'account_type' => AccountType::Pea->value,
+            'wallet_id' => $wallet->id,
             'type' => TransactionType::Sell->value,
             'date' => '2026-03-07',
             'security_id' => $security->id,
@@ -346,17 +382,21 @@ it('can sell exact owned quantity via Filament', function () {
         ->assertRedirect();
 });
 
-it('validates sell quantity against correct account type', function () {
+it('validates sell quantity against correct wallet', function () {
+    $peaWallet = Wallet::factory()->pea()->create();
+    $ctoWallet = Wallet::factory()->cto()->create();
     $security = Security::factory()->create();
 
-    Transaction::factory()->pea()->create([
+    Transaction::factory()->create([
+        'wallet_id' => $peaWallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
     ]);
 
-    Transaction::factory()->cto()->create([
+    Transaction::factory()->create([
+        'wallet_id' => $ctoWallet->id,
         'security_id' => $security->id,
         'quantity' => 5,
         'unit_price' => 100,
@@ -366,7 +406,7 @@ it('validates sell quantity against correct account type', function () {
     // Selling 8 on CTO should fail (only 5 owned on CTO)
     livewire(CreateTransaction::class)
         ->fillForm([
-            'account_type' => AccountType::Cto->value,
+            'wallet_id' => $ctoWallet->id,
             'type' => TransactionType::Sell->value,
             'date' => '2026-03-07',
             'security_id' => $security->id,
@@ -380,11 +420,12 @@ it('validates sell quantity against correct account type', function () {
 });
 
 it('allows buy quantity exceeding owned quantity', function () {
+    $wallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
 
     livewire(CreateTransaction::class)
         ->fillForm([
-            'account_type' => AccountType::Pea->value,
+            'wallet_id' => $wallet->id,
             'type' => TransactionType::Buy->value,
             'date' => '2026-03-07',
             'security_id' => $security->id,

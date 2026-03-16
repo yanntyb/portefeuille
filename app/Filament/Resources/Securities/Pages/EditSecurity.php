@@ -2,13 +2,11 @@
 
 namespace App\Filament\Resources\Securities\Pages;
 
-use App\Filament\Resources\Securities\AccountSecurityResource;
 use App\Filament\Resources\Securities\Schemas\SecurityForm;
 use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
 use App\Filament\Widgets\Securities\SingleSecurityGainStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityPerformanceStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityPriceChartWidget;
-use App\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
 use App\Jobs\UpdateSecurityJob;
 use App\Models\Security;
 use Filament\Actions\Action;
@@ -40,7 +38,7 @@ abstract class EditSecurity extends EditRecord
         return $this->getTitle();
     }
 
-    private function getFormattedValuation(): string
+    protected function getFormattedValuation(): string
     {
         $record = $this->record;
         $record->loadMissing('latestPrice');
@@ -51,29 +49,14 @@ abstract class EditSecurity extends EditRecord
             return '';
         }
 
-        $resource = static::getResource();
-        $isAccountResource = is_subclass_of($resource, AccountSecurityResource::class);
+        $security = Security::query()
+            ->forAuth()
+            ->where('securities.id', $record->id)
+            ->with('latestPrice')
+            ->first();
 
-        if ($isAccountResource) {
-            $accountType = $resource::accountType();
-            $security = Security::query()
-                ->forAccountType($accountType, auth()->id())
-                ->where('securities.id', $record->id)
-                ->with('latestPrice')
-                ->first();
-
-            $totalQuantity = $security?->total_quantity;
-            $totalInvested = $security?->total_invested;
-        } else {
-            $security = Security::query()
-                ->forAuth()
-                ->where('securities.id', $record->id)
-                ->with('latestPrice')
-                ->first();
-
-            $totalQuantity = $security?->total_quantity;
-            $totalInvested = $security?->total_invested;
-        }
+        $totalQuantity = $security?->total_quantity;
+        $totalInvested = $security?->total_invested;
 
         if ($totalQuantity === null) {
             return '';
@@ -102,22 +85,6 @@ abstract class EditSecurity extends EditRecord
             $this->record->refresh();
             $this->fillForm();
         }
-    }
-
-    public function getBreadcrumbs(): array
-    {
-        $resource = static::getResource();
-
-        if (! is_subclass_of($resource, AccountSecurityResource::class)) {
-            return parent::getBreadcrumbs();
-        }
-
-        $listPage = $resource::listPage();
-
-        return [
-            $listPage::getUrl() => $resource::getNavigationLabel(),
-            $this->record->name,
-        ];
     }
 
     protected function getHeaderActions(): array
@@ -163,48 +130,34 @@ abstract class EditSecurity extends EditRecord
 
     public function content(Schema $schema): Schema
     {
-        $resource = static::getResource();
-        $isAccountResource = is_subclass_of($resource, AccountSecurityResource::class);
-        $accountType = $isAccountResource ? $resource::accountType()->value : null;
-
         $record = $this->record;
 
         $components = [
             Livewire::make(SingleSecurityPerformanceStatsOverview::class, [
                 'record' => $record,
-                'accountType' => $accountType,
+                'walletId' => null,
             ])->key('single-security-performance-stats'),
             Livewire::make(SingleSecurityGainStatsOverview::class, [
                 'record' => $record,
-                'accountType' => $accountType,
+                'walletId' => null,
             ])->key('single-security-gain-stats'),
-        ];
-
-        if ($isAccountResource) {
-            $components[] = Livewire::make(SingleSecurityValuationChartWidget::class, [
+            Livewire::make(SingleSecurityPriceChartWidget::class, [
                 'record' => $record,
-                'accountType' => $accountType,
-            ])->key('single-security-valuation-chart');
-        }
-
-        $components[] = Livewire::make(SingleSecurityPriceChartWidget::class, [
-            'record' => $record,
-        ])->key('single-security-price-chart');
-
-        $components[] = Livewire::make(SectorAllocationChartWidget::class, [
-            'record' => $record,
-            'bareView' => true,
-        ])->key('single-security-sector-allocation');
-
-        $components[] = Section::make('Transactions')
-            ->collapsible()
-            ->collapsed()
-            ->persistCollapsed()
-            ->id('transactions')
-            ->extraAttributes(['class' => 'fi-section-no-content-padding'])
-            ->schema([
-                $this->getRelationManagersContentComponent(),
-            ]);
+            ])->key('single-security-price-chart'),
+            Livewire::make(SectorAllocationChartWidget::class, [
+                'record' => $record,
+                'bareView' => true,
+            ])->key('single-security-sector-allocation'),
+            Section::make('Transactions')
+                ->collapsible()
+                ->collapsed()
+                ->persistCollapsed()
+                ->id('transactions')
+                ->extraAttributes(['class' => 'fi-section-no-content-padding'])
+                ->schema([
+                    $this->getRelationManagersContentComponent(),
+                ]),
+        ];
 
         return $schema->components($components);
     }

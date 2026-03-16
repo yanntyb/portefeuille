@@ -4,6 +4,7 @@ use App\Filament\Widgets\Dashboard\PortfolioAllocationChartWidget;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
+use App\Models\Wallet;
 
 use function Pest\Livewire\livewire;
 
@@ -35,21 +36,30 @@ it('returns labels matching account types and correct valuations', function () {
         'close' => 250,
     ]);
 
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $ctoWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'CTO']);
+
     $widget = livewire(PortfolioAllocationChartWidget::class);
     $widget->assertOk();
 
     $data = invade($widget->instance())->getData();
 
-    expect($data['labels'])->toBe(['PEA', 'CTO'])
-        ->and($data['datasets'][0]['data'][0])->toBe(1200.0)
-        ->and($data['datasets'][0]['data'][1])->toBe(1250.0);
+    $peaIndex = array_search('PEA', $data['labels']);
+    $ctoIndex = array_search('CTO', $data['labels']);
+
+    expect($data['labels'])->toContain('PEA', 'CTO')
+        ->and($data['datasets'][0]['data'][$peaIndex])->toBe(1200.0)
+        ->and($data['datasets'][0]['data'][$ctoIndex])->toBe(1250.0);
 });
 
 it('returns zero valuations when no data exists', function () {
+    Wallet::factory()->pea()->create();
+    Wallet::factory()->cto()->create();
+
     $data = invade(livewire(PortfolioAllocationChartWidget::class)->instance())->getData();
 
-    expect($data['labels'])->toBe(['PEA', 'CTO'])
-        ->and($data['datasets'][0]['data'])->toBe([0.0, 0.0]);
+    expect($data['labels'])->toContain('PEA', 'CTO')
+        ->and($data['datasets'][0]['data'])->each->toBe(0.0);
 });
 
 it('only includes accounts with securities that have prices', function () {
@@ -62,9 +72,9 @@ it('only includes accounts with securities that have prices', function () {
     ]);
 
     // No price created for this security
+    Wallet::factory()->cto()->create();
 
     $data = invade(livewire(PortfolioAllocationChartWidget::class)->instance())->getData();
 
-    expect($data['datasets'][0]['data'][0])->toBe(0.0)
-        ->and($data['datasets'][0]['data'][1])->toBe(0.0);
+    expect($data['datasets'][0]['data'])->each->toBe(0.0);
 });

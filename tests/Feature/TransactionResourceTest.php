@@ -1,11 +1,11 @@
 <?php
 
-use App\Enums\AccountType;
 use App\Filament\Resources\Transactions\Pages\CreateTransaction;
 use App\Filament\Resources\Transactions\Pages\EditTransaction;
 use App\Filament\Resources\Transactions\Pages\ListTransactions;
 use App\Models\Security;
 use App\Models\Transaction;
+use App\Models\Wallet;
 
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Livewire\livewire;
@@ -15,6 +15,7 @@ it('can render the list page', function () {
 
     livewire(ListTransactions::class)
         ->assertOk()
+        ->loadTable()
         ->assertCanSeeTableRecords($transactions);
 });
 
@@ -24,11 +25,12 @@ it('can render the create page', function () {
 });
 
 it('can create a PEA transaction', function () {
+    $wallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
 
     livewire(CreateTransaction::class)
         ->fillForm([
-            'account_type' => AccountType::Pea->value,
+            'wallet_id' => $wallet->id,
             'date' => '2025-06-15',
             'security_id' => $security->id,
             'quantity' => 10,
@@ -40,7 +42,7 @@ it('can create a PEA transaction', function () {
         ->assertRedirect();
 
     assertDatabaseHas(Transaction::class, [
-        'account_type' => 'pea',
+        'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
         'fees' => 1.99,
@@ -48,11 +50,12 @@ it('can create a PEA transaction', function () {
 });
 
 it('can create a CTO transaction with broker', function () {
+    $wallet = Wallet::factory()->cto()->create();
     $security = Security::factory()->create();
 
     livewire(CreateTransaction::class)
         ->fillForm([
-            'account_type' => AccountType::Cto->value,
+            'wallet_id' => $wallet->id,
             'date' => '2025-06-15',
             'security_id' => $security->id,
             'broker' => 'Degiro',
@@ -65,15 +68,17 @@ it('can create a CTO transaction with broker', function () {
         ->assertRedirect();
 
     assertDatabaseHas(Transaction::class, [
-        'account_type' => 'cto',
+        'wallet_id' => $wallet->id,
         'broker' => 'Degiro',
     ]);
 });
 
 it('can create a Livret transaction', function () {
+    $wallet = Wallet::factory()->livret()->create();
+
     livewire(CreateTransaction::class)
         ->fillForm([
-            'account_type' => AccountType::Livret->value,
+            'wallet_id' => $wallet->id,
             'date' => '2025-06-01',
             'notes' => 'Versement mensuel',
         ])
@@ -82,7 +87,7 @@ it('can create a Livret transaction', function () {
         ->assertRedirect();
 
     assertDatabaseHas(Transaction::class, [
-        'account_type' => 'livret',
+        'wallet_id' => $wallet->id,
         'notes' => 'Versement mensuel',
         'security_id' => null,
         'broker' => null,
@@ -115,32 +120,38 @@ it('can update a transaction', function () {
 });
 
 it('validates that date is required', function () {
+    $wallet = Wallet::factory()->pea()->create();
+
     livewire(CreateTransaction::class)
         ->fillForm([
-            'account_type' => AccountType::Pea->value,
+            'wallet_id' => $wallet->id,
             'date' => null,
         ])
         ->call('create')
         ->assertHasFormErrors(['date' => 'required']);
 });
 
-it('validates that account_type is required', function () {
+it('validates that wallet is required', function () {
     livewire(CreateTransaction::class)
         ->fillForm([
-            'account_type' => null,
+            'wallet_id' => null,
             'date' => '2025-06-01',
         ])
         ->call('create')
-        ->assertHasFormErrors(['account_type' => 'required']);
+        ->assertHasFormErrors(['wallet_id' => 'required']);
 });
 
-it('can filter transactions by account type', function () {
-    $peaTransactions = Transaction::factory()->pea()->count(2)->create();
-    $livretTransactions = Transaction::factory()->livret()->count(2)->create();
+it('can filter transactions by wallet', function () {
+    $peaWallet = Wallet::factory()->pea()->create();
+    $livretWallet = Wallet::factory()->livret()->create();
+
+    $peaTransactions = Transaction::factory()->count(2)->create(['wallet_id' => $peaWallet->id]);
+    $livretTransactions = Transaction::factory()->livret()->count(2)->create(['wallet_id' => $livretWallet->id]);
 
     livewire(ListTransactions::class)
+        ->loadTable()
         ->assertCanSeeTableRecords($peaTransactions->merge($livretTransactions))
-        ->filterTable('account_type', AccountType::Pea->value)
+        ->filterTable('wallet_id', $peaWallet->id)
         ->assertCanSeeTableRecords($peaTransactions)
         ->assertCanNotSeeTableRecords($livretTransactions);
 });

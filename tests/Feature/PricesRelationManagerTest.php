@@ -33,6 +33,7 @@ it('can list prices for a security', function () {
         'pageClass' => EditAllSecurity::class,
     ])
         ->assertOk()
+        ->loadTable()
         ->assertCanSeeTableRecords($prices)
         ->assertCanNotSeeTableRecords(collect([$otherPrice]));
 });

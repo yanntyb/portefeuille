@@ -12,7 +12,7 @@ readonly class AccountPageData implements Storeable
      * @param  list<int>  $pricelessSecurityIds
      */
     public function __construct(
-        public string $accountType,
+        public ?int $walletId,
         public array $shownSecurityIds,
         public array $pricelessSecurityIds,
         public bool $isUpdating,
@@ -21,7 +21,7 @@ readonly class AccountPageData implements Storeable
     public static function from(AccountPage $page): self
     {
         return new self(
-            accountType: $page::accountType()->value,
+            walletId: $page->wallet?->id,
             shownSecurityIds: $page->shownSecurityIds,
             pricelessSecurityIds: $page->pricelessSecurityIds,
             isUpdating: $page->isUpdating,
@@ -31,7 +31,7 @@ readonly class AccountPageData implements Storeable
     public function toStore(): array
     {
         return [
-            'accountType' => $this->accountType,
+            'walletId' => $this->walletId,
             'shownSecurityIds' => $this->shownSecurityIds,
             'pricelessSecurityIds' => $this->pricelessSecurityIds,
             'isUpdating' => $this->isUpdating,

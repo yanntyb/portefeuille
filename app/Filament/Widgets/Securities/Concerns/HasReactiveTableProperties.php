@@ -49,6 +49,8 @@ trait HasReactiveTableProperties
     /** @var class-string|null */
     public ?string $tablePageClass = null;
 
+    public ?int $walletId = null;
+
     protected ?HasTable $tablePage = null;
 
     protected function getTablePage(): string
@@ -64,6 +66,10 @@ trait HasReactiveTableProperties
 
         /** @var HasTable $page */
         $page = app('livewire')->new($this->tablePageClass);
+
+        if (property_exists($page, 'walletId') && $this->walletId !== null) {
+            $page->walletId = $this->walletId;
+        }
 
         trigger('mount', $page, [], null, null, []);
 

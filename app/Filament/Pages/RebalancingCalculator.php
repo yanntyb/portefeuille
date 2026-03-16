@@ -2,10 +2,10 @@
 
 namespace App\Filament\Pages;
 
-use App\Enums\AccountType;
 use App\Models\AllocationProfile;
 use App\Models\Security;
 use App\Models\Transaction;
+use App\Models\Wallet;
 use App\Services\RebalancingCalculator as RebalancingService;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -63,7 +63,7 @@ class RebalancingCalculator extends Page implements HasTable
     public function mount(): void
     {
         $this->form->fill([
-            'account_type' => null,
+            'wallet_id' => null,
             'amount' => 500,
             'profile_id' => null,
             'allocations' => [],
@@ -75,13 +75,14 @@ class RebalancingCalculator extends Page implements HasTable
         return $schema
             ->components([
                 Form::make([
-                    Select::make('account_type')
+                    Select::make('wallet_id')
                         ->label('Type de compte')
-                        ->options([
+                        ->options(fn (): array => [
                             '' => 'Global (tous comptes)',
-                            ...collect(AccountType::cases())
-                                ->filter(fn (AccountType $type): bool => $type !== AccountType::Livret)
-                                ->mapWithKeys(fn (AccountType $type): array => [$type->value => $type->getLabel()])
+                            ...Wallet::query()
+                                ->withoutGlobalScope('user')
+                                ->where('user_id', auth()->id())
+                                ->pluck('name', 'id')
                                 ->all(),
                         ])
                         ->live()
@@ -210,7 +211,7 @@ class RebalancingCalculator extends Page implements HasTable
         $data = $this->form->getState();
         $allocations = $data['allocations'] ?? [];
         $amount = (float) ($data['amount'] ?? 0);
-        $accountType = ! empty($data['account_type']) ? AccountType::from($data['account_type']) : null;
+        $wallet = ! empty($data['wallet_id']) ? Wallet::find((int) $data['wallet_id']) : null;
 
         if (empty($allocations)) {
             Notification::make()
@@ -232,7 +233,7 @@ class RebalancingCalculator extends Page implements HasTable
             return;
         }
 
-        $securities = $this->buildSecuritiesData($allocations, $accountType);
+        $securities = $this->buildSecuritiesData($allocations, $wallet);
 
         $calculator = new RebalancingService;
         $results = $calculator->calculate($securities, $amount);
@@ -260,15 +261,16 @@ class RebalancingCalculator extends Page implements HasTable
             return;
         }
 
-        $accountType = ! empty($data['account_type']) ? $data['account_type'] : null;
+        $walletId = ! empty($data['wallet_id']) ? (int) $data['wallet_id'] : null;
+        $wallet = $walletId ? Wallet::find($walletId) : null;
 
         $profile = AllocationProfile::query()->updateOrCreate(
             [
                 'user_id' => auth()->id(),
-                'name' => $accountType ? AccountType::from($accountType)->getLabel() : 'Global',
+                'name' => $wallet ? $wallet->name : 'Global',
             ],
             [
-                'account_type' => $accountType,
+                'wallet_id' => $walletId,
             ]
         );
 
@@ -310,7 +312,7 @@ class RebalancingCalculator extends Page implements HasTable
         ])->all();
 
         $this->data['allocations'] = $allocations;
-        $this->data['account_type'] = $profile->account_type?->value ?? '';
+        $this->data['wallet_id'] = $profile->wallet_id ?? '';
         $this->resetResults();
     }
 
@@ -326,7 +328,7 @@ class RebalancingCalculator extends Page implements HasTable
      * @param  array<int, array{security_id: int|string, target_percentage: float|string}>  $allocations
      * @return array<int, array{security_id: int, name: string, price: float, quantity: float, target_percentage: float}>
      */
-    private function buildSecuritiesData(array $allocations, ?AccountType $accountType): array
+    private function buildSecuritiesData(array $allocations, ?Wallet $wallet): array
     {
         $securities = [];
 
@@ -345,8 +347,8 @@ class RebalancingCalculator extends Page implements HasTable
                 ->where('user_id', auth()->id())
                 ->where('security_id', $securityId);
 
-            if ($accountType) {
-                $quantityQuery->where('account_type', $accountType->value);
+            if ($wallet) {
+                $quantityQuery->where('wallet_id', $wallet->id);
             }
 
             $quantity = (float) $quantityQuery->sum('quantity');

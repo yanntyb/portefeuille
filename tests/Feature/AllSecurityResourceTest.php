@@ -19,6 +19,7 @@ it('can render the all securities list page', function () {
 
     livewire(ListAllSecurities::class)
         ->assertOk()
+        ->loadTable()
         ->assertCanSeeTableRecords(collect([$security]));
 });
 
@@ -40,6 +41,7 @@ it('can search securities by name', function () {
     $other = Security::factory()->create(['name' => 'Amazon']);
 
     livewire(ListAllSecurities::class)
+        ->loadTable()
         ->searchTable('Tesla')
         ->assertCanSeeTableRecords(collect([$target]))
         ->assertCanNotSeeTableRecords(collect([$other]));

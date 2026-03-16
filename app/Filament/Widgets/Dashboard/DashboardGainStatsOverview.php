@@ -2,7 +2,7 @@
 
 namespace App\Filament\Widgets\Dashboard;
 
-use App\Enums\AccountType;
+use App\Models\Wallet;
 use App\Services\DashboardDataProvider;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Number;
@@ -45,15 +45,17 @@ class DashboardGainStatsOverview extends Widget
     public function getGainData(): array
     {
         $provider = app(DashboardDataProvider::class);
-        $accountTypes = [AccountType::Pea, AccountType::Cto];
+        $wallets = Wallet::withoutGlobalScope('user')
+            ->where('user_id', auth()->id())
+            ->get();
 
         $totalValuation = 0;
         $totalInvested = 0;
         $totalFees = 0;
         $totalRealizedGain = 0;
 
-        foreach ($accountTypes as $accountType) {
-            $securities = $provider->securitiesForAccount($accountType);
+        foreach ($wallets as $wallet) {
+            $securities = $provider->securitiesForWallet($wallet);
 
             if ($this->shownSecurityIds !== null) {
                 $securities = $securities->whereIn('id', $this->shownSecurityIds);

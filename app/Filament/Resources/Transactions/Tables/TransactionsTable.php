@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\Transactions\Tables;
 
-use App\Enums\AccountType;
 use App\Enums\TransactionType;
+use App\Models\Wallet;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -22,10 +22,9 @@ class TransactionsTable
                     ->label('Date')
                     ->isoDate('MMM YYYY')
                     ->sortable(),
-                TextColumn::make('account_type')
+                TextColumn::make('wallet.name')
                     ->label('Compte')
-                    ->badge()
-                    ->sortable(),
+                    ->badge(),
                 TextColumn::make('type')
                     ->label('Type')
                     ->badge()
@@ -63,9 +62,9 @@ class TransactionsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('account_type')
+                SelectFilter::make('wallet_id')
                     ->label('Compte')
-                    ->options(AccountType::class),
+                    ->options(Wallet::query()->pluck('name', 'id')),
                 SelectFilter::make('type')
                     ->label('Type')
                     ->options(TransactionType::class),
