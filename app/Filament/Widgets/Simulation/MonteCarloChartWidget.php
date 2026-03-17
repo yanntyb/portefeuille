@@ -31,6 +31,9 @@ class MonteCarloChartWidget extends ChartWidget
 
     public int $nbSimulations = 500;
 
+    /** @var array<string, mixed>|null */
+    protected ?array $cachedSimulationData = null;
+
     #[On('simulation-settings-updated')]
     public function onSettingsUpdated(
         float $versementMensuel,
@@ -42,6 +45,7 @@ class MonteCarloChartWidget extends ChartWidget
         $this->tauxMoyen = $tauxMoyen;
         $this->volatilite = $volatilite;
         $this->nbSimulations = $nbSimulations;
+        $this->cachedSimulationData = null;
         $this->updateChartData();
     }
 
@@ -60,7 +64,10 @@ class MonteCarloChartWidget extends ChartWidget
             ->icon('heroicon-m-arrow-path')
             ->iconButton()
             ->color('gray')
-            ->action(fn () => $this->updateChartData());
+            ->action(function (): void {
+                $this->cachedSimulationData = null;
+                $this->updateChartData();
+            });
     }
 
     public function infoProjectionMonteCarloAction(): Action
@@ -86,6 +93,10 @@ class MonteCarloChartWidget extends ChartWidget
 
     protected function getData(): array
     {
+        if ($this->cachedSimulationData !== null) {
+            return $this->cachedSimulationData;
+        }
+
         $result = app(MonteCarloEngine::class)->compute(
             capitalInitial: $this->capitalInitial,
             versementMensuel: $this->versementMensuel,
@@ -97,7 +108,7 @@ class MonteCarloChartWidget extends ChartWidget
 
         $labels = array_map(fn (int $y): string => "Année {$y}", range(0, $result->duree));
 
-        return [
+        $this->cachedSimulationData = [
             'labels' => $labels,
             'datasets' => [
                 [
@@ -135,6 +146,8 @@ class MonteCarloChartWidget extends ChartWidget
                 ],
             ],
         ];
+
+        return $this->cachedSimulationData;
     }
 
     protected function getType(): string
