@@ -15,6 +15,7 @@ class EditUser extends EditRecord
     {
         return [
             Impersonate::make()
+                ->iconButton()
                 ->redirectTo('/')
                 ->action(function (Impersonate $action): void {
                     $action->impersonate($this->record);
