@@ -6,6 +6,15 @@
 <x-filament-widgets::widget>
     <div class="space-y-4">
         <div class="flex flex-wrap items-center gap-1">
+            <div class="flex items-center gap-1">
+                <span class="text-sm font-medium text-gray-950 dark:text-white">Corrélation</span>
+                <x-filament::icon-button
+                    icon="heroicon-o-information-circle"
+                    size="xs"
+                    color="gray"
+                    tooltip="Corrélation : mesure à quel point vos titres évoluent ensemble. Proche de 1 = même direction, proche de 0 = indépendants, négatif = directions opposées. Une corrélation moyenne basse indique une bonne diversification."
+                />
+            </div>
             @foreach ($periods as $p)
                 <button
                     type="button"
