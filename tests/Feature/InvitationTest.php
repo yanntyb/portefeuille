@@ -1,6 +1,6 @@
 <?php
 
-use App\Filament\Resources\Users\Pages\ListUsers;
+use App\Filament\Resources\Invitations\Pages\ListInvitations;
 use App\Livewire\InvitationRegistration;
 use App\Models\Invitation;
 use App\Models\User;
@@ -12,14 +12,14 @@ use function Pest\Livewire\livewire;
 it("l'action de génération d'invitation est visible pour un admin", function () {
     actingAs(User::factory()->admin()->create());
 
-    livewire(ListUsers::class)
+    livewire(ListInvitations::class)
         ->assertActionVisible('generateInvitation');
 });
 
 it('génère une invitation et la stocke en base', function () {
     actingAs(User::factory()->admin()->create());
 
-    livewire(ListUsers::class)
+    livewire(ListInvitations::class)
         ->callAction('generateInvitation')
         ->assertNotified();
 
@@ -31,8 +31,8 @@ it('génère une invitation et la stocke en base', function () {
 it('stocke un token unique en base', function () {
     actingAs(User::factory()->admin()->create());
 
-    livewire(ListUsers::class)->callAction('generateInvitation');
-    livewire(ListUsers::class)->callAction('generateInvitation');
+    livewire(ListInvitations::class)->callAction('generateInvitation');
+    livewire(ListInvitations::class)->callAction('generateInvitation');
 
     expect(Invitation::count())->toBe(2);
     expect(Invitation::pluck('token')->unique()->count())->toBe(2);
@@ -97,7 +97,7 @@ it("marque l'invitation comme utilisée après inscription", function () {
     expect($invitation->fresh()->isUsed())->toBeTrue();
 });
 
-it('redirige vers /admin après inscription', function () {
+it('redirige vers / après inscription', function () {
     $invitation = Invitation::factory()->create();
 
     livewire(InvitationRegistration::class, ['token' => $invitation->token])
@@ -106,7 +106,7 @@ it('redirige vers /admin après inscription', function () {
         ->set('password', 'motdepasse123')
         ->set('password_confirmation', 'motdepasse123')
         ->call('submit')
-        ->assertRedirect('/admin');
+        ->assertRedirect('/');
 });
 
 it('ne peut pas réutiliser une invitation déjà utilisée', function () {
