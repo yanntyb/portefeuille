@@ -6,6 +6,7 @@
     $heading = $this->getHeading();
     $description = $this->getDescription();
     $filters = $this->getFilters();
+    $headerActions = $this->getHeaderActions();
     $isCollapsible = $this->isCollapsible();
     $isCollapsed = $this->isCollapsed ?? false;
     $type = $this->getType();
@@ -18,8 +19,12 @@
         :collapsible="$isCollapsible"
         :collapsed="$isCollapsed"
     >
-        @if ($filters || method_exists($this, 'getFiltersSchema'))
+        @if ($filters || method_exists($this, 'getFiltersSchema') || count($headerActions))
             <x-slot name="afterHeader">
+                @foreach ($headerActions as $action)
+                    {{ $action }}
+                @endforeach
+
                 @if ($filters)
                     <x-filament::input.wrapper
                         inline-prefix

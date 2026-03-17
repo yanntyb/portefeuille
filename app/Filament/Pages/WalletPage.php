@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Enums\CurrencyModificationUnit;
+use App\Enums\FeeScope;
 use App\Enums\FrequencyUnit;
 use App\Filament\Widgets\Securities\WalletFeesWidget;
 use App\Filament\Widgets\Simulation\SimulationSectionWidget;
@@ -15,7 +16,6 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Navigation\NavigationItem;
 use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Callout;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -46,43 +46,6 @@ class WalletPage extends AccountPage
 
         $this->wallet = Wallet::findOrFail($this->walletId);
         parent::mount();
-    }
-
-    public function reloadSimulationAction(): Action
-    {
-        return Action::make('reloadSimulation')
-            ->label('Relancer')
-            ->icon('heroicon-m-arrow-path')
-            ->iconButton()
-            ->color('gray')
-            ->action(function (): void {
-                $this->dispatch('simulation-settings-updated',
-                    versementMensuel: $this->versementMensuel,
-                    tauxMoyen: $this->computeAnnualizedReturn(),
-                    volatilite: $this->computePortfolioVolatility(),
-                    nbSimulations: $this->nbSimulations,
-                );
-            });
-    }
-
-    public function infoProjectionMonteCarloAction(): Action
-    {
-        return Action::make('infoProjectionMonteCarlo')
-            ->label('Informations')
-            ->icon('heroicon-m-information-circle')
-            ->iconButton()
-            ->color('gray')
-            ->modalHeading('Projection Monte Carlo')
-            ->modalSubmitAction(false)
-            ->modalCancelActionLabel('Fermer')
-            ->schema([
-                Callout::make('Cette valeur est estimée à partir de l\'historique de vos titres.')
-                    ->warning()
-                    ->description('C\'est une hypothèse de départ : votre portefeuille pourrait être plus ou moins agité dans les années à venir. Vous pouvez ajuster cette valeur pour tester différents scénarios.'),
-                Callout::make('Comment sont calculées les 3 courbes ?')
-                    ->info()
-                    ->description('Le simulateur rejoue 500 fois l\'évolution de votre portefeuille sur la durée choisie, avec des rendements aléatoires cohérents avec vos hypothèses. Les 3 courbes résument l\'ensemble des résultats : 10 % des simulations finissent sous la courbe pessimiste, 50 % sous la médiane, et 90 % sous la courbe optimiste.'),
-            ]);
     }
 
     public function configureSimulationAction(): Action
@@ -154,6 +117,7 @@ class WalletPage extends AccountPage
                     'name' => $fee->name,
                     'value' => $fee->value,
                     'unit' => $fee->unit->value,
+                    'scope' => $fee->scope?->value,
                     'frequency' => $fee->frequency?->value,
                 ])->toArray(),
             ])
@@ -177,6 +141,11 @@ class WalletPage extends AccountPage
                             ))
                             ->live()
                             ->required(),
+                        Select::make('scope')
+                            ->label('Appliqué sur')
+                            ->options(FeeScope::class)
+                            ->visible(fn (Get $get): bool => $get('unit') === CurrencyModificationUnit::Percentage->value)
+                            ->required(fn (Get $get): bool => $get('unit') === CurrencyModificationUnit::Percentage->value),
                         Select::make('frequency')
                             ->label('Fréquence')
                             ->options(collect(FrequencyUnit::cases())->mapWithKeys(
@@ -196,6 +165,9 @@ class WalletPage extends AccountPage
                         'name' => $feeData['name'],
                         'value' => $feeData['value'],
                         'unit' => $feeData['unit'],
+                        'scope' => ($feeData['unit'] === CurrencyModificationUnit::Percentage->value)
+                            ? ($feeData['scope'] ?? null)
+                            : null,
                         'frequency' => ($feeData['unit'] === CurrencyModificationUnit::Currency->value)
                             ? ($feeData['frequency'] ?? null)
                             : null,
@@ -219,21 +191,13 @@ class WalletPage extends AccountPage
                 ->id('wallet-simulation')
                 ->afterHeader(fn () => [$this->configureSimulationAction()])
                 ->schema([
-                    Section::make('Projection Monte Carlo')
-                        ->collapsible()
-                        ->collapsed()
-                        ->persistCollapsed()
-                        ->id('wallet-simulation-montecarlo')
-                        ->afterHeader(fn () => [$this->reloadSimulationAction(), $this->infoProjectionMonteCarloAction()])
-                        ->schema([
-                            Livewire::make(SimulationSectionWidget::class, [
-                                'capitalInitial' => $this->getTotalValuation(),
-                                'tauxMoyen' => $this->computeAnnualizedReturn(),
-                                'volatilite' => $this->computePortfolioVolatility(),
-                                'versementMensuel' => $this->versementMensuel,
-                                'nbSimulations' => $this->nbSimulations,
-                            ])->key('wallet-simulation-section'),
-                        ]),
+                    Livewire::make(SimulationSectionWidget::class, [
+                        'capitalInitial' => $this->getTotalValuation(),
+                        'tauxMoyen' => $this->computeAnnualizedReturn(),
+                        'volatilite' => $this->computePortfolioVolatility(),
+                        'versementMensuel' => $this->versementMensuel,
+                        'nbSimulations' => $this->nbSimulations,
+                    ])->key('wallet-simulation-section'),
                 ]),
             Section::make('Frais')
                 ->collapsible()

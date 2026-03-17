@@ -4,18 +4,20 @@ namespace App\Filament\Widgets\Simulation;
 
 use App\Filament\Widgets\ChartWidget;
 use App\Services\MonteCarloEngine;
+use Filament\Actions\Action;
+use Filament\Schemas\Components\Callout;
 use Filament\Support\RawJs;
 use Livewire\Attributes\On;
 
 class MonteCarloChartWidget extends ChartWidget
 {
-    protected string $view = 'filament.widgets.bare-chart-widget';
-
     protected int|string|array $columnSpan = 'full';
 
     protected ?string $pollingInterval = null;
 
-    protected ?string $maxHeight = null;
+    protected ?string $maxHeight = '200px';
+
+    protected ?string $heading = 'Projection Monte Carlo';
 
     public float $capitalInitial = 10000;
 
@@ -29,11 +31,6 @@ class MonteCarloChartWidget extends ChartWidget
 
     public int $nbSimulations = 500;
 
-    public function getHeading(): ?string
-    {
-        return null;
-    }
-
     #[On('simulation-settings-updated')]
     public function onSettingsUpdated(
         float $versementMensuel,
@@ -46,6 +43,44 @@ class MonteCarloChartWidget extends ChartWidget
         $this->volatilite = $volatilite;
         $this->nbSimulations = $nbSimulations;
         $this->updateChartData();
+    }
+
+    public function getHeaderActions(): array
+    {
+        return [
+            $this->reloadSimulationAction(),
+            $this->infoProjectionMonteCarloAction(),
+        ];
+    }
+
+    public function reloadSimulationAction(): Action
+    {
+        return Action::make('reloadSimulation')
+            ->label('Relancer')
+            ->icon('heroicon-m-arrow-path')
+            ->iconButton()
+            ->color('gray')
+            ->action(fn () => $this->updateChartData());
+    }
+
+    public function infoProjectionMonteCarloAction(): Action
+    {
+        return Action::make('infoProjectionMonteCarlo')
+            ->label('Informations')
+            ->icon('heroicon-m-information-circle')
+            ->iconButton()
+            ->color('gray')
+            ->modalHeading('Projection Monte Carlo')
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Fermer')
+            ->schema([
+                Callout::make('Cette valeur est estimée à partir de l\'historique de vos titres.')
+                    ->warning()
+                    ->description('C\'est une hypothèse de départ : votre portefeuille pourrait être plus ou moins agité dans les années à venir. Vous pouvez ajuster cette valeur pour tester différents scénarios.'),
+                Callout::make('Comment sont calculées les 3 courbes ?')
+                    ->info()
+                    ->description('Le simulateur rejoue 500 fois l\'évolution de votre portefeuille sur la durée choisie, avec des rendements aléatoires cohérents avec vos hypothèses. Les 3 courbes résument l\'ensemble des résultats : 10 % des simulations finissent sous la courbe pessimiste, 50 % sous la médiane, et 90 % sous la courbe optimiste.'),
+            ]);
     }
 
     protected function getData(): array

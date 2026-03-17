@@ -2,10 +2,15 @@
 
 namespace App\Filament\Widgets;
 
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Widgets\ChartWidget as BaseChartWidget;
 
-abstract class ChartWidget extends BaseChartWidget
+abstract class ChartWidget extends BaseChartWidget implements HasActions
 {
+    use InteractsWithActions;
+
     protected bool $isCollapsible = true;
 
     protected bool $isCollapsed = true;
@@ -19,5 +24,13 @@ abstract class ChartWidget extends BaseChartWidget
         if ($this->bareView) {
             $this->view = 'filament.widgets.bare-chart-widget';
         }
+    }
+
+    /**
+     * @return array<Action>
+     */
+    public function getHeaderActions(): array
+    {
+        return [];
     }
 }
