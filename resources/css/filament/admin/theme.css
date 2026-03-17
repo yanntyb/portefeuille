@@ -56,6 +56,12 @@
     box-shadow: none !important;
 }
 
+/* Réduire les marges verticales des headers de sections collapsibles */
+.fi-section-header {
+    padding-top: 0.2rem !important;
+    padding-bottom: 0.2rem !important;
+}
+
 /* Masquer l'indicateur de sélection dans tous les tableaux */
 .fi-ta-selection-indicator {
     display: none !important;
