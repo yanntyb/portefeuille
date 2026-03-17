@@ -1,7 +1,5 @@
-const CACHE_NAME = 'dashboard-invest-v1';
-const STATIC_ASSETS = [
-    '/admin',
-];
+const CACHE_NAME = 'dashboard-invest-v2';
+const STATIC_ASSETS = [];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
@@ -52,17 +50,6 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    event.respondWith(
-        fetch(request)
-            .then((response) => {
-                if (response.ok) {
-                    const clone = response.clone();
-
-                    caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-                }
-
-                return response;
-            })
-            .catch(() => caches.match(request))
-    );
+    // Ne pas cacher les pages HTML (dépendent de la session/user)
+    return;
 });
