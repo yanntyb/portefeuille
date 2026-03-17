@@ -6,6 +6,7 @@ use App\Enums\CurrencyModificationUnit;
 use App\Enums\FeeScope;
 use App\Enums\FrequencyUnit;
 use App\Models\Wallet;
+use App\Models\WalletFee;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
