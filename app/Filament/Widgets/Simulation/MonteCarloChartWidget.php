@@ -72,7 +72,8 @@ class MonteCarloChartWidget extends ChartWidget
             ->color('gray')
             ->modalHeading('Projection Monte Carlo')
             ->modalSubmitAction(false)
-            ->modalCancelActionLabel('Fermer')
+            ->modalCancelAction(fn ($action) => $action->label('Fermer'))
+            ->action(fn () => null)
             ->schema([
                 Callout::make('Cette valeur est estimée à partir de l\'historique de vos titres.')
                     ->warning()
