@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Enums\CurrencyModificationUnit;
+use App\Enums\FeeScope;
 use App\Enums\FrequencyUnit;
 use App\Models\Wallet;
 use BackedEnum;
@@ -68,6 +69,7 @@ class WalletsConfigPage extends Page implements HasTable
                             'name' => $fee->name,
                             'value' => $fee->value,
                             'unit' => $fee->unit->value,
+                            'scope' => $fee->scope?->value,
                             'frequency' => $fee->frequency?->value,
                         ])->toArray(),
                     ])
@@ -91,6 +93,11 @@ class WalletsConfigPage extends Page implements HasTable
                                     ))
                                     ->live()
                                     ->required(),
+                                Select::make('scope')
+                                    ->label('Appliqué sur')
+                                    ->options(FeeScope::class)
+                                    ->visible(fn (Get $get): bool => $get('unit') === CurrencyModificationUnit::Percentage->value)
+                                    ->required(fn (Get $get): bool => $get('unit') === CurrencyModificationUnit::Percentage->value),
                                 Select::make('frequency')
                                     ->label('Fréquence')
                                     ->options(collect(FrequencyUnit::cases())->mapWithKeys(
@@ -110,6 +117,9 @@ class WalletsConfigPage extends Page implements HasTable
                                 'name' => $feeData['name'],
                                 'value' => $feeData['value'],
                                 'unit' => $feeData['unit'],
+                                'scope' => ($feeData['unit'] === CurrencyModificationUnit::Percentage->value)
+                                    ? ($feeData['scope'] ?? null)
+                                    : null,
                                 'frequency' => ($feeData['unit'] === CurrencyModificationUnit::Currency->value)
                                     ? ($feeData['frequency'] ?? null)
                                     : null,

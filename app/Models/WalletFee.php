@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CurrencyModificationUnit;
+use App\Enums\FeeScope;
 use App\Enums\FrequencyUnit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,12 +11,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class WalletFee extends Model
 {
     /** @var list<string> */
-    protected $fillable = ['wallet_id', 'name', 'value', 'unit', 'frequency'];
+    protected $fillable = ['wallet_id', 'name', 'value', 'unit', 'scope', 'frequency'];
 
     protected function casts(): array
     {
         return [
             'unit' => CurrencyModificationUnit::class,
+            'scope' => FeeScope::class,
             'frequency' => FrequencyUnit::class,
             'value' => 'decimal:4',
         ];

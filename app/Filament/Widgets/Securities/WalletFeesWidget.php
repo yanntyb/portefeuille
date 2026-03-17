@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets\Securities;
 
 use App\Enums\CurrencyModificationUnit;
+use App\Enums\FeeScope;
 use App\Enums\FrequencyUnit;
 use App\Filament\Widgets\Securities\Concerns\HasReactiveTableProperties;
 use App\Models\Wallet;
@@ -76,6 +77,9 @@ class WalletFeesWidget extends Widget
             return (float) $record->total_quantity * (float) $close;
         });
 
+        $totalRealizedGain = (float) $records->sum(fn ($record) => (float) ($record->total_realized_gain ?? 0));
+        $unrealizedGain = $totalValuation - $totalInvested;
+
         $transactionFeesPercentage = $totalInvested > 0
             ? Number::format(($totalFees / $totalInvested) * 100, 2).' %'
             : '0 %';
@@ -89,7 +93,11 @@ class WalletFeesWidget extends Widget
         foreach ($fees as $fee) {
             /** @var WalletFee $fee */
             $annual = match ($fee->unit) {
-                CurrencyModificationUnit::Percentage => ($fee->value / 100) * $totalValuation,
+                CurrencyModificationUnit::Percentage => ($fee->value / 100) * match ($fee->scope) {
+                    FeeScope::UnrealizedGain => max(0, $unrealizedGain),
+                    FeeScope::RealizedGain => max(0, $totalRealizedGain),
+                    default => $totalValuation,
+                },
                 CurrencyModificationUnit::Currency => match ($fee->frequency) {
                     FrequencyUnit::Monthly => (float) $fee->value * 12,
                     FrequencyUnit::Quarterly => (float) $fee->value * 4,
