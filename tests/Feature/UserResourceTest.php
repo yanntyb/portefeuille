@@ -94,11 +94,11 @@ it('shows impersonate action for admin users on non-admin targets', function () 
         ->assertTableActionVisible('impersonate', $target);
 });
 
-it('hides impersonate action for admin targets', function () {
+it('shows impersonate action for admin targets', function () {
     actingAs(User::factory()->admin()->create());
 
     $adminTarget = User::factory()->admin()->create();
 
     livewire(ListUsers::class)
-        ->assertTableActionHidden('impersonate', $adminTarget);
+        ->assertTableActionVisible('impersonate', $adminTarget);
 });

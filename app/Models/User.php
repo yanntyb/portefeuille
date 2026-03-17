@@ -67,7 +67,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function canBeImpersonated(): bool
     {
-        return ! $this->isAdmin();
+        return true;
     }
 
     public function canAccessPanel(Panel $panel): bool

@@ -82,8 +82,9 @@ class UserResource extends Resource
                     ->dateTime('d/m/Y')
                     ->sortable(),
             ])
-            ->actions([
+            ->recordActions([
                 Impersonate::make()
+                    ->iconButton()
                     ->redirectTo('/'),
             ]);
     }
