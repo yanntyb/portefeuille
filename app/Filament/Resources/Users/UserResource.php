@@ -15,7 +15,6 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use STS\FilamentImpersonate\Actions\Impersonate;
 use UnitEnum;
 
 class UserResource extends Resource
@@ -82,15 +81,7 @@ class UserResource extends Resource
                     ->dateTime('d/m/Y')
                     ->sortable(),
             ])
-            ->recordActions([
-                Impersonate::make()
-                    ->iconButton()
-                    ->redirectTo('/')
-                    ->action(function ($record, Impersonate $action): void {
-                        $action->impersonate($record);
-                        $action->redirect('/', navigate: false);
-                    }),
-            ]);
+            ->recordActions([]);
     }
 
     public static function getPages(): array
