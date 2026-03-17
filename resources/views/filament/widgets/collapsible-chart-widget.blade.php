@@ -21,9 +21,13 @@
     >
         @if ($filters || method_exists($this, 'getFiltersSchema') || count($headerActions))
             <x-slot name="afterHeader">
-                @foreach ($headerActions as $action)
-                    {{ $action }}
-                @endforeach
+                @if (count($headerActions))
+                    <div class="flex items-center gap-x-1">
+                        @foreach ($headerActions as $action)
+                            {{ $action }}
+                        @endforeach
+                    </div>
+                @endif
 
                 @if ($filters)
                     <x-filament::input.wrapper
