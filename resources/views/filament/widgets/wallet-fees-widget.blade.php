@@ -3,7 +3,7 @@
 @endphp
 
 <x-filament-widgets::widget>
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div class="grid grid-cols-1 gap-4 pt-4 sm:grid-cols-2">
         <x-filament::section :contained="false">
             <span class="text-sm font-medium text-gray-950 dark:text-white">
                 Frais de transaction
