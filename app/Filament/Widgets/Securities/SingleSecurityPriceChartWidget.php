@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class SingleSecurityPriceChartWidget extends ChartWidget
 {
-    protected ?string $heading = 'Evolution du prix';
+    protected ?string $heading = null;
 
     protected int|string|array $columnSpan = 'full';
 
@@ -20,6 +20,20 @@ class SingleSecurityPriceChartWidget extends ChartWidget
     protected ?string $maxHeight = '200px';
 
     public ?Model $record = null;
+
+    public function getHeading(): ?string
+    {
+        $this->record?->loadMissing('latestPrice');
+        $price = $this->record?->latestPrice?->close;
+
+        if ($price === null) {
+            return 'Évolution du prix';
+        }
+
+        $formatted = \Illuminate\Support\Number::currency((float) $price, 'EUR');
+
+        return "Évolution du prix — {$formatted}";
+    }
 
     protected function getData(): array
     {
