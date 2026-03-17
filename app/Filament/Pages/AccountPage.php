@@ -373,7 +373,16 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
 
     public function hasMoreRecords(): bool
     {
-        return $this->scopedSecuritiesQuery()->count() > $this->tableRecordLimit;
+        if ($this->wallet === null) {
+            return false;
+        }
+
+        $totalCount = Transaction::query()
+            ->where('wallet_id', $this->wallet->id)
+            ->distinct('security_id')
+            ->count('security_id');
+
+        return $totalCount > $this->tableRecordLimit;
     }
 
     public function loadMoreAction(): Action
