@@ -8,6 +8,7 @@ use App\Data\AccountPageData;
 use App\Filament\Resources\Securities\Tables\SecuritiesTable;
 use App\Filament\Resources\WalletSecurities\WalletSecurityResource;
 use App\Filament\Widgets\Securities\AllocationChartWidget;
+use App\Filament\Widgets\Securities\CorrelationMatrixWidget;
 use App\Filament\Widgets\Securities\GainStatsOverview;
 use App\Filament\Widgets\Securities\PerformanceStatsOverview;
 use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
@@ -453,6 +454,11 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
                             'shownSecurityIds' => $this->shownSecurityIds,
                             'walletId' => $this->wallet?->id,
                         ])->key('sector-allocation-chart'),
+                        Livewire::make(CorrelationMatrixWidget::class, [
+                            'tablePageClass' => static::class,
+                            'shownSecurityIds' => $this->shownSecurityIds,
+                            'walletId' => $this->wallet?->id,
+                        ])->key('correlation-matrix'),
                     ]),
                 ...$this->getExtraContentComponents(),
             ]);
