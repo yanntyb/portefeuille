@@ -84,7 +84,7 @@ class UserResource extends Resource
             ])
             ->actions([
                 Impersonate::make()
-                    ->redirectTo('/admin'),
+                    ->redirectTo('/'),
             ]);
     }
 

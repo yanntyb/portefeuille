@@ -15,8 +15,8 @@ use function Pest\Livewire\livewire;
 it('redirects to login when not authenticated', function () {
     auth()->logout();
 
-    get('/admin')
-        ->assertRedirect('/admin/login');
+    get('/')
+        ->assertRedirect('/login');
 });
 
 it('scopes transactions to the authenticated user', function () {

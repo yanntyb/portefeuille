@@ -61,7 +61,7 @@ class InvitationRegistration extends Component
 
         Auth::login($user);
 
-        $this->redirect('/admin', navigate: false);
+        $this->redirect('/', navigate: false);
     }
 
     public function render(): \Illuminate\View\View

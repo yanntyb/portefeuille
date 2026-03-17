@@ -33,7 +33,7 @@ test('service worker returns JavaScript content', function () {
 });
 
 test('admin panel contains PWA meta tags', function () {
-    $response = $this->get('/admin');
+    $response = $this->get('/');
 
     $response->assertSuccessful();
 
