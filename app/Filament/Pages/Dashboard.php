@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\Dashboard\DashboardCorrelationMatrixWidget;
 use App\Filament\Widgets\Dashboard\DashboardGainStatsOverview;
 use App\Filament\Widgets\Dashboard\DashboardPerformanceStatsOverview;
 use App\Filament\Widgets\Dashboard\DashboardSectorAllocationChartWidget;
@@ -77,6 +78,8 @@ class Dashboard extends BaseDashboard
                             ->key('dashboard-securities-table'),
                         Livewire::make(DashboardSectorAllocationChartWidget::class)
                             ->key('dashboard-sector-allocation-chart'),
+                        Livewire::make(DashboardCorrelationMatrixWidget::class)
+                            ->key('dashboard-correlation-matrix'),
                     ]),
             ]);
     }
