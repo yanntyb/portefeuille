@@ -48,7 +48,7 @@ class PricesRelationManager extends RelationManager
                     ->sortable(),
             ])
             ->headerActions([])
-            ->actions([
+            ->recordActions([
                 DeleteAction::make(),
             ])
             ->bulkActions([

@@ -62,7 +62,7 @@ class InvitationResource extends Resource
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
             ])
-            ->actions([
+            ->recordActions([
                 Action::make('copyLink')
                     ->label('Copier le lien')
                     ->icon('heroicon-o-clipboard-document')
