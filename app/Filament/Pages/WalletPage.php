@@ -2,15 +2,23 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\CurrencyModificationUnit;
+use App\Enums\FrequencyUnit;
+use App\Filament\Widgets\Securities\WalletFeesWidget;
 use App\Filament\Widgets\Simulation\SimulationSectionWidget;
 use App\Models\Wallet;
+use App\Models\WalletFee;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Navigation\NavigationItem;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Callout;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\HtmlString;
@@ -133,6 +141,74 @@ class WalletPage extends AccountPage
             });
     }
 
+    public function configureFeesAction(): Action
+    {
+        return Action::make('configureFees')
+            ->label('Configurer')
+            ->icon(Heroicon::OutlinedCog6Tooth)
+            ->iconButton()
+            ->color('gray')
+            ->modalHeading('Frais du portefeuille')
+            ->fillForm(fn (): array => [
+                'fees' => $this->wallet->fees->map(fn (WalletFee $fee) => [
+                    'name' => $fee->name,
+                    'value' => $fee->value,
+                    'unit' => $fee->unit->value,
+                    'frequency' => $fee->frequency?->value,
+                ])->toArray(),
+            ])
+            ->schema([
+                Repeater::make('fees')
+                    ->label(false)
+                    ->schema([
+                        TextInput::make('name')
+                            ->label('Nom')
+                            ->required()
+                            ->placeholder('Ex : Flat Tax, Frais Boursorama'),
+                        TextInput::make('value')
+                            ->label('Valeur')
+                            ->numeric()
+                            ->required()
+                            ->placeholder('Ex : 30, 10'),
+                        Select::make('unit')
+                            ->label('Unité')
+                            ->options(collect(CurrencyModificationUnit::cases())->mapWithKeys(
+                                fn (CurrencyModificationUnit $unit) => [$unit->value => $unit->getLabel()]
+                            ))
+                            ->live()
+                            ->required(),
+                        Select::make('frequency')
+                            ->label('Fréquence')
+                            ->options(collect(FrequencyUnit::cases())->mapWithKeys(
+                                fn (FrequencyUnit $freq) => [$freq->value => $freq->getLabel()]
+                            ))
+                            ->visible(fn (Get $get): bool => $get('unit') === CurrencyModificationUnit::Currency->value),
+                    ])
+                    ->columns(2)
+                    ->addActionLabel('Ajouter un frais')
+                    ->defaultItems(0),
+            ])
+            ->action(function (array $data): void {
+                $this->wallet->fees()->delete();
+
+                foreach ($data['fees'] as $feeData) {
+                    $this->wallet->fees()->create([
+                        'name' => $feeData['name'],
+                        'value' => $feeData['value'],
+                        'unit' => $feeData['unit'],
+                        'frequency' => ($feeData['unit'] === CurrencyModificationUnit::Currency->value)
+                            ? ($feeData['frequency'] ?? null)
+                            : null,
+                    ]);
+                }
+
+                Notification::make()
+                    ->title('Frais enregistrés')
+                    ->success()
+                    ->send();
+            });
+    }
+
     protected function getExtraContentComponents(): array
     {
         return [
@@ -158,6 +234,19 @@ class WalletPage extends AccountPage
                                 'nbSimulations' => $this->nbSimulations,
                             ])->key('wallet-simulation-section'),
                         ]),
+                ]),
+            Section::make('Frais')
+                ->collapsible()
+                ->collapsed()
+                ->persistCollapsed()
+                ->id('wallet-fees')
+                ->afterHeader(fn () => [$this->configureFeesAction()])
+                ->schema([
+                    Livewire::make(WalletFeesWidget::class, [
+                        'tablePageClass' => static::class,
+                        'shownSecurityIds' => $this->shownSecurityIds,
+                        'walletId' => $this->wallet?->id,
+                    ])->key('wallet-fees-widget'),
                 ]),
         ];
     }

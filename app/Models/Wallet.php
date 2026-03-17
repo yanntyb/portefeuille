@@ -34,4 +34,9 @@ class Wallet extends Model
     {
         return $this->hasMany(Transaction::class);
     }
+
+    public function fees(): HasMany
+    {
+        return $this->hasMany(WalletFee::class);
+    }
 }
