@@ -65,13 +65,21 @@ class CorrelationCalculator
             $pricesBySecurityAndDate[$price->security_id][$date] = (float) $price->close;
         }
 
-        // Trouver les dates communes à tous les titres
-        $dateSets = array_map('array_keys', $pricesBySecurityAndDate);
-        $commonDates = array_shift($dateSets);
+        // Exclure les titres sans données de prix dans la période
+        $securitiesWithPrices = $securities->filter(
+            fn ($s) => isset($pricesBySecurityAndDate[$s->id])
+        )->values();
 
-        if ($commonDates === null) {
+        if ($securitiesWithPrices->count() < 2) {
             return null;
         }
+
+        // Trouver les dates communes à tous les titres ayant des prix
+        $dateSets = $securitiesWithPrices->map(
+            fn ($s) => array_keys($pricesBySecurityAndDate[$s->id])
+        )->all();
+
+        $commonDates = array_shift($dateSets);
 
         foreach ($dateSets as $dates) {
             $commonDates = array_intersect($commonDates, $dates);
@@ -88,7 +96,7 @@ class CorrelationCalculator
         $alignedReturns = [];
         $labels = [];
 
-        foreach ($securities as $security) {
+        foreach ($securitiesWithPrices as $security) {
             $returns = [];
 
             for ($i = 1; $i < count($commonDates); $i++) {
