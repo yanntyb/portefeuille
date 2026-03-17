@@ -85,7 +85,11 @@ class UserResource extends Resource
             ->recordActions([
                 Impersonate::make()
                     ->iconButton()
-                    ->redirectTo('/'),
+                    ->redirectTo('/')
+                    ->action(function ($record, Impersonate $action): void {
+                        $action->impersonate($record);
+                        $action->redirect('/', navigate: false);
+                    }),
             ]);
     }
 
