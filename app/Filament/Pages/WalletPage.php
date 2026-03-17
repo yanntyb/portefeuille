@@ -145,7 +145,7 @@ class WalletPage extends AccountPage
     {
         return Action::make('configureFees')
             ->label('Configurer')
-            ->icon(Heroicon::OutlinedCog6Tooth)
+            ->icon('heroicon-m-cog-6-tooth')
             ->iconButton()
             ->color('gray')
             ->modalHeading('Frais du portefeuille')
