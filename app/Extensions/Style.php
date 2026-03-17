@@ -5,15 +5,25 @@ namespace App\Extensions;
 use Filament\Actions\Action;
 use Filament\Panel;
 use Filament\Schemas\Components\Section;
+use Filament\Support\Assets\Js;
+use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentView;
 use Filament\Tables\Table;
 use Filament\View\PanelsRenderHook;
+use Illuminate\Support\Facades\Vite;
 
 class Style extends Extension
 {
     public function getId(): string
     {
         return 'style';
+    }
+
+    public function boot(Panel $panel): void
+    {
+        FilamentAsset::register([
+            Js::make('chartjs-plugins', Vite::asset('resources/js/chartjs-plugins.js'))->module(),
+        ]);
     }
 
     public function register(Panel $panel): void
