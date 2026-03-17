@@ -31,9 +31,6 @@ class MonteCarloChartWidget extends ChartWidget
 
     public int $nbSimulations = 500;
 
-    /** @var array<string, mixed>|null */
-    protected ?array $cachedSimulationData = null;
-
     #[On('simulation-settings-updated')]
     public function onSettingsUpdated(
         float $versementMensuel,
@@ -45,8 +42,18 @@ class MonteCarloChartWidget extends ChartWidget
         $this->tauxMoyen = $tauxMoyen;
         $this->volatilite = $volatilite;
         $this->nbSimulations = $nbSimulations;
-        $this->cachedSimulationData = null;
+        $this->cachedData = null;
         $this->updateChartData();
+    }
+
+    /**
+     * Désactive la mise à jour automatique du chart à chaque render Livewire.
+     * Monte Carlo étant aléatoire, chaque appel produit des données différentes,
+     * ce qui provoquerait un recalcul indésirable (ex: ouverture d'une modale).
+     */
+    public function rendering(): void
+    {
+        //
     }
 
     public function getHeaderActions(): array
@@ -65,7 +72,7 @@ class MonteCarloChartWidget extends ChartWidget
             ->iconButton()
             ->color('gray')
             ->action(function (): void {
-                $this->cachedSimulationData = null;
+                $this->cachedData = null;
                 $this->updateChartData();
             });
     }
@@ -93,10 +100,6 @@ class MonteCarloChartWidget extends ChartWidget
 
     protected function getData(): array
     {
-        if ($this->cachedSimulationData !== null) {
-            return $this->cachedSimulationData;
-        }
-
         $result = app(MonteCarloEngine::class)->compute(
             capitalInitial: $this->capitalInitial,
             versementMensuel: $this->versementMensuel,
@@ -108,7 +111,7 @@ class MonteCarloChartWidget extends ChartWidget
 
         $labels = array_map(fn (int $y): string => "Année {$y}", range(0, $result->duree));
 
-        $this->cachedSimulationData = [
+        return [
             'labels' => $labels,
             'datasets' => [
                 [
@@ -146,8 +149,6 @@ class MonteCarloChartWidget extends ChartWidget
                 ],
             ],
         ];
-
-        return $this->cachedSimulationData;
     }
 
     protected function getType(): string
