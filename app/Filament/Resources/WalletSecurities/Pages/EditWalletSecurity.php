@@ -4,6 +4,7 @@ namespace App\Filament\Resources\WalletSecurities\Pages;
 
 use App\Filament\Pages\WalletPage;
 use App\Filament\Resources\Securities\Pages\EditSecurity;
+use App\Filament\Resources\Transactions\Schemas\TransactionForm;
 use App\Filament\Resources\WalletSecurities\WalletSecurityResource;
 use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
 use App\Filament\Widgets\Securities\SingleSecurityGainStatsOverview;
@@ -11,9 +12,13 @@ use App\Filament\Widgets\Securities\SingleSecurityPerformanceStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityPriceChartWidget;
 use App\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
 use App\Models\Security;
+use App\Models\Transaction;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Number;
 use Livewire\Attributes\Url;
 
@@ -53,6 +58,31 @@ class EditWalletSecurity extends EditSecurity
         $colorClass = $isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
 
         return '<span class="'.$colorClass.'">'.Number::currency($valuation, 'EUR').'</span>';
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            ...parent::getHeaderActions(),
+            Action::make('newTransaction')
+                ->label('Nouvelle transaction')
+                ->icon(Heroicon::OutlinedPlusCircle)
+                ->color('gray')
+                ->schema(fn (Schema $schema): Schema => TransactionForm::configure($schema, $this->walletId, $this->record->id))
+                ->action(function (array $data): void {
+                    Transaction::create([
+                        ...$data,
+                        'user_id' => auth()->id(),
+                        'wallet_id' => $this->walletId,
+                        'security_id' => $this->record->id,
+                    ]);
+
+                    Notification::make()
+                        ->title('Transaction enregistrée')
+                        ->success()
+                        ->send();
+                }),
+        ];
     }
 
     public function getBreadcrumbs(): array

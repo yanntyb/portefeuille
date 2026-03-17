@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Transactions\Schemas;
 
 use App\Enums\TransactionType;
+use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
 use App\Models\Wallet;
@@ -16,6 +17,7 @@ use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Model;
 
 class TransactionForm
 {
@@ -51,7 +53,7 @@ class TransactionForm
         $set('wallet_type', $name ? strtolower($name) : null);
     }
 
-    public static function configure(Schema $schema): Schema
+    public static function configure(Schema $schema, ?int $walletId = null, ?int $securityId = null): Schema
     {
         return $schema
             ->components([
@@ -72,7 +74,9 @@ class TransactionForm
                     ->required()
                     ->live()
                     ->afterStateUpdated(fn (Set $set, ?string $state) => self::syncWalletType($set, $state))
-                    ->afterStateHydrated(fn (Set $set, ?string $state) => self::syncWalletType($set, $state)),
+                    ->afterStateHydrated(fn (Set $set, ?string $state) => self::syncWalletType($set, $state))
+                    ->hidden($walletId !== null)
+                    ->default($walletId),
 
                 DatePicker::make('date')
                     ->label('Date')
@@ -83,11 +87,16 @@ class TransactionForm
 
                 Select::make('security_id')
                     ->label('Titre')
-                    ->relationship('security', 'isin')
-                    ->getOptionLabelFromRecordUsing(fn ($record): string => $record->name
-                        ? "{$record->isin} — {$record->name}"
-                        : $record->isin)
-                    ->searchable(['isin', 'name'])
+                    ->options(fn (): array => Security::query()
+                        ->orderBy('isin')
+                        ->get()
+                        ->mapWithKeys(fn (Security $security): array => [
+                            $security->id => $security->name
+                                ? "{$security->isin} — {$security->name}"
+                                : $security->isin,
+                        ])
+                        ->all())
+                    ->searchable()
                     ->preload()
                     ->live()
                     ->afterStateUpdated(fn (Get $get, Set $set) => self::fillUnitPrice($get, $set))
@@ -103,6 +112,14 @@ class TransactionForm
                         TextInput::make('ticker')
                             ->label('Ticker'),
                     ])
+                    ->createOptionUsing(fn (array $data): int => Security::create($data)->id)
+                    ->afterStateHydrated(function (Get $get, Set $set) use ($securityId): void {
+                        if ($securityId !== null) {
+                            self::fillUnitPrice($get, $set);
+                        }
+                    })
+                    ->hidden($securityId !== null)
+                    ->default($securityId)
                     ->hiddenJs(<<<'JS'
                         ! ['pea', 'cto'].includes($get('wallet_type'))
                         JS),
@@ -122,7 +139,7 @@ class TransactionForm
                         ! ['pea', 'cto'].includes($get('wallet_type'))
                         JS)
                     ->rules([
-                        fn (Get $get, ?Transaction $record): Closure => function (string $attribute, $value, Closure $fail) use ($get, $record): void {
+                        fn (Get $get, ?Model $record): Closure => function (string $attribute, $value, Closure $fail) use ($get, $record): void {
                             $type = $get('type');
 
                             if ($type !== TransactionType::Sell->value && $type !== TransactionType::Sell) {
@@ -140,7 +157,7 @@ class TransactionForm
                                 ->where('security_id', $securityId)
                                 ->where('wallet_id', $walletId)
                                 ->where('user_id', auth()->id())
-                                ->when($record, fn ($query) => $query->where('id', '!=', $record->id))
+                                ->when($record instanceof Transaction, fn ($query) => $query->where('id', '!=', $record->id))
                                 ->selectRaw("SUM(CASE WHEN type = 'buy' THEN quantity ELSE -quantity END) as total")
                                 ->value('total');
 
