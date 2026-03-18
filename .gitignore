@@ -27,3 +27,7 @@ Thumbs.db
 /.mcp.json
 /.playwright-mcp/
 *.png
+
+**/caddy
+frankenphp
+frankenphp-worker.php

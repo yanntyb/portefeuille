@@ -9,7 +9,7 @@ abstract class Extension implements Plugin
 {
     public static function make(): static
     {
-        app()->singletonIf(static::class);
+        app()->scopedIf(static::class);
 
         return app(static::class);
     }
