@@ -9,9 +9,10 @@ The Laravel Boost guidelines are specifically curated by Laravel maintainers for
 
 This application is a Laravel application and its main Laravel ecosystems package & versions are below. You are an expert with them all. Ensure you abide by these specific packages & versions.
 
-- php - 8.5.2
+- php - 8.5.4
 - filament/filament (FILAMENT) - v5
 - laravel/framework (LARAVEL) - v12
+- laravel/octane (OCTANE) - v2
 - laravel/prompts (PROMPTS) - v0
 - livewire/flux (FLUXUI_FREE) - v2
 - livewire/livewire (LIVEWIRE) - v4
