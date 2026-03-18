@@ -7,7 +7,6 @@ use App\Exceptions\TickerResolutionException;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\SecuritySector;
-use App\Support\PythonScriptCaller;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +14,10 @@ use Illuminate\Support\Facades\Log;
 
 class YahooFinanceService
 {
+    public function __construct(
+        private YahooFinanceClient $client,
+    ) {}
+
     /**
      * @throws TickerResolutionException
      */
@@ -34,15 +37,13 @@ class YahooFinanceService
      */
     public function searchTicker(string $query, ?string $fallbackQuery = null): array
     {
-        $input = ['query' => $query];
+        $results = $this->client->search($query);
 
-        if ($fallbackQuery !== null) {
-            $input['fallback_query'] = $fallbackQuery;
+        if ($results === [] && $fallbackQuery !== null) {
+            $results = $this->client->search($fallbackQuery);
         }
 
-        $result = PythonScriptCaller::call('search_ticker.py', $input);
-
-        return $result['data'] ?? [];
+        return $results;
     }
 
     /**
@@ -81,13 +82,11 @@ class YahooFinanceService
             return 0;
         }
 
-        $result = PythonScriptCaller::call('fetch_prices.py', [
-            'ticker' => $security->ticker,
-            'start_date' => $startDate->format('Y-m-d'),
-            'end_date' => $endDate->modify('+1 day')->format('Y-m-d'),
-        ], timeout: 60);
-
-        $historicalData = $result['data'] ?? [];
+        $historicalData = $this->client->fetchPrices(
+            $security->ticker,
+            $startDate->format('Y-m-d'),
+            $endDate->modify('+1 day')->format('Y-m-d'),
+        );
 
         if ($historicalData === []) {
             return 0;
@@ -190,11 +189,7 @@ class YahooFinanceService
             'end_date' => $endDate->modify('+1 day')->format('Y-m-d'),
         ], $tasks);
 
-        $result = PythonScriptCaller::call('fetch_prices_bulk.py', [
-            'tickers' => $tickersInput,
-        ], timeout: 120);
-
-        $allData = $result['data'] ?? [];
+        $allData = $this->client->fetchPricesBulk($tickersInput);
 
         $totalInserted = 0;
 
@@ -238,11 +233,7 @@ class YahooFinanceService
             $security->save();
         }
 
-        $result = PythonScriptCaller::call('fetch_sectors.py', [
-            'ticker' => $security->ticker,
-        ], timeout: 30);
-
-        $sectorsData = $result['data'] ?? [];
+        $sectorsData = $this->client->fetchSectors($security->ticker);
 
         if ($sectorsData === []) {
             return 0;

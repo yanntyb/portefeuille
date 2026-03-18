@@ -4,7 +4,7 @@ use App\Filament\Resources\AllSecurities\Pages\ListAllSecurities;
 use App\Models\Security;
 use App\Models\Transaction;
 use App\Models\User;
-use Illuminate\Support\Facades\Process;
+use App\Services\YahooFinanceClient;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseHas;
@@ -48,14 +48,14 @@ it('can search securities by name', function () {
 });
 
 it('can update a security from ISIN via table action', function () {
-    Process::fake([
-        '*search_ticker.py*' => Process::result(output: json_encode([
-            'status' => 'ok',
-            'data' => [
+    $this->mock(YahooFinanceClient::class, function ($mock) {
+        $mock->shouldReceive('search')
+            ->andReturn([
                 ['symbol' => 'MSFT', 'name' => 'Microsoft Corporation', 'exchange' => 'NMS', 'type' => 'Equity'],
-            ],
-        ])),
-    ]);
+            ]);
+        $mock->shouldReceive('fetchPrices')->andReturn([]);
+        $mock->shouldReceive('fetchSectors')->andReturn([]);
+    });
 
     $security = Security::factory()->create([
         'isin' => 'US5949181045',
@@ -86,12 +86,10 @@ it('can update a security from ISIN via table action', function () {
 });
 
 it('shows warning when no results found for ISIN', function () {
-    Process::fake([
-        '*search_ticker.py*' => Process::result(output: json_encode([
-            'status' => 'ok',
-            'data' => [],
-        ])),
-    ]);
+    $this->mock(YahooFinanceClient::class, function ($mock) {
+        $mock->shouldReceive('search')
+            ->andReturn([]);
+    });
 
     $security = Security::factory()->create([
         'isin' => 'XX0000000000',

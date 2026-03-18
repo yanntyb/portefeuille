@@ -3,24 +3,23 @@
 use App\Enums\Sector;
 use App\Models\Security;
 use App\Models\SecuritySector;
+use App\Services\YahooFinanceClient;
 use App\Services\YahooFinanceService;
-use Illuminate\Support\Facades\Process;
 
 it('fetches and stores sectors for an ETF with multiple sectors', function () {
     $security = Security::factory()->create(['ticker' => 'CW8.PA']);
 
-    Process::fake([
-        '*fetch_sectors.py*' => Process::result(output: json_encode([
-            'status' => 'ok',
-            'data' => [
+    $this->mock(YahooFinanceClient::class, function ($mock) {
+        $mock->shouldReceive('fetchSectors')
+            ->with('CW8.PA')
+            ->andReturn([
                 'technology' => 0.2283,
                 'healthcare' => 0.1341,
                 'financial_services' => 0.1556,
-            ],
-        ])),
-    ]);
+            ]);
+    });
 
-    $service = new YahooFinanceService;
+    $service = app(YahooFinanceService::class);
     $count = $service->fetchAndStoreSectors($security);
 
     expect($count)->toBe(3);
@@ -42,16 +41,15 @@ it('fetches and stores sectors for an ETF with multiple sectors', function () {
 it('fetches and stores a single sector for a stock', function () {
     $security = Security::factory()->create(['ticker' => 'AAPL']);
 
-    Process::fake([
-        '*fetch_sectors.py*' => Process::result(output: json_encode([
-            'status' => 'ok',
-            'data' => [
+    $this->mock(YahooFinanceClient::class, function ($mock) {
+        $mock->shouldReceive('fetchSectors')
+            ->with('AAPL')
+            ->andReturn([
                 'technology' => 1.0,
-            ],
-        ])),
-    ]);
+            ]);
+    });
 
-    $service = new YahooFinanceService;
+    $service = app(YahooFinanceService::class);
     $count = $service->fetchAndStoreSectors($security);
 
     expect($count)->toBe(1);
@@ -65,17 +63,16 @@ it('fetches and stores a single sector for a stock', function () {
 it('maps unknown sectors to Other', function () {
     $security = Security::factory()->create(['ticker' => 'TEST']);
 
-    Process::fake([
-        '*fetch_sectors.py*' => Process::result(output: json_encode([
-            'status' => 'ok',
-            'data' => [
+    $this->mock(YahooFinanceClient::class, function ($mock) {
+        $mock->shouldReceive('fetchSectors')
+            ->with('TEST')
+            ->andReturn([
                 'unknown_sector' => 0.5,
                 'technology' => 0.5,
-            ],
-        ])),
-    ]);
+            ]);
+    });
 
-    $service = new YahooFinanceService;
+    $service = app(YahooFinanceService::class);
     $count = $service->fetchAndStoreSectors($security);
 
     expect($count)->toBe(2);
@@ -95,16 +92,15 @@ it('removes old sectors not present in the new result', function () {
         'weight' => 0.1,
     ]);
 
-    Process::fake([
-        '*fetch_sectors.py*' => Process::result(output: json_encode([
-            'status' => 'ok',
-            'data' => [
+    $this->mock(YahooFinanceClient::class, function ($mock) {
+        $mock->shouldReceive('fetchSectors')
+            ->with('CW8.PA')
+            ->andReturn([
                 'technology' => 1.0,
-            ],
-        ])),
-    ]);
+            ]);
+    });
 
-    $service = new YahooFinanceService;
+    $service = app(YahooFinanceService::class);
     $service->fetchAndStoreSectors($security);
 
     expect(SecuritySector::where('security_id', $security->id)->count())->toBe(1);
@@ -118,20 +114,18 @@ it('removes old sectors not present in the new result', function () {
 it('resolves ticker if not set before fetching sectors', function () {
     $security = Security::factory()->create(['isin' => 'FR0011871110', 'ticker' => null]);
 
-    Process::fake([
-        '*search_ticker.py*' => Process::result(output: json_encode([
-            'status' => 'ok',
-            'data' => [
+    $this->mock(YahooFinanceClient::class, function ($mock) {
+        $mock->shouldReceive('search')
+            ->with('FR0011871110')
+            ->andReturn([
                 ['symbol' => 'CW8.PA', 'name' => 'Amundi MSCI World', 'exchange' => 'Paris', 'type' => 'ETF'],
-            ],
-        ])),
-        '*fetch_sectors.py*' => Process::result(output: json_encode([
-            'status' => 'ok',
-            'data' => ['technology' => 1.0],
-        ])),
-    ]);
+            ]);
+        $mock->shouldReceive('fetchSectors')
+            ->with('CW8.PA')
+            ->andReturn(['technology' => 1.0]);
+    });
 
-    $service = new YahooFinanceService;
+    $service = app(YahooFinanceService::class);
     $service->fetchAndStoreSectors($security);
 
     expect($security->fresh()->ticker)->toBe('CW8.PA');
@@ -140,14 +134,13 @@ it('resolves ticker if not set before fetching sectors', function () {
 it('returns zero when no sector data is available', function () {
     $security = Security::factory()->create(['ticker' => 'TEST']);
 
-    Process::fake([
-        '*fetch_sectors.py*' => Process::result(output: json_encode([
-            'status' => 'ok',
-            'data' => [],
-        ])),
-    ]);
+    $this->mock(YahooFinanceClient::class, function ($mock) {
+        $mock->shouldReceive('fetchSectors')
+            ->with('TEST')
+            ->andReturn([]);
+    });
 
-    $service = new YahooFinanceService;
+    $service = app(YahooFinanceService::class);
     $count = $service->fetchAndStoreSectors($security);
 
     expect($count)->toBe(0);
