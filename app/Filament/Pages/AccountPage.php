@@ -13,6 +13,7 @@ use App\Filament\Widgets\Securities\GainStatsOverview;
 use App\Filament\Widgets\Securities\PerformanceStatsOverview;
 use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
 use App\Filament\Widgets\Securities\ValuationChartWidget;
+use App\Filament\Widgets\Securities\ValuationStatOverview;
 use App\Jobs\UpdateSecuritiesJob;
 use App\Models\Security;
 use App\Models\SecurityPrice;
@@ -35,7 +36,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\HtmlString;
 use Illuminate\Support\Number;
 use UnitEnum;
 
@@ -87,8 +87,6 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
         $this->isUpdating = Cache::has($cacheKey);
 
         $this->computeSecurityVisibility();
-
-        $this->js('$wire.refreshPrices()');
     }
 
     public function tableStoreName(): string
@@ -174,7 +172,11 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
             return;
         }
 
-        app(YahooFinanceService::class)->fetchAndStorePricesBulk($securities);
+        try {
+            app(YahooFinanceService::class)->fetchAndStorePricesBulk($securities);
+        } catch (\Throwable) {
+            // Silently fail on API errors (e.g. rate limiting)
+        }
 
         $this->computeSecurityVisibility();
         $this->dispatch('prices-updated');
@@ -194,7 +196,7 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
 
     public function getTitle(): string|Htmlable
     {
-        return new HtmlString(static::getNavigationLabel().' '.$this->getFormattedValuation());
+        return static::getNavigationLabel();
     }
 
     protected function getTotalValuation(): float
@@ -423,6 +425,23 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
     {
         return $schema
             ->components([
+                Section::make()
+                    ->contained(false)
+                    ->columns(['default' => 1, 'lg' => 2])
+                    ->schema([
+                        Livewire::make(ValuationStatOverview::class, [
+                            'tablePageClass' => static::class,
+                            'shownSecurityIds' => $this->shownSecurityIds,
+                            'walletId' => $this->wallet?->id,
+                        ])->key('valuation-stat-overview')
+                            ->columnSpan(1),
+                        Livewire::make(ValuationChartWidget::class, [
+                            'tablePageClass' => static::class,
+                            'shownSecurityIds' => $this->shownSecurityIds,
+                            'walletId' => $this->wallet?->id,
+                        ])->key('valuation-chart')
+                            ->columnSpan(1),
+                    ]),
                 Livewire::make(PerformanceStatsOverview::class, [
                     'tablePageClass' => static::class,
                     'shownSecurityIds' => $this->shownSecurityIds,
@@ -433,11 +452,6 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
                     'shownSecurityIds' => $this->shownSecurityIds,
                     'walletId' => $this->wallet?->id,
                 ])->key('gain-stats-overview'),
-                Livewire::make(ValuationChartWidget::class, [
-                    'tablePageClass' => static::class,
-                    'shownSecurityIds' => $this->shownSecurityIds,
-                    'walletId' => $this->wallet?->id,
-                ])->key('valuation-chart'),
                 Section::make('Diversification')
                     ->collapsible()
                     ->collapsed()

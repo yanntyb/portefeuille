@@ -2,28 +2,23 @@
 
 namespace App\Filament\Widgets\Securities;
 
-use Filament\Widgets\Concerns\InteractsWithPageTable;
-use Filament\Widgets\StatsOverviewWidget;
-use Filament\Widgets\StatsOverviewWidget\Stat;
+use App\Filament\Widgets\Securities\Concerns\HasReactiveTableProperties;
+use Filament\Widgets\Widget;
 use Illuminate\Support\Number;
 use Livewire\Attributes\On;
 
-class ValuationStatOverview extends StatsOverviewWidget
+class ValuationStatOverview extends Widget
 {
-    use InteractsWithPageTable;
+    use HasReactiveTableProperties;
+
+    protected string $view = 'filament.widgets.valuation-stats-overview';
 
     protected ?string $pollingInterval = null;
 
-    /** @var class-string|null */
-    public ?string $tablePageClass = null;
+    protected int|string|array $columnSpan = 'full';
 
     /** @var list<int>|null */
     public ?array $shownSecurityIds = null;
-
-    protected function getTablePage(): string
-    {
-        return $this->tablePageClass;
-    }
 
     #[On('security-visibility-changed')]
     public function updateShownSecurityIds(array $shownSecurityIds): void
@@ -37,10 +32,16 @@ class ValuationStatOverview extends StatsOverviewWidget
         // Triggers re-render with fresh data
     }
 
-    protected function getStats(): array
+    /**
+     * @return array{valuation: string, color: string}
+     */
+    public function getValuationData(): array
     {
         if ($this->tablePageClass === null) {
-            return [];
+            return [
+                'valuation' => Number::currency(0, 'EUR'),
+                'color' => 'success',
+            ];
         }
 
         $query = $this->getPageTableQuery();
@@ -61,8 +62,11 @@ class ValuationStatOverview extends StatsOverviewWidget
             return (float) $record->total_quantity * (float) $close;
         });
 
+        $totalInvested = $records->sum(fn ($record) => (float) ($record->total_invested ?? 0));
+
         return [
-            Stat::make('Valorisation', Number::currency($valuation, 'EUR')),
+            'valuation' => Number::currency($valuation, 'EUR'),
+            'color' => $valuation >= $totalInvested ? 'success' : 'danger',
         ];
     }
 }

@@ -23,7 +23,7 @@ class ValuationChartWidget extends ChartWidget
     use HasFiltersSchema;
     use HasReactiveTableProperties;
 
-    protected ?string $heading = 'Valorisation';
+    protected ?string $heading = null;
 
     protected int|string|array $columnSpan = 'full';
 
