@@ -2,6 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Enums\CurrencyModificationUnit;
+use App\Enums\FeeScope;
+use App\Enums\Sector;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\SecuritySector;
@@ -14,146 +17,288 @@ use Illuminate\Database\Seeder;
 class TransactionSeeder extends Seeder
 {
     /**
-     * @var array<string, array{isin: string, ticker: string, name: string, start_price: float, drift: float, volatility: float, sectors: array<string, float>}>
+     * @var array<string, array{isin: string, ticker: string, name: string}>
      */
-    private const ETFS = [
+    private const PEA_ETFS = [
         'world' => [
             'isin' => 'LU1681043599',
             'ticker' => 'CW8.PA',
             'name' => 'Amundi MSCI World UCITS ETF',
-            'start_price' => 320.0,
-            'drift' => 0.00035,
-            'volatility' => 0.011,
-            'sectors' => [
-                'technology' => 0.235,
-                'financial_services' => 0.155,
-                'healthcare' => 0.120,
-                'consumer_cyclical' => 0.105,
-                'industrials' => 0.105,
-                'communication_services' => 0.075,
-                'consumer_defensive' => 0.065,
-                'energy' => 0.050,
-                'basic_materials' => 0.040,
-                'realestate' => 0.025,
-                'utilities' => 0.025,
-            ],
         ],
         'sp500' => [
             'isin' => 'FR0011871128',
             'ticker' => 'PE500.PA',
             'name' => 'Amundi PEA S&P 500 UCITS ETF',
-            'start_price' => 28.0,
-            'drift' => 0.00040,
-            'volatility' => 0.012,
-            'sectors' => [
-                'technology' => 0.295,
-                'financial_services' => 0.135,
-                'healthcare' => 0.125,
-                'consumer_cyclical' => 0.105,
-                'communication_services' => 0.090,
-                'industrials' => 0.085,
-                'consumer_defensive' => 0.060,
-                'energy' => 0.040,
-                'realestate' => 0.025,
-                'utilities' => 0.025,
-                'basic_materials' => 0.015,
-            ],
         ],
         'emerging' => [
             'isin' => 'FR0013412020',
             'ticker' => 'PAEEM.PA',
             'name' => 'Amundi PEA MSCI Emerging Markets UCITS ETF',
-            'start_price' => 19.0,
-            'drift' => 0.00015,
-            'volatility' => 0.014,
-            'sectors' => [
-                'technology' => 0.220,
-                'financial_services' => 0.210,
-                'consumer_cyclical' => 0.135,
-                'communication_services' => 0.100,
-                'industrials' => 0.070,
-                'energy' => 0.065,
-                'basic_materials' => 0.065,
-                'consumer_defensive' => 0.055,
-                'healthcare' => 0.040,
-                'utilities' => 0.025,
-                'realestate' => 0.015,
-            ],
         ],
         'europe' => [
             'isin' => 'FR0007085501',
             'ticker' => 'MEUD.PA',
             'name' => 'Amundi PEA STOXX Europe 600 UCITS ETF',
-            'start_price' => 22.0,
-            'drift' => 0.00025,
-            'volatility' => 0.010,
-            'sectors' => [
-                'financial_services' => 0.185,
-                'industrials' => 0.170,
-                'healthcare' => 0.145,
-                'consumer_cyclical' => 0.115,
-                'technology' => 0.085,
-                'consumer_defensive' => 0.080,
-                'energy' => 0.060,
-                'basic_materials' => 0.055,
-                'utilities' => 0.045,
-                'communication_services' => 0.035,
-                'realestate' => 0.025,
-            ],
         ],
         'nasdaq' => [
             'isin' => 'FR0013412269',
             'ticker' => 'PANX.PA',
             'name' => 'Amundi PEA Nasdaq-100 UCITS ETF',
-            'start_price' => 40.0,
-            'drift' => 0.00050,
-            'volatility' => 0.015,
-            'sectors' => [
-                'technology' => 0.490,
-                'communication_services' => 0.165,
-                'consumer_cyclical' => 0.145,
-                'healthcare' => 0.070,
-                'consumer_defensive' => 0.055,
-                'industrials' => 0.045,
-                'utilities' => 0.015,
-                'financial_services' => 0.015,
-            ],
         ],
     ];
+
+    /**
+     * @var array<string, array{isin: string, ticker: string, name: string}>
+     */
+    private const CTO_ETFS = [
+        'world' => [
+            'isin' => 'IE00B4L5Y983',
+            'ticker' => 'IWDA.L',
+            'name' => 'iShares Core MSCI World UCITS ETF',
+        ],
+        'sp500' => [
+            'isin' => 'IE00B5BMR087',
+            'ticker' => 'CSPX.L',
+            'name' => 'iShares Core S&P 500 UCITS ETF',
+        ],
+        'emerging' => [
+            'isin' => 'IE00BKM4GZ66',
+            'ticker' => 'EIMI.L',
+            'name' => 'iShares Core MSCI EM IMI UCITS ETF',
+        ],
+    ];
+
+    /**
+     * @var array<string, array{base_price: float, volatility: float}>
+     */
+    private const ETF_CONFIGS = [
+        'CW8.PA' => ['base_price' => 55.0, 'volatility' => 0.012],
+        'PE500.PA' => ['base_price' => 28.0, 'volatility' => 0.013],
+        'PAEEM.PA' => ['base_price' => 22.0, 'volatility' => 0.014],
+        'MEUD.PA' => ['base_price' => 62.0, 'volatility' => 0.011],
+        'PANX.PA' => ['base_price' => 42.0, 'volatility' => 0.015],
+        'IWDA.L' => ['base_price' => 62.0, 'volatility' => 0.012],
+        'CSPX.L' => ['base_price' => 380.0, 'volatility' => 0.013],
+        'EIMI.L' => ['base_price' => 28.0, 'volatility' => 0.014],
+    ];
+
+    /**
+     * @return array<string, array<string, float>>
+     */
+    private static function sectorAllocations(): array
+    {
+        return [
+            'world' => [
+                Sector::Technology->value => 0.23,
+                Sector::Healthcare->value => 0.12,
+                Sector::FinancialServices->value => 0.15,
+                Sector::CommunicationServices->value => 0.08,
+                Sector::ConsumerCyclical->value => 0.11,
+                Sector::ConsumerDefensive->value => 0.07,
+                Sector::Industrials->value => 0.10,
+                Sector::Energy->value => 0.05,
+                Sector::Utilities->value => 0.03,
+                Sector::RealEstate->value => 0.03,
+                Sector::BasicMaterials->value => 0.03,
+            ],
+            'sp500' => [
+                Sector::Technology->value => 0.29,
+                Sector::Healthcare->value => 0.13,
+                Sector::FinancialServices->value => 0.13,
+                Sector::CommunicationServices->value => 0.09,
+                Sector::ConsumerCyclical->value => 0.10,
+                Sector::ConsumerDefensive->value => 0.06,
+                Sector::Industrials->value => 0.08,
+                Sector::Energy->value => 0.04,
+                Sector::Utilities->value => 0.03,
+                Sector::RealEstate->value => 0.03,
+                Sector::BasicMaterials->value => 0.02,
+            ],
+            'emerging' => [
+                Sector::Technology->value => 0.20,
+                Sector::FinancialServices->value => 0.22,
+                Sector::CommunicationServices->value => 0.10,
+                Sector::ConsumerCyclical->value => 0.13,
+                Sector::ConsumerDefensive->value => 0.06,
+                Sector::Industrials->value => 0.06,
+                Sector::Energy->value => 0.07,
+                Sector::Healthcare->value => 0.04,
+                Sector::BasicMaterials->value => 0.07,
+                Sector::Utilities->value => 0.03,
+                Sector::RealEstate->value => 0.02,
+            ],
+            'europe' => [
+                Sector::FinancialServices->value => 0.18,
+                Sector::Healthcare->value => 0.15,
+                Sector::Industrials->value => 0.16,
+                Sector::Technology->value => 0.09,
+                Sector::ConsumerCyclical->value => 0.10,
+                Sector::ConsumerDefensive->value => 0.10,
+                Sector::Energy->value => 0.06,
+                Sector::BasicMaterials->value => 0.06,
+                Sector::Utilities->value => 0.05,
+                Sector::CommunicationServices->value => 0.03,
+                Sector::RealEstate->value => 0.02,
+            ],
+            'nasdaq' => [
+                Sector::Technology->value => 0.50,
+                Sector::CommunicationServices->value => 0.16,
+                Sector::ConsumerCyclical->value => 0.14,
+                Sector::Healthcare->value => 0.07,
+                Sector::ConsumerDefensive->value => 0.04,
+                Sector::Industrials->value => 0.04,
+                Sector::FinancialServices->value => 0.02,
+                Sector::Utilities->value => 0.01,
+                Sector::Energy->value => 0.01,
+                Sector::RealEstate->value => 0.01,
+            ],
+        ];
+    }
 
     public function run(User $user): void
     {
         $startDate = CarbonImmutable::parse('2021-03-01');
         $endDate = CarbonImmutable::now();
-        $monthlyBudget = 500.0;
 
-        $securities = [];
-
-        foreach (self::ETFS as $key => $etf) {
-            $security = Security::factory()->create([
-                'isin' => $etf['isin'],
-                'name' => $etf['name'],
-                'ticker' => $etf['ticker'],
-            ]);
-
-            $securities[$key] = $security;
-
-            $this->seedPriceHistory($security, $etf['start_price'], $etf['drift'], $etf['volatility'], $startDate);
-            $this->seedSectors($security, $etf['sectors']);
-        }
+        $peaSecurities = $this->createSecurities(self::PEA_ETFS, $startDate);
+        $ctoSecurities = $this->createSecurities(self::CTO_ETFS, $startDate);
 
         $peaWallet = Wallet::create([
             'user_id' => $user->id,
             'name' => 'PEA',
         ]);
 
-        $this->seedDcaTransactions($user, $peaWallet, $securities, $startDate, $endDate, $monthlyBudget);
+        $this->seedDcaTransactions($user, $peaWallet, $peaSecurities, $startDate, $endDate, 500.0);
+
+        $peaWallet->fees()->createMany([
+            [
+                'name' => 'Prélèvements sociaux',
+                'value' => 17.2,
+                'unit' => CurrencyModificationUnit::Percentage->value,
+                'scope' => FeeScope::RealizedGain->value,
+            ],
+        ]);
+
+        $ctoWallet = Wallet::create([
+            'user_id' => $user->id,
+            'name' => 'CTO',
+        ]);
+
+        $this->seedDcaTransactions($user, $ctoWallet, $ctoSecurities, $startDate, $endDate, 300.0, 'Trade Republic');
+
+        $ctoWallet->fees()->createMany([
+            [
+                'name' => 'Flat Tax (PFU)',
+                'value' => 30,
+                'unit' => CurrencyModificationUnit::Percentage->value,
+                'scope' => FeeScope::RealizedGain->value,
+            ],
+        ]);
+    }
+
+    /**
+     * @param  array<string, array{isin: string, ticker: string, name: string}>  $etfs
+     * @return array<string, Security>
+     */
+    private function createSecurities(array $etfs, CarbonImmutable $startDate): array
+    {
+        $securities = [];
+
+        foreach ($etfs as $key => $etf) {
+            $security = Security::firstOrCreate(
+                ['isin' => $etf['isin']],
+                [
+                    'name' => $etf['name'],
+                    'ticker' => $etf['ticker'],
+                ],
+            );
+
+            $securities[$key] = $security;
+
+            if ($security->wasRecentlyCreated) {
+                $this->generatePriceHistory($security, $startDate->subMonth());
+                $this->generateSectorAllocations($security, $key);
+            }
+        }
+
+        return $securities;
+    }
+
+    private function generatePriceHistory(Security $security, CarbonImmutable $startDate): void
+    {
+        $config = self::ETF_CONFIGS[$security->ticker];
+        $price = $config['base_price'];
+        $volatility = $config['volatility'];
+
+        $date = $startDate;
+        $today = CarbonImmutable::now();
+        $rows = [];
+
+        while ($date->lte($today)) {
+            if ($date->isWeekend()) {
+                $date = $date->addDay();
+
+                continue;
+            }
+
+            $price *= (1 + $this->randomNormal(0.0003, $volatility));
+            $price = max($price, 0.01);
+
+            $close = round($price, 4);
+            $open = round($close * (1 + $this->randomNormal(0, 0.003)), 4);
+            $high = round(max($open, $close) * (1 + abs($this->randomNormal(0, 0.004))), 4);
+            $low = round(min($open, $close) * (1 - abs($this->randomNormal(0, 0.004))), 4);
+
+            $rows[] = [
+                'security_id' => $security->id,
+                'date' => $date->toDateString(),
+                'open' => $open,
+                'high' => $high,
+                'low' => $low,
+                'close' => $close,
+                'volume' => rand(100000, 2000000),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+            $date = $date->addDay();
+        }
+
+        foreach (array_chunk($rows, 500) as $chunk) {
+            SecurityPrice::insert($chunk);
+        }
+    }
+
+    private function generateSectorAllocations(Security $security, string $etfKey): void
+    {
+        $allocations = self::sectorAllocations()[$etfKey];
+        $rows = [];
+
+        foreach ($allocations as $sector => $weight) {
+            $rows[] = [
+                'security_id' => $security->id,
+                'sector' => $sector,
+                'weight' => $weight,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        SecuritySector::insert($rows);
+    }
+
+    private function randomNormal(float $mean, float $stddev): float
+    {
+        $u1 = max(mt_rand() / mt_getrandmax(), 1e-10);
+        $u2 = mt_rand() / mt_getrandmax();
+
+        return $mean + $stddev * sqrt(-2.0 * log($u1)) * cos(2.0 * M_PI * $u2);
     }
 
     /**
      * @param  array<string, Security>  $securities
      */
-    private function seedDcaTransactions(User $user, Wallet $peaWallet, array $securities, CarbonImmutable $startDate, CarbonImmutable $endDate, float $monthlyBudget): void
+    private function seedDcaTransactions(User $user, Wallet $wallet, array $securities, CarbonImmutable $startDate, CarbonImmutable $endDate, float $monthlyBudget, ?string $broker = null): void
     {
         $budgetPerEtf = $monthlyBudget / count($securities);
         $date = $startDate;
@@ -192,10 +337,10 @@ class TransactionSeeder extends Seeder
 
                 $transactions[] = [
                     'user_id' => $user->id,
-                    'wallet_id' => $peaWallet->id,
+                    'wallet_id' => $wallet->id,
                     'date' => $investDate->toDateString(),
                     'security_id' => $security->id,
-                    'broker' => null,
+                    'broker' => $broker,
                     'quantity' => $quantity,
                     'unit_price' => round($price, 4),
                     'fees' => $fees,
@@ -211,70 +356,5 @@ class TransactionSeeder extends Seeder
         foreach (array_chunk($transactions, 100) as $chunk) {
             Transaction::insert($chunk);
         }
-    }
-
-    /**
-     * @param  array<string, float>  $sectors
-     */
-    private function seedSectors(Security $security, array $sectors): void
-    {
-        $rows = [];
-
-        foreach ($sectors as $sectorValue => $weight) {
-            $rows[] = [
-                'security_id' => $security->id,
-                'sector' => $sectorValue,
-                'weight' => $weight,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-        }
-
-        SecuritySector::insert($rows);
-    }
-
-    private function seedPriceHistory(Security $security, float $startPrice, float $dailyDrift, float $volatility, CarbonImmutable $startDate): void
-    {
-        $date = $startDate->subMonth();
-        $endDate = CarbonImmutable::now();
-        $close = $startPrice;
-        $rows = [];
-
-        while ($date->lte($endDate)) {
-            if ($date->isWeekday()) {
-                $randomShock = $dailyDrift + $volatility * $this->gaussianRandom();
-                $close = round($close * (1 + $randomShock), 4);
-                $dayVolatility = $close * $volatility;
-                $high = round($close + abs($dayVolatility * mt_rand(10, 80) / 100), 4);
-                $low = round($close - abs($dayVolatility * mt_rand(10, 80) / 100), 4);
-                $open = round($low + ($high - $low) * mt_rand(20, 80) / 100, 4);
-
-                $rows[] = [
-                    'security_id' => $security->id,
-                    'date' => $date->toDateString(),
-                    'open' => $open,
-                    'high' => $high,
-                    'low' => $low,
-                    'close' => $close,
-                    'volume' => mt_rand(50000, 500000),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-            }
-
-            $date = $date->addDay();
-        }
-
-        foreach (array_chunk($rows, 500) as $chunk) {
-            SecurityPrice::insert($chunk);
-        }
-    }
-
-    private function gaussianRandom(): float
-    {
-        $u1 = mt_rand(1, mt_getrandmax()) / mt_getrandmax();
-        $u2 = mt_rand(1, mt_getrandmax()) / mt_getrandmax();
-
-        return sqrt(-2 * log($u1)) * cos(2 * M_PI * $u2);
     }
 }
