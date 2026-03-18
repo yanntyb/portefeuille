@@ -2,64 +2,27 @@
 
 namespace App\Services;
 
-use GuzzleHttp\Cookie\CookieJar;
-use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Support\Facades\Http;
-use RuntimeException;
+use App\Services\YahooFinance\Requests\GetChartRequest;
+use App\Services\YahooFinance\Requests\GetQuoteSummaryRequest;
+use App\Services\YahooFinance\Requests\SearchRequest;
+use App\Services\YahooFinance\YahooFinanceConnector;
 
 class YahooFinanceClient
 {
-    private const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+    private const BULK_DELAY_MICROSECONDS = 2_000_000;
 
-    private ?CookieJar $cookieJar = null;
-
-    private ?string $crumb = null;
-
-    private function authenticate(): void
-    {
-        if ($this->crumb !== null) {
-            return;
-        }
-
-        $this->cookieJar = new CookieJar;
-
-        Http::withOptions(['cookies' => $this->cookieJar])
-            ->withHeaders(['User-Agent' => self::USER_AGENT])
-            ->get('https://fc.yahoo.com/v1/test/0.0.0.0');
-
-        $response = Http::withOptions(['cookies' => $this->cookieJar])
-            ->withHeaders(['User-Agent' => self::USER_AGENT])
-            ->get('https://query2.finance.yahoo.com/v1/test/getcrumb');
-
-        if (! $response->successful()) {
-            throw new RuntimeException('Failed to obtain Yahoo Finance crumb token');
-        }
-
-        $this->crumb = $response->body();
-    }
-
-    private function request(): PendingRequest
-    {
-        $this->authenticate();
-
-        return Http::withOptions(['cookies' => $this->cookieJar])
-            ->withHeaders(['User-Agent' => self::USER_AGENT]);
-    }
+    public function __construct(
+        private readonly YahooFinanceConnector $connector = new YahooFinanceConnector,
+    ) {}
 
     /**
      * @return list<array{symbol: string, name: string, exchange: string, type: string}>
      */
     public function search(string $query): array
     {
-        $response = $this->request()->get('https://query2.finance.yahoo.com/v1/finance/search', [
-            'q' => $query,
-            'quotesCount' => 10,
-            'newsCount' => 0,
-            'enableFuzzyQuery' => true,
-            'crumb' => $this->crumb,
-        ]);
+        $response = $this->connector->send(new SearchRequest($query));
 
-        if (! $response->successful()) {
+        if ($response->failed()) {
             return [];
         }
 
@@ -78,16 +41,9 @@ class YahooFinanceClient
      */
     public function fetchPrices(string $ticker, string $startDate, string $endDate): array
     {
-        $response = $this->request()
-            ->timeout(60)
-            ->get('https://query1.finance.yahoo.com/v8/finance/chart/'.urlencode($ticker), [
-                'period1' => strtotime($startDate),
-                'period2' => strtotime($endDate),
-                'interval' => '1d',
-                'crumb' => $this->crumb,
-            ]);
+        $response = $this->connector->send(new GetChartRequest($ticker, $startDate, $endDate));
 
-        if (! $response->successful()) {
+        if ($response->failed()) {
             return [];
         }
 
@@ -102,7 +58,11 @@ class YahooFinanceClient
     {
         $result = [];
 
-        foreach ($tickers as $info) {
+        foreach ($tickers as $index => $info) {
+            if ($index > 0) {
+                usleep(self::BULK_DELAY_MICROSECONDS);
+            }
+
             $prices = $this->fetchPrices($info['ticker'], $info['start_date'], $info['end_date']);
             if ($prices !== []) {
                 $result[$info['ticker']] = $prices;
@@ -117,19 +77,13 @@ class YahooFinanceClient
      */
     public function fetchSectors(string $ticker): array
     {
-        $response = $this->request()
-            ->timeout(30)
-            ->get('https://query1.finance.yahoo.com/v10/finance/quoteSummary/'.urlencode($ticker), [
-                'modules' => 'topHoldings,assetProfile',
-                'crumb' => $this->crumb,
-            ]);
+        $response = $this->connector->send(new GetQuoteSummaryRequest($ticker));
 
-        if (! $response->successful()) {
+        if ($response->failed()) {
             return [];
         }
 
         $data = $response->json('quoteSummary.result.0', []);
-
         $sectors = $this->parseSectorWeightings($data);
 
         if ($sectors === []) {

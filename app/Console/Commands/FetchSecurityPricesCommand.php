@@ -41,7 +41,7 @@ class FetchSecurityPricesCommand extends Command
     {
         $this->info("Traitement en parallèle de {$securities->count()} titre(s)...");
 
-        $totalInserted = $service->fetchAndStorePricesBulk($securities);
+        $totalInserted = $service->fetchAndStorePricesBulk($securities, force: true);
 
         $this->newLine();
         $this->info("Terminé : {$totalInserted} prix insérés/mis à jour.");

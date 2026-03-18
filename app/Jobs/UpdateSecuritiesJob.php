@@ -28,7 +28,7 @@ class UpdateSecuritiesJob implements ShouldQueue
         try {
             $securities = \App\Models\Security::whereIn('id', $this->securityIds)->get();
 
-            $service->fetchAndStorePricesBulk($securities);
+            $service->fetchAndStorePricesBulk($securities, force: true);
 
             foreach ($securities as $security) {
                 try {

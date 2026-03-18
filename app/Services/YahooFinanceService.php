@@ -9,6 +9,7 @@ use App\Models\SecurityPrice;
 use App\Models\SecuritySector;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -114,8 +115,14 @@ class YahooFinanceService
     /**
      * @param  Collection<int, Security>  $securities
      */
-    public function fetchAndStorePricesBulk(Collection $securities): int
+    public function fetchAndStorePricesBulk(Collection $securities, bool $force = false): int
     {
+        $cacheKey = 'yahoo_prices_bulk_fetched:'.auth()->id();
+
+        if (! $force && Cache::has($cacheKey)) {
+            return 0;
+        }
+
         $endDate = new \DateTimeImmutable('now');
 
         $securityIds = $securities->pluck('id');
@@ -190,6 +197,8 @@ class YahooFinanceService
         ], $tasks);
 
         $allData = $this->client->fetchPricesBulk($tickersInput);
+
+        Cache::put($cacheKey, true, now()->addHour());
 
         $totalInserted = 0;
 
