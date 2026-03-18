@@ -110,6 +110,42 @@ it('only counts transactions of the correct account type', function () {
         ->and($data['fees'])->toContain('5');
 });
 
+it('displays PRU on the edit page gain data', function () {
+    $security = Security::factory()->create();
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+        'quantity' => 10,
+        'unit_price' => 100,
+        'fees' => 0,
+    ]);
+
+    Transaction::factory()->pea()->create([
+        'security_id' => $security->id,
+        'quantity' => 10,
+        'unit_price' => 200,
+        'fees' => 0,
+    ]);
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
+        'date' => now(),
+        'close' => 150,
+    ]);
+
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
+    $widget = livewire(SingleSecurityGainStatsOverview::class, [
+        'record' => $security,
+        'walletId' => $peaWallet->id,
+    ]);
+
+    $data = $widget->instance()->getGainData();
+
+    // PRU = (10*100 + 10*200) / (10+10) = 3000/20 = 150
+    expect($data['pru'])->toContain('150');
+});
+
 it('renders edit page without errors when security has no transactions', function () {
     $security = Security::factory()->create();
 

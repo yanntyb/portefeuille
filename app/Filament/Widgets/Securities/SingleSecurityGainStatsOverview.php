@@ -23,6 +23,9 @@ class SingleSecurityGainStatsOverview extends Widget
 
     /**
      * @return array{
+     *     pru: string,
+     *     currentPrice: string,
+     *     priceDate: ?string,
      *     plusValue: string,
      *     plusValuePercentage: string,
      *     plusValuePositive: bool,
@@ -36,6 +39,9 @@ class SingleSecurityGainStatsOverview extends Widget
     {
         if (! $this->record) {
             return [
+                'pru' => Number::currency(0, 'EUR'),
+                'currentPrice' => Number::currency(0, 'EUR'),
+                'priceDate' => null,
                 'plusValue' => Number::currency(0, 'EUR'),
                 'plusValuePercentage' => '0 %',
                 'plusValuePositive' => true,
@@ -49,6 +55,9 @@ class SingleSecurityGainStatsOverview extends Widget
         $stats = $this->computeStats();
 
         return [
+            'pru' => Number::currency($stats['pru'], 'EUR'),
+            'currentPrice' => $stats['close'] !== null ? Number::currency($stats['close'], 'EUR') : '-',
+            'priceDate' => $stats['priceDate'],
             'plusValue' => Number::currency($stats['plusValue'], 'EUR'),
             'plusValuePercentage' => Number::format($stats['plusValuePercentage'], 2).' %',
             'plusValuePositive' => $stats['plusValue'] >= 0,
