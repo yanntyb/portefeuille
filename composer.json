@@ -61,9 +61,9 @@
             "@php artisan test --compact"
         ],
         "post-install-cmd": [
-            "bash -lc '[ -x \"$HOME/.local/bin/uv\" ] || (curl -LsSf https://astral.sh/uv/install.sh | sh)'",
-            "bash -lc 'export PATH=\"$HOME/.local/bin:$PATH\"; test -d .venv || uv venv'",
-            "bash -lc 'export PATH=\"$HOME/.local/bin:$PATH\"; uv pip install -r storage/python/requirements.txt --quiet'"
+            "bash -lc '[ -x \"$HOME/.local/bin/uv\" ] || (curl -LsSf https://astral.sh/uv/install.sh | sh)' || true",
+            "bash -lc 'export PATH=\"$HOME/.local/bin:$PATH\"; test -d .venv || uv venv' || true",
+            "bash -lc 'export PATH=\"$HOME/.local/bin:$PATH\"; uv pip install -r storage/python/requirements.txt --quiet' || true"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
