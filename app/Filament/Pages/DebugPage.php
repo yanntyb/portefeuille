@@ -34,6 +34,8 @@ class DebugPage extends Page
             ->action(function (): void {
                 $this->simulateUser = ! $this->simulateUser;
                 session(['debug.simulate_user' => $this->simulateUser]);
+
+                $this->redirect(static::getUrl());
             });
     }
 }

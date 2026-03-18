@@ -67,6 +67,32 @@
     display: none !important;
 }
 
+/* Centrer le contenu principal quand une max-width est définie */
+.fi-main-ctn {
+    justify-content: center !important;
+}
+
+/* Centrer le bouton Suivant de la pagination */
+.fi-pagination-next-btn {
+    grid-column: 1 / -1 !important;
+    justify-self: center !important;
+}
+
+/* Retirer le padding top du header de page */
+.fi-page-header-main-ctn {
+    padding-top: 0 !important;
+}
+
+/* Body noir comme la navbar */
+body {
+    background-color: #000000 !important;
+}
+
+/* Masquer le header sur la page de login */
+.fi-simple-header {
+    display: none !important;
+}
+
 /* Widgets Livewire imbriqués */
 .fi-sc-section.fi-section-no-content-padding .fi-wi-chart .fi-section > .fi-section-content-ctn > .fi-section-content {
     padding-left: 0 !important;

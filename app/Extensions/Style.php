@@ -47,6 +47,11 @@ class Style extends Extension
         });
 
         FilamentView::registerRenderHook(
+            PanelsRenderHook::TOPBAR_START,
+            fn (): string => '<div id="topbar-page-title" class="flex items-center"></div>',
+        );
+
+        FilamentView::registerRenderHook(
             PanelsRenderHook::BODY_END,
             fn (): string => <<<'HTML'
                 <script>
@@ -70,6 +75,20 @@ class Style extends Extension
                         document.addEventListener('alpine:initialized', setupSectionAutoCollapse);
                     })();
                 </script>
+                <script>
+                    (function () {
+                        function teleportPageTitle() {
+                            const target = document.getElementById('topbar-page-title');
+                            const heading = document.querySelector('.fi-header-heading');
+                            if (target) {
+                                target.textContent = heading ? heading.textContent.trim() : '';
+                            }
+                        }
+
+                        document.addEventListener('livewire:navigated', teleportPageTitle);
+                        document.addEventListener('DOMContentLoaded', teleportPageTitle);
+                    })();
+                </script>
             HTML,
         );
 
@@ -88,11 +107,29 @@ class Style extends Extension
                         border: none !important;
                         box-shadow: none !important;
                     }
+                    .fi-topbar {
+                        position: relative !important;
+                    }
+                    #topbar-page-title {
+                        position: absolute;
+                        left: 50%;
+                        top: 50%;
+                        transform: translate(-50%, -50%);
+                        font-size: 1.125rem;
+                        font-weight: 700;
+                        color: white;
+                    }
+                    .fi-header-heading {
+                        display: none !important;
+                    }
                     .fi-user-menu {
                         display: none !important;
                     }
                     .fi-pagination-records-per-page-select {
                         display: none !important;
+                    }
+                    .fi-page-content {
+                        row-gap: 0 !important;
                     }
                 </style>
             HTML,

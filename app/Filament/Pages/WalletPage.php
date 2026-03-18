@@ -21,7 +21,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
-use Illuminate\Support\HtmlString;
 use Livewire\Attributes\Url;
 use UnitEnum;
 
@@ -217,7 +216,7 @@ class WalletPage extends AccountPage
 
     public function getTitle(): string|Htmlable
     {
-        return new HtmlString($this->wallet->name.' '.$this->getFormattedValuation());
+        return $this->wallet->name;
     }
 
     public static function getNavigationItems(): array
