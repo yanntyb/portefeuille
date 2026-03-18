@@ -88,6 +88,16 @@ class SecuritiesTable
                         )
                         ->orderByRaw('CASE WHEN pru > 0 THEN (COALESCE(MAX(lp_perf.close), 0) - pru) / pru ELSE 0 END '.$direction)
                     ),
+                TextColumn::make('total_quantity')
+                    ->label('Quantité')
+                    ->numeric(decimalPlaces: 2)
+                    ->sortable(),
+                TextColumn::make('latestPrice.close')
+                    ->label('Prix actuel')
+                    ->money('EUR'),
+                TextColumn::make('pru')
+                    ->label('PRU')
+                    ->money('EUR'),
                 TextColumn::make('isin')
                     ->label('ISIN')
                     ->searchable(),
