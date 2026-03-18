@@ -8,6 +8,7 @@ use App\Extensions\Store;
 use App\Extensions\Style;
 use App\Extensions\TablePersistence;
 use App\Extensions\Transition;
+use App\Filament\Pages\Auth\Login;
 use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -17,11 +18,13 @@ use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -34,7 +37,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('')
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->spa(hasPrefetching: true)
-            ->login()
+            ->login(Login::class)
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -65,6 +68,24 @@ class AdminPanelProvider extends PanelProvider
             ->userMenuItems([
                 'profile' => fn (Action $action) => $action->hidden(),
             ])
+            ->renderHook(
+                PanelsRenderHook::GLOBAL_SEARCH_AFTER,
+                fn (): string => Blade::render('
+                    <form method="POST" action="{{ filament()->getLogoutUrl() }}">
+                        @csrf
+                        <x-filament::icon-button
+                            type="submit"
+                            icon="heroicon-o-power"
+                            color="gray"
+                            label="Déconnexion"
+                        />
+                    </form>
+                '),
+            )
+            ->renderHook(
+                PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
+                fn (): string => Blade::render(file_get_contents(resource_path('views/filament/pages/auth/demo-button.blade.php'))),
+            )
             ->plugins([
                 Pwa::make(),
                 Style::make(),
