@@ -48,7 +48,7 @@ class Style extends Extension
 
         FilamentView::registerRenderHook(
             PanelsRenderHook::TOPBAR_START,
-            fn (): string => '<div id="topbar-page-title" class="flex items-center"></div>',
+            fn (): string => '<div id="topbar-page-title" class="flex items-center text-sm font-medium text-center text-gray-950 dark:text-white"></div>',
         );
 
         FilamentView::registerRenderHook(
@@ -115,9 +115,6 @@ class Style extends Extension
                         left: 50%;
                         top: 50%;
                         transform: translate(-50%, -50%);
-                        font-size: 1.125rem;
-                        font-weight: 700;
-                        color: white;
                     }
                     .fi-header-heading {
                         display: none !important;
