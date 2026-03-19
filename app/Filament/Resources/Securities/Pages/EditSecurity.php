@@ -7,6 +7,8 @@ use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
 use App\Filament\Widgets\Securities\SingleSecurityGainStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityPerformanceStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityPriceChartWidget;
+use App\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
+use App\Filament\Widgets\Securities\SingleSecurityValuationStatOverview;
 use App\Jobs\UpdateSecurityJob;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
@@ -99,6 +101,14 @@ abstract class EditSecurity extends EditRecord
         $record = $this->record;
 
         $components = [
+            Livewire::make(SingleSecurityValuationStatOverview::class, [
+                'record' => $record,
+                'walletId' => null,
+            ])->key('single-security-valuation-stat'),
+            Livewire::make(SingleSecurityValuationChartWidget::class, [
+                'record' => $record,
+                'walletId' => null,
+            ])->key('single-security-valuation-chart'),
             Livewire::make(SingleSecurityPerformanceStatsOverview::class, [
                 'record' => $record,
                 'walletId' => null,

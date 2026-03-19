@@ -11,6 +11,7 @@ use App\Filament\Widgets\Securities\SingleSecurityGainStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityPerformanceStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityPriceChartWidget;
 use App\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
+use App\Filament\Widgets\Securities\SingleSecurityValuationStatOverview;
 use App\Models\Transaction;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -71,6 +72,14 @@ class EditWalletSecurity extends EditSecurity
         $walletId = $this->walletId;
 
         $components = [
+            Livewire::make(SingleSecurityValuationStatOverview::class, [
+                'record' => $record,
+                'walletId' => $walletId,
+            ])->key('single-security-valuation-stat'),
+            Livewire::make(SingleSecurityValuationChartWidget::class, [
+                'record' => $record,
+                'walletId' => $walletId,
+            ])->key('single-security-valuation-chart'),
             Livewire::make(SingleSecurityPerformanceStatsOverview::class, [
                 'record' => $record,
                 'walletId' => $walletId,
@@ -79,10 +88,6 @@ class EditWalletSecurity extends EditSecurity
                 'record' => $record,
                 'walletId' => $walletId,
             ])->key('single-security-gain-stats'),
-            Livewire::make(SingleSecurityValuationChartWidget::class, [
-                'record' => $record,
-                'walletId' => $walletId,
-            ])->key('single-security-valuation-chart'),
             Livewire::make(SingleSecurityPriceChartWidget::class, [
                 'record' => $record,
             ])->key('single-security-price-chart'),
