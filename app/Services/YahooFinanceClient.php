@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Support\PythonScriptCaller;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class YahooFinanceClient
@@ -17,7 +18,9 @@ class YahooFinanceClient
                 'query' => $query,
                 'fallback_query' => $fallbackQuery,
             ]);
-        } catch (RuntimeException) {
+        } catch (RuntimeException $e) {
+            Log::warning('YahooFinanceClient::search failed', ['error' => $e->getMessage()]);
+
             return [];
         }
 
@@ -39,7 +42,12 @@ class YahooFinanceClient
                 'start_date' => $startDate,
                 'end_date' => $endDate,
             ], 60);
-        } catch (RuntimeException) {
+        } catch (RuntimeException $e) {
+            Log::warning('YahooFinanceClient::fetchPrices failed', [
+                'ticker' => $ticker,
+                'error' => $e->getMessage(),
+            ]);
+
             return [];
         }
 
@@ -60,7 +68,9 @@ class YahooFinanceClient
             $result = PythonScriptCaller::call('fetch_prices_bulk.py', [
                 'tickers' => $tickers,
             ], 120);
-        } catch (RuntimeException) {
+        } catch (RuntimeException $e) {
+            Log::warning('YahooFinanceClient::fetchPricesBulk failed', ['error' => $e->getMessage()]);
+
             return [];
         }
 
@@ -80,7 +90,12 @@ class YahooFinanceClient
             $result = PythonScriptCaller::call('fetch_sectors.py', [
                 'ticker' => $ticker,
             ], 30);
-        } catch (RuntimeException) {
+        } catch (RuntimeException $e) {
+            Log::warning('YahooFinanceClient::fetchSectors failed', [
+                'ticker' => $ticker,
+                'error' => $e->getMessage(),
+            ]);
+
             return [];
         }
 

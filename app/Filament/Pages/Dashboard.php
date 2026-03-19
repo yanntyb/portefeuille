@@ -14,6 +14,7 @@ use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Log;
 
 class Dashboard extends BaseDashboard
 {
@@ -70,8 +71,8 @@ class Dashboard extends BaseDashboard
 
         try {
             app(YahooFinanceService::class)->fetchAndStorePricesBulk($securities);
-        } catch (\Throwable) {
-            // Silently fail on API errors
+        } catch (\Throwable $e) {
+            Log::warning('Dashboard::loadPrices failed', ['error' => $e->getMessage()]);
         }
 
         $this->dispatch('prices-updated');

@@ -36,6 +36,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Number;
 use UnitEnum;
 
@@ -174,8 +175,8 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
 
         try {
             app(YahooFinanceService::class)->fetchAndStorePricesBulk($securities);
-        } catch (\Throwable) {
-            // Silently fail on API errors (e.g. rate limiting)
+        } catch (\Throwable $e) {
+            Log::warning('AccountPage::refreshPrices failed', ['error' => $e->getMessage()]);
         }
 
         $this->computeSecurityVisibility();
