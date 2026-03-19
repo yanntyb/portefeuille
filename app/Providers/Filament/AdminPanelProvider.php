@@ -70,21 +70,26 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_AFTER,
-                fn (): string => Blade::render('
-                    <x-filament::icon-button
-                        icon="heroicon-o-power"
-                        color="gray"
-                        label="Déconnexion"
-                        x-on:click="
-                            fetch(@js(filament()->getLogoutUrl()), {
-                                method: \'POST\',
-                                headers: {
-                                    \'X-CSRF-TOKEN\': document.querySelector(\'meta[name=csrf-token]\').content,
-                                },
-                            }).then(() => window.location.href = @js(filament()->getLoginUrl()))
-                        "
-                    />
-                '),
+                function (): string {
+                    $logoutUrl = filament()->getLogoutUrl();
+                    $loginUrl = filament()->getLoginUrl();
+
+                    return Blade::render(
+                        '<x-filament::icon-button
+                            icon="heroicon-o-power"
+                            color="gray"
+                            label="Déconnexion"
+                            x-on:click="
+                                fetch(\''.$logoutUrl.'\', {
+                                    method: \'POST\',
+                                    headers: {
+                                        \'X-CSRF-TOKEN\': document.querySelector(\'meta[name=csrf-token]\').content,
+                                    },
+                                }).then(() => window.location.href = \''.$loginUrl.'\')
+                            "
+                        />'
+                    );
+                },
             )
             ->renderHook(
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
