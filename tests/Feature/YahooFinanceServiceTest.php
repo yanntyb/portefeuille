@@ -10,7 +10,7 @@ use App\Services\YahooFinanceService;
 it('resolves a ticker from an ISIN', function () {
     $this->mock(YahooFinanceClient::class, function ($mock) {
         $mock->shouldReceive('search')
-            ->with('FR0011871110')
+            ->with('FR0011871110', null)
             ->andReturn([
                 ['symbol' => 'CW8.PA', 'name' => 'Amundi MSCI World', 'exchange' => 'Paris', 'type' => 'ETF'],
             ]);
@@ -24,10 +24,7 @@ it('resolves a ticker from an ISIN', function () {
 it('resolves a ticker using name as fallback', function () {
     $this->mock(YahooFinanceClient::class, function ($mock) {
         $mock->shouldReceive('search')
-            ->with('FR0007005181')
-            ->andReturn([]);
-        $mock->shouldReceive('search')
-            ->with('CM-AM Dynamique International')
+            ->with('FR0007005181', 'CM-AM Dynamique International')
             ->andReturn([
                 ['symbol' => '0P00000FMT.F', 'name' => 'CM-AM Dynamique International C', 'exchange' => 'Frankfurt', 'type' => 'Fund'],
             ]);
@@ -57,7 +54,7 @@ it('returns search results from searchTicker', function () {
 
     $this->mock(YahooFinanceClient::class, function ($mock) use ($expectedData) {
         $mock->shouldReceive('search')
-            ->with('FR0011871110')
+            ->with('FR0011871110', null)
             ->andReturn($expectedData);
     });
 
@@ -96,7 +93,7 @@ it('resolves the ticker if not set and saves it', function () {
 
     $this->mock(YahooFinanceClient::class, function ($mock) {
         $mock->shouldReceive('search')
-            ->with('FR0011871110')
+            ->withArgs(fn ($query, $fallback) => $query === 'FR0011871110')
             ->andReturn([
                 ['symbol' => 'CW8.PA', 'name' => 'Amundi MSCI World', 'exchange' => 'Paris', 'type' => 'ETF'],
             ]);
@@ -185,7 +182,7 @@ it('bulk fetch resolves tickers for securities without one', function () {
 
     $this->mock(YahooFinanceClient::class, function ($mock) {
         $mock->shouldReceive('search')
-            ->with('FR0011871110')
+            ->withArgs(fn ($query, $fallback) => $query === 'FR0011871110')
             ->andReturn([
                 ['symbol' => 'CW8.PA', 'name' => 'Amundi MSCI World', 'exchange' => 'Paris', 'type' => 'ETF'],
             ]);

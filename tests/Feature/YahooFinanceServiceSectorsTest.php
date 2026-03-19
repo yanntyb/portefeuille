@@ -116,7 +116,7 @@ it('resolves ticker if not set before fetching sectors', function () {
 
     $this->mock(YahooFinanceClient::class, function ($mock) {
         $mock->shouldReceive('search')
-            ->with('FR0011871110')
+            ->withArgs(fn ($query, $fallback) => $query === 'FR0011871110')
             ->andReturn([
                 ['symbol' => 'CW8.PA', 'name' => 'Amundi MSCI World', 'exchange' => 'Paris', 'type' => 'ETF'],
             ]);

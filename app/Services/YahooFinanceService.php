@@ -38,13 +38,7 @@ class YahooFinanceService
      */
     public function searchTicker(string $query, ?string $fallbackQuery = null): array
     {
-        $results = $this->client->search($query);
-
-        if ($results === [] && $fallbackQuery !== null) {
-            $results = $this->client->search($fallbackQuery);
-        }
-
-        return $results;
+        return $this->client->search($query, $fallbackQuery);
     }
 
     /**
