@@ -36,7 +36,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('')
             ->viteTheme('resources/css/filament/admin/theme.css')
-            ->spa(hasPrefetching: false)
+            ->spa(hasPrefetching: true)
             ->login(Login::class)
             ->colors([
                 'primary' => Color::Amber,
