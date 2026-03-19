@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('securities:fetch-sectors')->daily();
     })
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->append(\App\Http\Middleware\ClearLegacyCookies::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (NotFoundHttpException $e) {
