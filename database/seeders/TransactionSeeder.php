@@ -69,6 +69,32 @@ class TransactionSeeder extends Seeder
     ];
 
     /**
+     * @var array<string, array{isin: string, ticker: string, name: string}>
+     */
+    private const CTO_STOCKS = [
+        'nvidia' => [
+            'isin' => 'US67066G1040',
+            'ticker' => 'NVDA',
+            'name' => 'NVIDIA Corporation',
+        ],
+        'microsoft' => [
+            'isin' => 'US5949181045',
+            'ticker' => 'MSFT',
+            'name' => 'Microsoft Corporation',
+        ],
+        'amazon' => [
+            'isin' => 'US0231351067',
+            'ticker' => 'AMZN',
+            'name' => 'Amazon.com Inc.',
+        ],
+        'tesla' => [
+            'isin' => 'US88160R1014',
+            'ticker' => 'TSLA',
+            'name' => 'Tesla Inc.',
+        ],
+    ];
+
+    /**
      * @var array<string, array{base_price: float, volatility: float}>
      */
     private const ETF_CONFIGS = [
@@ -80,6 +106,10 @@ class TransactionSeeder extends Seeder
         'IWDA.L' => ['base_price' => 62.0, 'volatility' => 0.012],
         'CSPX.L' => ['base_price' => 380.0, 'volatility' => 0.013],
         'EIMI.L' => ['base_price' => 28.0, 'volatility' => 0.014],
+        'NVDA' => ['base_price' => 15.0, 'volatility' => 0.025],
+        'MSFT' => ['base_price' => 230.0, 'volatility' => 0.016],
+        'AMZN' => ['base_price' => 160.0, 'volatility' => 0.018],
+        'TSLA' => ['base_price' => 200.0, 'volatility' => 0.030],
     ];
 
     /**
@@ -152,6 +182,18 @@ class TransactionSeeder extends Seeder
                 Sector::Energy->value => 0.01,
                 Sector::RealEstate->value => 0.01,
             ],
+            'nvidia' => [
+                Sector::Technology->value => 1.0,
+            ],
+            'microsoft' => [
+                Sector::Technology->value => 1.0,
+            ],
+            'amazon' => [
+                Sector::ConsumerCyclical->value => 1.0,
+            ],
+            'tesla' => [
+                Sector::ConsumerCyclical->value => 1.0,
+            ],
         ];
     }
 
@@ -184,7 +226,10 @@ class TransactionSeeder extends Seeder
             'name' => 'CTO',
         ]);
 
+        $ctoStockSecurities = $this->createSecurities(self::CTO_STOCKS, $startDate);
+
         $this->seedDcaTransactions($user, $ctoWallet, $ctoSecurities, $startDate, $endDate, 300.0, 'Trade Republic');
+        $this->seedStockTransactions($user, $ctoWallet, $ctoStockSecurities, $startDate, $endDate, 'Trade Republic');
 
         $ctoWallet->fees()->createMany([
             [
@@ -293,6 +338,156 @@ class TransactionSeeder extends Seeder
         $u2 = mt_rand() / mt_getrandmax();
 
         return $mean + $stddev * sqrt(-2.0 * log($u1)) * cos(2.0 * M_PI * $u2);
+    }
+
+    /**
+     * @var list<array{stock: string, date: string, quantity: int}>
+     */
+    private const STOCK_BUYS = [
+        ['stock' => 'nvidia', 'date' => '2021-06-10', 'quantity' => 20],
+        ['stock' => 'nvidia', 'date' => '2022-01-15', 'quantity' => 15],
+        ['stock' => 'nvidia', 'date' => '2022-10-20', 'quantity' => 25],
+        ['stock' => 'nvidia', 'date' => '2023-05-12', 'quantity' => 10],
+        ['stock' => 'microsoft', 'date' => '2021-04-20', 'quantity' => 5],
+        ['stock' => 'microsoft', 'date' => '2021-11-10', 'quantity' => 4],
+        ['stock' => 'microsoft', 'date' => '2022-06-15', 'quantity' => 6],
+        ['stock' => 'microsoft', 'date' => '2023-03-10', 'quantity' => 3],
+        ['stock' => 'amazon', 'date' => '2021-05-15', 'quantity' => 8],
+        ['stock' => 'amazon', 'date' => '2022-03-20', 'quantity' => 10],
+        ['stock' => 'amazon', 'date' => '2023-01-10', 'quantity' => 6],
+        ['stock' => 'tesla', 'date' => '2021-07-01', 'quantity' => 5],
+        ['stock' => 'tesla', 'date' => '2022-02-10', 'quantity' => 8],
+        ['stock' => 'tesla', 'date' => '2022-09-15', 'quantity' => 4],
+    ];
+
+    /**
+     * @var list<array{stock: string, date: string, quantity: int}>
+     */
+    private const STOCK_SELLS = [
+        ['stock' => 'nvidia', 'date' => '2024-03-15', 'quantity' => 10],
+        ['stock' => 'tesla', 'date' => '2023-08-20', 'quantity' => 5],
+        ['stock' => 'amazon', 'date' => '2024-01-10', 'quantity' => 4],
+    ];
+
+    /**
+     * @param  array<string, Security>  $securities
+     */
+    private function seedStockTransactions(User $user, Wallet $wallet, array $securities, CarbonImmutable $startDate, CarbonImmutable $endDate, ?string $broker = null): void
+    {
+        $transactions = [];
+        $holdingsQty = [];
+
+        foreach (self::STOCK_BUYS as $buy) {
+            $security = $securities[$buy['stock']];
+            $date = CarbonImmutable::parse($buy['date']);
+
+            if ($date->gt($endDate)) {
+                continue;
+            }
+
+            $price = $this->getPriceAt($security, $date);
+
+            if ($price === null) {
+                continue;
+            }
+
+            $holdingsQty[$buy['stock']] = ($holdingsQty[$buy['stock']] ?? 0) + $buy['quantity'];
+            $fees = round($buy['quantity'] * $price * 0.001, 2);
+
+            $transactions[] = [
+                'user_id' => $user->id,
+                'wallet_id' => $wallet->id,
+                'date' => $date->toDateString(),
+                'type' => 'buy',
+                'security_id' => $security->id,
+                'broker' => $broker,
+                'quantity' => $buy['quantity'],
+                'unit_price' => round($price, 4),
+                'fees' => $fees,
+                'realized_gain' => null,
+                'notes' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        foreach (self::STOCK_SELLS as $sell) {
+            $security = $securities[$sell['stock']];
+            $date = CarbonImmutable::parse($sell['date']);
+
+            if ($date->gt($endDate)) {
+                continue;
+            }
+
+            $held = $holdingsQty[$sell['stock']] ?? 0;
+
+            if ($held < $sell['quantity']) {
+                continue;
+            }
+
+            $price = $this->getPriceAt($security, $date);
+
+            if ($price === null) {
+                continue;
+            }
+
+            $holdingsQty[$sell['stock']] -= $sell['quantity'];
+            $fees = round($sell['quantity'] * $price * 0.001, 2);
+
+            $avgBuyPrice = $this->computeAverageBuyPrice($transactions, $security->id);
+            $realizedGain = round(($price - $avgBuyPrice) * $sell['quantity'] - $fees, 2);
+
+            $transactions[] = [
+                'user_id' => $user->id,
+                'wallet_id' => $wallet->id,
+                'date' => $date->toDateString(),
+                'type' => 'sell',
+                'security_id' => $security->id,
+                'broker' => $broker,
+                'quantity' => $sell['quantity'],
+                'unit_price' => round($price, 4),
+                'fees' => $fees,
+                'realized_gain' => $realizedGain,
+                'notes' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        foreach (array_chunk($transactions, 100) as $chunk) {
+            Transaction::insert($chunk);
+        }
+    }
+
+    private function getPriceAt(Security $security, CarbonImmutable $date): ?float
+    {
+        $price = SecurityPrice::query()
+            ->where('security_id', $security->id)
+            ->where('date', '<=', $date->toDateString())
+            ->orderByDesc('date')
+            ->value('close');
+
+        return $price !== null ? (float) $price : null;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $transactions
+     */
+    private function computeAverageBuyPrice(array $transactions, int $securityId): float
+    {
+        $totalCost = 0.0;
+        $totalQty = 0.0;
+
+        foreach ($transactions as $tx) {
+            if ($tx['security_id'] !== $securityId || $tx['type'] !== 'buy') {
+                continue;
+            }
+
+            $totalCost += (float) $tx['quantity'] * (float) $tx['unit_price'];
+            $totalQty += (float) $tx['quantity'];
+        }
+
+        return $totalQty > 0 ? $totalCost / $totalQty : 0.0;
     }
 
     /**
