@@ -113,10 +113,9 @@ class YahooFinanceService
     {
         $cacheKey = 'yahoo_prices_bulk_fetched:'.auth()->id();
 
-        // TODO: réactiver le cache après diagnostic du loading infini
-        // if (! $force && Cache::has($cacheKey)) {
-        //     return 0;
-        // }
+        if (! $force && Cache::has($cacheKey)) {
+            return 0;
+        }
 
         $endDate = new \DateTimeImmutable('now');
 
@@ -193,8 +192,7 @@ class YahooFinanceService
 
         $allData = $this->client->fetchPricesBulk($tickersInput);
 
-        // TODO: réactiver le cache après diagnostic du loading infini
-        // Cache::put($cacheKey, true, now()->addHour());
+        Cache::put($cacheKey, true, now()->addHour());
 
         $totalInserted = 0;
 
