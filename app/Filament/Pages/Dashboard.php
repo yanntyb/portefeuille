@@ -68,7 +68,11 @@ class Dashboard extends BaseDashboard
             return;
         }
 
-        app(YahooFinanceService::class)->fetchAndStorePricesBulk($securities);
+        try {
+            app(YahooFinanceService::class)->fetchAndStorePricesBulk($securities);
+        } catch (\Throwable) {
+            // Silently fail on API errors
+        }
 
         $this->dispatch('prices-updated');
     }
