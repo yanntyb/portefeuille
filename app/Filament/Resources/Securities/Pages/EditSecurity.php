@@ -8,7 +8,6 @@ use App\Filament\Widgets\Securities\SingleSecurityGainStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityPerformanceStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityPriceChartWidget;
 use App\Jobs\UpdateSecurityJob;
-use App\Models\Security;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -19,8 +18,6 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\HtmlString;
-use Illuminate\Support\Number;
 
 abstract class EditSecurity extends EditRecord
 {
@@ -30,43 +27,12 @@ abstract class EditSecurity extends EditRecord
 
     public function getTitle(): string|Htmlable
     {
-        return new HtmlString($this->record->name.' '.$this->getFormattedValuation());
+        return $this->record->name;
     }
 
     public function getHeading(): string|Htmlable
     {
         return $this->getTitle();
-    }
-
-    protected function getFormattedValuation(): string
-    {
-        $record = $this->record;
-        $record->loadMissing('latestPrice');
-
-        $close = $record->latestPrice?->close;
-
-        if ($close === null) {
-            return '';
-        }
-
-        $security = Security::query()
-            ->forAuth()
-            ->where('securities.id', $record->id)
-            ->with('latestPrice')
-            ->first();
-
-        $totalQuantity = $security?->total_quantity;
-        $totalInvested = $security?->total_invested;
-
-        if ($totalQuantity === null) {
-            return '';
-        }
-
-        $valuation = (float) $totalQuantity * (float) $close;
-        $isPositive = $valuation >= (float) ($totalInvested ?? 0);
-        $colorClass = $isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
-
-        return '<span class="'.$colorClass.'">'.Number::currency($valuation, 'EUR').'</span>';
     }
 
     public function mount(int|string $record): void

@@ -11,7 +11,6 @@ use App\Filament\Widgets\Securities\SingleSecurityGainStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityPerformanceStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityPriceChartWidget;
 use App\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
-use App\Models\Security;
 use App\Models\Transaction;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -19,7 +18,6 @@ use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Illuminate\Support\Number;
 use Livewire\Attributes\Url;
 
 class EditWalletSecurity extends EditSecurity
@@ -28,37 +26,6 @@ class EditWalletSecurity extends EditSecurity
 
     #[Url]
     public ?int $walletId = null;
-
-    protected function getFormattedValuation(): string
-    {
-        $record = $this->record;
-        $record->loadMissing('latestPrice');
-
-        $close = $record->latestPrice?->close;
-
-        if ($close === null || $this->walletId === null) {
-            return '';
-        }
-
-        $security = Security::query()
-            ->forWallet(\App\Models\Wallet::find($this->walletId))
-            ->where('securities.id', $record->id)
-            ->with('latestPrice')
-            ->first();
-
-        $totalQuantity = $security?->total_quantity;
-        $totalInvested = $security?->total_invested;
-
-        if ($totalQuantity === null) {
-            return '';
-        }
-
-        $valuation = (float) $totalQuantity * (float) $close;
-        $isPositive = $valuation >= (float) ($totalInvested ?? 0);
-        $colorClass = $isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
-
-        return '<span class="'.$colorClass.'">'.Number::currency($valuation, 'EUR').'</span>';
-    }
 
     protected function getHeaderActions(): array
     {
