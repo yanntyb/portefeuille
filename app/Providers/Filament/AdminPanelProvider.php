@@ -71,15 +71,19 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_AFTER,
                 fn (): string => Blade::render('
-                    <form method="POST" action="{{ filament()->getLogoutUrl() }}">
-                        @csrf
-                        <x-filament::icon-button
-                            type="submit"
-                            icon="heroicon-o-power"
-                            color="gray"
-                            label="Déconnexion"
-                        />
-                    </form>
+                    <x-filament::icon-button
+                        icon="heroicon-o-power"
+                        color="gray"
+                        label="Déconnexion"
+                        x-on:click="
+                            fetch(@js(filament()->getLogoutUrl()), {
+                                method: \'POST\',
+                                headers: {
+                                    \'X-CSRF-TOKEN\': document.querySelector(\'meta[name=csrf-token]\').content,
+                                },
+                            }).then(() => window.location.href = @js(filament()->getLoginUrl()))
+                        "
+                    />
                 '),
             )
             ->renderHook(
