@@ -20,8 +20,8 @@ class DemoSeeder extends Seeder
             ],
         );
 
-        $user->wallets()->delete();
         $user->transactions()->delete();
+        $user->wallets()->delete();
 
         $this->call(TransactionSeeder::class, parameters: ['user' => $user]);
         $this->call(FeedbackSeeder::class, parameters: ['user' => $user]);

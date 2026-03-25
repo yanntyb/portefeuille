@@ -17,99 +17,21 @@ use Illuminate\Database\Seeder;
 class TransactionSeeder extends Seeder
 {
     /**
-     * @var array<string, array{isin: string, ticker: string, name: string}>
+     * @var array{isin: string, ticker: string, name: string}
      */
-    private const PEA_ETFS = [
-        'world' => [
-            'isin' => 'LU1681043599',
-            'ticker' => 'CW8.PA',
-            'name' => 'Amundi MSCI World UCITS ETF',
-        ],
-        'sp500' => [
-            'isin' => 'FR0011871128',
-            'ticker' => 'PE500.PA',
-            'name' => 'Amundi PEA S&P 500 UCITS ETF',
-        ],
-        'emerging' => [
-            'isin' => 'FR0013412020',
-            'ticker' => 'PAEEM.PA',
-            'name' => 'Amundi PEA MSCI Emerging Markets UCITS ETF',
-        ],
-        'europe' => [
-            'isin' => 'FR0007085501',
-            'ticker' => 'MEUD.PA',
-            'name' => 'Amundi PEA STOXX Europe 600 UCITS ETF',
-        ],
-        'nasdaq' => [
-            'isin' => 'FR0013412269',
-            'ticker' => 'PANX.PA',
-            'name' => 'Amundi PEA Nasdaq-100 UCITS ETF',
-        ],
+    private const SP500_ETF = [
+        'isin' => 'FR0011871128',
+        'ticker' => 'PE500.PA',
+        'name' => 'Amundi PEA S&P 500 UCITS ETF',
     ];
 
     /**
-     * @var array<string, array{isin: string, ticker: string, name: string}>
+     * @var array{isin: string, ticker: string, name: string}
      */
-    private const CTO_ETFS = [
-        'world' => [
-            'isin' => 'IE00B4L5Y983',
-            'ticker' => 'IWDA.L',
-            'name' => 'iShares Core MSCI World UCITS ETF',
-        ],
-        'sp500' => [
-            'isin' => 'IE00B5BMR087',
-            'ticker' => 'CSPX.L',
-            'name' => 'iShares Core S&P 500 UCITS ETF',
-        ],
-        'emerging' => [
-            'isin' => 'IE00BKM4GZ66',
-            'ticker' => 'EIMI.L',
-            'name' => 'iShares Core MSCI EM IMI UCITS ETF',
-        ],
-    ];
-
-    /**
-     * @var array<string, array{isin: string, ticker: string, name: string}>
-     */
-    private const CTO_STOCKS = [
-        'nvidia' => [
-            'isin' => 'US67066G1040',
-            'ticker' => 'NVDA',
-            'name' => 'NVIDIA Corporation',
-        ],
-        'microsoft' => [
-            'isin' => 'US5949181045',
-            'ticker' => 'MSFT',
-            'name' => 'Microsoft Corporation',
-        ],
-        'amazon' => [
-            'isin' => 'US0231351067',
-            'ticker' => 'AMZN',
-            'name' => 'Amazon.com Inc.',
-        ],
-        'tesla' => [
-            'isin' => 'US88160R1014',
-            'ticker' => 'TSLA',
-            'name' => 'Tesla Inc.',
-        ],
-    ];
-
-    /**
-     * @var array<string, array{base_price: float, volatility: float}>
-     */
-    private const ETF_CONFIGS = [
-        'CW8.PA' => ['base_price' => 55.0, 'volatility' => 0.012],
-        'PE500.PA' => ['base_price' => 28.0, 'volatility' => 0.013],
-        'PAEEM.PA' => ['base_price' => 22.0, 'volatility' => 0.014],
-        'MEUD.PA' => ['base_price' => 62.0, 'volatility' => 0.011],
-        'PANX.PA' => ['base_price' => 42.0, 'volatility' => 0.015],
-        'IWDA.L' => ['base_price' => 62.0, 'volatility' => 0.012],
-        'CSPX.L' => ['base_price' => 380.0, 'volatility' => 0.013],
-        'EIMI.L' => ['base_price' => 28.0, 'volatility' => 0.014],
-        'NVDA' => ['base_price' => 15.0, 'volatility' => 0.025],
-        'MSFT' => ['base_price' => 230.0, 'volatility' => 0.016],
-        'AMZN' => ['base_price' => 160.0, 'volatility' => 0.018],
-        'TSLA' => ['base_price' => 200.0, 'volatility' => 0.030],
+    private const TOTALENERGIES_STOCK = [
+        'isin' => 'FR0000120271',
+        'ticker' => 'TTE.PA',
+        'name' => 'TotalEnergies SE',
     ];
 
     /**
@@ -118,19 +40,6 @@ class TransactionSeeder extends Seeder
     private static function sectorAllocations(): array
     {
         return [
-            'world' => [
-                Sector::Technology->value => 0.23,
-                Sector::Healthcare->value => 0.12,
-                Sector::FinancialServices->value => 0.15,
-                Sector::CommunicationServices->value => 0.08,
-                Sector::ConsumerCyclical->value => 0.11,
-                Sector::ConsumerDefensive->value => 0.07,
-                Sector::Industrials->value => 0.10,
-                Sector::Energy->value => 0.05,
-                Sector::Utilities->value => 0.03,
-                Sector::RealEstate->value => 0.03,
-                Sector::BasicMaterials->value => 0.03,
-            ],
             'sp500' => [
                 Sector::Technology->value => 0.29,
                 Sector::Healthcare->value => 0.13,
@@ -144,75 +53,29 @@ class TransactionSeeder extends Seeder
                 Sector::RealEstate->value => 0.03,
                 Sector::BasicMaterials->value => 0.02,
             ],
-            'emerging' => [
-                Sector::Technology->value => 0.20,
-                Sector::FinancialServices->value => 0.22,
-                Sector::CommunicationServices->value => 0.10,
-                Sector::ConsumerCyclical->value => 0.13,
-                Sector::ConsumerDefensive->value => 0.06,
-                Sector::Industrials->value => 0.06,
-                Sector::Energy->value => 0.07,
-                Sector::Healthcare->value => 0.04,
-                Sector::BasicMaterials->value => 0.07,
-                Sector::Utilities->value => 0.03,
-                Sector::RealEstate->value => 0.02,
-            ],
-            'europe' => [
-                Sector::FinancialServices->value => 0.18,
-                Sector::Healthcare->value => 0.15,
-                Sector::Industrials->value => 0.16,
-                Sector::Technology->value => 0.09,
-                Sector::ConsumerCyclical->value => 0.10,
-                Sector::ConsumerDefensive->value => 0.10,
-                Sector::Energy->value => 0.06,
-                Sector::BasicMaterials->value => 0.06,
-                Sector::Utilities->value => 0.05,
-                Sector::CommunicationServices->value => 0.03,
-                Sector::RealEstate->value => 0.02,
-            ],
-            'nasdaq' => [
-                Sector::Technology->value => 0.50,
-                Sector::CommunicationServices->value => 0.16,
-                Sector::ConsumerCyclical->value => 0.14,
-                Sector::Healthcare->value => 0.07,
-                Sector::ConsumerDefensive->value => 0.04,
-                Sector::Industrials->value => 0.04,
-                Sector::FinancialServices->value => 0.02,
-                Sector::Utilities->value => 0.01,
-                Sector::Energy->value => 0.01,
-                Sector::RealEstate->value => 0.01,
-            ],
-            'nvidia' => [
-                Sector::Technology->value => 1.0,
-            ],
-            'microsoft' => [
-                Sector::Technology->value => 1.0,
-            ],
-            'amazon' => [
-                Sector::ConsumerCyclical->value => 1.0,
-            ],
-            'tesla' => [
-                Sector::ConsumerCyclical->value => 1.0,
+            'totalenergies' => [
+                Sector::Energy->value => 1.0,
             ],
         ];
     }
 
     public function run(User $user): void
     {
-        $startDate = CarbonImmutable::parse('2021-03-01');
+        $startDate = CarbonImmutable::now()->subYears(5)->startOfMonth();
         $endDate = CarbonImmutable::now();
 
-        $peaSecurities = $this->createSecurities(self::PEA_ETFS, $startDate);
-        $ctoSecurities = $this->createSecurities(self::CTO_ETFS, $startDate);
+        $sp500Securities = $this->createSecurities(['sp500' => self::SP500_ETF]);
+        $totalenergiesSecurities = $this->createSecurities(['totalenergies' => self::TOTALENERGIES_STOCK]);
 
-        $peaWallet = Wallet::create([
+        $wallet = Wallet::create([
             'user_id' => $user->id,
             'name' => 'PEA',
         ]);
 
-        $this->seedDcaTransactions($user, $peaWallet, $peaSecurities, $startDate, $endDate, 500.0);
+        $this->seedDcaTransactions($user, $wallet, $sp500Securities, $startDate, $endDate, 500.0);
+        $this->seedOneTimeBuy($user, $wallet, $totalenergiesSecurities['totalenergies'], CarbonImmutable::parse('2025-01-15'), 2000.0);
 
-        $peaWallet->fees()->createMany([
+        $wallet->fees()->createMany([
             [
                 'name' => 'Prélèvements sociaux',
                 'value' => 17.2,
@@ -220,48 +83,29 @@ class TransactionSeeder extends Seeder
                 'scope' => FeeScope::RealizedGain->value,
             ],
         ]);
-
-        $ctoWallet = Wallet::create([
-            'user_id' => $user->id,
-            'name' => 'CTO',
-        ]);
-
-        $ctoStockSecurities = $this->createSecurities(self::CTO_STOCKS, $startDate);
-
-        $this->seedDcaTransactions($user, $ctoWallet, $ctoSecurities, $startDate, $endDate, 300.0, 'Trade Republic');
-        $this->seedStockTransactions($user, $ctoWallet, $ctoStockSecurities, $startDate, $endDate, 'Trade Republic');
-
-        $ctoWallet->fees()->createMany([
-            [
-                'name' => 'Flat Tax (PFU)',
-                'value' => 30,
-                'unit' => CurrencyModificationUnit::Percentage->value,
-                'scope' => FeeScope::RealizedGain->value,
-            ],
-        ]);
     }
 
     /**
-     * @param  array<string, array{isin: string, ticker: string, name: string}>  $etfs
+     * @param  array<string, array{isin: string, ticker: string, name: string}>  $stocks
      * @return array<string, Security>
      */
-    private function createSecurities(array $etfs, CarbonImmutable $startDate): array
+    private function createSecurities(array $stocks): array
     {
         $securities = [];
 
-        foreach ($etfs as $key => $etf) {
+        foreach ($stocks as $key => $stock) {
             $security = Security::firstOrCreate(
-                ['isin' => $etf['isin']],
+                ['isin' => $stock['isin']],
                 [
-                    'name' => $etf['name'],
-                    'ticker' => $etf['ticker'],
+                    'name' => $stock['name'],
+                    'ticker' => $stock['ticker'],
                 ],
             );
 
             $securities[$key] = $security;
 
             if ($security->wasRecentlyCreated) {
-                $this->generatePriceHistory($security, $startDate->subMonth());
+                $this->loadPricesFromFile($security);
                 $this->generateSectorAllocations($security, $key);
             }
         }
@@ -269,45 +113,28 @@ class TransactionSeeder extends Seeder
         return $securities;
     }
 
-    private function generatePriceHistory(Security $security, CarbonImmutable $startDate): void
+    private function loadPricesFromFile(Security $security): void
     {
-        $config = self::ETF_CONFIGS[$security->ticker];
-        $price = $config['base_price'];
-        $volatility = $config['volatility'];
+        $filename = database_path('seeders/data/'.str_replace('.', '_', $security->ticker).'_prices.json');
 
-        $date = $startDate;
-        $today = CarbonImmutable::now();
-        $rows = [];
-
-        while ($date->lte($today)) {
-            if ($date->isWeekend()) {
-                $date = $date->addDay();
-
-                continue;
-            }
-
-            $price *= (1 + $this->randomNormal(0.0003, $volatility));
-            $price = max($price, 0.01);
-
-            $close = round($price, 4);
-            $open = round($close * (1 + $this->randomNormal(0, 0.003)), 4);
-            $high = round(max($open, $close) * (1 + abs($this->randomNormal(0, 0.004))), 4);
-            $low = round(min($open, $close) * (1 - abs($this->randomNormal(0, 0.004))), 4);
-
-            $rows[] = [
-                'security_id' => $security->id,
-                'date' => $date->toDateString(),
-                'open' => $open,
-                'high' => $high,
-                'low' => $low,
-                'close' => $close,
-                'volume' => rand(100000, 2000000),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-
-            $date = $date->addDay();
+        if (! file_exists($filename)) {
+            return;
         }
+
+        /** @var list<array{date: string, open: float, high: float, low: float, close: float, volume: int}> $prices */
+        $prices = json_decode(file_get_contents($filename), true);
+
+        $rows = array_map(fn (array $p) => [
+            'security_id' => $security->id,
+            'date' => $p['date'],
+            'open' => $p['open'],
+            'high' => $p['high'],
+            'low' => $p['low'],
+            'close' => $p['close'],
+            'volume' => $p['volume'],
+            'created_at' => now(),
+            'updated_at' => now(),
+        ], $prices);
 
         foreach (array_chunk($rows, 500) as $chunk) {
             SecurityPrice::insert($chunk);
@@ -332,131 +159,41 @@ class TransactionSeeder extends Seeder
         SecuritySector::insert($rows);
     }
 
-    private function randomNormal(float $mean, float $stddev): float
+    private function seedOneTimeBuy(User $user, Wallet $wallet, Security $security, CarbonImmutable $date, float $budget, ?string $broker = null): void
     {
-        $u1 = max(mt_rand() / mt_getrandmax(), 1e-10);
-        $u2 = mt_rand() / mt_getrandmax();
-
-        return $mean + $stddev * sqrt(-2.0 * log($u1)) * cos(2.0 * M_PI * $u2);
-    }
-
-    /**
-     * @var list<array{stock: string, date: string, quantity: int}>
-     */
-    private const STOCK_BUYS = [
-        ['stock' => 'nvidia', 'date' => '2021-06-10', 'quantity' => 20],
-        ['stock' => 'nvidia', 'date' => '2022-01-15', 'quantity' => 15],
-        ['stock' => 'nvidia', 'date' => '2022-10-20', 'quantity' => 25],
-        ['stock' => 'nvidia', 'date' => '2023-05-12', 'quantity' => 10],
-        ['stock' => 'microsoft', 'date' => '2021-04-20', 'quantity' => 5],
-        ['stock' => 'microsoft', 'date' => '2021-11-10', 'quantity' => 4],
-        ['stock' => 'microsoft', 'date' => '2022-06-15', 'quantity' => 6],
-        ['stock' => 'microsoft', 'date' => '2023-03-10', 'quantity' => 3],
-        ['stock' => 'amazon', 'date' => '2021-05-15', 'quantity' => 8],
-        ['stock' => 'amazon', 'date' => '2022-03-20', 'quantity' => 10],
-        ['stock' => 'amazon', 'date' => '2023-01-10', 'quantity' => 6],
-        ['stock' => 'tesla', 'date' => '2021-07-01', 'quantity' => 5],
-        ['stock' => 'tesla', 'date' => '2022-02-10', 'quantity' => 8],
-        ['stock' => 'tesla', 'date' => '2022-09-15', 'quantity' => 4],
-    ];
-
-    /**
-     * @var list<array{stock: string, date: string, quantity: int}>
-     */
-    private const STOCK_SELLS = [
-        ['stock' => 'nvidia', 'date' => '2024-03-15', 'quantity' => 10],
-        ['stock' => 'tesla', 'date' => '2023-08-20', 'quantity' => 5],
-        ['stock' => 'amazon', 'date' => '2024-01-10', 'quantity' => 4],
-    ];
-
-    /**
-     * @param  array<string, Security>  $securities
-     */
-    private function seedStockTransactions(User $user, Wallet $wallet, array $securities, CarbonImmutable $startDate, CarbonImmutable $endDate, ?string $broker = null): void
-    {
-        $transactions = [];
-        $holdingsQty = [];
-
-        foreach (self::STOCK_BUYS as $buy) {
-            $security = $securities[$buy['stock']];
-            $date = CarbonImmutable::parse($buy['date']);
-
-            if ($date->gt($endDate)) {
-                continue;
-            }
-
-            $price = $this->getPriceAt($security, $date);
-
-            if ($price === null) {
-                continue;
-            }
-
-            $holdingsQty[$buy['stock']] = ($holdingsQty[$buy['stock']] ?? 0) + $buy['quantity'];
-            $fees = round($buy['quantity'] * $price * 0.001, 2);
-
-            $transactions[] = [
-                'user_id' => $user->id,
-                'wallet_id' => $wallet->id,
-                'date' => $date->toDateString(),
-                'type' => 'buy',
-                'security_id' => $security->id,
-                'broker' => $broker,
-                'quantity' => $buy['quantity'],
-                'unit_price' => round($price, 4),
-                'fees' => $fees,
-                'realized_gain' => null,
-                'notes' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+        if ($date->isWeekend()) {
+            $date = $date->next(CarbonImmutable::MONDAY);
         }
 
-        foreach (self::STOCK_SELLS as $sell) {
-            $security = $securities[$sell['stock']];
-            $date = CarbonImmutable::parse($sell['date']);
+        $price = $this->getPriceAt($security, $date);
 
-            if ($date->gt($endDate)) {
-                continue;
-            }
-
-            $held = $holdingsQty[$sell['stock']] ?? 0;
-
-            if ($held < $sell['quantity']) {
-                continue;
-            }
-
-            $price = $this->getPriceAt($security, $date);
-
-            if ($price === null) {
-                continue;
-            }
-
-            $holdingsQty[$sell['stock']] -= $sell['quantity'];
-            $fees = round($sell['quantity'] * $price * 0.001, 2);
-
-            $avgBuyPrice = $this->computeAverageBuyPrice($transactions, $security->id);
-            $realizedGain = round(($price - $avgBuyPrice) * $sell['quantity'] - $fees, 2);
-
-            $transactions[] = [
-                'user_id' => $user->id,
-                'wallet_id' => $wallet->id,
-                'date' => $date->toDateString(),
-                'type' => 'sell',
-                'security_id' => $security->id,
-                'broker' => $broker,
-                'quantity' => $sell['quantity'],
-                'unit_price' => round($price, 4),
-                'fees' => $fees,
-                'realized_gain' => $realizedGain,
-                'notes' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+        if ($price === null) {
+            return;
         }
 
-        foreach (array_chunk($transactions, 100) as $chunk) {
-            Transaction::insert($chunk);
+        $quantity = floor($budget / $price * 10000) / 10000;
+
+        if ($quantity <= 0) {
+            return;
         }
+
+        $fees = round($quantity * $price * 0.002, 2);
+
+        Transaction::insert([[
+            'user_id' => $user->id,
+            'wallet_id' => $wallet->id,
+            'date' => $date->toDateString(),
+            'type' => 'buy',
+            'security_id' => $security->id,
+            'broker' => $broker,
+            'quantity' => $quantity,
+            'unit_price' => round($price, 4),
+            'fees' => $fees,
+            'realized_gain' => null,
+            'notes' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]]);
     }
 
     private function getPriceAt(Security $security, CarbonImmutable $date): ?float
@@ -471,36 +208,16 @@ class TransactionSeeder extends Seeder
     }
 
     /**
-     * @param  list<array<string, mixed>>  $transactions
-     */
-    private function computeAverageBuyPrice(array $transactions, int $securityId): float
-    {
-        $totalCost = 0.0;
-        $totalQty = 0.0;
-
-        foreach ($transactions as $tx) {
-            if ($tx['security_id'] !== $securityId || $tx['type'] !== 'buy') {
-                continue;
-            }
-
-            $totalCost += (float) $tx['quantity'] * (float) $tx['unit_price'];
-            $totalQty += (float) $tx['quantity'];
-        }
-
-        return $totalQty > 0 ? $totalCost / $totalQty : 0.0;
-    }
-
-    /**
      * @param  array<string, Security>  $securities
+     * @param  array<string, float>|null  $allocations
      */
-    private function seedDcaTransactions(User $user, Wallet $wallet, array $securities, CarbonImmutable $startDate, CarbonImmutable $endDate, float $monthlyBudget, ?string $broker = null): void
+    private function seedDcaTransactions(User $user, Wallet $wallet, array $securities, CarbonImmutable $startDate, CarbonImmutable $endDate, float $monthlyBudget, ?string $broker = null, int $dayOfMonth = 15, ?array $allocations = null): void
     {
-        $budgetPerEtf = $monthlyBudget / count($securities);
         $date = $startDate;
         $transactions = [];
 
         while ($date->lte($endDate)) {
-            $investDate = $date->day(15);
+            $investDate = $date->day($dayOfMonth);
 
             if ($investDate->isWeekend()) {
                 $investDate = $investDate->next(CarbonImmutable::MONDAY);
@@ -510,7 +227,11 @@ class TransactionSeeder extends Seeder
                 break;
             }
 
-            foreach ($securities as $security) {
+            foreach ($securities as $key => $security) {
+                $budget = $allocations !== null
+                    ? $monthlyBudget * ($allocations[$key] ?? 0)
+                    : $monthlyBudget / count($securities);
+
                 $price = SecurityPrice::query()
                     ->where('security_id', $security->id)
                     ->where('date', '<=', $investDate->toDateString())
@@ -522,7 +243,7 @@ class TransactionSeeder extends Seeder
                 }
 
                 $price = (float) $price;
-                $quantity = floor($budgetPerEtf / $price * 10000) / 10000;
+                $quantity = floor($budget / $price * 10000) / 10000;
 
                 if ($quantity <= 0) {
                     continue;
