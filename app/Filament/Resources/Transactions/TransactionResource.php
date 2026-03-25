@@ -29,7 +29,7 @@ class TransactionResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Portefeuille';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 99;
 
     public static function form(Schema $schema): Schema
     {
