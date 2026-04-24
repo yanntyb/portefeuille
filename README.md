@@ -1,4 +1,4 @@
-# Argent
+# Portefeuille
 
 Application web de gestion de portefeuilles financiers personnels. Elle permet de suivre ses investissements, analyser la performance de ses titres, simuler des scénarios et rééquilibrer ses allocations.
 
