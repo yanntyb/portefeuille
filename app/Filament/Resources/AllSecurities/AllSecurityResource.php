@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\AllSecurities;
 
+use App\Filament\Resources\AllSecurities\Pages\CreateAllSecurity;
 use App\Filament\Resources\AllSecurities\Pages\EditAllSecurity;
 use App\Filament\Resources\AllSecurities\Pages\ListAllSecurities;
 use App\Filament\Resources\Securities\RelationManagers\PricesRelationManager;
@@ -87,6 +88,7 @@ class AllSecurityResource extends Resource
     {
         return [
             'index' => ListAllSecurities::route('/'),
+            'create' => CreateAllSecurity::route('/create'),
             'edit' => EditAllSecurity::route('/{record}/edit'),
         ];
     }
