@@ -4,52 +4,45 @@ Dashboard, Wallet, Rebalancing, Simulation, Admin pages. Data dependencies.
 
 ---
 
-## 🎯 Page Architecture
+## 🎯 Page Architecture (Layers)
 
-```mermaid
-graph TB
-    subgraph PAGES ["📄 Pages"]
-        A["DashboardPage"]
-        B["WalletPage"]
-        C["RebalancingPage"]
-        D["SimulationBoard"]
-        E["AdminPages"]
-    end
-    
-    subgraph DATA ["📥 Data Load"]
-        F["User + Wallets"]
-        G["Transactions + Prices"]
-        H["Allocation Profiles"]
-        I["Securities"]
-    end
-    
-    subgraph COMPUTE ["🧮 Compute"]
-        J["Aggregators"]
-        K["Calculators"]
-        L["Engines"]
-    end
-    
-    subgraph DISPLAY ["📤 Display"]
-        M["Metrics Cards"]
-        N["Charts"]
-        O["Tables"]
-        P["Suggestions"]
-    end
-    
-    A & B & C & D --> F & G & H & I
-    F & G & H & I --> J & K & L
-    J & K & L --> M & N & O & P
-    
-    classDef pages fill:#3b82f6,color:#fff
-    classDef data fill:#6366f1,color:#fff
-    classDef compute fill:#8b5cf6,color:#fff
-    classDef display fill:#10b981,color:#fff
-    
-    class A,B,C,D,E pages
-    class F,G,H,I data
-    class J,K,L compute
-    class M,N,O,P display
 ```
+📄 Pages (5)
+  ├─ DashboardPage
+  ├─ WalletPage
+  ├─ RebalancingPage
+  ├─ SimulationBoard
+  └─ AdminPages
+
+📥 Data Load (scoped by user)
+  ├─ User + Wallets
+  ├─ Transactions + Prices
+  ├─ Allocation Profiles
+  └─ Securities
+
+🧮 Compute (business logic)
+  ├─ Aggregators
+  ├─ Calculators
+  └─ Engines
+
+📤 Display (render to UI)
+  ├─ Metrics Cards
+  ├─ Charts
+  ├─ Tables
+  └─ Suggestions
+```
+
+---
+
+## 📋 Dependencies by Page
+
+| Page | Data Load | Compute | Output |
+|------|-----------|---------|--------|
+| Dashboard | User, Wallets, TX, Prices | Aggregator, Calculator, SectorAgg | Metrics, Charts |
+| Wallet | Wallet, TX, Prices, Fees | Aggregator, Calculator | Metrics, Holdings |
+| Rebalancing | AllocationProfile, Holdings, Prices | RebalancingCalculator | Suggestions |
+| Simulation | None (input-only) | MonteCarloEngine | Curves, Percentiles |
+| Admin | Securities only | None | Forms, Lists |
 
 ---
 
