@@ -2,11 +2,15 @@
 
 namespace App\Filament\Resources\PortfolioSecurities;
 
+use App\Filament\Resources\PortfolioSecurities\Pages\CreatePortfolioSecurity;
+use App\Filament\Resources\PortfolioSecurities\Pages\EditPortfolioSecurity;
 use App\Filament\Resources\PortfolioSecurities\Pages\ListPortfolioSecurities;
+use App\Filament\Resources\Securities\Schemas\SecurityForm;
 use App\Filament\Resources\Securities\Tables\SecuritiesTable;
 use App\Models\Security;
 use BackedEnum;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -35,17 +39,24 @@ class PortfolioSecurityResource extends Resource
         return auth()->user()->isAdmin();
     }
 
+    public static function form(Schema $schema): Schema
+    {
+        return SecurityForm::configure($schema);
+    }
+
     public static function table(Table $table): Table
     {
         return SecuritiesTable::configure($table)
             ->recordActions([])
-            ->modifyQueryUsing(fn (Builder $query) => $query->forAuth());
+            ->modifyQueryUsing(fn (Builder $query) => $query->forAuthAll());
     }
 
     public static function getPages(): array
     {
         return [
             'index' => ListPortfolioSecurities::route('/'),
+            'create' => CreatePortfolioSecurity::route('/create'),
+            'edit' => EditPortfolioSecurity::route('/{record}/edit'),
         ];
     }
 }

@@ -111,7 +111,10 @@ class RebalancingCalculator extends Page implements HasTable
                             Select::make('security_id')
                                 ->label('Titre')
                                 ->options(fn (): array => Security::query()
-                                    ->pluck('name', 'id')
+                                    ->get()
+                                    ->mapWithKeys(fn ($security): array => [
+                                        $security->id => $security->name ?? $security->ticker ?? $security->isin,
+                                    ])
                                     ->all())
                                 ->searchable()
                                 ->required(),

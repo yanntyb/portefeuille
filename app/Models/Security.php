@@ -75,6 +75,28 @@ class Security extends Model
     }
 
     /** @param Builder<self> $query */
+    public function scopeForAuthAll(Builder $query): void
+    {
+        $query
+            ->select([
+                'securities.id',
+                'securities.isin',
+                'securities.name',
+                'securities.ticker',
+                DB::raw("COALESCE(SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity ELSE -transactions.quantity END), 0) as total_quantity"),
+                DB::raw("1.0 * SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity * transactions.unit_price ELSE 0 END) / NULLIF(SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity ELSE 0 END), 0) as pru"),
+                DB::raw('COALESCE(SUM(transactions.fees), 0) as total_fees'),
+                DB::raw("COALESCE(SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity ELSE -transactions.quantity END) * (1.0 * SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity * transactions.unit_price ELSE 0 END) / NULLIF(SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity ELSE 0 END), 0)) + SUM(transactions.fees), 0) as total_invested"),
+                DB::raw('COALESCE(SUM(COALESCE(transactions.realized_gain, 0)), 0) as total_realized_gain'),
+            ])
+            ->leftJoin('transactions', function ($join) {
+                $join->on('transactions.security_id', '=', 'securities.id')
+                    ->where('transactions.user_id', '=', auth()->id());
+            })
+            ->groupBy('securities.id', 'securities.isin', 'securities.name', 'securities.ticker');
+    }
+
+    /** @param Builder<self> $query */
     public function scopeForWallet(Builder $query, Wallet $wallet): void
     {
         $query

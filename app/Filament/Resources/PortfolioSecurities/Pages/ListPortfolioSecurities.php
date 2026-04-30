@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PortfolioSecurities\Pages;
 
 use App\Filament\Resources\PortfolioSecurities\PortfolioSecurityResource;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListPortfolioSecurities extends ListRecords
@@ -16,4 +17,11 @@ class ListPortfolioSecurities extends ListRecords
 
     /** @var list<int> */
     public array $pricelessSecurityIds = [];
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            CreateAction::make(),
+        ];
+    }
 }
