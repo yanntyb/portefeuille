@@ -1,9 +1,9 @@
 <?php
 
+use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Security\Exceptions\TickerResolutionException;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
-use App\Models\Transaction;
 use App\Domains\Security\Services\YahooFinanceClient;
 use App\Domains\Security\Services\YahooFinanceService;
 

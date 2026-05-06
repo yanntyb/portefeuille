@@ -1,15 +1,18 @@
 <?php
 
-namespace Database\Factories;
+namespace Database\Factories\Domains\Portfolio\Models;
 
+use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Wallet>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Domains\Portfolio\Models\Wallet>
  */
 class WalletFactory extends Factory
 {
+    protected $model = Wallet::class;
+
     /** @return array<string, mixed> */
     public function definition(): array
     {

@@ -2,10 +2,12 @@
 
 namespace App\Filament\Pages;
 
-use App\Infrastructure\Concerns\HasTableStore;
-use App\Infrastructure\Contracts\TableStoreable;
 use App\Data\AccountPageData;
-use App\Filament\Resources\Securities\Tables\SecuritiesTable;
+use App\Domains\Security\Filament\Resources\SecurityBase\Tables\SecuritiesTable;
+use App\Domains\Security\Jobs\UpdateSecuritiesJob;
+use App\Domains\Security\Models\Security;
+use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Security\Services\PriceRefreshService;
 use App\Filament\Resources\WalletSecurities\WalletSecurityResource;
 use App\Filament\Widgets\Securities\AllocationChartWidget;
 use App\Filament\Widgets\Securities\CorrelationMatrixWidget;
@@ -14,14 +16,12 @@ use App\Filament\Widgets\Securities\PerformanceStatsOverview;
 use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
 use App\Filament\Widgets\Securities\ValuationChartWidget;
 use App\Filament\Widgets\Securities\ValuationStatOverview;
-use App\Domains\Security\Jobs\UpdateSecuritiesJob;
-use App\Domains\Security\Models\Security;
-use App\Domains\Security\Models\SecurityPrice;
+use App\Infrastructure\Concerns\HasTableStore;
+use App\Infrastructure\Contracts\TableStoreable;
+use App\Infrastructure\Support\MarketCalendar;
 use App\Models\Transaction;
 use App\Models\Wallet;
-use App\Domains\Security\Services\PriceRefreshService;
 use App\Services\VolatilityCalculator;
-use App\Infrastructure\Support\MarketCalendar;
 use Filament\Actions\Action;
 use Filament\Pages\Concerns\ExposesTableToWidgets;
 use Filament\Pages\Page;

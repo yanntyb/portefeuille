@@ -1,8 +1,9 @@
 <?php
 
+use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
-use App\Models\Transaction;
-use App\Models\Wallet;
+use App\Domains\User\Models\User;
 
 it('belongs to a security', function () {
     $security = Security::factory()->create();
@@ -41,7 +42,7 @@ it('casts decimal fields correctly', function () {
 });
 
 it('filters transactions by authenticated user via global scope', function () {
-    $otherUser = \App\Models\User::factory()->create();
+    $otherUser = User::factory()->create();
 
     Transaction::factory()->pea()->create(['user_id' => auth()->id()]);
     Transaction::factory()->pea()->create(['user_id' => auth()->id()]);
@@ -53,7 +54,7 @@ it('filters transactions by authenticated user via global scope', function () {
 });
 
 it('does not apply global scope when no user is authenticated', function () {
-    $otherUser = \App\Models\User::factory()->create();
+    $otherUser = User::factory()->create();
 
     Transaction::factory()->pea()->create(['user_id' => auth()->id()]);
 

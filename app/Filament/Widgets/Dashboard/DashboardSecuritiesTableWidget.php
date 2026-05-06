@@ -2,7 +2,7 @@
 
 namespace App\Filament\Widgets\Dashboard;
 
-use App\Filament\Resources\Securities\Tables\SecuritiesTable;
+use App\Domains\Security\Filament\Resources\SecurityBase\Tables\SecuritiesTable;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Infrastructure\Support\MarketCalendar;

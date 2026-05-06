@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Feedback extends Model
 {
-    /** @use HasFactory<\Database\Factories\FeedbackFactory> */
+    /** @use HasFactory<\Database\Factories\Domains\User\Models\FeedbackFactory> */
     use HasFactory;
 
     /** @var list<string> */

@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\WalletSecurities\Pages;
 
+use App\Domains\Security\Filament\Resources\SecurityBase\Pages\EditSecurity;
 use App\Filament\Pages\WalletPage;
-use App\Filament\Resources\Securities\Pages\EditSecurity;
 use App\Filament\Resources\Transactions\Schemas\TransactionForm;
 use App\Filament\Resources\WalletSecurities\WalletSecurityResource;
 use App\Models\Transaction;

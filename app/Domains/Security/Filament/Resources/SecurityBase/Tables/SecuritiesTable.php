@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Securities\Tables;
+namespace App\Domains\Security\Filament\Resources\SecurityBase\Tables;
 
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;

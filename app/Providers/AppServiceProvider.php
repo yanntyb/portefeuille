@@ -3,12 +3,14 @@
 namespace App\Providers;
 
 use App\Contracts\PortfolioPerformanceCalculating;
-use App\Domains\Security\Contracts\PriceRefreshing;
 use App\Contracts\Rebalancing;
 use App\Contracts\VolatilityCalculating;
+use App\Domains\Security\Commands\FetchSecurityPricesCommand;
+use App\Domains\Security\Commands\FetchSecuritySectorsCommand;
+use App\Domains\Security\Contracts\PriceRefreshing;
+use App\Domains\Security\Services\PriceRefreshService;
 use App\Services\DashboardDataProvider;
 use App\Services\PortfolioPerformanceCalculator;
-use App\Domains\Security\Services\PriceRefreshService;
 use App\Services\RebalancingCalculator;
 use App\Services\RebalancingCalculatorOrchestrator;
 use App\Services\SingleSecurityStatsProvider;
@@ -37,5 +39,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Carbon::setLocale('fr');
+
+        $this->commands([
+            FetchSecurityPricesCommand::class,
+            FetchSecuritySectorsCommand::class,
+        ]);
     }
 }

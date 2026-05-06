@@ -2,10 +2,10 @@
 
 namespace App\Filament\Resources\WalletSecurities;
 
-use App\Filament\Resources\Securities\RelationManagers\TransactionsRelationManager;
-use App\Filament\Resources\Securities\Schemas\SecurityForm;
-use App\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
+use App\Domains\Security\Filament\Resources\SecurityBase\RelationManagers\TransactionsRelationManager;
+use App\Domains\Security\Filament\Resources\SecurityBase\Schemas\SecurityForm;
 use App\Domains\Security\Models\Security;
+use App\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Securities\RelationManagers;
+namespace App\Domains\Security\Filament\Resources\SecurityBase\RelationManagers;
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;

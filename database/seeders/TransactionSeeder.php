@@ -2,15 +2,15 @@
 
 namespace Database\Seeders;
 
-use App\Enums\CurrencyModificationUnit;
-use App\Enums\FeeScope;
-use App\Enums\Sector;
-use App\Models\Security;
-use App\Models\SecurityPrice;
-use App\Models\SecuritySector;
-use App\Models\Transaction;
-use App\Models\User;
-use App\Models\Wallet;
+use App\Domains\Portfolio\Enums\CurrencyModificationUnit;
+use App\Domains\Portfolio\Enums\FeeScope;
+use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Portfolio\Models\Wallet;
+use App\Domains\Security\Enums\Sector;
+use App\Domains\Security\Models\Security;
+use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Security\Models\SecuritySector;
+use App\Domains\User\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 

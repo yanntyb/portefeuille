@@ -1,10 +1,10 @@
 <?php
 
-namespace Database\Factories;
+namespace Database\Factories\Domains\Portfolio\Models;
 
-use App\Models\AllocationProfile;
+use App\Domains\Portfolio\Models\AllocationProfile;
+use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\User\Models\User;
-use App\Models\Wallet;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class AllocationProfileFactory extends Factory
 {
+    protected $model = AllocationProfile::class;
+
     /** @return array<string, mixed> */
     public function definition(): array
     {

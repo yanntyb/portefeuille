@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class Security extends Model
 {
-    /** @use HasFactory<\Database\Factories\SecurityFactory> */
+    /** @use HasFactory<\Database\Factories\Domains\Security\Models\SecurityFactory> */
     use HasFactory;
 
     /** @var list<string> */

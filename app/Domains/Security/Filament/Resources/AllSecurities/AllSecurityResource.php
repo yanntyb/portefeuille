@@ -6,7 +6,7 @@ use App\Domains\Security\Filament\Resources\AllSecurities\Pages\CreateAllSecurit
 use App\Domains\Security\Filament\Resources\AllSecurities\Pages\EditAllSecurity;
 use App\Domains\Security\Filament\Resources\AllSecurities\Pages\ListAllSecurities;
 use App\Domains\Security\Filament\Resources\SecurityBase\RelationManagers\PricesRelationManager;
-use App\Filament\Resources\Securities\Schemas\SecurityForm;
+use App\Domains\Security\Filament\Resources\SecurityBase\Schemas\SecurityForm;
 use App\Domains\Security\Models\Security;
 use BackedEnum;
 use Filament\Resources\Resource;

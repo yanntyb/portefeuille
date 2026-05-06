@@ -1,10 +1,10 @@
 <?php
 
+use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
-use App\Models\Transaction;
-use App\Models\Wallet;
-use App\Support\MarketCalendar;
+use App\Infrastructure\Support\MarketCalendar;
 use Carbon\Carbon;
 
 it('has many transactions', function () {

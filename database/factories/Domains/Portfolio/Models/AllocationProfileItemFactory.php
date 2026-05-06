@@ -1,9 +1,9 @@
 <?php
 
-namespace Database\Factories;
+namespace Database\Factories\Domains\Portfolio\Models;
 
-use App\Models\AllocationProfile;
-use App\Models\AllocationProfileItem;
+use App\Domains\Portfolio\Models\AllocationProfile;
+use App\Domains\Portfolio\Models\AllocationProfileItem;
 use App\Domains\Security\Models\Security;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class AllocationProfileItemFactory extends Factory
 {
+    protected $model = AllocationProfileItem::class;
+
     /** @return array<string, mixed> */
     public function definition(): array
     {

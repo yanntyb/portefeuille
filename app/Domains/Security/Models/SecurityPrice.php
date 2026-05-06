@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SecurityPrice extends Model
 {
-    /** @use HasFactory<\Database\Factories\SecurityPriceFactory> */
+    /** @use HasFactory<\Database\Factories\Domains\Security\Models\SecurityPriceFactory> */
     use HasFactory;
 
     /** @var list<string> */

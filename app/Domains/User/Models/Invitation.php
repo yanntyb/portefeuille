@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Invitation extends Model
 {
-    /** @use HasFactory<\Database\Factories\InvitationFactory> */
+    /** @use HasFactory<\Database\Factories\Domains\User\Models\InvitationFactory> */
     use HasFactory;
 
     protected $fillable = ['token', 'created_by', 'expires_at', 'used_at'];

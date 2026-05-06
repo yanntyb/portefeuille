@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SecuritySector extends Model
 {
-    /** @use HasFactory<\Database\Factories\SecuritySectorFactory> */
+    /** @use HasFactory<\Database\Factories\Domains\Security\Models\SecuritySectorFactory> */
     use HasFactory;
 
     /** @var list<string> */

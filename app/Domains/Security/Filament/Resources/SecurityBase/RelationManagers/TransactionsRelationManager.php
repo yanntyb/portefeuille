@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Filament\Resources\Securities\RelationManagers;
+namespace App\Domains\Security\Filament\Resources\SecurityBase\RelationManagers;
 
-use App\Enums\TransactionType;
-use App\Filament\Resources\Transactions\Tables\TransactionsTable;
+use App\Domains\Portfolio\Enums\TransactionType;
+use App\Domains\Portfolio\Filament\Resources\Transactions\Tables\TransactionsTable;
+use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\SecurityPrice;
-use App\Models\Transaction;
-use App\Models\Wallet;
 use Closure;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;

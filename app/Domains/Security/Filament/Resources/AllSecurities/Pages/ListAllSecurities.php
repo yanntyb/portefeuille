@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\AllSecurities\Pages;
+namespace App\Domains\Security\Filament\Resources\AllSecurities\Pages;
 
 use App\Domains\Security\Filament\Resources\AllSecurities\AllSecurityResource;
 use Filament\Actions\CreateAction;

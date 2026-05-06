@@ -2,12 +2,12 @@
 
 namespace App\Filament\Resources\PortfolioSecurities;
 
+use App\Domains\Security\Filament\Resources\SecurityBase\Schemas\SecurityForm;
+use App\Domains\Security\Filament\Resources\SecurityBase\Tables\SecuritiesTable;
+use App\Domains\Security\Models\Security;
 use App\Filament\Resources\PortfolioSecurities\Pages\CreatePortfolioSecurity;
 use App\Filament\Resources\PortfolioSecurities\Pages\EditPortfolioSecurity;
 use App\Filament\Resources\PortfolioSecurities\Pages\ListPortfolioSecurities;
-use App\Filament\Resources\Securities\Schemas\SecurityForm;
-use App\Filament\Resources\Securities\Tables\SecuritiesTable;
-use App\Domains\Security\Models\Security;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

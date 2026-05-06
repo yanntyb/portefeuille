@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\Securities\Pages;
+namespace App\Domains\Security\Filament\Resources\SecurityBase\Pages;
 
-use App\Filament\Resources\Securities\Schemas\SecurityForm;
+use App\Domains\Security\Filament\Resources\SecurityBase\Schemas\SecurityForm;
 use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
 use App\Filament\Widgets\Securities\SingleSecurityGainStatsOverview;
 use App\Filament\Widgets\Securities\SingleSecurityPerformanceStatsOverview;

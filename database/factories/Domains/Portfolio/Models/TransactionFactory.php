@@ -1,12 +1,12 @@
 <?php
 
-namespace Database\Factories;
+namespace Database\Factories\Domains\Portfolio\Models;
 
-use App\Enums\TransactionType;
+use App\Domains\Portfolio\Enums\TransactionType;
+use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
-use App\Models\Transaction;
 use App\Domains\User\Models\User;
-use App\Models\Wallet;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -14,6 +14,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class TransactionFactory extends Factory
 {
+    protected $model = Transaction::class;
+
     /** @return array<string, mixed> */
     public function definition(): array
     {

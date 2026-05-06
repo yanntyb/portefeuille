@@ -1,6 +1,6 @@
 <?php
 
-namespace Database\Factories;
+namespace Database\Factories\Domains\Security\Models;
 
 use App\Domains\Security\Enums\Sector;
 use App\Domains\Security\Models\Security;
@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class SecuritySectorFactory extends Factory
 {
+    protected $model = SecuritySector::class;
+
     /** @return array<string, mixed> */
     public function definition(): array
     {

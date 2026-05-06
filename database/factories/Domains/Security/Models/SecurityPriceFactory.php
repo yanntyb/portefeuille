@@ -1,6 +1,6 @@
 <?php
 
-namespace Database\Factories;
+namespace Database\Factories\Domains\Security\Models;
 
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class SecurityPriceFactory extends Factory
 {
+    protected $model = SecurityPrice::class;
+
     /** @return array<string, mixed> */
     public function definition(): array
     {

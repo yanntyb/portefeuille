@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\Securities\Schemas;
+namespace App\Domains\Security\Filament\Resources\SecurityBase\Schemas;
 
-use App\Jobs\UpdateSecurityJob;
+use App\Domains\Security\Jobs\UpdateSecurityJob;
 use App\Domains\Security\Models\Security;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;

@@ -1,18 +1,20 @@
 <?php
 
-namespace Database\Factories;
+namespace Database\Factories\Domains\Portfolio\Models;
 
-use App\Enums\CurrencyModificationUnit;
-use App\Enums\FeeScope;
-use App\Enums\FrequencyUnit;
-use App\Models\Wallet;
+use App\Domains\Portfolio\Enums\CurrencyModificationUnit;
+use App\Domains\Portfolio\Enums\FrequencyUnit;
+use App\Domains\Portfolio\Models\Wallet;
+use App\Domains\Portfolio\Models\WalletFee;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\WalletFee>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Domains\Portfolio\Models\WalletFee>
  */
 class WalletFeeFactory extends Factory
 {
+    protected $model = WalletFee::class;
+
     /**
      * Define the model's default state.
      *
