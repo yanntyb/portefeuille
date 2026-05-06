@@ -1,18 +1,22 @@
 <?php
 
+use App\Domains\Portfolio\Filament\Pages\WalletPage;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Filament\Widgets\Securities\GainStatsOverview;
+use App\Domains\Security\Filament\Widgets\GainStatsOverview;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
-use App\Domains\Portfolio\Filament\Pages\WalletPage;
+use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
 
 it('can render on the PEA list page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $security->id]);
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    Transaction::factory()->pea()->create(['security_id' => $security->id, 'user_id' => $user->id]);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
 
     livewire(WalletPage::class, ['walletId' => $peaWallet->id])
         ->assertOk()
@@ -20,9 +24,12 @@ it('can render on the PEA list page', function () {
 });
 
 it('can render on the CTO list page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
-    Transaction::factory()->cto()->create(['security_id' => $security->id]);
-    $ctoWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'CTO']);
+    Transaction::factory()->cto()->create(['security_id' => $security->id, 'user_id' => $user->id]);
+    $ctoWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'CTO']);
 
     livewire(WalletPage::class, ['walletId' => $ctoWallet->id])
         ->assertOk()
@@ -30,10 +37,14 @@ it('can render on the CTO list page', function () {
 });
 
 it('computes valuation and plus-value correctly', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 5,
@@ -45,7 +56,7 @@ it('computes valuation and plus-value correctly', function () {
         'close' => 120,
     ]);
 
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
 
     $widget = livewire(GainStatsOverview::class, [
         'tablePageClass' => WalletPage::class,
@@ -62,10 +73,14 @@ it('computes valuation and plus-value correctly', function () {
 });
 
 it('displays percentage alongside plus-value', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
@@ -77,7 +92,7 @@ it('displays percentage alongside plus-value', function () {
         'close' => 120,
     ]);
 
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
 
     $widget = livewire(GainStatsOverview::class, [
         'tablePageClass' => WalletPage::class,
@@ -93,10 +108,14 @@ it('displays percentage alongside plus-value', function () {
 });
 
 it('shows positive flag when plus-value is positive', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
@@ -108,7 +127,7 @@ it('shows positive flag when plus-value is positive', function () {
         'close' => 150,
     ]);
 
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
 
     $widget = livewire(GainStatsOverview::class, [
         'tablePageClass' => WalletPage::class,
@@ -121,10 +140,14 @@ it('shows positive flag when plus-value is positive', function () {
 });
 
 it('shows negative flag when plus-value is negative', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
@@ -136,7 +159,7 @@ it('shows negative flag when plus-value is negative', function () {
         'close' => 80,
     ]);
 
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
 
     $widget = livewire(GainStatsOverview::class, [
         'tablePageClass' => WalletPage::class,
@@ -149,10 +172,14 @@ it('shows negative flag when plus-value is negative', function () {
 });
 
 it('displays fees with percentage', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 10,
@@ -164,7 +191,7 @@ it('displays fees with percentage', function () {
         'close' => 120,
     ]);
 
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
 
     $widget = livewire(GainStatsOverview::class, [
         'tablePageClass' => WalletPage::class,
@@ -179,7 +206,10 @@ it('displays fees with percentage', function () {
 });
 
 it('returns zero stats when no securities exist', function () {
-    $peaWallet = Wallet::factory()->pea()->create();
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $peaWallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
 
     $widget = livewire(GainStatsOverview::class, [
         'tablePageClass' => WalletPage::class,

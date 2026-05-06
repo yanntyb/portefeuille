@@ -1,19 +1,23 @@
 <?php
 
+use App\Domains\Portfolio\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Filament\Widgets\Securities\SingleSecurityPerformanceStatsOverview;
+use App\Domains\Security\Filament\Widgets\SingleSecurityPerformanceStatsOverview;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
-use App\Domains\Portfolio\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
+use App\Domains\User\Models\User;
 use Illuminate\Support\Carbon;
 
 use function Pest\Livewire\livewire;
 
 it('can render on the edit security page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $security->id]);
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    Transaction::factory()->pea()->create(['security_id' => $security->id, 'user_id' => $user->id]);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
 
     livewire(EditWalletSecurity::class, ['record' => $security->id, 'walletId' => $peaWallet->id])
         ->assertOk()
@@ -21,12 +25,16 @@ it('can render on the edit security page', function () {
 });
 
 it('computes returns for a single security', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     Carbon::setTestNow('2025-06-15');
 
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'date' => '2025-01-01',
         'quantity' => 10,
         'unit_price' => 100,
@@ -45,7 +53,7 @@ it('computes returns for a single security', function () {
         'close' => 120,
     ]);
 
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
 
     $widget = livewire(SingleSecurityPerformanceStatsOverview::class, [
         'record' => $security,
@@ -62,13 +70,17 @@ it('computes returns for a single security', function () {
 });
 
 it('returns seven period stats for a single security', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
     ]);
 
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
 
     $widget = livewire(SingleSecurityPerformanceStatsOverview::class, [
         'record' => $security,
@@ -81,12 +93,16 @@ it('returns seven period stats for a single security', function () {
 });
 
 it('filters transactions by wallet', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     Carbon::setTestNow('2025-06-15');
 
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'date' => '2025-01-01',
         'quantity' => 10,
         'unit_price' => 100,
@@ -95,6 +111,7 @@ it('filters transactions by wallet', function () {
 
     Transaction::factory()->cto()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'date' => '2025-01-01',
         'quantity' => 5,
         'unit_price' => 100,
@@ -113,8 +130,8 @@ it('filters transactions by wallet', function () {
         'close' => 120,
     ]);
 
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
-    $ctoWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'CTO']);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
+    $ctoWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'CTO']);
 
     $peaWidget = livewire(SingleSecurityPerformanceStatsOverview::class, [
         'record' => $security,

@@ -26,7 +26,7 @@ class UpdateSecuritiesJob implements ShouldQueue
     public function handle(YahooFinanceService $service): void
     {
         try {
-            $securities = \App\Models\Security::whereIn('id', $this->securityIds)->get();
+            $securities = \App\Domains\Security\Models\Security::whereIn('id', $this->securityIds)->get();
 
             $service->fetchAndStorePricesBulk($securities, force: true);
 

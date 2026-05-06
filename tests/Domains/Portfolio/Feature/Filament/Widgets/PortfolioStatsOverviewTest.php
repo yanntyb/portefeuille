@@ -105,10 +105,14 @@ it('shows success color when plus-value is positive', function () {
 });
 
 it('shows danger color when plus-value is negative', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
@@ -126,10 +130,14 @@ it('shows danger color when plus-value is negative', function () {
 });
 
 it('displays plus-value percentage in description', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
@@ -149,10 +157,14 @@ it('displays plus-value percentage in description', function () {
 });
 
 it('displays fees percentage in description', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 15,

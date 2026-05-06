@@ -1,9 +1,9 @@
 <?php
 
 use App\Domains\Security\Models\Security;
-use App\Domains\User\Models\User;
 use App\Domains\Security\Services\YahooFinanceClient;
 use App\Domains\Security\Services\YahooFinanceService;
+use App\Domains\User\Models\User;
 use Illuminate\Support\Facades\Cache;
 
 beforeEach(function () {

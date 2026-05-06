@@ -7,22 +7,28 @@ use App\Domains\Security\Enums\Sector;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\Security\Models\SecuritySector;
+use App\Domains\User\Models\User;
 use Illuminate\Support\Carbon;
 
 use function Pest\Livewire\livewire;
 
 it('aggregates sector data from all accounts', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $securityPea = Security::factory()->create(['name' => 'ETF PEA']);
     $securityCto = Security::factory()->create(['name' => 'ETF CTO']);
 
     Transaction::factory()->pea()->create([
         'security_id' => $securityPea->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
     ]);
 
     Transaction::factory()->cto()->create([
         'security_id' => $securityCto->id,
+        'user_id' => $user->id,
         'quantity' => 5,
         'unit_price' => 200,
     ]);
@@ -86,6 +92,9 @@ it('returns empty sector data when no securities exist', function () {
 });
 
 it('displays performance stats across all accounts', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     Carbon::setTestNow('2025-06-15');
 
     $securityPea = Security::factory()->create();
@@ -93,6 +102,7 @@ it('displays performance stats across all accounts', function () {
 
     Transaction::factory()->pea()->create([
         'security_id' => $securityPea->id,
+        'user_id' => $user->id,
         'date' => '2025-01-01',
         'quantity' => 10,
         'unit_price' => 100,
@@ -101,6 +111,7 @@ it('displays performance stats across all accounts', function () {
 
     Transaction::factory()->cto()->create([
         'security_id' => $securityCto->id,
+        'user_id' => $user->id,
         'date' => '2025-01-01',
         'quantity' => 10,
         'unit_price' => 100,

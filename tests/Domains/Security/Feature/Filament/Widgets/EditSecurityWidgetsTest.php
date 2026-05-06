@@ -1,21 +1,25 @@
 <?php
 
+use App\Domains\Portfolio\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Filament\Widgets\Securities\SingleSecurityGainStatsOverview;
-use App\Domains\Security\Filament\Widgets\Securities\SingleSecurityPerformanceStatsOverview;
-use App\Domains\Security\Filament\Widgets\Securities\SingleSecurityPriceChartWidget;
-use App\Domains\Security\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
+use App\Domains\Security\Filament\Widgets\SingleSecurityGainStatsOverview;
+use App\Domains\Security\Filament\Widgets\SingleSecurityPerformanceStatsOverview;
+use App\Domains\Security\Filament\Widgets\SingleSecurityPriceChartWidget;
+use App\Domains\Security\Filament\Widgets\SingleSecurityValuationChartWidget;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
-use App\Domains\Portfolio\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
+use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
 
 it('renders stats and chart widgets on the PEA edit page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $security->id]);
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    Transaction::factory()->pea()->create(['security_id' => $security->id, 'user_id' => $user->id]);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
 
     livewire(EditWalletSecurity::class, ['record' => $security->id, 'walletId' => $peaWallet->id])
         ->assertOk()
@@ -26,9 +30,12 @@ it('renders stats and chart widgets on the PEA edit page', function () {
 });
 
 it('renders stats and chart widgets on the CTO edit page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
-    Transaction::factory()->cto()->create(['security_id' => $security->id]);
-    $ctoWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'CTO']);
+    Transaction::factory()->cto()->create(['security_id' => $security->id, 'user_id' => $user->id]);
+    $ctoWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'CTO']);
 
     livewire(EditWalletSecurity::class, ['record' => $security->id, 'walletId' => $ctoWallet->id])
         ->assertOk()
@@ -39,10 +46,14 @@ it('renders stats and chart widgets on the CTO edit page', function () {
 });
 
 it('computes single security gain data correctly on edit page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 5,
@@ -54,7 +65,7 @@ it('computes single security gain data correctly on edit page', function () {
         'close' => 120,
     ]);
 
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
 
     $widget = livewire(SingleSecurityGainStatsOverview::class, [
         'record' => $security,
@@ -73,10 +84,14 @@ it('computes single security gain data correctly on edit page', function () {
 });
 
 it('only counts transactions of the correct account type', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 5,
@@ -84,6 +99,7 @@ it('only counts transactions of the correct account type', function () {
 
     Transaction::factory()->cto()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 20,
         'unit_price' => 200,
         'fees' => 10,
@@ -95,7 +111,7 @@ it('only counts transactions of the correct account type', function () {
         'close' => 120,
     ]);
 
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
 
     $widget = livewire(SingleSecurityGainStatsOverview::class, [
         'record' => $security,
@@ -111,10 +127,14 @@ it('only counts transactions of the correct account type', function () {
 });
 
 it('displays PRU on the edit page gain data', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
@@ -122,6 +142,7 @@ it('displays PRU on the edit page gain data', function () {
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 200,
         'fees' => 0,
@@ -133,7 +154,7 @@ it('displays PRU on the edit page gain data', function () {
         'close' => 150,
     ]);
 
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
 
     $widget = livewire(SingleSecurityGainStatsOverview::class, [
         'record' => $security,

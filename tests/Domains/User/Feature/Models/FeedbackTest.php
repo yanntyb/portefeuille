@@ -25,7 +25,7 @@ it('belongs to user', function () {
 });
 
 it('has fillable attributes', function () {
-    $feedback = new Feedback();
+    $feedback = new Feedback;
 
     expect($feedback->getFillable())->toContain('user_id', 'subject', 'body');
 });

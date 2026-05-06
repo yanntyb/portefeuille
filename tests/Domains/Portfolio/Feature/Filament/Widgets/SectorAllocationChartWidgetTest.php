@@ -1,14 +1,13 @@
 <?php
 
 use App\Domains\Portfolio\Filament\Pages\WalletPage;
-use App\Domains\Security\Filament\Widgets\SectorAllocationChartWidget;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Enums\Sector;
+use App\Domains\Security\Filament\Widgets\SectorAllocationChartWidget;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\Security\Models\SecuritySector;
-
 use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
@@ -40,17 +39,22 @@ it('can render on the CTO list page', function () {
 });
 
 it('aggregates sector data weighted by valuation for account list', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $securityA = Security::factory()->create(['name' => 'ETF World']);
     $securityB = Security::factory()->create(['name' => 'ETF Tech']);
 
     Transaction::factory()->pea()->create([
         'security_id' => $securityA->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
     ]);
 
     Transaction::factory()->pea()->create([
         'security_id' => $securityB->id,
+        'user_id' => $user->id,
         'quantity' => 5,
         'unit_price' => 200,
     ]);
@@ -87,7 +91,7 @@ it('aggregates sector data weighted by valuation for account list', function () 
         'weight' => 0.8,
     ]);
 
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
 
     $widget = livewire(SectorAllocationChartWidget::class, [
         'tablePageClass' => WalletPage::class,

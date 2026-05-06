@@ -1,13 +1,14 @@
 <?php
 
+use App\Domains\Portfolio\Filament\Pages\WalletPage;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Filament\Widgets\Securities\SecurityStatsOverview;
-use App\Domains\Security\Filament\Widgets\Securities\ValuationChartWidget;
+use App\Domains\Security\Filament\Widgets\SecurityStatsOverview;
+use App\Domains\Security\Filament\Widgets\ValuationChartWidget;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\Security\Services\YahooFinanceService;
-use App\Domains\Portfolio\Filament\Pages\WalletPage;
+use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
 
@@ -132,13 +133,17 @@ it('works on CTO wallet as well', function () {
 });
 
 it('filters stats widget to only shown securities', function () {
-    $peaWallet = Wallet::factory()->pea()->create();
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $peaWallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
     $security1 = Security::factory()->create();
     $security2 = Security::factory()->create();
 
     Transaction::factory()->create([
         'wallet_id' => $peaWallet->id,
         'security_id' => $security1->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
@@ -147,6 +152,7 @@ it('filters stats widget to only shown securities', function () {
     Transaction::factory()->create([
         'wallet_id' => $peaWallet->id,
         'security_id' => $security2->id,
+        'user_id' => $user->id,
         'quantity' => 5,
         'unit_price' => 200,
         'fees' => 0,
@@ -177,13 +183,17 @@ it('filters stats widget to only shown securities', function () {
 });
 
 it('filters chart widget to only shown securities', function () {
-    $peaWallet = Wallet::factory()->pea()->create();
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $peaWallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
     $security1 = Security::factory()->create();
     $security2 = Security::factory()->create();
 
     Transaction::factory()->create([
         'wallet_id' => $peaWallet->id,
         'security_id' => $security1->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
@@ -193,6 +203,7 @@ it('filters chart widget to only shown securities', function () {
     Transaction::factory()->create([
         'wallet_id' => $peaWallet->id,
         'security_id' => $security2->id,
+        'user_id' => $user->id,
         'quantity' => 5,
         'unit_price' => 200,
         'fees' => 0,
@@ -224,12 +235,16 @@ it('filters chart widget to only shown securities', function () {
 });
 
 it('shows empty stats when all securities are hidden', function () {
-    $peaWallet = Wallet::factory()->pea()->create();
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $peaWallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
         'wallet_id' => $peaWallet->id,
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
@@ -313,12 +328,16 @@ it('does not show error icon after toggling a priced security to hidden', functi
 });
 
 it('shows empty chart when all securities are hidden', function () {
-    $peaWallet = Wallet::factory()->pea()->create();
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $peaWallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
         'wallet_id' => $peaWallet->id,
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,

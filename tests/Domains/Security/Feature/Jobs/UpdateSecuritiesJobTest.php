@@ -38,7 +38,7 @@ it('skips sectors gracefully on ticker resolution failure', function () {
         ->andReturn(0);
     $service->shouldReceive('fetchAndStoreSectors')
         ->once()
-        ->andThrow(new \App\Exceptions\TickerResolutionException('No ticker found'));
+        ->andThrow(new \App\Domains\Security\Exceptions\TickerResolutionException('No ticker found'));
 
     (new UpdateSecuritiesJob([$security->id], $cacheKey))->handle($service);
 

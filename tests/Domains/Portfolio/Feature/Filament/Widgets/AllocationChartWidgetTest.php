@@ -1,9 +1,9 @@
 <?php
 
 use App\Domains\Portfolio\Filament\Pages\WalletPage;
-use App\Domains\Security\Filament\Widgets\AllocationChartWidget;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
+use App\Domains\Security\Filament\Widgets\AllocationChartWidget;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;

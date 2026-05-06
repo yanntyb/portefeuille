@@ -6,6 +6,7 @@ use App\Domains\Portfolio\Filament\Resources\Transactions\Pages\EditTransaction;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
+use App\Domains\User\Models\User;
 
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Livewire\livewire;
@@ -91,12 +92,16 @@ it('computes negative realized gain on sell at loss', function () {
 });
 
 it('can create a sell transaction via Filament', function () {
-    $wallet = Wallet::factory()->pea()->create();
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
@@ -237,12 +242,16 @@ it('clears realized gain when changing type from sell to buy', function () {
 });
 
 it('can update a sell transaction via Filament', function () {
-    $wallet = Wallet::factory()->pea()->create();
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
@@ -251,6 +260,7 @@ it('can update a sell transaction via Filament', function () {
     $sell = Transaction::factory()->sell()->create([
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 5,
         'unit_price' => 150,
         'fees' => 0,
@@ -292,12 +302,16 @@ it('computes realized gain on CTO sell transaction', function () {
 });
 
 it('can create a CTO sell transaction via Filament', function () {
-    $wallet = Wallet::factory()->cto()->create();
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $wallet = Wallet::factory()->cto()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 15,
         'unit_price' => 80,
         'fees' => 0,
@@ -330,12 +344,16 @@ it('can create a CTO sell transaction via Filament', function () {
 });
 
 it('cannot sell more than owned quantity via Filament', function () {
-    $wallet = Wallet::factory()->pea()->create();
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
@@ -356,12 +374,16 @@ it('cannot sell more than owned quantity via Filament', function () {
 });
 
 it('can sell exact owned quantity via Filament', function () {
-    $wallet = Wallet::factory()->pea()->create();
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
@@ -383,13 +405,17 @@ it('can sell exact owned quantity via Filament', function () {
 });
 
 it('validates sell quantity against correct wallet', function () {
-    $peaWallet = Wallet::factory()->pea()->create();
-    $ctoWallet = Wallet::factory()->cto()->create();
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $peaWallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
+    $ctoWallet = Wallet::factory()->cto()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
         'wallet_id' => $peaWallet->id,
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
@@ -398,6 +424,7 @@ it('validates sell quantity against correct wallet', function () {
     Transaction::factory()->create([
         'wallet_id' => $ctoWallet->id,
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 5,
         'unit_price' => 100,
         'fees' => 0,
@@ -420,7 +447,10 @@ it('validates sell quantity against correct wallet', function () {
 });
 
 it('allows buy quantity exceeding owned quantity', function () {
-    $wallet = Wallet::factory()->pea()->create();
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
     livewire(CreateTransaction::class)

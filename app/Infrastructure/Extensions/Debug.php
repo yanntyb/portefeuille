@@ -2,7 +2,7 @@
 
 namespace App\Infrastructure\Extensions;
 
-use App\Filament\Pages\DebugPage;
+use App\Domains\User\Filament\Pages\DebugPage;
 use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 

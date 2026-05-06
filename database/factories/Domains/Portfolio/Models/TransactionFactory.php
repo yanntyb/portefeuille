@@ -36,7 +36,7 @@ class TransactionFactory extends Factory
     {
         return $this->state(function (): array {
             $userId = auth()?->id();
-            if (!$userId) {
+            if (! $userId) {
                 $userId = User::factory()->create()->id;
             }
 
@@ -52,7 +52,7 @@ class TransactionFactory extends Factory
     {
         return $this->state(function (): array {
             $userId = auth()?->id();
-            if (!$userId) {
+            if (! $userId) {
                 $userId = User::factory()->create()->id;
             }
 

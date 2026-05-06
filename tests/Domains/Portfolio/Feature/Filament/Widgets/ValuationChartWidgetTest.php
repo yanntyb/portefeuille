@@ -1,12 +1,11 @@
 <?php
 
 use App\Domains\Portfolio\Filament\Pages\WalletPage;
-use App\Domains\Security\Filament\Widgets\ValuationChartWidget;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
+use App\Domains\Security\Filament\Widgets\ValuationChartWidget;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
-
 use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;

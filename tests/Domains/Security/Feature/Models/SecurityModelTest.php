@@ -4,6 +4,7 @@ use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\User\Models\User;
 use App\Infrastructure\Support\MarketCalendar;
 use Carbon\Carbon;
 
@@ -40,10 +41,14 @@ it('has a latest price', function () {
 });
 
 it('scopes securities by account type with aggregations', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 5,
@@ -51,6 +56,7 @@ it('scopes securities by account type with aggregations', function () {
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 20,
         'unit_price' => 150,
         'fees' => 8,
@@ -58,12 +64,13 @@ it('scopes securities by account type with aggregations', function () {
 
     Transaction::factory()->cto()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 5,
         'unit_price' => 200,
         'fees' => 3,
     ]);
 
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
     $peaResults = Security::query()->forWallet($peaWallet)->get();
 
     expect($peaResults)->toHaveCount(1)
@@ -73,10 +80,13 @@ it('scopes securities by account type with aggregations', function () {
 });
 
 it('does not include securities without transactions for the account type', function () {
-    $security = Security::factory()->create();
-    Transaction::factory()->cto()->create(['security_id' => $security->id]);
+    $user = User::factory()->create();
+    $this->actingAs($user);
 
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $security = Security::factory()->create();
+    Transaction::factory()->cto()->create(['security_id' => $security->id, 'user_id' => $user->id]);
+
+    $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
     $peaResults = Security::query()->forWallet($peaWallet)->get();
 
     expect($peaResults)->toBeEmpty();
@@ -150,10 +160,14 @@ it('has a today price only for today', function () {
 });
 
 it('computes PRU correctly', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
@@ -161,22 +175,27 @@ it('computes PRU correctly', function () {
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 200,
         'fees' => 0,
     ]);
 
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
     $result = Security::query()->forWallet($peaWallet)->first();
 
     expect((float) $result->pru)->toBe(150.0);
 });
 
 it('scopes securities for authenticated user across all account types', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 5,
@@ -184,6 +203,7 @@ it('scopes securities for authenticated user across all account types', function
 
     Transaction::factory()->cto()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'quantity' => 5,
         'unit_price' => 200,
         'fees' => 3,

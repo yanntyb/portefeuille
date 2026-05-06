@@ -2,7 +2,7 @@
 
 namespace App\Domains\Security\Filament\Widgets;
 
-use App\Data\CumulativeData;
+use App\Domains\Portfolio\Data\CumulativeData;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Services\TransactionAggregator;
 use App\Domains\Security\Models\Security;
