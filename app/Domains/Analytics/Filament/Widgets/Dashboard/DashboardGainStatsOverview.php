@@ -4,6 +4,7 @@ namespace App\Domains\Analytics\Filament\Widgets\Dashboard;
 
 use App\Domains\Analytics\Services\VolatilityCalculator;
 use App\Domains\Portfolio\Services\DashboardDataProvider;
+use App\Domains\Security\Models\Security;
 use App\Infrastructure\Filament\Concerns\ComputesGainStats;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Collection;
@@ -18,7 +19,7 @@ class DashboardGainStatsOverview extends Widget
     protected function resolveGainSecurities(): Collection
     {
         $provider = app(DashboardDataProvider::class);
-        $allSecurities = collect();
+        $securityIds = [];
 
         foreach ($provider->wallets() as $wallet) {
             $securities = $provider->securitiesForWallet($wallet);
@@ -27,10 +28,14 @@ class DashboardGainStatsOverview extends Widget
                 $securities = $securities->whereIn('id', $this->shownSecurityIds);
             }
 
-            $allSecurities = $allSecurities->concat($securities);
+            $securityIds = array_merge($securityIds, $securities->pluck('id')->all());
         }
 
-        return $allSecurities;
+        if (empty($securityIds)) {
+            return Security::query()->where('id', null)->get();
+        }
+
+        return Security::query()->whereIn('id', $securityIds)->get();
     }
 
     protected function resolveVolatilityValue(): ?string

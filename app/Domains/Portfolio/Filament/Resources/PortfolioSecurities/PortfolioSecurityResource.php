@@ -48,7 +48,7 @@ class PortfolioSecurityResource extends Resource
     {
         return SecuritiesTable::configure($table)
             ->recordActions([])
-            ->modifyQueryUsing(fn (Builder $query) => $query->forAuthAll());
+            ->modifyQueryUsing(fn (Builder $query) => $query->forAuth());
     }
 
     public static function getPages(): array
