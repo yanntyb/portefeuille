@@ -1,9 +1,9 @@
 <?php
 
-use App\Data\Simulation\CdiVsSasuSimulation;
-use App\Data\Simulation\InvestissementLocatifSimulation;
-use App\Data\Simulation\SimulationObject;
-use App\Services\SimulationEngine;
+use App\Domains\Analytics\Data\Simulation\CdiVsSasuSimulation;
+use App\Domains\Analytics\Data\Simulation\InvestissementLocatifSimulation;
+use App\Domains\Analytics\Data\Simulation\SimulationObject;
+use App\Domains\Analytics\Services\SimulationEngine;
 
 function simulationEngine(): SimulationEngine
 {

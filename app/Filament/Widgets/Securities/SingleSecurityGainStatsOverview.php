@@ -2,8 +2,8 @@
 
 namespace App\Filament\Widgets\Securities;
 
+use App\Domains\Analytics\Services\VolatilityCalculator;
 use App\Infrastructure\Filament\Concerns\ComputesSingleSecurityStats;
-use App\Services\VolatilityCalculator;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Number;

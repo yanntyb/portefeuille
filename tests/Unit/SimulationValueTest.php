@@ -1,7 +1,7 @@
 <?php
 
-use App\Data\Simulation\SimulationValue;
-use App\Data\Simulation\ValueFormat;
+use App\Domains\Analytics\Data\Simulation\SimulationValue;
+use App\Domains\Analytics\Data\Simulation\ValueFormat;
 
 it('parses euro values', function (): void {
     $value = SimulationValue::parse('3 862,50 €');

@@ -1,9 +1,9 @@
 <?php
 
-use App\Enums\CorrelationPeriod;
+use App\Domains\Analytics\Enums\CorrelationPeriod;
+use App\Domains\Analytics\Services\CorrelationCalculator;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
-use App\Services\CorrelationCalculator;
 use Illuminate\Support\Carbon;
 
 it('returns null when less than 2 securities', function () {

@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Filament\Widgets\Securities;
+namespace App\Domains\Analytics\Filament\Widgets\Dashboard;
 
 use App\Domains\Analytics\Data\CorrelationResult;
 use App\Domains\Analytics\Enums\CorrelationPeriod;
 use App\Domains\Analytics\Services\CorrelationCalculator;
-use App\Domains\Security\Models\Security;
-use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
+use App\Domains\Portfolio\Services\DashboardDataProvider;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -16,9 +15,8 @@ use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Widgets\Widget;
 use Livewire\Attributes\On;
 
-class CorrelationMatrixWidget extends Widget implements HasActions, HasSchemas
+class DashboardCorrelationMatrixWidget extends Widget implements HasActions, HasSchemas
 {
-    use HasReactiveTableProperties;
     use InteractsWithActions;
     use InteractsWithSchemas;
 
@@ -76,29 +74,18 @@ class CorrelationMatrixWidget extends Widget implements HasActions, HasSchemas
 
     public function getCorrelationData(): ?CorrelationResult
     {
-        if ($this->tablePageClass === null || $this->walletId === null) {
-            return null;
-        }
-
-        $securityIds = $this->getPageTableQuery()
-            ->reorder()
-            ->pluck('securities.id')
-            ->toArray();
+        $securities = app(DashboardDataProvider::class)->allSecurities();
 
         if ($this->shownSecurityIds !== null) {
-            $securityIds = array_values(array_intersect($securityIds, $this->shownSecurityIds));
+            $securities = $securities->whereIn('id', $this->shownSecurityIds);
         }
 
-        if (count($securityIds) < 2) {
+        if ($securities->count() < 2) {
             return null;
         }
-
-        $securities = Security::query()
-            ->whereIn('id', $securityIds)
-            ->get();
 
         $correlationPeriod = CorrelationPeriod::tryFrom($this->period) ?? CorrelationPeriod::OneYear;
 
-        return app(CorrelationCalculator::class)->compute($securities, $correlationPeriod);
+        return app(CorrelationCalculator::class)->compute($securities->values(), $correlationPeriod);
     }
 }

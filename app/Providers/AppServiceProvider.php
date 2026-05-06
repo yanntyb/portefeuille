@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
-use App\Contracts\Rebalancing;
-use App\Contracts\VolatilityCalculating;
+use App\Domains\Analytics\Contracts\Rebalancing;
+use App\Domains\Analytics\Contracts\VolatilityCalculating;
+use App\Domains\Analytics\Services\RebalancingCalculator;
+use App\Domains\Analytics\Services\RebalancingCalculatorOrchestrator;
+use App\Domains\Analytics\Services\VolatilityCalculator;
 use App\Domains\Portfolio\Contracts\PortfolioPerformanceCalculating;
 use App\Domains\Portfolio\Services\DashboardDataProvider;
 use App\Domains\Portfolio\Services\PortfolioPerformanceCalculator;
@@ -12,9 +15,6 @@ use App\Domains\Security\Commands\FetchSecurityPricesCommand;
 use App\Domains\Security\Commands\FetchSecuritySectorsCommand;
 use App\Domains\Security\Contracts\PriceRefreshing;
 use App\Domains\Security\Services\PriceRefreshService;
-use App\Services\RebalancingCalculator;
-use App\Services\RebalancingCalculatorOrchestrator;
-use App\Services\VolatilityCalculator;
 use Carbon\Carbon;
 use Illuminate\Support\ServiceProvider;
 

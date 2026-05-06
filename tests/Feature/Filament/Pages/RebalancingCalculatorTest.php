@@ -1,5 +1,6 @@
 <?php
 
+use App\Domains\Analytics\Services\RebalancingCalculator as RebalancingService;
 use App\Domains\Portfolio\Models\AllocationProfile;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
@@ -7,7 +8,6 @@ use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 use App\Filament\Pages\RebalancingCalculator;
-use App\Services\RebalancingCalculator as RebalancingService;
 
 use function Pest\Livewire\livewire;
 

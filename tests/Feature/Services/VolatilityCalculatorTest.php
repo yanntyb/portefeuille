@@ -1,9 +1,9 @@
 <?php
 
+use App\Domains\Analytics\Services\VolatilityCalculator;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
-use App\Services\VolatilityCalculator;
 
 describe('VolatilityCalculator', function () {
     it('returns null if less than 30 prices', function () {
