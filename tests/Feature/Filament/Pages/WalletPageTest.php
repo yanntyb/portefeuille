@@ -1,7 +1,7 @@
 <?php
 
 use App\Filament\Pages\WalletPage;
-use App\Models\User;
+use App\Domains\User\Models\User;
 use App\Models\Wallet;
 
 it('returns empty navigation when not authenticated', function () {

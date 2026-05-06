@@ -5,7 +5,7 @@ use App\Models\AllocationProfile;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
-use App\Models\User;
+use App\Domains\User\Models\User;
 use App\Models\Wallet;
 use App\Services\RebalancingCalculator as RebalancingService;
 

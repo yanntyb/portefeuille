@@ -3,7 +3,7 @@
 use App\Filament\Resources\AllSecurities\Pages\ListAllSecurities;
 use App\Models\Security;
 use App\Models\Transaction;
-use App\Models\User;
+use App\Domains\User\Models\User;
 use App\Models\Wallet;
 use App\Services\YahooFinanceClient;
 

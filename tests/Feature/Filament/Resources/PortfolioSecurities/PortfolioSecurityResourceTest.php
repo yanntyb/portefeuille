@@ -3,7 +3,7 @@
 use App\Filament\Resources\PortfolioSecurities\Pages\ListPortfolioSecurities;
 use App\Models\Security;
 use App\Models\Transaction;
-use App\Models\User;
+use App\Domains\User\Models\User;
 use App\Models\Wallet;
 
 use function Pest\Laravel\actingAs;

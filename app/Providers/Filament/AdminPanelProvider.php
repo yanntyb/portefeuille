@@ -8,7 +8,7 @@ use App\Infrastructure\Extensions\Store;
 use App\Infrastructure\Extensions\Style;
 use App\Infrastructure\Extensions\TablePersistence;
 use App\Infrastructure\Extensions\Transition;
-use App\Filament\Pages\Auth\Login;
+use App\Domains\User\Filament\Pages\Auth\Login;
 use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -41,7 +41,9 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
+            ->discoverResources(in: app_path('Domains/User/Filament/Resources'), for: 'App\Domains\User\Filament\Resources')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
+            ->discoverPages(in: app_path('Domains/User/Filament/Pages'), for: 'App\Domains\User\Filament\Pages')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([])
             ->widgets([])

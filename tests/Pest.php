@@ -14,7 +14,7 @@
 pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->beforeEach(function () {
-        $this->actingAs(App\Models\User::factory()->create());
+        $this->actingAs(App\Domains\User\Models\User::factory()->create());
     })
     ->in('Feature', 'Infrastructure');
 

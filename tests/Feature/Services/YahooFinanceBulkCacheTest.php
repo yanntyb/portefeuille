@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\Security;
-use App\Models\User;
+use App\Domains\User\Models\User;
 use App\Services\YahooFinanceClient;
 use App\Services\YahooFinanceService;
 use Illuminate\Support\Facades\Cache;

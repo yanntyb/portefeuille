@@ -1,7 +1,7 @@
 <?php
 
 use App\Filament\Pages\EditAccount;
-use App\Models\User;
+use App\Domains\User\Models\User;
 use Illuminate\Support\Facades\Hash;
 
 use function Pest\Livewire\livewire;

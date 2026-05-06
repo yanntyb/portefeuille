@@ -5,7 +5,7 @@ namespace Database\Factories;
 use App\Enums\TransactionType;
 use App\Models\Security;
 use App\Models\Transaction;
-use App\Models\User;
+use App\Domains\User\Models\User;
 use App\Models\Wallet;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

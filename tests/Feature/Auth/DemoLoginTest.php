@@ -1,7 +1,7 @@
 <?php
 
 use App\Filament\Pages\Auth\Login;
-use App\Models\User;
+use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
 

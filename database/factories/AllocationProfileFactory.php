@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\AllocationProfile;
-use App\Models\User;
+use App\Domains\User\Models\User;
 use App\Models\Wallet;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

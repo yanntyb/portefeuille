@@ -1,6 +1,6 @@
 <?php
 
-use App\Livewire\InvitationRegistration;
+use App\Domains\User\Livewire\InvitationRegistration;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/invitation/{token}', InvitationRegistration::class)

@@ -2,7 +2,7 @@
 
 use App\Filament\Resources\AllSecurities\Pages\EditAllSecurity;
 use App\Models\Security;
-use App\Models\User;
+use App\Domains\User\Models\User;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseHas;
