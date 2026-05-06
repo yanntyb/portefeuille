@@ -1,8 +1,8 @@
 <?php
 
-use App\Jobs\UpdateSecuritiesJob;
-use App\Models\Security;
-use App\Services\YahooFinanceService;
+use App\Domains\Security\Jobs\UpdateSecuritiesJob;
+use App\Domains\Security\Models\Security;
+use App\Domains\Security\Services\YahooFinanceService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 

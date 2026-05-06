@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Security;
+use App\Domains\Security\Models\Security;
 use App\Models\Transaction;
 use App\Models\Wallet;
 

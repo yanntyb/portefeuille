@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Security;
+use App\Domains\Security\Models\Security;
 use App\Models\Wallet;
 use Illuminate\Database\Eloquent\Collection;
 

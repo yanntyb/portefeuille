@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Contracts\VolatilityCalculating;
-use App\Models\Security;
-use App\Models\SecurityPrice;
+use App\Domains\Security\Models\Security;
+use App\Domains\Security\Models\SecurityPrice;
 use App\Models\Wallet;
 use Illuminate\Support\Collection;
 

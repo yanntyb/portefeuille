@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Data\CorrelationResult;
 use App\Enums\CorrelationPeriod;
-use App\Models\SecurityPrice;
+use App\Domains\Security\Models\SecurityPrice;
 use Illuminate\Support\Collection;
 
 class CorrelationCalculator

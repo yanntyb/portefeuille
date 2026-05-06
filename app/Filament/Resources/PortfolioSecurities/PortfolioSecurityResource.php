@@ -7,7 +7,7 @@ use App\Filament\Resources\PortfolioSecurities\Pages\EditPortfolioSecurity;
 use App\Filament\Resources\PortfolioSecurities\Pages\ListPortfolioSecurities;
 use App\Filament\Resources\Securities\Schemas\SecurityForm;
 use App\Filament\Resources\Securities\Tables\SecuritiesTable;
-use App\Models\Security;
+use App\Domains\Security\Models\Security;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

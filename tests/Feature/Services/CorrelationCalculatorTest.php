@@ -1,8 +1,8 @@
 <?php
 
 use App\Enums\CorrelationPeriod;
-use App\Models\Security;
-use App\Models\SecurityPrice;
+use App\Domains\Security\Models\Security;
+use App\Domains\Security\Models\SecurityPrice;
 use App\Services\CorrelationCalculator;
 use Illuminate\Support\Carbon;
 

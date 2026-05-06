@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Enums\Sector;
-use App\Models\Security;
-use App\Models\SecuritySector;
+use App\Domains\Security\Enums\Sector;
+use App\Domains\Security\Models\Security;
+use App\Domains\Security\Models\SecuritySector;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

@@ -1,8 +1,8 @@
 <?php
 
 use App\Filament\Pages\WalletPage;
-use App\Models\Security;
-use App\Models\SecurityPrice;
+use App\Domains\Security\Models\Security;
+use App\Domains\Security\Models\SecurityPrice;
 use App\Models\Transaction;
 use App\Models\Wallet;
 

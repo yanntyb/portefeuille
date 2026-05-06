@@ -3,7 +3,7 @@
 namespace App\Filament\Widgets\Securities;
 
 use App\Filament\Widgets\ChartWidget;
-use App\Models\SecurityPrice;
+use App\Domains\Security\Models\SecurityPrice;
 use Filament\Support\RawJs;
 use Illuminate\Database\Eloquent\Model;
 

@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Security;
-use App\Models\SecurityPrice;
+use App\Domains\Security\Models\Security;
+use App\Domains\Security\Models\SecurityPrice;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

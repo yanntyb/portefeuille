@@ -2,8 +2,8 @@
 
 use App\Filament\Pages\RebalancingCalculator;
 use App\Models\AllocationProfile;
-use App\Models\Security;
-use App\Models\SecurityPrice;
+use App\Domains\Security\Models\Security;
+use App\Domains\Security\Models\SecurityPrice;
 use App\Models\Transaction;
 use App\Domains\User\Models\User;
 use App\Models\Wallet;

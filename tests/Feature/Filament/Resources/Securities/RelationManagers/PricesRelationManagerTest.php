@@ -2,8 +2,8 @@
 
 use App\Filament\Resources\AllSecurities\Pages\EditAllSecurity;
 use App\Filament\Resources\Securities\RelationManagers\PricesRelationManager;
-use App\Models\Security;
-use App\Models\SecurityPrice;
+use App\Domains\Security\Models\Security;
+use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 
 use function Pest\Laravel\actingAs;

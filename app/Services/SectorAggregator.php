@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Enums\Sector;
+use App\Domains\Security\Enums\Sector;
 use App\Infrastructure\Support\ChartColors;
 use Illuminate\Support\Collection;
 

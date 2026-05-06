@@ -4,7 +4,7 @@ namespace App\Filament\Widgets\Securities;
 
 use App\Filament\Widgets\ChartWidget;
 use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
-use App\Models\SecuritySector;
+use App\Domains\Security\Models\SecuritySector;
 use App\Services\SectorAggregator;
 use Filament\Support\RawJs;
 use Illuminate\Database\Eloquent\Builder;

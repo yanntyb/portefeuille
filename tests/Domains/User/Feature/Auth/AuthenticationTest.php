@@ -3,7 +3,7 @@
 use App\Filament\Pages\WalletPage;
 use App\Filament\Resources\Transactions\Pages\CreateTransaction;
 use App\Filament\Resources\Transactions\Pages\ListTransactions;
-use App\Models\Security;
+use App\Domains\Security\Models\Security;
 use App\Models\Transaction;
 use App\Domains\User\Models\User;
 use App\Models\Wallet;

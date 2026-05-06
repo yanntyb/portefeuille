@@ -1,8 +1,8 @@
 <?php
 
 use App\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
-use App\Models\Security;
-use App\Services\YahooFinanceClient;
+use App\Domains\Security\Models\Security;
+use App\Domains\Security\Services\YahooFinanceClient;
 
 use function Pest\Livewire\livewire;
 

@@ -3,7 +3,7 @@
 use App\Enums\TransactionType;
 use App\Filament\Resources\Transactions\Pages\CreateTransaction;
 use App\Filament\Resources\Transactions\Pages\EditTransaction;
-use App\Models\Security;
+use App\Domains\Security\Models\Security;
 use App\Models\Transaction;
 use App\Models\Wallet;
 

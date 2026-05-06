@@ -3,12 +3,12 @@
 namespace App\Providers;
 
 use App\Contracts\PortfolioPerformanceCalculating;
-use App\Contracts\PriceRefreshing;
+use App\Domains\Security\Contracts\PriceRefreshing;
 use App\Contracts\Rebalancing;
 use App\Contracts\VolatilityCalculating;
 use App\Services\DashboardDataProvider;
 use App\Services\PortfolioPerformanceCalculator;
-use App\Services\PriceRefreshService;
+use App\Domains\Security\Services\PriceRefreshService;
 use App\Services\RebalancingCalculator;
 use App\Services\RebalancingCalculatorOrchestrator;
 use App\Services\SingleSecurityStatsProvider;

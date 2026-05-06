@@ -3,8 +3,8 @@
 namespace App\Filament\Widgets\Dashboard;
 
 use App\Filament\Resources\Securities\Tables\SecuritiesTable;
-use App\Models\Security;
-use App\Models\SecurityPrice;
+use App\Domains\Security\Models\Security;
+use App\Domains\Security\Models\SecurityPrice;
 use App\Infrastructure\Support\MarketCalendar;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;

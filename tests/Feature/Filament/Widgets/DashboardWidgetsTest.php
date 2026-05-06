@@ -1,11 +1,11 @@
 <?php
 
-use App\Enums\Sector;
+use App\Domains\Security\Enums\Sector;
 use App\Filament\Widgets\Dashboard\DashboardPerformanceStatsOverview;
 use App\Filament\Widgets\Dashboard\DashboardSectorAllocationChartWidget;
-use App\Models\Security;
-use App\Models\SecurityPrice;
-use App\Models\SecuritySector;
+use App\Domains\Security\Models\Security;
+use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Security\Models\SecuritySector;
 use App\Models\Transaction;
 use Illuminate\Support\Carbon;
 

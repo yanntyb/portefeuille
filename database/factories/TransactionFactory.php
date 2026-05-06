@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\TransactionType;
-use App\Models\Security;
+use App\Domains\Security\Models\Security;
 use App\Models\Transaction;
 use App\Domains\User\Models\User;
 use App\Models\Wallet;

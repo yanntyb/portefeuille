@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\Rebalancing;
-use App\Models\Security;
+use App\Domains\Security\Models\Security;
 use App\Models\Transaction;
 use App\Models\Wallet;
 

@@ -1,10 +1,10 @@
 <?php
 
 use App\Filament\Pages\Dashboard;
-use App\Models\Security;
-use App\Models\SecurityPrice;
+use App\Domains\Security\Models\Security;
+use App\Domains\Security\Models\SecurityPrice;
 use App\Models\Transaction;
-use App\Services\YahooFinanceService;
+use App\Domains\Security\Services\YahooFinanceService;
 use App\Support\MarketCalendar;
 
 use function Pest\Livewire\livewire;

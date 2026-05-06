@@ -5,7 +5,7 @@ namespace App\Filament\Widgets\Securities;
 use App\Data\CorrelationResult;
 use App\Enums\CorrelationPeriod;
 use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
-use App\Models\Security;
+use App\Domains\Security\Models\Security;
 use App\Services\CorrelationCalculator;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
