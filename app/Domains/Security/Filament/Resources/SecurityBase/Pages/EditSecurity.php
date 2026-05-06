@@ -3,13 +3,13 @@
 namespace App\Domains\Security\Filament\Resources\SecurityBase\Pages;
 
 use App\Domains\Security\Filament\Resources\SecurityBase\Schemas\SecurityForm;
-use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
-use App\Filament\Widgets\Securities\SingleSecurityGainStatsOverview;
-use App\Filament\Widgets\Securities\SingleSecurityPerformanceStatsOverview;
-use App\Filament\Widgets\Securities\SingleSecurityPriceChartWidget;
-use App\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
-use App\Filament\Widgets\Securities\SingleSecurityValuationStatOverview;
-use App\Jobs\UpdateSecurityJob;
+use App\Domains\Security\Filament\Widgets\SectorAllocationChartWidget;
+use App\Domains\Security\Filament\Widgets\SingleSecurityGainStatsOverview;
+use App\Domains\Security\Filament\Widgets\SingleSecurityPerformanceStatsOverview;
+use App\Domains\Security\Filament\Widgets\SingleSecurityPriceChartWidget;
+use App\Domains\Security\Filament\Widgets\SingleSecurityValuationChartWidget;
+use App\Domains\Security\Filament\Widgets\SingleSecurityValuationStatOverview;
+use App\Domains\Security\Jobs\UpdateSecurityJob;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;

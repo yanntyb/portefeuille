@@ -1,6 +1,6 @@
 <?php
 
-use App\Filament\Resources\AllSecurities\Pages\EditAllSecurity;
+use App\Domains\Security\Filament\Resources\AllSecurities\Pages\EditAllSecurity;
 use App\Domains\Security\Models\Security;
 use App\Domains\User\Models\User;
 

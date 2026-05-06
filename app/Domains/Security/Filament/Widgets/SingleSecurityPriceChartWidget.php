@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Filament\Widgets\Securities;
+namespace App\Domains\Security\Filament\Widgets;
 
-use App\Filament\Widgets\ChartWidget;
 use App\Domains\Security\Models\SecurityPrice;
+use App\Infrastructure\Filament\Widgets\ChartWidget;
 use Filament\Support\RawJs;
 use Illuminate\Database\Eloquent\Model;
 

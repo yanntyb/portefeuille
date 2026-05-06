@@ -1,15 +1,19 @@
 <?php
 
+use App\Domains\Portfolio\Filament\Pages\WalletPage;
+use App\Domains\Portfolio\Filament\Widgets\Securities\AllocationChartWidget;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
-use App\Filament\Pages\WalletPage;
-use App\Filament\Widgets\Securities\AllocationChartWidget;
+use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
 
 it('can render on the PEA list page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
     $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
@@ -20,6 +24,9 @@ it('can render on the PEA list page', function () {
 });
 
 it('can render on the CTO list page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
     $ctoWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'CTO']);
@@ -30,6 +37,9 @@ it('can render on the CTO list page', function () {
 });
 
 it('returns labels and percentages per security', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $securityA = Security::factory()->create(['name' => 'Action A']);
     $securityB = Security::factory()->create(['name' => 'Action B']);
 
@@ -81,6 +91,9 @@ it('returns labels and percentages per security', function () {
 });
 
 it('excludes securities with no latest price', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create(['name' => 'No Price']);
 
     Transaction::factory()->pea()->create([
@@ -103,6 +116,9 @@ it('excludes securities with no latest price', function () {
 });
 
 it('returns empty data when no securities exist', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $peaWallet = Wallet::factory()->pea()->create();
 
     $widget = livewire(AllocationChartWidget::class, [

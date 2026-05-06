@@ -2,8 +2,8 @@
 
 namespace App\Domains\Analytics\Filament\Pages;
 
-use App\Filament\Widgets\Simulation\SimulationBoardWidget;
-use App\Filament\Widgets\Simulation\SimulationScenarioChartWidget;
+use App\Domains\Analytics\Filament\Widgets\Simulation\SimulationBoardWidget;
+use App\Domains\Analytics\Filament\Widgets\Simulation\SimulationScenarioChartWidget;
 use BackedEnum;
 use Filament\Facades\Filament;
 use Filament\Navigation\NavigationItem;

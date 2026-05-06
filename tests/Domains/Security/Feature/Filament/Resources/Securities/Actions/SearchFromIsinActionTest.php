@@ -1,6 +1,6 @@
 <?php
 
-use App\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
+use App\Domains\Portfolio\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Services\YahooFinanceClient;
 

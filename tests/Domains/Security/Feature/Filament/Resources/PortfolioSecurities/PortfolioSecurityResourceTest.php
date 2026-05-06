@@ -4,7 +4,7 @@ use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
 use App\Domains\User\Models\User;
-use App\Filament\Resources\PortfolioSecurities\Pages\ListPortfolioSecurities;
+use App\Domains\Portfolio\Filament\Resources\PortfolioSecurities\Pages\ListPortfolioSecurities;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Livewire\livewire;

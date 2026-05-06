@@ -1,8 +1,8 @@
 <?php
 
+use App\Domains\Portfolio\Filament\Pages\WalletPage;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\User\Models\User;
-use App\Filament\Pages\WalletPage;
 
 it('returns empty navigation when not authenticated', function () {
     expect(WalletPage::getNavigationItems())->toBeEmpty();

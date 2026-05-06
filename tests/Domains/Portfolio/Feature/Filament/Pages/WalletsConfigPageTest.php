@@ -1,11 +1,15 @@
 <?php
 
+use App\Domains\Portfolio\Filament\Pages\WalletsConfigPage;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Filament\Pages\WalletsConfigPage;
+use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
 
 it('lists the authenticated user wallets', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $wallet = Wallet::factory()->create(['user_id' => auth()->id(), 'name' => 'Mon PEA']);
 
     livewire(WalletsConfigPage::class)
@@ -14,6 +18,9 @@ it('lists the authenticated user wallets', function () {
 });
 
 it('renames a wallet', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $wallet = Wallet::factory()->create(['user_id' => auth()->id(), 'name' => 'Ancien nom']);
 
     livewire(WalletsConfigPage::class)
@@ -23,6 +30,9 @@ it('renames a wallet', function () {
 });
 
 it('deletes a wallet', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $wallet = Wallet::factory()->create(['user_id' => auth()->id()]);
 
     livewire(WalletsConfigPage::class)

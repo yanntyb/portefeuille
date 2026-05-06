@@ -1,12 +1,12 @@
 <?php
 
+use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardPerformanceStatsOverview;
+use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardSectorAllocationChartWidget;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Security\Enums\Sector;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\Security\Models\SecuritySector;
-use App\Filament\Widgets\Dashboard\DashboardPerformanceStatsOverview;
-use App\Filament\Widgets\Dashboard\DashboardSectorAllocationChartWidget;
 use Illuminate\Support\Carbon;
 
 use function Pest\Livewire\livewire;

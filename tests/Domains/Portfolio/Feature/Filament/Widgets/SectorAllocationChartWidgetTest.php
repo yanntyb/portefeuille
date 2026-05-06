@@ -1,13 +1,13 @@
 <?php
 
+use App\Domains\Portfolio\Filament\Pages\WalletPage;
+use App\Domains\Portfolio\Filament\Widgets\Securities\SectorAllocationChartWidget;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Enums\Sector;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\Security\Models\SecuritySector;
-use App\Filament\Pages\WalletPage;
-use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
 
 use function Pest\Livewire\livewire;
 

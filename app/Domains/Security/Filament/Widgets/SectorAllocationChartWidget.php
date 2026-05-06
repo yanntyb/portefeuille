@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Filament\Widgets\Securities;
+namespace App\Domains\Security\Filament\Widgets;
 
 use App\Domains\Portfolio\Services\SectorAggregator;
 use App\Domains\Security\Models\SecuritySector;
-use App\Filament\Widgets\ChartWidget;
 use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
+use App\Infrastructure\Filament\Widgets\ChartWidget;
 use Filament\Support\RawJs;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;

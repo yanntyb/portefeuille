@@ -1,11 +1,15 @@
 <?php
 
+use App\Domains\Portfolio\Filament\Pages\CreateWalletPage;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Filament\Pages\CreateWalletPage;
+use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
 
 it('creates a wallet and redirects after submitting the form', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     livewire(CreateWalletPage::class)
         ->fillForm(['name' => 'Mon PEA'])
         ->call('create')

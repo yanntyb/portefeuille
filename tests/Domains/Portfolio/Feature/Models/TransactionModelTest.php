@@ -42,7 +42,10 @@ it('casts decimal fields correctly', function () {
 });
 
 it('filters transactions by authenticated user via global scope', function () {
+    $user = User::factory()->create();
     $otherUser = User::factory()->create();
+
+    $this->actingAs($user);
 
     Transaction::factory()->pea()->create(['user_id' => auth()->id()]);
     Transaction::factory()->pea()->create(['user_id' => auth()->id()]);
@@ -54,7 +57,10 @@ it('filters transactions by authenticated user via global scope', function () {
 });
 
 it('does not apply global scope when no user is authenticated', function () {
+    $user = User::factory()->create();
     $otherUser = User::factory()->create();
+
+    $this->actingAs($user);
 
     Transaction::factory()->pea()->create(['user_id' => auth()->id()]);
 

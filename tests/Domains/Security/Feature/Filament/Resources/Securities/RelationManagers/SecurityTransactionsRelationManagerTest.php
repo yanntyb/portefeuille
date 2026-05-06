@@ -1,9 +1,9 @@
 <?php
 
 use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Security\Filament\Resources\Securities\RelationManagers\TransactionsRelationManager;
 use App\Domains\Security\Models\Security;
-use App\Filament\Resources\Securities\RelationManagers\TransactionsRelationManager;
-use App\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
+use App\Domains\Portfolio\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
 
 use function Pest\Livewire\livewire;
 

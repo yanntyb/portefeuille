@@ -1,6 +1,6 @@
 <?php
 
-use App\Extensions\TablePersistence;
+use App\Infrastructure\Extensions\TablePersistence;
 
 it('has the correct plugin id', function () {
     $extension = TablePersistence::make();

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Widgets\Securities;
+namespace App\Domains\Security\Filament\Widgets;
 
 use App\Domains\Analytics\Services\VolatilityCalculator;
 use App\Domains\Portfolio\Models\Wallet;

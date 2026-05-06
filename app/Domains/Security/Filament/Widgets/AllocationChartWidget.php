@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Filament\Widgets\Securities;
+namespace App\Domains\Security\Filament\Widgets;
 
-use App\Filament\Widgets\ChartWidget;
 use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
+use App\Infrastructure\Filament\Widgets\ChartWidget;
 use App\Infrastructure\Support\ChartColors;
 use Filament\Support\RawJs;
 use Livewire\Attributes\On;

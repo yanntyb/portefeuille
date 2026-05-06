@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Widgets;
+namespace App\Infrastructure\Filament\Widgets;
 
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;

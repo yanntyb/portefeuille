@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Widgets\Securities;
+namespace App\Domains\Security\Filament\Widgets;
 
 use App\Infrastructure\Filament\Concerns\ComputesSingleSecurityStats;
 use Filament\Widgets\StatsOverviewWidget;
@@ -8,7 +8,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Number;
 
-class SingleSecurityPlusValueWidget extends StatsOverviewWidget
+class SingleSecurityFeesStatsWidget extends StatsOverviewWidget
 {
     use ComputesSingleSecurityStats;
 
@@ -16,7 +16,7 @@ class SingleSecurityPlusValueWidget extends StatsOverviewWidget
 
     protected int|string|array $columnSpan = 'full';
 
-    protected int|array|null $columns = ['default' => 2];
+    protected int|array|null $columns = ['default' => 1];
 
     public ?Model $record = null;
 
@@ -31,11 +31,9 @@ class SingleSecurityPlusValueWidget extends StatsOverviewWidget
         $stats = $this->computeStats();
 
         return [
-            Stat::make('Plus-value latente', Number::currency($stats['plusValue'], 'EUR'))
-                ->description(Number::format($stats['plusValuePercentage'], 2).' %')
-                ->color($stats['plusValue'] >= 0 ? 'success' : 'danger'),
-            Stat::make('Plus-value réalisée', Number::currency($stats['totalRealizedGain'], 'EUR'))
-                ->color($stats['totalRealizedGain'] >= 0 ? 'success' : 'danger'),
+            Stat::make('Frais', Number::currency($stats['totalFees'], 'EUR'))
+                ->description(Number::format($stats['feesPercentage'], 2).' %')
+                ->color('danger'),
         ];
     }
 }

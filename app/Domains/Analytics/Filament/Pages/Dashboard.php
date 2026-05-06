@@ -2,12 +2,12 @@
 
 namespace App\Domains\Analytics\Filament\Pages;
 
-use App\Filament\Widgets\Dashboard\DashboardCorrelationMatrixWidget;
-use App\Filament\Widgets\Dashboard\DashboardGainStatsOverview;
-use App\Filament\Widgets\Dashboard\DashboardPerformanceStatsOverview;
-use App\Filament\Widgets\Dashboard\DashboardSectorAllocationChartWidget;
-use App\Filament\Widgets\Dashboard\DashboardSecuritiesTableWidget;
-use App\Filament\Widgets\Dashboard\DashboardValuationWidget;
+use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardCorrelationMatrixWidget;
+use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardGainStatsOverview;
+use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardPerformanceStatsOverview;
+use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardSectorAllocationChartWidget;
+use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardSecuritiesTableWidget;
+use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardValuationWidget;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Services\PriceRefreshService;
 use Filament\Pages\Dashboard as BaseDashboard;

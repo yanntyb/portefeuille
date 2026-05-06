@@ -8,7 +8,7 @@ use App\Domains\Analytics\Data\Simulation\Simulation;
 use App\Domains\Analytics\Data\Simulation\SimulationObject;
 use App\Domains\Analytics\Data\Simulation\SimulationValue;
 use App\Domains\Analytics\Services\SimulationEngine;
-use App\Filament\Widgets\ChartWidget;
+use App\Infrastructure\Filament\Widgets\ChartWidget;
 use App\Infrastructure\Support\ChartColors;
 use Filament\Support\RawJs;
 

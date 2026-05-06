@@ -3,7 +3,7 @@
 namespace App\Domains\Analytics\Filament\Widgets\Simulation;
 
 use App\Domains\Analytics\Services\MonteCarloEngine;
-use App\Filament\Widgets\ChartWidget;
+use App\Infrastructure\Filament\Widgets\ChartWidget;
 use Filament\Actions\Action;
 use Filament\Schemas\Components\Callout;
 use Filament\Support\RawJs;

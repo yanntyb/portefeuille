@@ -2,19 +2,19 @@
 
 namespace App\Domains\Portfolio\Filament\Pages;
 
+use App\Domains\Analytics\Services\VolatilityCalculator;
 use App\Domains\Portfolio\Data\AccountPageData;
 use App\Domains\Portfolio\Filament\Resources\WalletSecurities\WalletSecurityResource;
-use App\Domains\Portfolio\Filament\Widgets\Securities\AllocationChartWidget;
-use App\Domains\Portfolio\Filament\Widgets\Securities\CorrelationMatrixWidget;
-use App\Domains\Portfolio\Filament\Widgets\Securities\GainStatsOverview;
-use App\Domains\Portfolio\Filament\Widgets\Securities\PerformanceStatsOverview;
-use App\Domains\Portfolio\Filament\Widgets\Securities\SectorAllocationChartWidget;
-use App\Domains\Portfolio\Filament\Widgets\Securities\ValuationChartWidget;
-use App\Domains\Portfolio\Filament\Widgets\Securities\ValuationStatOverview;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Portfolio\Services\VolatilityCalculator;
 use App\Domains\Security\Filament\Resources\SecurityBase\Tables\SecuritiesTable;
+use App\Domains\Security\Filament\Widgets\AllocationChartWidget;
+use App\Domains\Security\Filament\Widgets\CorrelationMatrixWidget;
+use App\Domains\Security\Filament\Widgets\GainStatsOverview;
+use App\Domains\Security\Filament\Widgets\PerformanceStatsOverview;
+use App\Domains\Security\Filament\Widgets\SectorAllocationChartWidget;
+use App\Domains\Security\Filament\Widgets\ValuationChartWidget;
+use App\Domains\Security\Filament\Widgets\ValuationStatOverview;
 use App\Domains\Security\Jobs\UpdateSecuritiesJob;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;

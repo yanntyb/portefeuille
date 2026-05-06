@@ -1,6 +1,6 @@
 @php
     $result = $this->getCorrelationData();
-    $periods = App\Enums\CorrelationPeriod::cases();
+    $periods = App\Domains\Analytics\Enums\CorrelationPeriod::cases();
     $headerActions = $this->getHeaderActions();
 @endphp
 

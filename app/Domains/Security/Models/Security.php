@@ -2,6 +2,8 @@
 
 namespace App\Domains\Security\Models;
 
+use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Portfolio\Models\Wallet;
 use App\Infrastructure\Support\MarketCalendar;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

@@ -2,12 +2,12 @@
 
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
+use App\Domains\Security\Filament\Widgets\Securities\SecurityStatsOverview;
+use App\Domains\Security\Filament\Widgets\Securities\ValuationChartWidget;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\Security\Services\YahooFinanceService;
-use App\Filament\Pages\WalletPage;
-use App\Filament\Widgets\Securities\SecurityStatsOverview;
-use App\Filament\Widgets\Securities\ValuationChartWidget;
+use App\Domains\Portfolio\Filament\Pages\WalletPage;
 
 use function Pest\Livewire\livewire;
 

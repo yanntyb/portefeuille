@@ -3,8 +3,8 @@
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
-use App\Filament\Pages\WalletPage;
-use App\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
+use App\Domains\Portfolio\Filament\Pages\WalletPage;
+use App\Domains\Portfolio\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
 
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Livewire\livewire;

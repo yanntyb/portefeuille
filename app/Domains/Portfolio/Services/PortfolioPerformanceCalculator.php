@@ -2,9 +2,9 @@
 
 namespace App\Domains\Portfolio\Services;
 
+use App\Domains\Analytics\Enums\PerformancePeriod;
 use App\Domains\Portfolio\Contracts\PortfolioPerformanceCalculating;
 use App\Domains\Portfolio\Data\PortfolioContext;
-use App\Domains\Portfolio\Enums\PerformancePeriod;
 use App\Domains\Portfolio\Enums\TransactionType;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Security\Models\Security;

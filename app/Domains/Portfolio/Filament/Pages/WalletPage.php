@@ -2,12 +2,12 @@
 
 namespace App\Domains\Portfolio\Filament\Pages;
 
+use App\Domains\Analytics\Filament\Widgets\Simulation\SimulationSectionWidget;
 use App\Domains\Portfolio\Enums\CurrencyModificationUnit;
-use App\Domains\Portfolio\Filament\Widgets\Securities\WalletFeesWidget;
-use App\Domains\Portfolio\Filament\Widgets\Simulation\SimulationSectionWidget;
+use App\Domains\Portfolio\Filament\Schemas\WalletFeesSchema;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Portfolio\Models\WalletFee;
-use App\Filament\Schemas\WalletFeesSchema;
+use App\Domains\Security\Filament\Widgets\WalletFeesWidget;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;

@@ -2,10 +2,10 @@
 
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
+use App\Domains\Security\Filament\Widgets\Securities\GainStatsOverview;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
-use App\Filament\Pages\WalletPage;
-use App\Filament\Widgets\Securities\GainStatsOverview;
+use App\Domains\Portfolio\Filament\Pages\WalletPage;
 
 use function Pest\Livewire\livewire;
 

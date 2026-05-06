@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Widgets\Securities;
+namespace App\Domains\Security\Filament\Widgets;
 
 use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
 use Filament\Widgets\StatsOverviewWidget;

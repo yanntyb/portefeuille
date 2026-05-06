@@ -144,7 +144,7 @@ class SecurityForm
 
     private static function mountSearchAction(Action $action, Schema $schema, string $isin, ?string $ticker = null): void
     {
-        $service = app(\App\Services\YahooFinanceService::class);
+        $service = app(\App\Domains\Security\Services\YahooFinanceService::class);
         $results = $service->searchTicker($isin, $ticker);
 
         if ($results === []) {
