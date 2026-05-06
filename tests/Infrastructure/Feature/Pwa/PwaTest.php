@@ -1,5 +1,7 @@
 <?php
 
+use App\Domains\User\Models\User;
+
 test('manifest.json returns valid JSON with required keys', function () {
     $response = $this->get('/manifest.json');
 
@@ -33,6 +35,8 @@ test('service worker returns JavaScript content', function () {
 });
 
 test('admin panel contains PWA meta tags', function () {
+    $this->actingAs(User::factory()->create());
+
     $response = $this->get('/');
 
     $response->assertSuccessful();

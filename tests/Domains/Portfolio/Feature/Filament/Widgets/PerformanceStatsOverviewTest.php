@@ -1,7 +1,7 @@
 <?php
 
 use App\Domains\Portfolio\Filament\Pages\WalletPage;
-use App\Domains\Portfolio\Filament\Widgets\Securities\PerformanceStatsOverview;
+use App\Domains\Security\Filament\Widgets\PerformanceStatsOverview;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;

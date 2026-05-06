@@ -3,9 +3,9 @@
 namespace App\Domains\Portfolio\Filament\Pages;
 
 use App\Domains\Portfolio\Enums\CurrencyModificationUnit;
+use App\Domains\Portfolio\Filament\Schemas\WalletFeesSchema;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Portfolio\Models\WalletFee;
-use App\Filament\Schemas\WalletFeesSchema;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;

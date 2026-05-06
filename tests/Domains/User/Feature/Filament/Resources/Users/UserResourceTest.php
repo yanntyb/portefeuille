@@ -24,6 +24,8 @@ it('allows an admin to access the user list page', function () {
 });
 
 it('denies a standard user access to the user list page', function () {
+    actingAs(User::factory()->create());
+
     livewire(ListUsers::class)
         ->assertForbidden();
 });

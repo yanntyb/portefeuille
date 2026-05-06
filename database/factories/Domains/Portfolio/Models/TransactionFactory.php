@@ -20,7 +20,7 @@ class TransactionFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => auth()->id() ?? User::factory(),
+            'user_id' => auth()->id() ?? User::factory()->create()->id,
             'wallet_id' => Wallet::factory(),
             'date' => fake()->dateTimeBetween('-2 years', 'now'),
             'security_id' => Security::factory(),
@@ -34,22 +34,34 @@ class TransactionFactory extends Factory
 
     public function pea(): static
     {
-        return $this->state(fn (): array => [
-            'wallet_id' => auth()->check()
-                ? Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA'])->id
-                : Wallet::factory()->pea(),
-            'broker' => null,
-        ]);
+        return $this->state(function (): array {
+            $userId = auth()?->id();
+            if (!$userId) {
+                $userId = User::factory()->create()->id;
+            }
+
+            return [
+                'wallet_id' => Wallet::firstOrCreate(['user_id' => $userId, 'name' => 'PEA'])->id,
+                'user_id' => $userId,
+                'broker' => null,
+            ];
+        });
     }
 
     public function cto(): static
     {
-        return $this->state(fn (): array => [
-            'wallet_id' => auth()->check()
-                ? Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'CTO'])->id
-                : Wallet::factory()->cto(),
-            'broker' => fake()->randomElement(['Degiro', 'Trade Republic', 'Interactive Brokers', 'Boursorama']),
-        ]);
+        return $this->state(function (): array {
+            $userId = auth()?->id();
+            if (!$userId) {
+                $userId = User::factory()->create()->id;
+            }
+
+            return [
+                'wallet_id' => Wallet::firstOrCreate(['user_id' => $userId, 'name' => 'CTO'])->id,
+                'user_id' => $userId,
+                'broker' => fake()->randomElement(['Degiro', 'Trade Republic', 'Interactive Brokers', 'Boursorama']),
+            ];
+        });
     }
 
     public function sell(): static

@@ -1,17 +1,21 @@
 <?php
 
-use App\Domains\Portfolio\Filament\Widgets\Dashboard\PortfolioStatsOverview;
+use App\Domains\Analytics\Filament\Widgets\Dashboard\PortfolioStatsOverview;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
 
 it('computes valuation, plus-value, and fees correctly', function () {
+    $this->actingAs(User::factory()->create());
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => auth()->id(),
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 5,
@@ -38,11 +42,14 @@ it('computes valuation, plus-value, and fees correctly', function () {
 });
 
 it('aggregates across PEA and CTO accounts', function () {
+    $this->actingAs(User::factory()->create());
+
     $securityPea = Security::factory()->create();
     $securityCto = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $securityPea->id,
+        'user_id' => auth()->id(),
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
@@ -50,6 +57,7 @@ it('aggregates across PEA and CTO accounts', function () {
 
     Transaction::factory()->cto()->create([
         'security_id' => $securityCto->id,
+        'user_id' => auth()->id(),
         'quantity' => 5,
         'unit_price' => 200,
         'fees' => 0,

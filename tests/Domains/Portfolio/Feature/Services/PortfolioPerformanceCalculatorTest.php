@@ -5,15 +5,20 @@ use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Portfolio\Services\PortfolioPerformanceCalculator;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\User\Models\User;
 use Illuminate\Support\Carbon;
 
 it('computes basic return without cash flows', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     Carbon::setTestNow('2025-06-15');
 
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'date' => '2025-01-01',
         'quantity' => 10,
         'unit_price' => 100,
@@ -45,6 +50,9 @@ it('computes basic return without cash flows', function () {
 });
 
 it('computes return with cash flows during period', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     Carbon::setTestNow('2025-06-15');
 
     $security = Security::factory()->create();
@@ -52,6 +60,7 @@ it('computes return with cash flows during period', function () {
     // Transaction initiale avant la période de 6 mois (2024-12-15)
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'date' => '2024-11-01',
         'quantity' => 10,
         'unit_price' => 100,
@@ -61,6 +70,7 @@ it('computes return with cash flows during period', function () {
     // Achat supplémentaire pendant la période
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'date' => '2025-04-01',
         'quantity' => 5,
         'unit_price' => 110,
@@ -95,12 +105,16 @@ it('computes return with cash flows during period', function () {
 });
 
 it('returns null when period predates first transaction', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     Carbon::setTestNow('2025-06-15');
 
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'date' => '2025-05-01',
         'quantity' => 10,
         'unit_price' => 100,
@@ -125,12 +139,16 @@ it('returns null when period predates first transaction', function () {
 });
 
 it('uses closest available price when exact start date has no price', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     Carbon::setTestNow('2025-06-15');
 
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
         'security_id' => $security->id,
+        'user_id' => $user->id,
         'date' => '2025-01-01',
         'quantity' => 10,
         'unit_price' => 100,

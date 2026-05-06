@@ -1,7 +1,7 @@
 <?php
 
 use App\Domains\Security\Filament\Resources\AllSecurities\Pages\EditAllSecurity;
-use App\Domains\Security\Filament\Resources\Securities\RelationManagers\PricesRelationManager;
+use App\Domains\Security\Filament\Resources\SecurityBase\RelationManagers\PricesRelationManager;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;

@@ -20,7 +20,10 @@ it('redirects to login when not authenticated', function () {
 });
 
 it('scopes transactions to the authenticated user', function () {
-    $myWallet = Wallet::factory()->pea()->create();
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $myWallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
     $myTransaction = Transaction::factory()->create([
         'user_id' => auth()->id(),
         'wallet_id' => $myWallet->id,
@@ -40,7 +43,10 @@ it('scopes transactions to the authenticated user', function () {
 });
 
 it('scopes PEA securities to the authenticated user', function () {
-    $myWallet = Wallet::factory()->pea()->create();
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $myWallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
     Transaction::factory()->create([
         'user_id' => auth()->id(),
@@ -64,7 +70,10 @@ it('scopes PEA securities to the authenticated user', function () {
 });
 
 it('scopes CTO securities to the authenticated user', function () {
-    $myWallet = Wallet::factory()->cto()->create();
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $myWallet = Wallet::factory()->cto()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
     Transaction::factory()->create([
         'user_id' => auth()->id(),
@@ -88,7 +97,10 @@ it('scopes CTO securities to the authenticated user', function () {
 });
 
 it('assigns user_id when creating a transaction', function () {
-    $wallet = Wallet::factory()->pea()->create();
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
     livewire(CreateTransaction::class)
