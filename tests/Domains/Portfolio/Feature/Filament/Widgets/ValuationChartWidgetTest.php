@@ -7,9 +7,14 @@ use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 
+use App\Domains\User\Models\User;
+
 use function Pest\Livewire\livewire;
 
 it('can render on the PEA list page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
     $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
@@ -20,6 +25,9 @@ it('can render on the PEA list page', function () {
 });
 
 it('can render on the CTO list page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
     $ctoWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'CTO']);
@@ -30,6 +38,9 @@ it('can render on the CTO list page', function () {
 });
 
 it('defaults to total mode with aggregated valuation', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
@@ -77,6 +88,9 @@ it('defaults to total mode with aggregated valuation', function () {
 });
 
 it('shows stacked areas per security in per_security mode', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $securityA = Security::factory()->create(['name' => 'ETF World']);
     $securityB = Security::factory()->create(['name' => 'ETF SP500']);
 
@@ -131,6 +145,9 @@ it('shows stacked areas per security in per_security mode', function () {
 });
 
 it('computes cumulative fees from transactions', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
@@ -177,6 +194,9 @@ it('computes cumulative fees from transactions', function () {
 });
 
 it('excludes prices before the first transaction date', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
@@ -213,6 +233,9 @@ it('excludes prices before the first transaction date', function () {
 });
 
 it('invested reflects mid-week transactions in the same week', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
@@ -243,6 +266,9 @@ it('invested reflects mid-week transactions in the same week', function () {
 });
 
 it('extrapolates missing prices using the last known close in total mode', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $securityA = Security::factory()->create();
     $securityB = Security::factory()->create();
 
@@ -297,6 +323,9 @@ it('extrapolates missing prices using the last known close in total mode', funct
 });
 
 it('extrapolates missing prices using the last known close in per_security mode', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $securityA = Security::factory()->create(['name' => 'ETF A']);
     $securityB = Security::factory()->create(['name' => 'ETF B']);
 
@@ -355,6 +384,9 @@ it('extrapolates missing prices using the last known close in per_security mode'
 });
 
 it('returns empty data when no securities exist', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $peaWallet = Wallet::factory()->pea()->create();
 
     $widget = livewire(ValuationChartWidget::class, [

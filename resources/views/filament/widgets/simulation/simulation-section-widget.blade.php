@@ -1,5 +1,5 @@
 <x-filament-widgets::widget>
-    @livewire(\App\Filament\Widgets\Simulation\MonteCarloChartWidget::class, [
+    @livewire(\App\Domains\Analytics\Filament\Widgets\Simulation\MonteCarloChartWidget::class, [
         'capitalInitial' => $this->capitalInitial,
         'versementMensuel' => $this->versementMensuel,
         'tauxMoyen' => $this->tauxMoyen,

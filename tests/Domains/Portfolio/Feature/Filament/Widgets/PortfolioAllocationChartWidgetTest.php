@@ -1,14 +1,19 @@
 <?php
 
-use App\Domains\Portfolio\Filament\Widgets\Dashboard\PortfolioAllocationChartWidget;
+use App\Domains\Analytics\Filament\Widgets\Dashboard\PortfolioAllocationChartWidget;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 
+use App\Domains\User\Models\User;
+
 use function Pest\Livewire\livewire;
 
 it('returns labels matching account types and correct valuations', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $securityPea = Security::factory()->create();
     $securityCto = Security::factory()->create();
 
@@ -53,6 +58,9 @@ it('returns labels matching account types and correct valuations', function () {
 });
 
 it('returns zero valuations when no data exists', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     Wallet::factory()->pea()->create();
     Wallet::factory()->cto()->create();
 
@@ -63,6 +71,9 @@ it('returns zero valuations when no data exists', function () {
 });
 
 it('only includes accounts with securities that have prices', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([

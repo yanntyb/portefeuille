@@ -8,9 +8,14 @@ use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use Illuminate\Support\Carbon;
 
+use App\Domains\User\Models\User;
+
 use function Pest\Livewire\livewire;
 
 it('can render on the PEA list page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
     $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
@@ -21,6 +26,9 @@ it('can render on the PEA list page', function () {
 });
 
 it('can render on the CTO list page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
     $ctoWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'CTO']);
@@ -31,6 +39,9 @@ it('can render on the CTO list page', function () {
 });
 
 it('displays performance stats with correct values', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     Carbon::setTestNow('2025-06-15');
 
     $security = Security::factory()->create();
@@ -73,6 +84,9 @@ it('displays performance stats with correct values', function () {
 });
 
 it('displays dash for periods without data', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     Carbon::setTestNow('2025-06-15');
 
     $security = Security::factory()->create();
@@ -107,6 +121,9 @@ it('displays dash for periods without data', function () {
 });
 
 it('shows danger color for negative returns', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     Carbon::setTestNow('2025-06-15');
 
     $security = Security::factory()->create();
@@ -146,6 +163,9 @@ it('shows danger color for negative returns', function () {
 });
 
 it('returns seven period stats', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
