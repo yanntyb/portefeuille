@@ -2,43 +2,23 @@
 
 namespace App\Domains\Security\Filament\Widgets;
 
-use App\Domains\Portfolio\Services\PortfolioPerformanceCalculator;
+use App\Domains\Security\Models\Security;
+use App\Infrastructure\Filament\Concerns\ComputesPerformanceStats;
 use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
 use Filament\Widgets\Widget;
-use Livewire\Attributes\On;
+use Illuminate\Database\Eloquent\Collection;
 
 class PerformanceStatsOverview extends Widget
 {
+    use ComputesPerformanceStats;
     use HasReactiveTableProperties;
 
     protected string $view = 'filament.widgets.performance-stats-overview';
 
-    protected ?string $pollingInterval = null;
-
-    protected int|string|array $columnSpan = 'full';
-
-    /** @var list<int>|null */
-    public ?array $shownSecurityIds = null;
-
-    #[On('security-visibility-changed')]
-    public function updateShownSecurityIds(array $shownSecurityIds): void
-    {
-        $this->shownSecurityIds = $shownSecurityIds;
-    }
-
-    #[On('prices-updated')]
-    public function refreshStats(): void
-    {
-        // Triggers re-render with fresh data
-    }
-
-    /**
-     * @return list<array{label: string, value: string, color: string}>
-     */
-    public function getPerformanceData(): array
+    protected function resolvePerformanceSecurities(): Collection
     {
         if ($this->tablePageClass === null) {
-            return [];
+            return Security::query()->where('id', null)->get();
         }
 
         $query = $this->getPageTableQuery();
@@ -47,10 +27,6 @@ class PerformanceStatsOverview extends Widget
             $query->whereIn('securities.id', $this->shownSecurityIds);
         }
 
-        $calculator = app(PortfolioPerformanceCalculator::class);
-
-        return PortfolioPerformanceCalculator::formatReturnsAsStats(
-            $calculator->computeReturns($query->with('latestPrice')->get()),
-        );
+        return $query->with('latestPrice')->get();
     }
 }

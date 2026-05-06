@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\Security\Filament\Widgets;
+namespace App\Domains\Portfolio\Filament\Widgets;
 
 use App\Domains\Portfolio\Enums\CurrencyModificationUnit;
 use App\Domains\Portfolio\Enums\FeeScope;

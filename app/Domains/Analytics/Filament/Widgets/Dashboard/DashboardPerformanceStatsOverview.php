@@ -3,37 +3,17 @@
 namespace App\Domains\Analytics\Filament\Widgets\Dashboard;
 
 use App\Domains\Portfolio\Services\DashboardDataProvider;
-use App\Domains\Portfolio\Services\PortfolioPerformanceCalculator;
+use App\Infrastructure\Filament\Concerns\ComputesPerformanceStats;
 use Filament\Widgets\Widget;
-use Livewire\Attributes\On;
+use Illuminate\Database\Eloquent\Collection;
 
 class DashboardPerformanceStatsOverview extends Widget
 {
+    use ComputesPerformanceStats;
+
     protected string $view = 'filament.widgets.performance-stats-overview';
 
-    protected ?string $pollingInterval = null;
-
-    protected int|string|array $columnSpan = 'full';
-
-    /** @var list<int>|null */
-    public ?array $shownSecurityIds = null;
-
-    #[On('security-visibility-changed')]
-    public function updateShownSecurityIds(array $shownSecurityIds): void
-    {
-        $this->shownSecurityIds = $shownSecurityIds;
-    }
-
-    #[On('prices-updated')]
-    public function refreshStats(): void
-    {
-        // Triggers re-render with fresh data
-    }
-
-    /**
-     * @return list<array{label: string, value: string, color: string}>
-     */
-    public function getPerformanceData(): array
+    protected function resolvePerformanceSecurities(): Collection
     {
         $securities = app(DashboardDataProvider::class)->allSecurities();
 
@@ -41,10 +21,6 @@ class DashboardPerformanceStatsOverview extends Widget
             $securities = $securities->whereIn('id', $this->shownSecurityIds);
         }
 
-        $calculator = app(PortfolioPerformanceCalculator::class);
-
-        return PortfolioPerformanceCalculator::formatReturnsAsStats(
-            $calculator->computeReturns($securities),
-        );
+        return $securities;
     }
 }

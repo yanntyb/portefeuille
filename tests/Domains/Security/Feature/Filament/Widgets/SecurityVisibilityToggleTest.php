@@ -3,7 +3,7 @@
 use App\Domains\Portfolio\Filament\Pages\WalletPage;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Filament\Widgets\SecurityStatsOverview;
+use App\Domains\Security\Filament\Widgets\GainStatsOverview;
 use App\Domains\Security\Filament\Widgets\ValuationChartWidget;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
@@ -170,16 +170,16 @@ it('filters stats widget to only shown securities', function () {
         'close' => 250,
     ]);
 
-    $widget = livewire(SecurityStatsOverview::class, [
+    $widget = livewire(GainStatsOverview::class, [
         'tablePageClass' => WalletPage::class,
         'walletId' => $peaWallet->id,
         'shownSecurityIds' => [$security1->id],
     ]);
 
-    $stats = invade($widget->instance())->getStats();
+    $gainData = $widget->instance()->getGainData();
 
-    // Only security1: valuation = 10 * 120 = 1200
-    expect($stats[0]->getValue())->toContain('1,200');
+    // Only security1: valuation = 10 * 120 = 1200, invested = 10 * 100 = 1000, plusValue = 200
+    expect($gainData['plusValue'])->toContain('200');
 });
 
 it('filters chart widget to only shown securities', function () {
@@ -256,14 +256,15 @@ it('shows empty stats when all securities are hidden', function () {
         'close' => 120,
     ]);
 
-    $widget = livewire(SecurityStatsOverview::class, [
+    $widget = livewire(GainStatsOverview::class, [
         'tablePageClass' => WalletPage::class,
+        'walletId' => $peaWallet->id,
         'shownSecurityIds' => [],
     ]);
 
-    $stats = invade($widget->instance())->getStats();
+    $gainData = $widget->instance()->getGainData();
 
-    expect($stats[0]->getValue())->toContain('0');
+    expect($gainData['plusValue'])->toContain('0');
 });
 
 it('displays error icon for securities without today price', function () {
