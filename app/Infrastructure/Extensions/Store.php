@@ -2,7 +2,7 @@
 
 namespace App\Infrastructure\Extensions;
 
-use App\Contracts\Storeable;
+use App\Infrastructure\Contracts\Storeable;
 use Filament\Panel;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;

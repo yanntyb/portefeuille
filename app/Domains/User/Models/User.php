@@ -2,6 +2,8 @@
 
 namespace App\Domains\User\Models;
 
+use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\User\Enums\Role;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;

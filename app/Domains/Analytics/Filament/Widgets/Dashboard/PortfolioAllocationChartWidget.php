@@ -5,6 +5,7 @@ namespace App\Domains\Analytics\Filament\Widgets\Dashboard;
 use App\Domains\Portfolio\Services\DashboardDataProvider;
 use App\Infrastructure\Filament\Widgets\ChartWidget;
 use Filament\Support\RawJs;
+use Livewire\Attributes\On;
 
 class PortfolioAllocationChartWidget extends ChartWidget
 {

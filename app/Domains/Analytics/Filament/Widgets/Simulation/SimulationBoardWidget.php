@@ -203,7 +203,6 @@ class SimulationBoardWidget extends Widget implements HasActions, HasSchemas, Ha
             nom: '',
             value: SimulationValue::plain(0),
             pipeline: $pipeline,
-            source: null,
             steps: [],
         ))->toArray();
 

@@ -12,6 +12,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * @property-read ?int $total_quantity
+ */
 class Security extends Model
 {
     /** @use HasFactory<\Database\Factories\Domains\Security\Models\SecurityFactory> */
