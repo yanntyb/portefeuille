@@ -12,6 +12,9 @@ use App\Domains\Security\Models\SecuritySector;
 use function Pest\Livewire\livewire;
 
 it('can render on the PEA list page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['security_id' => $security->id]);
     $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
@@ -22,6 +25,9 @@ it('can render on the PEA list page', function () {
 });
 
 it('can render on the CTO list page', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
     Transaction::factory()->cto()->create(['security_id' => $security->id]);
     $ctoWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'CTO']);
