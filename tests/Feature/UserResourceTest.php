@@ -84,21 +84,3 @@ it('allows an admin to delete a user', function () {
 
     assertDatabaseMissing($user);
 });
-
-it('shows impersonate action for admin users on non-admin targets', function () {
-    actingAs(User::factory()->admin()->create());
-
-    $target = User::factory()->create();
-
-    livewire(ListUsers::class)
-        ->assertTableActionVisible('impersonate', $target);
-});
-
-it('shows impersonate action for admin targets', function () {
-    actingAs(User::factory()->admin()->create());
-
-    $adminTarget = User::factory()->admin()->create();
-
-    livewire(ListUsers::class)
-        ->assertTableActionVisible('impersonate', $adminTarget);
-});

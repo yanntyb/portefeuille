@@ -46,9 +46,9 @@ it('affiche le formulaire pour un token valide', function () {
         ->assertSet('tokenInvalid', false);
 });
 
-it('retourne 404 pour un token inexistant', function () {
-    livewire(InvitationRegistration::class, ['token' => 'token-inexistant'])
-        ->assertStatus(404);
+it('redirige vers / pour un token inexistant', function () {
+    $this->get(route('invitation.register', ['token' => 'token-inexistant']))
+        ->assertRedirect('/');
 });
 
 it('indique une erreur pour une invitation expirée', function () {

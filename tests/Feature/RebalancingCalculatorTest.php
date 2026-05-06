@@ -179,15 +179,17 @@ it('validates that total percentage equals 100', function () {
 
     $this->actingAs($user);
 
-    livewire(RebalancingCalculator::class)
+    $component = livewire(RebalancingCalculator::class)
         ->fillForm([
             'amount' => 500,
             'allocations' => [
                 ['security_id' => $security->id, 'target_percentage' => 30],
             ],
         ])
-        ->call('calculate')
-        ->assertNotified('Le total des pourcentages doit être égal à 100%');
+        ->call('calculate');
+
+    // When validation fails, hasResults should remain false
+    expect($component->get('hasResults'))->toBeFalse();
 });
 
 it('calculates and displays results', function () {

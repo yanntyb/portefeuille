@@ -54,6 +54,17 @@ class Security extends Model
         return $this->hasOne(SecurityPrice::class)->whereDate('date', today());
     }
 
+    public function currentValuation(): float
+    {
+        $close = $this->latestPrice?->close;
+
+        if ($close === null || $this->total_quantity === null) {
+            return 0.0;
+        }
+
+        return (float) $this->total_quantity * (float) $close;
+    }
+
     /** @param Builder<self> $query */
     public function scopeForAuth(Builder $query): void
     {
@@ -83,16 +94,14 @@ class Security extends Model
                 'securities.isin',
                 'securities.name',
                 'securities.ticker',
-                DB::raw("COALESCE(SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity ELSE -transactions.quantity END), 0) as total_quantity"),
+                DB::raw("SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity ELSE -transactions.quantity END) as total_quantity"),
                 DB::raw("1.0 * SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity * transactions.unit_price ELSE 0 END) / NULLIF(SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity ELSE 0 END), 0) as pru"),
-                DB::raw('COALESCE(SUM(transactions.fees), 0) as total_fees'),
-                DB::raw("COALESCE(SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity ELSE -transactions.quantity END) * (1.0 * SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity * transactions.unit_price ELSE 0 END) / NULLIF(SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity ELSE 0 END), 0)) + SUM(transactions.fees), 0) as total_invested"),
-                DB::raw('COALESCE(SUM(COALESCE(transactions.realized_gain, 0)), 0) as total_realized_gain'),
+                DB::raw('SUM(transactions.fees) as total_fees'),
+                DB::raw("SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity ELSE -transactions.quantity END) * (1.0 * SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity * transactions.unit_price ELSE 0 END) / NULLIF(SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity ELSE 0 END), 0)) + SUM(transactions.fees) as total_invested"),
+                DB::raw('SUM(COALESCE(transactions.realized_gain, 0)) as total_realized_gain'),
             ])
-            ->leftJoin('transactions', function ($join) {
-                $join->on('transactions.security_id', '=', 'securities.id')
-                    ->where('transactions.user_id', '=', auth()->id());
-            })
+            ->join('transactions', 'transactions.security_id', '=', 'securities.id')
+            ->where('transactions.user_id', auth()->id())
             ->groupBy('securities.id', 'securities.isin', 'securities.name', 'securities.ticker');
     }
 

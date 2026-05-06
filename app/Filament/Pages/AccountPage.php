@@ -19,8 +19,8 @@ use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
 use App\Models\Wallet;
+use App\Services\PriceRefreshService;
 use App\Services\VolatilityCalculator;
-use App\Services\YahooFinanceService;
 use App\Support\MarketCalendar;
 use Filament\Actions\Action;
 use Filament\Pages\Concerns\ExposesTableToWidgets;
@@ -36,7 +36,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Number;
 use UnitEnum;
 
@@ -148,8 +147,14 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
             ->unique()
             ->all();
 
-        $this->pricelessSecurityIds = array_values(array_diff($allIds, $idsWithPrice));
-        $this->shownSecurityIds = array_values(array_diff($allIds, $this->hiddenSecurityIds));
+        $pricelessIds = array_diff($allIds, $idsWithPrice);
+        $this->pricelessSecurityIds = array_values($pricelessIds);
+
+        // For priced securities: shown by default, hidden if in hiddenSecurityIds
+        // For priceless securities: hidden by default, shown if in hiddenSecurityIds (toggled)
+        $shownPriced = array_diff($idsWithPrice, $this->hiddenSecurityIds);
+        $shownPriceless = array_intersect($pricelessIds, $this->hiddenSecurityIds);
+        $this->shownSecurityIds = array_values(array_merge($shownPriced, $shownPriceless));
     }
 
     public function refreshPrices(): void
@@ -161,23 +166,10 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
         $securities = Security::query()
             ->whereIn('id', $securityIds)
             ->whereNotNull('ticker')
+            ->with('currentPrice')
             ->get();
 
-        $hasPriceless = $securities->load('currentPrice')
-            ->contains(fn (Security $s) => $s->currentPrice === null);
-
-        if (! $hasPriceless) {
-            $this->computeSecurityVisibility();
-            $this->dispatch('prices-updated');
-
-            return;
-        }
-
-        try {
-            app(YahooFinanceService::class)->fetchAndStorePricesBulk($securities);
-        } catch (\Throwable $e) {
-            Log::warning('AccountPage::refreshPrices failed', ['error' => $e->getMessage()]);
-        }
+        app(PriceRefreshService::class)->refreshIfNeeded($securities);
 
         $this->computeSecurityVisibility();
         $this->dispatch('prices-updated');
@@ -208,15 +200,7 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
             $query->whereIn('securities.id', $this->shownSecurityIds);
         }
 
-        return (float) $query->with('latestPrice')->get()->sum(function ($record) {
-            $close = $record->latestPrice?->close;
-
-            if ($close === null || $record->total_quantity === null) {
-                return 0;
-            }
-
-            return (float) $record->total_quantity * (float) $close;
-        });
+        return (float) $query->with('latestPrice')->get()->sum(fn ($record) => $record->currentValuation());
     }
 
     protected function computeAnnualizedReturn(): float
@@ -227,15 +211,7 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
 
         $records = $this->scopedSecuritiesQuery()->with('latestPrice')->get();
 
-        $valuation = (float) $records->sum(function ($record) {
-            $close = $record->latestPrice?->close;
-
-            if ($close === null || $record->total_quantity === null) {
-                return 0;
-            }
-
-            return (float) $record->total_quantity * (float) $close;
-        });
+        $valuation = (float) $records->sum(fn ($record) => $record->currentValuation());
 
         $totalInvested = (float) $records->sum(fn ($record) => (float) ($record->total_invested ?? 0));
 
@@ -282,15 +258,7 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
 
         $records = $query->with('latestPrice')->get();
 
-        $valuation = $records->sum(function ($record) {
-            $close = $record->latestPrice?->close;
-
-            if ($close === null || $record->total_quantity === null) {
-                return 0;
-            }
-
-            return (float) $record->total_quantity * (float) $close;
-        });
+        $valuation = $records->sum(fn ($record) => $record->currentValuation());
 
         $totalInvested = $records->sum(fn ($record) => (float) ($record->total_invested ?? 0));
         $isPositive = $valuation >= $totalInvested;

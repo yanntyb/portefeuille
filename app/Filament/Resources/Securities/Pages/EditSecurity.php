@@ -29,7 +29,7 @@ abstract class EditSecurity extends EditRecord
 
     public function getTitle(): string|Htmlable
     {
-        return $this->record->name;
+        return $this->record->name ?? $this->record->ticker ?? $this->record->isin ?? 'Titre';
     }
 
     public function getHeading(): string|Htmlable
@@ -96,26 +96,32 @@ abstract class EditSecurity extends EditRecord
         return [];
     }
 
+    protected function getWalletId(): ?int
+    {
+        return null;
+    }
+
     public function content(Schema $schema): Schema
     {
         $record = $this->record;
+        $walletId = $this->getWalletId();
 
         $components = [
             Livewire::make(SingleSecurityValuationStatOverview::class, [
                 'record' => $record,
-                'walletId' => null,
+                'walletId' => $walletId,
             ])->key('single-security-valuation-stat'),
             Livewire::make(SingleSecurityValuationChartWidget::class, [
                 'record' => $record,
-                'walletId' => null,
+                'walletId' => $walletId,
             ])->key('single-security-valuation-chart'),
             Livewire::make(SingleSecurityPerformanceStatsOverview::class, [
                 'record' => $record,
-                'walletId' => null,
+                'walletId' => $walletId,
             ])->key('single-security-performance-stats'),
             Livewire::make(SingleSecurityGainStatsOverview::class, [
                 'record' => $record,
-                'walletId' => null,
+                'walletId' => $walletId,
             ])->key('single-security-gain-stats'),
             Livewire::make(SingleSecurityPriceChartWidget::class, [
                 'record' => $record,

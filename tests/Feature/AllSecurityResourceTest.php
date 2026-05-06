@@ -4,6 +4,7 @@ use App\Filament\Resources\AllSecurities\Pages\ListAllSecurities;
 use App\Models\Security;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\Wallet;
 use App\Services\YahooFinanceClient;
 
 use function Pest\Laravel\actingAs;
@@ -28,9 +29,11 @@ it('shows only the authenticated user transaction count', function () {
     $otherUser = User::factory()->create();
 
     $security = Security::factory()->create();
+    $userWallet = Wallet::factory()->create(['user_id' => $user->id]);
+    $otherUserWallet = Wallet::factory()->create(['user_id' => $otherUser->id]);
 
-    Transaction::factory()->count(3)->create(['security_id' => $security->id, 'user_id' => $user->id]);
-    Transaction::factory()->count(5)->create(['security_id' => $security->id, 'user_id' => $otherUser->id]);
+    Transaction::factory()->count(3)->create(['security_id' => $security->id, 'user_id' => $user->id, 'wallet_id' => $userWallet->id]);
+    Transaction::factory()->count(5)->create(['security_id' => $security->id, 'user_id' => $otherUser->id, 'wallet_id' => $otherUserWallet->id]);
 
     livewire(ListAllSecurities::class)
         ->assertTableColumnStateSet('user_transactions_count', 3, $security);

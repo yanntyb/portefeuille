@@ -4,9 +4,8 @@ namespace App\Filament\Pages;
 
 use App\Models\AllocationProfile;
 use App\Models\Security;
-use App\Models\Transaction;
 use App\Models\Wallet;
-use App\Services\RebalancingCalculator as RebalancingService;
+use App\Services\RebalancingCalculatorOrchestrator;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
@@ -216,38 +215,20 @@ class RebalancingCalculator extends Page implements HasTable
         $amount = (float) ($data['amount'] ?? 0);
         $wallet = ! empty($data['wallet_id']) ? Wallet::find((int) $data['wallet_id']) : null;
 
-        if (empty($allocations)) {
-            Notification::make()
-                ->warning()
-                ->title('Ajoutez au moins un titre')
-                ->send();
+        try {
+            $results = app(RebalancingCalculatorOrchestrator::class)->calculate($allocations, $amount, $wallet);
 
-            return;
-        }
-
-        $totalPercentage = array_sum(array_column($allocations, 'target_percentage'));
-        if (abs($totalPercentage - 100) > 0.01) {
+            $this->resultItems = $results['items'] ?? [];
+            $this->totalInvested = $results['total_invested'] ?? 0;
+            $this->remainder = $results['remainder'] ?? 0;
+            $this->hasResults = true;
+        } catch (\InvalidArgumentException $e) {
             Notification::make()
                 ->danger()
-                ->title('Le total des pourcentages doit être égal à 100%')
-                ->body("Total actuel : {$totalPercentage}%")
+                ->title('Erreur de validation')
+                ->body($e->getMessage())
                 ->send();
-
-            return;
         }
-
-        $securities = $this->buildSecuritiesData($allocations, $wallet);
-
-        $calculator = new RebalancingService;
-        $results = $calculator->calculate($securities, $amount);
-
-        $this->resultItems = [];
-        foreach ($results['items'] as $index => $item) {
-            $this->resultItems[$index] = $item;
-        }
-        $this->totalInvested = $results['total_invested'];
-        $this->remainder = $results['remainder'];
-        $this->hasResults = true;
     }
 
     public function saveProfile(): void
@@ -331,40 +312,4 @@ class RebalancingCalculator extends Page implements HasTable
      * @param  array<int, array{security_id: int|string, target_percentage: float|string}>  $allocations
      * @return array<int, array{security_id: int, name: string, price: float, quantity: float, target_percentage: float}>
      */
-    private function buildSecuritiesData(array $allocations, ?Wallet $wallet): array
-    {
-        $securities = [];
-
-        foreach ($allocations as $allocation) {
-            $securityId = (int) $allocation['security_id'];
-            $security = Security::query()->with('latestPrice')->find($securityId);
-
-            if (! $security) {
-                continue;
-            }
-
-            $price = $security->latestPrice?->close ?? 0;
-
-            $quantityQuery = Transaction::query()
-                ->withoutGlobalScope('user')
-                ->where('user_id', auth()->id())
-                ->where('security_id', $securityId);
-
-            if ($wallet) {
-                $quantityQuery->where('wallet_id', $wallet->id);
-            }
-
-            $quantity = (float) $quantityQuery->sum('quantity');
-
-            $securities[] = [
-                'security_id' => $securityId,
-                'name' => $security->name,
-                'price' => (float) $price,
-                'quantity' => $quantity,
-                'target_percentage' => (float) $allocation['target_percentage'],
-            ];
-        }
-
-        return $securities;
-    }
 }
