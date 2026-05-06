@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
-class RebalancingCalculator
+use App\Contracts\Rebalancing;
+
+class RebalancingCalculator implements Rebalancing
 {
     /**
      * @param  array<int, array{security_id: int, name: string, price: float, quantity: float, target_percentage: float}>  $securities

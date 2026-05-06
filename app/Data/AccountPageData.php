@@ -2,7 +2,7 @@
 
 namespace App\Data;
 
-use App\Contracts\Storeable;
+use App\Infrastructure\Contracts\Storeable;
 use App\Filament\Pages\AccountPage;
 
 readonly class AccountPageData implements Storeable

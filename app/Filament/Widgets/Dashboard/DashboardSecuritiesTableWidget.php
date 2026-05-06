@@ -5,7 +5,7 @@ namespace App\Filament\Widgets\Dashboard;
 use App\Filament\Resources\Securities\Tables\SecuritiesTable;
 use App\Models\Security;
 use App\Models\SecurityPrice;
-use App\Support\MarketCalendar;
+use App\Infrastructure\Support\MarketCalendar;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 use Illuminate\Database\Eloquent\Builder;

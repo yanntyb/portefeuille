@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Support\PythonScriptCaller;
+use App\Infrastructure\Support\PythonScriptCaller;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 

@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Data\CumulativeData;
 use App\Data\DailyValuations;
-use App\Data\TimeSeriesPoint;
+use App\Infrastructure\Data\TimeSeriesPoint;
 use App\Enums\TransactionType;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\PortfolioPerformanceCalculating;
 use App\Data\PortfolioContext;
 use App\Enums\PerformancePeriod;
 use App\Enums\TransactionType;
@@ -11,7 +12,7 @@ use App\Models\Transaction;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Number;
 
-class PortfolioPerformanceCalculator
+class PortfolioPerformanceCalculator implements PortfolioPerformanceCalculating
 {
     public function __construct(
         private TransactionAggregator $aggregator,
@@ -238,14 +239,6 @@ class PortfolioPerformanceCalculator
      */
     private function computeCurrentValuation(Collection $securities): float
     {
-        return $securities->sum(function ($security) {
-            $close = $security->latestPrice?->close;
-
-            if ($close === null || $security->total_quantity === null) {
-                return 0;
-            }
-
-            return (float) $security->total_quantity * (float) $close;
-        });
+        return $securities->sum(fn ($security) => $security->currentValuation());
     }
 }

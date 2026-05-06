@@ -6,17 +6,9 @@ use App\Filament\Pages\WalletPage;
 use App\Filament\Resources\Securities\Pages\EditSecurity;
 use App\Filament\Resources\Transactions\Schemas\TransactionForm;
 use App\Filament\Resources\WalletSecurities\WalletSecurityResource;
-use App\Filament\Widgets\Securities\SectorAllocationChartWidget;
-use App\Filament\Widgets\Securities\SingleSecurityGainStatsOverview;
-use App\Filament\Widgets\Securities\SingleSecurityPerformanceStatsOverview;
-use App\Filament\Widgets\Securities\SingleSecurityPriceChartWidget;
-use App\Filament\Widgets\Securities\SingleSecurityValuationChartWidget;
-use App\Filament\Widgets\Securities\SingleSecurityValuationStatOverview;
 use App\Models\Transaction;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Livewire;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Livewire\Attributes\Url;
@@ -66,45 +58,8 @@ class EditWalletSecurity extends EditSecurity
         return WalletPage::getUrl(['walletId' => $this->walletId]);
     }
 
-    public function content(Schema $schema): Schema
+    protected function getWalletId(): ?int
     {
-        $record = $this->record;
-        $walletId = $this->walletId;
-
-        $components = [
-            Livewire::make(SingleSecurityValuationStatOverview::class, [
-                'record' => $record,
-                'walletId' => $walletId,
-            ])->key('single-security-valuation-stat'),
-            Livewire::make(SingleSecurityValuationChartWidget::class, [
-                'record' => $record,
-                'walletId' => $walletId,
-            ])->key('single-security-valuation-chart'),
-            Livewire::make(SingleSecurityPerformanceStatsOverview::class, [
-                'record' => $record,
-                'walletId' => $walletId,
-            ])->key('single-security-performance-stats'),
-            Livewire::make(SingleSecurityGainStatsOverview::class, [
-                'record' => $record,
-                'walletId' => $walletId,
-            ])->key('single-security-gain-stats'),
-            Livewire::make(SingleSecurityPriceChartWidget::class, [
-                'record' => $record,
-            ])->key('single-security-price-chart'),
-            Livewire::make(SectorAllocationChartWidget::class, [
-                'record' => $record,
-                'bareView' => true,
-            ])->key('single-security-sector-allocation'),
-            Section::make('Transactions')
-                ->collapsible()
-                ->collapsed()
-                ->persistCollapsed()
-                ->id('transactions')
-                ->schema([
-                    $this->getRelationManagersContentComponent(),
-                ]),
-        ];
-
-        return $schema->components($components);
+        return $this->walletId;
     }
 }

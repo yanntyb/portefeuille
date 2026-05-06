@@ -2,7 +2,6 @@
 
 namespace App\Filament\Widgets\Dashboard;
 
-use App\Models\Wallet;
 use App\Services\DashboardDataProvider;
 use App\Services\VolatilityCalculator;
 use Filament\Widgets\Widget;
@@ -47,9 +46,6 @@ class DashboardGainStatsOverview extends Widget
     public function getGainData(): array
     {
         $provider = app(DashboardDataProvider::class);
-        $wallets = Wallet::withoutGlobalScope('user')
-            ->where('user_id', auth()->id())
-            ->get();
 
         $totalValuation = 0;
         $totalInvested = 0;
@@ -57,22 +53,14 @@ class DashboardGainStatsOverview extends Widget
         $totalRealizedGain = 0;
         $walletVolatilities = [];
 
-        foreach ($wallets as $wallet) {
+        foreach ($provider->wallets() as $wallet) {
             $securities = $provider->securitiesForWallet($wallet);
 
             if ($this->shownSecurityIds !== null) {
                 $securities = $securities->whereIn('id', $this->shownSecurityIds);
             }
 
-            $walletValuation = $securities->sum(function ($security) {
-                $close = $security->latestPrice?->close;
-
-                if ($close === null || $security->total_quantity === null) {
-                    return 0;
-                }
-
-                return (float) $security->total_quantity * (float) $close;
-            });
+            $walletValuation = $securities->sum(fn ($security) => $security->currentValuation());
 
             $totalValuation += $walletValuation;
             $totalInvested += $securities->sum(fn ($security) => (float) ($security->total_invested ?? 0));

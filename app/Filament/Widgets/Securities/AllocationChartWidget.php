@@ -3,8 +3,8 @@
 namespace App\Filament\Widgets\Securities;
 
 use App\Filament\Widgets\ChartWidget;
-use App\Filament\Widgets\Securities\Concerns\HasReactiveTableProperties;
-use App\Support\ChartColors;
+use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
+use App\Infrastructure\Support\ChartColors;
 use Filament\Support\RawJs;
 use Livewire\Attributes\On;
 

@@ -2,12 +2,13 @@
 
 namespace App\Services;
 
+use App\Contracts\VolatilityCalculating;
 use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Wallet;
 use Illuminate\Support\Collection;
 
-class VolatilityCalculator
+class VolatilityCalculator implements VolatilityCalculating
 {
     /**
      * @param  Collection<int, float>  $prices
@@ -79,6 +80,16 @@ class VolatilityCalculator
             $records = $records->whereIn('id', $shownSecurityIds);
         }
 
+        $ids = $records->pluck('id')->all();
+
+        $allPrices = SecurityPrice::query()
+            ->whereIn('security_id', $ids)
+            ->orderBy('security_id')
+            ->orderBy('date')
+            ->get(['security_id', 'close'])
+            ->groupBy('security_id')
+            ->map(fn ($group) => $group->pluck('close')->map(fn ($v) => (float) $v)->values());
+
         $weightedVolatility = 0.0;
 
         foreach ($records as $record) {
@@ -89,14 +100,7 @@ class VolatilityCalculator
             }
 
             $weight = ((float) $record->total_quantity * (float) $close) / $totalValuation;
-
-            $prices = SecurityPrice::query()
-                ->where('security_id', $record->id)
-                ->orderBy('date')
-                ->pluck('close')
-                ->map(fn ($v) => (float) $v)
-                ->values();
-
+            $prices = $allPrices->get($record->id, collect());
             $sigma = $this->annualizedVolatility($prices);
 
             if ($sigma === null) {

@@ -2,7 +2,7 @@
 
 namespace App\Filament\Widgets\Securities;
 
-use App\Filament\Widgets\Securities\Concerns\HasReactiveTableProperties;
+use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
 use App\Services\PortfolioPerformanceCalculator;
 use Filament\Widgets\Widget;
 use Livewire\Attributes\On;

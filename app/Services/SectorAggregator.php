@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Enums\Sector;
-use App\Support\ChartColors;
+use App\Infrastructure\Support\ChartColors;
 use Illuminate\Support\Collection;
 
 class SectorAggregator

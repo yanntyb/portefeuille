@@ -1,0 +1,14 @@
+<?php
+
+namespace App\Contracts;
+
+use App\Models\Wallet;
+
+interface Simulating
+{
+    /**
+     * Run Monte Carlo simulation for portfolio projections.
+     * Returns array with p10, p50, p90 percentile outcomes.
+     */
+    public function simulate(Wallet $wallet, array $params): array;
+}

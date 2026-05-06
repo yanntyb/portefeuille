@@ -9,12 +9,11 @@ use App\Filament\Widgets\Dashboard\DashboardSectorAllocationChartWidget;
 use App\Filament\Widgets\Dashboard\DashboardSecuritiesTableWidget;
 use App\Filament\Widgets\Dashboard\DashboardValuationWidget;
 use App\Models\Security;
-use App\Services\YahooFinanceService;
+use App\Services\PriceRefreshService;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\Log;
 
 class Dashboard extends BaseDashboard
 {
@@ -63,18 +62,8 @@ class Dashboard extends BaseDashboard
             ->with('currentPrice')
             ->get();
 
-        $pricelessSecurities = $securities->filter(fn (Security $security) => $security->currentPrice === null);
-
-        if ($pricelessSecurities->isEmpty()) {
-            return;
+        if (app(PriceRefreshService::class)->refreshIfNeeded($securities)) {
+            $this->dispatch('prices-updated');
         }
-
-        try {
-            app(YahooFinanceService::class)->fetchAndStorePricesBulk($securities);
-        } catch (\Throwable $e) {
-            Log::warning('Dashboard::loadPrices failed', ['error' => $e->getMessage()]);
-        }
-
-        $this->dispatch('prices-updated');
     }
 }

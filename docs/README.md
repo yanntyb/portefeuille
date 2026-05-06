@@ -85,10 +85,17 @@ Type systems, glossary, formulas.
 - Admin features
 - API endpoints (if any)
 
-### 🚀 Roadmap & Refactoring
+### 🏗️ Architecture & Health
+
+Before adding features, understand codebase patterns & gaps.
+
+- **[CODEBASE_STRUCTURE.md](CODEBASE_STRUCTURE.md)** — Architecture observations, strengths, frictions, recommendations (6/10 → 8/10 path)
+- **[MAINTAINABILITY_AUDIT.md](MAINTAINABILITY_AUDIT.md)** — Deep audit: critical gaps (indexes, heavy pages, no DI interfaces), Phase 1-2 action plan, effort estimates
+- **[REFACTORING.md](REFACTORING.md)** — Completed simplifications S1–S7 (N+1, duplications, shared schemas, with Mermaid diagrams)
+
+### 🚀 Roadmap & Features
 
 - **[ROADMAP.md](ROADMAP.md)** — Indicateurs manquants, priorisés par tier (Tier 1→4)
-- **[REFACTORING.md](REFACTORING.md)** — Simplifications de l'architecture actuelle (N+1, duplications, diagrammes Mermaid)
 - **[ROADMAP/tier1-drawdown.md](ROADMAP/tier1-drawdown.md)** — Max Drawdown : algorithme, service, tables optionnelles
 - **[ROADMAP/tier1-benchmark.md](ROADMAP/tier1-benchmark.md)** — Performance vs Benchmark : nouvelles tables, service, UI
 - **[ROADMAP/tier1-cagr-twr-mwr.md](ROADMAP/tier1-cagr-twr-mwr.md)** — CAGR, TWR depuis ouverture, MWR/XIRR

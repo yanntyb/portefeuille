@@ -2,12 +2,12 @@
 
 namespace App\Providers\Filament;
 
-use App\Extensions\Debug;
-use App\Extensions\Pwa;
-use App\Extensions\Store;
-use App\Extensions\Style;
-use App\Extensions\TablePersistence;
-use App\Extensions\Transition;
+use App\Infrastructure\Extensions\Debug;
+use App\Infrastructure\Extensions\Pwa;
+use App\Infrastructure\Extensions\Store;
+use App\Infrastructure\Extensions\Style;
+use App\Infrastructure\Extensions\TablePersistence;
+use App\Infrastructure\Extensions\Transition;
 use App\Filament\Pages\Auth\Login;
 use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;

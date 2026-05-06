@@ -3,7 +3,6 @@
 namespace App\Filament\Widgets\Dashboard;
 
 use App\Filament\Widgets\ChartWidget;
-use App\Models\Wallet;
 use App\Services\DashboardDataProvider;
 use Filament\Support\RawJs;
 
@@ -33,27 +32,14 @@ class PortfolioAllocationChartWidget extends ChartWidget
     protected function getData(): array
     {
         $provider = app(DashboardDataProvider::class);
-        $wallets = Wallet::withoutGlobalScope('user')
-            ->where('user_id', auth()->id())
-            ->orderBy('id')
-            ->get();
-
         $labels = [];
         $data = [];
         $colors = [];
 
-        foreach ($wallets as $index => $wallet) {
+        foreach ($provider->wallets()->sortBy('id')->values() as $index => $wallet) {
             $securities = $provider->securitiesForWallet($wallet);
 
-            $valuation = $securities->sum(function ($security) {
-                $close = $security->latestPrice?->close;
-
-                if ($close === null || $security->total_quantity === null) {
-                    return 0;
-                }
-
-                return (float) $security->total_quantity * (float) $close;
-            });
+            $valuation = $securities->sum(fn ($security) => $security->currentValuation());
 
             $labels[] = $wallet->name;
             $data[] = round($valuation, 2);

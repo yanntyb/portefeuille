@@ -2,7 +2,7 @@
 
 namespace App\Filament\Widgets\Securities;
 
-use App\Filament\Widgets\Securities\Concerns\ComputesSingleSecurityStats;
+use App\Infrastructure\Filament\Concerns\ComputesSingleSecurityStats;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Database\Eloquent\Model;

@@ -9,7 +9,7 @@ use App\Data\Simulation\SimulationObject;
 use App\Data\Simulation\SimulationValue;
 use App\Filament\Widgets\ChartWidget;
 use App\Services\SimulationEngine;
-use App\Support\ChartColors;
+use App\Infrastructure\Support\ChartColors;
 use Filament\Support\RawJs;
 
 class SimulationScenarioChartWidget extends ChartWidget

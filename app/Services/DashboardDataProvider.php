@@ -11,6 +11,19 @@ class DashboardDataProvider
     /** @var array<string, Collection<int, Security>> */
     private array $securitiesByWallet = [];
 
+    /** @var Collection<int, Wallet>|null */
+    private ?Collection $wallets = null;
+
+    /**
+     * @return Collection<int, Wallet>
+     */
+    public function wallets(): Collection
+    {
+        return $this->wallets ??= Wallet::withoutGlobalScope('user')
+            ->where('user_id', auth()->id())
+            ->get();
+    }
+
     /**
      * @return Collection<int, Security>
      */
@@ -31,11 +44,7 @@ class DashboardDataProvider
     {
         $all = new Collection;
 
-        $wallets = Wallet::withoutGlobalScope('user')
-            ->where('user_id', auth()->id())
-            ->get();
-
-        foreach ($wallets as $wallet) {
+        foreach ($this->wallets() as $wallet) {
             $all = $all->merge($this->securitiesForWallet($wallet));
         }
 

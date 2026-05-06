@@ -2,7 +2,7 @@
 
 namespace App\Filament\Widgets\Securities;
 
-use App\Filament\Widgets\Securities\Concerns\HasReactiveTableProperties;
+use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Number;
 use Livewire\Attributes\On;
@@ -52,15 +52,7 @@ class ValuationStatOverview extends Widget
 
         $records = $query->with('latestPrice')->get();
 
-        $valuation = $records->sum(function ($record) {
-            $close = $record->latestPrice?->close;
-
-            if ($close === null || $record->total_quantity === null) {
-                return 0;
-            }
-
-            return (float) $record->total_quantity * (float) $close;
-        });
+        $valuation = $records->sum(fn ($record) => $record->currentValuation());
 
         $totalInvested = $records->sum(fn ($record) => (float) ($record->total_invested ?? 0));
 

@@ -2,7 +2,6 @@
 
 namespace App\Filament\Widgets\Dashboard;
 
-use App\Models\Wallet;
 use App\Services\DashboardDataProvider;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Number;
@@ -28,25 +27,14 @@ class DashboardValuationWidget extends Widget
     public function getValuationData(): array
     {
         $provider = app(DashboardDataProvider::class);
-        $wallets = Wallet::withoutGlobalScope('user')
-            ->where('user_id', auth()->id())
-            ->get();
 
         $totalValuation = 0;
         $totalInvested = 0;
 
-        foreach ($wallets as $wallet) {
+        foreach ($provider->wallets() as $wallet) {
             $securities = $provider->securitiesForWallet($wallet);
 
-            $totalValuation += $securities->sum(function ($security) {
-                $close = $security->latestPrice?->close;
-
-                if ($close === null || $security->total_quantity === null) {
-                    return 0;
-                }
-
-                return (float) $security->total_quantity * (float) $close;
-            });
+            $totalValuation += $securities->sum(fn ($security) => $security->currentValuation());
 
             $totalInvested += $securities->sum(fn ($security) => (float) ($security->total_invested ?? 0));
         }

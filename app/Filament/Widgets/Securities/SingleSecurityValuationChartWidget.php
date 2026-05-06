@@ -3,7 +3,7 @@
 namespace App\Filament\Widgets\Securities;
 
 use App\Filament\Widgets\ChartWidget;
-use App\Filament\Widgets\Securities\Concerns\ComputesValuationChart;
+use App\Infrastructure\Filament\Concerns\ComputesValuationChart;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
 use App\Services\TransactionAggregator;

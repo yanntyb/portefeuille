@@ -29,13 +29,9 @@ class SecuritiesTable
                 TextColumn::make('valuation')
                     ->label('Valorisation')
                     ->state(function (Security $record): ?float {
-                        $close = $record->latestPrice?->close;
+                        $val = $record->currentValuation();
 
-                        if ($close === null || $record->total_quantity === null) {
-                            return null;
-                        }
-
-                        return (float) $record->total_quantity * (float) $close;
+                        return $val > 0.0 ? $val : null;
                     })
                     ->money('EUR')
                     ->sortable(query: fn (Builder $query, string $direction): Builder => $query

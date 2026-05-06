@@ -16,7 +16,7 @@ pest()->extend(Tests\TestCase::class)
     ->beforeEach(function () {
         $this->actingAs(App\Models\User::factory()->create());
     })
-    ->in('Feature');
+    ->in('Feature', 'Infrastructure');
 
 /*
 |--------------------------------------------------------------------------

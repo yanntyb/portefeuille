@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Support\MarketCalendar;
+use App\Infrastructure\Support\MarketCalendar;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
