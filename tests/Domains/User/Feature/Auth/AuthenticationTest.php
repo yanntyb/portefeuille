@@ -1,12 +1,12 @@
 <?php
 
+use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Portfolio\Models\Wallet;
+use App\Domains\Security\Models\Security;
+use App\Domains\User\Models\User;
 use App\Filament\Pages\WalletPage;
 use App\Filament\Resources\Transactions\Pages\CreateTransaction;
 use App\Filament\Resources\Transactions\Pages\ListTransactions;
-use App\Domains\Security\Models\Security;
-use App\Models\Transaction;
-use App\Domains\User\Models\User;
-use App\Models\Wallet;
 
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\get;

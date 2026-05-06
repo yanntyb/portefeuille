@@ -1,9 +1,9 @@
 <?php
 
-use App\Filament\Widgets\Dashboard\PortfolioStatsOverview;
+use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
-use App\Models\Transaction;
+use App\Filament\Widgets\Dashboard\PortfolioStatsOverview;
 
 use function Pest\Livewire\livewire;
 

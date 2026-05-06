@@ -1,8 +1,8 @@
 <?php
 
+use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
-use App\Models\Wallet;
 use App\Services\VolatilityCalculator;
 
 describe('VolatilityCalculator', function () {
@@ -69,7 +69,7 @@ describe('VolatilityCalculator', function () {
                 ->create(['close' => 100.0 + $i]);
         }
 
-        \App\Models\Transaction::factory()
+        \App\Domains\Portfolio\Models\Transaction::factory()
             ->for($wallet)
             ->for($security)
             ->create(['quantity' => 10, 'unit_price' => 115.0]);
@@ -92,12 +92,12 @@ describe('VolatilityCalculator', function () {
             SecurityPrice::factory()->for($security2)->create(['close' => 200.0 + $i]);
         }
 
-        \App\Models\Transaction::factory()
+        \App\Domains\Portfolio\Models\Transaction::factory()
             ->for($wallet)
             ->for($security1)
             ->create(['quantity' => 10, 'unit_price' => 115.0]);
 
-        \App\Models\Transaction::factory()
+        \App\Domains\Portfolio\Models\Transaction::factory()
             ->for($wallet)
             ->for($security2)
             ->create(['quantity' => 5, 'unit_price' => 215.0]);

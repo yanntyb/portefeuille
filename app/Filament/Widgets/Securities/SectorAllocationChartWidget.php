@@ -2,10 +2,10 @@
 
 namespace App\Filament\Widgets\Securities;
 
+use App\Domains\Portfolio\Services\SectorAggregator;
+use App\Domains\Security\Models\SecuritySector;
 use App\Filament\Widgets\ChartWidget;
 use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
-use App\Domains\Security\Models\SecuritySector;
-use App\Services\SectorAggregator;
 use Filament\Support\RawJs;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;

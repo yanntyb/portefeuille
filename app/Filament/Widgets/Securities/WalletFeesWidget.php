@@ -2,12 +2,12 @@
 
 namespace App\Filament\Widgets\Securities;
 
-use App\Enums\CurrencyModificationUnit;
-use App\Enums\FeeScope;
-use App\Enums\FrequencyUnit;
+use App\Domains\Portfolio\Enums\CurrencyModificationUnit;
+use App\Domains\Portfolio\Enums\FeeScope;
+use App\Domains\Portfolio\Enums\FrequencyUnit;
+use App\Domains\Portfolio\Models\Wallet;
+use App\Domains\Portfolio\Models\WalletFee;
 use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
-use App\Models\Wallet;
-use App\Models\WalletFee;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Number;
 use Livewire\Attributes\On;

@@ -1,11 +1,11 @@
 <?php
 
-use App\Enums\TransactionType;
+use App\Domains\Portfolio\Enums\TransactionType;
+use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Portfolio\Models\Wallet;
+use App\Domains\Security\Models\Security;
 use App\Filament\Resources\Transactions\Pages\CreateTransaction;
 use App\Filament\Resources\Transactions\Pages\EditTransaction;
-use App\Domains\Security\Models\Security;
-use App\Models\Transaction;
-use App\Models\Wallet;
 
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Livewire\livewire;

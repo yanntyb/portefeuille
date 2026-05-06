@@ -1,11 +1,11 @@
 <?php
 
-use App\Enums\TransactionType;
+use App\Domains\Portfolio\Enums\TransactionType;
+use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
-use App\Models\Transaction;
 use App\Domains\User\Models\User;
-use App\Models\Wallet;
 
 it('stores sell transaction', function () {
     $user = User::factory()->create();

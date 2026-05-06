@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Contracts\Rebalancing;
+use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
-use App\Models\Transaction;
-use App\Models\Wallet;
 
 class RebalancingCalculatorOrchestrator
 {

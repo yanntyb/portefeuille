@@ -2,11 +2,11 @@
 
 namespace App\Filament\Widgets\Securities;
 
+use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Portfolio\Services\TransactionAggregator;
+use App\Domains\Security\Models\SecurityPrice;
 use App\Filament\Widgets\ChartWidget;
 use App\Infrastructure\Filament\Concerns\ComputesValuationChart;
-use App\Domains\Security\Models\SecurityPrice;
-use App\Models\Transaction;
-use App\Services\TransactionAggregator;
 use Filament\Support\RawJs;
 use Illuminate\Database\Eloquent\Model;
 

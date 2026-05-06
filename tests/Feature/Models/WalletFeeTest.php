@@ -1,9 +1,9 @@
 <?php
 
-use App\Enums\CurrencyModificationUnit;
-use App\Enums\FrequencyUnit;
-use App\Models\Wallet;
-use App\Models\WalletFee;
+use App\Domains\Portfolio\Enums\CurrencyModificationUnit;
+use App\Domains\Portfolio\Enums\FrequencyUnit;
+use App\Domains\Portfolio\Models\Wallet;
+use App\Domains\Portfolio\Models\WalletFee;
 
 test('un wallet peut avoir plusieurs frais', function () {
     $wallet = Wallet::factory()->create();

@@ -2,7 +2,7 @@
 
 namespace App\Contracts;
 
-use App\Models\Wallet;
+use App\Domains\Portfolio\Models\Wallet;
 
 interface Simulating
 {

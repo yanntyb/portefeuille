@@ -2,7 +2,7 @@
 
 namespace App\Filament\Widgets\Securities;
 
-use App\Services\PortfolioPerformanceCalculator;
+use App\Domains\Portfolio\Services\PortfolioPerformanceCalculator;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Model;
 

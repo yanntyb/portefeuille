@@ -2,7 +2,7 @@
 
 namespace App\Infrastructure\Filament\Concerns;
 
-use App\Services\SingleSecurityStatsProvider;
+use App\Domains\Portfolio\Services\SingleSecurityStatsProvider;
 
 /**
  * @property ?\Illuminate\Database\Eloquent\Model $record

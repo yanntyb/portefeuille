@@ -2,13 +2,13 @@
 
 namespace App\Providers\Filament;
 
+use App\Domains\User\Filament\Pages\Auth\Login;
 use App\Infrastructure\Extensions\Debug;
 use App\Infrastructure\Extensions\Pwa;
 use App\Infrastructure\Extensions\Store;
 use App\Infrastructure\Extensions\Style;
 use App\Infrastructure\Extensions\TablePersistence;
 use App\Infrastructure\Extensions\Transition;
-use App\Domains\User\Filament\Pages\Auth\Login;
 use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -43,9 +43,13 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverResources(in: app_path('Domains/User/Filament/Resources'), for: 'App\Domains\User\Filament\Resources')
             ->discoverResources(in: app_path('Domains/Security/Filament/Resources'), for: 'App\Domains\Security\Filament\Resources')
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
+            ->discoverResources(in: app_path('Domains/Portfolio/Filament/Resources'), for: 'App\Domains\Portfolio\Filament\Resources')
             ->discoverPages(in: app_path('Domains/User/Filament/Pages'), for: 'App\Domains\User\Filament\Pages')
+            ->discoverPages(in: app_path('Domains/Security/Filament/Pages'), for: 'App\Domains\Security\Filament\Pages')
+            ->discoverPages(in: app_path('Domains/Portfolio/Filament/Pages'), for: 'App\Domains\Portfolio\Filament\Pages')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
+            ->discoverWidgets(in: app_path('Domains/Security/Filament/Widgets'), for: 'App\Domains\Security\Filament\Widgets')
+            ->discoverWidgets(in: app_path('Domains/Portfolio/Filament/Widgets'), for: 'App\Domains\Portfolio\Filament\Widgets')
             ->pages([])
             ->widgets([])
             ->navigationGroups([

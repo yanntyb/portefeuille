@@ -3,9 +3,9 @@
 namespace App\Filament\Widgets\Dashboard;
 
 use App\Data\CorrelationResult;
+use App\Domains\Portfolio\Services\DashboardDataProvider;
 use App\Enums\CorrelationPeriod;
 use App\Services\CorrelationCalculator;
-use App\Services\DashboardDataProvider;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;

@@ -2,7 +2,7 @@
 
 namespace App\Filament\Widgets\Dashboard;
 
-use App\Services\DashboardDataProvider;
+use App\Domains\Portfolio\Services\DashboardDataProvider;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Number;
 use Livewire\Attributes\On;

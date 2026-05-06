@@ -2,8 +2,8 @@
 
 namespace App\Filament\Widgets\Securities;
 
+use App\Domains\Portfolio\Models\Wallet;
 use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
-use App\Models\Wallet;
 use App\Services\VolatilityCalculator;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Number;

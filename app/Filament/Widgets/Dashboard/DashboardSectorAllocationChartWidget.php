@@ -2,9 +2,9 @@
 
 namespace App\Filament\Widgets\Dashboard;
 
+use App\Domains\Portfolio\Services\DashboardDataProvider;
+use App\Domains\Portfolio\Services\SectorAggregator;
 use App\Filament\Widgets\ChartWidget;
-use App\Services\DashboardDataProvider;
-use App\Services\SectorAggregator;
 use Filament\Support\RawJs;
 use Livewire\Attributes\On;
 

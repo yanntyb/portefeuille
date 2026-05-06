@@ -2,8 +2,8 @@
 
 namespace App\Contracts;
 
+use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
-use App\Models\Wallet;
 
 interface VolatilityCalculating
 {

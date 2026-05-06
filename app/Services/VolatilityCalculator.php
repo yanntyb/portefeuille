@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Contracts\VolatilityCalculating;
+use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
-use App\Models\Wallet;
 use Illuminate\Support\Collection;
 
 class VolatilityCalculator implements VolatilityCalculating

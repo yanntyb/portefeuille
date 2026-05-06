@@ -2,8 +2,8 @@
 
 namespace App\Filament\Widgets\Dashboard;
 
+use App\Domains\Portfolio\Services\DashboardDataProvider;
 use App\Filament\Widgets\ChartWidget;
-use App\Services\DashboardDataProvider;
 use Filament\Support\RawJs;
 
 class PortfolioAllocationChartWidget extends ChartWidget

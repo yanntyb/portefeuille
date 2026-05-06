@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\FeeScope;
+use App\Domains\Portfolio\Enums\FeeScope;
 
 it('has total valuation case', function () {
     expect(FeeScope::TotalValuation->value)->toBe('total_valuation');

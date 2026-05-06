@@ -1,8 +1,8 @@
 <?php
 
-use App\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
+use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Security\Models\Security;
-use App\Models\Transaction;
+use App\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
 
 use function Pest\Livewire\livewire;
 

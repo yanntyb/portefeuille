@@ -2,8 +2,8 @@
 
 namespace App\Filament\Widgets\Dashboard;
 
-use App\Services\DashboardDataProvider;
-use App\Services\PortfolioPerformanceCalculator;
+use App\Domains\Portfolio\Services\DashboardDataProvider;
+use App\Domains\Portfolio\Services\PortfolioPerformanceCalculator;
 use Filament\Widgets\Widget;
 use Livewire\Attributes\On;
 

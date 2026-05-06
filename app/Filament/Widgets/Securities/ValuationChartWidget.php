@@ -3,12 +3,12 @@
 namespace App\Filament\Widgets\Securities;
 
 use App\Data\CumulativeData;
-use App\Filament\Widgets\ChartWidget;
-use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
+use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Portfolio\Services\TransactionAggregator;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
-use App\Models\Transaction;
-use App\Services\TransactionAggregator;
+use App\Filament\Widgets\ChartWidget;
+use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
 use App\Infrastructure\Support\ChartColors;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Schema;

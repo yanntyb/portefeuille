@@ -1,7 +1,7 @@
 <?php
 
+use App\Domains\Portfolio\Models\Wallet;
 use App\Filament\Pages\WalletsConfigPage;
-use App\Models\Wallet;
 
 use function Pest\Livewire\livewire;
 

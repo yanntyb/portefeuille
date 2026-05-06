@@ -1,11 +1,11 @@
 <?php
 
-use App\Filament\Resources\AllSecurities\Pages\ListAllSecurities;
+use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
-use App\Models\Transaction;
-use App\Domains\User\Models\User;
-use App\Models\Wallet;
 use App\Domains\Security\Services\YahooFinanceClient;
+use App\Domains\User\Models\User;
+use App\Filament\Resources\AllSecurities\Pages\ListAllSecurities;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseHas;

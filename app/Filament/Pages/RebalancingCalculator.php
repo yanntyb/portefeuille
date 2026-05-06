@@ -2,9 +2,9 @@
 
 namespace App\Filament\Pages;
 
-use App\Models\AllocationProfile;
+use App\Domains\Portfolio\Models\AllocationProfile;
+use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
-use App\Models\Wallet;
 use App\Services\RebalancingCalculatorOrchestrator;
 use BackedEnum;
 use Filament\Actions\Action;

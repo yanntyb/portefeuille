@@ -1,11 +1,11 @@
 <?php
 
-use App\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
-use App\Filament\Widgets\Securities\SingleSecurityPerformanceStatsOverview;
+use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
-use App\Models\Transaction;
-use App\Models\Wallet;
+use App\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
+use App\Filament\Widgets\Securities\SingleSecurityPerformanceStatsOverview;
 use Illuminate\Support\Carbon;
 
 use function Pest\Livewire\livewire;
