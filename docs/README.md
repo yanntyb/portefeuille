@@ -85,6 +85,15 @@ Type systems, glossary, formulas.
 - Admin features
 - API endpoints (if any)
 
+### 🚀 Roadmap & Refactoring
+
+- **[ROADMAP.md](ROADMAP.md)** — Indicateurs manquants, priorisés par tier (Tier 1→4)
+- **[REFACTORING.md](REFACTORING.md)** — Simplifications de l'architecture actuelle (N+1, duplications, diagrammes Mermaid)
+- **[ROADMAP/tier1-drawdown.md](ROADMAP/tier1-drawdown.md)** — Max Drawdown : algorithme, service, tables optionnelles
+- **[ROADMAP/tier1-benchmark.md](ROADMAP/tier1-benchmark.md)** — Performance vs Benchmark : nouvelles tables, service, UI
+- **[ROADMAP/tier1-cagr-twr-mwr.md](ROADMAP/tier1-cagr-twr-mwr.md)** — CAGR, TWR depuis ouverture, MWR/XIRR
+- **[ROADMAP/tier2-risk-ratios.md](ROADMAP/tier2-risk-ratios.md)** — Sharpe, Sortino, Calmar : formules, service, affichage
+
 ---
 
 ## 🔍 Key Concepts (Quick Reference)
