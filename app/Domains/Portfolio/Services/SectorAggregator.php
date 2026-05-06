@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 class SectorAggregator
 {
     /**
-     * @param  Collection<int, \App\Models\Security>  $securities  With latestPrice and sectors loaded
+     * @param  Collection<int, \App\Domains\Security\Models\Security>  $securities  With latestPrice and sectors loaded
      * @return array{datasets: list<array<string, mixed>>, labels: list<string>}
      */
     public function buildStackedSectorData(Collection $securities): array

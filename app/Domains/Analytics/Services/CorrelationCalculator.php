@@ -12,7 +12,7 @@ class CorrelationCalculator
     private const int MIN_DATA_POINTS = 20;
 
     /**
-     * @param  Collection<int, \App\Models\Security>  $securities  Securities with name loaded
+     * @param  Collection<int, \App\Domains\Security\Models\Security>  $securities  Securities with name loaded
      */
     public function compute(Collection $securities, CorrelationPeriod $period): ?CorrelationResult
     {

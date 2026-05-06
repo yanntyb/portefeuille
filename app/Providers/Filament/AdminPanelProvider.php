@@ -48,7 +48,6 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Domains/Security/Filament/Pages'), for: 'App\Domains\Security\Filament\Pages')
             ->discoverPages(in: app_path('Domains/Portfolio/Filament/Pages'), for: 'App\Domains\Portfolio\Filament\Pages')
             ->discoverPages(in: app_path('Domains/Analytics/Filament/Pages'), for: 'App\Domains\Analytics\Filament\Pages')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->discoverWidgets(in: app_path('Domains/Security/Filament/Widgets'), for: 'App\Domains\Security\Filament\Widgets')
             ->discoverWidgets(in: app_path('Domains/Portfolio/Filament/Widgets'), for: 'App\Domains\Portfolio\Filament\Widgets')
             ->discoverWidgets(in: app_path('Domains/Analytics/Filament/Widgets'), for: 'App\Domains\Analytics\Filament\Widgets')
