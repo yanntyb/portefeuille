@@ -19,6 +19,7 @@ use App\Models\Security;
 use App\Models\SecurityPrice;
 use App\Models\Transaction;
 use App\Models\Wallet;
+use App\Services\VolatilityCalculator;
 use App\Services\YahooFinanceService;
 use App\Support\MarketCalendar;
 use Filament\Actions\Action;
@@ -34,7 +35,6 @@ use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Number;
@@ -269,83 +269,7 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
             return 15.0;
         }
 
-        $records = $this->scopedSecuritiesQuery()->with('latestPrice')->get();
-
-        $totalValuation = (float) $records->sum(function ($record) {
-            $close = $record->latestPrice?->close;
-
-            if ($close === null || $record->total_quantity === null) {
-                return 0;
-            }
-
-            return (float) $record->total_quantity * (float) $close;
-        });
-
-        if ($totalValuation <= 0) {
-            return 15.0;
-        }
-
-        $weightedVolatility = 0.0;
-
-        foreach ($records as $record) {
-            $close = $record->latestPrice?->close;
-
-            if ($close === null || $record->total_quantity === null || (float) $record->total_quantity <= 0) {
-                continue;
-            }
-
-            $weight = ((float) $record->total_quantity * (float) $close) / $totalValuation;
-
-            $prices = SecurityPrice::query()
-                ->where('security_id', $record->id)
-                ->orderBy('date')
-                ->pluck('close')
-                ->map(fn ($v) => (float) $v)
-                ->values();
-
-            $sigma = $this->annualizedVolatility($prices);
-
-            if ($sigma === null) {
-                continue;
-            }
-
-            $weightedVolatility += $weight * $sigma;
-        }
-
-        return $weightedVolatility > 0
-            ? round($weightedVolatility, 2)
-            : 15.0;
-    }
-
-    /** @param Collection<int, float> $prices */
-    private function annualizedVolatility(Collection $prices): ?float
-    {
-        if ($prices->count() < 30) {
-            return null;
-        }
-
-        $returns = [];
-
-        for ($i = 1; $i < $prices->count(); $i++) {
-            $prev = $prices[$i - 1];
-
-            if ($prev == 0.0) {
-                continue;
-            }
-
-            $returns[] = ($prices[$i] - $prev) / $prev;
-        }
-
-        $n = count($returns);
-
-        if ($n < 2) {
-            return null;
-        }
-
-        $mean = array_sum($returns) / $n;
-        $variance = array_sum(array_map(fn (float $r) => ($r - $mean) ** 2, $returns)) / ($n - 1);
-
-        return sqrt($variance) * sqrt(252) * 100;
+        return app(VolatilityCalculator::class)->forWallet($this->wallet);
     }
 
     protected function getFormattedValuation(): string

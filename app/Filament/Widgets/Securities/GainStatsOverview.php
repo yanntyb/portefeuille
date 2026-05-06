@@ -3,6 +3,8 @@
 namespace App\Filament\Widgets\Securities;
 
 use App\Filament\Widgets\Securities\Concerns\HasReactiveTableProperties;
+use App\Models\Wallet;
+use App\Services\VolatilityCalculator;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Number;
 use Livewire\Attributes\On;
@@ -19,6 +21,8 @@ class GainStatsOverview extends Widget
 
     /** @var list<int>|null */
     public ?array $shownSecurityIds = null;
+
+    public ?int $walletId = null;
 
     #[On('security-visibility-changed')]
     public function updateShownSecurityIds(array $shownSecurityIds): void
@@ -41,6 +45,7 @@ class GainStatsOverview extends Widget
      *     realizedGainPositive: bool,
      *     fees: string,
      *     feesPercentage: string,
+     *     volatilite: ?string,
      * }
      */
     public function getGainData(): array
@@ -54,6 +59,7 @@ class GainStatsOverview extends Widget
                 'realizedGainPositive' => true,
                 'fees' => Number::currency(0, 'EUR'),
                 'feesPercentage' => '0 %',
+                'volatilite' => null,
             ];
         }
 
@@ -84,6 +90,16 @@ class GainStatsOverview extends Widget
         $plusValuePercentage = $totalInvested > 0 ? ($plusValue / $totalInvested) * 100 : 0;
         $feesPercentage = $totalInvested > 0 ? ($totalFees / $totalInvested) * 100 : 0;
 
+        $volatilite = null;
+        if ($this->walletId !== null) {
+            $wallet = Wallet::find($this->walletId);
+            if ($wallet !== null) {
+                $shownIds = $this->shownSecurityIds && count($this->shownSecurityIds) > 0 ? $this->shownSecurityIds : null;
+                $volatiliteValue = app(VolatilityCalculator::class)->forWallet($wallet, $shownIds);
+                $volatilite = Number::format($volatiliteValue, 2).' %';
+            }
+        }
+
         return [
             'plusValue' => Number::currency($plusValue, 'EUR'),
             'plusValuePercentage' => Number::format($plusValuePercentage, 2).' %',
@@ -92,6 +108,7 @@ class GainStatsOverview extends Widget
             'realizedGainPositive' => $totalRealizedGain >= 0,
             'fees' => Number::currency($totalFees, 'EUR'),
             'feesPercentage' => Number::format($feesPercentage, 2).' %',
+            'volatilite' => $volatilite,
         ];
     }
 }

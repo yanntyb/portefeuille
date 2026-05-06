@@ -4,6 +4,7 @@ namespace App\Filament\Widgets\Dashboard;
 
 use App\Models\Wallet;
 use App\Services\DashboardDataProvider;
+use App\Services\VolatilityCalculator;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Number;
 use Livewire\Attributes\On;
@@ -40,6 +41,7 @@ class DashboardGainStatsOverview extends Widget
      *     realizedGainPositive: bool,
      *     fees: string,
      *     feesPercentage: string,
+     *     volatilite: ?string,
      * }
      */
     public function getGainData(): array
@@ -53,6 +55,7 @@ class DashboardGainStatsOverview extends Widget
         $totalInvested = 0;
         $totalFees = 0;
         $totalRealizedGain = 0;
+        $walletVolatilities = [];
 
         foreach ($wallets as $wallet) {
             $securities = $provider->securitiesForWallet($wallet);
@@ -61,7 +64,7 @@ class DashboardGainStatsOverview extends Widget
                 $securities = $securities->whereIn('id', $this->shownSecurityIds);
             }
 
-            $totalValuation += $securities->sum(function ($security) {
+            $walletValuation = $securities->sum(function ($security) {
                 $close = $security->latestPrice?->close;
 
                 if ($close === null || $security->total_quantity === null) {
@@ -71,14 +74,31 @@ class DashboardGainStatsOverview extends Widget
                 return (float) $security->total_quantity * (float) $close;
             });
 
+            $totalValuation += $walletValuation;
             $totalInvested += $securities->sum(fn ($security) => (float) ($security->total_invested ?? 0));
             $totalFees += $securities->sum(fn ($security) => (float) ($security->total_fees ?? 0));
             $totalRealizedGain += $securities->sum(fn ($security) => (float) ($security->total_realized_gain ?? 0));
+
+            $walletVolatility = app(VolatilityCalculator::class)->forWallet($wallet);
+            $walletVolatilities[] = [
+                'valuation' => $walletValuation,
+                'volatility' => $walletVolatility,
+            ];
         }
 
         $plusValue = $totalValuation - $totalInvested;
         $plusValuePercentage = $totalInvested > 0 ? ($plusValue / $totalInvested) * 100 : 0;
         $feesPercentage = $totalInvested > 0 ? ($totalFees / $totalInvested) * 100 : 0;
+
+        $volatilite = null;
+        if ($totalValuation > 0 && count($walletVolatilities) > 0) {
+            $weightedVolatility = 0.0;
+            foreach ($walletVolatilities as $item) {
+                $weight = $item['valuation'] / $totalValuation;
+                $weightedVolatility += $weight * $item['volatility'];
+            }
+            $volatilite = Number::format($weightedVolatility, 2).' %';
+        }
 
         return [
             'plusValue' => Number::currency($plusValue, 'EUR'),
@@ -88,6 +108,7 @@ class DashboardGainStatsOverview extends Widget
             'realizedGainPositive' => $totalRealizedGain >= 0,
             'fees' => Number::currency($totalFees, 'EUR'),
             'feesPercentage' => Number::format($feesPercentage, 2).' %',
+            'volatilite' => $volatilite,
         ];
     }
 }

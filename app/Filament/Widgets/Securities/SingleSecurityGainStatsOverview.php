@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets\Securities;
 
 use App\Filament\Widgets\Securities\Concerns\ComputesSingleSecurityStats;
+use App\Services\VolatilityCalculator;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Number;
@@ -33,6 +34,7 @@ class SingleSecurityGainStatsOverview extends Widget
      *     realizedGainPositive: bool,
      *     fees: string,
      *     feesPercentage: string,
+     *     volatilite: ?string,
      * }
      */
     public function getGainData(): array
@@ -49,10 +51,13 @@ class SingleSecurityGainStatsOverview extends Widget
                 'realizedGainPositive' => true,
                 'fees' => Number::currency(0, 'EUR'),
                 'feesPercentage' => '0 %',
+                'volatilite' => null,
             ];
         }
 
         $stats = $this->computeStats();
+        $volatiliteValue = app(VolatilityCalculator::class)->forSecurity($this->record);
+        $volatilite = $volatiliteValue !== null ? Number::format($volatiliteValue, 2).' %' : null;
 
         return [
             'pru' => Number::currency($stats['pru'], 'EUR'),
@@ -65,6 +70,7 @@ class SingleSecurityGainStatsOverview extends Widget
             'realizedGainPositive' => $stats['totalRealizedGain'] >= 0,
             'fees' => Number::currency($stats['totalFees'], 'EUR'),
             'feesPercentage' => Number::format($stats['feesPercentage'], 2).' %',
+            'volatilite' => $volatilite,
         ];
     }
 }

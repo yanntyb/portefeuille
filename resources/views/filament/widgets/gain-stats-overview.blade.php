@@ -51,5 +51,18 @@
                 </div>
             </div>
         @endisset
+
+        @isset($data['volatilite'])
+            <span class="mt-4 block text-sm font-medium text-gray-950 dark:text-white">
+                Risque
+            </span>
+
+            <div class="mt-3">
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Volatilité annualisée</span>
+                <p class="mt-1 text-2xl font-semibold text-gray-950 dark:text-white">
+                    {{ $data['volatilite'] }}
+                </p>
+            </div>
+        @endisset
     </x-filament::section>
 </x-filament-widgets::widget>
