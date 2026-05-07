@@ -7,6 +7,7 @@ use App\Domains\Analytics\Data\Simulation\Simulation;
 use App\Domains\Analytics\Data\Simulation\SimulationObject;
 use App\Domains\Analytics\Data\Simulation\SimulationScenario;
 use App\Domains\Analytics\Data\Simulation\SimulationValue;
+use App\Domains\Analytics\Services\RebalancingDisplayService;
 use App\Domains\Analytics\Services\SimulationEngine;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -281,12 +282,9 @@ class SimulationBoardWidget extends Widget implements HasActions, HasSchemas, Ha
      */
     public function getPipelineObjectNames(): array
     {
-        return collect($this->objects)
-            ->filter(fn (array $obj): bool => ! empty($obj['pipeline']) && ! empty($obj['steps']))
-            ->pluck('nom')
-            ->reject(fn (string $name): bool => in_array($name, $this->hiddenFromScenario))
-            ->values()
-            ->all();
+        $dtoObjects = array_map(fn (array $o): SimulationObject => SimulationObject::fromArray($o), $this->objects);
+
+        return app(RebalancingDisplayService::class)->getPipelineObjectNames($dtoObjects, $this->hiddenFromScenario);
     }
 
     public function isVisibleInScenario(int $index): bool
@@ -311,40 +309,14 @@ class SimulationBoardWidget extends Widget implements HasActions, HasSchemas, Ha
         }
     }
 
-    private function computePercentDiff(string $baseFormatted, string $scenarioFormatted): ?string
-    {
-        $base = SimulationValue::parse($baseFormatted)->numeric;
-        $scenario = SimulationValue::parse($scenarioFormatted)->numeric;
-
-        if ($base === null || $scenario === null || $base == 0) {
-            return null;
-        }
-
-        $diff = (($scenario - $base) / abs($base)) * 100;
-
-        if (abs($diff) < 0.01) {
-            return null;
-        }
-
-        $sign = $diff > 0 ? '+' : '';
-
-        return $sign.number_format($diff, 1, ',', ' ').' %';
-    }
-
     /**
      * @return list<string>
      */
     private function getOverriddenParamNames(): array
     {
-        if (empty($this->scenarios)) {
-            return [];
-        }
+        $dtoScenarios = array_map(fn (array $s): SimulationScenario => SimulationScenario::fromArray($s), $this->scenarios);
 
-        return collect($this->scenarios[0]['overrides'] ?? [])
-            ->pluck('param')
-            ->unique()
-            ->values()
-            ->all();
+        return app(RebalancingDisplayService::class)->getOverriddenParamNames($dtoScenarios);
     }
 
     /**
@@ -352,47 +324,25 @@ class SimulationBoardWidget extends Widget implements HasActions, HasSchemas, Ha
      */
     public function getScenarioTableRecords(): array
     {
-        $pipelineNames = $this->getPipelineObjectNames();
-        $overriddenParams = $this->getOverriddenParamNames();
+        $dtoObjects = array_map(fn (array $o): SimulationObject => SimulationObject::fromArray($o), $this->objects);
+        $dtoScenarios = array_map(fn (array $s): SimulationScenario => SimulationScenario::fromArray($s), $this->scenarios);
 
-        $baseRecord = ['id' => 'base', 'scenario' => 'Base (actuel)', 'description' => null, '_type' => 'base'];
+        $records = app(RebalancingDisplayService::class)->buildScenarioTableRecords(
+            $dtoObjects,
+            $dtoScenarios,
+            $this->scenarioResults,
+            $this->hiddenFromScenario,
+            fn (string $param): ?string => $this->getSourceValue($param)
+        );
 
-        foreach ($overriddenParams as $param) {
-            $baseRecord[$param] = $this->getSourceValue($param) ?? '—';
-        }
-
-        foreach ($pipelineNames as $name) {
-            $baseRecord[$name] = $this->getSourceValue($name) ?? '—';
-        }
-
-        $records = [$baseRecord];
-
-        foreach ($this->scenarioResults as $key => $result) {
-            $description = collect($this->scenarios[$key]['overrides'] ?? [])
-                ->map(fn (array $o): string => "{$o['param']} {$o['operator']} {$o['value']}")
-                ->implode(' · ');
-
-            $record = [
-                'id' => "scenario-{$key}",
-                'scenario' => $result['scenario'],
-                'description' => $description,
-                '_type' => 'scenario',
-                '_index' => $key,
-            ];
-
-            foreach ($overriddenParams as $param) {
-                $record[$param] = $result['results'][$param] ?? $baseRecord[$param];
-                $record["_diff_{$param}"] = $this->computePercentDiff($baseRecord[$param], $record[$param]);
+        foreach ($records as $index => &$record) {
+            if ($index === 0) {
+                $record['id'] = 'base';
+                $record['_type'] = 'base';
+            } else {
+                $record['id'] = "scenario-{$record['_index']}";
+                $record['_type'] = 'scenario';
             }
-
-            foreach ($pipelineNames as $name) {
-                $scenarioValue = $result['results'][$name] ?? '—';
-                $baseValue = $baseRecord[$name] ?? '—';
-                $record[$name] = $scenarioValue;
-                $record["_diff_{$name}"] = $this->computePercentDiff($baseValue, $scenarioValue);
-            }
-
-            $records[] = $record;
         }
 
         return $records;
