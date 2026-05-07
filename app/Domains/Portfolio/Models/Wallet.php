@@ -33,6 +33,11 @@ class Wallet extends Model
         });
     }
 
+    public function scopeForUser(Builder $query, int $userId): Builder
+    {
+        return $query->withoutGlobalScope('user')->where('wallets.user_id', $userId);
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

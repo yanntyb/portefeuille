@@ -30,6 +30,11 @@ class Transaction extends Model
         });
     }
 
+    public function scopeForUser(Builder $query, int $userId): Builder
+    {
+        return $query->withoutGlobalScope('user')->where('transactions.user_id', $userId);
+    }
+
     /** @var list<string> */
     protected $fillable = [
         'user_id',
