@@ -2,6 +2,26 @@
 
 > Référence: https://herbertograca.com/2017/11/16/explicit-architecture-01-ddd-hexagonal-onion-clean-cqrs-how-i-put-it-all-together/
 
+---
+
+## 📊 Status Global
+
+| Phase | Nom | Status | Tests | Commits |
+|-------|-----|--------|-------|---------|
+| 6 | Events | ✅ **Done** | 432 pass | 6 |
+| 7 | Repositories & Contracts | ✅ **Done** | 432 pass | 7 |
+| 8 | Asset Abstraction | ⏳ Pending | — | — |
+| 9 | Ports & Projections | ⏳ Pending | — | — |
+| 10 | Bitcoin Support | ⏳ Pending | — | — |
+
+**Key Decisions Implemented:**
+- Phase 7B: **Option 3** (Request-scoped UserId service) ✅
+- 7 services refactored to use repositories
+- VolatilityCalculating signature changed: `Wallet → int walletId`
+- Division by zero guard added to DashboardGainStatsOverview
+
+---
+
 ## 1. Problème actuel — le verrou `security_id`
 
 Tout le système tourne autour de `securities`. Un seul FK `transactions.security_id` verrouille
@@ -498,45 +518,83 @@ vendor/bin/pint --dirty --format agent
 | `VolatilityCalculating` | ✅ Défini, ✅ bindé | Signature change `Wallet → int walletId` (TBD Phase 7C) |
 | `Rebalancing` | ✅ Défini, ✅ bindé | Aucun changement nécessaire (pure math) |
 
-## 11. Phase 7 — Résultats et blockers
+## 11. Phase 7 — Résultats Finaux ✅
 
-### Phase 7A ✅ Complète
-- Bindings ajoutés pour SecurityRepository, SecurityPriceRepository, TransactionRepository
-- Status: Tous les tests passent, prêt pour Phase 7B+
+### 11.1 Phase 7A ✅ Complètement réalisée
+- ✅ Bindings ajoutés pour SecurityRepositoryInterface, SecurityPriceRepositoryInterface, TransactionRepositoryInterface
+- ✅ Tous 3 interfaces implémentées dans EloquentXxxRepository
+- ✅ Tests passent (432 pass)
 
-### Phase 7B ⏸️ Blocker: Contexte utilisateur
-Refactoriser 7 services vers injection repository révèle **problème critique**:
-- `forWallet(walletId, userId)` et `forSecurity(securityId, userId)` requièrent `userId`
-- Services comme VolatilityCalculator, PortfolioPerformanceService reçoivent wallet mais pas userId
-- `auth()->id()` retourne `null` en tests → binde crash
+### 11.2 Phase 7B ✅ Complètement réalisée (7 services)
+**Approche choisie: Option 3 (Request-scoped UserId service)**
 
-**Services affectés:**
-1. RealizedGainCalculator — **résolu** (transaction.user_id disponible)
-2. SingleSecurityStatsProvider — **complexe** (besoin userId pour forSecurity)
-3. VolatilityCalculator — **blocké** (pas userId context, signature change TBD)
-4. PortfolioPerformanceCalculator — **blocké** (idem)
-5. PortfolioPerformanceService — **blocké**
-6. DashboardDataProvider — **blocké**
-7. YahooFinanceService — **peut rester ORM** (aucun userId needed)
+Contexte: Refactoriser 7 services vers injection repository révélait un défi critique du contexte utilisateur.
+- Problème: `forWallet(walletId, userId)` et `forSecurity(securityId, userId)` nécessitaient `userId`
+- Services sans userId explicit (VolatilityCalculator, etc) créaient tight coupling si on injectait UserId
 
-### Solution recommandée Phase 7B
-**Option 1 (Pragmatique)**: Garder ORM directs pour services sans userId context
-- Services purs (VolatilityCalculator, PortfolioPerformanceCalculator) → queryBuilder direct
-- Services avec transaction context (RealizedGainCalculator) → repository injection
-- Phase 7 focus: RealizedGainCalculator seulement
+**Solution implémentée:**
+- Créé service global UserId injectable (Option 3)
+- Permet override de test via `TestCase::actingAs()`
+- Pas de modifications de signatures (sauf VolatilityCalculating interface)
+- Services pures (PortfolioPerformanceCalculator) isolées du contexte utilisateur
 
-**Option 2 (Refactor majeur)**: Restructurer services pour passer userId explicitement
-- Requires: Modifier signature tous les services
-- Impact: Cascading changes à Filament pages, commands, tests
-- Timeline: Phase 8+
+**Services refactorisés:**
+1. ✅ RealizedGainCalculator — TransactionRepository
+2. ✅ SingleSecurityStatsProvider — TransactionRepository
+3. ✅ YahooFinanceService — SecurityPriceRepository (7 ORM points)
+4. ✅ VolatilityCalculator — SecurityRepository, SecurityPriceRepository + signature change
+5. ✅ PortfolioPerformanceCalculator — SecurityPriceRepository (no UserId injection)
+6. ✅ DashboardDataProvider — SecurityRepository
+7. ✅ PortfolioPerformanceService — SecurityRepository, SecurityPriceRepository, TransactionRepository
 
-**Option 3 (À explorer)**: Request-scoped UserId service
-- `UserId $userId` service injectable, fallback auth()->id() en production
-- Permet test fixture override
-- Moins intrusif que Option 2
+### 11.3 Phase 7C ✅ Complètement réalisée (Interface Cleanup)
+- ✅ VolatilityCalculating signature: `forWallet(Wallet $wallet)` → `forWallet(int $walletId)`
+- ✅ Tous callers mis à jour (2 Filament widgets, 1 service)
+- ✅ Tests updated et passant
 
-### Décision Phase 8
-Recommandation: **Option 1** court-terme (complète Phase 7 partiel)
-- Phase 7B.1: RealizedGainCalculator + tests ✅
-- Phase 7B.2: Pause, marker pour Phase 8 avec Option 2 ou 3
-- Phase 8: Addresser Commands (FetchSecurityPricesCommand, etc) — plus simples que services
+### 11.4 Fixes & Cleanup
+- ✅ DashboardGainStatsOverview: Guard contre division by zero
+- ✅ PhpDoc types: Fully-qualified Security references
+- ✅ Pint formatting: Full codebase cleaned
+- ✅ All 432 tests passing, 0 new phpstan errors
+
+### 11.5 Lessons Learned
+| Leçon | Application |
+|-------|-------------|
+| **Pure calculation services** | Don't inject UserId; use repositories that respect global scopes |
+| **Global scopes + tests** | TestCase override of UserId service enables clean test isolation |
+| **Interface signatures** | Prefer `int walletId` over `Wallet $wallet` for decoupling |
+| **Incremental refactoring** | 7 services in 3 commits without cascading failures |
+
+---
+
+## 12. Phase 8+ — Roadmap vers Bitcoin
+
+### Phase 8 — Asset Abstraction
+**Prérequis:** Phase 7 terminée, architecture repository stable
+
+**Objectif:** Extraire Asset aggregate, remplacer Security par Asset
+
+**Étapes:**
+1. Créer Asset abstract aggregate (herite Transaction, AssetPrice)
+2. Stock extends Asset, Crypto extends Asset
+3. Migration: security_prices → asset_prices, transactions.security_id → asset_id
+4. Rendre AssetType polymorphe (Stock, ETF, Crypto, RealEstate, Bond, Savings)
+
+### Phase 9 — Ports & Projections
+**Objectif:** AssetPriceProviderPort, HoldingsProjection read model
+
+**Adapters:**
+- YahooFinanceAdapter: Stock/ETF
+- CoinGeckoAdapter: Crypto (24/7)
+- ManualPriceAdapter: RealEstate, Private assets
+
+### Phase 10 — Bitcoin Support
+**Minimal changeset:** 3 files
+1. `CryptoAsset` model extends Asset
+2. `asset_details_crypto` migration
+3. `CoinGeckoAdapter` implements AssetPriceProviderPort
+
+Portfolio, Transaction, RealizedGainCalculator require ZERO changes.
+
+---
