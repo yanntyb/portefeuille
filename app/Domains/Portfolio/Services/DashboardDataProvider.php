@@ -11,7 +11,9 @@ class DashboardDataProvider
     public function __construct(
         private SecurityRepositoryInterface $securityRepository,
     ) {}
-    /** @var array<string, Collection<int, Security>> */
+    /**
+     * @var array<string, \Illuminate\Database\Eloquent\Collection<int, \App\Domains\Security\Models\Security>>
+     */
     private array $securitiesByWallet = [];
 
     /** @var Collection<int, Wallet>|null */
@@ -28,7 +30,7 @@ class DashboardDataProvider
     }
 
     /**
-     * @return Collection<int, Security>
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Domains\Security\Models\Security>
      */
     public function securitiesForWallet(Wallet $wallet): Collection
     {
@@ -38,7 +40,7 @@ class DashboardDataProvider
     }
 
     /**
-     * @return Collection<int, Security>
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Domains\Security\Models\Security>
      */
     public function allSecurities(): Collection
     {
