@@ -6,6 +6,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property-read int $id
+ * @property string $token
+ * @property int $created_by
+ * @property \Illuminate\Support\Carbon $expires_at
+ * @property ?\Illuminate\Support\Carbon $used_at
+ * @property-read \Illuminate\Support\Carbon $created_at
+ * @property-read \Illuminate\Support\Carbon $updated_at
+ */
 class Invitation extends Model
 {
     /** @use HasFactory<\Database\Factories\Domains\User\Models\InvitationFactory> */

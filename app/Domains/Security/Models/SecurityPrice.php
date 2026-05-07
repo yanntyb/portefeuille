@@ -6,6 +6,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property-read int $id
+ * @property-read int $security_id
+ * @property-read \Illuminate\Support\Carbon $date
+ * @property-read string $open
+ * @property-read string $high
+ * @property-read string $low
+ * @property-read string $close
+ * @property-read int $volume
+ * @property-read \Illuminate\Support\Carbon $created_at
+ * @property-read \Illuminate\Support\Carbon $updated_at
+ */
 class SecurityPrice extends Model
 {
     /** @use HasFactory<\Database\Factories\Domains\Security\Models\SecurityPriceFactory> */

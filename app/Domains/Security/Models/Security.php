@@ -13,7 +13,13 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\DB;
 
 /**
+ * @property-read int $id
+ * @property string $isin
+ * @property string $name
+ * @property string $ticker
  * @property-read ?int $total_quantity
+ * @property-read \Illuminate\Support\Carbon $created_at
+ * @property-read \Illuminate\Support\Carbon $updated_at
  */
 class Security extends Model
 {

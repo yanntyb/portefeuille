@@ -2,6 +2,8 @@
 
 namespace App\Domains\Portfolio\Data;
 
+use App\Infrastructure\Data\TimeSeriesPoint;
+
 readonly class CumulativeData
 {
     /**

@@ -4,6 +4,7 @@ namespace App\Domains\Analytics\Filament\Pages;
 
 use App\Domains\Analytics\Services\RebalancingCalculatorOrchestrator;
 use App\Domains\Portfolio\Models\AllocationProfile;
+use App\Domains\Portfolio\Models\AllocationProfileItem;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
 use BackedEnum;
@@ -290,10 +291,13 @@ class RebalancingCalculator extends Page implements HasTable
             return;
         }
 
-        $allocations = $profile->items->map(fn ($item): array => [
-            'security_id' => $item->security_id,
-            'target_percentage' => $item->target_percentage,
-        ])->all();
+        $allocations = $profile->items->map(function ($item): array {
+            /** @var AllocationProfileItem $item */
+            return [
+                'security_id' => $item->security_id,
+                'target_percentage' => $item->target_percentage,
+            ];
+        })->all();
 
         $this->data['allocations'] = $allocations;
         $this->data['wallet_id'] = $profile->wallet_id ?? '';

@@ -103,6 +103,9 @@ trait HasReactiveTableProperties
         return $this->getTablePageInstance()->getTableRecords();
     }
 
+    /**
+     * @return Collection<int, Security>
+     */
     protected function getFilteredSecurities(bool $withPrice = true, bool $reorder = false): Collection
     {
         if ($this->tablePageClass === null) {

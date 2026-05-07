@@ -56,6 +56,7 @@ class CorrelationCalculator
             $query->where('date', '>=', $startDate);
         }
 
+        /** @var Collection<int, SecurityPrice> $prices */
         $prices = $query->get(['security_id', 'date', 'close']);
 
         $pricesBySecurityAndDate = [];

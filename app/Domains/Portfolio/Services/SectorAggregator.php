@@ -3,13 +3,15 @@
 namespace App\Domains\Portfolio\Services;
 
 use App\Domains\Security\Enums\Sector;
+use App\Domains\Security\Models\Security;
+use App\Domains\Security\Models\SecuritySector;
 use App\Infrastructure\Support\ChartColors;
 use Illuminate\Support\Collection;
 
 class SectorAggregator
 {
     /**
-     * @param  Collection<int, \App\Domains\Security\Models\Security>  $securities  With latestPrice and sectors loaded
+     * @param  Collection<int, Security>  $securities  With latestPrice and sectors loaded
      * @return array{datasets: list<array<string, mixed>>, labels: list<string>}
      */
     public function buildStackedSectorData(Collection $securities): array
@@ -20,6 +22,7 @@ class SectorAggregator
         $securityNames = [];
 
         foreach ($securities as $security) {
+            /** @var Security $security */
             $quantity = (float) $security->total_quantity;
             $price = $security->latestPrice?->close;
 
@@ -31,6 +34,7 @@ class SectorAggregator
             $securityNames[$security->id] = $security->name;
 
             foreach ($security->sectors as $sectorRecord) {
+                /** @var SecuritySector $sectorRecord */
                 $key = $sectorRecord->sector->value;
                 $amount = $valuation * (float) $sectorRecord->weight;
                 $sectorBySecurity[$key][$security->id] = ($sectorBySecurity[$key][$security->id] ?? 0) + $amount;

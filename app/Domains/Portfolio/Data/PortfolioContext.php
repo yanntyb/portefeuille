@@ -2,13 +2,16 @@
 
 namespace App\Domains\Portfolio\Data;
 
+use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Security\Models\Security;
+use App\Infrastructure\Data\TimeSeriesPoint;
 use Illuminate\Support\Collection;
 
 readonly class PortfolioContext
 {
     /**
-     * @param  Collection<int, \App\Models\Security>  $securities
-     * @param  Collection<int, \App\Models\Transaction>  $transactions
+     * @param  Collection<int, Security>  $securities
+     * @param  Collection<int, Transaction>  $transactions
      * @param  array<int, list<array{date: string, close: float}>>  $priceMap
      * @param  array<int, list<TimeSeriesPoint>>  $cumulativeQuantities
      */

@@ -9,6 +9,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property-read int $id
+ * @property int $wallet_id
+ * @property string $name
+ * @property string $value
+ * @property CurrencyModificationUnit $unit
+ * @property FeeScope $scope
+ * @property FrequencyUnit $frequency
+ * @property-read \Illuminate\Support\Carbon $created_at
+ * @property-read \Illuminate\Support\Carbon $updated_at
+ */
 class WalletFee extends Model
 {
     /** @use HasFactory<\Database\Factories\Domains\Portfolio\Models\WalletFeeFactory> */

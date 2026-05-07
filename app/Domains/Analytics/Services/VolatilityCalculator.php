@@ -62,7 +62,7 @@ class VolatilityCalculator implements VolatilityCalculating
             ->with('latestPrice')
             ->get();
 
-        $totalValuation = (float) $records->sum(function ($record) {
+        $totalValuation = (float) $records->sum(function (Security $record) {
             $close = $record->latestPrice?->close;
 
             if ($close === null || $record->total_quantity === null) {
@@ -93,6 +93,7 @@ class VolatilityCalculator implements VolatilityCalculating
         $weightedVolatility = 0.0;
 
         foreach ($records as $record) {
+            /** @var Security $record */
             $close = $record->latestPrice?->close;
 
             if ($close === null || $record->total_quantity === null || (float) $record->total_quantity <= 0) {

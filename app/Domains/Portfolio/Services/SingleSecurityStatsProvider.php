@@ -4,7 +4,7 @@ namespace App\Domains\Portfolio\Services;
 
 use App\Domains\Portfolio\Enums\TransactionType;
 use App\Domains\Portfolio\Models\Transaction;
-use Illuminate\Database\Eloquent\Model;
+use App\Domains\Security\Models\Security;
 
 class SingleSecurityStatsProvider
 {
@@ -26,7 +26,7 @@ class SingleSecurityStatsProvider
      *     priceDate: ?string,
      * }
      */
-    public function computeStats(Model $record, ?int $walletId): array
+    public function computeStats(Security $record, ?int $walletId): array
     {
         $key = $record->id.':'.($walletId ?? 0);
 
@@ -36,7 +36,7 @@ class SingleSecurityStatsProvider
     /**
      * @return array<string, mixed>
      */
-    private function doCompute(Model $record, ?int $walletId): array
+    private function doCompute(Security $record, ?int $walletId): array
     {
         $transactionsQuery = Transaction::query()
             ->where('security_id', $record->id);

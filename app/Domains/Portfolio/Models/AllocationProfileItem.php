@@ -7,6 +7,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property-read int $id
+ * @property-read int $allocation_profile_id
+ * @property-read int $security_id
+ * @property-read string $target_percentage
+ * @property-read \Illuminate\Support\Carbon $created_at
+ * @property-read \Illuminate\Support\Carbon $updated_at
+ */
 class AllocationProfileItem extends Model
 {
     /** @use HasFactory<\Database\Factories\Domains\Portfolio\Models\AllocationProfileItemFactory> */
