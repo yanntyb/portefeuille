@@ -33,6 +33,26 @@ class EloquentSecurityRepository implements SecurityRepositoryInterface
             ->get();
     }
 
+    public function withTransactions(): Collection
+    {
+        return Security::query()
+            ->whereHas('transactions')
+            ->get();
+    }
+
+    public function neededSectorUpdate(): Collection
+    {
+        return Security::query()
+            ->whereHas('transactions')
+            ->where(function ($query): void {
+                $query->whereDoesntHave('sectors')
+                    ->orWhereHas('sectors', function ($q): void {
+                        $q->where('updated_at', '<', now()->subDays(7));
+                    });
+            })
+            ->get();
+    }
+
     public function save(Security $security): void
     {
         $security->save();

@@ -2,6 +2,7 @@
 
 namespace App\Domains\Security\Commands;
 
+use App\Domains\Security\Contracts\SecurityRepositoryInterface;
 use App\Domains\Security\Exceptions\TickerResolutionException;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Services\YahooFinanceService;
@@ -15,9 +16,9 @@ class FetchSecurityPricesCommand extends Command
 
     protected $description = 'Récupère les prix de clôture depuis Yahoo Finance';
 
-    public function handle(YahooFinanceService $service): int
+    public function handle(YahooFinanceService $service, SecurityRepositoryInterface $securityRepository): int
     {
-        $securities = $this->getSecurities();
+        $securities = $this->getSecurities($securityRepository);
 
         if ($securities->isEmpty()) {
             $this->warn('Aucun titre à traiter.');
@@ -83,14 +84,16 @@ class FetchSecurityPricesCommand extends Command
     /**
      * @return \Illuminate\Database\Eloquent\Collection<int, Security>
      */
-    private function getSecurities(): \Illuminate\Database\Eloquent\Collection
+    private function getSecurities(SecurityRepositoryInterface $securityRepository): \Illuminate\Database\Eloquent\Collection
     {
         $securityId = $this->option('security');
 
         if ($securityId) {
-            return Security::where('id', $securityId)->get();
+            $security = $securityRepository->findById($securityId);
+
+            return $security ? Security::query()->whereKey($security->id)->get() : Security::query()->whereRaw('0')->get();
         }
 
-        return Security::whereHas('transactions')->get();
+        return $securityRepository->withTransactions();
     }
 }

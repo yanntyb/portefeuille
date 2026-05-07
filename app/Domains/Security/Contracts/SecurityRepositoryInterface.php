@@ -15,5 +15,9 @@ interface SecurityRepositoryInterface
 
     public function search(string $query): Collection;
 
+    public function withTransactions(): Collection;
+
+    public function neededSectorUpdate(): Collection;
+
     public function save(Security $security): void;
 }
