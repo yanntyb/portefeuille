@@ -21,5 +21,10 @@ interface SecurityRepositoryInterface
 
     public function forWallet(int $walletId): Collection;
 
+    /**
+     * @return array<int>
+     */
+    public function getIdsForWallet(int $walletId): array;
+
     public function save(Security $security): void;
 }

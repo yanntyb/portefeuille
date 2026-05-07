@@ -61,4 +61,17 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
     {
         $transaction->delete();
     }
+
+    /**
+     * @return \Illuminate\Support\Carbon|null
+     */
+    public function getFirstBuyDateForWallet(int $walletId): ?\Illuminate\Support\Carbon
+    {
+        $date = \App\Domains\Portfolio\Models\Transaction::query()
+            ->where('wallet_id', $walletId)
+            ->where('type', 'buy')
+            ->min('date');
+
+        return $date ? \Illuminate\Support\Carbon::parse($date) : null;
+    }
 }

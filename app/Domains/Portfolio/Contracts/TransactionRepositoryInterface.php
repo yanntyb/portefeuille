@@ -22,4 +22,9 @@ interface TransactionRepositoryInterface
     public function save(Transaction $transaction): void;
 
     public function delete(Transaction $transaction): void;
+
+    /**
+     * @return \Illuminate\Support\Carbon|null
+     */
+    public function getFirstBuyDateForWallet(int $walletId): ?\Illuminate\Support\Carbon;
 }

@@ -72,4 +72,18 @@ class EloquentSecurityPriceRepository implements SecurityPriceRepositoryInterfac
             ->orderBy('date')
             ->get();
     }
+
+    /**
+     * @param  array<int>  $securityIds
+     * @return array<int>
+     */
+    public function getSecurityIdsWithRecentPrice(array $securityIds, string $fromDate): array
+    {
+        return SecurityPrice::query()
+            ->whereIn('security_id', $securityIds)
+            ->where('date', '>=', $fromDate)
+            ->pluck('security_id')
+            ->unique()
+            ->all();
+    }
 }

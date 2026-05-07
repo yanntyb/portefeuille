@@ -67,6 +67,23 @@ class EloquentSecurityRepository implements SecurityRepositoryInterface
             ->get();
     }
 
+    /**
+     * @return array<int>
+     */
+    public function getIdsForWallet(int $walletId): array
+    {
+        $wallet = \App\Domains\Portfolio\Models\Wallet::find($walletId);
+
+        if (! $wallet) {
+            return [];
+        }
+
+        return Security::query()
+            ->forWallet($wallet)
+            ->pluck('securities.id')
+            ->all();
+    }
+
     public function save(Security $security): void
     {
         $security->save();

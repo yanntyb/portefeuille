@@ -23,4 +23,10 @@ interface SecurityPriceRepositoryInterface
     public function findBySecurityAndDate(int $securityId, string $date): ?SecurityPrice;
 
     public function getForSecurities(array $securityIds): Collection;
+
+    /**
+     * @param  array<int>  $securityIds
+     * @return array<int>
+     */
+    public function getSecurityIdsWithRecentPrice(array $securityIds, string $fromDate): array;
 }

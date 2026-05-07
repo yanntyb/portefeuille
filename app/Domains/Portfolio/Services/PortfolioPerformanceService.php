@@ -3,9 +3,11 @@
 namespace App\Domains\Portfolio\Services;
 
 use App\Domains\Analytics\Services\VolatilityCalculator;
+use App\Domains\Portfolio\Contracts\TransactionRepositoryInterface;
 use App\Domains\Portfolio\Models\Wallet;
+use App\Domains\Security\Contracts\SecurityPriceRepositoryInterface;
+use App\Domains\Security\Contracts\SecurityRepositoryInterface;
 use App\Domains\Security\Models\Security;
-use App\Domains\Security\Models\SecurityPrice;
 use App\Infrastructure\Support\MarketCalendar;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Number;
@@ -15,17 +17,19 @@ class PortfolioPerformanceService
     /** @var array<int, \Illuminate\Database\Eloquent\Collection> */
     private array $securitiesCache = [];
 
-    public function __construct(private VolatilityCalculator $volatilityCalculator) {}
+    public function __construct(
+        private VolatilityCalculator $volatilityCalculator,
+        private SecurityRepositoryInterface $securityRepository,
+        private SecurityPriceRepositoryInterface $priceRepository,
+        private TransactionRepositoryInterface $transactionRepository,
+    ) {}
 
     /**
      * @return \Illuminate\Database\Eloquent\Collection<int, Security>
      */
     private function getSecurities(Wallet $wallet): \Illuminate\Database\Eloquent\Collection
     {
-        return $this->securitiesCache[$wallet->id] ??= Security::query()
-            ->forWallet($wallet)
-            ->with('latestPrice')
-            ->get();
+        return $this->securitiesCache[$wallet->id] ??= $this->securityRepository->forWallet($wallet->id);
     }
 
     /**
@@ -34,17 +38,12 @@ class PortfolioPerformanceService
      */
     public function computeSecurityVisibility(Wallet $wallet, array $hiddenSecurityIds): array
     {
-        $allIds = Security::query()
-            ->forWallet($wallet)
-            ->pluck('securities.id')
-            ->all();
+        $allIds = $this->securityRepository->getIdsForWallet($wallet->id);
 
-        $idsWithPrice = SecurityPrice::query()
-            ->whereIn('security_id', $allIds)
-            ->where('date', '>=', MarketCalendar::lastTradingDate()->toDateString())
-            ->pluck('security_id')
-            ->unique()
-            ->all();
+        $idsWithPrice = $this->priceRepository->getSecurityIdsWithRecentPrice(
+            $allIds,
+            MarketCalendar::lastTradingDate()->toDateString()
+        );
 
         $pricelessIds = array_diff($allIds, $idsWithPrice);
 
@@ -90,15 +89,13 @@ class PortfolioPerformanceService
             return 7.0;
         }
 
-        $firstDate = $wallet->transactions()
-            ->where('type', 'buy')
-            ->min('date');
+        $firstDate = $this->transactionRepository->getFirstBuyDateForWallet($wallet->id);
 
         if ($firstDate === null) {
             return 7.0;
         }
 
-        $years = Carbon::parse($firstDate)->diffInDays(now()) / 365.25;
+        $years = $firstDate->diffInDays(now()) / 365.25;
 
         if ($years < 0.5) {
             return 7.0;
