@@ -6,11 +6,10 @@ use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 
-use function Pest\Laravel\actingAs;
 use function Pest\Livewire\livewire;
 
 beforeEach(function () {
-    actingAs(User::factory()->admin()->create());
+    $this->actingAs(User::factory()->admin()->create());
 });
 
 it('can render the relation manager on the edit page', function () {

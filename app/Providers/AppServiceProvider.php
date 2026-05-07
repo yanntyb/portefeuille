@@ -21,6 +21,7 @@ use App\Domains\Security\Contracts\SecurityRepositoryInterface;
 use App\Domains\Security\Infrastructure\Eloquent\EloquentSecurityPriceRepository;
 use App\Domains\Security\Infrastructure\Eloquent\EloquentSecurityRepository;
 use App\Domains\Security\Services\PriceRefreshService;
+use App\Infrastructure\Services\UserId;
 use Carbon\Carbon;
 use Illuminate\Support\ServiceProvider;
 
@@ -28,6 +29,9 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // User context service (singleton, overridable in tests)
+        $this->app->singleton(UserId::class);
+
         // Request-scoped data providers (cached within single request)
         $this->app->scoped(DashboardDataProvider::class);
         $this->app->scoped(SingleSecurityStatsProvider::class);

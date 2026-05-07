@@ -2,14 +2,20 @@
 
 namespace App\Domains\Portfolio\Services;
 
+use App\Domains\Portfolio\Contracts\TransactionRepositoryInterface;
 use App\Domains\Portfolio\Enums\TransactionType;
-use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Security\Models\Security;
+use App\Infrastructure\Services\UserId;
 
 class SingleSecurityStatsProvider
 {
     /** @var array<string, array<string, mixed>> */
     private array $cache = [];
+
+    public function __construct(
+        private TransactionRepositoryInterface $transactionRepository,
+        private UserId $userId,
+    ) {}
 
     /**
      * @return array{
@@ -38,14 +44,11 @@ class SingleSecurityStatsProvider
      */
     private function doCompute(Security $record, ?int $walletId): array
     {
-        $transactionsQuery = Transaction::query()
-            ->where('security_id', $record->id);
+        $userId = $this->userId->get();
 
-        if ($walletId) {
-            $transactionsQuery->where('wallet_id', $walletId);
-        }
-
-        $transactions = $transactionsQuery->get();
+        $transactions = $this->transactionRepository
+            ->forSecurity($record->id, $userId)
+            ->filter(fn ($t) => !$walletId || $t->wallet_id === $walletId);
 
         $buyTransactions = $transactions->where('type', TransactionType::Buy);
         $sellTransactions = $transactions->where('type', TransactionType::Sell);

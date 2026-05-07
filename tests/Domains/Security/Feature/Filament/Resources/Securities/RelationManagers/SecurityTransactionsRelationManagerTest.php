@@ -4,8 +4,13 @@ use App\Domains\Portfolio\Filament\Resources\WalletSecurities\Pages\EditWalletSe
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Security\Filament\Resources\SecurityBase\RelationManagers\TransactionsRelationManager;
 use App\Domains\Security\Models\Security;
+use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
+
+beforeEach(function () {
+    $this->actingAs(User::factory()->create());
+});
 
 it('can render the relation manager on the edit page', function () {
     $security = Security::factory()->create();

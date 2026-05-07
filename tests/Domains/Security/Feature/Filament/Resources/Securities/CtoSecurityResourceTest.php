@@ -5,9 +5,14 @@ use App\Domains\Portfolio\Filament\Resources\WalletSecurities\Pages\EditWalletSe
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
+use App\Domains\User\Models\User;
 
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Livewire\livewire;
+
+beforeEach(function () {
+    $this->actingAs(User::factory()->create());
+});
 
 it('does not have a create action in the CTO wallet page', function () {
     $ctoWallet = Wallet::factory()->cto()->create();

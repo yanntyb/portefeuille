@@ -3,8 +3,13 @@
 use App\Domains\Portfolio\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Services\YahooFinanceClient;
+use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
+
+beforeEach(function () {
+    $this->actingAs(User::factory()->create());
+});
 
 it('can search ticker from ISIN on security edit page', function () {
     $this->mock(YahooFinanceClient::class, function ($mock) {

@@ -168,6 +168,9 @@ it('displays PRU on the edit page gain data', function () {
 });
 
 it('renders edit page without errors when security has no transactions', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
     $security = Security::factory()->create();
 
     livewire(EditWalletSecurity::class, ['record' => $security->id])

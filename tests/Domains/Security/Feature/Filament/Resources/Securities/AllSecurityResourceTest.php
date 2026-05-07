@@ -7,12 +7,11 @@ use App\Domains\Security\Models\Security;
 use App\Domains\Security\Services\YahooFinanceClient;
 use App\Domains\User\Models\User;
 
-use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Livewire\livewire;
 
 beforeEach(function () {
-    actingAs(User::factory()->admin()->create());
+    $this->actingAs(User::factory()->admin()->create());
 });
 
 it('can render the all securities list page', function () {

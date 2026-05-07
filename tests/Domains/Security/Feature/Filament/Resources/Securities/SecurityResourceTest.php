@@ -5,9 +5,14 @@ use App\Domains\Portfolio\Filament\Resources\WalletSecurities\Pages\EditWalletSe
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
+use App\Domains\User\Models\User;
 
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Livewire\livewire;
+
+beforeEach(function () {
+    $this->actingAs(User::factory()->create());
+});
 
 it('can render the PEA wallet page with only PEA securities', function () {
     $peaWallet = Wallet::factory()->pea()->create();
