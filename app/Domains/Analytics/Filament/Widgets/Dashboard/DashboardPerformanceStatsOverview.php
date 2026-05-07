@@ -4,12 +4,14 @@ namespace App\Domains\Analytics\Filament\Widgets\Dashboard;
 
 use App\Domains\Portfolio\Services\DashboardDataProvider;
 use App\Infrastructure\Filament\Concerns\ComputesPerformanceStats;
+use App\Infrastructure\Filament\Concerns\HasStatWidgetListeners;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Collection;
 
 class DashboardPerformanceStatsOverview extends Widget
 {
     use ComputesPerformanceStats;
+    use HasStatWidgetListeners;
 
     protected string $view = 'filament.widgets.performance-stats-overview';
 
