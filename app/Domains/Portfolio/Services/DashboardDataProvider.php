@@ -11,6 +11,7 @@ class DashboardDataProvider
     public function __construct(
         private SecurityRepositoryInterface $securityRepository,
     ) {}
+
     /**
      * @var array<string, \Illuminate\Database\Eloquent\Collection<int, \App\Domains\Security\Models\Security>>
      */

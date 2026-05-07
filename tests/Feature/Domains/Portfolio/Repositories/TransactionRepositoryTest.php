@@ -17,7 +17,7 @@ class TransactionRepositoryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->repository = new EloquentTransactionRepository();
+        $this->repository = new EloquentTransactionRepository;
     }
 
     public function test_find_by_id_returns_transaction(): void
@@ -100,7 +100,7 @@ class TransactionRepositoryTest extends TestCase
         $wallet = $user->wallets()->create(['name' => 'Test Wallet']);
         $security = Transaction::factory()->for($user)->create()->security;
 
-        $transaction = new Transaction();
+        $transaction = new Transaction;
         $transaction->user_id = $user->id;
         $transaction->wallet_id = $wallet->id;
         $transaction->security_id = $security->id;

@@ -2,8 +2,6 @@
 
 namespace App\Infrastructure\Filament\Concerns;
 
-use Filament\Support\RawJs;
-
 trait ComputesValuationChart
 {
     protected function buildChartDatasets(array $valuations, array $invested, array $fees, array $labels): array

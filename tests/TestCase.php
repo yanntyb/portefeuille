@@ -20,6 +20,7 @@ abstract class TestCase extends BaseTestCase
     {
         // Set UserId override when authenticating via $this->actingAs()
         app(UserId::class)->setOverride($user->id ?? $user->getKey());
+
         return parent::actingAs($user, $guard);
     }
 }

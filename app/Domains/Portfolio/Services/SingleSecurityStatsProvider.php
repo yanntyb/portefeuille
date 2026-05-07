@@ -48,7 +48,7 @@ class SingleSecurityStatsProvider
 
         $transactions = $this->transactionRepository
             ->forSecurity($record->id, $userId)
-            ->filter(fn ($t) => !$walletId || $t->wallet_id === $walletId);
+            ->filter(fn ($t) => ! $walletId || $t->wallet_id === $walletId);
 
         $buyTransactions = $transactions->where('type', TransactionType::Buy);
         $sellTransactions = $transactions->where('type', TransactionType::Sell);

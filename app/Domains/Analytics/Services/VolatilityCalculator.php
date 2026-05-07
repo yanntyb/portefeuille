@@ -15,6 +15,7 @@ class VolatilityCalculator implements VolatilityCalculating
         private SecurityRepositoryInterface $securityRepository,
         private SecurityPriceRepositoryInterface $priceRepository,
     ) {}
+
     /**
      * @param  Collection<int, float>  $prices
      */

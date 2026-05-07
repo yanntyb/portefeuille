@@ -9,7 +9,6 @@ use App\Domains\Security\Contracts\SecurityPriceRepositoryInterface;
 use App\Domains\Security\Contracts\SecurityRepositoryInterface;
 use App\Domains\Security\Models\Security;
 use App\Infrastructure\Support\MarketCalendar;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Number;
 
 class PortfolioPerformanceService
