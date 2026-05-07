@@ -16,6 +16,7 @@ it('computes PRU correctly with only buy transactions', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
@@ -24,6 +25,7 @@ it('computes PRU correctly with only buy transactions', function () {
     ]);
 
     Transaction::factory()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
@@ -48,6 +50,7 @@ it('computes realized gain on sell transaction', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
@@ -56,6 +59,7 @@ it('computes realized gain on sell transaction', function () {
     ]);
 
     $sell = Transaction::factory()->sell()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 5,
@@ -72,6 +76,7 @@ it('computes negative realized gain on sell at loss', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
@@ -80,6 +85,7 @@ it('computes negative realized gain on sell at loss', function () {
     ]);
 
     $sell = Transaction::factory()->sell()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 5,
@@ -99,6 +105,7 @@ it('can create a sell transaction via Filament', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'user_id' => $user->id,
@@ -142,6 +149,7 @@ it('does not set realized_gain for buy transactions', function () {
     $security = Security::factory()->create();
 
     $buy = Transaction::factory()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
@@ -153,11 +161,13 @@ it('does not set realized_gain for buy transactions', function () {
 });
 
 it('computes PRU from correct wallet only', function () {
-    $peaWallet = Wallet::factory()->pea()->create();
-    $ctoWallet = Wallet::factory()->cto()->create();
+    $user = User::factory()->create();
+    $peaWallet = Wallet::factory()->for($user)->pea()->create();
+    $ctoWallet = Wallet::factory()->for($user)->cto()->create();
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
+        'user_id' => $user->id,
         'wallet_id' => $peaWallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
@@ -166,6 +176,7 @@ it('computes PRU from correct wallet only', function () {
     ]);
 
     Transaction::factory()->create([
+        'user_id' => $user->id,
         'wallet_id' => $ctoWallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
@@ -174,6 +185,7 @@ it('computes PRU from correct wallet only', function () {
     ]);
 
     $sell = Transaction::factory()->sell()->create([
+        'user_id' => $user->id,
         'wallet_id' => $peaWallet->id,
         'security_id' => $security->id,
         'quantity' => 5,
@@ -190,6 +202,7 @@ it('recalculates realized gain when updating a sell transaction', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
@@ -198,6 +211,7 @@ it('recalculates realized gain when updating a sell transaction', function () {
     ]);
 
     $sell = Transaction::factory()->sell()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 5,
@@ -219,6 +233,7 @@ it('clears realized gain when changing type from sell to buy', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
@@ -227,6 +242,7 @@ it('clears realized gain when changing type from sell to buy', function () {
     ]);
 
     $sell = Transaction::factory()->sell()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 5,
@@ -249,6 +265,7 @@ it('can update a sell transaction via Filament', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'user_id' => $user->id,
@@ -258,6 +275,7 @@ it('can update a sell transaction via Filament', function () {
     ]);
 
     $sell = Transaction::factory()->sell()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'user_id' => $user->id,
@@ -282,6 +300,7 @@ it('computes realized gain on CTO sell transaction', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 20,
@@ -290,6 +309,7 @@ it('computes realized gain on CTO sell transaction', function () {
     ]);
 
     $sell = Transaction::factory()->sell()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'quantity' => 10,
@@ -309,6 +329,7 @@ it('can create a CTO sell transaction via Filament', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'user_id' => $user->id,
@@ -351,6 +372,7 @@ it('cannot sell more than owned quantity via Filament', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'user_id' => $user->id,
@@ -381,6 +403,7 @@ it('can sell exact owned quantity via Filament', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
+        'user_id' => $wallet->user_id,
         'wallet_id' => $wallet->id,
         'security_id' => $security->id,
         'user_id' => $user->id,
@@ -413,18 +436,18 @@ it('validates sell quantity against correct wallet', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->create([
+        'user_id' => $user->id,
         'wallet_id' => $peaWallet->id,
         'security_id' => $security->id,
-        'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
     ]);
 
     Transaction::factory()->create([
+        'user_id' => $user->id,
         'wallet_id' => $ctoWallet->id,
         'security_id' => $security->id,
-        'user_id' => $user->id,
         'quantity' => 5,
         'unit_price' => 100,
         'fees' => 0,
