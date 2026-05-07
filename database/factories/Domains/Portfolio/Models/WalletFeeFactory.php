@@ -28,7 +28,7 @@ class WalletFeeFactory extends Factory
             'value' => $this->faker->numberBetween(1, 100),
             'unit' => CurrencyModificationUnit::Currency,
             'scope' => null,
-            'frequency' => FrequencyUnit::Annual,
+            'frequency' => FrequencyUnit::Yearly,
         ];
     }
 }
