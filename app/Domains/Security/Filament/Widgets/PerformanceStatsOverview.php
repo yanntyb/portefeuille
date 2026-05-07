@@ -2,7 +2,6 @@
 
 namespace App\Domains\Security\Filament\Widgets;
 
-use App\Domains\Security\Models\Security;
 use App\Infrastructure\Filament\Concerns\ComputesPerformanceStats;
 use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
 use Filament\Widgets\Widget;
@@ -17,16 +16,6 @@ class PerformanceStatsOverview extends Widget
 
     protected function resolvePerformanceSecurities(): Collection
     {
-        if ($this->tablePageClass === null) {
-            return Security::query()->where('id', null)->get();
-        }
-
-        $query = $this->getPageTableQuery();
-
-        if ($this->shownSecurityIds !== null) {
-            $query->whereIn('securities.id', $this->shownSecurityIds);
-        }
-
-        return $query->with('latestPrice')->get();
+        return $this->getFilteredSecurities();
     }
 }

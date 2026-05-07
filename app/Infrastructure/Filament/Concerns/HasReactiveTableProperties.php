@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\Filament\Concerns;
 
+use App\Domains\Security\Models\Security;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -100,5 +101,28 @@ trait HasReactiveTableProperties
     protected function getPageTableRecords(): Collection|Paginator
     {
         return $this->getTablePageInstance()->getTableRecords();
+    }
+
+    protected function getFilteredSecurities(bool $withPrice = true, bool $reorder = false): Collection
+    {
+        if ($this->tablePageClass === null) {
+            return Security::query()->where('id', null)->get();
+        }
+
+        $query = $this->getPageTableQuery();
+
+        if ($reorder) {
+            $query->reorder();
+        }
+
+        if ($this->shownSecurityIds !== null) {
+            $query->whereIn('securities.id', $this->shownSecurityIds);
+        }
+
+        if ($withPrice) {
+            $query->with('latestPrice');
+        }
+
+        return $query->get();
     }
 }

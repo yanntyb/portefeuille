@@ -23,21 +23,12 @@ class CorrelationMatrixWidget extends Widget implements HasActions, HasSchemas
             return Security::query()->where('id', null)->get();
         }
 
-        $securityIds = $this->getPageTableQuery()
-            ->reorder()
-            ->pluck('securities.id')
-            ->toArray();
+        $securities = $this->getFilteredSecurities(withPrice: false, reorder: true);
 
-        if ($this->shownSecurityIds !== null) {
-            $securityIds = array_values(array_intersect($securityIds, $this->shownSecurityIds));
-        }
-
-        if (count($securityIds) < 2) {
+        if ($securities->count() < 2) {
             return Security::query()->where('id', null)->get();
         }
 
-        return Security::query()
-            ->whereIn('id', $securityIds)
-            ->get();
+        return $securities;
     }
 }

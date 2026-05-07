@@ -83,14 +83,8 @@ class ValuationChartWidget extends ChartWidget
 
     private function resolveData(): array
     {
-        $securityIds = $this->getPageTableQuery()
-            ->reorder()
-            ->pluck('securities.id')
-            ->toArray();
-
-        if ($this->shownSecurityIds !== null) {
-            $securityIds = array_values(array_intersect($securityIds, $this->shownSecurityIds));
-        }
+        $securities = $this->getFilteredSecurities(withPrice: false, reorder: true);
+        $securityIds = $securities->pluck('id')->toArray();
 
         if (empty($securityIds)) {
             return ['datasets' => [], 'labels' => []];

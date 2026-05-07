@@ -41,13 +41,7 @@ class AllocationChartWidget extends ChartWidget
             return ['datasets' => [], 'labels' => []];
         }
 
-        $query = $this->getPageTableQuery()->reorder();
-
-        if ($this->shownSecurityIds !== null) {
-            $query->whereIn('securities.id', $this->shownSecurityIds);
-        }
-
-        $securities = $query->with('latestPrice')->get();
+        $securities = $this->getFilteredSecurities(withPrice: true, reorder: true);
 
         $labels = [];
         $valuations = [];
