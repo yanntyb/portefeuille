@@ -3,8 +3,8 @@
 namespace App\Domains\Analytics\Filament\Widgets\Dashboard;
 
 use App\Domains\Portfolio\Services\DashboardDataProvider;
+use App\Infrastructure\Filament\Computations\ValuationComputation;
 use Filament\Widgets\Widget;
-use Illuminate\Support\Number;
 use Livewire\Attributes\On;
 
 class DashboardValuationWidget extends Widget
@@ -39,9 +39,9 @@ class DashboardValuationWidget extends Widget
             $totalInvested += $securities->sum(fn ($security) => (float) ($security->total_invested ?? 0));
         }
 
-        return [
-            'valuation' => Number::currency($totalValuation, 'EUR'),
-            'color' => $totalValuation >= $totalInvested ? 'success' : 'danger',
-        ];
+        return ValuationComputation::computeFromStats([
+            'valuation' => $totalValuation,
+            'totalInvested' => $totalInvested,
+        ]);
     }
 }

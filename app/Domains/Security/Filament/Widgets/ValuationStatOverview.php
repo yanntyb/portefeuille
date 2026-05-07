@@ -2,6 +2,7 @@
 
 namespace App\Domains\Security\Filament\Widgets;
 
+use App\Infrastructure\Filament\Computations\ValuationComputation;
 use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
 use App\Infrastructure\Filament\Concerns\HasStatWidgetListeners;
 use Filament\Widgets\Widget;
@@ -41,13 +42,6 @@ class ValuationStatOverview extends Widget
 
         $records = $query->with('latestPrice')->get();
 
-        $valuation = $records->sum(fn ($record) => $record->currentValuation());
-
-        $totalInvested = $records->sum(fn ($record) => (float) ($record->total_invested ?? 0));
-
-        return [
-            'valuation' => Number::currency($valuation, 'EUR'),
-            'color' => $valuation >= $totalInvested ? 'success' : 'danger',
-        ];
+        return ValuationComputation::compute($records);
     }
 }

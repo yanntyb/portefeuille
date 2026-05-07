@@ -2,10 +2,10 @@
 
 namespace App\Domains\Security\Filament\Widgets;
 
+use App\Infrastructure\Filament\Computations\ValuationComputation;
 use App\Infrastructure\Filament\Concerns\ComputesSingleSecurityStats;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Number;
 
 class SingleSecurityValuationStatOverview extends Widget
 {
@@ -27,17 +27,14 @@ class SingleSecurityValuationStatOverview extends Widget
     public function getValuationData(): array
     {
         if (! $this->record) {
-            return [
-                'valuation' => Number::currency(0, 'EUR'),
-                'color' => 'success',
-            ];
+            return ValuationComputation::computeFromStats([
+                'valuation' => 0,
+                'totalInvested' => 0,
+            ]);
         }
 
         $stats = $this->computeStats();
 
-        return [
-            'valuation' => Number::currency($stats['valuation'], 'EUR'),
-            'color' => $stats['valuation'] >= $stats['totalInvested'] ? 'success' : 'danger',
-        ];
+        return ValuationComputation::computeFromStats($stats);
     }
 }
