@@ -2,11 +2,13 @@
 
 namespace App\Domains\Portfolio\Observers;
 
-use App\Domains\Portfolio\Enums\TransactionType;
 use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Portfolio\Services\RealizedGainCalculator;
 
 class TransactionObserver
 {
+    public function __construct(private RealizedGainCalculator $calculator) {}
+
     public function creating(Transaction $transaction): void
     {
         $this->syncRealizedGain($transaction);
@@ -19,23 +21,6 @@ class TransactionObserver
 
     private function syncRealizedGain(Transaction $transaction): void
     {
-        if ($transaction->type !== TransactionType::Sell) {
-            $transaction->realized_gain = null;
-
-            return;
-        }
-
-        $buyTransactions = Transaction::query()
-            ->where('security_id', $transaction->security_id)
-            ->where('wallet_id', $transaction->wallet_id)
-            ->where('type', TransactionType::Buy)
-            ->get();
-
-        $totalBuyQuantity = (float) $buyTransactions->sum('quantity');
-        $totalBuyCost = $buyTransactions->sum(fn ($t) => (float) $t->quantity * (float) $t->unit_price);
-
-        $pru = $totalBuyQuantity > 0 ? $totalBuyCost / $totalBuyQuantity : 0;
-
-        $transaction->realized_gain = round(((float) $transaction->unit_price - $pru) * (float) $transaction->quantity - (float) $transaction->fees, 2);
+        $transaction->realized_gain = $this->calculator->calculate($transaction);
     }
 }

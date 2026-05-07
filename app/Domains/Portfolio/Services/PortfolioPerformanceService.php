@@ -12,7 +12,21 @@ use Illuminate\Support\Number;
 
 class PortfolioPerformanceService
 {
+    /** @var array<int, \Illuminate\Database\Eloquent\Collection> */
+    private array $securitiesCache = [];
+
     public function __construct(private VolatilityCalculator $volatilityCalculator) {}
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection<int, Security>
+     */
+    private function getSecurities(Wallet $wallet): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->securitiesCache[$wallet->id] ??= Security::query()
+            ->forWallet($wallet)
+            ->with('latestPrice')
+            ->get();
+    }
 
     /**
      * @param  array<int>  $hiddenSecurityIds
@@ -52,13 +66,13 @@ class PortfolioPerformanceService
      */
     public function getTotalValuation(Wallet $wallet, array $shownSecurityIds): float
     {
-        $query = Security::query()->forWallet($wallet);
+        $records = $this->getSecurities($wallet);
 
         if ($shownSecurityIds) {
-            $query->whereIn('securities.id', $shownSecurityIds);
+            $records = $records->whereIn('id', $shownSecurityIds);
         }
 
-        return (float) $query->with('latestPrice')->get()->sum(fn ($record) => $record->currentValuation());
+        return (float) $records->sum(fn ($record) => $record->currentValuation());
     }
 
     public function computeAnnualizedReturn(?Wallet $wallet): float
@@ -67,7 +81,7 @@ class PortfolioPerformanceService
             return 7.0;
         }
 
-        $records = Security::query()->forWallet($wallet)->with('latestPrice')->get();
+        $records = $this->getSecurities($wallet);
 
         $valuation = (float) $records->sum(fn ($record) => $record->currentValuation());
         $totalInvested = (float) $records->sum(fn ($record) => (float) ($record->total_invested ?? 0));
@@ -109,13 +123,11 @@ class PortfolioPerformanceService
      */
     public function getFormattedValuation(Wallet $wallet, array $shownSecurityIds): string
     {
-        $query = Security::query()->forWallet($wallet);
+        $records = $this->getSecurities($wallet);
 
         if ($shownSecurityIds) {
-            $query->whereIn('securities.id', $shownSecurityIds);
+            $records = $records->whereIn('id', $shownSecurityIds);
         }
-
-        $records = $query->with('latestPrice')->get();
 
         $valuation = $records->sum(fn ($record) => $record->currentValuation());
         $totalInvested = $records->sum(fn ($record) => (float) ($record->total_invested ?? 0));
