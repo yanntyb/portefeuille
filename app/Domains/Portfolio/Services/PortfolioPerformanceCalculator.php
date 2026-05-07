@@ -7,8 +7,8 @@ use App\Domains\Portfolio\Contracts\PortfolioPerformanceCalculating;
 use App\Domains\Portfolio\Data\PortfolioContext;
 use App\Domains\Portfolio\Enums\TransactionType;
 use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Security\Contracts\SecurityPriceRepositoryInterface;
 use App\Domains\Security\Models\Security;
-use App\Domains\Security\Models\SecurityPrice;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Number;
 
@@ -16,6 +16,7 @@ class PortfolioPerformanceCalculator implements PortfolioPerformanceCalculating
 {
     public function __construct(
         private TransactionAggregator $aggregator,
+        private SecurityPriceRepositoryInterface $priceRepository,
     ) {}
 
     /**
@@ -196,10 +197,7 @@ class PortfolioPerformanceCalculator implements PortfolioPerformanceCalculating
      */
     private function loadPriceMap(array $securityIds): array
     {
-        $prices = SecurityPrice::query()
-            ->whereIn('security_id', $securityIds)
-            ->orderBy('date')
-            ->get(['security_id', 'date', 'close']);
+        $prices = $this->priceRepository->getForSecurities($securityIds);
 
         $map = [];
 
