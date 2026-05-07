@@ -3,13 +3,18 @@
 namespace App\Domains\Analytics\Services;
 
 use App\Domains\Analytics\Contracts\VolatilityCalculating;
-use App\Domains\Portfolio\Models\Wallet;
+use App\Domains\Security\Contracts\SecurityPriceRepositoryInterface;
+use App\Domains\Security\Contracts\SecurityRepositoryInterface;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use Illuminate\Support\Collection;
 
 class VolatilityCalculator implements VolatilityCalculating
 {
+    public function __construct(
+        private SecurityRepositoryInterface $securityRepository,
+        private SecurityPriceRepositoryInterface $priceRepository,
+    ) {}
     /**
      * @param  Collection<int, float>  $prices
      */
@@ -55,12 +60,20 @@ class VolatilityCalculator implements VolatilityCalculating
         return $this->annualizedVolatility($prices);
     }
 
-    public function forWallet(Wallet $wallet, ?array $shownSecurityIds = null): float
+    private function getPricesForSecurities(array $ids): Collection
     {
-        $records = Security::query()
-            ->forWallet($wallet)
-            ->with('latestPrice')
-            ->get();
+        return SecurityPrice::query()
+            ->whereIn('security_id', $ids)
+            ->orderBy('security_id')
+            ->orderBy('date')
+            ->get(['security_id', 'close'])
+            ->groupBy('security_id')
+            ->map(fn ($group) => $group->pluck('close')->map(fn ($v) => (float) $v)->values());
+    }
+
+    public function forWallet(int $walletId, ?array $shownSecurityIds = null): float
+    {
+        $records = $this->securityRepository->forWallet($walletId);
 
         $totalValuation = (float) $records->sum(function (Security $record) {
             $close = $record->latestPrice?->close;
@@ -82,13 +95,7 @@ class VolatilityCalculator implements VolatilityCalculating
 
         $ids = $records->pluck('id')->all();
 
-        $allPrices = SecurityPrice::query()
-            ->whereIn('security_id', $ids)
-            ->orderBy('security_id')
-            ->orderBy('date')
-            ->get(['security_id', 'close'])
-            ->groupBy('security_id')
-            ->map(fn ($group) => $group->pluck('close')->map(fn ($v) => (float) $v)->values());
+        $allPrices = $this->getPricesForSecurities($ids);
 
         $weightedVolatility = 0.0;
 

@@ -2,7 +2,6 @@
 
 namespace App\Domains\Analytics\Contracts;
 
-use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
 
 interface VolatilityCalculating
@@ -17,5 +16,5 @@ interface VolatilityCalculating
      * Calculate weighted portfolio volatility for a wallet.
      * Weight by market capitalization. Returns 15.0 if no securities.
      */
-    public function forWallet(Wallet $wallet, ?array $shownSecurityIds = null): float;
+    public function forWallet(int $walletId, ?array $shownSecurityIds = null): float;
 }

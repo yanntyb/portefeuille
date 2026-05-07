@@ -53,6 +53,20 @@ class EloquentSecurityRepository implements SecurityRepositoryInterface
             ->get();
     }
 
+    public function forWallet(int $walletId): Collection
+    {
+        $wallet = \App\Domains\Portfolio\Models\Wallet::find($walletId);
+
+        if (! $wallet) {
+            return collect();
+        }
+
+        return Security::query()
+            ->forWallet($wallet)
+            ->with('latestPrice')
+            ->get();
+    }
+
     public function save(Security $security): void
     {
         $security->save();

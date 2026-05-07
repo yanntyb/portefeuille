@@ -54,7 +54,7 @@ describe('VolatilityCalculator', function () {
         $wallet = Wallet::factory()->create();
         $calculator = app(VolatilityCalculator::class);
 
-        $result = $calculator->forWallet($wallet);
+        $result = $calculator->forWallet($wallet->id);
 
         expect($result)->toBe(15.0);
     });
@@ -75,7 +75,7 @@ describe('VolatilityCalculator', function () {
             ->create(['quantity' => 10, 'unit_price' => 115.0]);
 
         $calculator = app(VolatilityCalculator::class);
-        $result = $calculator->forWallet($wallet);
+        $result = $calculator->forWallet($wallet->id);
 
         expect($result)->toBeFloat()
             ->toBeGreaterThan(0);
@@ -103,7 +103,7 @@ describe('VolatilityCalculator', function () {
             ->create(['quantity' => 5, 'unit_price' => 215.0]);
 
         $calculator = app(VolatilityCalculator::class);
-        $result = $calculator->forWallet($wallet, [$security1->id]);
+        $result = $calculator->forWallet($wallet->id, [$security1->id]);
 
         expect($result)->toBeFloat()
             ->toBeGreaterThan(0);

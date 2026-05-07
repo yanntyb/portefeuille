@@ -52,7 +52,7 @@ class DashboardGainStatsOverview extends Widget
             $walletValuation = $securities->sum(fn ($security) => $security->currentValuation());
             $totalValuation += $walletValuation;
 
-            $walletVolatility = app(VolatilityCalculator::class)->forWallet($wallet);
+            $walletVolatility = app(VolatilityCalculator::class)->forWallet($wallet->id);
             $walletVolatilities[] = [
                 'valuation' => $walletValuation,
                 'volatility' => $walletVolatility,

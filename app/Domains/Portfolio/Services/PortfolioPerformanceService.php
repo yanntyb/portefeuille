@@ -115,7 +115,7 @@ class PortfolioPerformanceService
             return 15.0;
         }
 
-        return $this->volatilityCalculator->forWallet($wallet);
+        return $this->volatilityCalculator->forWallet($wallet->id);
     }
 
     /**

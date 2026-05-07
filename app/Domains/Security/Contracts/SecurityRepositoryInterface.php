@@ -19,5 +19,7 @@ interface SecurityRepositoryInterface
 
     public function neededSectorUpdate(): Collection;
 
+    public function forWallet(int $walletId): Collection;
+
     public function save(Security $security): void;
 }

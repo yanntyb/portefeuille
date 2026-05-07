@@ -38,7 +38,7 @@ class GainStatsOverview extends Widget
         }
 
         $shownIds = $this->shownSecurityIds && count($this->shownSecurityIds) > 0 ? $this->shownSecurityIds : null;
-        $volatiliteValue = app(VolatilityCalculator::class)->forWallet($wallet, $shownIds);
+        $volatiliteValue = app(VolatilityCalculator::class)->forWallet($wallet->id, $shownIds);
 
         return Number::format($volatiliteValue, 2).' %';
     }
