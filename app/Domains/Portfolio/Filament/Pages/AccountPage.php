@@ -2,11 +2,11 @@
 
 namespace App\Domains\Portfolio\Filament\Pages;
 
-use App\Domains\Analytics\Services\VolatilityCalculator;
 use App\Domains\Portfolio\Data\AccountPageData;
 use App\Domains\Portfolio\Filament\Resources\WalletSecurities\WalletSecurityResource;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
+use App\Domains\Portfolio\Services\PortfolioPerformanceService;
 use App\Domains\Security\Filament\Resources\SecurityBase\Tables\SecuritiesTable;
 use App\Domains\Security\Filament\Widgets\AllocationChartWidget;
 use App\Domains\Security\Filament\Widgets\CorrelationMatrixWidget;
@@ -17,11 +17,9 @@ use App\Domains\Security\Filament\Widgets\ValuationChartWidget;
 use App\Domains\Security\Filament\Widgets\ValuationStatOverview;
 use App\Domains\Security\Jobs\UpdateSecuritiesJob;
 use App\Domains\Security\Models\Security;
-use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\Security\Services\PriceRefreshService;
 use App\Infrastructure\Concerns\HasTableStore;
 use App\Infrastructure\Contracts\TableStoreable;
-use App\Infrastructure\Support\MarketCalendar;
 use Filament\Actions\Action;
 use Filament\Pages\Concerns\ExposesTableToWidgets;
 use Filament\Pages\Page;
@@ -34,9 +32,7 @@ use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Number;
 use UnitEnum;
 
 abstract class AccountPage extends Page implements HasTable, TableStoreable
@@ -136,25 +132,14 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
 
     private function computeSecurityVisibility(): void
     {
-        $allIds = $this->scopedSecuritiesQuery()
-            ->pluck('securities.id')
-            ->all();
+        if ($this->wallet === null) {
+            return;
+        }
 
-        $idsWithPrice = SecurityPrice::query()
-            ->whereIn('security_id', $allIds)
-            ->where('date', '>=', MarketCalendar::lastTradingDate()->toDateString())
-            ->pluck('security_id')
-            ->unique()
-            ->all();
-
-        $pricelessIds = array_diff($allIds, $idsWithPrice);
-        $this->pricelessSecurityIds = array_values($pricelessIds);
-
-        // For priced securities: shown by default, hidden if in hiddenSecurityIds
-        // For priceless securities: hidden by default, shown if in hiddenSecurityIds (toggled)
-        $shownPriced = array_diff($idsWithPrice, $this->hiddenSecurityIds);
-        $shownPriceless = array_intersect($pricelessIds, $this->hiddenSecurityIds);
-        $this->shownSecurityIds = array_values(array_merge($shownPriced, $shownPriceless));
+        $service = app(PortfolioPerformanceService::class);
+        $result = $service->computeSecurityVisibility($this->wallet, $this->hiddenSecurityIds);
+        $this->shownSecurityIds = $result['shown_ids'];
+        $this->pricelessSecurityIds = $result['priceless_ids'];
     }
 
     public function refreshPrices(): void
@@ -194,77 +179,30 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
 
     protected function getTotalValuation(): float
     {
-        $query = $this->scopedSecuritiesQuery();
-
-        if ($this->shownSecurityIds) {
-            $query->whereIn('securities.id', $this->shownSecurityIds);
+        if ($this->wallet === null) {
+            return 0.0;
         }
 
-        return (float) $query->with('latestPrice')->get()->sum(fn ($record) => $record->currentValuation());
+        return app(PortfolioPerformanceService::class)->getTotalValuation($this->wallet, $this->shownSecurityIds);
     }
 
     protected function computeAnnualizedReturn(): float
     {
-        if ($this->wallet === null) {
-            return 7.0;
-        }
-
-        $records = $this->scopedSecuritiesQuery()->with('latestPrice')->get();
-
-        $valuation = (float) $records->sum(fn ($record) => $record->currentValuation());
-
-        $totalInvested = (float) $records->sum(fn ($record) => (float) ($record->total_invested ?? 0));
-
-        if ($totalInvested <= 0 || $valuation <= 0) {
-            return 7.0;
-        }
-
-        $firstDate = Transaction::query()
-            ->where('wallet_id', $this->wallet->id)
-            ->where('type', 'buy')
-            ->min('date');
-
-        if ($firstDate === null) {
-            return 7.0;
-        }
-
-        $years = Carbon::parse($firstDate)->diffInDays(now()) / 365.25;
-
-        if ($years < 0.5) {
-            return 7.0;
-        }
-
-        $cagr = (($valuation / $totalInvested) ** (1 / $years) - 1) * 100;
-
-        return round((float) max(0, min(50, $cagr)), 2);
+        return app(PortfolioPerformanceService::class)->computeAnnualizedReturn($this->wallet);
     }
 
     protected function computePortfolioVolatility(): float
     {
-        if ($this->wallet === null) {
-            return 15.0;
-        }
-
-        return app(VolatilityCalculator::class)->forWallet($this->wallet);
+        return app(PortfolioPerformanceService::class)->computePortfolioVolatility($this->wallet);
     }
 
     protected function getFormattedValuation(): string
     {
-        $query = $this->scopedSecuritiesQuery();
-
-        if ($this->shownSecurityIds) {
-            $query->whereIn('securities.id', $this->shownSecurityIds);
+        if ($this->wallet === null) {
+            return '';
         }
 
-        $records = $query->with('latestPrice')->get();
-
-        $valuation = $records->sum(fn ($record) => $record->currentValuation());
-
-        $totalInvested = $records->sum(fn ($record) => (float) ($record->total_invested ?? 0));
-        $isPositive = $valuation >= $totalInvested;
-        $colorClass = $isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
-
-        return '<span class="'.$colorClass.'">'.Number::currency($valuation, 'EUR').'</span>';
+        return app(PortfolioPerformanceService::class)->getFormattedValuation($this->wallet, $this->shownSecurityIds);
     }
 
     public function hasMoreRecords(): bool
