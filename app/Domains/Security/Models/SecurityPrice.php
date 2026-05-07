@@ -23,6 +23,8 @@ class SecurityPrice extends Model
     /** @use HasFactory<\Database\Factories\Domains\Security\Models\SecurityPriceFactory> */
     use HasFactory;
 
+    protected $table = 'asset_prices';
+
     /** @var list<string> */
     protected $fillable = [
         'security_id',

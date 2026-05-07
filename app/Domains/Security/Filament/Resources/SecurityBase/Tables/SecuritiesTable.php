@@ -40,7 +40,7 @@ class SecuritiesTable
                                 ->select('security_id', 'close')
                                 ->whereIn('id', function ($sub) {
                                     $sub->selectRaw('MAX(id)')
-                                        ->from('security_prices')
+                                        ->from('asset_prices')
                                         ->groupBy('security_id');
                                 }),
                             'lp',
@@ -75,7 +75,7 @@ class SecuritiesTable
                                 ->select('security_id', 'close')
                                 ->whereIn('id', function ($sub) {
                                     $sub->selectRaw('MAX(id)')
-                                        ->from('security_prices')
+                                        ->from('asset_prices')
                                         ->groupBy('security_id');
                                 }),
                             'lp_perf',

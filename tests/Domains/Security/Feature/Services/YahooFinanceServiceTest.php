@@ -81,7 +81,7 @@ it('fetches and stores prices for a security', function () {
     expect($count)->toBe(2);
     expect(SecurityPrice::where('security_id', $security->id)->count())->toBe(2);
 
-    $this->assertDatabaseHas('security_prices', [
+    $this->assertDatabaseHas('asset_prices', [
         'security_id' => $security->id,
         'date' => '2026-02-19',
         'close' => 103.0,
