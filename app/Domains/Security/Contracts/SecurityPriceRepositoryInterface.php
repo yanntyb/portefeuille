@@ -4,6 +4,7 @@ namespace App\Domains\Security\Contracts;
 
 use App\Domains\Security\Models\SecurityPrice;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 
 interface SecurityPriceRepositoryInterface
 {
@@ -14,4 +15,10 @@ interface SecurityPriceRepositoryInterface
     public function forSecuritySince(int $securityId, \DateTimeInterface $date): Collection;
 
     public function save(SecurityPrice $price): void;
+
+    public function getLatestDateForSecurities(array $securityIds): SupportCollection;
+
+    public function getEarliestDateForSecurities(array $securityIds): SupportCollection;
+
+    public function findBySecurityAndDate(int $securityId, string $date): ?SecurityPrice;
 }

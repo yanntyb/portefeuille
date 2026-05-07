@@ -2,6 +2,7 @@
 
 namespace App\Domains\Security\Services;
 
+use App\Domains\Security\Contracts\SecurityPriceRepositoryInterface;
 use App\Domains\Security\Enums\Sector;
 use App\Domains\Security\Events\PriceUpdated;
 use App\Domains\Security\Exceptions\TickerResolutionException;
@@ -18,6 +19,7 @@ class YahooFinanceService
 {
     public function __construct(
         private YahooFinanceClient $client,
+        private SecurityPriceRepositoryInterface $priceRepository,
     ) {}
 
     /**
@@ -55,13 +57,16 @@ class YahooFinanceService
         $endDate = new \DateTimeImmutable('now');
 
         if ($startDate === null) {
-            $latestDate = $security->prices()->max('date');
+            $latestDates = $this->priceRepository->getLatestDateForSecurities([$security->id]);
+            $latestDate = $latestDates->get($security->id);
             $latestDateObj = $latestDate ? new \DateTimeImmutable($latestDate) : null;
 
             $earliestTransactionDate = DB::table('transactions')
                 ->where('security_id', $security->id)
                 ->min('date');
-            $earliestPriceDate = $security->prices()->min('date');
+
+            $earliestPriceDates = $this->priceRepository->getEarliestDateForSecurities([$security->id]);
+            $earliestPriceDate = $earliestPriceDates->get($security->id);
 
             if ($latestDateObj !== null && $earliestTransactionDate !== null && $earliestTransactionDate < $earliestPriceDate) {
                 $startDate = new \DateTimeImmutable($earliestTransactionDate);
@@ -105,9 +110,7 @@ class YahooFinanceService
         );
 
         foreach ($rows as $row) {
-            $price = SecurityPrice::where('security_id', $row['security_id'])
-                ->where('date', $row['date'])
-                ->first();
+            $price = $this->priceRepository->findBySecurityAndDate($row['security_id'], $row['date']);
 
             if ($price) {
                 PriceUpdated::dispatch($price, $security);
@@ -130,13 +133,9 @@ class YahooFinanceService
 
         $endDate = new \DateTimeImmutable('now');
 
-        $securityIds = $securities->pluck('id');
+        $securityIds = $securities->pluck('id')->all();
 
-        $latestDates = SecurityPrice::query()
-            ->selectRaw('security_id, MAX(date) as latest_date')
-            ->whereIn('security_id', $securityIds)
-            ->groupBy('security_id')
-            ->pluck('latest_date', 'security_id');
+        $latestDates = $this->priceRepository->getLatestDateForSecurities($securityIds);
 
         $earliestTransactionDates = DB::table('transactions')
             ->selectRaw('security_id, MIN(date) as earliest_date')
@@ -144,11 +143,7 @@ class YahooFinanceService
             ->groupBy('security_id')
             ->pluck('earliest_date', 'security_id');
 
-        $earliestPriceDates = SecurityPrice::query()
-            ->selectRaw('security_id, MIN(date) as earliest_date')
-            ->whereIn('security_id', $securityIds)
-            ->groupBy('security_id')
-            ->pluck('earliest_date', 'security_id');
+        $earliestPriceDates = $this->priceRepository->getEarliestDateForSecurities($securityIds);
 
         /** @var array<int, array{security: Security, startDate: string}> */
         $tasks = [];
@@ -232,9 +227,7 @@ class YahooFinanceService
             );
 
             foreach ($rows as $row) {
-                $price = SecurityPrice::where('security_id', $row['security_id'])
-                    ->where('date', $row['date'])
-                    ->first();
+                $price = $this->priceRepository->findBySecurityAndDate($row['security_id'], $row['date']);
 
                 if ($price) {
                     PriceUpdated::dispatch($price, $task['security']);
