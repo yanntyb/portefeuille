@@ -32,6 +32,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet)
             ->for($security)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Buy,
                 'quantity' => 10,
                 'unit_price' => 100.00,
@@ -53,6 +54,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet)
             ->for($security)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Buy,
                 'quantity' => 10,
                 'unit_price' => 100.00,
@@ -63,6 +65,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet)
             ->for($security)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Sell,
                 'quantity' => 10,
                 'unit_price' => 120.00,
@@ -84,6 +87,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet)
             ->for($security)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Buy,
                 'quantity' => 10,
                 'unit_price' => 100.00,
@@ -94,6 +98,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet)
             ->for($security)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Sell,
                 'quantity' => 10,
                 'unit_price' => 80.00,
@@ -115,6 +120,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet)
             ->for($security)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Buy,
                 'quantity' => 10,
                 'unit_price' => 100.00,
@@ -125,6 +131,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet)
             ->for($security)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Sell,
                 'quantity' => 10,
                 'unit_price' => 120.00,
@@ -146,6 +153,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet)
             ->for($security)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Buy,
                 'quantity' => 10,
                 'unit_price' => 100.00,
@@ -156,6 +164,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet)
             ->for($security)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Buy,
                 'quantity' => 10,
                 'unit_price' => 120.00,
@@ -166,6 +175,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet)
             ->for($security)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Sell,
                 'quantity' => 20,
                 'unit_price' => 130.00,
@@ -190,6 +200,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet)
             ->for($security)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Buy,
                 'quantity' => 50,
                 'unit_price' => 100.00,
@@ -200,6 +211,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet)
             ->for($security)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Sell,
                 'quantity' => 20,
                 'unit_price' => 120.00,
@@ -221,6 +233,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet)
             ->for($security)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Sell,
                 'quantity' => 10,
                 'unit_price' => 100.00,
@@ -243,6 +256,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet1)
             ->for($security)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Buy,
                 'quantity' => 10,
                 'unit_price' => 100.00,
@@ -253,6 +267,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet2)
             ->for($security)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Buy,
                 'quantity' => 10,
                 'unit_price' => 150.00,
@@ -263,6 +278,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet1)
             ->for($security)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Sell,
                 'quantity' => 10,
                 'unit_price' => 120.00,
@@ -285,6 +301,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet)
             ->for($security1)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Buy,
                 'quantity' => 10,
                 'unit_price' => 100.00,
@@ -295,6 +312,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet)
             ->for($security2)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Buy,
                 'quantity' => 10,
                 'unit_price' => 50.00,
@@ -305,6 +323,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet)
             ->for($security1)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Sell,
                 'quantity' => 10,
                 'unit_price' => 120.00,
@@ -326,6 +345,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet)
             ->for($security)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Buy,
                 'quantity' => 10.5,
                 'unit_price' => 100.00,
@@ -336,6 +356,7 @@ class RealizedGainCalculatorTest extends TestCase
             ->for($wallet)
             ->for($security)
             ->create([
+                'user_id' => $user->id,
                 'type' => TransactionType::Sell,
                 'quantity' => 5.25,
                 'unit_price' => 120.00,
