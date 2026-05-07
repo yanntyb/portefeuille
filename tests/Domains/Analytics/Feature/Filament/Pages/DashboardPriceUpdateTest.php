@@ -5,9 +5,14 @@ use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\Security\Services\YahooFinanceService;
+use App\Domains\User\Models\User;
 use App\Infrastructure\Support\MarketCalendar;
 
 use function Pest\Livewire\livewire;
+
+beforeEach(function () {
+    $this->actingAs(User::factory()->create());
+});
 
 it('updates prices when securities have no recent price', function () {
     $security = Security::factory()->create(['ticker' => 'AAPL']);

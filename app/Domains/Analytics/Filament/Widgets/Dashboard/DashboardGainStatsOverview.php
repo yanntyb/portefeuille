@@ -63,6 +63,10 @@ class DashboardGainStatsOverview extends Widget
             return null;
         }
 
+        if ($totalValuation <= 0) {
+            return null;
+        }
+
         $weightedVolatility = 0.0;
         foreach ($walletVolatilities as $item) {
             $weight = $item['valuation'] / $totalValuation;

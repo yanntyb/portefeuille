@@ -3,11 +3,14 @@
 namespace App\Domains\Portfolio\Services;
 
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\Security;
+use App\Domains\Security\Contracts\SecurityRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 
 class DashboardDataProvider
 {
+    public function __construct(
+        private SecurityRepositoryInterface $securityRepository,
+    ) {}
     /** @var array<string, Collection<int, Security>> */
     private array $securitiesByWallet = [];
 
@@ -31,10 +34,7 @@ class DashboardDataProvider
     {
         $key = (string) $wallet->id;
 
-        return $this->securitiesByWallet[$key] ??= Security::query()
-            ->forWallet($wallet)
-            ->with('latestPrice')
-            ->get();
+        return $this->securitiesByWallet[$key] ??= $this->securityRepository->forWallet($wallet->id);
     }
 
     /**

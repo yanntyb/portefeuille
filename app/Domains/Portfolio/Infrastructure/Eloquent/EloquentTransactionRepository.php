@@ -43,6 +43,15 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
             ->get();
     }
 
+    public function forSecurities(array $securityIds, int $userId): Collection
+    {
+        return Transaction::query()
+            ->forUser($userId)
+            ->whereIn('security_id', $securityIds)
+            ->orderBy('date')
+            ->get();
+    }
+
     public function save(Transaction $transaction): void
     {
         $transaction->save();

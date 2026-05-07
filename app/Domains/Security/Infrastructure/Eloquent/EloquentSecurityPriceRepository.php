@@ -64,4 +64,12 @@ class EloquentSecurityPriceRepository implements SecurityPriceRepositoryInterfac
             ->where('date', $date)
             ->first();
     }
+
+    public function getForSecurities(array $securityIds): Collection
+    {
+        return SecurityPrice::query()
+            ->whereIn('security_id', $securityIds)
+            ->orderBy('date')
+            ->get();
+    }
 }

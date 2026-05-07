@@ -21,4 +21,6 @@ interface SecurityPriceRepositoryInterface
     public function getEarliestDateForSecurities(array $securityIds): SupportCollection;
 
     public function findBySecurityAndDate(int $securityId, string $date): ?SecurityPrice;
+
+    public function getForSecurities(array $securityIds): Collection;
 }

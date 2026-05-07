@@ -17,6 +17,8 @@ interface TransactionRepositoryInterface
 
     public function forSecurity(int $securityId, int $userId): Collection;
 
+    public function forSecurities(array $securityIds, int $userId): Collection;
+
     public function save(Transaction $transaction): void;
 
     public function delete(Transaction $transaction): void;

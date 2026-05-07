@@ -5,8 +5,13 @@ use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
+
+beforeEach(function () {
+    $this->actingAs(User::factory()->create());
+});
 
 it('restores shown security ids from store for PEA page', function () {
     $peaWallet = Wallet::factory()->pea()->create();
