@@ -10,7 +10,9 @@
 |-------|-----|--------|-------|---------|
 | 6 | Events | ✅ **Done** | 432 pass | 6 |
 | 7 | Repositories & Contracts | ✅ **Done** | 432 pass | 7 |
-| 8 | Asset Abstraction | ⏳ Pending | — | — |
+| 8A | Asset Domain Skeleton | ✅ **Done** | 438 pass (+6) | 1 |
+| 8B | Rename security_prices → asset_prices | ⏳ Pending | — | — |
+| 8C | security_id → asset_id + caller updates | ⏳ Pending | — | — |
 | 9 | Ports & Projections | ⏳ Pending | — | — |
 | 10 | Bitcoin Support | ⏳ Pending | — | — |
 
@@ -19,6 +21,7 @@
 - 7 services refactored to use repositories
 - VolatilityCalculating signature changed: `Wallet → int walletId`
 - Division by zero guard added to DashboardGainStatsOverview
+- Phase 8A: **Incremental approach** (Asset + Stock coexist with Security on same table) ✅
 
 ---
 
@@ -568,18 +571,81 @@ Contexte: Refactoriser 7 services vers injection repository révélait un défi 
 
 ---
 
-## 12. Phase 8+ — Roadmap vers Bitcoin
+## 12. Phase 8A — Asset Domain Skeleton ✅
 
-### Phase 8 — Asset Abstraction
-**Prérequis:** Phase 7 terminée, architecture repository stable
+### 12.1 Phase 8A ✅ Complètement réalisée
+
+**Stratégie:** Incremental (Strangler Fig) - Asset + Stock coexist avec Security sur la même table
+
+**Fichiers créés (10 nouveaux):**
+1. ✅ `app/Domains/Asset/Enums/AssetType.php` — 6 backed string cases (Stock, ETF, Crypto, RealEstate, Bond, Savings)
+2. ✅ `app/Domains/Asset/Models/Asset.php` — Abstract aggregate, protected $table = 'securities'
+3. ✅ `app/Domains/Asset/Models/Stock.php` — Concrete model, extends Asset, adds isin/ticker
+4. ✅ `app/Domains/Asset/Contracts/AssetRepositoryInterface.php` — Port interface
+5. ✅ `app/Domains/Asset/Infrastructure/Eloquent/EloquentAssetRepository.php` — Adapter
+6. ✅ `database/factories/Domains/Asset/Models/StockFactory.php` — Test factory
+7. ✅ `database/migrations/2026_05_08_011816_add_type_to_securities_table.php` — Migration
+8. ✅ `tests/Domains/Asset/Unit/Models/StockTest.php` — 3 unit tests
+9. ✅ `tests/Domains/Asset/Feature/Repositories/AssetRepositoryTest.php` — 3 feature tests
+10. ✅ `app/Providers/AppServiceProvider.php` — AssetRepositoryInterface binding
+
+**Décisions architecturales:**
+- Asset et Security coexistent sur `securities` table jusqu'à 8C (pas de renommage destructif)
+- Asset scopes (`scopeForAuth`, `scopeForWallet`) produisent SQL identique à Security
+- Stock utilise foreign key `security_id` explicite (Eloquent relation guessing evité)
+- Asset::currentValuation() héritée par Stock via latestPrice() + total_quantity
+- Tests isolent wallets par noms explicites (évite unique constraint sur wallet.name)
+
+**Tests passant:**
+- ✅ 432 existing tests (Security, Portfolio, Analytics) — zéro régressions
+- ✅ 6 new Asset tests (Stock model, AssetRepository) — tous passant
+- ✅ Total: 438 tests pass
+
+**Gate validation:** ✅
+- ✅ `php artisan test --compact` — 438/438 pass
+- ✅ `vendor/bin/pint --dirty --format agent` — 0 errors
+- ✅ No new phpstan issues
+
+### 12.2 Phase 8B — Pending (Rename security_prices → asset_prices)
+
+**Scope:** Rename table, update foreign keys, minimal caller updates expected
+
+**Fichiers à modifier:**
+1. `SecurityPrice` model — rename table, update relation name
+2. Migration — rename security_prices → asset_prices
+3. Asset/Stock scopes — update relationship references
+
+**Fichiers non affectés:**
+- Security model (can coexist on asset_prices if needed)
+- Services using SecurityPriceRepository (interface unchanged)
+
+### 12.3 Phase 8C — Pending (security_id → asset_id + 70+ callers)
+
+**Scope:** Bulk rename security_id FK → asset_id across all tables
+
+**Impact:** Affects 70+ files across 4 domains
+- Portfolio: Transaction, Wallet, RealizedGainCalculator
+- Analytics: VolatilityCalculator, RebalancingCalculator, SimulationEngine  
+- Security → Asset: Repository methods, relationship definitions
+- Infrastructure: EloquentXxxRepository queries
+
+**Strategy:** Use PHPStan + IDE refactoring to minimize human error
+
+---
+
+## 13. Phase 8+ — Roadmap vers Bitcoin
+
+### Phase 8 — Asset Abstraction ✅ 8A DONE, 8B/8C PENDING
+**Prérequis:** Phase 7 terminée, architecture repository stable ✅
 
 **Objectif:** Extraire Asset aggregate, remplacer Security par Asset
 
 **Étapes:**
-1. Créer Asset abstract aggregate (herite Transaction, AssetPrice)
-2. Stock extends Asset, Crypto extends Asset
-3. Migration: security_prices → asset_prices, transactions.security_id → asset_id
-4. Rendre AssetType polymorphe (Stock, ETF, Crypto, RealEstate, Bond, Savings)
+1. ✅ 8A: Créer Asset abstract aggregate (herite Transaction, SecurityPrice)
+2. ✅ 8A: Stock extends Asset, factory + tests
+3. ⏳ 8B: Migration: security_prices → asset_prices (rename table)
+4. ⏳ 8C: Migration: transactions.security_id → asset_id + 70+ callers
+5. ⏳ 8C: Rendre AssetType polymorphe (Stock, ETF, Crypto, RealEstate, Bond, Savings) via Security model removal
 
 ### Phase 9 — Ports & Projections
 **Objectif:** AssetPriceProviderPort, HoldingsProjection read model
