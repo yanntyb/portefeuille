@@ -5,6 +5,7 @@ namespace App\Domains\Analytics\Filament\Widgets\Dashboard;
 use App\Domains\Analytics\Services\VolatilityCalculator;
 use App\Domains\Portfolio\Services\DashboardDataProvider;
 use App\Infrastructure\Filament\Concerns\ComputesGainStats;
+use App\Infrastructure\Filament\Concerns\HasStatWidgetListeners;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Number;
@@ -12,6 +13,7 @@ use Illuminate\Support\Number;
 class DashboardGainStatsOverview extends Widget
 {
     use ComputesGainStats;
+    use HasStatWidgetListeners;
 
     protected string $view = 'filament.widgets.gain-stats-overview';
 

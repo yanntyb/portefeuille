@@ -6,6 +6,7 @@ use App\Domains\Analytics\Services\VolatilityCalculator;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Infrastructure\Filament\Concerns\ComputesGainStats;
 use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
+use App\Infrastructure\Filament\Concerns\HasStatWidgetListeners;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Number;
@@ -14,6 +15,7 @@ class GainStatsOverview extends Widget
 {
     use ComputesGainStats;
     use HasReactiveTableProperties;
+    use HasStatWidgetListeners;
 
     protected string $view = 'filament.widgets.gain-stats-overview';
 

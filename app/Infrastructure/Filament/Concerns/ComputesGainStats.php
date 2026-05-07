@@ -4,7 +4,6 @@ namespace App\Infrastructure\Filament\Concerns;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Number;
-use Livewire\Attributes\On;
 
 trait ComputesGainStats
 {
@@ -12,18 +11,6 @@ trait ComputesGainStats
 
     /** @var list<int>|null */
     public ?array $shownSecurityIds = null;
-
-    #[On('security-visibility-changed')]
-    public function updateShownSecurityIds(array $shownSecurityIds): void
-    {
-        $this->shownSecurityIds = $shownSecurityIds;
-    }
-
-    #[On('prices-updated')]
-    public function refreshStats(): void
-    {
-        // Triggers re-render with fresh data
-    }
 
     /**
      * @return array{
