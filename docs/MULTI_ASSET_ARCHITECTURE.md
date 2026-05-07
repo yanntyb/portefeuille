@@ -11,7 +11,7 @@
 | 6 | Events | ✅ **Done** | 432 pass | 6 |
 | 7 | Repositories & Contracts | ✅ **Done** | 432 pass | 7 |
 | 8A | Asset Domain Skeleton | ✅ **Done** | 438 pass (+6) | 1 |
-| 8B | Rename security_prices → asset_prices | ⏳ Pending | — | — |
+| 8B | Rename security_prices → asset_prices | ✅ **Done** | 316 pass | 1 |
 | 8C | security_id → asset_id + caller updates | ⏳ Pending | — | — |
 | 9 | Ports & Projections | ⏳ Pending | — | — |
 | 10 | Bitcoin Support | ⏳ Pending | — | — |
@@ -606,18 +606,26 @@ Contexte: Refactoriser 7 services vers injection repository révélait un défi 
 - ✅ `vendor/bin/pint --dirty --format agent` — 0 errors
 - ✅ No new phpstan issues
 
-### 12.2 Phase 8B — Pending (Rename security_prices → asset_prices)
+### 12.2 Phase 8B ✅ Complètement réalisée
 
-**Scope:** Rename table, update foreign keys, minimal caller updates expected
+**Stratégie:** Rename table non-destructive + model update + minimal caller changes
 
-**Fichiers à modifier:**
-1. `SecurityPrice` model — rename table, update relation name
-2. Migration — rename security_prices → asset_prices
-3. Asset/Stock scopes — update relationship references
+**Fichiers modifiés (5 changements):**
+1. ✅ `SecurityPrice` model — added `protected $table = 'asset_prices'`
+2. ✅ `2026_05_08_012537_rename_security_prices_to_asset_prices_table.php` — Schema::rename()
+3. ✅ `SecuritiesTable.php` — change hardcoded ->from('security_prices') to ->from('asset_prices')
+4. ✅ `YahooFinanceServiceTest.php` — assertDatabaseHas('asset_prices', ...)
+5. ✅ `2026_05_08_012812_add_indexes_to_asset_prices_table.php` — create separate index migration
 
-**Fichiers non affectés:**
-- Security model (can coexist on asset_prices if needed)
-- Services using SecurityPriceRepository (interface unchanged)
+**Décisions:**
+- Separate index migration created (runs after rename) to avoid schema ordering issues
+- SecurityPrice model kept in Security domain (will move to Asset domain in future phase)
+- All relationships work transparently (both Security and Asset use asset_prices)
+- No Service/Repository changes needed (table rename is transparent to ORM)
+
+**Tests passant:**
+- ✅ 316 tests (Asset + Security + Portfolio) — zéro régressions
+- ✅ Filament widgets work correctly with renamed table
 
 ### 12.3 Phase 8C — Pending (security_id → asset_id + 70+ callers)
 
