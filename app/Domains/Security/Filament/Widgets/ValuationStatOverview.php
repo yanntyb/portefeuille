@@ -3,13 +3,14 @@
 namespace App\Domains\Security\Filament\Widgets;
 
 use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
+use App\Infrastructure\Filament\Concerns\HasStatWidgetListeners;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Number;
-use Livewire\Attributes\On;
 
 class ValuationStatOverview extends Widget
 {
     use HasReactiveTableProperties;
+    use HasStatWidgetListeners;
 
     protected string $view = 'filament.widgets.valuation-stats-overview';
 
@@ -19,18 +20,6 @@ class ValuationStatOverview extends Widget
 
     /** @var list<int>|null */
     public ?array $shownSecurityIds = null;
-
-    #[On('security-visibility-changed')]
-    public function updateShownSecurityIds(array $shownSecurityIds): void
-    {
-        $this->shownSecurityIds = $shownSecurityIds;
-    }
-
-    #[On('prices-updated')]
-    public function refreshStats(): void
-    {
-        // Triggers re-render with fresh data
-    }
 
     /**
      * @return array{valuation: string, color: string}
