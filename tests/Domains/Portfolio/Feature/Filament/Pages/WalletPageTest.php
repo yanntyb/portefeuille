@@ -1,8 +1,20 @@
 <?php
 
 use App\Domains\Portfolio\Filament\Pages\WalletPage;
+use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
+use App\Domains\Security\Filament\Widgets\AllocationChartWidget;
+use App\Domains\Security\Filament\Widgets\CorrelationMatrixWidget;
+use App\Domains\Security\Filament\Widgets\GainStatsOverview;
+use App\Domains\Security\Filament\Widgets\PerformanceStatsOverview;
+use App\Domains\Security\Filament\Widgets\SectorAllocationChartWidget;
+use App\Domains\Security\Filament\Widgets\ValuationChartWidget;
+use App\Domains\Security\Filament\Widgets\ValuationStatOverview;
+use App\Domains\Security\Models\Security;
+use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
+
+use function Pest\Livewire\livewire;
 
 it('returns empty navigation when not authenticated', function () {
     expect(WalletPage::getNavigationItems())->toBeEmpty();
@@ -103,4 +115,24 @@ it('assigns correct sort order to wallets', function () {
         ->and($sorts['CTO'])->toBe(3)
         ->and($sorts['Livret'])->toBe(4)
         ->and($sorts['Autre'])->toBe(10);
+});
+
+it('renders wallet page with all widgets', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $security = Security::factory()->create();
+    Transaction::factory()->pea()->create(['security_id' => $security->id]);
+    SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => now()]);
+    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+
+    livewire(WalletPage::class, ['walletId' => $peaWallet->id])
+        ->assertOk()
+        ->assertSeeLivewire(ValuationStatOverview::class)
+        ->assertSeeLivewire(ValuationChartWidget::class)
+        ->assertSeeLivewire(PerformanceStatsOverview::class)
+        ->assertSeeLivewire(GainStatsOverview::class)
+        ->assertSeeLivewire(AllocationChartWidget::class)
+        ->assertSeeLivewire(SectorAllocationChartWidget::class)
+        ->assertSeeLivewire(CorrelationMatrixWidget::class);
 });

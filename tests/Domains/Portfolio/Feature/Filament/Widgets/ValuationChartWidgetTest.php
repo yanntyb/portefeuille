@@ -10,32 +10,6 @@ use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
 
-it('can render on the PEA list page', function () {
-    $user = User::factory()->create();
-    $this->actingAs($user);
-
-    $security = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $security->id]);
-    $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
-
-    livewire(WalletPage::class, ['walletId' => $peaWallet->id])
-        ->assertOk()
-        ->assertSeeLivewire(ValuationChartWidget::class);
-});
-
-it('can render on the CTO list page', function () {
-    $user = User::factory()->create();
-    $this->actingAs($user);
-
-    $security = Security::factory()->create();
-    Transaction::factory()->cto()->create(['security_id' => $security->id]);
-    $ctoWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'CTO']);
-
-    livewire(WalletPage::class, ['walletId' => $ctoWallet->id])
-        ->assertOk()
-        ->assertSeeLivewire(ValuationChartWidget::class);
-});
-
 it('defaults to total mode with aggregated valuation', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
