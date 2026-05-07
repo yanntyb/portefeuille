@@ -7,6 +7,8 @@ use App\Domains\Analytics\Contracts\VolatilityCalculating;
 use App\Domains\Analytics\Services\RebalancingCalculator;
 use App\Domains\Analytics\Services\RebalancingCalculatorOrchestrator;
 use App\Domains\Analytics\Services\VolatilityCalculator;
+use App\Domains\Asset\Contracts\AssetRepositoryInterface;
+use App\Domains\Asset\Infrastructure\Eloquent\EloquentAssetRepository;
 use App\Domains\Portfolio\Contracts\PortfolioPerformanceCalculating;
 use App\Domains\Portfolio\Contracts\TransactionRepositoryInterface;
 use App\Domains\Portfolio\Infrastructure\Eloquent\EloquentTransactionRepository;
@@ -37,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(SingleSecurityStatsProvider::class);
 
         // Repository interfaces → Eloquent implementations
+        $this->app->bind(AssetRepositoryInterface::class, EloquentAssetRepository::class);
         $this->app->bind(SecurityRepositoryInterface::class, EloquentSecurityRepository::class);
         $this->app->bind(SecurityPriceRepositoryInterface::class, EloquentSecurityPriceRepository::class);
         $this->app->bind(TransactionRepositoryInterface::class, EloquentTransactionRepository::class);
