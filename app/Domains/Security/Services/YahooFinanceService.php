@@ -3,6 +3,7 @@
 namespace App\Domains\Security\Services;
 
 use App\Domains\Security\Enums\Sector;
+use App\Domains\Security\Events\PriceUpdated;
 use App\Domains\Security\Exceptions\TickerResolutionException;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
@@ -102,6 +103,16 @@ class YahooFinanceService
             ['security_id', 'date'],
             ['open', 'high', 'low', 'close', 'volume'],
         );
+
+        foreach ($rows as $row) {
+            $price = SecurityPrice::where('security_id', $row['security_id'])
+                ->where('date', $row['date'])
+                ->first();
+
+            if ($price) {
+                PriceUpdated::dispatch($price, $security);
+            }
+        }
 
         return count($rows);
     }
@@ -219,6 +230,16 @@ class YahooFinanceService
                 ['security_id', 'date'],
                 ['open', 'high', 'low', 'close', 'volume'],
             );
+
+            foreach ($rows as $row) {
+                $price = SecurityPrice::where('security_id', $row['security_id'])
+                    ->where('date', $row['date'])
+                    ->first();
+
+                if ($price) {
+                    PriceUpdated::dispatch($price, $task['security']);
+                }
+            }
 
             $totalInserted += count($rows);
         }

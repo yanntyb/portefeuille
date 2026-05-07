@@ -2,6 +2,7 @@
 
 namespace App\Domains\Analytics\Filament\Pages;
 
+use App\Domains\Analytics\Events\PortfolioRebalanced;
 use App\Domains\Analytics\Services\RebalancingCalculatorOrchestrator;
 use App\Domains\Portfolio\Models\AllocationProfile;
 use App\Domains\Portfolio\Models\AllocationProfileItem;
@@ -223,6 +224,8 @@ class RebalancingCalculator extends Page implements HasTable
             $this->totalInvested = $results['total_invested'] ?? 0;
             $this->remainder = $results['remainder'] ?? 0;
             $this->hasResults = true;
+
+            PortfolioRebalanced::dispatch(auth()->user(), $results['items'] ?? []);
         } catch (\InvalidArgumentException $e) {
             Notification::make()
                 ->danger()

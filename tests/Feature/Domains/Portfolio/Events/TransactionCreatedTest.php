@@ -4,7 +4,6 @@ namespace Tests\Feature\Domains\Portfolio\Events;
 
 use App\Domains\Portfolio\Events\TransactionCreated;
 use App\Domains\Portfolio\Models\Transaction;
-use Illuminate\Database\Eloquent\Factories\Sequence;
 use Tests\TestCase;
 
 class TransactionCreatedTest extends TestCase
