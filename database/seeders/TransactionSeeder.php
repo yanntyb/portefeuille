@@ -255,6 +255,7 @@ class TransactionSeeder extends Seeder
                     'user_id' => $user->id,
                     'wallet_id' => $wallet->id,
                     'date' => $investDate->toDateString(),
+                    'type' => 'buy',
                     'asset_id' => $security->id,
                     'broker' => $broker,
                     'quantity' => $quantity,
