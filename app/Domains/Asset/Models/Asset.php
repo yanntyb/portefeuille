@@ -45,7 +45,7 @@ abstract class Asset extends Model
 
     public function transactions(): HasMany
     {
-        return $this->hasMany(Transaction::class);
+        return $this->hasMany(Transaction::class, 'asset_id');
     }
 
     public function prices(): HasMany
@@ -95,7 +95,7 @@ abstract class Asset extends Model
                 DB::raw("SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity ELSE -transactions.quantity END) * (1.0 * SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity * transactions.unit_price ELSE 0 END) / NULLIF(SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity ELSE 0 END), 0)) + SUM(transactions.fees) as total_invested"),
                 DB::raw('SUM(COALESCE(transactions.realized_gain, 0)) as total_realized_gain'),
             ])
-            ->join('transactions', 'transactions.security_id', '=', 'securities.id')
+            ->join('transactions', 'transactions.asset_id', '=', 'securities.id')
             ->where('transactions.user_id', auth()->id())
             ->groupBy('securities.id', 'securities.type', 'securities.name');
     }
@@ -114,7 +114,7 @@ abstract class Asset extends Model
                 DB::raw("SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity ELSE -transactions.quantity END) * (1.0 * SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity * transactions.unit_price ELSE 0 END) / NULLIF(SUM(CASE WHEN transactions.type = 'buy' THEN transactions.quantity ELSE 0 END), 0)) + SUM(transactions.fees) as total_invested"),
                 DB::raw('SUM(COALESCE(transactions.realized_gain, 0)) as total_realized_gain'),
             ])
-            ->join('transactions', 'transactions.security_id', '=', 'securities.id')
+            ->join('transactions', 'transactions.asset_id', '=', 'securities.id')
             ->where('transactions.wallet_id', $wallet->id)
             ->groupBy('securities.id', 'securities.type', 'securities.name');
     }

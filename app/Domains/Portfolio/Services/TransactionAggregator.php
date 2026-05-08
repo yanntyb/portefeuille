@@ -22,7 +22,7 @@ class TransactionAggregator
 
         foreach ($transactions as $transaction) {
             $date = $transaction->date->format('Y-m-d');
-            $securityId = $transaction->security_id;
+            $securityId = $transaction->asset_id;
             $isSell = $transaction->type === TransactionType::Sell;
 
             if (! isset($quantities[$securityId])) {

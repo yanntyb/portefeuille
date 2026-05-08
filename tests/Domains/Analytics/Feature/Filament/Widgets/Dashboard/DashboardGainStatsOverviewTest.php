@@ -28,8 +28,9 @@ it('calculates unrealized gains from buy transaction', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 150,
         'date' => now(),
     ]);
@@ -37,7 +38,7 @@ it('calculates unrealized gains from buy transaction', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'type' => 'buy',
         'quantity' => 10,
         'unit_price' => 100,
@@ -59,8 +60,9 @@ it('calculates realized gains from sell transaction', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 150,
         'date' => now(),
     ]);
@@ -68,7 +70,7 @@ it('calculates realized gains from sell transaction', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'type' => 'buy',
         'quantity' => 10,
         'unit_price' => 100,
@@ -78,7 +80,7 @@ it('calculates realized gains from sell transaction', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'type' => 'sell',
         'quantity' => 5,
         'unit_price' => 120,
@@ -101,8 +103,9 @@ it('includes fees in calculations', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 100,
         'date' => now(),
     ]);
@@ -110,7 +113,7 @@ it('includes fees in calculations', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'type' => 'buy',
         'quantity' => 10,
         'unit_price' => 100,

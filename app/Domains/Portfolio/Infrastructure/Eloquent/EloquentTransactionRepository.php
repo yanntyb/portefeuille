@@ -39,7 +39,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
     {
         return Transaction::query()
             ->forUser($userId)
-            ->where('security_id', $securityId)
+            ->where('asset_id', $securityId)
             ->get();
     }
 
@@ -47,7 +47,7 @@ class EloquentTransactionRepository implements TransactionRepositoryInterface
     {
         return Transaction::query()
             ->forUser($userId)
-            ->whereIn('security_id', $securityIds)
+            ->whereIn('asset_id', $securityIds)
             ->orderBy('date')
             ->get();
     }

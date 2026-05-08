@@ -28,7 +28,7 @@ class PortfolioPerformanceCalculator implements PortfolioPerformanceCalculating
         $securityIds = $securities->pluck('id')->all();
 
         $transactions = Transaction::query()
-            ->whereIn('security_id', $securityIds)
+            ->whereIn('asset_id', $securityIds)
             ->orderBy('date')
             ->get();
 
@@ -50,7 +50,7 @@ class PortfolioPerformanceCalculator implements PortfolioPerformanceCalculating
     public function computeReturnsForSecurity(Security $security, ?int $walletId = null): array
     {
         $transactionsQuery = Transaction::query()
-            ->where('security_id', $security->id)
+            ->where('asset_id', $security->id)
             ->orderBy('date');
 
         if ($walletId) {

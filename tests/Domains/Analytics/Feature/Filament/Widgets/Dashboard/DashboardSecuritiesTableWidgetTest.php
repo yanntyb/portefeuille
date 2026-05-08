@@ -20,13 +20,13 @@ it('initializes shownSecurityIds with all user securities on mount', function ()
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security1->id,
+        'asset_id' => $security1->id,
     ]);
 
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security2->id,
+        'asset_id' => $security2->id,
     ]);
 
     $widget = livewire(DashboardSecuritiesTableWidget::class)->instance();
@@ -45,17 +45,18 @@ it('flags priceless securities in pricelessSecurityIds', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $securityWithPrice->id,
+        'asset_id' => $securityWithPrice->id,
     ]);
 
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $securityWithoutPrice->id,
+        'asset_id' => $securityWithoutPrice->id,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityWithPrice->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityWithPrice->id,
         'date' => now()->toDateString(),
     ]);
 
@@ -74,7 +75,7 @@ it('toggleSecurity moves security to hiddenSecurityIds', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
     ]);
 
     $widget = livewire(DashboardSecuritiesTableWidget::class)->instance();
@@ -98,7 +99,7 @@ it('double toggle restores security to shownSecurityIds', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
     ]);
 
     $widget = livewire(DashboardSecuritiesTableWidget::class)->instance();
@@ -121,7 +122,7 @@ it('dispatches security-visibility-changed on toggle', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
     ]);
 
     livewire(DashboardSecuritiesTableWidget::class)
@@ -142,13 +143,13 @@ it('does not show securities from other users', function () {
     Transaction::factory()->create([
         'user_id' => $user1->id,
         'wallet_id' => $wallet1->id,
-        'security_id' => $security1->id,
+        'asset_id' => $security1->id,
     ]);
 
     Transaction::factory()->create([
         'user_id' => $user2->id,
         'wallet_id' => $wallet2->id,
-        'security_id' => $security2->id,
+        'asset_id' => $security2->id,
     ]);
 
     $widget = livewire(DashboardSecuritiesTableWidget::class)->instance();

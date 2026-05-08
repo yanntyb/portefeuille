@@ -20,47 +20,49 @@ it('aggregates sector data weighted by valuation for account list', function () 
     $securityB = Security::factory()->create(['name' => 'ETF Tech']);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $securityA->id,
+        'asset_id' => $securityA->id,
         'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
     ]);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $securityB->id,
+        'asset_id' => $securityB->id,
         'user_id' => $user->id,
         'quantity' => 5,
         'unit_price' => 200,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityA->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityA->id,
         'date' => now(),
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityB->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityB->id,
         'date' => now(),
         'close' => 200,
     ]);
 
     // ETF World: valuation = 10 * 100 = 1000
     SecuritySector::factory()->create([
-        'security_id' => $securityA->id,
+        'asset_id' => $securityA->id,
         'sector' => Sector::Technology,
         'weight' => 0.3,
     ]);
 
     SecuritySector::factory()->create([
-        'security_id' => $securityA->id,
+        'asset_id' => $securityA->id,
         'sector' => Sector::Healthcare,
         'weight' => 0.2,
     ]);
 
     // ETF Tech: valuation = 5 * 200 = 1000
     SecuritySector::factory()->create([
-        'security_id' => $securityB->id,
+        'asset_id' => $securityB->id,
         'sector' => Sector::Technology,
         'weight' => 0.8,
     ]);
@@ -99,13 +101,13 @@ it('shows sector weights as percentages for a single security', function () {
     $security = Security::factory()->create();
 
     SecuritySector::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'sector' => Sector::Technology,
         'weight' => 0.6,
     ]);
 
     SecuritySector::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'sector' => Sector::Healthcare,
         'weight' => 0.4,
     ]);

@@ -15,7 +15,7 @@ it('stores sell transaction', function () {
     // Buy 10 shares
     Transaction::factory()->create([
         'user_id' => $user->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'wallet_id' => $wallet->id,
         'type' => TransactionType::Buy,
         'quantity' => 10,
@@ -24,7 +24,7 @@ it('stores sell transaction', function () {
     // Sell 5
     $sellTransaction = Transaction::factory()->create([
         'user_id' => $user->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'wallet_id' => $wallet->id,
         'type' => TransactionType::Sell,
         'quantity' => 5,
@@ -36,14 +36,16 @@ it('stores sell transaction', function () {
 
 it('stores latest security price', function () {
     $security = Security::factory()->create();
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 125.50,
         'date' => now(),
     ]);
 
-    $price = SecurityPrice::query()
-        ->where('security_id', $security->id)
+    $price = 
+SecurityPrice::query()
+        ->where('asset_id', $security->id)
         ->orderByDesc('date')
         ->value('close');
 
@@ -57,7 +59,7 @@ it('stores transaction fees', function () {
 
     $transaction = Transaction::factory()->create([
         'user_id' => $user->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'wallet_id' => $wallet->id,
         'type' => TransactionType::Buy,
         'quantity' => 10,
@@ -75,7 +77,7 @@ it('stores transaction notes', function () {
 
     $transaction = Transaction::factory()->create([
         'user_id' => $user->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'wallet_id' => $wallet->id,
         'type' => TransactionType::Buy,
         'quantity' => 10,
@@ -92,7 +94,7 @@ it('stores broker info for cto transactions', function () {
 
     $transaction = Transaction::factory()->create([
         'user_id' => $user->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'wallet_id' => $ctoWallet->id,
         'type' => TransactionType::Buy,
         'quantity' => 5,

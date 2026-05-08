@@ -11,7 +11,7 @@ use function Pest\Laravel\mock;
 
 it('fetches prices in bulk for all securities with transactions', function () {
     $securityWithTx = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $securityWithTx->id]);
+    Transaction::factory()->pea()->create(['asset_id' => $securityWithTx->id]);
 
     Security::factory()->create(); // without transactions
 
@@ -40,7 +40,7 @@ it('fetches prices sequentially for a specific security', function () {
 
 it('fetches prices sequentially when --from is specified', function () {
     $security = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $security->id]);
+    Transaction::factory()->pea()->create(['asset_id' => $security->id]);
 
     mock(YahooFinanceService::class, function (MockInterface $mock) {
         $mock->shouldReceive('fetchAndStorePrices')
@@ -54,7 +54,7 @@ it('fetches prices sequentially when --from is specified', function () {
 
 it('handles ticker resolution errors gracefully in sequential mode', function () {
     $security = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $security->id]);
+    Transaction::factory()->pea()->create(['asset_id' => $security->id]);
 
     mock(YahooFinanceService::class, function (MockInterface $mock) use ($security) {
         $mock->shouldReceive('fetchAndStorePrices')

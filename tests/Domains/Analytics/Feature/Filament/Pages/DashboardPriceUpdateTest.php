@@ -18,11 +18,12 @@ it('updates prices when securities have no recent price', function () {
     $security = Security::factory()->create(['ticker' => 'AAPL']);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => MarketCalendar::lastTradingDate()->subDay(),
         'close' => 100,
     ]);
@@ -41,11 +42,12 @@ it('skips price update when securities have a price on last trading date', funct
     $security = Security::factory()->create(['ticker' => 'AAPL']);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => MarketCalendar::lastTradingDate(),
         'close' => 100,
     ]);
@@ -62,11 +64,12 @@ it('skips price update when all securities have today price', function () {
     $security = Security::factory()->create(['ticker' => 'AAPL']);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => now(),
         'close' => 100,
     ]);
@@ -84,11 +87,11 @@ it('skips securities without ticker', function () {
     $securityWithoutTicker = Security::factory()->create(['ticker' => null]);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $securityWithTicker->id,
+        'asset_id' => $securityWithTicker->id,
     ]);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $securityWithoutTicker->id,
+        'asset_id' => $securityWithoutTicker->id,
     ]);
 
     $mock = $this->mock(YahooFinanceService::class);
@@ -108,7 +111,7 @@ it('dispatches prices-updated event after updating prices', function () {
     $security = Security::factory()->create(['ticker' => 'AAPL']);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
     ]);
 
     $mock = $this->mock(YahooFinanceService::class);
@@ -123,11 +126,12 @@ it('does not dispatch event when no update needed', function () {
     $security = Security::factory()->create(['ticker' => 'AAPL']);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => now(),
         'close' => 100,
     ]);

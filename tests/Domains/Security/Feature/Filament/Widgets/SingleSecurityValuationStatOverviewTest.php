@@ -27,8 +27,9 @@ it('computes valuation from single security stats', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);
@@ -36,7 +37,7 @@ it('computes valuation from single security stats', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'type' => 'buy',
         'quantity' => 10,
         'unit_price' => 100,
@@ -61,8 +62,9 @@ it('shows success color when valuation exceeds total invested', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);
@@ -70,7 +72,7 @@ it('shows success color when valuation exceeds total invested', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'type' => 'buy',
         'quantity' => 10,
         'unit_price' => 100,
@@ -93,8 +95,9 @@ it('shows danger color when below total invested', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 99,
         'date' => now(),
     ]);
@@ -102,7 +105,7 @@ it('shows danger color when below total invested', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'type' => 'buy',
         'quantity' => 10,
         'unit_price' => 100,
@@ -126,8 +129,9 @@ it('isolates to specified wallet', function () {
     $ctoWallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'CTO']);
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);
@@ -135,7 +139,7 @@ it('isolates to specified wallet', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $peaWallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'type' => 'buy',
         'quantity' => 10,
         'unit_price' => 100,
@@ -144,7 +148,7 @@ it('isolates to specified wallet', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $ctoWallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'type' => 'buy',
         'quantity' => 5,
         'unit_price' => 100,

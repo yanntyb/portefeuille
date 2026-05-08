@@ -37,7 +37,7 @@ class SingleSecurityValuationChartWidget extends ChartWidget
         $securityIds = [$this->record->id];
 
         $transactionsQuery = Transaction::query()
-            ->whereIn('security_id', $securityIds)
+            ->whereIn('asset_id', $securityIds)
             ->orderBy('date');
 
         if ($this->walletId) {

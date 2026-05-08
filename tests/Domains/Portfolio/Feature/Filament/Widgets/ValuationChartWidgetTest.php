@@ -17,20 +17,22 @@ it('defaults to total mode with aggregated valuation', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'date' => '2024-01-15',
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2024-01-15',
         'close' => 105,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2024-02-15',
         'close' => 110,
     ]);
@@ -68,27 +70,29 @@ it('shows stacked areas per security in per_security mode', function () {
     $securityB = Security::factory()->create(['name' => 'ETF SP500']);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $securityA->id,
+        'asset_id' => $securityA->id,
         'quantity' => 10,
         'unit_price' => 100,
         'date' => '2024-01-15',
     ]);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $securityB->id,
+        'asset_id' => $securityB->id,
         'quantity' => 5,
         'unit_price' => 200,
         'date' => '2024-01-15',
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityA->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityA->id,
         'date' => '2024-01-15',
         'close' => 105,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityB->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityB->id,
         'date' => '2024-01-15',
         'close' => 210,
     ]);
@@ -124,7 +128,7 @@ it('computes cumulative fees from transactions', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 5,
@@ -132,21 +136,23 @@ it('computes cumulative fees from transactions', function () {
     ]);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 5,
         'unit_price' => 110,
         'fees' => 3,
         'date' => '2024-02-10',
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2024-01-15',
         'close' => 105,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2024-02-15',
         'close' => 110,
     ]);
@@ -173,20 +179,22 @@ it('excludes prices before the first transaction date', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'date' => '2024-06-01',
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2024-01-01',
         'close' => 50,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2024-06-03',
         'close' => 105,
     ]);
@@ -212,15 +220,16 @@ it('invested reflects mid-week transactions in the same week', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
         'date' => '2024-01-10',
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2024-01-12',
         'close' => 105,
     ]);
@@ -246,35 +255,38 @@ it('extrapolates missing prices using the last known close in total mode', funct
     $securityB = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $securityA->id,
+        'asset_id' => $securityA->id,
         'quantity' => 10,
         'unit_price' => 100,
         'date' => '2024-01-10',
     ]);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $securityB->id,
+        'asset_id' => $securityB->id,
         'quantity' => 5,
         'unit_price' => 200,
         'date' => '2024-01-10',
     ]);
 
     // Both have prices on day 1
-    SecurityPrice::factory()->create([
-        'security_id' => $securityA->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityA->id,
         'date' => '2024-01-15',
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityB->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityB->id,
         'date' => '2024-01-15',
         'close' => 200,
     ]);
 
     // Only securityA has a price on day 2
-    SecurityPrice::factory()->create([
-        'security_id' => $securityA->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityA->id,
         'date' => '2024-01-16',
         'close' => 110,
     ]);
@@ -303,34 +315,37 @@ it('extrapolates missing prices using the last known close in per_security mode'
     $securityB = Security::factory()->create(['name' => 'ETF B']);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $securityA->id,
+        'asset_id' => $securityA->id,
         'quantity' => 10,
         'unit_price' => 100,
         'date' => '2024-01-10',
     ]);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $securityB->id,
+        'asset_id' => $securityB->id,
         'quantity' => 5,
         'unit_price' => 200,
         'date' => '2024-01-10',
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityA->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityA->id,
         'date' => '2024-01-15',
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityB->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityB->id,
         'date' => '2024-01-15',
         'close' => 200,
     ]);
 
     // Only securityA has a price on day 2
-    SecurityPrice::factory()->create([
-        'security_id' => $securityA->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityA->id,
         'date' => '2024-01-16',
         'close' => 110,
     ]);

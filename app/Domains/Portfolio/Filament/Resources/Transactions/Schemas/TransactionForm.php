@@ -23,7 +23,7 @@ class TransactionForm
 {
     private static function fillUnitPrice(Get $get, Set $set): void
     {
-        $securityId = $get('security_id');
+        $securityId = $get('asset_id');
         $date = $get('date');
 
         if (! $securityId || ! $date) {
@@ -85,7 +85,7 @@ class TransactionForm
                     ->live()
                     ->afterStateUpdated(fn (Get $get, Set $set) => self::fillUnitPrice($get, $set)),
 
-                Select::make('security_id')
+                Select::make('asset_id')
                     ->label('Titre')
                     ->options(fn (): array => Security::query()
                         ->orderBy('isin')
@@ -146,7 +146,7 @@ class TransactionForm
                                 return;
                             }
 
-                            $securityId = $get('security_id');
+                            $securityId = $get('asset_id');
                             $walletId = $get('wallet_id');
 
                             if (! $securityId || ! $walletId) {
@@ -154,7 +154,7 @@ class TransactionForm
                             }
 
                             $ownedQuantity = (float) Transaction::withoutGlobalScopes()
-                                ->where('security_id', $securityId)
+                                ->where('asset_id', $securityId)
                                 ->where('wallet_id', $walletId)
                                 ->where('user_id', auth()->id())
                                 ->when($record instanceof Transaction, fn ($query) => $query->where('id', '!=', $record->id))

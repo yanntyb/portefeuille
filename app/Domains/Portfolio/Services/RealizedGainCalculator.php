@@ -19,7 +19,7 @@ class RealizedGainCalculator
         $transaction->loadMissing('wallet');
         $buyTransactions = $this->transactionRepository
             ->forWallet($transaction->wallet_id, $transaction->wallet->user_id)
-            ->filter(fn ($t) => $t->security_id === $transaction->security_id && $t->type === TransactionType::Buy);
+            ->filter(fn ($t) => $t->asset_id === $transaction->asset_id && $t->type === TransactionType::Buy);
 
         $totalBuyQuantity = (float) $buyTransactions->sum('quantity');
         $totalBuyCost = $buyTransactions->sum(fn ($t) => (float) $t->quantity * (float) $t->unit_price);

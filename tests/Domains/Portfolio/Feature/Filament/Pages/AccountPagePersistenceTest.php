@@ -18,11 +18,13 @@ it('restores shown security ids from store for PEA page', function () {
     $securityA = Security::factory()->create();
     $securityB = Security::factory()->create();
 
-    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $securityA->id]);
-    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $securityB->id]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $securityA->id]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $securityB->id]);
 
-    SecurityPrice::factory()->create(['security_id' => $securityA->id, 'date' => now()]);
-    SecurityPrice::factory()->create(['security_id' => $securityB->id, 'date' => now()]);
+    
+SecurityPrice::factory()->create(['security_id' => $securityA->id, 'date' => now()]);
+    
+SecurityPrice::factory()->create(['security_id' => $securityB->id, 'date' => now()]);
 
     $component = livewire(WalletPage::class, ['walletId' => $peaWallet->id]);
     $component->call('restoreFromTableStore', ['hiddenSecurityIds' => [$securityB->id]]);
@@ -37,11 +39,13 @@ it('updates shown security ids when toggling', function () {
     $securityA = Security::factory()->create();
     $securityB = Security::factory()->create();
 
-    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $securityA->id]);
-    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $securityB->id]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $securityA->id]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $securityB->id]);
 
-    SecurityPrice::factory()->create(['security_id' => $securityA->id, 'date' => now()]);
-    SecurityPrice::factory()->create(['security_id' => $securityB->id, 'date' => now()]);
+    
+SecurityPrice::factory()->create(['security_id' => $securityA->id, 'date' => now()]);
+    
+SecurityPrice::factory()->create(['security_id' => $securityB->id, 'date' => now()]);
 
     $component = livewire(WalletPage::class, ['walletId' => $peaWallet->id]);
 
@@ -56,8 +60,9 @@ it('ignores persisted ids that no longer exist', function () {
     $peaWallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
 
-    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $security->id]);
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => now()]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $security->id]);
+    
+SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => now()]);
 
     $component = livewire(WalletPage::class, ['walletId' => $peaWallet->id]);
     $component->call('restoreFromTableStore', ['hiddenSecurityIds' => [99999]]);
@@ -74,11 +79,13 @@ it('restores independently per wallet', function () {
     $peaSecurity = Security::factory()->create();
     $ctoSecurity = Security::factory()->create();
 
-    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $peaSecurity->id]);
-    Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'security_id' => $ctoSecurity->id]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $peaSecurity->id]);
+    Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'asset_id' => $ctoSecurity->id]);
 
-    SecurityPrice::factory()->create(['security_id' => $peaSecurity->id, 'date' => now()]);
-    SecurityPrice::factory()->create(['security_id' => $ctoSecurity->id, 'date' => now()]);
+    
+SecurityPrice::factory()->create(['security_id' => $peaSecurity->id, 'date' => now()]);
+    
+SecurityPrice::factory()->create(['security_id' => $ctoSecurity->id, 'date' => now()]);
 
     $peaComponent = livewire(WalletPage::class, ['walletId' => $peaWallet->id]);
     $ctoComponent = livewire(WalletPage::class, ['walletId' => $ctoWallet->id]);

@@ -97,7 +97,7 @@ class TransactionsRelationManager extends RelationManager
                             $securityId = $livewire->getOwnerRecord()->id;
 
                             $ownedQuantity = (float) Transaction::withoutGlobalScopes()
-                                ->where('security_id', $securityId)
+                                ->where('asset_id', $securityId)
                                 ->where('wallet_id', $walletId)
                                 ->where('user_id', auth()->id())
                                 ->when($record, fn ($query) => $query->where('id', '!=', $record->id))

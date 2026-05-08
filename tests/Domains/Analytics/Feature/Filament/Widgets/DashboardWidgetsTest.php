@@ -20,41 +20,43 @@ it('aggregates sector data from all accounts', function () {
     $securityCto = Security::factory()->create(['name' => 'ETF CTO']);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $securityPea->id,
+        'asset_id' => $securityPea->id,
         'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
     ]);
 
     Transaction::factory()->cto()->create([
-        'security_id' => $securityCto->id,
+        'asset_id' => $securityCto->id,
         'user_id' => $user->id,
         'quantity' => 5,
         'unit_price' => 200,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityPea->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityPea->id,
         'date' => now(),
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityCto->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityCto->id,
         'date' => now(),
         'close' => 200,
     ]);
 
     // ETF PEA: valuation = 10 * 100 = 1000
     SecuritySector::factory()->create([
-        'security_id' => $securityPea->id,
+        'asset_id' => $securityPea->id,
         'sector' => Sector::Technology,
         'weight' => 0.6,
     ]);
 
     // ETF CTO: valuation = 5 * 200 = 1000
     SecuritySector::factory()->create([
-        'security_id' => $securityCto->id,
+        'asset_id' => $securityCto->id,
         'sector' => Sector::Healthcare,
         'weight' => 0.5,
     ]);
@@ -101,7 +103,7 @@ it('displays performance stats across all accounts', function () {
     $securityCto = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $securityPea->id,
+        'asset_id' => $securityPea->id,
         'user_id' => $user->id,
         'date' => '2025-01-01',
         'quantity' => 10,
@@ -110,7 +112,7 @@ it('displays performance stats across all accounts', function () {
     ]);
 
     Transaction::factory()->cto()->create([
-        'security_id' => $securityCto->id,
+        'asset_id' => $securityCto->id,
         'user_id' => $user->id,
         'date' => '2025-01-01',
         'quantity' => 10,
@@ -118,26 +120,30 @@ it('displays performance stats across all accounts', function () {
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityPea->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityPea->id,
         'date' => '2025-01-15',
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityPea->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityPea->id,
         'date' => '2025-06-15',
         'close' => 120,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityCto->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityCto->id,
         'date' => '2025-01-15',
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityCto->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityCto->id,
         'date' => '2025-06-15',
         'close' => 110,
     ]);

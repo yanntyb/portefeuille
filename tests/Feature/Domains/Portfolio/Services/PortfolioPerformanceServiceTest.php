@@ -30,7 +30,7 @@ class PortfolioPerformanceServiceTest extends TestCase
 
         foreach ($securities as $security) {
             $wallet->transactions()->create([
-                'security_id' => $security->id,
+                'asset_id' => $security->id,
                 'type' => 'buy',
                 'quantity' => 10,
                 'price' => 100.00,
@@ -41,7 +41,8 @@ class PortfolioPerformanceServiceTest extends TestCase
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
         foreach ($securities as $security) {
-            SecurityPrice::factory()
+            
+SecurityPrice::factory()
                 ->for($security)
                 ->create(['date' => $lastTradingDate, 'close' => 100.00]);
         }
@@ -64,11 +65,12 @@ class PortfolioPerformanceServiceTest extends TestCase
         $pricedSecurity = Security::factory()->create();
         $pricelessSecurity = Security::factory()->create();
 
-        $wallet->transactions()->create(['security_id' => $pricedSecurity->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
-        $wallet->transactions()->create(['security_id' => $pricelessSecurity->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
+        $wallet->transactions()->create(['asset_id' => $pricedSecurity->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
+        $wallet->transactions()->create(['asset_id' => $pricelessSecurity->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
-        SecurityPrice::factory()
+        
+SecurityPrice::factory()
             ->for($pricedSecurity)
             ->create(['date' => $lastTradingDate]);
 
@@ -85,12 +87,13 @@ class PortfolioPerformanceServiceTest extends TestCase
         $securities = Security::factory()->count(3)->create();
 
         foreach ($securities as $security) {
-            $wallet->transactions()->create(['security_id' => $security->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
+            $wallet->transactions()->create(['asset_id' => $security->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
         }
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
         foreach ($securities as $security) {
-            SecurityPrice::factory()
+            
+SecurityPrice::factory()
                 ->for($security)
                 ->create(['date' => $lastTradingDate, 'close' => 100.00]);
         }
@@ -108,7 +111,7 @@ class PortfolioPerformanceServiceTest extends TestCase
         $user = User::factory()->create();
         $wallet = Wallet::factory()->for($user)->create();
         $pricelessSecurity = Security::factory()->create();
-        $wallet->transactions()->create(['security_id' => $pricelessSecurity->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
+        $wallet->transactions()->create(['asset_id' => $pricelessSecurity->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
 
         $result = $this->service->computeSecurityVisibility($wallet, [$pricelessSecurity->id]);
 
@@ -122,12 +125,13 @@ class PortfolioPerformanceServiceTest extends TestCase
         $securities = Security::factory()->count(2)->create();
 
         foreach ($securities as $security) {
-            $wallet->transactions()->create(['security_id' => $security->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
+            $wallet->transactions()->create(['asset_id' => $security->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
         }
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
         foreach ($securities as $security) {
-            SecurityPrice::factory()
+            
+SecurityPrice::factory()
                 ->for($security)
                 ->create(['date' => $lastTradingDate, 'close' => 100.00]);
         }
@@ -144,14 +148,16 @@ class PortfolioPerformanceServiceTest extends TestCase
         $security1 = Security::factory()->create();
         $security2 = Security::factory()->create();
 
-        $wallet->transactions()->create(['security_id' => $security1->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
-        $wallet->transactions()->create(['security_id' => $security2->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
+        $wallet->transactions()->create(['asset_id' => $security1->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
+        $wallet->transactions()->create(['asset_id' => $security2->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
-        SecurityPrice::factory()
+        
+SecurityPrice::factory()
             ->for($security1)
             ->create(['date' => $lastTradingDate, 'close' => 100.00]);
-        SecurityPrice::factory()
+        
+SecurityPrice::factory()
             ->for($security2)
             ->create(['date' => $lastTradingDate, 'close' => 100.00]);
 
@@ -185,12 +191,13 @@ class PortfolioPerformanceServiceTest extends TestCase
         $security = Security::factory()->create();
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
-        SecurityPrice::factory()
+        
+SecurityPrice::factory()
             ->for($security)
             ->create(['date' => $lastTradingDate, 'close' => 150.00]);
 
         $wallet->transactions()->create([
-            'security_id' => $security->id,
+            'asset_id' => $security->id,
             'type' => 'buy',
             'quantity' => 10,
             'price' => 100.00,
@@ -228,10 +235,11 @@ class PortfolioPerformanceServiceTest extends TestCase
         $wallet = Wallet::factory()->for($user)->create();
         $security = Security::factory()->create();
 
-        $wallet->transactions()->create(['security_id' => $security->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
+        $wallet->transactions()->create(['asset_id' => $security->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
-        SecurityPrice::factory()
+        
+SecurityPrice::factory()
             ->for($security)
             ->create(['date' => $lastTradingDate, 'close' => 100.00]);
 
@@ -248,12 +256,13 @@ class PortfolioPerformanceServiceTest extends TestCase
         $security = Security::factory()->create();
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
-        SecurityPrice::factory()
+        
+SecurityPrice::factory()
             ->for($security)
             ->create(['date' => $lastTradingDate, 'close' => 100.00]);
 
         $wallet->transactions()->create([
-            'security_id' => $security->id,
+            'asset_id' => $security->id,
             'type' => 'buy',
             'quantity' => 10,
             'price' => 100.00,

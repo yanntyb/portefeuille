@@ -20,21 +20,23 @@ it('displays performance stats with correct values', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => '2025-01-01',
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2025-01-15',
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 120,
     ]);
@@ -65,15 +67,16 @@ it('displays dash for periods without data', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => '2025-05-01',
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 120,
     ]);
@@ -102,21 +105,23 @@ it('shows danger color for negative returns', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => '2025-01-01',
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2025-01-15',
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 80,
     ]);
@@ -142,7 +147,7 @@ it('returns seven period stats', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
     ]);
 
     $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);

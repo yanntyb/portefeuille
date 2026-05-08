@@ -18,7 +18,7 @@ it('renders stats and chart widgets on the PEA edit page', function () {
     $this->actingAs($user);
 
     $security = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $security->id, 'user_id' => $user->id]);
+    Transaction::factory()->pea()->create(['asset_id' => $security->id, 'user_id' => $user->id]);
     $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
 
     livewire(EditWalletSecurity::class, ['record' => $security->id, 'walletId' => $peaWallet->id])
@@ -34,7 +34,7 @@ it('renders stats and chart widgets on the CTO edit page', function () {
     $this->actingAs($user);
 
     $security = Security::factory()->create();
-    Transaction::factory()->cto()->create(['security_id' => $security->id, 'user_id' => $user->id]);
+    Transaction::factory()->cto()->create(['asset_id' => $security->id, 'user_id' => $user->id]);
     $ctoWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'CTO']);
 
     livewire(EditWalletSecurity::class, ['record' => $security->id, 'walletId' => $ctoWallet->id])
@@ -52,15 +52,16 @@ it('computes single security gain data correctly on edit page', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 5,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => now(),
         'close' => 120,
     ]);
@@ -90,7 +91,7 @@ it('only counts transactions of the correct account type', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
@@ -98,15 +99,16 @@ it('only counts transactions of the correct account type', function () {
     ]);
 
     Transaction::factory()->cto()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'quantity' => 20,
         'unit_price' => 200,
         'fees' => 10,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => now(),
         'close' => 120,
     ]);
@@ -133,7 +135,7 @@ it('displays PRU on the edit page gain data', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
@@ -141,15 +143,16 @@ it('displays PRU on the edit page gain data', function () {
     ]);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 200,
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => now(),
         'close' => 150,
     ]);

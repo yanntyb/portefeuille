@@ -58,16 +58,16 @@ class RebalancingCalculatorOrchestrator
         $quantitiesQuery = Transaction::query()
             ->withoutGlobalScope('user')
             ->where('user_id', auth()->id())
-            ->whereIn('security_id', $securityIds);
+            ->whereIn('asset_id', $securityIds);
 
         if ($wallet) {
             $quantitiesQuery->where('wallet_id', $wallet->id);
         }
 
         $quantities = $quantitiesQuery
-            ->selectRaw('security_id, SUM(quantity) as total_qty')
-            ->groupBy('security_id')
-            ->pluck('total_qty', 'security_id');
+            ->selectRaw('asset_id, SUM(quantity) as total_qty')
+            ->groupBy('asset_id')
+            ->pluck('total_qty', 'asset_id');
 
         // Build result array maintaining allocation order
         $result = [];

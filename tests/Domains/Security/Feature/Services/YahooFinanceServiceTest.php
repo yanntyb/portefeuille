@@ -79,10 +79,11 @@ it('fetches and stores prices for a security', function () {
     $count = $service->fetchAndStorePrices($security);
 
     expect($count)->toBe(2);
-    expect(SecurityPrice::where('security_id', $security->id)->count())->toBe(2);
+    expect(
+SecurityPrice::where('asset_id', $security->id)->count())->toBe(2);
 
     $this->assertDatabaseHas('asset_prices', [
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => '2026-02-19',
         'close' => 103.0,
     ]);
@@ -110,8 +111,9 @@ it('resolves the ticker if not set and saves it', function () {
 it('fetches incrementally from the last stored date', function () {
     $security = Security::factory()->create(['ticker' => 'CW8.PA']);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2026-02-18',
         'close' => 100.0,
     ]);
@@ -130,7 +132,8 @@ it('fetches incrementally from the last stored date', function () {
     $count = $service->fetchAndStorePrices($security);
 
     expect($count)->toBe(1);
-    expect(SecurityPrice::where('security_id', $security->id)->count())->toBe(2);
+    expect(
+SecurityPrice::where('asset_id', $security->id)->count())->toBe(2);
 });
 
 it('fetches prices in bulk', function () {
@@ -153,15 +156,18 @@ it('fetches prices in bulk', function () {
     $count = $service->fetchAndStorePricesBulk(Security::whereIn('id', [$security1->id, $security2->id])->get());
 
     expect($count)->toBe(2);
-    expect(SecurityPrice::where('security_id', $security1->id)->count())->toBe(1);
-    expect(SecurityPrice::where('security_id', $security2->id)->count())->toBe(1);
+    expect(
+SecurityPrice::where('asset_id', $security1->id)->count())->toBe(1);
+    expect(
+SecurityPrice::where('asset_id', $security2->id)->count())->toBe(1);
 });
 
 it('bulk fetch skips securities that are already up to date', function () {
     $security = Security::factory()->create(['ticker' => 'CW8.PA']);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => today(),
         'close' => 100.0,
     ]);
@@ -205,12 +211,13 @@ it('fetches from earliest transaction date when prices have a gap', function () 
     $security = Security::factory()->create(['ticker' => 'MEUD.PA']);
 
     Transaction::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => '2023-03-15',
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2024-02-19',
         'close' => 50.0,
     ]);
@@ -233,12 +240,13 @@ it('bulk fetch fills price gaps from earliest transaction date', function () {
     $security = Security::factory()->create(['ticker' => 'MEUD.PA']);
 
     Transaction::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => '2023-03-15',
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2024-02-19',
         'close' => 50.0,
     ]);

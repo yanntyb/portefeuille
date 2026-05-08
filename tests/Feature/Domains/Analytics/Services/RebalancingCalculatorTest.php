@@ -19,14 +19,14 @@ class RebalancingCalculatorTest extends TestCase
     {
         $securities = [
             [
-                'security_id' => 1,
+                'asset_id' => 1,
                 'name' => 'Stock A',
                 'price' => 100.0,
                 'quantity' => 50,
                 'target_percentage' => 50,
             ],
             [
-                'security_id' => 2,
+                'asset_id' => 2,
                 'name' => 'Stock B',
                 'price' => 100.0,
                 'quantity' => 50,
@@ -46,7 +46,7 @@ class RebalancingCalculatorTest extends TestCase
     {
         $securities = [
             [
-                'security_id' => 1,
+                'asset_id' => 1,
                 'name' => 'Stock A',
                 'price' => 100.0,
                 'quantity' => 10,
@@ -64,14 +64,14 @@ class RebalancingCalculatorTest extends TestCase
     {
         $securities = [
             [
-                'security_id' => 1,
+                'asset_id' => 1,
                 'name' => 'Stock A',
                 'price' => 100.0,
                 'quantity' => 50,
                 'target_percentage' => 50,
             ],
             [
-                'security_id' => 2,
+                'asset_id' => 2,
                 'name' => 'Stock B',
                 'price' => 100.0,
                 'quantity' => 50,
@@ -92,7 +92,7 @@ class RebalancingCalculatorTest extends TestCase
     {
         $securities = [
             [
-                'security_id' => 1,
+                'asset_id' => 1,
                 'name' => 'Stock A',
                 'price' => 100.0,
                 'quantity' => 10,
@@ -112,7 +112,7 @@ class RebalancingCalculatorTest extends TestCase
     {
         $securities = [
             [
-                'security_id' => 1,
+                'asset_id' => 1,
                 'name' => 'Stock A',
                 'price' => 50.0,
                 'quantity' => 10,
@@ -130,14 +130,14 @@ class RebalancingCalculatorTest extends TestCase
     {
         $securities = [
             [
-                'security_id' => 1,
+                'asset_id' => 1,
                 'name' => 'Stock A',
                 'price' => 100.0,
                 'quantity' => 50,
                 'target_percentage' => 50,
             ],
             [
-                'security_id' => 2,
+                'asset_id' => 2,
                 'name' => 'Stock B',
                 'price' => 100.0,
                 'quantity' => 50,
@@ -159,14 +159,14 @@ class RebalancingCalculatorTest extends TestCase
     {
         $securities = [
             [
-                'security_id' => 1,
+                'asset_id' => 1,
                 'name' => 'Stock A',
                 'price' => 100.0,
                 'quantity' => 50,
                 'target_percentage' => 50,
             ],
             [
-                'security_id' => 2,
+                'asset_id' => 2,
                 'name' => 'Stock B',
                 'price' => 100.0,
                 'quantity' => 50,
@@ -184,7 +184,7 @@ class RebalancingCalculatorTest extends TestCase
     {
         $securities = [
             [
-                'security_id' => 1,
+                'asset_id' => 1,
                 'name' => 'Stock A',
                 'price' => 33.33,
                 'quantity' => 10,
@@ -202,14 +202,14 @@ class RebalancingCalculatorTest extends TestCase
     {
         $securities = [
             [
-                'security_id' => 1,
+                'asset_id' => 1,
                 'name' => 'Stock A',
                 'price' => 100.0,
                 'quantity' => 20,
                 'target_percentage' => 20,
             ],
             [
-                'security_id' => 2,
+                'asset_id' => 2,
                 'name' => 'Stock B',
                 'price' => 50.0,
                 'quantity' => 40,
@@ -228,21 +228,21 @@ class RebalancingCalculatorTest extends TestCase
     {
         $securities = [
             [
-                'security_id' => 1,
+                'asset_id' => 1,
                 'name' => 'Stock A',
                 'price' => 100.0,
                 'quantity' => 100,
                 'target_percentage' => 33,
             ],
             [
-                'security_id' => 2,
+                'asset_id' => 2,
                 'name' => 'Stock B',
                 'price' => 100.0,
                 'quantity' => 100,
                 'target_percentage' => 33,
             ],
             [
-                'security_id' => 3,
+                'asset_id' => 3,
                 'name' => 'Stock C',
                 'price' => 100.0,
                 'quantity' => 100,

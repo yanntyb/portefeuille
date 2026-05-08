@@ -62,7 +62,7 @@ class YahooFinanceService
             $latestDateObj = $latestDate ? new \DateTimeImmutable($latestDate) : null;
 
             $earliestTransactionDate = DB::table('transactions')
-                ->where('security_id', $security->id)
+                ->where('asset_id', $security->id)
                 ->min('date');
 
             $earliestPriceDates = $this->priceRepository->getEarliestDateForSecurities([$security->id]);
@@ -138,10 +138,10 @@ class YahooFinanceService
         $latestDates = $this->priceRepository->getLatestDateForSecurities($securityIds);
 
         $earliestTransactionDates = DB::table('transactions')
-            ->selectRaw('security_id, MIN(date) as earliest_date')
-            ->whereIn('security_id', $securityIds)
-            ->groupBy('security_id')
-            ->pluck('earliest_date', 'security_id');
+            ->selectRaw('asset_id, MIN(date) as earliest_date')
+            ->whereIn('asset_id', $securityIds)
+            ->groupBy('asset_id')
+            ->pluck('earliest_date', 'asset_id');
 
         $earliestPriceDates = $this->priceRepository->getEarliestDateForSecurities($securityIds);
 

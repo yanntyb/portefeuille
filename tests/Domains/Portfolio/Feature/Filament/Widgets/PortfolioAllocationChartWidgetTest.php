@@ -17,25 +17,27 @@ it('returns labels matching account types and correct valuations', function () {
     $securityCto = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $securityPea->id,
+        'asset_id' => $securityPea->id,
         'quantity' => 10,
         'unit_price' => 100,
     ]);
 
     Transaction::factory()->cto()->create([
-        'security_id' => $securityCto->id,
+        'asset_id' => $securityCto->id,
         'quantity' => 5,
         'unit_price' => 200,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityPea->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityPea->id,
         'date' => now(),
         'close' => 120,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityCto->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityCto->id,
         'date' => now(),
         'close' => 250,
     ]);
@@ -76,7 +78,7 @@ it('only includes accounts with securities that have prices', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
     ]);

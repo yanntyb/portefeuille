@@ -32,7 +32,7 @@ it('can create a PEA transaction', function () {
         ->fillForm([
             'wallet_id' => $wallet->id,
             'date' => '2025-06-15',
-            'security_id' => $security->id,
+            'asset_id' => $security->id,
             'quantity' => 10,
             'unit_price' => 100.50,
             'fees' => 1.99,
@@ -43,7 +43,7 @@ it('can create a PEA transaction', function () {
 
     assertDatabaseHas(Transaction::class, [
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 10,
         'fees' => 1.99,
     ]);
@@ -57,7 +57,7 @@ it('can create a CTO transaction with broker', function () {
         ->fillForm([
             'wallet_id' => $wallet->id,
             'date' => '2025-06-15',
-            'security_id' => $security->id,
+            'asset_id' => $security->id,
             'broker' => 'Degiro',
             'quantity' => 5,
             'unit_price' => 150.00,
@@ -89,7 +89,7 @@ it('can create a Livret transaction', function () {
     assertDatabaseHas(Transaction::class, [
         'wallet_id' => $wallet->id,
         'notes' => 'Versement mensuel',
-        'security_id' => null,
+        'asset_id' => null,
         'broker' => null,
     ]);
 });

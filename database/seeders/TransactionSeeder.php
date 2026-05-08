@@ -125,7 +125,7 @@ class TransactionSeeder extends Seeder
         $prices = json_decode(file_get_contents($filename), true);
 
         $rows = array_map(fn (array $p) => [
-            'security_id' => $security->id,
+            'asset_id' => $security->id,
             'date' => $p['date'],
             'open' => $p['open'],
             'high' => $p['high'],
@@ -148,7 +148,7 @@ class TransactionSeeder extends Seeder
 
         foreach ($allocations as $sector => $weight) {
             $rows[] = [
-                'security_id' => $security->id,
+                'asset_id' => $security->id,
                 'sector' => $sector,
                 'weight' => $weight,
                 'created_at' => now(),
@@ -184,7 +184,7 @@ class TransactionSeeder extends Seeder
             'wallet_id' => $wallet->id,
             'date' => $date->toDateString(),
             'type' => 'buy',
-            'security_id' => $security->id,
+            'asset_id' => $security->id,
             'broker' => $broker,
             'quantity' => $quantity,
             'unit_price' => round($price, 4),
@@ -199,7 +199,7 @@ class TransactionSeeder extends Seeder
     private function getPriceAt(Security $security, CarbonImmutable $date): ?float
     {
         $price = SecurityPrice::query()
-            ->where('security_id', $security->id)
+            ->where('asset_id', $security->id)
             ->where('date', '<=', $date->toDateString())
             ->orderByDesc('date')
             ->value('close');
@@ -233,7 +233,7 @@ class TransactionSeeder extends Seeder
                     : $monthlyBudget / count($securities);
 
                 $price = SecurityPrice::query()
-                    ->where('security_id', $security->id)
+                    ->where('asset_id', $security->id)
                     ->where('date', '<=', $investDate->toDateString())
                     ->orderByDesc('date')
                     ->value('close');
@@ -255,7 +255,7 @@ class TransactionSeeder extends Seeder
                     'user_id' => $user->id,
                     'wallet_id' => $wallet->id,
                     'date' => $investDate->toDateString(),
-                    'security_id' => $security->id,
+                    'asset_id' => $security->id,
                     'broker' => $broker,
                     'quantity' => $quantity,
                     'unit_price' => round($price, 4),

@@ -21,11 +21,13 @@ it('can render the relation manager on the edit page', function () {
 
 it('can list prices for a security', function () {
     $security = Security::factory()->create();
-    $prices = SecurityPrice::factory()
+    $prices = 
+SecurityPrice::factory()
         ->count(3)
-        ->create(['security_id' => $security->id]);
+        ->create(['asset_id' => $security->id]);
 
-    $otherPrice = SecurityPrice::factory()->create();
+    $otherPrice = 
+SecurityPrice::factory()->create();
 
     livewire(PricesRelationManager::class, [
         'ownerRecord' => $security,
@@ -50,7 +52,8 @@ it('does not have create or edit actions', function () {
 
 it('can delete a price record', function () {
     $security = Security::factory()->create();
-    $price = SecurityPrice::factory()->create(['security_id' => $security->id]);
+    $price = 
+SecurityPrice::factory()->create(['security_id' => $security->id]);
 
     livewire(PricesRelationManager::class, [
         'ownerRecord' => $security,
@@ -59,14 +62,16 @@ it('can delete a price record', function () {
         ->callTableAction('delete', $price)
         ->assertHasNoActionErrors();
 
-    expect(SecurityPrice::find($price->id))->toBeNull();
+    expect(
+SecurityPrice::find($price->id))->toBeNull();
 });
 
 it('can bulk delete price records', function () {
     $security = Security::factory()->create();
-    $prices = SecurityPrice::factory()
+    $prices = 
+SecurityPrice::factory()
         ->count(3)
-        ->create(['security_id' => $security->id]);
+        ->create(['asset_id' => $security->id]);
 
     livewire(PricesRelationManager::class, [
         'ownerRecord' => $security,
@@ -75,5 +80,6 @@ it('can bulk delete price records', function () {
         ->callTableBulkAction('delete', $prices)
         ->assertHasNoActionErrors();
 
-    expect(SecurityPrice::where('security_id', $security->id)->count())->toBe(0);
+    expect(
+SecurityPrice::where('asset_id', $security->id)->count())->toBe(0);
 });

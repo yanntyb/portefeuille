@@ -7,7 +7,7 @@ use App\Domains\User\Models\User;
 
 it('belongs to a security', function () {
     $security = Security::factory()->create();
-    $transaction = Transaction::factory()->pea()->create(['security_id' => $security->id]);
+    $transaction = Transaction::factory()->pea()->create(['asset_id' => $security->id]);
 
     expect($transaction->security->id)->toBe($security->id);
 });

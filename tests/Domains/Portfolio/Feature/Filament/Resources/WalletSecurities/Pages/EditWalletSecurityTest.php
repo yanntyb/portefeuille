@@ -15,7 +15,7 @@ it('transaction can be created with wallet and security', function () {
     Transaction::create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => now(),
         'quantity' => 10,
         'unit_price' => 150.50,
@@ -23,7 +23,7 @@ it('transaction can be created with wallet and security', function () {
     ]);
 
     $transaction = Transaction::where('wallet_id', $wallet->id)
-        ->where('security_id', $security->id)
+        ->where('asset_id', $security->id)
         ->first();
 
     expect($transaction)->not->toBeNull()
@@ -42,14 +42,14 @@ it('stores quantity and unit price correctly', function () {
     Transaction::create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => now(),
         'quantity' => 25,
         'unit_price' => 200.75,
         'type' => 'buy',
     ]);
 
-    $transaction = Transaction::where('security_id', $security->id)->first();
+    $transaction = Transaction::where('asset_id', $security->id)->first();
 
     expect((float) $transaction->quantity)->toBe(25.0)
         ->and((float) $transaction->unit_price)->toBe(200.75);

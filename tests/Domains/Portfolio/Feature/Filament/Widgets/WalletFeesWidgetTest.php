@@ -50,10 +50,11 @@ it('calculates transaction fees', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
 
     $security = Security::factory()->create();
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 100, 'date' => now()]);
+    
+SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 100, 'date' => now()]);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 25.50,
@@ -76,10 +77,11 @@ it('calculates percentage fees on valuation', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
 
     $security = Security::factory()->create();
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 100, 'date' => now()]);
+    
+SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 100, 'date' => now()]);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
@@ -109,10 +111,11 @@ it('calculates currency fees with frequency', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
 
     $security = Security::factory()->create();
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 100, 'date' => now()]);
+    
+SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 100, 'date' => now()]);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
     ]);
@@ -141,10 +144,11 @@ it('calculates percentage fees on unrealized gain', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
 
     $security = Security::factory()->create();
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 150, 'date' => now()]);
+    
+SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 150, 'date' => now()]);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
@@ -174,10 +178,11 @@ it('calculates quarterly fees correctly', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
 
     $security = Security::factory()->create();
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 100, 'date' => now()]);
+    
+SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 100, 'date' => now()]);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
     ]);

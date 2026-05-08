@@ -41,7 +41,7 @@ class Transaction extends Model
         'wallet_id',
         'date',
         'type',
-        'security_id',
+        'asset_id',
         'broker',
         'quantity',
         'unit_price',
@@ -70,7 +70,7 @@ class Transaction extends Model
 
     public function security(): BelongsTo
     {
-        return $this->belongsTo(Security::class);
+        return $this->belongsTo(Security::class, 'asset_id');
     }
 
     public function user(): BelongsTo

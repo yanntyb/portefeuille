@@ -23,8 +23,9 @@ it('returns null when not enough common data points', function () {
     // Only 5 days of data (below MIN_DATA_POINTS of 20+1)
     foreach ($securities as $security) {
         for ($i = 0; $i < 5; $i++) {
-            SecurityPrice::factory()->create([
-                'security_id' => $security->id,
+            
+SecurityPrice::factory()->create([
+                'asset_id' => $security->id,
                 'date' => now()->subDays($i),
                 'close' => 100 + $i,
             ]);
@@ -46,8 +47,9 @@ it('returns correlation of 1.0 for identical price series', function () {
 
     foreach ($securities as $security) {
         for ($i = 0; $i < 30; $i++) {
-            SecurityPrice::factory()->create([
-                'security_id' => $security->id,
+            
+SecurityPrice::factory()->create([
+                'asset_id' => $security->id,
                 'date' => $baseDate->copy()->addDays($i),
                 'close' => 100 + $i * 0.5,
             ]);
@@ -76,14 +78,16 @@ it('returns correlation near -1.0 for inversely correlated series', function () 
         $factor = ($i % 2 === 0) ? 1.05 : 0.95;
         $inverseFactor = ($i % 2 === 0) ? 0.95 : 1.05;
 
-        SecurityPrice::factory()->create([
-            'security_id' => $securities[0]->id,
+        
+SecurityPrice::factory()->create([
+            'asset_id' => $securities[0]->id,
             'date' => $baseDate->copy()->addDays($i),
             'close' => 100 * ($factor ** $i),
         ]);
 
-        SecurityPrice::factory()->create([
-            'security_id' => $securities[1]->id,
+        
+SecurityPrice::factory()->create([
+            'asset_id' => $securities[1]->id,
             'date' => $baseDate->copy()->addDays($i),
             'close' => 100 * ($inverseFactor ** $i),
         ]);
@@ -107,8 +111,9 @@ it('filters prices by period', function () {
         $date = now()->subDays(400 - $i);
 
         foreach ($securities as $security) {
-            SecurityPrice::factory()->create([
-                'security_id' => $security->id,
+            
+SecurityPrice::factory()->create([
+                'asset_id' => $security->id,
                 'date' => $date,
                 'close' => 100 + $i * 0.1,
             ]);

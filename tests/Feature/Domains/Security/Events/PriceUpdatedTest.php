@@ -14,7 +14,8 @@ class PriceUpdatedTest extends TestCase
     public function test_creates_event_with_price_and_security(): void
     {
         $security = Security::factory()->create();
-        $price = SecurityPrice::factory()->for($security)->create();
+        $price = 
+SecurityPrice::factory()->for($security)->create();
 
         $event = new PriceUpdated($price, $security);
 
@@ -26,17 +27,20 @@ class PriceUpdatedTest extends TestCase
     public function test_stores_price_reference(): void
     {
         $security = Security::factory()->create();
-        $price = SecurityPrice::factory()->for($security)->create();
+        $price = 
+SecurityPrice::factory()->for($security)->create();
 
         $event = new PriceUpdated($price, $security);
 
-        $this->assertInstanceOf(SecurityPrice::class, $event->price);
+        $this->assertInstanceOf(
+SecurityPrice::class, $event->price);
     }
 
     public function test_stores_security_reference(): void
     {
         $security = Security::factory()->create();
-        $price = SecurityPrice::factory()->for($security)->create();
+        $price = 
+SecurityPrice::factory()->for($security)->create();
 
         $event = new PriceUpdated($price, $security);
 
@@ -46,7 +50,8 @@ class PriceUpdatedTest extends TestCase
     public function test_uses_custom_timestamp(): void
     {
         $security = Security::factory()->create();
-        $price = SecurityPrice::factory()->for($security)->create();
+        $price = 
+SecurityPrice::factory()->for($security)->create();
         $customTime = new \DateTimeImmutable('2025-01-01 12:00:00');
 
         $event = new PriceUpdated($price, $security, $customTime);

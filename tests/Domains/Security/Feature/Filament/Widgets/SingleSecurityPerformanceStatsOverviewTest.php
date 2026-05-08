@@ -16,7 +16,7 @@ it('can render on the edit security page', function () {
     $this->actingAs($user);
 
     $security = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $security->id, 'user_id' => $user->id]);
+    Transaction::factory()->pea()->create(['asset_id' => $security->id, 'user_id' => $user->id]);
     $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
 
     livewire(EditWalletSecurity::class, ['record' => $security->id, 'walletId' => $peaWallet->id])
@@ -33,7 +33,7 @@ it('computes returns for a single security', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'date' => '2025-01-01',
         'quantity' => 10,
@@ -41,14 +41,16 @@ it('computes returns for a single security', function () {
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2025-01-15',
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 120,
     ]);
@@ -76,7 +78,7 @@ it('returns seven period stats for a single security', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
     ]);
 
@@ -101,7 +103,7 @@ it('filters transactions by wallet', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'date' => '2025-01-01',
         'quantity' => 10,
@@ -110,7 +112,7 @@ it('filters transactions by wallet', function () {
     ]);
 
     Transaction::factory()->cto()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'date' => '2025-01-01',
         'quantity' => 5,
@@ -118,14 +120,16 @@ it('filters transactions by wallet', function () {
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2025-01-15',
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 120,
     ]);

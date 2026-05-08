@@ -17,11 +17,11 @@ beforeEach(function () {
 it('can render the PEA wallet page with only PEA securities', function () {
     $peaWallet = Wallet::factory()->pea()->create();
     $peaSecurity = Security::factory()->create();
-    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $peaSecurity->id]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $peaSecurity->id]);
 
     $ctoWallet = Wallet::factory()->cto()->create();
     $ctoSecurity = Security::factory()->create();
-    Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'security_id' => $ctoSecurity->id]);
+    Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'asset_id' => $ctoSecurity->id]);
 
     livewire(WalletPage::class, ['walletId' => $peaWallet->id])
         ->assertOk()
@@ -33,11 +33,11 @@ it('can render the PEA wallet page with only PEA securities', function () {
 it('can render the CTO wallet page with only CTO securities', function () {
     $peaWallet = Wallet::factory()->pea()->create();
     $peaSecurity = Security::factory()->create();
-    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $peaSecurity->id]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $peaSecurity->id]);
 
     $ctoWallet = Wallet::factory()->cto()->create();
     $ctoSecurity = Security::factory()->create();
-    Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'security_id' => $ctoSecurity->id]);
+    Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'asset_id' => $ctoSecurity->id]);
 
     livewire(WalletPage::class, ['walletId' => $ctoWallet->id])
         ->assertOk()
@@ -52,7 +52,7 @@ it('displays aggregated columns for a wallet security', function () {
 
     Transaction::factory()->create([
         'wallet_id' => $peaWallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 5.00,
@@ -60,7 +60,7 @@ it('displays aggregated columns for a wallet security', function () {
 
     Transaction::factory()->create([
         'wallet_id' => $peaWallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 20,
         'unit_price' => 150,
         'fees' => 8.00,
@@ -76,7 +76,7 @@ it('displays aggregated columns for a wallet security', function () {
 it('does not have a create action in the wallet list page', function () {
     $peaWallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
-    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $security->id]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $security->id]);
 
     livewire(WalletPage::class, ['walletId' => $peaWallet->id])
         ->assertTableActionDoesNotExist('create');
@@ -113,10 +113,10 @@ it('can update a security from wallet', function () {
 it('can search wallet securities by name', function () {
     $peaWallet = Wallet::factory()->pea()->create();
     $target = Security::factory()->create(['name' => 'Amundi MSCI World']);
-    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $target->id]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $target->id]);
 
     $other = Security::factory()->create(['name' => 'Chevron Corporation']);
-    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $other->id]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $other->id]);
 
     livewire(WalletPage::class, ['walletId' => $peaWallet->id])
         ->loadTable()

@@ -213,8 +213,8 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
 
         $totalCount = Transaction::query()
             ->where('wallet_id', $this->wallet->id)
-            ->distinct('security_id')
-            ->count('security_id');
+            ->distinct('asset_id')
+            ->count('asset_id');
 
         return $totalCount > $this->tableRecordLimit;
     }

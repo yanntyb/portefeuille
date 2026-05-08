@@ -17,7 +17,7 @@ it('computes basic return without cash flows', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'date' => '2025-01-01',
         'quantity' => 10,
@@ -25,14 +25,16 @@ it('computes basic return without cash flows', function () {
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2025-01-15',
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 120,
     ]);
@@ -59,7 +61,7 @@ it('computes return with cash flows during period', function () {
 
     // Transaction initiale avant la période de 6 mois (2024-12-15)
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'date' => '2024-11-01',
         'quantity' => 10,
@@ -69,7 +71,7 @@ it('computes return with cash flows during period', function () {
 
     // Achat supplémentaire pendant la période
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'date' => '2025-04-01',
         'quantity' => 5,
@@ -78,14 +80,16 @@ it('computes return with cash flows during period', function () {
     ]);
 
     // Prix au début de la période 6m (proche du 2024-12-15)
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2024-12-15',
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 120,
     ]);
@@ -113,7 +117,7 @@ it('returns null when period predates first transaction', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'date' => '2025-05-01',
         'quantity' => 10,
@@ -121,8 +125,9 @@ it('returns null when period predates first transaction', function () {
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 120,
     ]);
@@ -147,7 +152,7 @@ it('uses closest available price when exact start date has no price', function (
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'date' => '2025-01-01',
         'quantity' => 10,
@@ -156,14 +161,16 @@ it('uses closest available price when exact start date has no price', function (
     ]);
 
     // Pas de prix au 2025-03-15 exactement, mais un prix au 2025-03-10
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2025-03-10',
         'close' => 105,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 120,
     ]);

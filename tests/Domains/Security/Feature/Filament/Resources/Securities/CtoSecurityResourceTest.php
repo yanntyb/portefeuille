@@ -17,7 +17,7 @@ beforeEach(function () {
 it('does not have a create action in the CTO wallet page', function () {
     $ctoWallet = Wallet::factory()->cto()->create();
     $security = Security::factory()->create();
-    Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'security_id' => $security->id]);
+    Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'asset_id' => $security->id]);
 
     livewire(WalletPage::class, ['walletId' => $ctoWallet->id])
         ->assertTableActionDoesNotExist('create');
@@ -54,10 +54,10 @@ it('can update a security from CTO wallet', function () {
 it('can search CTO wallet securities by name', function () {
     $ctoWallet = Wallet::factory()->cto()->create();
     $target = Security::factory()->create(['name' => 'Tesla Inc.']);
-    Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'security_id' => $target->id]);
+    Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'asset_id' => $target->id]);
 
     $other = Security::factory()->create(['name' => 'Amazon']);
-    Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'security_id' => $other->id]);
+    Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'asset_id' => $other->id]);
 
     livewire(WalletPage::class, ['walletId' => $ctoWallet->id])
         ->loadTable()
@@ -72,7 +72,7 @@ it('displays aggregated columns for a CTO wallet security', function () {
 
     Transaction::factory()->create([
         'wallet_id' => $ctoWallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 5,
         'unit_price' => 200,
         'fees' => 3.00,
@@ -80,7 +80,7 @@ it('displays aggregated columns for a CTO wallet security', function () {
 
     Transaction::factory()->create([
         'wallet_id' => $ctoWallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 15,
         'unit_price' => 250,
         'fees' => 7.00,

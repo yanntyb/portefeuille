@@ -18,14 +18,14 @@ it('calculates shares to buy for a simple 60/40 split', function () {
 
     $result = $calculator->calculate([
         [
-            'security_id' => 1,
+            'asset_id' => 1,
             'name' => 'NASDAQ ETF',
             'price' => 50.0,
             'quantity' => 0,
             'target_percentage' => 60.0,
         ],
         [
-            'security_id' => 2,
+            'asset_id' => 2,
             'name' => 'STOXX ETF',
             'price' => 30.0,
             'quantity' => 0,
@@ -45,14 +45,14 @@ it('considers existing holdings when calculating', function () {
 
     $result = $calculator->calculate([
         [
-            'security_id' => 1,
+            'asset_id' => 1,
             'name' => 'NASDAQ ETF',
             'price' => 100.0,
             'quantity' => 10,
             'target_percentage' => 60.0,
         ],
         [
-            'security_id' => 2,
+            'asset_id' => 2,
             'name' => 'STOXX ETF',
             'price' => 50.0,
             'quantity' => 5,
@@ -73,14 +73,14 @@ it('uses greedy allocation for remainder', function () {
 
     $result = $calculator->calculate([
         [
-            'security_id' => 1,
+            'asset_id' => 1,
             'name' => 'Cheap ETF',
             'price' => 10.0,
             'quantity' => 0,
             'target_percentage' => 50.0,
         ],
         [
-            'security_id' => 2,
+            'asset_id' => 2,
             'name' => 'Expensive ETF',
             'price' => 10.0,
             'quantity' => 0,
@@ -98,14 +98,14 @@ it('never buys negative shares', function () {
 
     $result = $calculator->calculate([
         [
-            'security_id' => 1,
+            'asset_id' => 1,
             'name' => 'Over-allocated',
             'price' => 100.0,
             'quantity' => 100,
             'target_percentage' => 10.0,
         ],
         [
-            'security_id' => 2,
+            'asset_id' => 2,
             'name' => 'Under-allocated',
             'price' => 50.0,
             'quantity' => 0,
@@ -122,14 +122,14 @@ it('never exceeds the investment amount', function () {
 
     $result = $calculator->calculate([
         [
-            'security_id' => 1,
+            'asset_id' => 1,
             'name' => 'NASDAQ ETF',
             'price' => 65.53,
             'quantity' => 137.77,
             'target_percentage' => 60.0,
         ],
         [
-            'security_id' => 2,
+            'asset_id' => 2,
             'name' => 'STOXX ETF',
             'price' => 305.40,
             'quantity' => 239.75,
@@ -146,7 +146,7 @@ it('handles a single security at 100%', function () {
 
     $result = $calculator->calculate([
         [
-            'security_id' => 1,
+            'asset_id' => 1,
             'name' => 'Only ETF',
             'price' => 75.0,
             'quantity' => 0,
@@ -172,8 +172,9 @@ it('can render the rebalancing calculator page', function () {
 it('validates that total percentage equals 100', function () {
     $user = User::factory()->create();
     $security = Security::factory()->create();
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 50.0,
     ]);
 
@@ -183,7 +184,7 @@ it('validates that total percentage equals 100', function () {
         ->fillForm([
             'amount' => 500,
             'allocations' => [
-                ['security_id' => $security->id, 'target_percentage' => 30],
+                ['asset_id' => $security->id, 'target_percentage' => 30],
             ],
         ])
         ->call('calculate');
@@ -197,8 +198,10 @@ it('calculates and displays results', function () {
     $security1 = Security::factory()->create(['name' => 'NASDAQ ETF']);
     $security2 = Security::factory()->create(['name' => 'STOXX ETF']);
 
-    SecurityPrice::factory()->create(['security_id' => $security1->id, 'close' => 50.0]);
-    SecurityPrice::factory()->create(['security_id' => $security2->id, 'close' => 30.0]);
+    
+SecurityPrice::factory()->create(['security_id' => $security1->id, 'close' => 50.0]);
+    
+SecurityPrice::factory()->create(['security_id' => $security2->id, 'close' => 30.0]);
 
     $this->actingAs($user);
 
@@ -206,8 +209,8 @@ it('calculates and displays results', function () {
         ->fillForm([
             'amount' => 500,
             'allocations' => [
-                ['security_id' => $security1->id, 'target_percentage' => 60],
-                ['security_id' => $security2->id, 'target_percentage' => 40],
+                ['asset_id' => $security1->id, 'target_percentage' => 60],
+                ['asset_id' => $security2->id, 'target_percentage' => 40],
             ],
         ])
         ->call('calculate');
@@ -220,7 +223,8 @@ it('calculates and displays results', function () {
 it('can save and load a profile', function () {
     $user = User::factory()->create();
     $security = Security::factory()->create();
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 100.0]);
+    
+SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 100.0]);
 
     $this->actingAs($user);
 
@@ -229,7 +233,7 @@ it('can save and load a profile', function () {
             'amount' => 500,
             'wallet_id' => null,
             'allocations' => [
-                ['security_id' => $security->id, 'target_percentage' => 100],
+                ['asset_id' => $security->id, 'target_percentage' => 100],
             ],
         ])
         ->call('saveProfile')
@@ -247,7 +251,8 @@ it('can save and load a profile', function () {
 it('considers wallet when calculating quantities', function () {
     $user = User::factory()->create();
     $security = Security::factory()->create();
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 100.0]);
+    
+SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 100.0]);
 
     $peaWallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
     $ctoWallet = Wallet::factory()->cto()->create(['user_id' => $user->id]);
@@ -255,14 +260,14 @@ it('considers wallet when calculating quantities', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $peaWallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 5,
     ]);
 
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $ctoWallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 3,
     ]);
 
@@ -273,7 +278,7 @@ it('considers wallet when calculating quantities', function () {
             'amount' => 500,
             'wallet_id' => $peaWallet->id,
             'allocations' => [
-                ['security_id' => $security->id, 'target_percentage' => 100],
+                ['asset_id' => $security->id, 'target_percentage' => 100],
             ],
         ])
         ->call('calculate');
@@ -285,7 +290,7 @@ it('considers wallet when calculating quantities', function () {
             'amount' => 500,
             'wallet_id' => null,
             'allocations' => [
-                ['security_id' => $security->id, 'target_percentage' => 100],
+                ['asset_id' => $security->id, 'target_percentage' => 100],
             ],
         ])
         ->call('calculate');

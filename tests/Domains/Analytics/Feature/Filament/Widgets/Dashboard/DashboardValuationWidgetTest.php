@@ -27,8 +27,9 @@ it('returns correct valuation from buy transaction', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);
@@ -36,7 +37,7 @@ it('returns correct valuation from buy transaction', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'type' => 'buy',
         'quantity' => 10,
         'unit_price' => 100,
@@ -58,8 +59,9 @@ it('shows success color when valuation exceeds invested', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);
@@ -67,7 +69,7 @@ it('shows success color when valuation exceeds invested', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'type' => 'buy',
         'quantity' => 10,
         'unit_price' => 100,
@@ -87,8 +89,9 @@ it('shows danger color when valuation is below invested', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 99,
         'date' => now(),
     ]);
@@ -96,7 +99,7 @@ it('shows danger color when valuation is below invested', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'type' => 'buy',
         'quantity' => 10,
         'unit_price' => 100,
@@ -117,8 +120,9 @@ it('aggregates across PEA and CTO wallets', function () {
     $ctoWallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'CTO']);
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);
@@ -126,7 +130,7 @@ it('aggregates across PEA and CTO wallets', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $peaWallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'type' => 'buy',
         'quantity' => 10,
         'unit_price' => 100,
@@ -135,7 +139,7 @@ it('aggregates across PEA and CTO wallets', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $ctoWallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'type' => 'buy',
         'quantity' => 5,
         'unit_price' => 100,
@@ -157,8 +161,9 @@ it('uses total_invested from scope not raw query', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);
@@ -166,7 +171,7 @@ it('uses total_invested from scope not raw query', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'type' => 'buy',
         'quantity' => 10,
         'unit_price' => 100,

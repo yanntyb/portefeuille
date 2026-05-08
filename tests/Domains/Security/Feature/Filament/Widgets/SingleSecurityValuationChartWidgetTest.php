@@ -45,7 +45,7 @@ it('returns empty when no prices', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
     ]);
@@ -72,14 +72,15 @@ it('builds chart with valuation dataset', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'date' => $transactionDate,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 110,
         'date' => now(),
     ]);
@@ -107,7 +108,7 @@ it('filters transactions to specified walletId', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet1->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'date' => $transactionDate,
@@ -116,14 +117,15 @@ it('filters transactions to specified walletId', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet2->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 5,
         'unit_price' => 100,
         'date' => $transactionDate,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 110,
         'date' => now(),
     ]);
@@ -157,7 +159,7 @@ it('uses all transactions when walletId is null', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet1->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'date' => $transactionDate,
@@ -166,14 +168,15 @@ it('uses all transactions when walletId is null', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet2->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 5,
         'unit_price' => 100,
         'date' => $transactionDate,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 110,
         'date' => now(),
     ]);

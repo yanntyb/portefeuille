@@ -34,7 +34,7 @@ class EditWalletSecurity extends EditSecurity
                         ...$data,
                         'user_id' => auth()->id(),
                         'wallet_id' => $this->walletId,
-                        'security_id' => $this->record->id,
+                        'asset_id' => $this->record->id,
                     ]);
 
                     Notification::make()

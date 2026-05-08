@@ -122,8 +122,9 @@ it('renders wallet page with all widgets', function () {
     $this->actingAs($user);
 
     $security = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $security->id]);
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => now()]);
+    Transaction::factory()->pea()->create(['asset_id' => $security->id]);
+    
+SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => now()]);
     $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
 
     livewire(WalletPage::class, ['walletId' => $peaWallet->id])

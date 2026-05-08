@@ -28,11 +28,12 @@ it('returns securities from page table query when tablePageClass is set', functi
     $transaction = \App\Domains\Portfolio\Models\Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 100,
     ]);
 
@@ -58,17 +59,19 @@ it('filters by shownSecurityIds when set', function () {
     \App\Domains\Portfolio\Models\Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security1->id,
+        'asset_id' => $security1->id,
     ]);
 
     \App\Domains\Portfolio\Models\Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security2->id,
+        'asset_id' => $security2->id,
     ]);
 
-    SecurityPrice::factory()->create(['security_id' => $security1->id]);
-    SecurityPrice::factory()->create(['security_id' => $security2->id]);
+    
+SecurityPrice::factory()->create(['security_id' => $security1->id]);
+    
+SecurityPrice::factory()->create(['security_id' => $security2->id]);
 
     $widget = livewire(GainStatsOverview::class, [
         'tablePageClass' => \App\Domains\Portfolio\Filament\Pages\WalletPage::class,
@@ -92,11 +95,12 @@ it('loads latestPrice relationship when withPrice is true', function () {
     \App\Domains\Portfolio\Models\Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 100,
     ]);
 
@@ -120,11 +124,12 @@ it('calls getFilteredSecurities with withPrice parameter', function () {
     \App\Domains\Portfolio\Models\Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 100,
     ]);
 

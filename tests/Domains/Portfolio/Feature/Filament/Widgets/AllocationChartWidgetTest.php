@@ -18,25 +18,27 @@ it('returns labels and percentages per security', function () {
     $securityB = Security::factory()->create(['name' => 'Action B']);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $securityA->id,
+        'asset_id' => $securityA->id,
         'quantity' => 10,
         'unit_price' => 100,
     ]);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $securityB->id,
+        'asset_id' => $securityB->id,
         'quantity' => 5,
         'unit_price' => 200,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityA->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityA->id,
         'date' => now(),
         'close' => 120,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityB->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityB->id,
         'date' => now(),
         'close' => 250,
     ]);
@@ -71,7 +73,7 @@ it('excludes securities with no latest price', function () {
     $security = Security::factory()->create(['name' => 'No Price']);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
     ]);

@@ -14,15 +14,16 @@ it('computes valuation, plus-value, and fees correctly', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => auth()->id(),
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 5,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => now(),
         'close' => 120,
     ]);
@@ -48,7 +49,7 @@ it('aggregates across PEA and CTO accounts', function () {
     $securityCto = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $securityPea->id,
+        'asset_id' => $securityPea->id,
         'user_id' => auth()->id(),
         'quantity' => 10,
         'unit_price' => 100,
@@ -56,21 +57,23 @@ it('aggregates across PEA and CTO accounts', function () {
     ]);
 
     Transaction::factory()->cto()->create([
-        'security_id' => $securityCto->id,
+        'asset_id' => $securityCto->id,
         'user_id' => auth()->id(),
         'quantity' => 5,
         'unit_price' => 200,
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityPea->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityPea->id,
         'date' => now(),
         'close' => 120,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $securityCto->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $securityCto->id,
         'date' => now(),
         'close' => 250,
     ]);
@@ -87,14 +90,15 @@ it('shows success color when plus-value is positive', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => now(),
         'close' => 150,
     ]);
@@ -111,15 +115,16 @@ it('shows danger color when plus-value is negative', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => now(),
         'close' => 80,
     ]);
@@ -136,15 +141,16 @@ it('displays plus-value percentage in description', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => now(),
         'close' => 120,
     ]);
@@ -163,15 +169,16 @@ it('displays fees percentage in description', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
         'fees' => 15,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => now(),
         'close' => 120,
     ]);

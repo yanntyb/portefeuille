@@ -12,7 +12,7 @@ use function Pest\Laravel\mock;
 
 it('fetches sectors for securities needing update', function () {
     $security = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $security->id]);
+    Transaction::factory()->pea()->create(['asset_id' => $security->id]);
 
     Security::factory()->create(); // without transactions
 
@@ -28,9 +28,9 @@ it('fetches sectors for securities needing update', function () {
 
 it('skips securities with recently updated sectors', function () {
     $security = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $security->id]);
+    Transaction::factory()->pea()->create(['asset_id' => $security->id]);
     SecuritySector::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'updated_at' => now()->subDays(3),
     ]);
 
@@ -57,7 +57,7 @@ it('fetches sectors for a specific security', function () {
 
 it('handles ticker resolution errors gracefully', function () {
     $security = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $security->id]);
+    Transaction::factory()->pea()->create(['asset_id' => $security->id]);
 
     mock(YahooFinanceService::class, function (MockInterface $mock) use ($security) {
         $mock->shouldReceive('fetchAndStoreSectors')
@@ -71,9 +71,9 @@ it('handles ticker resolution errors gracefully', function () {
 
 it('fetches sectors when existing sectors are older than 7 days', function () {
     $security = Security::factory()->create();
-    Transaction::factory()->pea()->create(['security_id' => $security->id]);
+    Transaction::factory()->pea()->create(['asset_id' => $security->id]);
     SecuritySector::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'updated_at' => now()->subDays(8),
     ]);
 

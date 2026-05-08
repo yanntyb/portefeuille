@@ -23,7 +23,7 @@ class TransactionFactory extends Factory
             'user_id' => auth()->id() ?? User::factory()->create()->id,
             'wallet_id' => Wallet::factory(),
             'date' => fake()->dateTimeBetween('-2 years', 'now'),
-            'security_id' => Security::factory(),
+            'asset_id' => Security::factory(),
             'quantity' => fake()->randomFloat(4, 1, 100),
             'unit_price' => fake()->randomFloat(4, 5, 500),
             'type' => TransactionType::Buy,
@@ -77,7 +77,7 @@ class TransactionFactory extends Factory
             'wallet_id' => auth()->check()
                 ? Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'Livret'])->id
                 : Wallet::factory()->livret(),
-            'security_id' => null,
+            'asset_id' => null,
             'broker' => null,
             'quantity' => null,
             'unit_price' => null,

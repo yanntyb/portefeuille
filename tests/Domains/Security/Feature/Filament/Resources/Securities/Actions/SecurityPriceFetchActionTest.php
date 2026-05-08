@@ -15,15 +15,16 @@ it('fetches missing prices on page load via refreshPrices', function () {
     $this->actingAs($user);
 
     $security = Security::factory()->create(['ticker' => 'AAPL']);
-    Transaction::factory()->pea()->create(['security_id' => $security->id, 'user_id' => $user->id]);
+    Transaction::factory()->pea()->create(['asset_id' => $security->id, 'user_id' => $user->id]);
     $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
 
     $mock = Mockery::mock(YahooFinanceService::class);
     $mock->shouldReceive('fetchAndStorePricesBulk')
         ->once()
         ->andReturnUsing(function ($securities) use ($security): int {
-            SecurityPrice::factory()->create([
-                'security_id' => $security->id,
+            
+SecurityPrice::factory()->create([
+                'asset_id' => $security->id,
                 'date' => now(),
                 'close' => 100,
             ]);

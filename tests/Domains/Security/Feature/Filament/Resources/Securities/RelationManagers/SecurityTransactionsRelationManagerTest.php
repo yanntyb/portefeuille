@@ -24,7 +24,7 @@ it('can list transactions for a security', function () {
     $transactions = Transaction::factory()
         ->count(3)
         ->pea()
-        ->create(['security_id' => $security->id]);
+        ->create(['asset_id' => $security->id]);
 
     $otherTransaction = Transaction::factory()->pea()->create();
 

@@ -31,8 +31,8 @@ it('shows only the authenticated user transaction count', function () {
     $userWallet = Wallet::factory()->create(['user_id' => $user->id]);
     $otherUserWallet = Wallet::factory()->create(['user_id' => $otherUser->id]);
 
-    Transaction::factory()->count(3)->create(['security_id' => $security->id, 'user_id' => $user->id, 'wallet_id' => $userWallet->id]);
-    Transaction::factory()->count(5)->create(['security_id' => $security->id, 'user_id' => $otherUser->id, 'wallet_id' => $otherUserWallet->id]);
+    Transaction::factory()->count(3)->create(['asset_id' => $security->id, 'user_id' => $user->id, 'wallet_id' => $userWallet->id]);
+    Transaction::factory()->count(5)->create(['asset_id' => $security->id, 'user_id' => $otherUser->id, 'wallet_id' => $otherUserWallet->id]);
 
     livewire(ListAllSecurities::class)
         ->assertTableColumnStateSet('user_transactions_count', 3, $security);

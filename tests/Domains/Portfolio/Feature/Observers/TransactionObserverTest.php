@@ -12,7 +12,7 @@ it('sets realized_gain to null for buy transactions', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
 
     $transaction = Transaction::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'wallet_id' => $wallet->id,
         'user_id' => $user->id,
         'quantity' => 10,
@@ -29,7 +29,7 @@ it('calculates realized_gain for sell transactions', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
 
     Transaction::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'wallet_id' => $wallet->id,
         'user_id' => $user->id,
         'quantity' => 10,
@@ -37,7 +37,7 @@ it('calculates realized_gain for sell transactions', function () {
     ]);
 
     $sellTransaction = Transaction::factory()->sell()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'wallet_id' => $wallet->id,
         'user_id' => $user->id,
         'quantity' => 5,
@@ -56,7 +56,7 @@ it('calculates pru with multiple buy transactions', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
 
     Transaction::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'wallet_id' => $wallet->id,
         'user_id' => $user->id,
         'quantity' => 10,
@@ -64,7 +64,7 @@ it('calculates pru with multiple buy transactions', function () {
     ]);
 
     Transaction::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'wallet_id' => $wallet->id,
         'user_id' => $user->id,
         'quantity' => 5,
@@ -72,7 +72,7 @@ it('calculates pru with multiple buy transactions', function () {
     ]);
 
     $sellTransaction = Transaction::factory()->sell()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'wallet_id' => $wallet->id,
         'user_id' => $user->id,
         'quantity' => 3,
@@ -92,7 +92,7 @@ it('handles sell with no prior buy transactions', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
 
     $sellTransaction = Transaction::factory()->sell()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'wallet_id' => $wallet->id,
         'user_id' => $user->id,
         'quantity' => 5,
@@ -111,7 +111,7 @@ it('recalculates realized_gain on update', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
 
     Transaction::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'wallet_id' => $wallet->id,
         'user_id' => $user->id,
         'quantity' => 10,
@@ -119,7 +119,7 @@ it('recalculates realized_gain on update', function () {
     ]);
 
     $sellTransaction = Transaction::factory()->sell()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'wallet_id' => $wallet->id,
         'user_id' => $user->id,
         'quantity' => 5,
@@ -144,7 +144,7 @@ it('filters by wallet when calculating pru', function () {
     $ctoWallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'CTO']);
 
     Transaction::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'wallet_id' => $peaWallet->id,
         'user_id' => $user->id,
         'quantity' => 10,
@@ -152,7 +152,7 @@ it('filters by wallet when calculating pru', function () {
     ]);
 
     Transaction::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'wallet_id' => $ctoWallet->id,
         'user_id' => $user->id,
         'quantity' => 10,
@@ -160,7 +160,7 @@ it('filters by wallet when calculating pru', function () {
     ]);
 
     $peaSellTransaction = Transaction::factory()->sell()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'wallet_id' => $peaWallet->id,
         'user_id' => $user->id,
         'quantity' => 5,

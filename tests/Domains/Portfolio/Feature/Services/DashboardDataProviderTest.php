@@ -9,8 +9,9 @@ use App\Domains\Security\Models\SecurityPrice;
 it('returns securities with latest price for a given wallet', function () {
     $peaWallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
-    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $security->id]);
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => today(), 'close' => 150]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $security->id]);
+    
+SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => today(), 'close' => 150]);
 
     $provider = app(DashboardDataProvider::class);
     $securities = $provider->securitiesForWallet($peaWallet);
@@ -24,8 +25,9 @@ it('returns securities with latest price for a given wallet', function () {
 it('caches results within the same instance', function () {
     $peaWallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
-    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $security->id]);
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => today(), 'close' => 100]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $security->id]);
+    
+SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => today(), 'close' => 100]);
 
     $provider = app(DashboardDataProvider::class);
 
@@ -40,8 +42,8 @@ it('separates securities by wallet', function () {
     $ctoWallet = Wallet::factory()->cto()->create();
     $peaSecurity = Security::factory()->create();
     $ctoSecurity = Security::factory()->create();
-    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'security_id' => $peaSecurity->id]);
-    Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'security_id' => $ctoSecurity->id]);
+    Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $peaSecurity->id]);
+    Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'asset_id' => $ctoSecurity->id]);
 
     $provider = app(DashboardDataProvider::class);
 

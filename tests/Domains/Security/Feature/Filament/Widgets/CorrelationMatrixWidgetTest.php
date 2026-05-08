@@ -21,23 +21,25 @@ it('returns null without tablePageClass', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security1->id,
+        'asset_id' => $security1->id,
     ]);
 
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security2->id,
+        'asset_id' => $security2->id,
     ]);
 
     for ($i = 0; $i < 25; $i++) {
-        SecurityPrice::factory()->create([
-            'security_id' => $security1->id,
+        
+SecurityPrice::factory()->create([
+            'asset_id' => $security1->id,
             'date' => now()->subDays(25 - $i),
         ]);
 
-        SecurityPrice::factory()->create([
-            'security_id' => $security2->id,
+        
+SecurityPrice::factory()->create([
+            'asset_id' => $security2->id,
             'date' => now()->subDays(25 - $i),
         ]);
     }
@@ -59,11 +61,12 @@ it('returns null with fewer than two securities in wallet', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
     ]);
 
-    SecurityPrice::factory()->count(25)->create([
-        'security_id' => $security->id,
+    
+SecurityPrice::factory()->count(25)->create([
+        'asset_id' => $security->id,
     ]);
 
     $data = livewire(CorrelationMatrixWidget::class, [
@@ -87,23 +90,25 @@ it('returns CorrelationResult with sufficient data', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security1->id,
+        'asset_id' => $security1->id,
     ]);
 
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security2->id,
+        'asset_id' => $security2->id,
     ]);
 
     for ($i = 0; $i < 25; $i++) {
-        SecurityPrice::factory()->create([
-            'security_id' => $security1->id,
+        
+SecurityPrice::factory()->create([
+            'asset_id' => $security1->id,
             'date' => now()->subDays(25 - $i),
         ]);
 
-        SecurityPrice::factory()->create([
-            'security_id' => $security2->id,
+        
+SecurityPrice::factory()->create([
+            'asset_id' => $security2->id,
             'date' => now()->subDays(25 - $i),
         ]);
     }
@@ -130,34 +135,37 @@ it('filters to shownSecurityIds', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security1->id,
+        'asset_id' => $security1->id,
     ]);
 
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security2->id,
+        'asset_id' => $security2->id,
     ]);
 
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security3->id,
+        'asset_id' => $security3->id,
     ]);
 
     for ($i = 0; $i < 25; $i++) {
-        SecurityPrice::factory()->create([
-            'security_id' => $security1->id,
+        
+SecurityPrice::factory()->create([
+            'asset_id' => $security1->id,
             'date' => now()->subDays(25 - $i),
         ]);
 
-        SecurityPrice::factory()->create([
-            'security_id' => $security2->id,
+        
+SecurityPrice::factory()->create([
+            'asset_id' => $security2->id,
             'date' => now()->subDays(25 - $i),
         ]);
 
-        SecurityPrice::factory()->create([
-            'security_id' => $security3->id,
+        
+SecurityPrice::factory()->create([
+            'asset_id' => $security3->id,
             'date' => now()->subDays(25 - $i),
         ]);
     }
@@ -185,23 +193,25 @@ it('returns null when shownSecurityIds reduces below two', function () {
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security1->id,
+        'asset_id' => $security1->id,
     ]);
 
     Transaction::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
-        'security_id' => $security2->id,
+        'asset_id' => $security2->id,
     ]);
 
     for ($i = 0; $i < 25; $i++) {
-        SecurityPrice::factory()->create([
-            'security_id' => $security1->id,
+        
+SecurityPrice::factory()->create([
+            'asset_id' => $security1->id,
             'date' => now()->subDays(25 - $i),
         ]);
 
-        SecurityPrice::factory()->create([
-            'security_id' => $security2->id,
+        
+SecurityPrice::factory()->create([
+            'asset_id' => $security2->id,
             'date' => now()->subDays(25 - $i),
         ]);
     }
