@@ -5,14 +5,14 @@ use App\Domains\Security\Models\SecurityPrice;
 
 it('belongs to a security', function () {
     $security = Security::factory()->create();
-    $price = 
+    $price =
 SecurityPrice::factory()->create(['security_id' => $security->id]);
 
     expect($price->security->id)->toBe($security->id);
 });
 
 it('casts date to Carbon instance', function () {
-    $price = 
+    $price =
 SecurityPrice::factory()->create(['date' => '2024-06-15']);
 
     expect($price->date)->toBeInstanceOf(\Illuminate\Support\Carbon::class)
@@ -20,13 +20,13 @@ SecurityPrice::factory()->create(['date' => '2024-06-15']);
 });
 
 it('casts OHLC fields as decimals', function () {
-    $price = 
+    $price =
 SecurityPrice::factory()->create([
-        'open' => 100.1234,
-        'high' => 105.5678,
-        'low' => 98.9012,
-        'close' => 103.4567,
-    ]);
+    'open' => 100.1234,
+    'high' => 105.5678,
+    'low' => 98.9012,
+    'close' => 103.4567,
+]);
 
     $price->refresh();
 
@@ -37,7 +37,7 @@ SecurityPrice::factory()->create([
 });
 
 it('casts volume as integer', function () {
-    $price = 
+    $price =
 SecurityPrice::factory()->create(['volume' => 50000]);
 
     $price->refresh();

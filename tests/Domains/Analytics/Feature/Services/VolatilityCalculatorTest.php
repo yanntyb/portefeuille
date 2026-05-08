@@ -38,10 +38,10 @@ describe('VolatilityCalculator', function () {
         $security = Security::factory()->create();
 
         for ($i = 0; $i < 30; $i++) {
-            
-SecurityPrice::factory()
-                ->for($security)
-                ->create(['close' => 100.0 + $i]);
+
+            SecurityPrice::factory()
+                            ->for($security)
+                            ->create(['close' => 100.0 + $i]);
         }
 
         $calculator = app(VolatilityCalculator::class);
@@ -65,10 +65,10 @@ SecurityPrice::factory()
 
         $security = Security::factory()->create();
         for ($i = 0; $i < 30; $i++) {
-            
-SecurityPrice::factory()
-                ->for($security)
-                ->create(['close' => 100.0 + $i]);
+
+            SecurityPrice::factory()
+                            ->for($security)
+                            ->create(['close' => 100.0 + $i]);
         }
 
         \App\Domains\Portfolio\Models\Transaction::factory()
@@ -90,10 +90,10 @@ SecurityPrice::factory()
         $security2 = Security::factory()->create();
 
         for ($i = 0; $i < 30; $i++) {
-            
-SecurityPrice::factory()->for($security1)->create(['close' => 100.0 + $i]);
-            
-SecurityPrice::factory()->for($security2)->create(['close' => 200.0 + $i]);
+
+            SecurityPrice::factory()->for($security1)->create(['close' => 100.0 + $i]);
+
+            SecurityPrice::factory()->for($security2)->create(['close' => 200.0 + $i]);
         }
 
         \App\Domains\Portfolio\Models\Transaction::factory()

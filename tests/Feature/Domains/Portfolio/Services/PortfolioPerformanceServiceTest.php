@@ -41,10 +41,10 @@ class PortfolioPerformanceServiceTest extends TestCase
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
         foreach ($securities as $security) {
-            
-SecurityPrice::factory()
-                ->for($security)
-                ->create(['date' => $lastTradingDate, 'close' => 100.00]);
+
+            SecurityPrice::factory()
+                            ->for($security)
+                            ->create(['date' => $lastTradingDate, 'close' => 100.00]);
         }
 
         $result = $this->service->computeSecurityVisibility($wallet, []);
@@ -69,10 +69,10 @@ SecurityPrice::factory()
         $wallet->transactions()->create(['asset_id' => $pricelessSecurity->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
-        
-SecurityPrice::factory()
-            ->for($pricedSecurity)
-            ->create(['date' => $lastTradingDate]);
+
+        SecurityPrice::factory()
+                    ->for($pricedSecurity)
+                    ->create(['date' => $lastTradingDate]);
 
         $result = $this->service->computeSecurityVisibility($wallet, []);
 
@@ -92,10 +92,10 @@ SecurityPrice::factory()
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
         foreach ($securities as $security) {
-            
-SecurityPrice::factory()
-                ->for($security)
-                ->create(['date' => $lastTradingDate, 'close' => 100.00]);
+
+            SecurityPrice::factory()
+                            ->for($security)
+                            ->create(['date' => $lastTradingDate, 'close' => 100.00]);
         }
 
         $hiddenIds = [$securities[0]->id, $securities[1]->id];
@@ -130,10 +130,10 @@ SecurityPrice::factory()
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
         foreach ($securities as $security) {
-            
-SecurityPrice::factory()
-                ->for($security)
-                ->create(['date' => $lastTradingDate, 'close' => 100.00]);
+
+            SecurityPrice::factory()
+                            ->for($security)
+                            ->create(['date' => $lastTradingDate, 'close' => 100.00]);
         }
 
         $valuation = $this->service->getTotalValuation($wallet, []);
@@ -152,14 +152,14 @@ SecurityPrice::factory()
         $wallet->transactions()->create(['asset_id' => $security2->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
-        
-SecurityPrice::factory()
-            ->for($security1)
-            ->create(['date' => $lastTradingDate, 'close' => 100.00]);
-        
-SecurityPrice::factory()
-            ->for($security2)
-            ->create(['date' => $lastTradingDate, 'close' => 100.00]);
+
+        SecurityPrice::factory()
+                    ->for($security1)
+                    ->create(['date' => $lastTradingDate, 'close' => 100.00]);
+
+        SecurityPrice::factory()
+                    ->for($security2)
+                    ->create(['date' => $lastTradingDate, 'close' => 100.00]);
 
         $valuationAll = $this->service->getTotalValuation($wallet, []);
         $valuationFiltered = $this->service->getTotalValuation($wallet, [$security1->id]);
@@ -191,10 +191,10 @@ SecurityPrice::factory()
         $security = Security::factory()->create();
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
-        
-SecurityPrice::factory()
-            ->for($security)
-            ->create(['date' => $lastTradingDate, 'close' => 150.00]);
+
+        SecurityPrice::factory()
+                    ->for($security)
+                    ->create(['date' => $lastTradingDate, 'close' => 150.00]);
 
         $wallet->transactions()->create([
             'asset_id' => $security->id,
@@ -238,10 +238,10 @@ SecurityPrice::factory()
         $wallet->transactions()->create(['asset_id' => $security->id, 'type' => 'buy', 'quantity' => 10, 'price' => 100.00, 'fees' => 0, 'date' => now()]);
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
-        
-SecurityPrice::factory()
-            ->for($security)
-            ->create(['date' => $lastTradingDate, 'close' => 100.00]);
+
+        SecurityPrice::factory()
+                    ->for($security)
+                    ->create(['date' => $lastTradingDate, 'close' => 100.00]);
 
         $formatted = $this->service->getFormattedValuation($wallet, []);
 
@@ -256,10 +256,10 @@ SecurityPrice::factory()
         $security = Security::factory()->create();
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
-        
-SecurityPrice::factory()
-            ->for($security)
-            ->create(['date' => $lastTradingDate, 'close' => 100.00]);
+
+        SecurityPrice::factory()
+                    ->for($security)
+                    ->create(['date' => $lastTradingDate, 'close' => 100.00]);
 
         $wallet->transactions()->create([
             'asset_id' => $security->id,

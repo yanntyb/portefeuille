@@ -10,8 +10,8 @@ it('returns securities with latest price for a given wallet', function () {
     $peaWallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $security->id]);
-    
-SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => today(), 'close' => 150]);
+
+    SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => today(), 'close' => 150]);
 
     $provider = app(DashboardDataProvider::class);
     $securities = $provider->securitiesForWallet($peaWallet);
@@ -26,8 +26,8 @@ it('caches results within the same instance', function () {
     $peaWallet = Wallet::factory()->pea()->create();
     $security = Security::factory()->create();
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $security->id]);
-    
-SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => today(), 'close' => 100]);
+
+    SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => today(), 'close' => 100]);
 
     $provider = app(DashboardDataProvider::class);
 
