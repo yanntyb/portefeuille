@@ -28,7 +28,7 @@ it('transaction can be created with wallet and security', function () {
 
     expect($transaction)->not->toBeNull()
         ->and($transaction->wallet_id)->toBe($wallet->id)
-        ->and($transaction->security_id)->toBe($security->id)
+        ->and($transaction->asset_id)->toBe($security->id)
         ->and($transaction->user_id)->toBe($user->id);
 });
 

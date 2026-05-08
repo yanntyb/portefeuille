@@ -248,8 +248,8 @@ class RealizedGainCalculatorTest extends TestCase
     public function test_isolates_transactions_by_wallet(): void
     {
         $user = User::factory()->create();
-        $wallet1 = Wallet::factory()->for($user)->create();
-        $wallet2 = Wallet::factory()->for($user)->create();
+        $wallet1 = Wallet::factory()->for($user)->pea()->create();
+        $wallet2 = Wallet::factory()->for($user)->cto()->create();
         $security = Security::factory()->create();
 
         Transaction::factory()

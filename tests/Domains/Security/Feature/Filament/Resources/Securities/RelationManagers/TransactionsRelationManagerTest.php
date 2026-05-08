@@ -45,7 +45,7 @@ it('stores latest security price', function () {
 
     $price =
 SecurityPrice::query()
-    ->where('asset_id', $security->id)
+    ->where('security_id', $security->id)
     ->orderByDesc('date')
     ->value('close');
 
