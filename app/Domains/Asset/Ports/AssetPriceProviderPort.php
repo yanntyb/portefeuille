@@ -17,7 +17,7 @@ interface AssetPriceProviderPort
      *
      * @return Collection<int, array{date: string, close: float, open?: float, high?: float, low?: float, volume?: int}>
      */
-    public function getPriceHistory(int $assetId, string $startDate = null, string $endDate = null): Collection;
+    public function getPriceHistory(int $assetId, ?string $startDate = null, ?string $endDate = null): Collection;
 
     /**
      * Check if adapter supports asset type

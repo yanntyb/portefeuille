@@ -1,7 +1,6 @@
 <?php
 
 use App\Domains\Asset\Ports\AssetPriceProviderPort;
-use App\Domains\Asset\Enums\AssetType;
 
 it('defines provider contract', function () {
     $reflection = new ReflectionClass(AssetPriceProviderPort::class);

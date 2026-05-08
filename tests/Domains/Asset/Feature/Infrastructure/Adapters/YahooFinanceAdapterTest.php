@@ -1,7 +1,7 @@
 <?php
 
-use App\Domains\Asset\Infrastructure\Adapters\YahooFinanceAdapter;
 use App\Domains\Asset\Enums\AssetType;
+use App\Domains\Asset\Infrastructure\Adapters\YahooFinanceAdapter;
 use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 
@@ -20,7 +20,7 @@ it('gets current price for asset', function () {
         'date' => '2026-05-08',
     ]);
 
-    $adapter = new YahooFinanceAdapter();
+    $adapter = new YahooFinanceAdapter;
     $price = $adapter->getCurrentPrice($security->id);
 
     expect($price)->toBe(130.00);
@@ -29,7 +29,7 @@ it('gets current price for asset', function () {
 it('returns null when no prices exist', function () {
     $security = Security::factory()->create();
 
-    $adapter = new YahooFinanceAdapter();
+    $adapter = new YahooFinanceAdapter;
     $price = $adapter->getCurrentPrice($security->id);
 
     expect($price)->toBeNull();
@@ -58,7 +58,7 @@ it('gets price history for date range', function () {
         'volume' => 1500,
     ]);
 
-    $adapter = new YahooFinanceAdapter();
+    $adapter = new YahooFinanceAdapter;
     $history = $adapter->getPriceHistory($security->id);
 
     expect($history)->toHaveCount(2)
@@ -87,7 +87,7 @@ it('filters price history by date range', function () {
         'close' => 120.0,
     ]);
 
-    $adapter = new YahooFinanceAdapter();
+    $adapter = new YahooFinanceAdapter;
     $history = $adapter->getPriceHistory($security->id, '2026-05-01', '2026-05-09');
 
     expect($history)->toHaveCount(1)
@@ -95,7 +95,7 @@ it('filters price history by date range', function () {
 });
 
 it('supports Stock and ETF types', function () {
-    $adapter = new YahooFinanceAdapter();
+    $adapter = new YahooFinanceAdapter;
 
     expect($adapter->supports(AssetType::Stock))->toBeTrue()
         ->and($adapter->supports(AssetType::ETF))->toBeTrue()
