@@ -12,7 +12,7 @@
 | 7 | Repositories & Contracts | ✅ **Done** | 432 pass | 7 |
 | 8A | Asset Domain Skeleton | ✅ **Done** | 438 pass (+6) | 1 |
 | 8B | Rename security_prices → asset_prices | ✅ **Done** | 316 pass | 1 |
-| 8C | security_id → asset_id + caller updates | ✅ ~Done (78%) | 465/594 pass | 2 |
+| 8C | security_id → asset_id + caller updates | ✅ **Done** (100%) | 587/587 pass | 5 |
 | 9 | Ports & Projections | ⏳ Pending | — | — |
 | 10 | Bitcoin Support | ⏳ Pending | — | — |
 
