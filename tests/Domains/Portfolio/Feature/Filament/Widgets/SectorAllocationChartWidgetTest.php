@@ -99,13 +99,13 @@ it('shows sector weights as percentages for a single security', function () {
     $security = Security::factory()->create();
 
     SecuritySector::factory()->create([
-        'asset_id' => $security->id,
+        'security_id' => $security->id,
         'sector' => Sector::Technology,
         'weight' => 0.6,
     ]);
 
     SecuritySector::factory()->create([
-        'asset_id' => $security->id,
+        'security_id' => $security->id,
         'sector' => Sector::Healthcare,
         'weight' => 0.4,
     ]);

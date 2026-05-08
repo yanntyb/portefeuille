@@ -26,13 +26,13 @@ it('fetches and stores sectors for an ETF with multiple sectors', function () {
     expect(SecuritySector::where('security_id', $security->id)->count())->toBe(3);
 
     $this->assertDatabaseHas('security_sectors', [
-        'asset_id' => $security->id,
+        'security_id' => $security->id,
         'sector' => 'technology',
         'weight' => 0.2283,
     ]);
 
     $this->assertDatabaseHas('security_sectors', [
-        'asset_id' => $security->id,
+        'security_id' => $security->id,
         'sector' => 'healthcare',
         'weight' => 0.1341,
     ]);
@@ -78,7 +78,7 @@ it('maps unknown sectors to Other', function () {
     expect($count)->toBe(2);
 
     $this->assertDatabaseHas('security_sectors', [
-        'asset_id' => $security->id,
+        'security_id' => $security->id,
         'sector' => Sector::Other->value,
     ]);
 });
@@ -87,7 +87,7 @@ it('removes old sectors not present in the new result', function () {
     $security = Security::factory()->create(['ticker' => 'CW8.PA']);
 
     SecuritySector::factory()->create([
-        'asset_id' => $security->id,
+        'security_id' => $security->id,
         'sector' => Sector::Energy,
         'weight' => 0.1,
     ]);

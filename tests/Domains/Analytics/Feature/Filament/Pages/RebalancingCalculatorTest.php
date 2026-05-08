@@ -174,7 +174,7 @@ it('validates that total percentage equals 100', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+        'security_id' => $security->id,
         'close' => 50.0,
     ]);
 

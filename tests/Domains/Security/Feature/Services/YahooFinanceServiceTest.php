@@ -83,7 +83,7 @@ it('fetches and stores prices for a security', function () {
         SecurityPrice::where('security_id', $security->id)->count())->toBe(2);
 
     $this->assertDatabaseHas('asset_prices', [
-        'asset_id' => $security->id,
+        'security_id' => $security->id,
         'date' => '2026-02-19',
         'close' => 103.0,
     ]);
@@ -112,7 +112,7 @@ it('fetches incrementally from the last stored date', function () {
     $security = Security::factory()->create(['ticker' => 'CW8.PA']);
 
     SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+        'security_id' => $security->id,
         'date' => '2026-02-18',
         'close' => 100.0,
     ]);
@@ -165,7 +165,7 @@ it('bulk fetch skips securities that are already up to date', function () {
     $security = Security::factory()->create(['ticker' => 'CW8.PA']);
 
     SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+        'security_id' => $security->id,
         'date' => today(),
         'close' => 100.0,
     ]);
@@ -214,7 +214,7 @@ it('fetches from earliest transaction date when prices have a gap', function () 
     ]);
 
     SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+        'security_id' => $security->id,
         'date' => '2024-02-19',
         'close' => 50.0,
     ]);
@@ -242,7 +242,7 @@ it('bulk fetch fills price gaps from earliest transaction date', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+        'security_id' => $security->id,
         'date' => '2024-02-19',
         'close' => 50.0,
     ]);

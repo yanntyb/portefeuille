@@ -30,7 +30,7 @@ it('skips securities with recently updated sectors', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['asset_id' => $security->id]);
     SecuritySector::factory()->create([
-        'asset_id' => $security->id,
+        'security_id' => $security->id,
         'updated_at' => now()->subDays(3),
     ]);
 
@@ -73,7 +73,7 @@ it('fetches sectors when existing sectors are older than 7 days', function () {
     $security = Security::factory()->create();
     Transaction::factory()->pea()->create(['asset_id' => $security->id]);
     SecuritySector::factory()->create([
-        'asset_id' => $security->id,
+        'security_id' => $security->id,
         'updated_at' => now()->subDays(8),
     ]);
 
