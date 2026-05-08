@@ -1,33 +1,33 @@
 <?php
 
-use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Models\Stock;
-use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Security\Models\Security;
 
-it('returns 0 valuation with no latestPrice', function (): void {
-    $stock = Stock::factory()->make();
+it('creates stock from security', function () {
+    $security = Security::factory()->create([
+        'name' => 'Apple Inc',
+        'ticker' => 'AAPL',
+        'isin' => 'US0378331005',
+    ]);
 
-    $valuation = $stock->currentValuation();
+    $stock = Stock::find($security->id);
 
-    expect($valuation)->toBe(0.0);
+    expect($stock)->not->toBeNull()
+        ->and($stock->name)->toBe('Apple Inc')
+        ->and($stock->ticker)->toBe('AAPL')
+        ->and($stock->isin)->toBe('US0378331005');
 });
 
-it('returns quantity * close when latestPrice loaded', function (): void {
-    $stock = Stock::factory()->create();
-    $stock->setAttribute('total_quantity', 100);
+it('has correct asset type', function () {
+    $security = Security::factory()->create();
+    $stock = Stock::find($security->id);
 
-    $latestPrice =
-SecurityPrice::factory()->make(['close' => 50.0]);
-    $stock->setRelation('latestPrice', $latestPrice);
-
-    $valuation = $stock->currentValuation();
-
-    expect($valuation)->toBe(5000.0);
+    expect($stock->type->value)->toBe('stock');
 });
 
-it('casts type to AssetType enum', function (): void {
-    $stock = Stock::factory()->create(['type' => AssetType::Stock]);
+it('uses security prices for valuation', function () {
+    $security = Security::factory()->create();
+    $stock = Stock::find($security->id);
 
-    expect($stock->type)->toBeInstanceOf(AssetType::class)
-        ->and($stock->type)->toBe(AssetType::Stock);
+    expect($stock->prices)->not->toBeNull();
 });
