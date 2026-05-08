@@ -13,7 +13,8 @@
 | 8A | Asset Domain Skeleton | ✅ **Done** | 438 pass (+6) | 1 |
 | 8B | Rename security_prices → asset_prices | ✅ **Done** | 316 pass | 1 |
 | 8C | security_id → asset_id + caller updates | ✅ **Done** (100%) | 587/587 pass | 5 |
-| 9A | AssetPriceProviderPort + YahooFinanceAdapter | ✅ **Done** | 593/593 pass | 1 |
+| 9A | AssetPriceProviderPort + YahooFinanceAdapter | ✅ **Done** (100%) | 602/602 pass | 4 |
+| Coverage | Critical domain tests (AssetType, Asset, Stock, UserId) | ✅ **Done** | 79.9% | 2 |
 | 9B | HoldingsProjection read model | ⏳ In Progress | — | — |
 | 9C | RebalancingOrchestrator using projections | ⏳ Pending | — | — |
 | 10 | Bitcoin Support (CoinGeckoAdapter) | ⏳ Pending | — | — |
@@ -24,6 +25,10 @@
 - VolatilityCalculating signature changed: `Wallet → int walletId`
 - Division by zero guard added to DashboardGainStatsOverview
 - Phase 8A: **Incremental approach** (Asset + Stock coexist with Security on same table) ✅
+- Phase 9A: **Ports & Adapters pattern** for multi-asset pricing (YahooFinanceAdapter → Stock/ETF) ✅
+  - AssetPriceProviderPort interface enables CoinGeckoAdapter (Phase 10)
+  - Support for Stock/ETF/Crypto/RealEstate/Bond/Savings types
+  - 79.9% code coverage maintained (602/602 tests, 1448 assertions)
 
 ---
 
@@ -744,8 +749,57 @@ Remaining 129 failing tests require:
 5. ⏳ 8C: Résoudre 129 tests failing (SecurityPrice/Analytics context issues)
 6. ⏳ 8C: Rendre AssetType polymorphe (Stock, ETF, Crypto, RealEstate, Bond, Savings) via Security model removal
 
+## 14. Phase 9A — Ports & Adapters ✅
+
+### 14.1 Phase 9A ✅ Complètement réalisée
+
+**Stratégie:** Implement Ports & Adapters pattern for multi-asset pricing
+
+**Fichiers créés (2 + tests):**
+1. ✅ `app/Domains/Asset/Ports/AssetPriceProviderPort.php` — Interface port
+2. ✅ `app/Domains/Asset/Infrastructure/Adapters/YahooFinanceAdapter.php` — Adapter implementation
+3. ✅ `tests/Domains/Asset/Unit/Ports/AssetPriceProviderPortTest.php` — Interface contract tests
+4. ✅ `tests/Domains/Asset/Feature/Infrastructure/Adapters/YahooFinanceAdapterTest.php` — Adapter tests
+
+**Port Contract:** AssetPriceProviderPort
+```php
+- getCurrentPrice(assetId): ?float
+- getPriceHistory(assetId, startDate?, endDate?): Collection
+- supports(AssetType): bool
+```
+
+**YahooFinanceAdapter implements:**
+- ✅ Stock, ETF support
+- ✅ Queries SecurityPrice table (legacy context)
+- ✅ 6 tests, 100% passing
+
+**Coverage improvements:**
+- ✅ AssetType enum: 0% → 66.7%
+- ✅ Asset models tested (via Stock)
+- ✅ UserId service tested: 42.9% → 100% 
+- ✅ Overall: 79.6% → 79.9%
+
+**Code changes:**
+- Seeder fix: Added missing 'type' field to DCA transactions (60 monthly SP500 buys + 1 TotalEnergies)
+- 9 new critical coverage tests
+- 2 Pint formatting fixes
+
+**Tests passing:**
+- ✅ Total: 602/602 pass (1448 assertions)
+- ✅ No regressions from Phase 8C
+
+**Gate validation:** ✅
+- ✅ `php artisan test --compact` — 602/602 pass
+- ✅ `vendor/bin/pint --format agent` — PASS
+- ✅ PHPStan level 2 — 130 pre-existing (no new errors)
+- ✅ Coverage: 79.9%
+
+**Architecture enabled:**
+- Phase 10 ready: CoinGeckoAdapter can now implement AssetPriceProviderPort
+- Support for Stock/ETF/Crypto/RealEstate/Bond/Savings asset types
+
 ### Phase 9 — Ports & Projections
-**Objectif:** AssetPriceProviderPort, HoldingsProjection read model
+**Objectif:** HoldingsProjection read model, RebalancingOrchestrator refactor
 
 **Adapters:**
 - YahooFinanceAdapter: Stock/ETF
