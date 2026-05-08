@@ -13,8 +13,10 @@
 | 8A | Asset Domain Skeleton | ✅ **Done** | 438 pass (+6) | 1 |
 | 8B | Rename security_prices → asset_prices | ✅ **Done** | 316 pass | 1 |
 | 8C | security_id → asset_id + caller updates | ✅ **Done** (100%) | 587/587 pass | 5 |
-| 9 | Ports & Projections | ⏳ Pending | — | — |
-| 10 | Bitcoin Support | ⏳ Pending | — | — |
+| 9A | AssetPriceProviderPort + YahooFinanceAdapter | ✅ **Done** | 593/593 pass | 1 |
+| 9B | HoldingsProjection read model | ⏳ In Progress | — | — |
+| 9C | RebalancingOrchestrator using projections | ⏳ Pending | — | — |
+| 10 | Bitcoin Support (CoinGeckoAdapter) | ⏳ Pending | — | — |
 
 **Key Decisions Implemented:**
 - Phase 7B: **Option 3** (Request-scoped UserId service) ✅
