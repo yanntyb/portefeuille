@@ -29,16 +29,14 @@ it('returns labels and percentages per security', function () {
         'unit_price' => 200,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $securityA->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $securityA->id,
         'date' => now(),
         'close' => 120,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $securityB->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $securityB->id,
         'date' => now(),
         'close' => 250,
     ]);

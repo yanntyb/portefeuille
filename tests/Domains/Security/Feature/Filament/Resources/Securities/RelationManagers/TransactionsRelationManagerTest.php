@@ -36,18 +36,18 @@ it('stores sell transaction', function () {
 
 it('stores latest security price', function () {
     $security = Security::factory()->create();
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'close' => 125.50,
         'date' => now(),
     ]);
 
-    $price = 
+    $price =
 SecurityPrice::query()
-        ->where('asset_id', $security->id)
-        ->orderByDesc('date')
-        ->value('close');
+    ->where('asset_id', $security->id)
+    ->orderByDesc('date')
+    ->value('close');
 
     expect((float) $price)->toBe(125.50);
 });

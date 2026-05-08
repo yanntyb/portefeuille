@@ -103,7 +103,7 @@ class TransactionRepositoryTest extends TestCase
         $transaction = new Transaction;
         $transaction->user_id = $user->id;
         $transaction->wallet_id = $wallet->id;
-        $transaction->security_id = $security->id;
+        $transaction->asset_id = $security->id;
         $transaction->date = now();
         $transaction->type = 'buy';
         $transaction->quantity = 10;

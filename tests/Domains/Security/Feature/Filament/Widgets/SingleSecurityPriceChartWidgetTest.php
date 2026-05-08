@@ -39,23 +39,20 @@ it('returns prices in chronological order', function () {
 
     $security = Security::factory()->create();
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'close' => 100,
         'date' => now()->subDays(2),
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'close' => 110,
         'date' => now()->subDays(1),
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);
@@ -74,16 +71,14 @@ it('maps close prices to dataset data', function () {
 
     $security = Security::factory()->create();
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'close' => 100.5,
         'date' => now()->subDays(1),
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'close' => 110.75,
         'date' => now(),
     ]);
@@ -102,9 +97,8 @@ it('heading shows latest price', function () {
 
     $security = Security::factory()->create();
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'close' => 150,
         'date' => now(),
     ]);

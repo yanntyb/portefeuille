@@ -24,9 +24,8 @@ it('computes valuation and plus-value correctly', function () {
         'fees' => 5,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'date' => now(),
         'close' => 120,
     ]);
@@ -61,9 +60,8 @@ it('displays percentage alongside plus-value', function () {
         'fees' => 0,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'date' => now(),
         'close' => 120,
     ]);
@@ -97,9 +95,8 @@ it('shows positive flag when plus-value is positive', function () {
         'fees' => 0,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'date' => now(),
         'close' => 150,
     ]);
@@ -130,9 +127,8 @@ it('shows negative flag when plus-value is negative', function () {
         'fees' => 0,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'date' => now(),
         'close' => 80,
     ]);
@@ -163,9 +159,8 @@ it('displays fees with percentage', function () {
         'fees' => 10,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'date' => now(),
         'close' => 120,
     ]);

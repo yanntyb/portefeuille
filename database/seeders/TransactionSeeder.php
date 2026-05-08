@@ -233,7 +233,7 @@ class TransactionSeeder extends Seeder
                     : $monthlyBudget / count($securities);
 
                 $price = SecurityPrice::query()
-                    ->where('asset_id', $security->id)
+                    ->where('security_id', $security->id)
                     ->where('date', '<=', $investDate->toDateString())
                     ->orderByDesc('date')
                     ->value('close');

@@ -59,9 +59,8 @@ it('computes single security gain data correctly on edit page', function () {
         'fees' => 5,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'date' => now(),
         'close' => 120,
     ]);
@@ -106,9 +105,8 @@ it('only counts transactions of the correct account type', function () {
         'fees' => 10,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'date' => now(),
         'close' => 120,
     ]);
@@ -150,9 +148,8 @@ it('displays PRU on the edit page gain data', function () {
         'fees' => 0,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'date' => now(),
         'close' => 150,
     ]);

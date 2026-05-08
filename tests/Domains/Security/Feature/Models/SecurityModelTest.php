@@ -10,7 +10,7 @@ use Carbon\Carbon;
 
 it('has many transactions', function () {
     $security = Security::factory()->create();
-    Transaction::factory()->pea()->count(3)->create(['security_id' => $security->id]);
+    Transaction::factory()->pea()->count(3)->create(['asset_id' => $security->id]);
 
     expect($security->transactions)->toHaveCount(3);
 });
@@ -47,7 +47,7 @@ it('scopes securities by account type with aggregations', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
@@ -55,7 +55,7 @@ it('scopes securities by account type with aggregations', function () {
     ]);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'quantity' => 20,
         'unit_price' => 150,
@@ -63,7 +63,7 @@ it('scopes securities by account type with aggregations', function () {
     ]);
 
     Transaction::factory()->cto()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'quantity' => 5,
         'unit_price' => 200,
@@ -84,7 +84,7 @@ it('does not include securities without transactions for the account type', func
     $this->actingAs($user);
 
     $security = Security::factory()->create();
-    Transaction::factory()->cto()->create(['security_id' => $security->id, 'user_id' => $user->id]);
+    Transaction::factory()->cto()->create(['asset_id' => $security->id, 'user_id' => $user->id]);
 
     $peaWallet = Wallet::firstOrCreate(['user_id' => $user->id, 'name' => 'PEA']);
     $peaResults = Security::query()->forWallet($peaWallet)->get();
@@ -166,7 +166,7 @@ it('computes PRU correctly', function () {
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
@@ -174,7 +174,7 @@ it('computes PRU correctly', function () {
     ]);
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 200,
@@ -194,7 +194,7 @@ it('scopes securities for authenticated user across all account types', function
     $security = Security::factory()->create();
 
     Transaction::factory()->pea()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'quantity' => 10,
         'unit_price' => 100,
@@ -202,7 +202,7 @@ it('scopes securities for authenticated user across all account types', function
     ]);
 
     Transaction::factory()->cto()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'user_id' => $user->id,
         'quantity' => 5,
         'unit_price' => 200,

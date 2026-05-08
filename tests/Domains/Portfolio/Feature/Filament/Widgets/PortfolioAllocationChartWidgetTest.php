@@ -28,16 +28,14 @@ it('returns labels matching account types and correct valuations', function () {
         'unit_price' => 200,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $securityPea->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $securityPea->id,
         'date' => now(),
         'close' => 120,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $securityCto->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $securityCto->id,
         'date' => now(),
         'close' => 250,
     ]);

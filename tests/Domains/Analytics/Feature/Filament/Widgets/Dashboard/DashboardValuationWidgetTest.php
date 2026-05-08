@@ -27,9 +27,8 @@ it('returns correct valuation from buy transaction', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);
@@ -59,9 +58,8 @@ it('shows success color when valuation exceeds invested', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);
@@ -89,9 +87,8 @@ it('shows danger color when valuation is below invested', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'close' => 99,
         'date' => now(),
     ]);
@@ -120,9 +117,8 @@ it('aggregates across PEA and CTO wallets', function () {
     $ctoWallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'CTO']);
     $security = Security::factory()->create();
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);
@@ -161,9 +157,8 @@ it('uses total_invested from scope not raw query', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
     $security = Security::factory()->create();
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);

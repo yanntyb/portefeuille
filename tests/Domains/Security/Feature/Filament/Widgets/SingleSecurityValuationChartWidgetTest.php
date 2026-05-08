@@ -78,9 +78,8 @@ it('builds chart with valuation dataset', function () {
         'date' => $transactionDate,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'close' => 110,
         'date' => now(),
     ]);
@@ -123,9 +122,8 @@ it('filters transactions to specified walletId', function () {
         'date' => $transactionDate,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'close' => 110,
         'date' => now(),
     ]);
@@ -174,9 +172,8 @@ it('uses all transactions when walletId is null', function () {
         'date' => $transactionDate,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'close' => 110,
         'date' => now(),
     ]);

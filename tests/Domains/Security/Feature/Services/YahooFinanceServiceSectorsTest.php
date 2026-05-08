@@ -23,7 +23,7 @@ it('fetches and stores sectors for an ETF with multiple sectors', function () {
     $count = $service->fetchAndStoreSectors($security);
 
     expect($count)->toBe(3);
-    expect(SecuritySector::where('asset_id', $security->id)->count())->toBe(3);
+    expect(SecuritySector::where('security_id', $security->id)->count())->toBe(3);
 
     $this->assertDatabaseHas('security_sectors', [
         'asset_id' => $security->id,
@@ -54,7 +54,7 @@ it('fetches and stores a single sector for a stock', function () {
 
     expect($count)->toBe(1);
 
-    $sector = SecuritySector::where('asset_id', $security->id)->first();
+    $sector = SecuritySector::where('security_id', $security->id)->first();
 
     expect($sector->sector)->toBe(Sector::Technology)
         ->and((float) $sector->weight)->toBe(1.0);
@@ -103,7 +103,7 @@ it('removes old sectors not present in the new result', function () {
     $service = app(YahooFinanceService::class);
     $service->fetchAndStoreSectors($security);
 
-    expect(SecuritySector::where('asset_id', $security->id)->count())->toBe(1);
+    expect(SecuritySector::where('security_id', $security->id)->count())->toBe(1);
 
     $this->assertDatabaseMissing('security_sectors', [
         'asset_id' => $security->id,
@@ -144,5 +144,5 @@ it('returns zero when no sector data is available', function () {
     $count = $service->fetchAndStoreSectors($security);
 
     expect($count)->toBe(0);
-    expect(SecuritySector::where('asset_id', $security->id)->count())->toBe(0);
+    expect(SecuritySector::where('security_id', $security->id)->count())->toBe(0);
 });

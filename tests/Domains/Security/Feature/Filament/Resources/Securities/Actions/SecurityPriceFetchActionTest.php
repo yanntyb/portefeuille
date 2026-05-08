@@ -22,9 +22,9 @@ it('fetches missing prices on page load via refreshPrices', function () {
     $mock->shouldReceive('fetchAndStorePricesBulk')
         ->once()
         ->andReturnUsing(function ($securities) use ($security): int {
-            
-SecurityPrice::factory()->create([
-                'asset_id' => $security->id,
+
+            SecurityPrice::factory()->create([
+                'security_id' => $security->id,
                 'date' => now(),
                 'close' => 100,
             ]);

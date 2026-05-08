@@ -27,16 +27,14 @@ it('displays performance stats with correct values', function () {
         'fees' => 0,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'date' => '2025-01-15',
         'close' => 100,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 120,
     ]);
@@ -74,9 +72,8 @@ it('displays dash for periods without data', function () {
         'fees' => 0,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 120,
     ]);
@@ -112,16 +109,14 @@ it('shows danger color for negative returns', function () {
         'fees' => 0,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'date' => '2025-01-15',
         'close' => 100,
     ]);
 
-    
-SecurityPrice::factory()->create([
-        'asset_id' => $security->id,
+    SecurityPrice::factory()->create([
+        'security_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 80,
     ]);
