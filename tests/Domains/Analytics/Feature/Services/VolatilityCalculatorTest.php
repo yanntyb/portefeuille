@@ -29,7 +29,7 @@ describe('VolatilityCalculator', function () {
         $security = Security::factory()->create();
         $calculator = app(VolatilityCalculator::class);
 
-        $result = $calculator->forSecurity($security);
+        $result = $calculator->forAsset($security);
 
         expect($result)->toBeNull();
     });
@@ -40,12 +40,12 @@ describe('VolatilityCalculator', function () {
         for ($i = 0; $i < 30; $i++) {
 
             SecurityPrice::factory()
-                            ->for($security)
-                            ->create(['close' => 100.0 + $i]);
+                ->for($security)
+                ->create(['close' => 100.0 + $i]);
         }
 
         $calculator = app(VolatilityCalculator::class);
-        $result = $calculator->forSecurity($security);
+        $result = $calculator->forAsset($security);
 
         expect($result)->toBeFloat()
             ->toBeGreaterThan(0);
@@ -67,8 +67,8 @@ describe('VolatilityCalculator', function () {
         for ($i = 0; $i < 30; $i++) {
 
             SecurityPrice::factory()
-                            ->for($security)
-                            ->create(['close' => 100.0 + $i]);
+                ->for($security)
+                ->create(['close' => 100.0 + $i]);
         }
 
         \App\Domains\Portfolio\Models\Transaction::factory()

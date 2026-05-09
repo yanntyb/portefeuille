@@ -2,7 +2,7 @@
 
 namespace App\Domains\Analytics\Contracts;
 
-use App\Domains\Security\Models\Security;
+use App\Domains\Asset\Models\Asset;
 
 interface VolatilityCalculating
 {
@@ -10,7 +10,7 @@ interface VolatilityCalculating
      * Calculate annualized volatility for a security based on historical prices.
      * Returns null if insufficient price data (< 30 prices).
      */
-    public function forSecurity(Security $security): ?float;
+    public function forAsset(Asset $asset): ?float;
 
     /**
      * Calculate weighted portfolio volatility for a wallet.

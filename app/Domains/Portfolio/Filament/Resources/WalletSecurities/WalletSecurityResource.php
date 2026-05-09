@@ -2,16 +2,16 @@
 
 namespace App\Domains\Portfolio\Filament\Resources\WalletSecurities;
 
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Portfolio\Filament\Resources\WalletSecurities\Pages\EditWalletSecurity;
 use App\Domains\Security\Filament\Resources\SecurityBase\RelationManagers\TransactionsRelationManager;
 use App\Domains\Security\Filament\Resources\SecurityBase\Schemas\SecurityForm;
-use App\Domains\Security\Models\Security;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 
 class WalletSecurityResource extends Resource
 {
-    protected static ?string $model = Security::class;
+    protected static ?string $model = Asset::class;
 
     protected static bool $shouldRegisterNavigation = false;
 

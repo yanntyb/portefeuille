@@ -2,6 +2,7 @@
 
 namespace App\Domains\Portfolio\Filament\Pages;
 
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Portfolio\Data\AccountPageData;
 use App\Domains\Portfolio\Filament\Resources\WalletSecurities\WalletSecurityResource;
 use App\Domains\Portfolio\Models\Transaction;
@@ -16,7 +17,6 @@ use App\Domains\Security\Filament\Widgets\SectorAllocationChartWidget;
 use App\Domains\Security\Filament\Widgets\ValuationChartWidget;
 use App\Domains\Security\Filament\Widgets\ValuationStatOverview;
 use App\Domains\Security\Jobs\UpdateSecuritiesJob;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Services\PriceRefreshService;
 use App\Infrastructure\Concerns\HasTableStore;
 use App\Infrastructure\Contracts\TableStoreable;
@@ -67,10 +67,10 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
     public function scopedSecuritiesQuery(): Builder
     {
         if ($this->wallet === null) {
-            return Security::query()->forAuth()->whereRaw('0 = 1');
+            return Asset::query()->forAuth()->whereRaw('0 = 1');
         }
 
-        return Security::query()->forWallet($this->wallet);
+        return Asset::query()->forWallet($this->wallet);
     }
 
     public function mount(): void
@@ -148,7 +148,7 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
             ->pluck('securities.id')
             ->all();
 
-        $securities = Security::query()
+        $securities = Asset::query()
             ->whereIn('id', $securityIds)
             ->whereNotNull('ticker')
             ->with('currentPrice')
@@ -234,10 +234,10 @@ abstract class AccountPage extends Page implements HasTable, TableStoreable
         return SecuritiesTable::configure(
             $table
                 ->query(fn (): Builder => $this->wallet
-                    ? Security::query()->forWallet($this->wallet)->limit($this->tableRecordLimit)
-                    : Security::query()->forAuth()->whereRaw('0 = 1'))
+                    ? Asset::query()->forWallet($this->wallet)->limit($this->tableRecordLimit)
+                    : Asset::query()->forAuth()->whereRaw('0 = 1'))
                 ->paginated(false)
-                ->recordUrl(fn (Security $record): string => WalletSecurityResource::getUrl('edit', [
+                ->recordUrl(fn (Asset $record): string => WalletSecurityResource::getUrl('edit', [
                     'record' => $record,
                     'walletId' => $this->wallet?->id,
                 ]))

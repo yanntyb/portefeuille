@@ -8,7 +8,7 @@ use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardPerformanceStatsOv
 use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardSectorAllocationChartWidget;
 use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardSecuritiesTableWidget;
 use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardValuationWidget;
-use App\Domains\Security\Models\Security;
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Security\Services\PriceRefreshService;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Schemas\Components\Livewire;
@@ -56,7 +56,7 @@ class Dashboard extends BaseDashboard
 
     public function loadPrices(): void
     {
-        $securities = Security::query()
+        $securities = Asset::query()
             ->whereHas('transactions')
             ->whereNotNull('ticker')
             ->with('currentPrice')

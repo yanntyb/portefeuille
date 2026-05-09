@@ -2,7 +2,7 @@
 
 namespace App\Infrastructure\Filament\Concerns;
 
-use App\Domains\Security\Models\Security;
+use App\Domains\Asset\Models\Asset;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -104,12 +104,12 @@ trait HasReactiveTableProperties
     }
 
     /**
-     * @return Collection<int, Security>
+     * @return Collection<int, Asset>
      */
     protected function getFilteredSecurities(bool $withPrice = true, bool $reorder = false): Collection
     {
         if ($this->tablePageClass === null) {
-            return Security::query()->where('id', null)->get();
+            return Asset::query()->where('id', null)->get();
         }
 
         $query = $this->getPageTableQuery();

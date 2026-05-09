@@ -2,8 +2,8 @@
 
 namespace App\Domains\Analytics\Filament\Widgets\Dashboard;
 
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Security\Filament\Resources\SecurityBase\Tables\SecuritiesTable;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Infrastructure\Support\MarketCalendar;
 use Filament\Tables\Table;
@@ -30,7 +30,7 @@ class DashboardSecuritiesTableWidget extends TableWidget
 
     private function computeSecurityVisibility(): void
     {
-        $allIds = Security::query()
+        $allIds = Asset::query()
             ->whereHas('transactions', fn ($q) => $q->where('user_id', auth()->id()))
             ->pluck('id')
             ->all();
@@ -63,7 +63,7 @@ class DashboardSecuritiesTableWidget extends TableWidget
         return SecuritiesTable::configure(
             $table
                 ->heading(null)
-                ->query(fn (): Builder => Security::query()->forAuth())
+                ->query(fn (): Builder => Asset::query()->forAuth())
         );
     }
 }

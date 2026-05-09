@@ -3,9 +3,9 @@
 namespace App\Domains\Analytics\Services;
 
 use App\Domains\Analytics\Contracts\Rebalancing;
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Portfolio\Models\HoldingsProjection;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\Security;
 
 class RebalancingCalculatorOrchestrator
 {
@@ -48,7 +48,7 @@ class RebalancingCalculatorOrchestrator
         }
 
         // Bulk load securities with prices
-        $securities = Security::query()
+        $securities = Asset::query()
             ->with('latestPrice')
             ->whereIn('id', $securityIds)
             ->get()

@@ -56,7 +56,7 @@ class SingleSecurityGainStatsOverview extends Widget
         }
 
         $stats = $this->computeStats();
-        $volatiliteValue = app(VolatilityCalculator::class)->forSecurity($this->record);
+        $volatiliteValue = app(VolatilityCalculator::class)->forAsset($this->record);
         $volatilite = $volatiliteValue !== null ? Number::format($volatiliteValue, 2).' %' : null;
 
         return [

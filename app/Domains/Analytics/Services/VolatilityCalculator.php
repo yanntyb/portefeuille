@@ -3,9 +3,9 @@
 namespace App\Domains\Analytics\Services;
 
 use App\Domains\Analytics\Contracts\VolatilityCalculating;
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Security\Contracts\SecurityPriceRepositoryInterface;
 use App\Domains\Security\Contracts\SecurityRepositoryInterface;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use Illuminate\Support\Collection;
 
@@ -49,10 +49,10 @@ class VolatilityCalculator implements VolatilityCalculating
         return sqrt($variance) * sqrt(252) * 100;
     }
 
-    public function forSecurity(Security $security): ?float
+    public function forAsset(Asset $asset): ?float
     {
         $prices = SecurityPrice::query()
-            ->where('asset_id', $security->id)
+            ->where('asset_id', $asset->id)
             ->orderBy('date')
             ->pluck('close')
             ->map(fn ($v) => (float) $v)
@@ -76,7 +76,7 @@ class VolatilityCalculator implements VolatilityCalculating
     {
         $records = $this->securityRepository->forWallet($walletId);
 
-        $totalValuation = (float) $records->sum(function (Security $record) {
+        $totalValuation = (float) $records->sum(function (Asset $record) {
             $close = $record->latestPrice?->close;
 
             if ($close === null || $record->total_quantity === null) {
@@ -101,7 +101,7 @@ class VolatilityCalculator implements VolatilityCalculating
         $weightedVolatility = 0.0;
 
         foreach ($records as $record) {
-            /** @var Security $record */
+            /** @var Asset $record */
             $close = $record->latestPrice?->close;
 
             if ($close === null || $record->total_quantity === null || (float) $record->total_quantity <= 0) {

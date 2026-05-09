@@ -3,11 +3,11 @@
 namespace App\Domains\Portfolio\Services;
 
 use App\Domains\Analytics\Services\VolatilityCalculator;
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Portfolio\Contracts\TransactionRepositoryInterface;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Contracts\SecurityPriceRepositoryInterface;
 use App\Domains\Security\Contracts\SecurityRepositoryInterface;
-use App\Domains\Security\Models\Security;
 use App\Infrastructure\Support\MarketCalendar;
 use Illuminate\Support\Number;
 
@@ -24,7 +24,7 @@ class PortfolioPerformanceService
     ) {}
 
     /**
-     * @return \Illuminate\Database\Eloquent\Collection<int, Security>
+     * @return \Illuminate\Database\Eloquent\Collection<int, Asset>
      */
     private function getSecurities(Wallet $wallet): \Illuminate\Database\Eloquent\Collection
     {

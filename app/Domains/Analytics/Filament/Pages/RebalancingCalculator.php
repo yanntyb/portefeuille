@@ -4,10 +4,10 @@ namespace App\Domains\Analytics\Filament\Pages;
 
 use App\Domains\Analytics\Events\PortfolioRebalanced;
 use App\Domains\Analytics\Services\RebalancingCalculatorOrchestrator;
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Portfolio\Models\AllocationProfile;
 use App\Domains\Portfolio\Models\AllocationProfileItem;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\Security;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
@@ -111,7 +111,7 @@ class RebalancingCalculator extends Page implements HasTable
                         ->schema([
                             Select::make('asset_id')
                                 ->label('Titre')
-                                ->options(fn (): array => Security::query()
+                                ->options(fn (): array => Asset::query()
                                     ->get()
                                     ->mapWithKeys(fn ($security): array => [
                                         $security->id => $security->name ?? $security->ticker ?? $security->isin,

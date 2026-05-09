@@ -2,12 +2,12 @@
 
 namespace App\Domains\Portfolio\Filament\Resources\PortfolioSecurities;
 
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Portfolio\Filament\Resources\PortfolioSecurities\Pages\CreatePortfolioSecurity;
 use App\Domains\Portfolio\Filament\Resources\PortfolioSecurities\Pages\EditPortfolioSecurity;
 use App\Domains\Portfolio\Filament\Resources\PortfolioSecurities\Pages\ListPortfolioSecurities;
 use App\Domains\Security\Filament\Resources\SecurityBase\Schemas\SecurityForm;
 use App\Domains\Security\Filament\Resources\SecurityBase\Tables\SecuritiesTable;
-use App\Domains\Security\Models\Security;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -18,7 +18,7 @@ use UnitEnum;
 
 class PortfolioSecurityResource extends Resource
 {
-    protected static ?string $model = Security::class;
+    protected static ?string $model = Asset::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBriefcase;
 

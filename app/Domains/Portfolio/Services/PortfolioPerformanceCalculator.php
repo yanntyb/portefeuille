@@ -3,12 +3,12 @@
 namespace App\Domains\Portfolio\Services;
 
 use App\Domains\Analytics\Enums\PerformancePeriod;
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Portfolio\Contracts\PortfolioPerformanceCalculating;
 use App\Domains\Portfolio\Data\PortfolioContext;
 use App\Domains\Portfolio\Enums\TransactionType;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Security\Contracts\SecurityPriceRepositoryInterface;
-use App\Domains\Security\Models\Security;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Number;
 
@@ -20,7 +20,7 @@ class PortfolioPerformanceCalculator implements PortfolioPerformanceCalculating
     ) {}
 
     /**
-     * @param  Collection<int, Security>  $securities  Securities with total_quantity and latestPrice loaded
+     * @param  Collection<int, Asset>  $securities  Securities with total_quantity and latestPrice loaded
      * @return array<string, float|null> Keyed by PerformancePeriod value
      */
     public function computeReturns(Collection $securities): array
@@ -47,7 +47,7 @@ class PortfolioPerformanceCalculator implements PortfolioPerformanceCalculating
     /**
      * @return array<string, float|null> Keyed by PerformancePeriod value
      */
-    public function computeReturnsForSecurity(Security $security, ?int $walletId = null): array
+    public function computeReturnsForSecurity(Asset $security, ?int $walletId = null): array
     {
         $transactionsQuery = Transaction::query()
             ->where('asset_id', $security->id)
@@ -233,7 +233,7 @@ class PortfolioPerformanceCalculator implements PortfolioPerformanceCalculating
     }
 
     /**
-     * @param  Collection<int, Security>  $securities
+     * @param  Collection<int, Asset>  $securities
      */
     private function computeCurrentValuation(Collection $securities): float
     {

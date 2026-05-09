@@ -2,8 +2,8 @@
 
 namespace App\Domains\Analytics\Filament\Widgets\Dashboard;
 
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Portfolio\Services\DashboardDataProvider;
-use App\Domains\Security\Models\Security;
 use App\Infrastructure\Filament\Concerns\ComputesCorrelationMatrix;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Schemas\Contracts\HasSchemas;
@@ -25,7 +25,7 @@ class DashboardCorrelationMatrixWidget extends Widget implements HasActions, Has
         }
 
         if ($securities->isEmpty()) {
-            return Security::query()->where('id', null)->get();
+            return Asset::query()->where('id', null)->get();
         }
 
         return $securities;

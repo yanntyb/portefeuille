@@ -2,9 +2,9 @@
 
 namespace App\Domains\Portfolio\Services;
 
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Portfolio\Contracts\TransactionRepositoryInterface;
 use App\Domains\Portfolio\Enums\TransactionType;
-use App\Domains\Security\Models\Security;
 use App\Infrastructure\Services\UserId;
 
 class SingleSecurityStatsProvider
@@ -32,7 +32,7 @@ class SingleSecurityStatsProvider
      *     priceDate: ?string,
      * }
      */
-    public function computeStats(Security $record, ?int $walletId): array
+    public function computeStats(Asset $record, ?int $walletId): array
     {
         $key = $record->id.':'.($walletId ?? 0);
 
@@ -42,7 +42,7 @@ class SingleSecurityStatsProvider
     /**
      * @return array<string, mixed>
      */
-    private function doCompute(Security $record, ?int $walletId): array
+    private function doCompute(Asset $record, ?int $walletId): array
     {
         $userId = $this->userId->get();
 
