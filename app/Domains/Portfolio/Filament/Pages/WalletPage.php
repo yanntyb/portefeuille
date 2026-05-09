@@ -13,6 +13,7 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Navigation\NavigationItem;
 use Filament\Notifications\Notification;
+use Filament\Pages\Page;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Support\Icons\Heroicon;
@@ -20,14 +21,21 @@ use Illuminate\Contracts\Support\Htmlable;
 use Livewire\Attributes\Url;
 use UnitEnum;
 
-class WalletPage extends AccountPage
+class WalletPage extends Page
 {
     protected static string|UnitEnum|null $navigationGroup = 'Portefeuille';
 
     protected static ?string $slug = 'wallet';
 
+    protected string $view = 'filament.pages.wallet-page';
+
     #[Url]
     public ?int $walletId = null;
+
+    public ?Wallet $wallet = null;
+
+    /** @var list<int> */
+    public array $shownSecurityIds = [];
 
     public float $versementMensuel = 500;
 
@@ -40,7 +48,6 @@ class WalletPage extends AccountPage
         }
 
         $this->wallet = Wallet::findOrFail($this->walletId);
-        parent::mount();
     }
 
     public function configureSimulationAction(): Action
@@ -221,5 +228,20 @@ class WalletPage extends AccountPage
             'Livret' => 4,
             default => 10,
         };
+    }
+
+    protected function getTotalValuation(): float
+    {
+        return $this->wallet ? $this->wallet->totalValuation() : 0.0;
+    }
+
+    protected function computeAnnualizedReturn(): float
+    {
+        return 7.0;
+    }
+
+    protected function computePortfolioVolatility(): float
+    {
+        return 15.0;
     }
 }
