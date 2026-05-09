@@ -2,7 +2,6 @@
 
 namespace App\Domains\Security\Filament\Widgets;
 
-use App\Domains\Security\Models\Security;
 use App\Infrastructure\Filament\Concerns\ComputesCorrelationMatrix;
 use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
 use Filament\Actions\Contracts\HasActions;

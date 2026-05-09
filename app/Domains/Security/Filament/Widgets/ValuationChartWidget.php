@@ -5,8 +5,6 @@ namespace App\Domains\Security\Filament\Widgets;
 use App\Domains\Portfolio\Data\CumulativeData;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Services\TransactionAggregator;
-use App\Domains\Security\Models\Security;
-use App\Domains\Security\Models\SecurityPrice;
 use App\Infrastructure\Filament\Concerns\HasReactiveTableProperties;
 use App\Infrastructure\Filament\Widgets\ChartWidget;
 use App\Infrastructure\Support\ChartColors;

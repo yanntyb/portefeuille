@@ -2,12 +2,12 @@
 
 use App\Domains\Analytics\Enums\CorrelationPeriod;
 use App\Domains\Analytics\Services\CorrelationCalculator;
-use App\Domains\Security\Models\Security;
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Security\Models\SecurityPrice;
 use Illuminate\Support\Carbon;
 
 it('returns null when less than 2 securities', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     $result = app(CorrelationCalculator::class)->compute(
         collect([$security]),
@@ -18,7 +18,7 @@ it('returns null when less than 2 securities', function () {
 });
 
 it('returns null when not enough common data points', function () {
-    $securities = Security::factory()->count(2)->create();
+    $securities = Stock::factory()->count(2)->create();
 
     // Only 5 days of data (below MIN_DATA_POINTS of 20+1)
     foreach ($securities as $security) {
@@ -41,7 +41,7 @@ it('returns null when not enough common data points', function () {
 });
 
 it('returns correlation of 1.0 for identical price series', function () {
-    $securities = Security::factory()->count(2)->create();
+    $securities = Stock::factory()->count(2)->create();
 
     $baseDate = Carbon::parse('2025-01-01');
 
@@ -69,7 +69,7 @@ it('returns correlation of 1.0 for identical price series', function () {
 });
 
 it('returns correlation near -1.0 for inversely correlated series', function () {
-    $securities = Security::factory()->count(2)->create();
+    $securities = Stock::factory()->count(2)->create();
 
     $baseDate = Carbon::parse('2025-01-01');
 
@@ -102,7 +102,7 @@ it('returns correlation near -1.0 for inversely correlated series', function () 
 });
 
 it('filters prices by period', function () {
-    $securities = Security::factory()->count(2)->create();
+    $securities = Stock::factory()->count(2)->create();
 
     // Create prices spanning 2 years
     for ($i = 0; $i < 400; $i++) {

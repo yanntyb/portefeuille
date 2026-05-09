@@ -1,9 +1,9 @@
 <?php
 
 use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardCorrelationMatrixWidget;
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 
@@ -14,7 +14,7 @@ it('returns null with fewer than two securities', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $user->id,
@@ -38,8 +38,8 @@ it('returns null with insufficient price history', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security1 = Security::factory()->create();
-    $security2 = Security::factory()->create();
+    $security1 = Stock::factory()->create();
+    $security2 = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $user->id,
@@ -73,8 +73,8 @@ it('returns CorrelationResult with two securities having 25+ prices', function (
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security1 = Security::factory()->create();
-    $security2 = Security::factory()->create();
+    $security1 = Stock::factory()->create();
+    $security2 = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $user->id,
@@ -113,9 +113,9 @@ it('filters to shownSecurityIds', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security1 = Security::factory()->create();
-    $security2 = Security::factory()->create();
-    $security3 = Security::factory()->create();
+    $security1 = Stock::factory()->create();
+    $security2 = Stock::factory()->create();
+    $security3 = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $user->id,
@@ -166,8 +166,8 @@ it('returns null when shownSecurityIds reduces below two', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security1 = Security::factory()->create();
-    $security2 = Security::factory()->create();
+    $security1 = Stock::factory()->create();
+    $security2 = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $user->id,

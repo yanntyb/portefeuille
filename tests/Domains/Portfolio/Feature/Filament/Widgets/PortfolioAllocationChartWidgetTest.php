@@ -1,9 +1,9 @@
 <?php
 
 use App\Domains\Analytics\Filament\Widgets\Dashboard\PortfolioAllocationChartWidget;
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 
@@ -13,8 +13,8 @@ it('returns labels matching account types and correct valuations', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $securityPea = Security::factory()->create();
-    $securityCto = Security::factory()->create();
+    $securityPea = Stock::factory()->create();
+    $securityCto = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $securityPea->id,
@@ -73,7 +73,7 @@ it('only includes accounts with securities that have prices', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,

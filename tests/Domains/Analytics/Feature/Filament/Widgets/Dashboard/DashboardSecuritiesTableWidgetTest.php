@@ -1,9 +1,9 @@
 <?php
 
 use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardSecuritiesTableWidget;
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 
@@ -14,8 +14,8 @@ it('initializes shownSecurityIds with all user securities on mount', function ()
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security1 = Security::factory()->create();
-    $security2 = Security::factory()->create();
+    $security1 = Stock::factory()->create();
+    $security2 = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $user->id,
@@ -39,8 +39,8 @@ it('flags priceless securities in pricelessSecurityIds', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $securityWithPrice = Security::factory()->create();
-    $securityWithoutPrice = Security::factory()->create();
+    $securityWithPrice = Stock::factory()->create();
+    $securityWithoutPrice = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $user->id,
@@ -69,7 +69,7 @@ it('toggleSecurity moves security to hiddenSecurityIds', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $user->id,
@@ -93,7 +93,7 @@ it('double toggle restores security to shownSecurityIds', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $user->id,
@@ -116,7 +116,7 @@ it('dispatches security-visibility-changed on toggle', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $user->id,
@@ -136,8 +136,8 @@ it('does not show securities from other users', function () {
 
     $wallet1 = Wallet::factory()->pea()->create(['user_id' => $user1->id]);
     $wallet2 = Wallet::factory()->pea()->create(['user_id' => $user2->id]);
-    $security1 = Security::factory()->create();
-    $security2 = Security::factory()->create();
+    $security1 = Stock::factory()->create();
+    $security2 = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $user1->id,

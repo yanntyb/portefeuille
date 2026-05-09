@@ -1,8 +1,8 @@
 <?php
 
 use App\Domains\Analytics\Services\VolatilityCalculator;
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 
 describe('VolatilityCalculator', function () {
@@ -26,7 +26,7 @@ describe('VolatilityCalculator', function () {
     });
 
     it('returns null for security without prices', function () {
-        $security = Security::factory()->create();
+        $security = Stock::factory()->create();
         $calculator = app(VolatilityCalculator::class);
 
         $result = $calculator->forAsset($security);
@@ -35,7 +35,7 @@ describe('VolatilityCalculator', function () {
     });
 
     it('returns volatility for security with sufficient prices', function () {
-        $security = Security::factory()->create();
+        $security = Stock::factory()->create();
 
         for ($i = 0; $i < 30; $i++) {
 
@@ -63,7 +63,7 @@ describe('VolatilityCalculator', function () {
     it('returns weighted volatility for wallet with securities', function () {
         $wallet = Wallet::factory()->create();
 
-        $security = Security::factory()->create();
+        $security = Stock::factory()->create();
         for ($i = 0; $i < 30; $i++) {
 
             SecurityPrice::factory()
@@ -86,8 +86,8 @@ describe('VolatilityCalculator', function () {
     it('respects shownSecurityIds filter', function () {
         $wallet = Wallet::factory()->create();
 
-        $security1 = Security::factory()->create();
-        $security2 = Security::factory()->create();
+        $security1 = Stock::factory()->create();
+        $security2 = Stock::factory()->create();
 
         for ($i = 0; $i < 30; $i++) {
 

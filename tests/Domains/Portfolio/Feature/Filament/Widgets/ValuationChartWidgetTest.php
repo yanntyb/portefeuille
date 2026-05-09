@@ -1,10 +1,10 @@
 <?php
 
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Filament\Pages\WalletPage;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Filament\Widgets\ValuationChartWidget;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 
@@ -14,7 +14,7 @@ it('defaults to total mode with aggregated valuation', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -64,8 +64,8 @@ it('shows stacked areas per security in per_security mode', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $securityA = Security::factory()->create(['name' => 'ETF World']);
-    $securityB = Security::factory()->create(['name' => 'ETF SP500']);
+    $securityA = Stock::factory()->create(['name' => 'ETF World']);
+    $securityB = Stock::factory()->create(['name' => 'ETF SP500']);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $securityA->id,
@@ -121,7 +121,7 @@ it('computes cumulative fees from transactions', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -170,7 +170,7 @@ it('excludes prices before the first transaction date', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -209,7 +209,7 @@ it('invested reflects mid-week transactions in the same week', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -242,8 +242,8 @@ it('extrapolates missing prices using the last known close in total mode', funct
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $securityA = Security::factory()->create();
-    $securityB = Security::factory()->create();
+    $securityA = Stock::factory()->create();
+    $securityB = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $securityA->id,
@@ -301,8 +301,8 @@ it('extrapolates missing prices using the last known close in per_security mode'
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $securityA = Security::factory()->create(['name' => 'ETF A']);
-    $securityB = Security::factory()->create(['name' => 'ETF B']);
+    $securityA = Stock::factory()->create(['name' => 'ETF A']);
+    $securityB = Stock::factory()->create(['name' => 'ETF B']);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $securityA->id,

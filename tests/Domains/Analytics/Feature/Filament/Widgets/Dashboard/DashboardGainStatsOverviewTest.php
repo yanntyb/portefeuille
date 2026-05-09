@@ -1,9 +1,9 @@
 <?php
 
 use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardGainStatsOverview;
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 
@@ -26,7 +26,7 @@ it('calculates unrealized gains from buy transaction', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     SecurityPrice::factory()->create([
         'asset_id' => $security->id,
@@ -57,7 +57,7 @@ it('calculates realized gains from sell transaction', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     SecurityPrice::factory()->create([
         'asset_id' => $security->id,
@@ -99,7 +99,7 @@ it('includes fees in calculations', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     SecurityPrice::factory()->create([
         'asset_id' => $security->id,

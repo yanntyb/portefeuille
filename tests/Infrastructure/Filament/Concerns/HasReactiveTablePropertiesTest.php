@@ -1,8 +1,8 @@
 <?php
 
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Filament\Widgets\GainStatsOverview;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 
@@ -23,7 +23,7 @@ it('returns securities from page table query when tablePageClass is set', functi
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     $transaction = \App\Domains\Portfolio\Models\Transaction::factory()->create([
         'user_id' => $user->id,
@@ -52,8 +52,8 @@ it('filters by shownSecurityIds when set', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security1 = Security::factory()->create();
-    $security2 = Security::factory()->create();
+    $security1 = Stock::factory()->create();
+    $security2 = Stock::factory()->create();
 
     \App\Domains\Portfolio\Models\Transaction::factory()->create([
         'user_id' => $user->id,
@@ -88,7 +88,7 @@ it('loads latestPrice relationship when withPrice is true', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     \App\Domains\Portfolio\Models\Transaction::factory()->create([
         'user_id' => $user->id,
@@ -116,7 +116,7 @@ it('calls getFilteredSecurities with withPrice parameter', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     \App\Domains\Portfolio\Models\Transaction::factory()->create([
         'user_id' => $user->id,

@@ -1,5 +1,6 @@
 <?php
 
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Filament\Pages\WalletPage;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
@@ -10,7 +11,6 @@ use App\Domains\Security\Filament\Widgets\PerformanceStatsOverview;
 use App\Domains\Security\Filament\Widgets\SectorAllocationChartWidget;
 use App\Domains\Security\Filament\Widgets\ValuationChartWidget;
 use App\Domains\Security\Filament\Widgets\ValuationStatOverview;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 
@@ -121,7 +121,7 @@ it('renders wallet page with all widgets', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     Transaction::factory()->pea()->create(['asset_id' => $security->id]);
 
     SecurityPrice::factory()->create(['asset_id' => $security->id, 'date' => now()]);

@@ -1,8 +1,8 @@
 <?php
 
 use App\Domains\Analytics\Filament\Widgets\Dashboard\PortfolioStatsOverview;
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 
@@ -11,7 +11,7 @@ use function Pest\Livewire\livewire;
 it('computes valuation, plus-value, and fees correctly', function () {
     $this->actingAs(User::factory()->create());
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -44,8 +44,8 @@ it('computes valuation, plus-value, and fees correctly', function () {
 it('aggregates across PEA and CTO accounts', function () {
     $this->actingAs(User::factory()->create());
 
-    $securityPea = Security::factory()->create();
-    $securityCto = Security::factory()->create();
+    $securityPea = Stock::factory()->create();
+    $securityCto = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $securityPea->id,
@@ -84,7 +84,7 @@ it('aggregates across PEA and CTO accounts', function () {
 });
 
 it('shows success color when plus-value is positive', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -108,7 +108,7 @@ it('shows danger color when plus-value is negative', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -133,7 +133,7 @@ it('displays plus-value percentage in description', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -160,7 +160,7 @@ it('displays fees percentage in description', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,

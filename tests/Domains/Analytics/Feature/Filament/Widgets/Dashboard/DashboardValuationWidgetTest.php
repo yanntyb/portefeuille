@@ -1,9 +1,9 @@
 <?php
 
 use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardValuationWidget;
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 
@@ -25,7 +25,7 @@ it('returns correct valuation from buy transaction', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     SecurityPrice::factory()->create([
         'asset_id' => $security->id,
@@ -56,7 +56,7 @@ it('shows success color when valuation exceeds invested', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     SecurityPrice::factory()->create([
         'asset_id' => $security->id,
@@ -85,7 +85,7 @@ it('shows danger color when valuation is below invested', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     SecurityPrice::factory()->create([
         'asset_id' => $security->id,
@@ -115,7 +115,7 @@ it('aggregates across PEA and CTO wallets', function () {
 
     $peaWallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
     $ctoWallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'CTO']);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     SecurityPrice::factory()->create([
         'asset_id' => $security->id,
@@ -155,7 +155,7 @@ it('uses total_invested from scope not raw query', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     SecurityPrice::factory()->create([
         'asset_id' => $security->id,

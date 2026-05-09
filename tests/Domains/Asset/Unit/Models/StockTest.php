@@ -1,10 +1,9 @@
 <?php
 
 use App\Domains\Asset\Models\Stock;
-use App\Domains\Security\Models\Security;
 
 it('creates stock from security', function () {
-    $security = Security::factory()->create([
+    $security = Stock::factory()->create([
         'name' => 'Apple Inc',
         'ticker' => 'AAPL',
         'isin' => 'US0378331005',
@@ -19,14 +18,14 @@ it('creates stock from security', function () {
 });
 
 it('has correct asset type', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     $stock = Stock::find($security->id);
 
     expect($stock->type->value)->toBe('stock');
 });
 
 it('uses security prices for valuation', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     $stock = Stock::find($security->id);
 
     expect($stock->prices)->not->toBeNull();

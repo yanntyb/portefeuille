@@ -1,10 +1,10 @@
 <?php
 
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Filament\Pages\WalletPage;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Filament\Widgets\AllocationChartWidget;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 
@@ -14,8 +14,8 @@ it('returns labels and percentages per security', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $securityA = Security::factory()->create(['name' => 'Action A']);
-    $securityB = Security::factory()->create(['name' => 'Action B']);
+    $securityA = Stock::factory()->create(['name' => 'Action A']);
+    $securityB = Stock::factory()->create(['name' => 'Action B']);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $securityA->id,
@@ -68,7 +68,7 @@ it('excludes securities with no latest price', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $security = Security::factory()->create(['name' => 'No Price']);
+    $security = Stock::factory()->create(['name' => 'No Price']);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,

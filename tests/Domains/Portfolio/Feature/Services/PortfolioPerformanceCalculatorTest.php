@@ -1,9 +1,9 @@
 <?php
 
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Portfolio\Services\PortfolioPerformanceCalculator;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 use Illuminate\Support\Carbon;
@@ -14,7 +14,7 @@ it('computes basic return without cash flows', function () {
 
     Carbon::setTestNow('2025-06-15');
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -55,7 +55,7 @@ it('computes return with cash flows during period', function () {
 
     Carbon::setTestNow('2025-06-15');
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     // Transaction initiale avant la période de 6 mois (2024-12-15)
     Transaction::factory()->pea()->create([
@@ -111,7 +111,7 @@ it('returns null when period predates first transaction', function () {
 
     Carbon::setTestNow('2025-06-15');
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -145,7 +145,7 @@ it('uses closest available price when exact start date has no price', function (
 
     Carbon::setTestNow('2025-06-15');
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,

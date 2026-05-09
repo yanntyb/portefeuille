@@ -1,11 +1,11 @@
 <?php
 
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Enums\TransactionType;
 use App\Domains\Portfolio\Filament\Resources\Transactions\Pages\CreateTransaction;
 use App\Domains\Portfolio\Filament\Resources\Transactions\Pages\EditTransaction;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\Security;
 use App\Domains\User\Models\User;
 
 use function Pest\Laravel\assertDatabaseHas;
@@ -13,7 +13,7 @@ use function Pest\Livewire\livewire;
 
 it('computes PRU correctly with only buy transactions', function () {
     $wallet = Wallet::factory()->pea()->create();
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $wallet->user_id,
@@ -47,7 +47,7 @@ it('computes PRU correctly with only buy transactions', function () {
 
 it('computes realized gain on sell transaction', function () {
     $wallet = Wallet::factory()->pea()->create();
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $wallet->user_id,
@@ -73,7 +73,7 @@ it('computes realized gain on sell transaction', function () {
 
 it('computes negative realized gain on sell at loss', function () {
     $wallet = Wallet::factory()->pea()->create();
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $wallet->user_id,
@@ -102,7 +102,7 @@ it('can create a sell transaction via Filament', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $wallet->user_id,
@@ -146,7 +146,7 @@ it('can create a sell transaction via Filament', function () {
 
 it('does not set realized_gain for buy transactions', function () {
     $wallet = Wallet::factory()->pea()->create();
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     $buy = Transaction::factory()->create([
         'user_id' => $wallet->user_id,
@@ -164,7 +164,7 @@ it('computes PRU from correct wallet only', function () {
     $user = User::factory()->create();
     $peaWallet = Wallet::factory()->for($user)->pea()->create();
     $ctoWallet = Wallet::factory()->for($user)->cto()->create();
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $user->id,
@@ -199,7 +199,7 @@ it('computes PRU from correct wallet only', function () {
 
 it('recalculates realized gain when updating a sell transaction', function () {
     $wallet = Wallet::factory()->pea()->create();
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $wallet->user_id,
@@ -230,7 +230,7 @@ it('recalculates realized gain when updating a sell transaction', function () {
 
 it('clears realized gain when changing type from sell to buy', function () {
     $wallet = Wallet::factory()->pea()->create();
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $wallet->user_id,
@@ -262,7 +262,7 @@ it('can update a sell transaction via Filament', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $wallet->user_id,
@@ -297,7 +297,7 @@ it('can update a sell transaction via Filament', function () {
 
 it('computes realized gain on CTO sell transaction', function () {
     $wallet = Wallet::factory()->cto()->create();
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $wallet->user_id,
@@ -326,7 +326,7 @@ it('can create a CTO sell transaction via Filament', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->cto()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $wallet->user_id,
@@ -369,7 +369,7 @@ it('cannot sell more than owned quantity via Filament', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $wallet->user_id,
@@ -400,7 +400,7 @@ it('can sell exact owned quantity via Filament', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $wallet->user_id,
@@ -433,7 +433,7 @@ it('validates sell quantity against correct wallet', function () {
 
     $peaWallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
     $ctoWallet = Wallet::factory()->cto()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create([
         'user_id' => $user->id,
@@ -474,7 +474,7 @@ it('allows buy quantity exceeding owned quantity', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     livewire(CreateTransaction::class)
         ->fillForm([

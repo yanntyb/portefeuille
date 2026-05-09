@@ -2,9 +2,9 @@
 
 use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardPerformanceStatsOverview;
 use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardSectorAllocationChartWidget;
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Security\Enums\Sector;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\Security\Models\SecuritySector;
 use App\Domains\User\Models\User;
@@ -16,8 +16,8 @@ it('aggregates sector data from all accounts', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $securityPea = Security::factory()->create(['name' => 'ETF PEA']);
-    $securityCto = Security::factory()->create(['name' => 'ETF CTO']);
+    $securityPea = Stock::factory()->create(['name' => 'ETF PEA']);
+    $securityCto = Stock::factory()->create(['name' => 'ETF CTO']);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $securityPea->id,
@@ -97,8 +97,8 @@ it('displays performance stats across all accounts', function () {
 
     Carbon::setTestNow('2025-06-15');
 
-    $securityPea = Security::factory()->create();
-    $securityCto = Security::factory()->create();
+    $securityPea = Stock::factory()->create();
+    $securityCto = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $securityPea->id,

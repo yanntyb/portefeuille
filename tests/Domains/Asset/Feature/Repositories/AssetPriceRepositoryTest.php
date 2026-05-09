@@ -2,11 +2,11 @@
 
 use App\Domains\Asset\Contracts\AssetPriceRepositoryInterface;
 use App\Domains\Asset\Models\AssetPrice;
-use App\Domains\Security\Models\Security;
+use App\Domains\Asset\Models\Stock;
 use Carbon\Carbon;
 
 it('finds the latest price for an asset', function (): void {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     AssetPrice::factory()->create(['asset_id' => $security->id, 'date' => '2026-05-06', 'close' => 100.0]);
     AssetPrice::factory()->create(['asset_id' => $security->id, 'date' => '2026-05-08', 'close' => 125.5]);
 
@@ -17,13 +17,13 @@ it('finds the latest price for an asset', function (): void {
 });
 
 it('returns null when no prices exist for asset', function (): void {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     expect(app(AssetPriceRepositoryInterface::class)->findLatestForAsset($security->id))->toBeNull();
 });
 
 it('finds a price for an asset on a specific date', function (): void {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     AssetPrice::factory()->create(['asset_id' => $security->id, 'date' => '2026-05-07']);
 
     $price = app(AssetPriceRepositoryInterface::class)
@@ -34,7 +34,7 @@ it('finds a price for an asset on a specific date', function (): void {
 });
 
 it('returns null when no price exists on date', function (): void {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     expect(
         app(AssetPriceRepositoryInterface::class)
@@ -43,7 +43,7 @@ it('returns null when no price exists on date', function (): void {
 });
 
 it('returns prices for asset since a given date', function (): void {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     AssetPrice::factory()->create(['asset_id' => $security->id, 'date' => '2026-04-30']);
     AssetPrice::factory()->create(['asset_id' => $security->id, 'date' => '2026-05-01']);
     AssetPrice::factory()->create(['asset_id' => $security->id, 'date' => '2026-05-08']);
@@ -55,7 +55,7 @@ it('returns prices for asset since a given date', function (): void {
 });
 
 it('saves an asset price', function (): void {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     $price = new AssetPrice([
         'asset_id' => $security->id,
         'date' => '2026-05-09',
@@ -72,8 +72,8 @@ it('saves an asset price', function (): void {
 });
 
 it('gets latest date for multiple assets', function (): void {
-    $s1 = Security::factory()->create();
-    $s2 = Security::factory()->create();
+    $s1 = Stock::factory()->create();
+    $s2 = Stock::factory()->create();
     AssetPrice::factory()->create(['asset_id' => $s1->id, 'date' => '2026-05-06']);
     AssetPrice::factory()->create(['asset_id' => $s1->id, 'date' => '2026-05-08']);
     AssetPrice::factory()->create(['asset_id' => $s2->id, 'date' => '2026-05-07']);
@@ -85,7 +85,7 @@ it('gets latest date for multiple assets', function (): void {
 });
 
 it('gets earliest date for multiple assets', function (): void {
-    $s1 = Security::factory()->create();
+    $s1 = Stock::factory()->create();
     AssetPrice::factory()->create(['asset_id' => $s1->id, 'date' => '2026-04-01']);
     AssetPrice::factory()->create(['asset_id' => $s1->id, 'date' => '2026-05-08']);
 
@@ -95,8 +95,8 @@ it('gets earliest date for multiple assets', function (): void {
 });
 
 it('gets prices for multiple assets since a date', function (): void {
-    $s1 = Security::factory()->create();
-    $s2 = Security::factory()->create();
+    $s1 = Stock::factory()->create();
+    $s2 = Stock::factory()->create();
     AssetPrice::factory()->create(['asset_id' => $s1->id, 'date' => '2026-04-30']);
     AssetPrice::factory()->create(['asset_id' => $s1->id, 'date' => '2026-05-01']);
     AssetPrice::factory()->create(['asset_id' => $s2->id, 'date' => '2026-05-02']);

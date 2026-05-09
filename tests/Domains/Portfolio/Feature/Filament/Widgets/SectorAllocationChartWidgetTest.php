@@ -1,11 +1,11 @@
 <?php
 
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Filament\Pages\WalletPage;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Enums\Sector;
 use App\Domains\Security\Filament\Widgets\SectorAllocationChartWidget;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\Security\Models\SecuritySector;
 use App\Domains\User\Models\User;
@@ -16,8 +16,8 @@ it('aggregates sector data weighted by valuation for account list', function () 
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $securityA = Security::factory()->create(['name' => 'ETF World']);
-    $securityB = Security::factory()->create(['name' => 'ETF Tech']);
+    $securityA = Stock::factory()->create(['name' => 'ETF World']);
+    $securityB = Stock::factory()->create(['name' => 'ETF Tech']);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $securityA->id,
@@ -96,7 +96,7 @@ it('aggregates sector data weighted by valuation for account list', function () 
 });
 
 it('shows sector weights as percentages for a single security', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     SecuritySector::factory()->create([
         'asset_id' => $security->id,

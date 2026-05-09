@@ -1,10 +1,10 @@
 <?php
 
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Filament\Pages\WalletPage;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Filament\Widgets\PerformanceStatsOverview;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 use Illuminate\Support\Carbon;
@@ -17,7 +17,7 @@ it('displays performance stats with correct values', function () {
 
     Carbon::setTestNow('2025-06-15');
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -62,7 +62,7 @@ it('displays dash for periods without data', function () {
 
     Carbon::setTestNow('2025-06-15');
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -99,7 +99,7 @@ it('shows danger color for negative returns', function () {
 
     Carbon::setTestNow('2025-06-15');
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -139,7 +139,7 @@ it('returns seven period stats', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,

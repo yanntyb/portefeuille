@@ -2,8 +2,6 @@
 
 namespace App\Domains\Security\Filament\Resources\SecurityBase\Tables;
 
-use App\Domains\Security\Models\Security;
-use App\Domains\Security\Models\SecurityPrice;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;

@@ -4,7 +4,6 @@ namespace App\Domains\Security\Filament\Widgets;
 
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Services\TransactionAggregator;
-use App\Domains\Security\Models\SecurityPrice;
 use App\Infrastructure\Filament\Concerns\ComputesValuationChart;
 use App\Infrastructure\Filament\Widgets\ChartWidget;
 use Filament\Support\RawJs;

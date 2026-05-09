@@ -3,10 +3,10 @@
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Infrastructure\Adapters\YahooFinanceAdapter;
 use App\Domains\Asset\Models\AssetPrice;
-use App\Domains\Security\Models\Security;
+use App\Domains\Asset\Models\Stock;
 
 it('gets current price for asset', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     AssetPrice::factory()->create([
         'asset_id' => $security->id,
@@ -27,7 +27,7 @@ it('gets current price for asset', function () {
 });
 
 it('returns null when no prices exist', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     $adapter = new YahooFinanceAdapter;
     $price = $adapter->getCurrentPrice($security->id);
@@ -36,7 +36,7 @@ it('returns null when no prices exist', function () {
 });
 
 it('gets price history for date range', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     AssetPrice::factory()->create([
         'asset_id' => $security->id,
@@ -67,7 +67,7 @@ it('gets price history for date range', function () {
 });
 
 it('filters price history by date range', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     AssetPrice::factory()->create([
         'asset_id' => $security->id,

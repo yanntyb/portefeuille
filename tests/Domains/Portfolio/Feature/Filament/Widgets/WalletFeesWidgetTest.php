@@ -1,5 +1,6 @@
 <?php
 
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Enums\CurrencyModificationUnit;
 use App\Domains\Portfolio\Enums\FeeScope;
 use App\Domains\Portfolio\Enums\FrequencyUnit;
@@ -8,7 +9,6 @@ use App\Domains\Portfolio\Filament\Widgets\WalletFeesWidget;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Portfolio\Models\WalletFee;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 
@@ -49,7 +49,7 @@ it('calculates transaction fees', function () {
     $this->actingAs($user);
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     SecurityPrice::factory()->create(['asset_id' => $security->id, 'close' => 100, 'date' => now()]);
 
@@ -76,7 +76,7 @@ it('calculates percentage fees on valuation', function () {
     $this->actingAs($user);
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     SecurityPrice::factory()->create(['asset_id' => $security->id, 'close' => 100, 'date' => now()]);
 
@@ -110,7 +110,7 @@ it('calculates currency fees with frequency', function () {
     $this->actingAs($user);
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     SecurityPrice::factory()->create(['asset_id' => $security->id, 'close' => 100, 'date' => now()]);
 
@@ -143,7 +143,7 @@ it('calculates percentage fees on unrealized gain', function () {
     $this->actingAs($user);
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     SecurityPrice::factory()->create(['asset_id' => $security->id, 'close' => 150, 'date' => now()]);
 
@@ -177,7 +177,7 @@ it('calculates quarterly fees correctly', function () {
     $this->actingAs($user);
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     SecurityPrice::factory()->create(['asset_id' => $security->id, 'close' => 100, 'date' => now()]);
 

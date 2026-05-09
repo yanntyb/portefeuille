@@ -2,10 +2,9 @@
 
 use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\Asset\Models\Stock;
-use App\Domains\Security\Models\Security;
 
 it('stock loads prices relationship', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     AssetPrice::factory(5)->create(['asset_id' => $security->id]);
 
     $asset = Stock::find($security->id);
@@ -14,7 +13,7 @@ it('stock loads prices relationship', function () {
 });
 
 it('stock calculates current price from latest price record', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     AssetPrice::factory()->create([
         'asset_id' => $security->id,
@@ -35,7 +34,7 @@ it('stock calculates current price from latest price record', function () {
 });
 
 it('stock has correct asset type', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     $stock = Stock::find($security->id);
 
     expect($stock->type->value)->toBe('stock');

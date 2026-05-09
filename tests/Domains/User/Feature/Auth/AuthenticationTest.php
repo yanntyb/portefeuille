@@ -1,11 +1,11 @@
 <?php
 
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Filament\Pages\WalletPage;
 use App\Domains\Portfolio\Filament\Resources\Transactions\Pages\CreateTransaction;
 use App\Domains\Portfolio\Filament\Resources\Transactions\Pages\ListTransactions;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\Security;
 use App\Domains\User\Models\User;
 
 use function Pest\Laravel\assertDatabaseHas;
@@ -47,7 +47,7 @@ it('scopes PEA securities to the authenticated user', function () {
     $this->actingAs($user);
 
     $myWallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     Transaction::factory()->create([
         'user_id' => auth()->id(),
         'wallet_id' => $myWallet->id,
@@ -56,7 +56,7 @@ it('scopes PEA securities to the authenticated user', function () {
 
     $otherUser = User::factory()->create();
     $otherWallet = Wallet::factory()->pea()->create(['user_id' => $otherUser->id]);
-    $otherSecurity = Security::factory()->create();
+    $otherSecurity = Stock::factory()->create();
     Transaction::factory()->create([
         'user_id' => $otherUser->id,
         'wallet_id' => $otherWallet->id,
@@ -74,7 +74,7 @@ it('scopes CTO securities to the authenticated user', function () {
     $this->actingAs($user);
 
     $myWallet = Wallet::factory()->cto()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     Transaction::factory()->create([
         'user_id' => auth()->id(),
         'wallet_id' => $myWallet->id,
@@ -83,7 +83,7 @@ it('scopes CTO securities to the authenticated user', function () {
 
     $otherUser = User::factory()->create();
     $otherWallet = Wallet::factory()->cto()->create(['user_id' => $otherUser->id]);
-    $otherSecurity = Security::factory()->create();
+    $otherSecurity = Stock::factory()->create();
     Transaction::factory()->create([
         'user_id' => $otherUser->id,
         'wallet_id' => $otherWallet->id,
@@ -101,7 +101,7 @@ it('assigns user_id when creating a transaction', function () {
     $this->actingAs($user);
 
     $wallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     livewire(CreateTransaction::class)
         ->fillForm([

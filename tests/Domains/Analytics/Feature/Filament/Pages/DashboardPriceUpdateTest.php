@@ -1,8 +1,8 @@
 <?php
 
 use App\Domains\Analytics\Filament\Pages\Dashboard;
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\Security\Services\YahooFinanceService;
 use App\Domains\User\Models\User;
@@ -15,7 +15,7 @@ beforeEach(function () {
 });
 
 it('updates prices when securities have no recent price', function () {
-    $security = Security::factory()->create(['ticker' => 'AAPL']);
+    $security = Stock::factory()->create(['ticker' => 'AAPL']);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -38,7 +38,7 @@ it('updates prices when securities have no recent price', function () {
 });
 
 it('skips price update when securities have a price on last trading date', function () {
-    $security = Security::factory()->create(['ticker' => 'AAPL']);
+    $security = Stock::factory()->create(['ticker' => 'AAPL']);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -59,7 +59,7 @@ it('skips price update when securities have a price on last trading date', funct
 });
 
 it('skips price update when all securities have today price', function () {
-    $security = Security::factory()->create(['ticker' => 'AAPL']);
+    $security = Stock::factory()->create(['ticker' => 'AAPL']);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -80,8 +80,8 @@ it('skips price update when all securities have today price', function () {
 });
 
 it('skips securities without ticker', function () {
-    $securityWithTicker = Security::factory()->create(['ticker' => 'AAPL']);
-    $securityWithoutTicker = Security::factory()->create(['ticker' => null]);
+    $securityWithTicker = Stock::factory()->create(['ticker' => 'AAPL']);
+    $securityWithoutTicker = Stock::factory()->create(['ticker' => null]);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $securityWithTicker->id,
@@ -105,7 +105,7 @@ it('skips securities without ticker', function () {
 });
 
 it('dispatches prices-updated event after updating prices', function () {
-    $security = Security::factory()->create(['ticker' => 'AAPL']);
+    $security = Stock::factory()->create(['ticker' => 'AAPL']);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -120,7 +120,7 @@ it('dispatches prices-updated event after updating prices', function () {
 });
 
 it('does not dispatch event when no update needed', function () {
-    $security = Security::factory()->create(['ticker' => 'AAPL']);
+    $security = Stock::factory()->create(['ticker' => 'AAPL']);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,

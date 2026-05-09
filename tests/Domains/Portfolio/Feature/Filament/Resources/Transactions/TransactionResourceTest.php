@@ -1,11 +1,11 @@
 <?php
 
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Filament\Resources\Transactions\Pages\CreateTransaction;
 use App\Domains\Portfolio\Filament\Resources\Transactions\Pages\EditTransaction;
 use App\Domains\Portfolio\Filament\Resources\Transactions\Pages\ListTransactions;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\Security;
 
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Livewire\livewire;
@@ -26,7 +26,7 @@ it('can render the create page', function () {
 
 it('can create a PEA transaction', function () {
     $wallet = Wallet::factory()->pea()->create();
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     livewire(CreateTransaction::class)
         ->fillForm([
@@ -51,7 +51,7 @@ it('can create a PEA transaction', function () {
 
 it('can create a CTO transaction with broker', function () {
     $wallet = Wallet::factory()->cto()->create();
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     livewire(CreateTransaction::class)
         ->fillForm([

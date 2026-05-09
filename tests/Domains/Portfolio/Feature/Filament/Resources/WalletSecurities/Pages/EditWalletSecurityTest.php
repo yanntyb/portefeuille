@@ -1,15 +1,15 @@
 <?php
 
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\Security;
 use App\Domains\User\Models\User;
 
 it('transaction can be created with wallet and security', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
 
     Transaction::create([
@@ -36,7 +36,7 @@ it('stores quantity and unit price correctly', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
 
     Transaction::create([

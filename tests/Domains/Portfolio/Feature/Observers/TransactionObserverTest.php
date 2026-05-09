@@ -1,12 +1,12 @@
 <?php
 
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\Security;
 use App\Domains\User\Models\User;
 
 it('sets realized_gain to null for buy transactions', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     $user = User::factory()->create();
     $this->actingAs($user);
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
@@ -23,7 +23,7 @@ it('sets realized_gain to null for buy transactions', function () {
 });
 
 it('calculates realized_gain for sell transactions', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     $user = User::factory()->create();
     $this->actingAs($user);
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
@@ -50,7 +50,7 @@ it('calculates realized_gain for sell transactions', function () {
 });
 
 it('calculates pru with multiple buy transactions', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     $user = User::factory()->create();
     $this->actingAs($user);
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
@@ -86,7 +86,7 @@ it('calculates pru with multiple buy transactions', function () {
 });
 
 it('handles sell with no prior buy transactions', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     $user = User::factory()->create();
     $this->actingAs($user);
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
@@ -105,7 +105,7 @@ it('handles sell with no prior buy transactions', function () {
 });
 
 it('recalculates realized_gain on update', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     $user = User::factory()->create();
     $this->actingAs($user);
     $wallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
@@ -137,7 +137,7 @@ it('recalculates realized_gain on update', function () {
 });
 
 it('filters by wallet when calculating pru', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     $user = User::factory()->create();
     $this->actingAs($user);
     $peaWallet = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);

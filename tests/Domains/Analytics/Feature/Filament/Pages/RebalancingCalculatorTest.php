@@ -2,10 +2,10 @@
 
 use App\Domains\Analytics\Filament\Pages\RebalancingCalculator;
 use App\Domains\Analytics\Services\RebalancingCalculator as RebalancingService;
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\AllocationProfile;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 
@@ -171,7 +171,7 @@ it('can render the rebalancing calculator page', function () {
 
 it('validates that total percentage equals 100', function () {
     $user = User::factory()->create();
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     SecurityPrice::factory()->create([
         'asset_id' => $security->id,
@@ -195,8 +195,8 @@ it('validates that total percentage equals 100', function () {
 
 it('calculates and displays results', function () {
     $user = User::factory()->create();
-    $security1 = Security::factory()->create(['name' => 'NASDAQ ETF']);
-    $security2 = Security::factory()->create(['name' => 'STOXX ETF']);
+    $security1 = Stock::factory()->create(['name' => 'NASDAQ ETF']);
+    $security2 = Stock::factory()->create(['name' => 'STOXX ETF']);
 
     SecurityPrice::factory()->create(['asset_id' => $security1->id, 'close' => 50.0]);
 
@@ -221,7 +221,7 @@ it('calculates and displays results', function () {
 
 it('can save and load a profile', function () {
     $user = User::factory()->create();
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     SecurityPrice::factory()->create(['asset_id' => $security->id, 'close' => 100.0]);
 
@@ -249,7 +249,7 @@ it('can save and load a profile', function () {
 
 it('considers wallet when calculating quantities', function () {
     $user = User::factory()->create();
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     SecurityPrice::factory()->create(['asset_id' => $security->id, 'close' => 100.0]);
 

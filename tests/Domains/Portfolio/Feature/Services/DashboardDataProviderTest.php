@@ -1,14 +1,14 @@
 <?php
 
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Portfolio\Services\DashboardDataProvider;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 
 it('returns securities with latest price for a given wallet', function () {
     $peaWallet = Wallet::factory()->pea()->create();
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $security->id]);
 
     SecurityPrice::factory()->create(['asset_id' => $security->id, 'date' => today(), 'close' => 150]);
@@ -24,7 +24,7 @@ it('returns securities with latest price for a given wallet', function () {
 
 it('caches results within the same instance', function () {
     $peaWallet = Wallet::factory()->pea()->create();
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $security->id]);
 
     SecurityPrice::factory()->create(['asset_id' => $security->id, 'date' => today(), 'close' => 100]);
@@ -40,8 +40,8 @@ it('caches results within the same instance', function () {
 it('separates securities by wallet', function () {
     $peaWallet = Wallet::factory()->pea()->create();
     $ctoWallet = Wallet::factory()->cto()->create();
-    $peaSecurity = Security::factory()->create();
-    $ctoSecurity = Security::factory()->create();
+    $peaSecurity = Stock::factory()->create();
+    $ctoSecurity = Stock::factory()->create();
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $peaSecurity->id]);
     Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'asset_id' => $ctoSecurity->id]);
 

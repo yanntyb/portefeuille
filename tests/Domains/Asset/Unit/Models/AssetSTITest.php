@@ -8,7 +8,6 @@ use App\Domains\Asset\Models\ETF;
 use App\Domains\Asset\Models\RealEstate;
 use App\Domains\Asset\Models\Savings;
 use App\Domains\Asset\Models\Stock;
-use App\Domains\Security\Models\Security;
 
 it('Asset is not abstract', function () {
     $reflection = new ReflectionClass(Asset::class);
@@ -16,7 +15,7 @@ it('Asset is not abstract', function () {
 });
 
 it('dispatches to Stock for type stock', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     Security::query()->where('id', $security->id)->update(['type' => AssetType::Stock->value]);
     $security->refresh();
     $asset = Asset::find($security->id);
@@ -24,7 +23,7 @@ it('dispatches to Stock for type stock', function () {
 });
 
 it('dispatches to ETF for type etf', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     Security::query()->where('id', $security->id)->update(['type' => AssetType::ETF->value]);
     $security->refresh();
     $asset = Asset::find($security->id);
@@ -32,7 +31,7 @@ it('dispatches to ETF for type etf', function () {
 });
 
 it('dispatches to Crypto for type crypto', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     Security::query()->where('id', $security->id)->update(['type' => AssetType::Crypto->value]);
     $security->refresh();
     $asset = Asset::find($security->id);
@@ -40,7 +39,7 @@ it('dispatches to Crypto for type crypto', function () {
 });
 
 it('dispatches to RealEstate for type real_estate', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     Security::query()->where('id', $security->id)->update(['type' => AssetType::RealEstate->value]);
     $security->refresh();
     $asset = Asset::find($security->id);
@@ -48,7 +47,7 @@ it('dispatches to RealEstate for type real_estate', function () {
 });
 
 it('dispatches to Bond for type bond', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     Security::query()->where('id', $security->id)->update(['type' => AssetType::Bond->value]);
     $security->refresh();
     $asset = Asset::find($security->id);
@@ -56,7 +55,7 @@ it('dispatches to Bond for type bond', function () {
 });
 
 it('dispatches to Savings for type savings', function () {
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     Security::query()->where('id', $security->id)->update(['type' => AssetType::Savings->value]);
     $security->refresh();
     $asset = Asset::find($security->id);
@@ -64,10 +63,10 @@ it('dispatches to Savings for type savings', function () {
 });
 
 it('Asset::all returns correct subclasses', function () {
-    $stock = Security::factory()->create();
+    $stock = Stock::factory()->create();
     Security::query()->where('id', $stock->id)->update(['type' => AssetType::Stock->value]);
 
-    $etf = Security::factory()->create();
+    $etf = Stock::factory()->create();
     Security::query()->where('id', $etf->id)->update(['type' => AssetType::ETF->value]);
 
     $classes = Asset::all()->map(fn ($a) => get_class($a))->values()->toArray();

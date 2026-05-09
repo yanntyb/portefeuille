@@ -1,16 +1,16 @@
 <?php
 
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Portfolio\Services\SingleSecurityStatsProvider;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 
 it('returns all zeros when no transactions exist', function () {
     $user = User::factory()->create();
     app(\App\Infrastructure\Services\UserId::class)->setOverride($user->id);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     $provider = app(SingleSecurityStatsProvider::class);
     $stats = $provider->computeStats($security, null);
@@ -28,7 +28,7 @@ it('returns all zeros when no transactions exist', function () {
 it('calculates total quantity from buy and sell transactions', function () {
     $user = User::factory()->create();
     app(\App\Infrastructure\Services\UserId::class)->setOverride($user->id);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create(['asset_id' => $security->id, 'quantity' => 10, 'unit_price' => 100, 'user_id' => $user->id]);
     Transaction::factory()->pea()->create(['asset_id' => $security->id, 'quantity' => 5, 'unit_price' => 120, 'user_id' => $user->id]);
@@ -43,7 +43,7 @@ it('calculates total quantity from buy and sell transactions', function () {
 it('calculates weighted average price (PRU)', function () {
     $user = User::factory()->create();
     app(\App\Infrastructure\Services\UserId::class)->setOverride($user->id);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create(['asset_id' => $security->id, 'quantity' => 10, 'unit_price' => 100, 'user_id' => $user->id]);
     Transaction::factory()->pea()->create(['asset_id' => $security->id, 'quantity' => 5, 'unit_price' => 110, 'user_id' => $user->id]);
@@ -64,7 +64,7 @@ it('filters transactions by wallet when walletId provided', function () {
     $wallet1 = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'PEA']);
     $wallet2 = Wallet::factory()->create(['user_id' => $user->id, 'name' => 'CTO']);
 
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create([
         'asset_id' => $security->id,
@@ -90,7 +90,7 @@ it('filters transactions by wallet when walletId provided', function () {
 it('includes fees in total invested', function () {
     $user = User::factory()->create();
     app(\App\Infrastructure\Services\UserId::class)->setOverride($user->id);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -110,7 +110,7 @@ it('includes fees in total invested', function () {
 it('returns zero valuation when no latest price exists', function () {
     $user = User::factory()->create();
     app(\App\Infrastructure\Services\UserId::class)->setOverride($user->id);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -129,7 +129,7 @@ it('returns zero valuation when no latest price exists', function () {
 it('calculates valuation with latest price', function () {
     $user = User::factory()->create();
     app(\App\Infrastructure\Services\UserId::class)->setOverride($user->id);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     SecurityPrice::factory()->create(['asset_id' => $security->id, 'close' => 150, 'date' => now()]);
 
@@ -151,7 +151,7 @@ it('calculates valuation with latest price', function () {
 it('caches results by security id and wallet id', function () {
     $user = User::factory()->create();
     app(\App\Infrastructure\Services\UserId::class)->setOverride($user->id);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
     Transaction::factory()->pea()->create(['asset_id' => $security->id, 'quantity' => 10, 'unit_price' => 100, 'user_id' => $user->id]);
 
     $provider = app(SingleSecurityStatsProvider::class);
@@ -165,7 +165,7 @@ it('caches results by security id and wallet id', function () {
 it('calculates realized gain from sell transactions', function () {
     $user = User::factory()->create();
     app(\App\Infrastructure\Services\UserId::class)->setOverride($user->id);
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,

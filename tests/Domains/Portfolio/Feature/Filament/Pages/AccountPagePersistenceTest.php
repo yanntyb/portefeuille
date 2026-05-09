@@ -1,9 +1,9 @@
 <?php
 
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Filament\Pages\WalletPage;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 
@@ -15,8 +15,8 @@ beforeEach(function () {
 
 it('restores shown security ids from store for PEA page', function () {
     $peaWallet = Wallet::factory()->pea()->create();
-    $securityA = Security::factory()->create();
-    $securityB = Security::factory()->create();
+    $securityA = Stock::factory()->create();
+    $securityB = Stock::factory()->create();
 
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $securityA->id]);
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $securityB->id]);
@@ -35,8 +35,8 @@ it('restores shown security ids from store for PEA page', function () {
 
 it('updates shown security ids when toggling', function () {
     $peaWallet = Wallet::factory()->pea()->create();
-    $securityA = Security::factory()->create();
-    $securityB = Security::factory()->create();
+    $securityA = Stock::factory()->create();
+    $securityB = Stock::factory()->create();
 
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $securityA->id]);
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $securityB->id]);
@@ -56,7 +56,7 @@ it('updates shown security ids when toggling', function () {
 
 it('ignores persisted ids that no longer exist', function () {
     $peaWallet = Wallet::factory()->pea()->create();
-    $security = Security::factory()->create();
+    $security = Stock::factory()->create();
 
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $security->id]);
 
@@ -74,8 +74,8 @@ it('restores independently per wallet', function () {
     $peaWallet = Wallet::factory()->pea()->create();
     $ctoWallet = Wallet::factory()->cto()->create();
 
-    $peaSecurity = Security::factory()->create();
-    $ctoSecurity = Security::factory()->create();
+    $peaSecurity = Stock::factory()->create();
+    $ctoSecurity = Stock::factory()->create();
 
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $peaSecurity->id]);
     Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'asset_id' => $ctoSecurity->id]);
