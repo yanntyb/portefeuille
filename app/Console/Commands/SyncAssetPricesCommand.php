@@ -16,37 +16,43 @@ class SyncAssetPricesCommand extends Command
 
     public function handle(PriceSyncService $priceSyncService): int
     {
-        $type = $this->option('type');
+        $type = $this->option('type') ?? 'stock';
         $all = $this->option('all');
 
-        if (! $type && ! $all) {
-            $type = 'stock';
+        if ($all) {
+            $result = $this->syncAll($priceSyncService);
+        } else {
+            $result = $this->syncType($priceSyncService, $type);
+            if ($result === self::FAILURE) {
+                return self::FAILURE;
+            }
         }
 
-        try {
-            if ($all) {
-                $this->info('Syncing all asset prices...');
-                $result = $priceSyncService->syncAllStockAndEtfPrices();
-            } else {
-                $assetType = AssetType::tryFrom($type);
-                if (! $assetType) {
-                    $this->error(sprintf('Invalid asset type: %s', $type));
+        $this->displayResults($result);
 
-                    return self::FAILURE;
-                }
+        return self::SUCCESS;
+    }
 
-                $this->info(sprintf('Syncing %s prices...', $type));
-                $result = $priceSyncService->syncAssetsOfType($assetType);
-            }
+    private function syncAll(PriceSyncService $priceSyncService): array
+    {
+        $this->info('Syncing all asset prices...');
 
-            $this->displayResults($result);
+        return $priceSyncService->syncAllStockAndEtfPrices();
+    }
 
-            return self::SUCCESS;
-        } catch (\Exception $e) {
-            $this->error(sprintf('Sync failed: %s', $e->getMessage()));
+    private function syncType(PriceSyncService $priceSyncService, string $type): int|array
+    {
+        $assetType = AssetType::tryFrom($type);
+
+        if (! $assetType) {
+            $this->error(sprintf('Invalid asset type: %s', $type));
 
             return self::FAILURE;
         }
+
+        $this->info(sprintf('Syncing %s prices...', $type));
+
+        return $priceSyncService->syncAssetsOfType($assetType);
     }
 
     /** @param array{synced: int, errors: int, error_details: array<int, string>} $result */
@@ -57,7 +63,7 @@ class SyncAssetPricesCommand extends Command
 
         if ($result['errors'] > 0) {
             $this->warn(sprintf('✗ Errors: %d assets', $result['errors']));
-            foreach ($result['error_details'] as $assetId => $error) {
+            foreach ($result['error_details'] as $error) {
                 $this->line(sprintf('  • %s', $error));
             }
         }
