@@ -1,7 +1,7 @@
 <?php
 
 use App\Domains\Asset\Models\AssetPrice;
-use App\Domains\Security\Models\Security;
+use App\Domains\Asset\Models\Stock;
 
 it('uses the asset_prices table', function (): void {
     expect((new AssetPrice)->getTable())->toBe('asset_prices');
@@ -12,17 +12,17 @@ it('uses asset_id as foreign key', function (): void {
 });
 
 it('belongs to an asset', function (): void {
-    $security = Security::factory()->create();
-    $price = AssetPrice::factory()->create(['asset_id' => $security->id]);
+    $stock = Stock::factory()->create();
+    $price = AssetPrice::factory()->create(['asset_id' => $stock->id]);
 
     expect($price->asset)->not->toBeNull()
-        ->and($price->asset->id)->toBe($security->id);
+        ->and($price->asset->id)->toBe($stock->id);
 });
 
 it('casts date to Carbon instance', function (): void {
-    $security = Security::factory()->create();
+    $stock = Stock::factory()->create();
     $price = AssetPrice::factory()->create([
-        'asset_id' => $security->id,
+        'asset_id' => $stock->id,
         'date' => '2026-05-08',
     ]);
 
@@ -31,9 +31,9 @@ it('casts date to Carbon instance', function (): void {
 });
 
 it('casts OHLC fields as decimals', function (): void {
-    $security = Security::factory()->create();
+    $stock = Stock::factory()->create();
     $price = AssetPrice::factory()->create([
-        'asset_id' => $security->id,
+        'asset_id' => $stock->id,
         'open' => 100.1234,
         'high' => 105.5678,
         'low' => 98.9012,
@@ -49,9 +49,9 @@ it('casts OHLC fields as decimals', function (): void {
 });
 
 it('casts volume as integer', function (): void {
-    $security = Security::factory()->create();
+    $stock = Stock::factory()->create();
     $price = AssetPrice::factory()->create([
-        'asset_id' => $security->id,
+        'asset_id' => $stock->id,
         'volume' => 75000,
     ]);
 
