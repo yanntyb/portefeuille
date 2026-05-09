@@ -5,7 +5,6 @@ namespace App\Domains\Asset\Models;
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Services\AssetValuationService;
 use App\Domains\Portfolio\Models\Transaction;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -83,12 +82,6 @@ class Asset extends Model
     public function latestPrice(): HasOne
     {
         return $this->hasOne(AssetPrice::class, 'asset_id')->latestOfMany('date');
-    }
-
-    public function todayPrice(): HasOne
-    {
-        return $this->hasOne(AssetPrice::class, 'asset_id')
-            ->whereDate('date', Carbon::now()->toDateString());
     }
 
     public function currentValuation(): float
