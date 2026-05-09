@@ -37,7 +37,7 @@ it('computes basic return without cash flows', function () {
         'close' => 120,
     ]);
 
-    $securities = Security::query()
+    $securities = Stock::query()
         ->forWallet(Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']))
         ->with('latestPrice')
         ->get();
@@ -91,7 +91,7 @@ it('computes return with cash flows during period', function () {
         'close' => 120,
     ]);
 
-    $securities = Security::query()
+    $securities = Stock::query()
         ->forWallet(Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']))
         ->with('latestPrice')
         ->get();
@@ -128,7 +128,7 @@ it('returns null when period predates first transaction', function () {
         'close' => 120,
     ]);
 
-    $securities = Security::query()
+    $securities = Stock::query()
         ->forWallet(Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']))
         ->with('latestPrice')
         ->get();
@@ -170,7 +170,7 @@ it('uses closest available price when exact start date has no price', function (
         'close' => 120,
     ]);
 
-    $securities = Security::query()
+    $securities = Stock::query()
         ->forWallet(Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']))
         ->with('latestPrice')
         ->get();
