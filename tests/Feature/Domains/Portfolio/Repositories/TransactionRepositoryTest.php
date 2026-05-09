@@ -98,12 +98,12 @@ class TransactionRepositoryTest extends TestCase
     {
         $user = User::factory()->create();
         $wallet = $user->wallets()->create(['name' => 'Test Wallet']);
-        $security = Transaction::factory()->for($user)->create()->security;
+        $stock = Transaction::factory()->for($user)->create()->asset;
 
         $transaction = new Transaction;
         $transaction->user_id = $user->id;
         $transaction->wallet_id = $wallet->id;
-        $transaction->asset_id = $security->id;
+        $transaction->asset_id = $stock->id;
         $transaction->date = now();
         $transaction->type = 'buy';
         $transaction->quantity = 10;

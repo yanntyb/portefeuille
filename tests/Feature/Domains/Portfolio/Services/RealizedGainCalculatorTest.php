@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Domains\Portfolio\Services;
 
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Enums\TransactionType;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Portfolio\Services\RealizedGainCalculator;
-use App\Domains\Security\Models\Security;
 use App\Domains\User\Models\User;
 use Tests\TestCase;
 
@@ -26,11 +26,11 @@ class RealizedGainCalculatorTest extends TestCase
     {
         $user = User::factory()->create();
         $wallet = Wallet::factory()->for($user)->create();
-        $security = Security::factory()->create();
+        $stock = Stock::factory()->create();
 
         $buyTransaction = Transaction::factory()
             ->for($wallet)
-            ->for($security)
+            ->for($stock, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Buy,
@@ -48,11 +48,11 @@ class RealizedGainCalculatorTest extends TestCase
     {
         $user = User::factory()->create();
         $wallet = Wallet::factory()->for($user)->create();
-        $security = Security::factory()->create();
+        $stock = Stock::factory()->create();
 
         Transaction::factory()
             ->for($wallet)
-            ->for($security)
+            ->for($stock, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Buy,
@@ -63,7 +63,7 @@ class RealizedGainCalculatorTest extends TestCase
 
         $sellTransaction = Transaction::factory()
             ->for($wallet)
-            ->for($security)
+            ->for($stock, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Sell,
@@ -81,11 +81,11 @@ class RealizedGainCalculatorTest extends TestCase
     {
         $user = User::factory()->create();
         $wallet = Wallet::factory()->for($user)->create();
-        $security = Security::factory()->create();
+        $stock = Stock::factory()->create();
 
         Transaction::factory()
             ->for($wallet)
-            ->for($security)
+            ->for($stock, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Buy,
@@ -96,7 +96,7 @@ class RealizedGainCalculatorTest extends TestCase
 
         $sellTransaction = Transaction::factory()
             ->for($wallet)
-            ->for($security)
+            ->for($stock, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Sell,
@@ -114,11 +114,11 @@ class RealizedGainCalculatorTest extends TestCase
     {
         $user = User::factory()->create();
         $wallet = Wallet::factory()->for($user)->create();
-        $security = Security::factory()->create();
+        $stock = Stock::factory()->create();
 
         Transaction::factory()
             ->for($wallet)
-            ->for($security)
+            ->for($stock, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Buy,
@@ -129,7 +129,7 @@ class RealizedGainCalculatorTest extends TestCase
 
         $sellTransaction = Transaction::factory()
             ->for($wallet)
-            ->for($security)
+            ->for($stock, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Sell,
@@ -147,11 +147,11 @@ class RealizedGainCalculatorTest extends TestCase
     {
         $user = User::factory()->create();
         $wallet = Wallet::factory()->for($user)->create();
-        $security = Security::factory()->create();
+        $stock = Stock::factory()->create();
 
         Transaction::factory()
             ->for($wallet)
-            ->for($security)
+            ->for($stock, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Buy,
@@ -162,7 +162,7 @@ class RealizedGainCalculatorTest extends TestCase
 
         Transaction::factory()
             ->for($wallet)
-            ->for($security)
+            ->for($stock, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Buy,
@@ -173,7 +173,7 @@ class RealizedGainCalculatorTest extends TestCase
 
         $sellTransaction = Transaction::factory()
             ->for($wallet)
-            ->for($security)
+            ->for($stock, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Sell,
@@ -194,11 +194,11 @@ class RealizedGainCalculatorTest extends TestCase
     {
         $user = User::factory()->create();
         $wallet = Wallet::factory()->for($user)->create();
-        $security = Security::factory()->create();
+        $stock = Stock::factory()->create();
 
         Transaction::factory()
             ->for($wallet)
-            ->for($security)
+            ->for($stock, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Buy,
@@ -209,7 +209,7 @@ class RealizedGainCalculatorTest extends TestCase
 
         $sellTransaction = Transaction::factory()
             ->for($wallet)
-            ->for($security)
+            ->for($stock, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Sell,
@@ -227,11 +227,11 @@ class RealizedGainCalculatorTest extends TestCase
     {
         $user = User::factory()->create();
         $wallet = Wallet::factory()->for($user)->create();
-        $security = Security::factory()->create();
+        $stock = Stock::factory()->create();
 
         $sellTransaction = Transaction::factory()
             ->for($wallet)
-            ->for($security)
+            ->for($stock, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Sell,
@@ -250,11 +250,11 @@ class RealizedGainCalculatorTest extends TestCase
         $user = User::factory()->create();
         $wallet1 = Wallet::factory()->for($user)->pea()->create();
         $wallet2 = Wallet::factory()->for($user)->cto()->create();
-        $security = Security::factory()->create();
+        $stock = Stock::factory()->create();
 
         Transaction::factory()
             ->for($wallet1)
-            ->for($security)
+            ->for($stock, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Buy,
@@ -265,7 +265,7 @@ class RealizedGainCalculatorTest extends TestCase
 
         Transaction::factory()
             ->for($wallet2)
-            ->for($security)
+            ->for($stock, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Buy,
@@ -276,7 +276,7 @@ class RealizedGainCalculatorTest extends TestCase
 
         $sellTransaction = Transaction::factory()
             ->for($wallet1)
-            ->for($security)
+            ->for($stock, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Sell,
@@ -294,12 +294,12 @@ class RealizedGainCalculatorTest extends TestCase
     {
         $user = User::factory()->create();
         $wallet = Wallet::factory()->for($user)->create();
-        $security1 = Security::factory()->create();
-        $security2 = Security::factory()->create();
+        $stock1 = Stock::factory()->create();
+        $stock2 = Stock::factory()->create();
 
         Transaction::factory()
             ->for($wallet)
-            ->for($security1)
+            ->for($stock1, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Buy,
@@ -310,7 +310,7 @@ class RealizedGainCalculatorTest extends TestCase
 
         Transaction::factory()
             ->for($wallet)
-            ->for($security2)
+            ->for($stock2, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Buy,
@@ -321,7 +321,7 @@ class RealizedGainCalculatorTest extends TestCase
 
         $sellTransaction = Transaction::factory()
             ->for($wallet)
-            ->for($security1)
+            ->for($stock1, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Sell,
@@ -339,11 +339,11 @@ class RealizedGainCalculatorTest extends TestCase
     {
         $user = User::factory()->create();
         $wallet = Wallet::factory()->for($user)->create();
-        $security = Security::factory()->create();
+        $stock = Stock::factory()->create();
 
         Transaction::factory()
             ->for($wallet)
-            ->for($security)
+            ->for($stock, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Buy,
@@ -354,7 +354,7 @@ class RealizedGainCalculatorTest extends TestCase
 
         $sellTransaction = Transaction::factory()
             ->for($wallet)
-            ->for($security)
+            ->for($stock, 'asset')
             ->create([
                 'user_id' => $user->id,
                 'type' => TransactionType::Sell,

@@ -3,7 +3,7 @@
 namespace Database\Factories\Domains\Asset\Models;
 
 use App\Domains\Asset\Models\AssetPrice;
-use App\Domains\Security\Models\Security;
+use App\Domains\Asset\Models\Stock;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -19,7 +19,7 @@ class AssetPriceFactory extends Factory
         $close = fake()->randomFloat(4, 10, 500);
 
         return [
-            'asset_id' => Security::factory(),
+            'asset_id' => Stock::factory(),
             'date' => fake()->date(),
             'open' => fake()->randomFloat(4, 10, 500),
             'high' => $close * fake()->randomFloat(2, 1.0, 1.05),

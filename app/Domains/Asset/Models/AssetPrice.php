@@ -2,7 +2,6 @@
 
 namespace App\Domains\Asset\Models;
 
-use App\Domains\Security\Models\Security;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -52,6 +51,6 @@ class AssetPrice extends Model
 
     public function asset(): BelongsTo
     {
-        return $this->belongsTo(Security::class, 'asset_id');
+        return $this->belongsTo(Asset::class, 'asset_id');
     }
 }

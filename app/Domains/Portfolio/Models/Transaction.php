@@ -2,9 +2,9 @@
 
 namespace App\Domains\Portfolio\Models;
 
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Portfolio\Enums\TransactionType;
 use App\Domains\Portfolio\Observers\TransactionObserver;
-use App\Domains\Security\Models\Security;
 use App\Domains\User\Models\User;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
@@ -68,9 +68,9 @@ class Transaction extends Model
         return $this->belongsTo(Wallet::class);
     }
 
-    public function security(): BelongsTo
+    public function asset(): BelongsTo
     {
-        return $this->belongsTo(Security::class, 'asset_id');
+        return $this->belongsTo(Asset::class, 'asset_id');
     }
 
     public function user(): BelongsTo

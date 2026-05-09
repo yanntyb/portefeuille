@@ -15,13 +15,13 @@ class CalculateRealizedGainListenerTest extends TestCase
     {
         $user = User::factory()->create();
         $wallet = $user->wallets()->create(['name' => 'Test Wallet']);
-        $security = Transaction::factory()->for($user)->create()->security;
+        $stock = Transaction::factory()->for($user)->create()->asset;
 
         // Create sell transaction (observer calculates realized gain)
         $sellTransaction = Transaction::factory()
             ->for($user)
             ->for($wallet)
-            ->for($security, 'security')
+            ->for($stock, 'asset')
             ->create([
                 'type' => TransactionType::Sell,
                 'quantity' => 10,
@@ -37,13 +37,13 @@ class CalculateRealizedGainListenerTest extends TestCase
     {
         $user = User::factory()->create();
         $wallet = $user->wallets()->create(['name' => 'Test Wallet']);
-        $security = Transaction::factory()->for($user)->create()->security;
+        $stock = Transaction::factory()->for($user)->create()->asset;
 
         // Create buy
         Transaction::factory()
             ->for($user)
             ->for($wallet)
-            ->for($security, 'security')
+            ->for($stock, 'asset')
             ->create([
                 'type' => TransactionType::Buy,
                 'quantity' => 10,
@@ -55,7 +55,7 @@ class CalculateRealizedGainListenerTest extends TestCase
         $sell = Transaction::factory()
             ->for($user)
             ->for($wallet)
-            ->for($security, 'security')
+            ->for($stock, 'asset')
             ->create([
                 'type' => TransactionType::Sell,
                 'quantity' => 10,
@@ -71,12 +71,12 @@ class CalculateRealizedGainListenerTest extends TestCase
     {
         $user = User::factory()->create();
         $wallet = $user->wallets()->create(['name' => 'Test Wallet']);
-        $security = Transaction::factory()->for($user)->create()->security;
+        $stock = Transaction::factory()->for($user)->create()->asset;
 
         $buy = Transaction::factory()
             ->for($user)
             ->for($wallet)
-            ->for($security, 'security')
+            ->for($stock, 'asset')
             ->create([
                 'type' => TransactionType::Buy,
                 'quantity' => 10,
@@ -91,13 +91,13 @@ class CalculateRealizedGainListenerTest extends TestCase
     {
         $user = User::factory()->create();
         $wallet = $user->wallets()->create(['name' => 'Test Wallet']);
-        $security = Transaction::factory()->for($user)->create()->security;
+        $stock = Transaction::factory()->for($user)->create()->asset;
 
         // Two buy transactions
         Transaction::factory()
             ->for($user)
             ->for($wallet)
-            ->for($security, 'security')
+            ->for($stock, 'asset')
             ->create([
                 'type' => TransactionType::Buy,
                 'quantity' => 5,
@@ -108,7 +108,7 @@ class CalculateRealizedGainListenerTest extends TestCase
         Transaction::factory()
             ->for($user)
             ->for($wallet)
-            ->for($security, 'security')
+            ->for($stock, 'asset')
             ->create([
                 'type' => TransactionType::Buy,
                 'quantity' => 5,
@@ -120,7 +120,7 @@ class CalculateRealizedGainListenerTest extends TestCase
         $sell = Transaction::factory()
             ->for($user)
             ->for($wallet)
-            ->for($security, 'security')
+            ->for($stock, 'asset')
             ->create([
                 'type' => TransactionType::Sell,
                 'quantity' => 10,

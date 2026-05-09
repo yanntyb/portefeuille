@@ -2,7 +2,7 @@
 
 namespace App\Domains\Portfolio\Models;
 
-use App\Domains\Security\Models\Security;
+use App\Domains\Asset\Models\Asset;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -40,8 +40,8 @@ class AllocationProfileItem extends Model
         return $this->belongsTo(AllocationProfile::class);
     }
 
-    public function security(): BelongsTo
+    public function asset(): BelongsTo
     {
-        return $this->belongsTo(Security::class, 'asset_id');
+        return $this->belongsTo(Asset::class, 'asset_id');
     }
 }

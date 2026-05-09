@@ -2,14 +2,13 @@
 
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\Security;
 use App\Domains\User\Models\User;
 
-it('belongs to a security', function () {
-    $security = Security::factory()->create();
-    $transaction = Transaction::factory()->pea()->create(['asset_id' => $security->id]);
+it('belongs to an asset', function () {
+    $stock = \App\Domains\Asset\Models\Stock::factory()->create();
+    $transaction = Transaction::factory()->pea()->create(['asset_id' => $stock->id]);
 
-    expect($transaction->security->id)->toBe($security->id);
+    expect($transaction->asset->id)->toBe($stock->id);
 });
 
 it('casts date to Carbon instance', function () {
