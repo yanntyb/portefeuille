@@ -17,7 +17,7 @@ readonly class AssetValuationService
             return 0.0;
         }
 
-        $latestPrice = $asset->latestPrice;
+        $latestPrice = $this->priceRepository->findLatestForAsset($asset->id);
 
         if ($latestPrice === null) {
             return 0.0;
