@@ -3,7 +3,7 @@
 namespace App\Domains\Analytics\Services;
 
 use App\Domains\Analytics\Contracts\Rebalancing;
-use App\Domains\Portfolio\Models\Transaction;
+use App\Domains\Portfolio\Models\HoldingsProjection;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Models\Security;
 
@@ -54,20 +54,23 @@ class RebalancingCalculatorOrchestrator
             ->get()
             ->keyBy('id');
 
-        // Bulk load quantities
-        $quantitiesQuery = Transaction::query()
+        // Bulk load quantities from HoldingsProjection read model
+        $quantitiesQuery = HoldingsProjection::query()
             ->withoutGlobalScope('user')
             ->where('user_id', auth()->id())
             ->whereIn('asset_id', $securityIds);
 
         if ($wallet) {
-            $quantitiesQuery->where('wallet_id', $wallet->id);
+            $quantities = $quantitiesQuery
+                ->where('wallet_id', $wallet->id)
+                ->pluck('quantity', 'asset_id');
+        } else {
+            // For global view, sum quantities across all wallets per asset
+            $quantities = $quantitiesQuery
+                ->selectRaw('asset_id, SUM(quantity) as total_qty')
+                ->groupBy('asset_id')
+                ->pluck('total_qty', 'asset_id');
         }
-
-        $quantities = $quantitiesQuery
-            ->selectRaw('asset_id, SUM(quantity) as total_qty')
-            ->groupBy('asset_id')
-            ->pluck('total_qty', 'asset_id');
 
         // Build result array maintaining allocation order
         $result = [];
