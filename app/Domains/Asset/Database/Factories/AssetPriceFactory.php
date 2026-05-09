@@ -1,6 +1,6 @@
 <?php
 
-namespace Database\Factories\Domains\Asset\Models;
+namespace App\Domains\Asset\Database\Factories;
 
 use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\Asset\Models\Stock;

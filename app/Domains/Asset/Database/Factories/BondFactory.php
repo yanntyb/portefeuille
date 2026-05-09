@@ -1,6 +1,6 @@
 <?php
 
-namespace Database\Factories\Domains\Asset\Models;
+namespace App\Domains\Asset\Database\Factories;
 
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Models\Bond;
@@ -18,7 +18,7 @@ class BondFactory extends Factory
     {
         return [
             'isin' => 'XS'.fake()->numerify('##############'),
-            'name' => fake()->company().' '.'Bond',
+            'name' => fake()->company().' Bond',
             'ticker' => fake()->lexify('????'),
             'type' => AssetType::Bond->value,
         ];

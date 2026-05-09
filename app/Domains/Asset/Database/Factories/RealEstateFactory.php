@@ -1,6 +1,6 @@
 <?php
 
-namespace Database\Factories\Domains\Asset\Models;
+namespace App\Domains\Asset\Database\Factories;
 
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Models\RealEstate;
@@ -18,7 +18,7 @@ class RealEstateFactory extends Factory
     {
         return [
             'isin' => fake()->numerify('###############'),
-            'name' => fake()->city().' '.'Property',
+            'name' => fake()->city().' Property',
             'ticker' => fake()->lexify('????'),
             'type' => AssetType::RealEstate->value,
         ];

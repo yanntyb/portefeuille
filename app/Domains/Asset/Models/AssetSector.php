@@ -2,14 +2,17 @@
 
 namespace App\Domains\Asset\Models;
 
+use App\Domains\Asset\Database\Factories\AssetSectorFactory;
 use App\Domains\Asset\Enums\Sector;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[UseFactory(AssetSectorFactory::class)]
 class AssetSector extends Model
 {
-    /** @use HasFactory<\Database\Factories\Domains\Asset\Models\AssetSectorFactory> */
+    /** @use HasFactory<AssetSectorFactory> */
     use HasFactory;
 
     protected $table = 'security_sectors';

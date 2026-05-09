@@ -1,6 +1,6 @@
 <?php
 
-namespace Database\Factories\Domains\Asset\Models;
+namespace App\Domains\Asset\Database\Factories;
 
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Models\ETF;

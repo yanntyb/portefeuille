@@ -2,6 +2,8 @@
 
 namespace App\Domains\Asset\Models;
 
+use App\Domains\Asset\Database\Factories\AssetPriceFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,9 +20,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read \Illuminate\Support\Carbon $created_at
  * @property-read \Illuminate\Support\Carbon $updated_at
  */
+#[UseFactory(AssetPriceFactory::class)]
 class AssetPrice extends Model
 {
-    /** @use HasFactory<\Database\Factories\Domains\Asset\Models\AssetPriceFactory> */
+    /** @use HasFactory<AssetPriceFactory> */
     use HasFactory;
 
     protected $table = 'asset_prices';
