@@ -37,6 +37,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AssetPriceRepositoryInterface::class, EloquentAssetPriceRepository::class);
         $this->app->bind(TransactionRepositoryInterface::class, EloquentTransactionRepository::class);
 
+        // Ports → Adapters
+        $this->app->bind(\App\Domains\Asset\Ports\AssetPriceProviderPort::class, \App\Domains\Asset\Infrastructure\Adapters\DatabaseAssetPriceAdapter::class);
+
+        // Asset domain services
+        $this->app->scoped(\App\Domains\Asset\Services\AssetValuationService::class);
+
         // Service interfaces → implementations (scoped for per-request safety)
         $this->app->scoped(VolatilityCalculating::class, VolatilityCalculator::class);
         $this->app->scoped(PortfolioPerformanceCalculating::class, PortfolioPerformanceCalculator::class);

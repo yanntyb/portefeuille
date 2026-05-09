@@ -5,7 +5,6 @@ namespace App\Domains\Asset\Models;
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Infrastructure\Support\MarketCalendar;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -87,13 +86,6 @@ class Asset extends Model
         return $this->hasOne(AssetPrice::class, 'asset_id')->latestOfMany('date');
     }
 
-    public function currentPrice(): HasOne
-    {
-        return $this->hasOne(AssetPrice::class, 'asset_id')
-            ->where('date', '>=', MarketCalendar::lastTradingDate()->toDateString())
-            ->latestOfMany('date');
-    }
-
     public function todayPrice(): HasOne
     {
         return $this->hasOne(AssetPrice::class, 'asset_id')->whereDate('date', today());
@@ -101,13 +93,8 @@ class Asset extends Model
 
     public function currentValuation(): float
     {
-        $close = $this->latestPrice?->close;
-
-        if ($close === null || $this->total_quantity === null) {
-            return 0.0;
-        }
-
-        return (float) $this->total_quantity * (float) $close;
+        return app(\App\Domains\Asset\Services\AssetValuationService::class)
+            ->computeCurrentValuation($this);
     }
 
     /** @param Builder<self> $query */
