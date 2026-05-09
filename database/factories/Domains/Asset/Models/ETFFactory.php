@@ -18,9 +18,11 @@ class ETFFactory extends Factory
     {
         $countryPrefixes = ['FR', 'US', 'DE', 'LU', 'IE'];
         $prefix = fake()->randomElement($countryPrefixes);
+        $digits = fake()->numerify('##########');
+        $isin = $prefix.$digits;
 
         return [
-            'isin' => $prefix.fake()->numerify('##########'),
+            'isin' => $isin,
             'name' => fake()->company().' ETF',
             'ticker' => fake()->lexify('????').'.PA',
             'type' => AssetType::ETF->value,

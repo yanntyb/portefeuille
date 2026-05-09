@@ -2,6 +2,7 @@
 
 namespace App\Domains\Asset\Models;
 
+use App\Domains\Security\Models\SecuritySector;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -14,14 +15,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class ETF extends Asset
 {
-    /** @var list<string> */
-    protected $fillable = [
-        'name',
-        'type',
-        'isin',
-        'ticker',
-    ];
-
     public function sectors(): HasMany
     {
         return $this->hasMany(SecuritySector::class, 'security_id');

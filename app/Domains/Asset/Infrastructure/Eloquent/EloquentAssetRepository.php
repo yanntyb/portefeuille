@@ -20,7 +20,7 @@ class EloquentAssetRepository implements AssetRepositoryInterface
         $wallet = Wallet::find($walletId);
 
         if (! $wallet) {
-            return collect();
+            return new Collection;
         }
 
         return Asset::query()

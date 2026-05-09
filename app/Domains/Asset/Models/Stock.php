@@ -16,14 +16,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Stock extends Asset
 {
-    /** @var list<string> */
-    protected $fillable = [
-        'name',
-        'type',
-        'isin',
-        'ticker',
-    ];
-
     public function sectors(): HasMany
     {
         return $this->hasMany(SecuritySector::class, 'security_id');
