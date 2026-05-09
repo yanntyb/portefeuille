@@ -47,7 +47,7 @@ class CorrelationCalculator
         $securityIds = $securities->pluck('id')->all();
 
         $query = SecurityPrice::query()
-            ->whereIn('security_id', $securityIds)
+            ->whereIn('asset_id', $securityIds)
             ->orderBy('date');
 
         $startDate = $period->startDate();
@@ -57,13 +57,13 @@ class CorrelationCalculator
         }
 
         /** @var Collection<int, SecurityPrice> $prices */
-        $prices = $query->get(['security_id', 'date', 'close']);
+        $prices = $query->get(['asset_id', 'date', 'close']);
 
         $pricesBySecurityAndDate = [];
 
         foreach ($prices as $price) {
             $date = $price->date->format('Y-m-d');
-            $pricesBySecurityAndDate[$price->security_id][$date] = (float) $price->close;
+            $pricesBySecurityAndDate[$price->asset_id][$date] = (float) $price->close;
         }
 
         // Exclure les titres sans données de prix dans la période

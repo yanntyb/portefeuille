@@ -24,13 +24,13 @@ it('defaults to total mode with aggregated valuation', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => '2024-01-15',
         'close' => 105,
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => '2024-02-15',
         'close' => 110,
     ]);
@@ -82,13 +82,13 @@ it('shows stacked areas per security in per_security mode', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityA->id,
+        'asset_id' => $securityA->id,
         'date' => '2024-01-15',
         'close' => 105,
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityB->id,
+        'asset_id' => $securityB->id,
         'date' => '2024-01-15',
         'close' => 210,
     ]);
@@ -140,13 +140,13 @@ it('computes cumulative fees from transactions', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => '2024-01-15',
         'close' => 105,
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => '2024-02-15',
         'close' => 110,
     ]);
@@ -180,13 +180,13 @@ it('excludes prices before the first transaction date', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => '2024-01-01',
         'close' => 50,
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => '2024-06-03',
         'close' => 105,
     ]);
@@ -220,7 +220,7 @@ it('invested reflects mid-week transactions in the same week', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => '2024-01-12',
         'close' => 105,
     ]);
@@ -262,13 +262,13 @@ it('extrapolates missing prices using the last known close in total mode', funct
     // Both have prices on day 1
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityA->id,
+        'asset_id' => $securityA->id,
         'date' => '2024-01-15',
         'close' => 100,
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityB->id,
+        'asset_id' => $securityB->id,
         'date' => '2024-01-15',
         'close' => 200,
     ]);
@@ -276,7 +276,7 @@ it('extrapolates missing prices using the last known close in total mode', funct
     // Only securityA has a price on day 2
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityA->id,
+        'asset_id' => $securityA->id,
         'date' => '2024-01-16',
         'close' => 110,
     ]);
@@ -319,13 +319,13 @@ it('extrapolates missing prices using the last known close in per_security mode'
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityA->id,
+        'asset_id' => $securityA->id,
         'date' => '2024-01-15',
         'close' => 100,
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityB->id,
+        'asset_id' => $securityB->id,
         'date' => '2024-01-15',
         'close' => 200,
     ]);
@@ -333,7 +333,7 @@ it('extrapolates missing prices using the last known close in per_security mode'
     // Only securityA has a price on day 2
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityA->id,
+        'asset_id' => $securityA->id,
         'date' => '2024-01-16',
         'close' => 110,
     ]);

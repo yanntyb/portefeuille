@@ -17,7 +17,7 @@ it('has many transactions', function () {
 
 it('has many prices', function () {
     $security = Security::factory()->create();
-    SecurityPrice::factory()->count(5)->create(['security_id' => $security->id]);
+    SecurityPrice::factory()->count(5)->create(['asset_id' => $security->id]);
 
     expect($security->prices)->toHaveCount(5);
 });
@@ -26,13 +26,13 @@ it('has a latest price', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => '2024-01-01',
         'close' => 100,
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => '2024-06-01',
         'close' => 150,
     ]);
@@ -96,7 +96,7 @@ it('has a current price when price is on last trading date', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => MarketCalendar::lastTradingDate(),
         'close' => 120,
     ]);
@@ -109,7 +109,7 @@ it('does not have a current price when price is before last trading date', funct
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => MarketCalendar::lastTradingDate()->subDay(),
         'close' => 120,
     ]);
@@ -122,13 +122,13 @@ it('current price returns the most recent price since last trading date', functi
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => '2026-02-27',
         'close' => 100,
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => '2026-02-28',
         'close' => 130,
     ]);
@@ -140,7 +140,7 @@ it('has a today price only for today', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => today()->subDays(1),
         'close' => 120,
     ]);
@@ -148,7 +148,7 @@ it('has a today price only for today', function () {
     expect($security->todayPrice)->toBeNull();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => today(),
         'close' => 125,
     ]);

@@ -55,7 +55,7 @@ class SectorAllocationChartWidget extends ChartWidget
             }
 
             $date = SecuritySector::query()
-                ->whereIn('security_id', $securityIds)
+                ->whereIn('asset_id', $securityIds)
                 ->min('updated_at');
 
             return $date ? Carbon::parse($date) : null;

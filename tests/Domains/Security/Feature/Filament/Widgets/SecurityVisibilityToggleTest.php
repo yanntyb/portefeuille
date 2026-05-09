@@ -21,9 +21,9 @@ it('initializes shownSecurityIds with only securities that have today price', fu
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $security2->id]);
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $securityNoPrice->id]);
 
-    SecurityPrice::factory()->create(['security_id' => $security1->id, 'date' => today(), 'close' => 100]);
+    SecurityPrice::factory()->create(['asset_id' => $security1->id, 'date' => today(), 'close' => 100]);
 
-    SecurityPrice::factory()->create(['security_id' => $security2->id, 'date' => today(), 'close' => 200]);
+    SecurityPrice::factory()->create(['asset_id' => $security2->id, 'date' => today(), 'close' => 200]);
 
     $page = livewire(WalletPage::class, ['walletId' => $peaWallet->id]);
 
@@ -40,9 +40,9 @@ it('removes a security id when toggling a visible security', function () {
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $security1->id]);
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $security2->id]);
 
-    SecurityPrice::factory()->create(['security_id' => $security1->id, 'date' => today(), 'close' => 100]);
+    SecurityPrice::factory()->create(['asset_id' => $security1->id, 'date' => today(), 'close' => 100]);
 
-    SecurityPrice::factory()->create(['security_id' => $security2->id, 'date' => today(), 'close' => 200]);
+    SecurityPrice::factory()->create(['asset_id' => $security2->id, 'date' => today(), 'close' => 200]);
 
     $page = livewire(WalletPage::class, ['walletId' => $peaWallet->id])
         ->call('toggleSecurity', $security1->id);
@@ -57,7 +57,7 @@ it('adds back a security id when toggling a hidden security', function () {
     $security = Security::factory()->create();
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $security->id]);
 
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => today(), 'close' => 100]);
+    SecurityPrice::factory()->create(['asset_id' => $security->id, 'date' => today(), 'close' => 100]);
 
     $page = livewire(WalletPage::class, ['walletId' => $peaWallet->id])
         ->call('toggleSecurity', $security->id)
@@ -85,7 +85,7 @@ it('skips fetch when all securities have current prices', function () {
     $security = Security::factory()->create(['ticker' => 'AAPL']);
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $security->id]);
 
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => today(), 'close' => 150]);
+    SecurityPrice::factory()->create(['asset_id' => $security->id, 'date' => today(), 'close' => 150]);
 
     $mock = test()->mock(YahooFinanceService::class);
     $mock->shouldNotReceive('fetchAndStorePricesBulk');
@@ -102,7 +102,7 @@ it('fetches prices when at least one security lacks current price', function () 
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $securityWithPrice->id]);
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $securityWithoutPrice->id]);
 
-    SecurityPrice::factory()->create(['security_id' => $securityWithPrice->id, 'date' => today(), 'close' => 150]);
+    SecurityPrice::factory()->create(['asset_id' => $securityWithPrice->id, 'date' => today(), 'close' => 150]);
 
     $mock = test()->mock(YahooFinanceService::class);
     $mock->shouldReceive('fetchAndStorePricesBulk')->once()->andReturn(1);
@@ -127,7 +127,7 @@ it('works on CTO wallet as well', function () {
     $security = Security::factory()->create();
     Transaction::factory()->create(['wallet_id' => $ctoWallet->id, 'asset_id' => $security->id]);
 
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'date' => today(), 'close' => 100]);
+    SecurityPrice::factory()->create(['asset_id' => $security->id, 'date' => today(), 'close' => 100]);
 
     $page = livewire(WalletPage::class, ['walletId' => $ctoWallet->id]);
 
@@ -167,13 +167,13 @@ it('filters stats widget to only shown securities', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security1->id,
+        'asset_id' => $security1->id,
         'date' => now(),
         'close' => 120,
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security2->id,
+        'asset_id' => $security2->id,
         'date' => now(),
         'close' => 250,
     ]);
@@ -219,13 +219,13 @@ it('filters chart widget to only shown securities', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security1->id,
+        'asset_id' => $security1->id,
         'date' => '2024-01-15',
         'close' => 120,
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security2->id,
+        'asset_id' => $security2->id,
         'date' => '2024-01-15',
         'close' => 250,
     ]);
@@ -259,7 +259,7 @@ it('shows empty stats when all securities are hidden', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => now(),
         'close' => 120,
     ]);
@@ -282,7 +282,7 @@ it('displays error icon for securities without today price', function () {
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $securityWithPrice->id]);
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $securityWithoutPrice->id]);
 
-    SecurityPrice::factory()->create(['security_id' => $securityWithPrice->id, 'date' => today(), 'close' => 100]);
+    SecurityPrice::factory()->create(['asset_id' => $securityWithPrice->id, 'date' => today(), 'close' => 100]);
 
     $page = livewire(WalletPage::class, ['walletId' => $peaWallet->id]);
     $page->loadTable();
@@ -324,7 +324,7 @@ it('does not show error icon after toggling a priced security to hidden', functi
     $securityWithPrice = Security::factory()->create();
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $securityWithPrice->id]);
 
-    SecurityPrice::factory()->create(['security_id' => $securityWithPrice->id, 'date' => today(), 'close' => 100]);
+    SecurityPrice::factory()->create(['asset_id' => $securityWithPrice->id, 'date' => today(), 'close' => 100]);
 
     $page = livewire(WalletPage::class, ['walletId' => $peaWallet->id]);
 
@@ -356,7 +356,7 @@ it('shows empty chart when all securities are hidden', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => '2024-01-15',
         'close' => 120,
     ]);

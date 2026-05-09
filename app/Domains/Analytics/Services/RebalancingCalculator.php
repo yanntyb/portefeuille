@@ -93,7 +93,7 @@ class RebalancingCalculator implements Rebalancing
                 : 0;
 
             $items[] = [
-                'security_id' => $security['security_id'],
+                'asset_id' => $security['asset_id'],
                 'name' => $security['name'],
                 'price' => $security['price'],
                 'quantity_held' => $security['quantity'],

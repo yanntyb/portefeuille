@@ -109,7 +109,7 @@ class RebalancingCalculator extends Page implements HasTable
                     Repeater::make('allocations')
                         ->label('Allocations cibles')
                         ->schema([
-                            Select::make('security_id')
+                            Select::make('asset_id')
                                 ->label('Titre')
                                 ->options(fn (): array => Security::query()
                                     ->get()
@@ -266,7 +266,7 @@ class RebalancingCalculator extends Page implements HasTable
 
         foreach ($allocations as $allocation) {
             $profile->items()->create([
-                'security_id' => $allocation['security_id'],
+                'asset_id' => $allocation['asset_id'],
                 'target_percentage' => $allocation['target_percentage'],
             ]);
         }
@@ -297,7 +297,7 @@ class RebalancingCalculator extends Page implements HasTable
         $allocations = $profile->items->map(function ($item): array {
             /** @var AllocationProfileItem $item */
             return [
-                'security_id' => $item->security_id,
+                'asset_id' => $item->asset_id,
                 'target_percentage' => $item->target_percentage,
             ];
         })->all();

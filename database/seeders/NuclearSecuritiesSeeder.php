@@ -67,7 +67,7 @@ class NuclearSecuritiesSeeder extends Seeder
         }
 
         $rows = array_map(fn (array $price) => [
-            'security_id' => $security->id,
+            'asset_id' => $security->id,
             'date' => $price['date'],
             'open' => $price['open'],
             'high' => $price['high'],

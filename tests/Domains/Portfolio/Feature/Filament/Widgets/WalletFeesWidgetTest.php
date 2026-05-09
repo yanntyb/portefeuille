@@ -51,7 +51,7 @@ it('calculates transaction fees', function () {
 
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 100, 'date' => now()]);
+    SecurityPrice::factory()->create(['asset_id' => $security->id, 'close' => 100, 'date' => now()]);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -78,7 +78,7 @@ it('calculates percentage fees on valuation', function () {
 
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 100, 'date' => now()]);
+    SecurityPrice::factory()->create(['asset_id' => $security->id, 'close' => 100, 'date' => now()]);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -112,7 +112,7 @@ it('calculates currency fees with frequency', function () {
 
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 100, 'date' => now()]);
+    SecurityPrice::factory()->create(['asset_id' => $security->id, 'close' => 100, 'date' => now()]);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -145,7 +145,7 @@ it('calculates percentage fees on unrealized gain', function () {
 
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 150, 'date' => now()]);
+    SecurityPrice::factory()->create(['asset_id' => $security->id, 'close' => 150, 'date' => now()]);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,
@@ -179,7 +179,7 @@ it('calculates quarterly fees correctly', function () {
 
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 100, 'date' => now()]);
+    SecurityPrice::factory()->create(['asset_id' => $security->id, 'close' => 100, 'date' => now()]);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,

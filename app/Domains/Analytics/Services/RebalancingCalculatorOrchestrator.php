@@ -40,7 +40,7 @@ class RebalancingCalculatorOrchestrator
      */
     public function prepareSecuritiesData(array $allocations, ?Wallet $wallet): array
     {
-        $securityIds = array_map(fn ($a) => (int) ($a['security_id'] ?? 0), $allocations);
+        $securityIds = array_map(fn ($a) => (int) ($a['asset_id'] ?? 0), $allocations);
         $securityIds = array_filter($securityIds);
 
         if (empty($securityIds)) {
@@ -75,7 +75,7 @@ class RebalancingCalculatorOrchestrator
         // Build result array maintaining allocation order
         $result = [];
         foreach ($allocations as $allocation) {
-            $securityId = (int) ($allocation['security_id'] ?? 0);
+            $securityId = (int) ($allocation['asset_id'] ?? 0);
             $security = $securities->get($securityId);
 
             if (! $security) {
@@ -83,7 +83,7 @@ class RebalancingCalculatorOrchestrator
             }
 
             $result[] = [
-                'security_id' => $securityId,
+                'asset_id' => $securityId,
                 'name' => $security->name,
                 'price' => (float) ($security->latestPrice?->close ?? 0),
                 'quantity' => (float) ($quantities->get($securityId) ?? 0),

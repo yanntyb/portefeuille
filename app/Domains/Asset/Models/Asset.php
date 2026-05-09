@@ -5,7 +5,6 @@ namespace App\Domains\Asset\Models;
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\SecurityPrice;
 use App\Infrastructure\Support\MarketCalendar;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -50,24 +49,24 @@ abstract class Asset extends Model
 
     public function prices(): HasMany
     {
-        return $this->hasMany(SecurityPrice::class, 'security_id');
+        return $this->hasMany(AssetPrice::class, 'asset_id');
     }
 
     public function latestPrice(): HasOne
     {
-        return $this->hasOne(SecurityPrice::class, 'security_id')->latestOfMany('date');
+        return $this->hasOne(AssetPrice::class, 'asset_id')->latestOfMany('date');
     }
 
     public function currentPrice(): HasOne
     {
-        return $this->hasOne(SecurityPrice::class, 'security_id')
+        return $this->hasOne(AssetPrice::class, 'asset_id')
             ->where('date', '>=', MarketCalendar::lastTradingDate()->toDateString())
             ->latestOfMany('date');
     }
 
     public function todayPrice(): HasOne
     {
-        return $this->hasOne(SecurityPrice::class, 'security_id')->whereDate('date', today());
+        return $this->hasOne(AssetPrice::class, 'asset_id')->whereDate('date', today());
     }
 
     public function currentValuation(): float

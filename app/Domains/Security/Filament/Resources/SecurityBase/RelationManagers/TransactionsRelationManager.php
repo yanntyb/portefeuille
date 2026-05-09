@@ -117,7 +117,7 @@ class TransactionsRelationManager extends RelationManager
                     ->minValue(0)
                     ->default(function (RelationManager $livewire): ?float {
                         $price = SecurityPrice::query()
-                            ->where('security_id', $livewire->getOwnerRecord()->id)
+                            ->where('asset_id', $livewire->getOwnerRecord()->id)
                             ->orderByDesc('date')
                             ->value('close');
 

@@ -106,10 +106,10 @@ class ValuationChartWidget extends ChartWidget
         $firstTransactionDate = $transactions->first()->date;
 
         $prices = SecurityPrice::query()
-            ->whereIn('security_id', $securityIds)
+            ->whereIn('asset_id', $securityIds)
             ->where('date', '>=', $firstTransactionDate)
             ->orderBy('date')
-            ->get(['security_id', 'date', 'close']);
+            ->get(['asset_id', 'date', 'close']);
 
         if ($prices->isEmpty()) {
             return ['datasets' => [], 'labels' => []];
@@ -152,7 +152,7 @@ class ValuationChartWidget extends ChartWidget
 
         $pricesByDayAndSecurity = $prices->groupBy(
             fn ($p) => Carbon::parse($p->date)->format('Y-m-d'),
-        )->map(fn (Collection $group) => $group->keyBy('security_id'));
+        )->map(fn (Collection $group) => $group->keyBy('asset_id'));
 
         $labels = [];
         $valuationsBySecurity = [];

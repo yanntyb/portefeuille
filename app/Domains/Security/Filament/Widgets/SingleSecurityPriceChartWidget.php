@@ -42,7 +42,7 @@ class SingleSecurityPriceChartWidget extends ChartWidget
         }
 
         $prices = SecurityPrice::query()
-            ->where('security_id', $this->record->id)
+            ->where('asset_id', $this->record->id)
             ->orderBy('date')
             ->get(['date', 'close']);
 

@@ -6,7 +6,7 @@ use App\Domains\Security\Models\SecurityPrice;
 it('belongs to a security', function () {
     $security = Security::factory()->create();
     $price =
-SecurityPrice::factory()->create(['security_id' => $security->id]);
+SecurityPrice::factory()->create(['asset_id' => $security->id]);
 
     expect($price->security->id)->toBe($security->id);
 });

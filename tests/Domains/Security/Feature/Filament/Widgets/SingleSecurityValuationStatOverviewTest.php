@@ -28,7 +28,7 @@ it('computes valuation from single security stats', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);
@@ -62,7 +62,7 @@ it('shows success color when valuation exceeds total invested', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);
@@ -94,7 +94,7 @@ it('shows danger color when below total invested', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'close' => 99,
         'date' => now(),
     ]);
@@ -127,7 +127,7 @@ it('isolates to specified wallet', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);

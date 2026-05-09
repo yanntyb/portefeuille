@@ -29,7 +29,7 @@ it('computes valuation from wallet page table query', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);
@@ -63,7 +63,7 @@ it('shows success color when valuation exceeds invested', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);
@@ -95,7 +95,7 @@ it('shows danger color when below invested', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'close' => 99,
         'date' => now(),
     ]);
@@ -128,13 +128,13 @@ it('filters to shownSecurityIds when set', function () {
     $security2 = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security1->id,
+        'asset_id' => $security1->id,
         'close' => 120,
         'date' => now(),
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security2->id,
+        'asset_id' => $security2->id,
         'close' => 120,
         'date' => now(),
     ]);

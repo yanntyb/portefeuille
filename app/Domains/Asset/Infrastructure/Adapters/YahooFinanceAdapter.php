@@ -3,24 +3,24 @@
 namespace App\Domains\Asset\Infrastructure\Adapters;
 
 use App\Domains\Asset\Enums\AssetType;
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\Asset\Ports\AssetPriceProviderPort;
-use App\Domains\Security\Models\SecurityPrice;
 use Illuminate\Support\Collection;
 
 class YahooFinanceAdapter implements AssetPriceProviderPort
 {
     public function getCurrentPrice(int $assetId): ?float
     {
-        return SecurityPrice::query()
-            ->where('security_id', $assetId)
+        return AssetPrice::query()
+            ->where('asset_id', $assetId)
             ->orderByDesc('date')
             ->value('close');
     }
 
     public function getPriceHistory(int $assetId, ?string $startDate = null, ?string $endDate = null): Collection
     {
-        $query = SecurityPrice::query()
-            ->where('security_id', $assetId)
+        $query = AssetPrice::query()
+            ->where('asset_id', $assetId)
             ->orderBy('date');
 
         if ($startDate !== null) {

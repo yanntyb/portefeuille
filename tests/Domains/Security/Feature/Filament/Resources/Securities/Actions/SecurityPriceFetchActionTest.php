@@ -24,7 +24,7 @@ it('fetches missing prices on page load via refreshPrices', function () {
         ->andReturnUsing(function ($securities) use ($security): int {
 
             SecurityPrice::factory()->create([
-                'security_id' => $security->id,
+                'asset_id' => $security->id,
                 'date' => now(),
                 'close' => 100,
             ]);

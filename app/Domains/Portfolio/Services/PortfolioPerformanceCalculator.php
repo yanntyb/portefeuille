@@ -202,7 +202,7 @@ class PortfolioPerformanceCalculator implements PortfolioPerformanceCalculating
         $map = [];
 
         foreach ($prices as $price) {
-            $map[$price->security_id][] = [
+            $map[$price->asset_id][] = [
                 'date' => $price->date->format('Y-m-d'),
                 'close' => (float) $price->close,
             ];

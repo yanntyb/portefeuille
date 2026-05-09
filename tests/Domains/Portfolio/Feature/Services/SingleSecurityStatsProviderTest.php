@@ -131,7 +131,7 @@ it('calculates valuation with latest price', function () {
     app(\App\Infrastructure\Services\UserId::class)->setOverride($user->id);
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create(['security_id' => $security->id, 'close' => 150, 'date' => now()]);
+    SecurityPrice::factory()->create(['asset_id' => $security->id, 'close' => 150, 'date' => now()]);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,

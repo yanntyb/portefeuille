@@ -34,13 +34,13 @@ it('aggregates sector data from all accounts', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityPea->id,
+        'asset_id' => $securityPea->id,
         'date' => now(),
         'close' => 100,
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityCto->id,
+        'asset_id' => $securityCto->id,
         'date' => now(),
         'close' => 200,
     ]);
@@ -119,25 +119,25 @@ it('displays performance stats across all accounts', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityPea->id,
+        'asset_id' => $securityPea->id,
         'date' => '2025-01-15',
         'close' => 100,
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityPea->id,
+        'asset_id' => $securityPea->id,
         'date' => '2025-06-15',
         'close' => 120,
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityCto->id,
+        'asset_id' => $securityCto->id,
         'date' => '2025-01-15',
         'close' => 100,
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityCto->id,
+        'asset_id' => $securityCto->id,
         'date' => '2025-06-15',
         'close' => 110,
     ]);

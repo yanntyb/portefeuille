@@ -37,15 +37,15 @@ class SecuritiesTable
                     ->sortable(query: fn (Builder $query, string $direction): Builder => $query
                         ->leftJoinSub(
                             SecurityPrice::query()
-                                ->select('security_id', 'close')
+                                ->select('asset_id', 'close')
                                 ->whereIn('id', function ($sub) {
                                     $sub->selectRaw('MAX(id)')
                                         ->from('asset_prices')
-                                        ->groupBy('security_id');
+                                        ->groupBy('asset_id');
                                 }),
                             'lp',
                             'securities.id',
-                            'lp.security_id',
+                            'lp.asset_id',
                         )
                         ->orderByRaw('(COALESCE(total_quantity, 0) * COALESCE(MAX(lp.close), 0)) '.$direction)
                     ),
@@ -72,15 +72,15 @@ class SecuritiesTable
                     ->sortable(query: fn (Builder $query, string $direction): Builder => $query
                         ->leftJoinSub(
                             SecurityPrice::query()
-                                ->select('security_id', 'close')
+                                ->select('asset_id', 'close')
                                 ->whereIn('id', function ($sub) {
                                     $sub->selectRaw('MAX(id)')
                                         ->from('asset_prices')
-                                        ->groupBy('security_id');
+                                        ->groupBy('asset_id');
                                 }),
                             'lp_perf',
                             'securities.id',
-                            'lp_perf.security_id',
+                            'lp_perf.asset_id',
                         )
                         ->orderByRaw('CASE WHEN pru > 0 THEN (COALESCE(MAX(lp_perf.close), 0) - pru) / pru ELSE 0 END '.$direction)
                     ),

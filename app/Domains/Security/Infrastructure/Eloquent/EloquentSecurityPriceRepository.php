@@ -12,7 +12,7 @@ class EloquentSecurityPriceRepository implements SecurityPriceRepositoryInterfac
     public function findLatestForSecurity(int $securityId): ?SecurityPrice
     {
         return SecurityPrice::query()
-            ->where('security_id', $securityId)
+            ->where('asset_id', $securityId)
             ->orderByDesc('date')
             ->first();
     }
@@ -20,7 +20,7 @@ class EloquentSecurityPriceRepository implements SecurityPriceRepositoryInterfac
     public function findForSecurityOnDate(int $securityId, \DateTimeInterface $date): ?SecurityPrice
     {
         return SecurityPrice::query()
-            ->where('security_id', $securityId)
+            ->where('asset_id', $securityId)
             ->whereDate('date', $date)
             ->first();
     }
@@ -28,7 +28,7 @@ class EloquentSecurityPriceRepository implements SecurityPriceRepositoryInterfac
     public function forSecuritySince(int $securityId, \DateTimeInterface $date): Collection
     {
         return SecurityPrice::query()
-            ->where('security_id', $securityId)
+            ->where('asset_id', $securityId)
             ->where('date', '>=', $date)
             ->orderBy('date')
             ->get();
@@ -42,25 +42,25 @@ class EloquentSecurityPriceRepository implements SecurityPriceRepositoryInterfac
     public function getLatestDateForSecurities(array $securityIds): SupportCollection
     {
         return SecurityPrice::query()
-            ->selectRaw('security_id, MAX(date) as latest_date')
-            ->whereIn('security_id', $securityIds)
-            ->groupBy('security_id')
-            ->pluck('latest_date', 'security_id');
+            ->selectRaw('asset_id, MAX(date) as latest_date')
+            ->whereIn('asset_id', $securityIds)
+            ->groupBy('asset_id')
+            ->pluck('latest_date', 'asset_id');
     }
 
     public function getEarliestDateForSecurities(array $securityIds): SupportCollection
     {
         return SecurityPrice::query()
-            ->selectRaw('security_id, MIN(date) as earliest_date')
-            ->whereIn('security_id', $securityIds)
-            ->groupBy('security_id')
-            ->pluck('earliest_date', 'security_id');
+            ->selectRaw('asset_id, MIN(date) as earliest_date')
+            ->whereIn('asset_id', $securityIds)
+            ->groupBy('asset_id')
+            ->pluck('earliest_date', 'asset_id');
     }
 
     public function findBySecurityAndDate(int $securityId, string $date): ?SecurityPrice
     {
         return SecurityPrice::query()
-            ->where('security_id', $securityId)
+            ->where('asset_id', $securityId)
             ->where('date', $date)
             ->first();
     }
@@ -68,7 +68,7 @@ class EloquentSecurityPriceRepository implements SecurityPriceRepositoryInterfac
     public function getForSecurities(array $securityIds): Collection
     {
         return SecurityPrice::query()
-            ->whereIn('security_id', $securityIds)
+            ->whereIn('asset_id', $securityIds)
             ->orderBy('date')
             ->get();
     }
@@ -80,9 +80,9 @@ class EloquentSecurityPriceRepository implements SecurityPriceRepositoryInterfac
     public function getSecurityIdsWithRecentPrice(array $securityIds, string $fromDate): array
     {
         return SecurityPrice::query()
-            ->whereIn('security_id', $securityIds)
+            ->whereIn('asset_id', $securityIds)
             ->where('date', '>=', $fromDate)
-            ->pluck('security_id')
+            ->pluck('asset_id')
             ->unique()
             ->all();
     }

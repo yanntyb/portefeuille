@@ -36,9 +36,9 @@ class DashboardSecuritiesTableWidget extends TableWidget
             ->all();
 
         $idsWithPrice = SecurityPrice::query()
-            ->whereIn('security_id', $allIds)
+            ->whereIn('asset_id', $allIds)
             ->where('date', '>=', MarketCalendar::lastTradingDate()->toDateString())
-            ->pluck('security_id')
+            ->pluck('asset_id')
             ->unique()
             ->all();
 

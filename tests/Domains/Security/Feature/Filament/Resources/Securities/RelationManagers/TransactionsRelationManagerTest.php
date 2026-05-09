@@ -38,14 +38,14 @@ it('stores latest security price', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'close' => 125.50,
         'date' => now(),
     ]);
 
     $price =
 SecurityPrice::query()
-    ->where('security_id', $security->id)
+    ->where('asset_id', $security->id)
     ->orderByDesc('date')
     ->value('close');
 

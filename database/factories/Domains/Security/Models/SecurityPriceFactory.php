@@ -19,7 +19,7 @@ class SecurityPriceFactory extends Factory
         $close = fake()->randomFloat(4, 10, 500);
 
         return [
-            'security_id' => Security::factory(),
+            'asset_id' => Security::factory(),
             'date' => fake()->date(),
             'open' => fake()->randomFloat(4, 10, 500),
             'high' => $close * fake()->randomFloat(2, 1.0, 1.05),

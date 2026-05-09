@@ -28,7 +28,7 @@ it('returns correct valuation from buy transaction', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);
@@ -59,7 +59,7 @@ it('shows success color when valuation exceeds invested', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);
@@ -88,7 +88,7 @@ it('shows danger color when valuation is below invested', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'close' => 99,
         'date' => now(),
     ]);
@@ -118,7 +118,7 @@ it('aggregates across PEA and CTO wallets', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);
@@ -158,7 +158,7 @@ it('uses total_invested from scope not raw query', function () {
     $security = Security::factory()->create();
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'close' => 120,
         'date' => now(),
     ]);

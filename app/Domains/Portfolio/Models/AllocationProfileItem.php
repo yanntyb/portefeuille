@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property-read int $id
  * @property-read int $allocation_profile_id
- * @property-read int $security_id
+ * @property-read int $asset_id
  * @property-read string $target_percentage
  * @property-read \Illuminate\Support\Carbon $created_at
  * @property-read \Illuminate\Support\Carbon $updated_at
@@ -23,7 +23,7 @@ class AllocationProfileItem extends Model
     /** @var list<string> */
     protected $fillable = [
         'allocation_profile_id',
-        'security_id',
+        'asset_id',
         'target_percentage',
     ];
 
@@ -42,6 +42,6 @@ class AllocationProfileItem extends Model
 
     public function security(): BelongsTo
     {
-        return $this->belongsTo(Security::class);
+        return $this->belongsTo(Security::class, 'asset_id');
     }
 }

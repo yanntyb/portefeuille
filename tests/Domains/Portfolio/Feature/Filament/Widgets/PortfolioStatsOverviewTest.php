@@ -22,7 +22,7 @@ it('computes valuation, plus-value, and fees correctly', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => now(),
         'close' => 120,
     ]);
@@ -64,13 +64,13 @@ it('aggregates across PEA and CTO accounts', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityPea->id,
+        'asset_id' => $securityPea->id,
         'date' => now(),
         'close' => 120,
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityCto->id,
+        'asset_id' => $securityCto->id,
         'date' => now(),
         'close' => 250,
     ]);
@@ -94,7 +94,7 @@ it('shows success color when plus-value is positive', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => now(),
         'close' => 150,
     ]);
@@ -119,7 +119,7 @@ it('shows danger color when plus-value is negative', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => now(),
         'close' => 80,
     ]);
@@ -144,7 +144,7 @@ it('displays plus-value percentage in description', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => now(),
         'close' => 120,
     ]);
@@ -171,7 +171,7 @@ it('displays fees percentage in description', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'date' => now(),
         'close' => 120,
     ]);

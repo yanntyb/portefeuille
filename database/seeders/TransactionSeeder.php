@@ -125,7 +125,7 @@ class TransactionSeeder extends Seeder
         $prices = json_decode(file_get_contents($filename), true);
 
         $rows = array_map(fn (array $p) => [
-            'security_id' => $security->id,
+            'asset_id' => $security->id,
             'date' => $p['date'],
             'open' => $p['open'],
             'high' => $p['high'],
@@ -199,7 +199,7 @@ class TransactionSeeder extends Seeder
     private function getPriceAt(Security $security, CarbonImmutable $date): ?float
     {
         $price = SecurityPrice::query()
-            ->where('security_id', $security->id)
+            ->where('asset_id', $security->id)
             ->where('date', '<=', $date->toDateString())
             ->orderByDesc('date')
             ->value('close');
@@ -233,7 +233,7 @@ class TransactionSeeder extends Seeder
                     : $monthlyBudget / count($securities);
 
                 $price = SecurityPrice::query()
-                    ->where('security_id', $security->id)
+                    ->where('asset_id', $security->id)
                     ->where('date', '<=', $investDate->toDateString())
                     ->orderByDesc('date')
                     ->value('close');

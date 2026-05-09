@@ -94,7 +94,7 @@ class YahooFinanceService
         }
 
         $rows = array_map(fn (array $data) => [
-            'security_id' => $security->id,
+            'asset_id' => $security->id,
             'date' => $data['date'],
             'open' => $data['open'],
             'high' => $data['high'],
@@ -105,12 +105,12 @@ class YahooFinanceService
 
         SecurityPrice::upsert(
             $rows,
-            ['security_id', 'date'],
+            ['asset_id', 'date'],
             ['open', 'high', 'low', 'close', 'volume'],
         );
 
         foreach ($rows as $row) {
-            $price = $this->priceRepository->findBySecurityAndDate($row['security_id'], $row['date']);
+            $price = $this->priceRepository->findBySecurityAndDate($row['asset_id'], $row['date']);
 
             if ($price) {
                 PriceUpdated::dispatch($price, $security);
@@ -211,7 +211,7 @@ class YahooFinanceService
             }
 
             $rows = array_map(fn (array $data) => [
-                'security_id' => $task['security']->id,
+                'asset_id' => $task['security']->id,
                 'date' => $data['date'],
                 'open' => $data['open'],
                 'high' => $data['high'],
@@ -222,12 +222,12 @@ class YahooFinanceService
 
             SecurityPrice::upsert(
                 $rows,
-                ['security_id', 'date'],
+                ['asset_id', 'date'],
                 ['open', 'high', 'low', 'close', 'volume'],
             );
 
             foreach ($rows as $row) {
-                $price = $this->priceRepository->findBySecurityAndDate($row['security_id'], $row['date']);
+                $price = $this->priceRepository->findBySecurityAndDate($row['asset_id'], $row['date']);
 
                 if ($price) {
                     PriceUpdated::dispatch($price, $task['security']);

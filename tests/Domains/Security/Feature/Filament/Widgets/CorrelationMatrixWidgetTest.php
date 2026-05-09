@@ -33,12 +33,12 @@ it('returns null without tablePageClass', function () {
     for ($i = 0; $i < 25; $i++) {
 
         SecurityPrice::factory()->create([
-            'security_id' => $security1->id,
+            'asset_id' => $security1->id,
             'date' => now()->subDays(25 - $i),
         ]);
 
         SecurityPrice::factory()->create([
-            'security_id' => $security2->id,
+            'asset_id' => $security2->id,
             'date' => now()->subDays(25 - $i),
         ]);
     }
@@ -64,7 +64,7 @@ it('returns null with fewer than two securities in wallet', function () {
     ]);
 
     SecurityPrice::factory()->count(25)->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
     ]);
 
     $data = livewire(CorrelationMatrixWidget::class, [
@@ -100,12 +100,12 @@ it('returns CorrelationResult with sufficient data', function () {
     for ($i = 0; $i < 25; $i++) {
 
         SecurityPrice::factory()->create([
-            'security_id' => $security1->id,
+            'asset_id' => $security1->id,
             'date' => now()->subDays(25 - $i),
         ]);
 
         SecurityPrice::factory()->create([
-            'security_id' => $security2->id,
+            'asset_id' => $security2->id,
             'date' => now()->subDays(25 - $i),
         ]);
     }
@@ -150,17 +150,17 @@ it('filters to shownSecurityIds', function () {
     for ($i = 0; $i < 25; $i++) {
 
         SecurityPrice::factory()->create([
-            'security_id' => $security1->id,
+            'asset_id' => $security1->id,
             'date' => now()->subDays(25 - $i),
         ]);
 
         SecurityPrice::factory()->create([
-            'security_id' => $security2->id,
+            'asset_id' => $security2->id,
             'date' => now()->subDays(25 - $i),
         ]);
 
         SecurityPrice::factory()->create([
-            'security_id' => $security3->id,
+            'asset_id' => $security3->id,
             'date' => now()->subDays(25 - $i),
         ]);
     }
@@ -200,12 +200,12 @@ it('returns null when shownSecurityIds reduces below two', function () {
     for ($i = 0; $i < 25; $i++) {
 
         SecurityPrice::factory()->create([
-            'security_id' => $security1->id,
+            'asset_id' => $security1->id,
             'date' => now()->subDays(25 - $i),
         ]);
 
         SecurityPrice::factory()->create([
-            'security_id' => $security2->id,
+            'asset_id' => $security2->id,
             'date' => now()->subDays(25 - $i),
         ]);
     }

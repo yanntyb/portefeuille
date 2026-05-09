@@ -34,13 +34,13 @@ it('aggregates sector data weighted by valuation for account list', function () 
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityA->id,
+        'asset_id' => $securityA->id,
         'date' => now(),
         'close' => 100,
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityB->id,
+        'asset_id' => $securityB->id,
         'date' => now(),
         'close' => 200,
     ]);

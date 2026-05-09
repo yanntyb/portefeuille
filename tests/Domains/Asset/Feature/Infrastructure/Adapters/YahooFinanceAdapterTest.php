@@ -2,20 +2,20 @@
 
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Infrastructure\Adapters\YahooFinanceAdapter;
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\Security\Models\Security;
-use App\Domains\Security\Models\SecurityPrice;
 
 it('gets current price for asset', function () {
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    AssetPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 125.50,
         'date' => '2026-05-07',
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    AssetPrice::factory()->create([
+        'asset_id' => $security->id,
         'close' => 130.00,
         'date' => '2026-05-08',
     ]);
@@ -38,8 +38,8 @@ it('returns null when no prices exist', function () {
 it('gets price history for date range', function () {
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    AssetPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2026-05-01',
         'open' => 100.0,
         'high' => 102.0,
@@ -48,8 +48,8 @@ it('gets price history for date range', function () {
         'volume' => 1000,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    AssetPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2026-05-02',
         'open' => 101.0,
         'high' => 105.0,
@@ -69,20 +69,20 @@ it('gets price history for date range', function () {
 it('filters price history by date range', function () {
     $security = Security::factory()->create();
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    AssetPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2026-04-30',
         'close' => 100.0,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    AssetPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2026-05-05',
         'close' => 110.0,
     ]);
 
-    SecurityPrice::factory()->create([
-        'security_id' => $security->id,
+    AssetPrice::factory()->create([
+        'asset_id' => $security->id,
         'date' => '2026-05-10',
         'close' => 120.0,
     ]);

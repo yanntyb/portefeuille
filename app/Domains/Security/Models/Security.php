@@ -40,7 +40,7 @@ class Security extends Model
 
     public function prices(): HasMany
     {
-        return $this->hasMany(SecurityPrice::class);
+        return $this->hasMany(SecurityPrice::class, 'asset_id');
     }
 
     public function sectors(): HasMany
@@ -50,19 +50,19 @@ class Security extends Model
 
     public function latestPrice(): HasOne
     {
-        return $this->hasOne(SecurityPrice::class)->latestOfMany('date');
+        return $this->hasOne(SecurityPrice::class, 'asset_id')->latestOfMany('date');
     }
 
     public function currentPrice(): HasOne
     {
-        return $this->hasOne(SecurityPrice::class)
+        return $this->hasOne(SecurityPrice::class, 'asset_id')
             ->where('date', '>=', MarketCalendar::lastTradingDate()->toDateString())
             ->latestOfMany('date');
     }
 
     public function todayPrice(): HasOne
     {
-        return $this->hasOne(SecurityPrice::class)->whereDate('date', today());
+        return $this->hasOne(SecurityPrice::class, 'asset_id')->whereDate('date', today());
     }
 
     public function currentValuation(): float

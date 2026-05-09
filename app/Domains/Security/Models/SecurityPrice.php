@@ -7,8 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
+ * @deprecated Use App\Domains\Asset\Models\AssetPrice for Asset domain price access.
+ *             This model remains for Security domain analytics and widgets only.
+ *
  * @property-read int $id
- * @property-read int $security_id
+ * @property-read int $asset_id
  * @property-read \Illuminate\Support\Carbon $date
  * @property-read string $open
  * @property-read string $high
@@ -27,7 +30,7 @@ class SecurityPrice extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'security_id',
+        'asset_id',
         'date',
         'open',
         'high',
@@ -51,6 +54,6 @@ class SecurityPrice extends Model
 
     public function security(): BelongsTo
     {
-        return $this->belongsTo(Security::class);
+        return $this->belongsTo(Security::class, 'asset_id');
     }
 }

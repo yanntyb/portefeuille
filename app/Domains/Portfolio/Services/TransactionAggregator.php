@@ -103,7 +103,7 @@ class TransactionAggregator
 
         $pricesByDayAndSecurity = $prices->groupBy(
             fn ($p) => Carbon::parse($p->date)->format('Y-m-d'),
-        )->map(fn (Collection $group) => $group->keyBy('security_id'));
+        )->map(fn (Collection $group) => $group->keyBy('asset_id'));
 
         $labels = [];
         $valuations = [];

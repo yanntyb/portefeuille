@@ -31,7 +31,7 @@ class TransactionForm
         }
 
         $price = SecurityPrice::query()
-            ->where('security_id', $securityId)
+            ->where('asset_id', $securityId)
             ->where('date', '<=', $date)
             ->orderByDesc('date')
             ->value('close');

@@ -57,10 +57,10 @@ class SingleSecurityValuationChartWidget extends ChartWidget
         $firstTransactionDate = $transactions->first()->date;
 
         $prices = SecurityPrice::query()
-            ->whereIn('security_id', $securityIds)
+            ->whereIn('asset_id', $securityIds)
             ->where('date', '>=', $firstTransactionDate)
             ->orderBy('date')
-            ->get(['security_id', 'date', 'close']);
+            ->get(['asset_id', 'date', 'close']);
 
         if ($prices->isEmpty()) {
             return ['datasets' => [], 'labels' => []];

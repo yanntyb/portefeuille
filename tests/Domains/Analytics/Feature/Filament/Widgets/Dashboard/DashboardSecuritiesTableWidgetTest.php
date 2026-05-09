@@ -55,7 +55,7 @@ it('flags priceless securities in pricelessSecurityIds', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityWithPrice->id,
+        'asset_id' => $securityWithPrice->id,
         'date' => now()->toDateString(),
     ]);
 

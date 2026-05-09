@@ -30,13 +30,13 @@ it('returns labels and percentages per security', function () {
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityA->id,
+        'asset_id' => $securityA->id,
         'date' => now(),
         'close' => 120,
     ]);
 
     SecurityPrice::factory()->create([
-        'security_id' => $securityB->id,
+        'asset_id' => $securityB->id,
         'date' => now(),
         'close' => 250,
     ]);
