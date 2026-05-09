@@ -47,16 +47,26 @@ class UpdateHoldingsProjectionListener
             ? (float) ($totals->total_cost ?? 0) / (float) ($totals->total_qty ?? 1)
             : 0;
 
-        HoldingsProjection::updateOrCreate(
-            [
-                'asset_id' => $transaction->asset_id,
-                'wallet_id' => $transaction->wallet_id,
-            ],
-            [
+        HoldingsProjection::query()
+            ->where('asset_id', $transaction->asset_id)
+            ->where('wallet_id', $transaction->wallet_id)
+            ->update([
                 'user_id' => $transaction->user_id,
                 'quantity' => $quantity,
                 'avg_cost' => $avgCost,
-            ]
-        );
+            ]);
+
+        // If no row was updated, create one
+        if (HoldingsProjection::where('asset_id', $transaction->asset_id)
+            ->where('wallet_id', $transaction->wallet_id)
+            ->count() === 0) {
+            HoldingsProjection::create([
+                'user_id' => $transaction->user_id,
+                'asset_id' => $transaction->asset_id,
+                'wallet_id' => $transaction->wallet_id,
+                'quantity' => $quantity,
+                'avg_cost' => $avgCost,
+            ]);
+        }
     }
 }

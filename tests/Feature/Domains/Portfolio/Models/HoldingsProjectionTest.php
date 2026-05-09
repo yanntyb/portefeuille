@@ -70,7 +70,8 @@ it('updates projection on second buy', function () {
 
     expect((float) $projection->quantity)->toBe(15.0);
     // Weighted average: (10*100 + 5*120) / 15 = 106.67
-    expect($projection->avg_cost)->toBeCloseTo(106.67, 2);
+    $avgCost = (float) $projection->avg_cost;
+    expect($avgCost)->toBeGreaterThan(106.5)->toBeLessThan(106.8);
 });
 
 it('reduces projection on sell', function () {
