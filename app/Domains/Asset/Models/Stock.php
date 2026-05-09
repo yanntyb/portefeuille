@@ -2,7 +2,7 @@
 
 namespace App\Domains\Asset\Models;
 
-use App\Domains\Security\Models\SecuritySector;
+use App\Domains\Asset\Models\AssetSector;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -18,6 +18,6 @@ class Stock extends Asset
 {
     public function sectors(): HasMany
     {
-        return $this->hasMany(SecuritySector::class, 'asset_id');
+        return $this->hasMany(AssetSector::class, 'asset_id');
     }
 }
