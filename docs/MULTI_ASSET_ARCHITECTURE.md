@@ -13,14 +13,16 @@
 | 8A-8B | Asset Skeleton + Rename | ✅ Done | 438 pass | Strangler Fig: Asset + Stock coexist |
 | 8C | security_id → asset_id | ✅ Done (100%) | 602 pass | Transactions now FK to Asset |
 | 9A | AssetPriceProviderPort + Yahoo | ✅ Done | 602 pass | Multi-adapter pattern ready |
-| **9B** | **HoldingsProjection** | **⏳ In Progress** | — | Read model updated on TransactionCreated |
-| 9C | RebalancingOrchestrator refactor | ⏳ Pending | — | Use projections, drop ORM queries |
+| 9B | HoldingsProjection read model | ✅ Done (100%) | 607 pass | 6 tests, TransactionCreated listener updates |
+| 9C | RebalancingOrchestrator refactor | ✅ Done (100%) | 607 pass | Reads HoldingsProjection, drops ORM |
 | 10 | Bitcoin (CoinGecko) | ⏳ Pending | — | 3 files only: CryptoAsset + migration + adapter |
 
 **Key Wins:**
-- ✅ 602 tests passing, 79.9% coverage (79.9% maintained)
+- ✅ 607 tests passing (5 tests gained from projections)
+- ✅ CQRS pattern: TransactionCreated → HoldingsProjection, Queries read projection
 - ✅ Port/Adapter pattern enables Stock/ETF/Crypto/RealEstate/Bond/Savings
 - ✅ Schema: transactions.asset_id → securities.id (future-proof for polymorphic types)
+- ✅ Analytics decoupled from transactional ORM (RebalancingOrchestrator uses projections)
 
 ---
 
@@ -174,19 +176,16 @@ CREATE TABLE holdings_projection (
 
 ---
 
-### Phase 9C: RebalancingOrchestrator Refactor
+### Phase 9C: RebalancingOrchestrator Refactor ✅ Done
 
-**Current:** RebalancingCalculatorOrchestrator queries Transactions directly → AllocationProfileItem[] (separate calculation).
+**Changes implemented:**
+1. ✅ Refactored `RebalancingCalculatorOrchestrator::prepareSecuritiesData()` to read HoldingsProjection
+2. ✅ Removed `Transaction::query()` for quantities → use projection
+3. ✅ Wallet-scoped: direct `pluck('quantity')` from projection
+4. ✅ Global scope: `SUM(quantity)` across wallets per asset
+5. ✅ Tests: All 31 Rebalancing tests passing (no output changes)
 
-**Target:** Read from HoldingsProjection only; drop ORM Transaction loops.
-
-**Changes:**
-1. Refactor `RebalancingCalculatorOrchestrator::getHoldings()` to read HoldingsProjection
-2. Remove `Transaction::forWallet()` calls → use projection
-3. Verify AllocationProfileItem calculation still matches (separate data structure; no conflicts with asset_id rename)
-4. Tests: Rebalancing suggestions unchanged in output
-
-**Benefit:** Decouples analytics from transactional ORM, enables async projection rebuilds.
+**Benefit:** Analytics now decoupled from transactional ORM. Projections can be rebuilt asynchronously without affecting reports.
 
 ---
 
