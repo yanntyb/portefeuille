@@ -9,7 +9,6 @@ use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardSectorAllocationCh
 use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardSecuritiesTableWidget;
 use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardValuationWidget;
 use App\Domains\Asset\Models\Asset;
-use App\Domains\Security\Services\PriceRefreshService;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
@@ -56,14 +55,6 @@ class Dashboard extends BaseDashboard
 
     public function loadPrices(): void
     {
-        $securities = Asset::query()
-            ->whereHas('transactions')
-            ->whereNotNull('ticker')
-            ->with('currentPrice')
-            ->get();
-
-        if (app(PriceRefreshService::class)->refreshIfNeeded($securities)) {
-            $this->dispatch('prices-updated');
-        }
+        $this->dispatch('prices-updated');
     }
 }
