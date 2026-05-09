@@ -19,6 +19,11 @@ class DashboardGainStatsOverview extends Widget
 
     protected function resolveGainSecurities(): Collection
     {
+        return $this->getFilteredSecurities();
+    }
+
+    public function getFilteredSecurities(bool $withPrice = false): Collection
+    {
         $provider = app(DashboardDataProvider::class);
         $allSecurities = new Collection;
 
@@ -27,6 +32,10 @@ class DashboardGainStatsOverview extends Widget
 
             if ($this->shownSecurityIds !== null) {
                 $securities = $securities->whereIn('id', $this->shownSecurityIds);
+            }
+
+            if ($withPrice) {
+                $securities = $securities->load('latestPrice');
             }
 
             $allSecurities = $allSecurities->merge($securities);
