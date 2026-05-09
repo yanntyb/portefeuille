@@ -79,4 +79,12 @@ class EloquentAssetPriceRepository implements AssetPriceRepositoryInterface
             ->pluck('asset_id')
             ->all();
     }
+
+    public function getForSecurities(array $assetIds): Collection
+    {
+        return AssetPrice::query()
+            ->whereIn('asset_id', $assetIds)
+            ->orderBy('date')
+            ->get();
+    }
 }

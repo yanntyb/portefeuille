@@ -5,6 +5,7 @@ namespace App\Domains\Analytics\Filament\Widgets\Dashboard;
 use App\Domains\Asset\Models\Asset;
 use App\Domains\Asset\Models\AssetPrice;
 use App\Infrastructure\Support\MarketCalendar;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 use Illuminate\Database\Eloquent\Builder;
@@ -34,7 +35,7 @@ class DashboardSecuritiesTableWidget extends TableWidget
             ->pluck('id')
             ->all();
 
-        $idsWithPrice = SecurityPrice::query()
+        $idsWithPrice = AssetPrice::query()
             ->whereIn('asset_id', $allIds)
             ->where('date', '>=', MarketCalendar::lastTradingDate()->toDateString())
             ->pluck('asset_id')
@@ -59,10 +60,13 @@ class DashboardSecuritiesTableWidget extends TableWidget
 
     public function table(Table $table): Table
     {
-        return SecuritiesTable::configure(
-            $table
-                ->heading(null)
-                ->query(fn (): Builder => Asset::query()->forAuth())
-        );
+        return $table
+            ->heading(null)
+            ->query(fn (): Builder => Asset::query()->forAuth())
+            ->columns([
+                TextColumn::make('isin')->label('ISIN')->searchable()->sortable(),
+                TextColumn::make('name')->label('Nom')->searchable(),
+                TextColumn::make('ticker')->label('Ticker'),
+            ]);
     }
 }

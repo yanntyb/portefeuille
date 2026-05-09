@@ -46,7 +46,7 @@ class CorrelationCalculator
     {
         $securityIds = $securities->pluck('id')->all();
 
-        $query = SecurityPrice::query()
+        $query = AssetPrice::query()
             ->whereIn('asset_id', $securityIds)
             ->orderBy('date');
 
@@ -56,7 +56,7 @@ class CorrelationCalculator
             $query->where('date', '>=', $startDate);
         }
 
-        /** @var Collection<int, SecurityPrice> $prices */
+        /** @var Collection<int, AssetPrice> $prices */
         $prices = $query->get(['asset_id', 'date', 'close']);
 
         $pricesBySecurityAndDate = [];

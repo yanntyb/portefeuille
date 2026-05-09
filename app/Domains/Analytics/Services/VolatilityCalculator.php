@@ -51,7 +51,7 @@ class VolatilityCalculator implements VolatilityCalculating
 
     public function forAsset(Asset $asset): ?float
     {
-        $prices = SecurityPrice::query()
+        $prices = AssetPrice::query()
             ->where('asset_id', $asset->id)
             ->orderBy('date')
             ->pluck('close')
@@ -63,7 +63,7 @@ class VolatilityCalculator implements VolatilityCalculating
 
     private function getPricesForSecurities(array $ids): Collection
     {
-        return SecurityPrice::query()
+        return AssetPrice::query()
             ->whereIn('asset_id', $ids)
             ->orderBy('asset_id')
             ->orderBy('date')
