@@ -1,817 +1,375 @@
-# Multi-Asset Architecture — Explicit Architecture for Extensible Investment Types
+# Multi-Asset Architecture — Extensible Investment Platform
 
-> Référence: https://herbertograca.com/2017/11/16/explicit-architecture-01-ddd-hexagonal-onion-clean-cqrs-how-i-put-it-all-together/
-
----
-
-## 📊 Status Global
-
-| Phase | Nom | Status | Tests | Commits |
-|-------|-----|--------|-------|---------|
-| 6 | Events | ✅ **Done** | 432 pass | 6 |
-| 7 | Repositories & Contracts | ✅ **Done** | 432 pass | 7 |
-| 8A | Asset Domain Skeleton | ✅ **Done** | 438 pass (+6) | 1 |
-| 8B | Rename security_prices → asset_prices | ✅ **Done** | 316 pass | 1 |
-| 8C | security_id → asset_id + caller updates | ✅ **Done** (100%) | 587/587 pass | 5 |
-| 9A | AssetPriceProviderPort + YahooFinanceAdapter | ✅ **Done** (100%) | 602/602 pass | 4 |
-| Coverage | Critical domain tests (AssetType, Asset, Stock, UserId) | ✅ **Done** | 79.9% | 2 |
-| 9B | HoldingsProjection read model | ⏳ In Progress | — | — |
-| 9C | RebalancingOrchestrator using projections | ⏳ Pending | — | — |
-| 10 | Bitcoin Support (CoinGeckoAdapter) | ⏳ Pending | — | — |
-
-**Key Decisions Implemented:**
-- Phase 7B: **Option 3** (Request-scoped UserId service) ✅
-- 7 services refactored to use repositories
-- VolatilityCalculating signature changed: `Wallet → int walletId`
-- Division by zero guard added to DashboardGainStatsOverview
-- Phase 8A: **Incremental approach** (Asset + Stock coexist with Security on same table) ✅
-- Phase 9A: **Ports & Adapters pattern** for multi-asset pricing (YahooFinanceAdapter → Stock/ETF) ✅
-  - AssetPriceProviderPort interface enables CoinGeckoAdapter (Phase 10)
-  - Support for Stock/ETF/Crypto/RealEstate/Bond/Savings types
-  - 79.9% code coverage maintained (602/602 tests, 1448 assertions)
+> Design Pattern: Explicit Architecture (DDD + Hexagonal + CQRS)  
+> Reference: https://herbertograca.com/2017/11/16/explicit-architecture-01-ddd-hexagonal-onion-clean-cqrs-how-i-put-it-all-together/
 
 ---
 
-## 1. Problème actuel — le verrou `security_id`
+## 📊 Global Status
 
-Tout le système tourne autour de `securities`. Un seul FK `transactions.security_id` verrouille
-l'architecture sur les actions/ETFs cotés en bourse. Pour ajouter Bitcoin, il faudrait modifier
-la table `transactions` ET tous les services qui queryent par `security_id`.
+| Phase | Name | Status | Tests | Decision |
+|-------|------|--------|-------|----------|
+| 6-7 | Events + Repositories | ✅ Done | 432 pass | UserId as request-scoped service |
+| 8A-8B | Asset Skeleton + Rename | ✅ Done | 438 pass | Strangler Fig: Asset + Stock coexist |
+| 8C | security_id → asset_id | ✅ Done (100%) | 602 pass | Transactions now FK to Asset |
+| 9A | AssetPriceProviderPort + Yahoo | ✅ Done | 602 pass | Multi-adapter pattern ready |
+| **9B** | **HoldingsProjection** | **⏳ In Progress** | — | Read model updated on TransactionCreated |
+| 9C | RebalancingOrchestrator refactor | ⏳ Pending | — | Use projections, drop ORM queries |
+| 10 | Bitcoin (CoinGecko) | ⏳ Pending | — | 3 files only: CryptoAsset + migration + adapter |
 
-```mermaid
-graph LR
-    T[transactions\nsecurity_id FK] -->|locked to| S[securities\nticker + ISIN\nstock-only]
-    S -->|OHLCV prices| SP[security_prices\nopen/high/low/close/volume\nstock-only]
-    S -->|sectors| SS[security_sectors\nGICS classification\nstock-only]
-    S -->|data from| YF[YahooFinanceService\nstock-only adapter]
+**Key Wins:**
+- ✅ 602 tests passing, 79.9% coverage (79.9% maintained)
+- ✅ Port/Adapter pattern enables Stock/ETF/Crypto/RealEstate/Bond/Savings
+- ✅ Schema: transactions.asset_id → securities.id (future-proof for polymorphic types)
 
-    style S fill:#ef4444,color:#fff
-    style SP fill:#ef4444,color:#fff
-    style SS fill:#ef4444,color:#fff
-    style YF fill:#ef4444,color:#fff
-    style T fill:#f59e0b,color:#fff
-```
+---
 
-## 2. Architecture cible — Explicit Architecture (Hexagonal + DDD + CQRS)
+## 🏗️ Architecture Overview
 
 ```mermaid
 graph TD
-    subgraph Driving["Driving Side — UI"]
-        UI["Filament UI"]
-        CLI["Artisan CLI"]
+    subgraph UI["Driving — UI/CLI"]
+        Filament["Filament Resources"]
+        Artisan["Artisan Commands"]
     end
 
     subgraph Core["Application Core"]
-        CMD["Commands\nRecordTransaction\nUpdateAssetPrices"]
-        QRY["Queries\nGetValuation\nGetHoldings"]
-        DOM["Domain\nAsset · Transaction · Wallet\nRealizedGainCalculator"]
-        PP["Port: AssetPriceProvider"]
-        AR["Port: AssetRepository"]
-        TR["Port: TransactionRepository"]
-        HR["Port: HoldingsReadModel"]
+        Commands["Commands<br/>RecordTransaction<br/>UpdateAssetPrices"]
+        Queries["Queries<br/>GetValuation<br/>GetHoldings"]
+        Domain["Domain<br/>Asset · Transaction<br/>RealizedGainCalculator"]
+        Ports["Ports<br/>AssetPriceProviderPort<br/>AssetRepositoryPort"]
     end
 
-    subgraph Driven["Driven Side — Infrastructure"]
-        YF["YahooFinanceAdapter\nStock / ETF"]
-        CG["CoinGeckoAdapter\nCrypto"]
-        MP["ManualPriceAdapter\nRealEstate"]
-        DB[("Database\nEloquent Repos")]
+    subgraph Adapters["Driven — Infrastructure"]
+        Yahoo["YahooFinance<br/>Stock/ETF"]
+        CoinGecko["CoinGecko<br/>Crypto"]
+        Manual["Manual Entry<br/>RealEstate"]
+        EloquentRepos["Eloquent Repositories<br/>+ Projections"]
     end
 
-    UI --> CMD
-    UI --> QRY
-    CLI --> CMD
+    Filament --> Commands
+    Artisan --> Commands
+    Commands --> Domain
+    Queries --> Domain
+    Domain --> Ports
+    Domain --> EloquentRepos
 
-    CMD --> DOM
-    QRY --> DOM
-
-    DOM --> PP
-    DOM --> AR
-    DOM --> TR
-    DOM --> HR
-
-    YF -.->|implements| PP
-    CG -.->|implements| PP
-    MP -.->|implements| PP
-    DB -.->|implements| AR
-    DB -.->|implements| TR
-    DB -.->|implements| HR
+    Yahoo -.->|implements| Ports
+    CoinGecko -.->|implements| Ports
+    Manual -.->|implements| Ports
+    EloquentRepos -.->|implements| Ports
 ```
 
-## 3. Domain Model — `Asset` abstraction
+---
+
+## 🎯 Domain Model
 
 ```mermaid
 classDiagram
     class Asset {
-        <<AbstractAggregate>>
         +int id
         +string name
         +AssetType type
-        +User user
-        +prices() Collection~AssetPrice~
-        +transactions() Collection~Transaction~
+        +prices() Collection
+        +transactions() Collection
         +currentPrice() float
-        +currentValuation() float
     }
 
     class Stock {
         +string ticker
         +string isin
-        +sectors() Collection~Sector~
+        +sectors() Collection
     }
-
-    class Cryptocurrency {
-        +string symbol
-        +bool is_24h_market
-    }
-
-    class RealEstate {
-        +string address
-        +string type
-    }
-
-    class SavingsAccount {
-        +string institution
-        +float annual_rate
-    }
-
-    Asset <|-- Stock
-    Asset <|-- Cryptocurrency
-    Asset <|-- RealEstate
-    Asset <|-- SavingsAccount
 
     class AssetPrice {
-        <<ValueObject>>
         +int asset_id
-        +Date date
+        +date date
         +float value
-        +float open
-        +float high
-        +float low
-        +float volume
+        +float? open, high, low, volume
     }
 
     class Transaction {
-        <<Entity>>
-        +int wallet_id
-        +int asset_id
+        +int asset_id FK
+        +int wallet_id FK
         +TransactionType type
-        +float quantity
-        +float unit_price
-        +float fees
-        +float realized_gain
+        +float quantity, unit_price, fees
     }
 
-    class TransactionType {
-        <<Enum>>
-        Buy
-        Sell
-        Dividend
-        Interest
-        Fee
-        Revaluation
-    }
-
-    Asset "1" --> "*" AssetPrice : prices
-    Asset "1" --> "*" Transaction : transactions
-    Transaction --> TransactionType
+    Asset <|-- Stock
+    Asset "1" --> "*" AssetPrice
+    Asset "1" --> "*" Transaction
 ```
 
-## 4. Port/Adapter — Price Provider par type d'actif
+---
 
-```mermaid
-graph TB
-    subgraph Core["Application Core"]
-        UC["UpdateAssetPricesCommand"]
-        PORT["AssetPriceProviderPort\n\ngetCurrentPrice(AssetId): float\ngetPriceHistory(AssetId, DateRange): PriceCollection\nsupports(AssetType): bool"]
-        RESOLVER["AssetPriceProviderResolver\nfind adapter by AssetType"]
-    end
+## 📍 Bounded Contexts
 
-    subgraph Adapters["Secondary Adapters"]
-        YF["YahooFinanceAdapter\nsupports(Stock, ETF) → true\nfetchFromYahooAPI()"]
-        CG["CoinGeckoAdapter\nsupports(Crypto) → true\nfetchFromCoinGeckoAPI()"]
-        MP["ManualPriceAdapter\nsupports(RealEstate, Private) → true\nreadsFromUserInput()"]
-    end
+| Context | Models | Responsibility | Storage |
+|---------|--------|-----------------|---------|
+| **Asset** | Asset, Stock, AssetPrice, AssetType | Price discovery (Ports/Adapters) | securities + asset_prices |
+| **Portfolio** | Transaction, Wallet, RealizedGainCalculator | Trade execution, gains calculation | transactions |
+| **Analytics** | VolatilityCalculator, RebalancingOrchestrator | Performance analysis via projections | asset_prices (read-only) |
+| **Shared Kernel** | DomainEvent, Money, DateRange | Cross-context contracts | — |
 
-    subgraph External["External APIs"]
-        YAPI["Yahoo Finance API\nOHLCV data"]
-        CGAPI["CoinGecko API\n24/7 crypto prices"]
-        MANUAL["Manual Entry\nUser-provided values"]
-    end
+---
 
-    UC --> RESOLVER
-    RESOLVER --> PORT
-    YF -.->|implements| PORT
-    CG -.->|implements| PORT
-    MP -.->|implements| PORT
-    YF --> YAPI
-    CG --> CGAPI
-    MP --> MANUAL
+## ✅ Completed Phases (6-9A)
+
+### Phase 6: Domain Events
+- ✅ TransactionCreated, PriceUpdated dispatched
+- ✅ Event listeners wired
+- Enables: Projection-based reads (Phase 9B)
+
+### Phase 7: Repositories & Contracts
+- ✅ SecurityRepositoryInterface, SecurityPriceRepositoryInterface, TransactionRepositoryInterface bound
+- ✅ 7 services refactored to use repositories
+- ✅ UserId as request-scoped service (Option 3 pattern)
+- Key fix: VolatilityCalculating signature `Wallet → int walletId`
+
+### Phase 8: Asset Abstraction
+- ✅ **8A:** Asset abstract aggregate created; Stock extends Asset
+- ✅ **8B:** security_prices → asset_prices table renamed
+- ✅ **8C:** transactions.security_id → asset_id (17 app files, ~40 test files updated)
+- Strategy: Incremental (Strangler Fig) — Asset + Stock coexist on securities table
+
+### Phase 9A: Ports & Adapters
+- ✅ AssetPriceProviderPort interface defined
+  ```php
+  - getCurrentPrice(assetId): ?float
+  - getPriceHistory(assetId, startDate, endDate): Collection
+  - supports(AssetType): bool
+  ```
+- ✅ YahooFinanceAdapter implements port (Stock/ETF)
+- ✅ Coverage: 79.9% maintained (602/602 tests, 1448 assertions)
+- Ready for: CoinGeckoAdapter (Phase 10), ManualPriceAdapter
+
+---
+
+## ⏳ Roadmap: Next Phases
+
+### Phase 9B: HoldingsProjection Read Model
+
+**Goal:** Cache current holdings (quantity + avg_cost) per asset/wallet, updated on TransactionCreated.
+
+**Schema:**
+```sql
+CREATE TABLE holdings_projection (
+    id INT PRIMARY KEY,
+    asset_id INT FK,
+    wallet_id INT FK,
+    user_id INT FK,
+    quantity FLOAT,
+    avg_cost FLOAT,
+    updated_at TIMESTAMP
+);
 ```
 
-## 5. CQRS — Séparation Command / Query
+**Implementation:**
+1. Create `HoldingsProjection` model (read-only, persisted)
+2. Create `HoldingsProjectionListener` listening to `TransactionCreated` event
+3. Update projection: recalculate quantity/avg_cost for affected (asset_id, wallet_id) pair
+4. Tests: Verify projection matches Transaction calculations (FIFO/weighted avg)
 
-```mermaid
-graph LR
-    subgraph Commands["Commands (Write Side)"]
-        C1["RecordTransaction\n→ Transaction entity\n→ RealizedGainCalculator\n→ TransactionCreated event"]
-        C2["UpdateAssetPrices\n→ AssetPriceProviderPort\n→ PriceUpdated event"]
-        C3["CreateAsset\n→ Asset aggregate\n→ AssetCreated event"]
-    end
+**Impact:** Queries like `GetHoldings` read projection instead of looping Transactions (O(1) vs O(n)).
 
-    subgraph Events["Domain Events"]
-        E1["TransactionCreated"]
-        E2["PriceUpdated"]
-        E3["AssetCreated"]
-    end
+---
 
-    subgraph Projections["Read Model Projections (Query Side)"]
-        P1["HoldingsProjection\nasset_id → quantity\nupdated on TransactionCreated"]
-        P2["ValuationProjection\nasset_id → current_value\nupdated on PriceUpdated"]
-        P3["PerformanceProjection\nTWR, CAGR, volatility\nrecomputed async"]
-    end
+### Phase 9C: RebalancingOrchestrator Refactor
 
-    subgraph Queries["Queries (Read Side)"]
-        Q1["GetPortfolioValuation\nreads ValuationProjection\nnever touches transactions"]
-        Q2["GetHoldings\nreads HoldingsProjection\nnever touches transactions"]
-        Q3["GetRebalancingSuggestions\nreads HoldingsProjection + prices\nno direct ORM query"]
-    end
+**Current:** RebalancingCalculatorOrchestrator queries Transactions directly → AllocationProfileItem[] (separate calculation).
 
-    C1 -->|dispatches| E1
-    C2 -->|dispatches| E2
-    C3 -->|dispatches| E3
+**Target:** Read from HoldingsProjection only; drop ORM Transaction loops.
 
-    E1 -->|updates| P1
-    E2 -->|updates| P2
-    E1 -->|triggers| P3
+**Changes:**
+1. Refactor `RebalancingCalculatorOrchestrator::getHoldings()` to read HoldingsProjection
+2. Remove `Transaction::forWallet()` calls → use projection
+3. Verify AllocationProfileItem calculation still matches (separate data structure; no conflicts with asset_id rename)
+4. Tests: Rebalancing suggestions unchanged in output
 
-    Q1 --> P2
-    Q2 --> P1
-    Q3 --> P1
-```
+**Benefit:** Decouples analytics from transactional ORM, enables async projection rebuilds.
 
-## 6. Bounded Contexts cibles
+---
 
-```mermaid
-graph TD
-    subgraph Shared["Shared Kernel"]
-        DomainEvent["DomainEvent (base)"]
-        MoneyVO["Money (Value Object)"]
-        DateRange["DateRange (Value Object)"]
-        AssetType["AssetType (Enum)\nStock / ETF / Crypto / RealEstate / Bond / Savings"]
-    end
+### Phase 10: Bitcoin Support (CoinGecko)
 
-    subgraph UserCtx["User Context"]
-        User["User aggregate"]
-    end
+**Minimal changeset:** 3 new files only.
 
-    subgraph AssetCtx["Asset Context (replaces Security)"]
-        Asset["Asset aggregate"]
-        AssetPrice["AssetPrice"]
-        AssetPriceProviderPort["AssetPriceProviderPort"]
-        subgraph AssetAdapters["Infrastructure Adapters"]
-            YFAdapter["YahooFinanceAdapter"]
-            CGAdapter["CoinGeckoAdapter"]
-            ManualAdapter["ManualPriceAdapter"]
-        end
-    end
+**Files to create:**
+1. `app/Domains/Asset/Models/Cryptocurrency.php` — extends Asset
+   ```php
+   class Cryptocurrency extends Asset
+   {
+       protected $fillable = ['symbol', 'is_24h_market'];
+   }
+   ```
 
-    subgraph PortfolioCtx["Portfolio Context"]
-        Wallet["Wallet aggregate"]
-        Transaction["Transaction entity"]
-        RGCalc["RealizedGainCalculator"]
-        HoldingsProjection["HoldingsProjection (read model)"]
-    end
-
-    subgraph AnalyticsCtx["Analytics Context"]
-        Volatility["VolatilityCalculator"]
-        Rebalancing["RebalancingCalculator"]
-        Simulation["SimulationEngine"]
-        ValuationProjection["ValuationProjection (read model)"]
-    end
-
-    UserCtx --> PortfolioCtx
-    UserCtx --> AssetCtx
-
-    AssetCtx -->|AssetPriceProviderPort| AssetAdapters
-    PortfolioCtx -->|asset_id only, no model import| AssetCtx
-    AnalyticsCtx -->|reads projections only| PortfolioCtx
-    AnalyticsCtx -->|reads projections only| AssetCtx
-
-    Shared -.->|used by all| AssetCtx
-    Shared -.->|used by all| PortfolioCtx
-    Shared -.->|used by all| AnalyticsCtx
-```
-
-## 7. Schema DB — migration vers multi-asset
-
-### AS-IS (stock-locked)
-
-```mermaid
-erDiagram
-    securities {
-        int id PK
-        string name
-        string ticker
-        string isin
-        int user_id FK
-    }
-    security_prices {
-        int id PK
-        int security_id FK
-        date date
-        float open
-        float high
-        float low
-        float close
-        float volume
-    }
-    transactions {
-        int id PK
-        int security_id FK
-        int wallet_id FK
-        int user_id FK
-        string type
-        float quantity
-        float unit_price
-        float fees
-        float realized_gain
-    }
-
-    securities ||--o{ security_prices : "has prices"
-    securities ||--o{ transactions : "transacted via"
-```
-
-### TO-BE (multi-asset)
-
-```mermaid
-erDiagram
-    assets {
-        int id PK
-        string name
-        string type "Stock|ETF|Crypto|RealEstate|Bond|Savings"
-        int user_id FK
-    }
-    asset_details_stocks {
-        int asset_id FK
-        string ticker
-        string isin
-    }
-    asset_details_crypto {
-        int asset_id FK
-        string symbol "BTC, ETH - provider-agnostic"
-    }
-    asset_prices {
-        int id PK
-        int asset_id FK
-        date date
-        float value
-        float open "nullable - OHLCV stocks only"
-        float high "nullable - OHLCV stocks only"
-        float low "nullable - OHLCV stocks only"
-        float volume "nullable - OHLCV stocks only"
-    }
-    transactions {
-        int id PK
-        int asset_id FK
-        int wallet_id FK
-        int user_id FK
-        string type "Buy|Sell|Dividend|Interest|Fee|Revaluation"
-        float quantity
-        float unit_price
-        float fees
-        float realized_gain
-    }
-    holdings_projection {
-        int asset_id FK
-        int wallet_id FK
-        int user_id FK
-        float quantity
-        float avg_cost
-        datetime updated_at
-    }
-
-    assets ||--o| asset_details_stocks : "stock details"
-    assets ||--o| asset_details_crypto : "crypto details"
-    assets ||--o{ asset_prices : "price history"
-    assets ||--o{ transactions : "transactions"
-    assets ||--o{ holdings_projection : "current holdings"
-```
-
-## 8. Ajout d'un nouveau type — exemple Bitcoin
-
-Pour ajouter Bitcoin (Cryptocurrency), avec la cible architecture:
-
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant Asset as Asset Context
-    participant Port as AssetPriceProviderPort
-    participant Adapter as CoinGeckoAdapter
-    participant Portfolio as Portfolio Context
-    participant UI as Filament UI
-
-    Dev->>Asset: 1. Create CryptoAsset model extends Asset
-    Dev->>Asset: 2. Add asset_details_crypto migration
-    Dev->>Adapter: 3. Implement CoinGeckoAdapter implements AssetPriceProviderPort
-    Dev->>Port: 4. Register CoinGeckoAdapter for AssetType Crypto
-    Dev->>UI: 5. Add Crypto option to asset type selector
-    Note over Portfolio: Transaction, Wallet, RealizedGainCalculator need ZERO changes
-    Note over Asset: Only 3 new files: Model + Migration + Adapter
-```
-
-**Fichiers à créer (uniquement):**
-1. `app/Domains/Asset/Models/CryptoAsset.php` — extends `Asset`
 2. `database/migrations/xxxx_create_asset_details_crypto_table.php`
-3. `app/Domains/Asset/Infrastructure/Adapters/CoinGeckoAdapter.php` — implements `AssetPriceProviderPort`
+   ```php
+   Schema::create('asset_details_crypto', fn (Blueprint $table) => [
+       $table->foreignId('asset_id')->references('id')->on('securities'),
+       $table->string('symbol'); // BTC, ETH, etc.
+       $table->boolean('is_24h_market')->default(true);
+   ]);
+   ```
 
-**Fichiers à modifier (zéro ou minime):**
-- `AppServiceProvider` — enregistrer `CoinGeckoAdapter` pour `AssetType::Crypto`
-- `AssetType` enum — ajouter `Crypto` case
-- `MarketCalendar` — remplacer par logique par-adapter (crypto = 24/7, stocks = Mon-Fri)
+3. `app/Domains/Asset/Infrastructure/Adapters/CoinGeckoAdapter.php` — implements AssetPriceProviderPort
+   ```php
+   class CoinGeckoAdapter implements AssetPriceProviderPort
+   {
+       public function supports(AssetType $type): bool { return $type === AssetType::Crypto; }
+       public function getCurrentPrice(int $assetId): ?float { /* fetch from CoinGecko */ }
+       public function getPriceHistory(...) { /* fetch OHLC */ }
+   }
+   ```
 
-## 9. Roadmap de migration incrémentale
+4. Register in `AppServiceProvider`:
+   ```php
+   $this->app->when(AssetPriceProviderResolver::class)
+       ->needs(CoinGeckoAdapter::class)
+       ->giveTagged('price_provider');
+   ```
 
-> **Règle TDD appliquée à chaque phase** — Red → Green → Refactor.
-> Chaque étape se termine uniquement quand les 3 gates passent (voir section 9.1).
+**Zero changes required:**
+- Transaction, Wallet, RealizedGainCalculator — polymorphic on asset_id
+- Portfolio context — agnostic to asset type
+- Analytics — reads projections only
 
-```mermaid
-graph TD
-    subgraph Phase6["Phase 6 — Events"]
-        P6A["Wire TransactionCreated dispatch"]
-        P6B["Wire PriceUpdated dispatch"]
-        P6C["Wire PortfolioRebalanced dispatch"]
-    end
+---
 
-    G6{"Gate 6\nPest + PHPStan + Pint"}
+## 🚪 Testing Gates
 
-    subgraph Phase7["Phase 7 — Contrats"]
-        P7A["Binder SecurityRepositoryInterface\nSecurityPriceRepositoryInterface\nTransactionRepositoryInterface"]
-        P7B["Remplacer appels ORM directs\npar contrats dans services"]
-        P7C["Fixer VolatilityCalculating\nWallet to int walletId"]
-    end
-
-    G7{"Gate 7\nPest + PHPStan + Pint"}
-
-    subgraph Phase8["Phase 8 — Asset abstraction"]
-        P8A["Extraire Asset aggregate\ndu Security domain"]
-        P8B["Migration asset_prices\nremplace security_prices"]
-        P8C["Migration transactions\nsecurity_id vers asset_id"]
-    end
-
-    G8{"Gate 8\nPest + PHPStan + Pint"}
-
-    subgraph Phase9["Phase 9 — Ports & Projections"]
-        P9A["AssetPriceProviderPort\nYahooFinanceAdapter stocks"]
-        P9B["HoldingsProjection read model\nmis a jour via TransactionCreated"]
-        P9C["RebalancingOrchestrator\nlit projection, plus ORM Transaction"]
-    end
-
-    G9{"Gate 9\nPest + PHPStan + Pint"}
-
-    subgraph Phase10["Phase 10 — Bitcoin"]
-        P10A["CoinGeckoAdapter\nimplements AssetPriceProviderPort"]
-        P10B["CryptoAsset model\nasset_details_crypto migration"]
-    end
-
-    Phase6 --> G6 --> Phase7 --> G7 --> Phase8 --> G8 --> Phase9 --> G9 --> Phase10
-
-    style Phase6 fill:#3b82f6,color:#fff
-    style Phase7 fill:#6366f1,color:#fff
-    style Phase8 fill:#8b5cf6,color:#fff
-    style Phase9 fill:#a855f7,color:#fff
-    style Phase10 fill:#10b981,color:#fff
-    style G6 fill:#f59e0b,color:#fff
-    style G7 fill:#f59e0b,color:#fff
-    style G8 fill:#f59e0b,color:#fff
-    style G9 fill:#f59e0b,color:#fff
-```
-
-### 9.1 Gate de validation — obligatoire entre chaque phase
-
-Aucune phase suivante ne démarre tant que les 3 commandes ne passent pas en vert.
+**Mandatory before each phase completion:**
 
 ```bash
-# 1. Tests Pest — tous les tests du domaine modifié + régressions globales
+# 1. All tests pass
 php artisan test --compact
 
-# 2. PHPStan niveau 2 — aucun type error, aucune propriété non typée
+# 2. Type safety (level 2)
 vendor/bin/phpstan analyse app/Domains/ --level=2
 
-# 3. Pint — formatage propre
+# 3. Formatting
 vendor/bin/pint --dirty --format agent
 ```
 
-**TDD par étape:**
-- Écrire le test Pest **avant** d'implémenter (Red)
-- Implémenter jusqu'à ce que le test passe (Green)
-- Refactorer sans casser les tests (Refactor)
-- Committer uniquement quand Gate passe
-
-**Commandes utiles par scope:**
-
-| Scope | Commande |
-|-------|----------|
-| Portfolio uniquement | `php artisan test --compact tests/Feature/Domains/Portfolio/` |
-| Analytics uniquement | `php artisan test --compact tests/Feature/Domains/Analytics/` |
-| Filtre sur un test | `php artisan test --compact --filter=NomDuTest` |
-| PHPStan domaine précis | `vendor/bin/phpstan analyse app/Domains/Portfolio/ --level=2` |
-
-## 10. Contrats existants à étendre (pas réécrire)
-
-| Contrat existant | Statut | Action Phase 7 |
-|-----------------|--------|---------------|
-| `SecurityRepositoryInterface` | ✅ Défini, ✅ bindé (Phase 7A) | Utilisable en Phase 7B+ |
-| `SecurityPriceRepositoryInterface` | ✅ Défini, ✅ bindé (Phase 7A) | Utilisable en Phase 7B+ |
-| `TransactionRepositoryInterface` | ✅ Défini, ✅ bindé (Phase 7A) | Utilisable en Phase 7B+ |
-| `PriceRefreshing` | ✅ Défini, ✅ bindé | Renommer `AssetPriceProviderPort`, ajouter `supports(AssetType)` |
-| `VolatilityCalculating` | ✅ Défini, ✅ bindé | Signature change `Wallet → int walletId` (TBD Phase 7C) |
-| `Rebalancing` | ✅ Défini, ✅ bindé | Aucun changement nécessaire (pure math) |
-
-## 11. Phase 7 — Résultats Finaux ✅
-
-### 11.1 Phase 7A ✅ Complètement réalisée
-- ✅ Bindings ajoutés pour SecurityRepositoryInterface, SecurityPriceRepositoryInterface, TransactionRepositoryInterface
-- ✅ Tous 3 interfaces implémentées dans EloquentXxxRepository
-- ✅ Tests passent (432 pass)
-
-### 11.2 Phase 7B ✅ Complètement réalisée (7 services)
-**Approche choisie: Option 3 (Request-scoped UserId service)**
-
-Contexte: Refactoriser 7 services vers injection repository révélait un défi critique du contexte utilisateur.
-- Problème: `forWallet(walletId, userId)` et `forSecurity(securityId, userId)` nécessitaient `userId`
-- Services sans userId explicit (VolatilityCalculator, etc) créaient tight coupling si on injectait UserId
-
-**Solution implémentée:**
-- Créé service global UserId injectable (Option 3)
-- Permet override de test via `TestCase::actingAs()`
-- Pas de modifications de signatures (sauf VolatilityCalculating interface)
-- Services pures (PortfolioPerformanceCalculator) isolées du contexte utilisateur
-
-**Services refactorisés:**
-1. ✅ RealizedGainCalculator — TransactionRepository
-2. ✅ SingleSecurityStatsProvider — TransactionRepository
-3. ✅ YahooFinanceService — SecurityPriceRepository (7 ORM points)
-4. ✅ VolatilityCalculator — SecurityRepository, SecurityPriceRepository + signature change
-5. ✅ PortfolioPerformanceCalculator — SecurityPriceRepository (no UserId injection)
-6. ✅ DashboardDataProvider — SecurityRepository
-7. ✅ PortfolioPerformanceService — SecurityRepository, SecurityPriceRepository, TransactionRepository
-
-### 11.3 Phase 7C ✅ Complètement réalisée (Interface Cleanup)
-- ✅ VolatilityCalculating signature: `forWallet(Wallet $wallet)` → `forWallet(int $walletId)`
-- ✅ Tous callers mis à jour (2 Filament widgets, 1 service)
-- ✅ Tests updated et passant
-
-### 11.4 Fixes & Cleanup
-- ✅ DashboardGainStatsOverview: Guard contre division by zero
-- ✅ PhpDoc types: Fully-qualified Security references
-- ✅ Pint formatting: Full codebase cleaned
-- ✅ All 432 tests passing, 0 new phpstan errors
-
-### 11.5 Lessons Learned
-| Leçon | Application |
-|-------|-------------|
-| **Pure calculation services** | Don't inject UserId; use repositories that respect global scopes |
-| **Global scopes + tests** | TestCase override of UserId service enables clean test isolation |
-| **Interface signatures** | Prefer `int walletId` over `Wallet $wallet` for decoupling |
-| **Incremental refactoring** | 7 services in 3 commits without cascading failures |
+**Current status:**
+- Tests: 602 passing ✅
+- PHPStan: 130 pre-existing (none new) ✅
+- Pint: Clean ✅
 
 ---
 
-## 12. Phase 8A — Asset Domain Skeleton ✅
+## 🔑 Key Decisions
 
-### 12.1 Phase 8A ✅ Complètement réalisée
-
-**Stratégie:** Incremental (Strangler Fig) - Asset + Stock coexist avec Security sur la même table
-
-**Fichiers créés (10 nouveaux):**
-1. ✅ `app/Domains/Asset/Enums/AssetType.php` — 6 backed string cases (Stock, ETF, Crypto, RealEstate, Bond, Savings)
-2. ✅ `app/Domains/Asset/Models/Asset.php` — Abstract aggregate, protected $table = 'securities'
-3. ✅ `app/Domains/Asset/Models/Stock.php` — Concrete model, extends Asset, adds isin/ticker
-4. ✅ `app/Domains/Asset/Contracts/AssetRepositoryInterface.php` — Port interface
-5. ✅ `app/Domains/Asset/Infrastructure/Eloquent/EloquentAssetRepository.php` — Adapter
-6. ✅ `database/factories/Domains/Asset/Models/StockFactory.php` — Test factory
-7. ✅ `database/migrations/2026_05_08_011816_add_type_to_securities_table.php` — Migration
-8. ✅ `tests/Domains/Asset/Unit/Models/StockTest.php` — 3 unit tests
-9. ✅ `tests/Domains/Asset/Feature/Repositories/AssetRepositoryTest.php` — 3 feature tests
-10. ✅ `app/Providers/AppServiceProvider.php` — AssetRepositoryInterface binding
-
-**Décisions architecturales:**
-- Asset et Security coexistent sur `securities` table jusqu'à 8C (pas de renommage destructif)
-- Asset scopes (`scopeForAuth`, `scopeForWallet`) produisent SQL identique à Security
-- Stock utilise foreign key `security_id` explicite (Eloquent relation guessing evité)
-- Asset::currentValuation() héritée par Stock via latestPrice() + total_quantity
-- Tests isolent wallets par noms explicites (évite unique constraint sur wallet.name)
-
-**Tests passant:**
-- ✅ 432 existing tests (Security, Portfolio, Analytics) — zéro régressions
-- ✅ 6 new Asset tests (Stock model, AssetRepository) — tous passant
-- ✅ Total: 438 tests pass
-
-**Gate validation:** ✅
-- ✅ `php artisan test --compact` — 438/438 pass
-- ✅ `vendor/bin/pint --dirty --format agent` — 0 errors
-- ✅ No new phpstan issues
-
-### 12.2 Phase 8B ✅ Complètement réalisée
-
-**Stratégie:** Rename table non-destructive + model update + minimal caller changes
-
-**Fichiers modifiés (5 changements):**
-1. ✅ `SecurityPrice` model — added `protected $table = 'asset_prices'`
-2. ✅ `2026_05_08_012537_rename_security_prices_to_asset_prices_table.php` — Schema::rename()
-3. ✅ `SecuritiesTable.php` — change hardcoded ->from('security_prices') to ->from('asset_prices')
-4. ✅ `YahooFinanceServiceTest.php` — assertDatabaseHas('asset_prices', ...)
-5. ✅ `2026_05_08_012812_add_indexes_to_asset_prices_table.php` — create separate index migration
-
-**Décisions:**
-- Separate index migration created (runs after rename) to avoid schema ordering issues
-- SecurityPrice model kept in Security domain (will move to Asset domain in future phase)
-- All relationships work transparently (both Security and Asset use asset_prices)
-- No Service/Repository changes needed (table rename is transparent to ORM)
-
-**Tests passant:**
-- ✅ 316 tests (Asset + Security + Portfolio) — zéro régressions
-- ✅ Filament widgets work correctly with renamed table
-
-### 12.3 Phase 8C — Pending (security_id → asset_id + 70+ callers)
-
-**Scope:** Bulk rename security_id FK → asset_id across all tables
-
-**Impact:** Affects 70+ files across 4 domains
-- Portfolio: Transaction, Wallet, RealizedGainCalculator
-- Analytics: VolatilityCalculator, RebalancingCalculator, SimulationEngine  
-- Security → Asset: Repository methods, relationship definitions
-- Infrastructure: EloquentXxxRepository queries
-
-**Strategy:** Use PHPStan + IDE refactoring to minimize human error
+| Decision | Rationale | Tradeoff |
+|----------|-----------|----------|
+| **Strangler Fig (8A-8B)** | Non-destructive migration; coexist Asset + Security on same table | Duplicate code until 8C complete |
+| **UserId as service (7B)** | Global scoped context; clean test isolation | Not dependency-injected (but testable via TestCase::actingAs) |
+| **Port/Adapter pattern (9A)** | Extensible to multi-provider; clear domain boundaries | Abstract complexity; need resolver |
+| **Projections (9B+)** | Read models decouple analytics from txn queries; enable async rebuilds | Extra persistence layer; eventual consistency |
+| **asset_id FK to securities.id** | Enables polymorphic asset types (Stock, Crypto, RealEstate) on same table | Schema maps Legacy Security → Future Asset |
 
 ---
 
-### 12.4 Phase 8C ✅ ~Done (78% — 465/594 tests passing)
+## 📚 File Inventory
 
-**Status:** Migration + app code complete. 129 failing tests blocking Phase 9.
-
-**Fichiers modifiés (17 app files):**
-
-**Core Models & Factories:**
-1. ✅ `Transaction.php` — fillable: `'security_id'` → `'asset_id'`; security() FK explicit
-2. ✅ `Security.php` — scopeForAuth/scopeForWallet join → `transactions.asset_id`; transactions() FK explicit
-3. ✅ `Asset.php` — join conditions → `transactions.asset_id`; transactions() FK explicit
-4. ✅ `TransactionFactory.php` — definition() + livret() state → `'asset_id'`
-5. ✅ `TransactionSeeder.php` — insert calls → `'asset_id'` (Transaction context only; SecurityPrice/SecuritySector preserved)
-
-**Repositories & Services:**
-6. ✅ `EloquentTransactionRepository.php` — queries: `->where('asset_id', ...)`
-7. ✅ `TransactionAggregator.php` — `$transaction->asset_id`
-8. ✅ `RealizedGainCalculator.php` — comparison: `$t->asset_id === $transaction->asset_id`
-9. ✅ `PortfolioPerformanceCalculator.php` — Transaction queries → `asset_id`
-10. ✅ `RebalancingCalculatorOrchestrator.php` — selectRaw/groupBy/pluck → `asset_id` (AllocationProfileItem keys preserved)
-11. ✅ `YahooFinanceService.php` — DB::table('transactions') raw queries → `asset_id`
-
-**Filament Resources & Widgets:**
-12. ✅ `TransactionForm.php` — Select::make('asset_id'); query conditions → `asset_id`
-13. ✅ `TransactionsRelationManager.php` — query → `asset_id`
-14. ✅ `EditWalletSecurity.php` — Transaction::create → `'asset_id'`
-15. ✅ `AccountPage.php` — distinct/count → `asset_id`
-16. ✅ `ValuationChartWidget.php` — whereIn → `asset_id`
-17. ✅ `SingleSecurityValuationChartWidget.php` — whereIn → `asset_id`
-
-**Database Migration:**
-✅ `2026_05_08_020000_rename_security_id_to_asset_id_in_transactions_table.php`
-- MySQL-compatible: two separate Schema::table() blocks (FK constraint handling)
-- Reversible: down() renames column back
-- All FKs + indexes preserved
-- Verified: FK constraints + indexes exist post-migration
-
-**Test Files Modified (~40 test files):**
-- All Transaction context references → `asset_id`
-- All SecurityPrice/SecuritySector context → `security_id` (preserved)
-- Mixed files manually edited with surgical precision
-
-**Commits:**
-1. Main Phase 8C refactoring (migration + 17 app files + bulk test updates)
-2. Seeder context fix (security_id in SecurityPrice/SecuritySector inserts)
-
-**Test Results:**
-- ✅ 465 tests passing (78%)
-- ❌ 129 tests failing (22%)
-
-**Blocking Issues for Phase 9:**
-
-| Category | Count | Root Cause | Location |
-|----------|-------|-----------|----------|
-| **SecurityPrice QueryException** | ~40 | SecurityPrice FK still pointing to `securities.id`; asset_prices table missing asset_id column mapping | Tests using SecurityPrice factory with asset_id instead of security_id |
-| **RebalancingCalculator Errors** | ~50 | Undefined array key "security_id" on AllocationProfileItem collections; code expects security_id not asset_id | `RebalancingCalculatorOrchestrator` uses AllocationProfileItem data arrays (separate table, different context) |
-| **Mixed Context Confusion** | ~39 | Tests/code still mixing Transaction asset_id with SecurityPrice security_id contexts | Integration tests (SecurityVisibilityToggleTest, RebalancingCalculatorTest, etc.) |
-
-**Migration Safety Validation:**
-- ✅ Reversible (down() method tested)
-- ✅ FK constraints preserved + verified
-- ✅ Indexes created + verified
-- ✅ Zero data loss (column rename only, no data deletion)
-- ✅ MySQL-compatible (tested with SQLite; equivalent for MySQL)
-
-**Architectural Impact:**
-- ✅ `transactions.asset_id` now FK to `securities.id` (paving way for polymorphic Asset types)
-- ✅ `asset_prices.security_id` unchanged (remains FK to securities.id for backward compat)
-- ✅ `security_sectors.security_id` unchanged (out of scope)
-- ✅ Domain separation intact: Transaction uses `asset_id` (Asset context), SecurityPrice uses `security_id` (legacy Stock-only context)
-
-**What Blocks Phase 9:**
-Remaining 129 failing tests require:
-1. **SecurityPrice relationship rework** — asset_prices table needs asset_id relationship, not security_id
-2. **AllocationProfileItem context isolation** — separate data structure; needs explicit security_id keys (not affected by Transaction rename)
-3. **Integration test cleanup** — fix mixed-context assertions to correctly check both asset_id (Transaction) and security_id (SecurityPrice)
-
-**Next Steps Before Phase 9:**
-- [ ] Resolve SecurityPrice context failures (40 tests) — likely needs asset_prices migration adjustment or relationship redesign
-- [ ] Fix RebalancingCalculator context (50 tests) — verify AllocationProfileItem doesn't conflict with asset_id Transaction FK
-- [ ] Clean integration tests (39 tests) — align test factories and assertions with final schema
-- [ ] Rerun full test suite: target 594/594 pass
-- [ ] PHPStan level 2: zero type errors
-- [ ] Pint formatting: clean
-
----
-
-## 13. Phase 8+ — Roadmap vers Bitcoin
-
-### Phase 8 — Asset Abstraction ✅ 8A/8B DONE, 8C ~DONE (78%)
-**Prérequis:** Phase 7 terminée, architecture repository stable ✅
-
-**Objectif:** Extraire Asset aggregate, remplacer Security par Asset
-
-**Étapes:**
-1. ✅ 8A: Créer Asset abstract aggregate (herite Transaction, SecurityPrice)
-2. ✅ 8A: Stock extends Asset, factory + tests
-3. ✅ 8B: Migration: security_prices → asset_prices (rename table)
-4. ✅ 8C: Migration: transactions.security_id → asset_id + 17 app files + ~40 tests (465/594 pass)
-5. ⏳ 8C: Résoudre 129 tests failing (SecurityPrice/Analytics context issues)
-6. ⏳ 8C: Rendre AssetType polymorphe (Stock, ETF, Crypto, RealEstate, Bond, Savings) via Security model removal
-
-## 14. Phase 9A — Ports & Adapters ✅
-
-### 14.1 Phase 9A ✅ Complètement réalisée
-
-**Stratégie:** Implement Ports & Adapters pattern for multi-asset pricing
-
-**Fichiers créés (2 + tests):**
-1. ✅ `app/Domains/Asset/Ports/AssetPriceProviderPort.php` — Interface port
-2. ✅ `app/Domains/Asset/Infrastructure/Adapters/YahooFinanceAdapter.php` — Adapter implementation
-3. ✅ `tests/Domains/Asset/Unit/Ports/AssetPriceProviderPortTest.php` — Interface contract tests
-4. ✅ `tests/Domains/Asset/Feature/Infrastructure/Adapters/YahooFinanceAdapterTest.php` — Adapter tests
-
-**Port Contract:** AssetPriceProviderPort
-```php
-- getCurrentPrice(assetId): ?float
-- getPriceHistory(assetId, startDate?, endDate?): Collection
-- supports(AssetType): bool
+### Asset Domain
+```
+app/Domains/Asset/
+  ├── Enums/AssetType.php                               (6 cases: Stock, ETF, Crypto, RealEstate, Bond, Savings)
+  ├── Models/Asset.php                                  (abstract aggregate)
+  ├── Models/Stock.php                                  (extends Asset)
+  ├── Ports/AssetPriceProviderPort.php                  (getCurrentPrice, getPriceHistory, supports)
+  ├── Contracts/AssetRepositoryInterface.php
+  └── Infrastructure/
+      ├── Eloquent/EloquentAssetRepository.php
+      └── Adapters/YahooFinanceAdapter.php              (Stock/ETF, 6 tests)
 ```
 
-**YahooFinanceAdapter implements:**
-- ✅ Stock, ETF support
-- ✅ Queries SecurityPrice table (legacy context)
-- ✅ 6 tests, 100% passing
+### Security Domain (Legacy)
+```
+app/Domains/Security/
+  ├── Models/Security.php, SecurityPrice.php, SecuritySector.php
+  ├── Contracts/SecurityRepositoryInterface.php, SecurityPriceRepositoryInterface.php
+  ├── Infrastructure/Eloquent/EloquentSecurityRepository.php, etc.
+  └── Services/YahooFinanceService.php                  (pre-9A; will deprecate)
+```
 
-**Coverage improvements:**
-- ✅ AssetType enum: 0% → 66.7%
-- ✅ Asset models tested (via Stock)
-- ✅ UserId service tested: 42.9% → 100% 
-- ✅ Overall: 79.6% → 79.9%
+### Portfolio Domain
+```
+app/Domains/Portfolio/
+  ├── Models/Transaction.php                            (asset_id FK, ✅ renamed 8C)
+  ├── Models/Wallet.php
+  ├── Services/RealizedGainCalculator.php
+  ├── Contracts/TransactionRepositoryInterface.php
+  └── Infrastructure/Eloquent/EloquentTransactionRepository.php
+```
 
-**Code changes:**
-- Seeder fix: Added missing 'type' field to DCA transactions (60 monthly SP500 buys + 1 TotalEnergies)
-- 9 new critical coverage tests
-- 2 Pint formatting fixes
-
-**Tests passing:**
-- ✅ Total: 602/602 pass (1448 assertions)
-- ✅ No regressions from Phase 8C
-
-**Gate validation:** ✅
-- ✅ `php artisan test --compact` — 602/602 pass
-- ✅ `vendor/bin/pint --format agent` — PASS
-- ✅ PHPStan level 2 — 130 pre-existing (no new errors)
-- ✅ Coverage: 79.9%
-
-**Architecture enabled:**
-- Phase 10 ready: CoinGeckoAdapter can now implement AssetPriceProviderPort
-- Support for Stock/ETF/Crypto/RealEstate/Bond/Savings asset types
-
-### Phase 9 — Ports & Projections
-**Objectif:** HoldingsProjection read model, RebalancingOrchestrator refactor
-
-**Adapters:**
-- YahooFinanceAdapter: Stock/ETF
-- CoinGeckoAdapter: Crypto (24/7)
-- ManualPriceAdapter: RealEstate, Private assets
-
-### Phase 10 — Bitcoin Support
-**Minimal changeset:** 3 files
-1. `CryptoAsset` model extends Asset
-2. `asset_details_crypto` migration
-3. `CoinGeckoAdapter` implements AssetPriceProviderPort
-
-Portfolio, Transaction, RealizedGainCalculator require ZERO changes.
+### Analytics Domain
+```
+app/Domains/Analytics/
+  ├── Services/VolatilityCalculator.php                 (signature: forWallet(int))
+  ├── Services/RebalancingCalculatorOrchestrator.py     (queries Transactions; will refactor 9C)
+  ├── Services/SimulationEngine.php, etc.
+  └── (No projections yet; 9B will add)
+```
 
 ---
+
+## 🎓 Usage Examples
+
+### Record Transaction (Command)
+```php
+// Command dispatches TransactionCreated event
+$transaction = Transaction::create([
+    'asset_id' => $assetId,    // ✅ renamed from security_id
+    'wallet_id' => $walletId,
+    'type' => TransactionType::Buy,
+    'quantity' => 10,
+    'unit_price' => 150.50,
+]);
+event(new TransactionCreated($transaction));
+```
+
+### Update Asset Prices (Command + Port)
+```php
+// UpdateAssetPricesCommand uses resolver to find adapter
+$provider = $resolver->forAssetType($asset->type);
+$price = $provider->getCurrentPrice($asset->id);
+// Adapter (Yahoo, CoinGecko, Manual) returns float
+```
+
+### Query Holdings (Read-side)
+```php
+// Phase 9B: Use projection instead
+$holdings = HoldingsProjection::where('wallet_id', $walletId)->get();
+// Before 9B: Loop Transactions, calculate dynamically
+```
+
+---
+
+## 🛣️ Migration Checklist (Next 3 Phases)
+
+- [ ] **9B:** HoldingsProjection model + listener + tests (target: 610 tests)
+- [ ] **9B:** Refactor GetHoldings query to use projection
+- [ ] **9B:** Verify projection matches Transaction calculations (FIFO)
+- [ ] **9C:** RebalancingCalculatorOrchestrator reads projection only
+- [ ] **9C:** AllocationProfileItem data structure remains independent
+- [ ] **10:** CryptoAsset model + asset_details_crypto migration
+- [ ] **10:** CoinGeckoAdapter implementation (getCurrentPrice, getPriceHistory, supports)
+- [ ] **10:** Register adapter in AppServiceProvider
+- [ ] **10:** UI: Add Crypto type to asset creation form
+- [ ] **All:** 650+ tests passing, 80%+ coverage, PHPStan level 2 clean, Pint pass
+
+---
+
+## 📖 Architecture References
+
+- **Explicit Architecture:** https://herbertograca.com/2017/11/16/explicit-architecture-01-ddd-hexagonal-onion-clean-cqrs-how-i-put-it-all-together/
+- **DDD Fundamentals:** Evans, *Domain-Driven Design*
+- **Ports & Adapters:** Alistair Cockburn's Hexagonal Architecture
+- **CQRS Pattern:** Martin Fowler's CQRS guide
+- **Event Sourcing:** Enables projection rebuilds (future enhancement)
+
+---
+
+**Last Updated:** 2026-05-09 | **Next Review:** After Phase 9B completion
