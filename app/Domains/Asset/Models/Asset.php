@@ -20,7 +20,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class Asset extends Model
 {
-    /** @use HasFactory<\Database\Factories\Domains\Asset\Models\AssetFactory> */
     use HasFactory;
 
     protected $table = 'securities';
@@ -44,7 +43,7 @@ class Asset extends Model
     /**
      * @param  object|array<string, mixed>  $attributes
      */
-    public function newFromBuilder($attributes = [], $connection = null): self
+    public function newFromBuilder($attributes = [], $connection = null): Asset
     {
         $type = $attributes->type ?? $attributes['type'] ?? AssetType::Stock->value;
 
