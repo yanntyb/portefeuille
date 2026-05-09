@@ -2,6 +2,7 @@
 
 namespace App\Domains\Security\Models;
 
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Security\Enums\Sector;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -38,8 +39,8 @@ class SecuritySector extends Model
         ];
     }
 
-    public function security(): BelongsTo
+    public function asset(): BelongsTo
     {
-        return $this->belongsTo(Security::class, 'asset_id');
+        return $this->belongsTo(Asset::class, 'asset_id');
     }
 }

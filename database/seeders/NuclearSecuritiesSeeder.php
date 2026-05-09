@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\Security;
-use App\Models\SecurityPrice;
-use App\Models\SecuritySector;
-use App\Services\YahooFinanceClient;
+use App\Domains\Asset\Models\Security;
+use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Security\Models\SecuritySector;
+use App\Domains\Security\Services\YahooFinanceClient;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 

@@ -11,14 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::disableForeignKeyConstraints();
+
         Schema::table('security_sectors', function (Blueprint $table): void {
-            $table->dropForeign(['security_id']); // no-op on SQLite
+            $table->dropForeign(['security_id']);
             $table->renameColumn('security_id', 'asset_id');
         });
 
         Schema::table('security_sectors', function (Blueprint $table): void {
             $table->foreign('asset_id')->references('id')->on('securities')->cascadeOnDelete();
         });
+
+        Schema::enableForeignKeyConstraints();
     }
 
     /**
@@ -26,6 +30,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::disableForeignKeyConstraints();
+
         Schema::table('security_sectors', function (Blueprint $table): void {
             $table->dropForeign(['asset_id']);
             $table->renameColumn('asset_id', 'security_id');
@@ -34,5 +40,7 @@ return new class extends Migration
         Schema::table('security_sectors', function (Blueprint $table): void {
             $table->foreign('security_id')->references('id')->on('securities')->cascadeOnDelete();
         });
+
+        Schema::enableForeignKeyConstraints();
     }
 };

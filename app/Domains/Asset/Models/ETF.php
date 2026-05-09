@@ -2,7 +2,6 @@
 
 namespace App\Domains\Asset\Models;
 
-use App\Domains\Asset\Models\AssetSector;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**

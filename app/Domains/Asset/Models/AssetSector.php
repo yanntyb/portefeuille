@@ -3,13 +3,18 @@
 namespace App\Domains\Asset\Models;
 
 use App\Domains\Security\Enums\Sector;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AssetSector extends Model
 {
+    /** @use HasFactory<\Database\Factories\Domains\Asset\Models\AssetSectorFactory> */
+    use HasFactory;
+
     protected $table = 'security_sectors';
 
+    /** @var list<string> */
     protected $fillable = ['asset_id', 'sector', 'weight'];
 
     /** @return array<string, string> */
