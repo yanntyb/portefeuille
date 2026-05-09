@@ -7,6 +7,8 @@ use App\Domains\Asset\Contracts\AssetRepositoryInterface;
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Infrastructure\Adapters\YahooFinanceAdapter;
 use App\Domains\Asset\Models\Asset;
+use App\Domains\Asset\ValueObjects\AssetPriceData;
+use App\Domains\Asset\ValueObjects\PriceData;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -90,7 +92,12 @@ readonly class PriceSyncService
             return;
         }
 
-        $prices = $this->transformer->transform($asset->id, $priceHistory);
-        $this->persister->persist($prices);
+        $priceDataCollection = $this->transformer->transform($priceHistory);
+        $assetPrices = $priceDataCollection
+            ->map(fn (PriceData $priceData) => AssetPriceData::fromPriceData($asset->id, $priceData)->toArray())
+            ->values()
+            ->toArray();
+
+        $this->persister->persist($assetPrices);
     }
 }
