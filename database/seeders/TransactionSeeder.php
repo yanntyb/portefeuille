@@ -2,14 +2,14 @@
 
 namespace Database\Seeders;
 
+use App\Domains\Asset\Enums\Sector;
+use App\Domains\Asset\Models\AssetPrice;
+use App\Domains\Asset\Models\AssetSector;
+use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Enums\CurrencyModificationUnit;
 use App\Domains\Portfolio\Enums\FeeScope;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Enums\Sector;
-use App\Domains\Security\Models\Security;
-use App\Domains\Security\Models\SecurityPrice;
-use App\Domains\Security\Models\SecuritySector;
 use App\Domains\User\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
@@ -87,14 +87,14 @@ class TransactionSeeder extends Seeder
 
     /**
      * @param  array<string, array{isin: string, ticker: string, name: string}>  $stocks
-     * @return array<string, Security>
+     * @return array<string, Stock>
      */
     private function createSecurities(array $stocks): array
     {
         $securities = [];
 
         foreach ($stocks as $key => $stock) {
-            $security = Security::firstOrCreate(
+            $security = Stock::firstOrCreate(
                 ['isin' => $stock['isin']],
                 [
                     'name' => $stock['name'],
@@ -113,7 +113,7 @@ class TransactionSeeder extends Seeder
         return $securities;
     }
 
-    private function loadPricesFromFile(Security $security): void
+    private function loadPricesFromFile(Stock $security): void
     {
         $filename = database_path('seeders/data/'.str_replace('.', '_', $security->ticker).'_prices.json');
 
@@ -137,11 +137,11 @@ class TransactionSeeder extends Seeder
         ], $prices);
 
         foreach (array_chunk($rows, 500) as $chunk) {
-            SecurityPrice::insert($chunk);
+            AssetPrice::insert($chunk);
         }
     }
 
-    private function generateSectorAllocations(Security $security, string $etfKey): void
+    private function generateSectorAllocations(Stock $security, string $etfKey): void
     {
         $allocations = self::sectorAllocations()[$etfKey];
         $rows = [];
@@ -156,10 +156,10 @@ class TransactionSeeder extends Seeder
             ];
         }
 
-        SecuritySector::insert($rows);
+        AssetSector::insert($rows);
     }
 
-    private function seedOneTimeBuy(User $user, Wallet $wallet, Security $security, CarbonImmutable $date, float $budget, ?string $broker = null): void
+    private function seedOneTimeBuy(User $user, Wallet $wallet, Stock $security, CarbonImmutable $date, float $budget, ?string $broker = null): void
     {
         if ($date->isWeekend()) {
             $date = $date->next(CarbonImmutable::MONDAY);
@@ -196,9 +196,9 @@ class TransactionSeeder extends Seeder
         ]]);
     }
 
-    private function getPriceAt(Security $security, CarbonImmutable $date): ?float
+    private function getPriceAt(Stock $security, CarbonImmutable $date): ?float
     {
-        $price = SecurityPrice::query()
+        $price = AssetPrice::query()
             ->where('asset_id', $security->id)
             ->where('date', '<=', $date->toDateString())
             ->orderByDesc('date')
@@ -232,7 +232,7 @@ class TransactionSeeder extends Seeder
                     ? $monthlyBudget * ($allocations[$key] ?? 0)
                     : $monthlyBudget / count($securities);
 
-                $price = SecurityPrice::query()
+                $price = AssetPrice::query()
                     ->where('asset_id', $security->id)
                     ->where('date', '<=', $investDate->toDateString())
                     ->orderByDesc('date')

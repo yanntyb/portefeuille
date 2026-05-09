@@ -30,7 +30,7 @@ it('forWallet returns only securities in wallet', function (): void {
 
     Transaction::factory()->for($wallet)->for($stock1, 'asset')->create();
     Transaction::factory()->for($wallet)->for($stock2, 'asset')->create();
-    Transaction::factory()->for($otherWallet)->for($stock3, 'security')->create();
+    Transaction::factory()->for($otherWallet)->for($stock3, 'asset')->create();
 
     $repository = app(AssetRepositoryInterface::class);
     $securities = $repository->forWallet($wallet->id);

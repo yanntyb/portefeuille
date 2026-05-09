@@ -6,6 +6,7 @@ use App\Domains\Asset\Contracts\AssetRepositoryInterface;
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Models\Asset;
 use App\Domains\Portfolio\Models\Wallet;
+use App\Domains\Portfolio\Services\AssetQueryService;
 use Illuminate\Database\Eloquent\Collection;
 
 class EloquentAssetRepository implements AssetRepositoryInterface
@@ -23,7 +24,7 @@ class EloquentAssetRepository implements AssetRepositoryInterface
             return new Collection;
         }
 
-        return Asset::query()
+        return app(AssetQueryService::class)
             ->forWallet($wallet)
             ->with('latestPrice')
             ->get();
@@ -37,7 +38,7 @@ class EloquentAssetRepository implements AssetRepositoryInterface
             return [];
         }
 
-        return Asset::query()
+        return app(AssetQueryService::class)
             ->forWallet($wallet)
             ->pluck('securities.id')
             ->all();

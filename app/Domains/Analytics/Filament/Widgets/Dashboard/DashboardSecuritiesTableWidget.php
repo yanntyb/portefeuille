@@ -4,6 +4,7 @@ namespace App\Domains\Analytics\Filament\Widgets\Dashboard;
 
 use App\Domains\Asset\Models\Asset;
 use App\Domains\Asset\Models\AssetPrice;
+use App\Domains\Portfolio\Services\AssetQueryService;
 use App\Infrastructure\Support\MarketCalendar;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -62,7 +63,7 @@ class DashboardSecuritiesTableWidget extends TableWidget
     {
         return $table
             ->heading(null)
-            ->query(fn (): Builder => Asset::query()->forAuth())
+            ->query(fn (): Builder => app(AssetQueryService::class)->forAuthenticatedUser())
             ->columns([
                 TextColumn::make('isin')->label('ISIN')->searchable()->sortable(),
                 TextColumn::make('name')->label('Nom')->searchable(),

@@ -1,10 +1,11 @@
 <?php
 
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
+use App\Domains\Portfolio\Services\AssetQueryService;
 use App\Domains\Portfolio\Services\PortfolioPerformanceCalculator;
-use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\User\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -37,8 +38,9 @@ it('computes basic return without cash flows', function () {
         'close' => 120,
     ]);
 
-    $securities = Stock::query()
-        ->forWallet(Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']))
+    $wallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $securities = app(AssetQueryService::class)
+        ->forWallet($wallet)
         ->with('latestPrice')
         ->get();
 
@@ -91,8 +93,9 @@ it('computes return with cash flows during period', function () {
         'close' => 120,
     ]);
 
-    $securities = Stock::query()
-        ->forWallet(Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']))
+    $wallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $securities = app(AssetQueryService::class)
+        ->forWallet($wallet)
         ->with('latestPrice')
         ->get();
 
@@ -128,8 +131,9 @@ it('returns null when period predates first transaction', function () {
         'close' => 120,
     ]);
 
-    $securities = Stock::query()
-        ->forWallet(Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']))
+    $wallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $securities = app(AssetQueryService::class)
+        ->forWallet($wallet)
         ->with('latestPrice')
         ->get();
 
@@ -170,8 +174,9 @@ it('uses closest available price when exact start date has no price', function (
         'close' => 120,
     ]);
 
-    $securities = Stock::query()
-        ->forWallet(Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']))
+    $wallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
+    $securities = app(AssetQueryService::class)
+        ->forWallet($wallet)
         ->with('latestPrice')
         ->get();
 
