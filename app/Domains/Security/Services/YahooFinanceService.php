@@ -2,11 +2,11 @@
 
 namespace App\Domains\Security\Services;
 
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Security\Contracts\SecurityPriceRepositoryInterface;
 use App\Domains\Security\Enums\Sector;
 use App\Domains\Security\Events\PriceUpdated;
 use App\Domains\Security\Exceptions\TickerResolutionException;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\Security\Models\SecuritySector;
 use DateTimeInterface;
@@ -47,26 +47,26 @@ class YahooFinanceService
     /**
      * @throws TickerResolutionException
      */
-    public function fetchAndStorePrices(Security $security, ?DateTimeInterface $startDate = null): int
+    public function fetchAndStorePrices(Asset $asset, ?DateTimeInterface $startDate = null): int
     {
-        if ($security->ticker === null) {
-            $security->ticker = $this->resolveTickerFromIsin($security->isin, $security->name);
-            $security->save();
+        if ($asset->ticker === null) {
+            $asset->ticker = $this->resolveTickerFromIsin($asset->isin, $asset->name);
+            $asset->save();
         }
 
         $endDate = new \DateTimeImmutable('now');
 
         if ($startDate === null) {
-            $latestDates = $this->priceRepository->getLatestDateForSecurities([$security->id]);
-            $latestDate = $latestDates->get($security->id);
+            $latestDates = $this->priceRepository->getLatestDateForSecurities([$asset->id]);
+            $latestDate = $latestDates->get($asset->id);
             $latestDateObj = $latestDate ? new \DateTimeImmutable($latestDate) : null;
 
             $earliestTransactionDate = DB::table('transactions')
-                ->where('asset_id', $security->id)
+                ->where('asset_id', $asset->id)
                 ->min('date');
 
-            $earliestPriceDates = $this->priceRepository->getEarliestDateForSecurities([$security->id]);
-            $earliestPriceDate = $earliestPriceDates->get($security->id);
+            $earliestPriceDates = $this->priceRepository->getEarliestDateForSecurities([$asset->id]);
+            $earliestPriceDate = $earliestPriceDates->get($asset->id);
 
             if ($latestDateObj !== null && $earliestTransactionDate !== null && $earliestTransactionDate < $earliestPriceDate) {
                 $startDate = new \DateTimeImmutable($earliestTransactionDate);
@@ -84,7 +84,7 @@ class YahooFinanceService
         }
 
         $historicalData = $this->client->fetchPrices(
-            $security->ticker,
+            $asset->ticker,
             $startDate->format('Y-m-d'),
             $endDate->modify('+1 day')->format('Y-m-d'),
         );
@@ -94,7 +94,7 @@ class YahooFinanceService
         }
 
         $rows = array_map(fn (array $data) => [
-            'asset_id' => $security->id,
+            'asset_id' => $asset->id,
             'date' => $data['date'],
             'open' => $data['open'],
             'high' => $data['high'],
@@ -113,7 +113,7 @@ class YahooFinanceService
             $price = $this->priceRepository->findBySecurityAndDate($row['asset_id'], $row['date']);
 
             if ($price) {
-                PriceUpdated::dispatch($price, $security);
+                PriceUpdated::dispatch($price, $asset);
             }
         }
 
@@ -121,7 +121,7 @@ class YahooFinanceService
     }
 
     /**
-     * @param  Collection<int, Security>  $securities
+     * @param  Collection<int, Asset>  $securities
      */
     public function fetchAndStorePricesBulk(Collection $securities, bool $force = false): int
     {
@@ -145,7 +145,7 @@ class YahooFinanceService
 
         $earliestPriceDates = $this->priceRepository->getEarliestDateForSecurities($securityIds);
 
-        /** @var array<int, array{security: Security, startDate: string}> */
+        /** @var array<int, array{security: Asset, startDate: string}> */
         $tasks = [];
 
         foreach ($securities as $security) {
@@ -243,14 +243,14 @@ class YahooFinanceService
     /**
      * @throws TickerResolutionException
      */
-    public function fetchAndStoreSectors(Security $security): int
+    public function fetchAndStoreSectors(Asset $asset): int
     {
-        if ($security->ticker === null) {
-            $security->ticker = $this->resolveTickerFromIsin($security->isin, $security->name);
-            $security->save();
+        if ($asset->ticker === null) {
+            $asset->ticker = $this->resolveTickerFromIsin($asset->isin, $asset->name);
+            $asset->save();
         }
 
-        $sectorsData = $this->client->fetchSectors($security->ticker);
+        $sectorsData = $this->client->fetchSectors($asset->ticker);
 
         if ($sectorsData === []) {
             return 0;
@@ -263,7 +263,7 @@ class YahooFinanceService
             $sector = in_array($key, $sectorValues) ? $key : Sector::Other->value;
 
             $rows[] = [
-                'asset_id' => $security->id,
+                'asset_id' => $asset->id,
                 'sector' => $sector,
                 'weight' => $weight,
             ];
@@ -276,7 +276,7 @@ class YahooFinanceService
         );
 
         $sectorKeys = array_column($rows, 'sector');
-        $security->sectors()
+        $asset->sectors()
             ->whereNotIn('sector', $sectorKeys)
             ->delete();
 

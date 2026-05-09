@@ -2,14 +2,14 @@
 
 namespace App\Domains\Security\Contracts;
 
-use App\Domains\Security\Models\Security;
+use App\Domains\Asset\Models\Asset;
 use Illuminate\Database\Eloquent\Collection;
 
 interface SecurityRepositoryInterface
 {
-    public function findById(int $id): ?Security;
+    public function findById(int $id): ?Asset;
 
-    public function findByIsin(string $isin): ?Security;
+    public function findByIsin(string $isin): ?Asset;
 
     public function all(): Collection;
 
@@ -26,5 +26,5 @@ interface SecurityRepositoryInterface
      */
     public function getIdsForWallet(int $walletId): array;
 
-    public function save(Security $security): void;
+    public function save(Asset $asset): void;
 }

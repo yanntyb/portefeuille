@@ -2,9 +2,9 @@
 
 namespace App\Domains\Security\Commands;
 
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Security\Contracts\SecurityRepositoryInterface;
 use App\Domains\Security\Exceptions\TickerResolutionException;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Services\YahooFinanceService;
 use Illuminate\Console\Command;
 
@@ -36,7 +36,7 @@ class FetchSecurityPricesCommand extends Command
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Collection<int, Security>  $securities
+     * @param  \Illuminate\Database\Eloquent\Collection<int, Asset>  $securities
      */
     private function handleBulk(YahooFinanceService $service, \Illuminate\Database\Eloquent\Collection $securities): int
     {
@@ -51,7 +51,7 @@ class FetchSecurityPricesCommand extends Command
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Collection<int, Security>  $securities
+     * @param  \Illuminate\Database\Eloquent\Collection<int, Asset>  $securities
      */
     private function handleSequential(YahooFinanceService $service, \Illuminate\Database\Eloquent\Collection $securities): int
     {
@@ -82,7 +82,7 @@ class FetchSecurityPricesCommand extends Command
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Collection<int, Security>
+     * @return \Illuminate\Database\Eloquent\Collection<int, Asset>
      */
     private function getSecurities(SecurityRepositoryInterface $securityRepository): \Illuminate\Database\Eloquent\Collection
     {
@@ -91,7 +91,7 @@ class FetchSecurityPricesCommand extends Command
         if ($securityId) {
             $security = $securityRepository->findById($securityId);
 
-            return $security ? Security::query()->whereKey($security->id)->get() : Security::query()->whereRaw('0')->get();
+            return $security ? Asset::query()->whereKey($security->id)->get() : Asset::query()->whereRaw('0')->get();
         }
 
         return $securityRepository->withTransactions();

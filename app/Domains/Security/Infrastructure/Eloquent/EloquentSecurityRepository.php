@@ -2,32 +2,32 @@
 
 namespace App\Domains\Security\Infrastructure\Eloquent;
 
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Security\Contracts\SecurityRepositoryInterface;
-use App\Domains\Security\Models\Security;
 use Illuminate\Database\Eloquent\Collection;
 
 class EloquentSecurityRepository implements SecurityRepositoryInterface
 {
-    public function findById(int $id): ?Security
+    public function findById(int $id): ?Asset
     {
-        return Security::query()->find($id);
+        return Asset::query()->find($id);
     }
 
-    public function findByIsin(string $isin): ?Security
+    public function findByIsin(string $isin): ?Asset
     {
-        return Security::query()
+        return Asset::query()
             ->where('isin', $isin)
             ->first();
     }
 
     public function all(): Collection
     {
-        return Security::query()->get();
+        return Asset::query()->get();
     }
 
     public function search(string $query): Collection
     {
-        return Security::query()
+        return Asset::query()
             ->where('isin', 'like', "%{$query}%")
             ->orWhere('name', 'like', "%{$query}%")
             ->get();
@@ -35,14 +35,14 @@ class EloquentSecurityRepository implements SecurityRepositoryInterface
 
     public function withTransactions(): Collection
     {
-        return Security::query()
+        return Asset::query()
             ->whereHas('transactions')
             ->get();
     }
 
     public function neededSectorUpdate(): Collection
     {
-        return Security::query()
+        return Asset::query()
             ->whereHas('transactions')
             ->where(function ($query): void {
                 $query->whereDoesntHave('sectors')
@@ -61,7 +61,7 @@ class EloquentSecurityRepository implements SecurityRepositoryInterface
             return collect();
         }
 
-        return Security::query()
+        return Asset::query()
             ->forWallet($wallet)
             ->with('latestPrice')
             ->get();
@@ -78,14 +78,14 @@ class EloquentSecurityRepository implements SecurityRepositoryInterface
             return [];
         }
 
-        return Security::query()
+        return Asset::query()
             ->forWallet($wallet)
             ->pluck('securities.id')
             ->all();
     }
 
-    public function save(Security $security): void
+    public function save(Asset $asset): void
     {
-        $security->save();
+        $asset->save();
     }
 }

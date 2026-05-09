@@ -2,8 +2,8 @@
 
 namespace App\Domains\Security\Jobs;
 
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Security\Exceptions\TickerResolutionException;
-use App\Domains\Security\Models\Security;
 use App\Domains\Security\Services\YahooFinanceService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -30,7 +30,7 @@ class UpdateSecurityJob implements ShouldQueue
         $cacheKey = self::cacheKeyFor($this->securityId);
 
         try {
-            $security = Security::findOrFail($this->securityId);
+            $security = Asset::findOrFail($this->securityId);
             $security->update(['ticker' => $this->ticker, 'name' => $this->name]);
 
             $security->prices()->delete();

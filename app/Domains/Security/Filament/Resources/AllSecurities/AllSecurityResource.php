@@ -2,12 +2,12 @@
 
 namespace App\Domains\Security\Filament\Resources\AllSecurities;
 
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Security\Filament\Resources\AllSecurities\Pages\CreateAllSecurity;
 use App\Domains\Security\Filament\Resources\AllSecurities\Pages\EditAllSecurity;
 use App\Domains\Security\Filament\Resources\AllSecurities\Pages\ListAllSecurities;
 use App\Domains\Security\Filament\Resources\SecurityBase\RelationManagers\PricesRelationManager;
 use App\Domains\Security\Filament\Resources\SecurityBase\Schemas\SecurityForm;
-use App\Domains\Security\Models\Security;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -19,7 +19,7 @@ use UnitEnum;
 
 class AllSecurityResource extends Resource
 {
-    protected static ?string $model = Security::class;
+    protected static ?string $model = Asset::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBookOpen;
 

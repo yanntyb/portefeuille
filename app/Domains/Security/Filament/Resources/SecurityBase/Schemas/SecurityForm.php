@@ -2,8 +2,8 @@
 
 namespace App\Domains\Security\Filament\Resources\SecurityBase\Schemas;
 
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Security\Jobs\UpdateSecurityJob;
-use App\Domains\Security\Models\Security;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
@@ -66,7 +66,7 @@ class SecurityForm
             ->action(function (array $data, EditRecord $livewire): void {
                 [$symbol, $name] = explode('|', $data['selected_result'], 2);
 
-                /** @var Security $security */
+                /** @var Asset $security */
                 $security = $livewire->getRecord();
 
                 $state = $livewire->data;
@@ -95,7 +95,7 @@ class SecurityForm
             ->color('gray')
             ->iconButton()
             ->schema(self::searchSchema())
-            ->mountUsing(function (Action $action, Schema $schema, Security $record): void {
+            ->mountUsing(function (Action $action, Schema $schema, Asset $record): void {
                 if (empty($record->isin)) {
                     Notification::make()
                         ->title('ISIN manquant')
@@ -109,7 +109,7 @@ class SecurityForm
 
                 self::mountSearchAction($action, $schema, $record->isin, $record->ticker);
             })
-            ->action(function (array $data, Security $record): void {
+            ->action(function (array $data, Asset $record): void {
                 [$symbol, $name] = explode('|', $data['selected_result'], 2);
 
                 $cacheKey = UpdateSecurityJob::cacheKeyFor($record->id);
