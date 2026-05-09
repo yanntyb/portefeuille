@@ -3,43 +3,66 @@
 namespace App\Domains\Asset\Infrastructure\Adapters;
 
 use App\Domains\Asset\Enums\AssetType;
-use App\Domains\Asset\Models\AssetPrice;
+use App\Domains\Asset\Models\Asset;
 use App\Domains\Asset\Ports\AssetPriceProviderPort;
+use App\Infrastructure\Support\PythonScriptCaller;
 use Illuminate\Support\Collection;
 
 class YahooFinanceAdapter implements AssetPriceProviderPort
 {
     public function getCurrentPrice(int $assetId): ?float
     {
-        return AssetPrice::query()
-            ->where('asset_id', $assetId)
-            ->orderByDesc('date')
-            ->value('close');
+        $asset = Asset::query()->find($assetId);
+
+        if (! $asset || ! $asset->ticker) {
+            return null;
+        }
+
+        try {
+            $result = PythonScriptCaller::call('fetch_prices.py', [
+                'ticker' => $asset->ticker,
+                'start_date' => now()->subYear()->format('Y-m-d'),
+                'end_date' => now()->format('Y-m-d'),
+            ]);
+
+            if ($result['status'] !== 'ok' || empty($result['data'])) {
+                return null;
+            }
+
+            $prices = $result['data'];
+
+            return end($prices)['close'] ?? null;
+        } catch (\Exception) {
+            return null;
+        }
     }
 
     public function getPriceHistory(int $assetId, ?string $startDate = null, ?string $endDate = null): Collection
     {
-        $query = AssetPrice::query()
-            ->where('asset_id', $assetId)
-            ->orderBy('date');
+        $asset = Asset::query()->find($assetId);
 
-        if ($startDate !== null) {
-            $query->where('date', '>=', $startDate);
+        if (! $asset || ! $asset->ticker) {
+            return collect();
         }
 
-        if ($endDate !== null) {
-            $query->where('date', '<=', $endDate);
-        }
+        $startDate ??= now()->subYear()->format('Y-m-d');
+        $endDate ??= now()->format('Y-m-d');
 
-        return $query->get(['date', 'open', 'high', 'low', 'close', 'volume'])
-            ->map(fn ($price) => [
-                'date' => $price->date,
-                'open' => (float) $price->open,
-                'high' => (float) $price->high,
-                'low' => (float) $price->low,
-                'close' => (float) $price->close,
-                'volume' => (int) $price->volume,
+        try {
+            $result = PythonScriptCaller::call('fetch_prices.py', [
+                'ticker' => $asset->ticker,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
             ]);
+
+            if ($result['status'] !== 'ok') {
+                return collect();
+            }
+
+            return collect($result['data'] ?? []);
+        } catch (\Exception) {
+            return collect();
+        }
     }
 
     public function supports(AssetType $type): bool
