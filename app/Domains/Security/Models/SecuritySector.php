@@ -9,11 +9,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property-read int $id
- * @property-read int $security_id
+ * @property-read int $asset_id
  * @property-read Sector $sector
  * @property-read string $weight
  * @property-read \Illuminate\Support\Carbon $created_at
  * @property-read \Illuminate\Support\Carbon $updated_at
+ *
+ * @deprecated Use App\Domains\Asset\Models\AssetSector instead.
  */
 class SecuritySector extends Model
 {
@@ -22,7 +24,7 @@ class SecuritySector extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'security_id',
+        'asset_id',
         'sector',
         'weight',
     ];
@@ -38,6 +40,6 @@ class SecuritySector extends Model
 
     public function security(): BelongsTo
     {
-        return $this->belongsTo(Security::class);
+        return $this->belongsTo(Security::class, 'asset_id');
     }
 }

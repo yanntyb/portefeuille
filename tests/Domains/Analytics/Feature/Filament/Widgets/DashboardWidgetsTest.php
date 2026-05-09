@@ -47,14 +47,14 @@ it('aggregates sector data from all accounts', function () {
 
     // ETF PEA: valuation = 10 * 100 = 1000
     SecuritySector::factory()->create([
-        'security_id' => $securityPea->id,
+        'asset_id' => $securityPea->id,
         'sector' => Sector::Technology,
         'weight' => 0.6,
     ]);
 
     // ETF CTO: valuation = 5 * 200 = 1000
     SecuritySector::factory()->create([
-        'security_id' => $securityCto->id,
+        'asset_id' => $securityCto->id,
         'sector' => Sector::Healthcare,
         'weight' => 0.5,
     ]);

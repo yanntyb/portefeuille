@@ -18,7 +18,7 @@ class SecuritySectorFactory extends Factory
     public function definition(): array
     {
         return [
-            'security_id' => Security::factory(),
+            'asset_id' => Security::factory(),
             'sector' => fake()->randomElement(Sector::cases()),
             'weight' => fake()->randomFloat(6, 0.01, 0.5),
         ];

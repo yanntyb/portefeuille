@@ -47,20 +47,20 @@ it('aggregates sector data weighted by valuation for account list', function () 
 
     // ETF World: valuation = 10 * 100 = 1000
     SecuritySector::factory()->create([
-        'security_id' => $securityA->id,
+        'asset_id' => $securityA->id,
         'sector' => Sector::Technology,
         'weight' => 0.3,
     ]);
 
     SecuritySector::factory()->create([
-        'security_id' => $securityA->id,
+        'asset_id' => $securityA->id,
         'sector' => Sector::Healthcare,
         'weight' => 0.2,
     ]);
 
     // ETF Tech: valuation = 5 * 200 = 1000
     SecuritySector::factory()->create([
-        'security_id' => $securityB->id,
+        'asset_id' => $securityB->id,
         'sector' => Sector::Technology,
         'weight' => 0.8,
     ]);
@@ -99,13 +99,13 @@ it('shows sector weights as percentages for a single security', function () {
     $security = Security::factory()->create();
 
     SecuritySector::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'sector' => Sector::Technology,
         'weight' => 0.6,
     ]);
 
     SecuritySector::factory()->create([
-        'security_id' => $security->id,
+        'asset_id' => $security->id,
         'sector' => Sector::Healthcare,
         'weight' => 0.4,
     ]);

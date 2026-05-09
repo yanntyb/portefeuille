@@ -148,7 +148,7 @@ class TransactionSeeder extends Seeder
 
         foreach ($allocations as $sector => $weight) {
             $rows[] = [
-                'security_id' => $security->id,
+                'asset_id' => $security->id,
                 'sector' => $sector,
                 'weight' => $weight,
                 'created_at' => now(),

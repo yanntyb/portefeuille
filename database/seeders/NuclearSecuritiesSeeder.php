@@ -98,7 +98,7 @@ class NuclearSecuritiesSeeder extends Seeder
         $rows = [];
         foreach ($sectors as $sector => $weight) {
             $rows[] = [
-                'security_id' => $security->id,
+                'asset_id' => $security->id,
                 'sector' => $sector,
                 'weight' => $weight,
                 'created_at' => now(),

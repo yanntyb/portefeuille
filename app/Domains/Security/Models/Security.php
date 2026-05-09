@@ -45,7 +45,7 @@ class Security extends Model
 
     public function sectors(): HasMany
     {
-        return $this->hasMany(SecuritySector::class);
+        return $this->hasMany(SecuritySector::class, 'asset_id');
     }
 
     public function latestPrice(): HasOne

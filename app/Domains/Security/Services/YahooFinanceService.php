@@ -263,7 +263,7 @@ class YahooFinanceService
             $sector = in_array($key, $sectorValues) ? $key : Sector::Other->value;
 
             $rows[] = [
-                'security_id' => $security->id,
+                'asset_id' => $security->id,
                 'sector' => $sector,
                 'weight' => $weight,
             ];
@@ -271,7 +271,7 @@ class YahooFinanceService
 
         SecuritySector::upsert(
             $rows,
-            ['security_id', 'sector'],
+            ['asset_id', 'sector'],
             ['weight'],
         );
 
