@@ -13,8 +13,8 @@ class UpdateHoldingsProjectionListener
     {
         $transaction = $event->transaction;
 
-        // Skip if no asset_id (e.g., cash accounts)
-        if ($transaction->asset_id === null) {
+        // Skip if no user_id or asset_id
+        if ($transaction->user_id === null || $transaction->asset_id === null) {
             return;
         }
 
