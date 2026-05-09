@@ -7,24 +7,29 @@ use App\Domains\Asset\Contracts\AssetRepositoryInterface;
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Infrastructure\Adapters\YahooFinanceAdapter;
 use App\Domains\Asset\Models\Asset;
-use App\Domains\Asset\Models\AssetPrice;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 readonly class PriceSyncService
 {
+    private const DEFAULT_HISTORY_YEARS = 5;
+
     public function __construct(
         private AssetRepositoryInterface $assetRepository,
         private AssetPriceRepositoryInterface $priceRepository,
         private YahooFinanceAdapter $yahooAdapter,
+        private PriceDataTransformer $transformer,
+        private PricePersister $persister,
     ) {}
 
     /** @return array{synced: int, errors: int, error_details: array<int, string>} */
     public function syncAllStockAndEtfPrices(): array
     {
-        $assets = Asset::query()
-            ->whereIn('type', [AssetType::Stock->value, AssetType::ETF->value])
-            ->get();
+        $assets = collect([
+            $this->assetRepository->findByType(AssetType::Stock),
+            $this->assetRepository->findByType(AssetType::ETF),
+        ])->flatten();
 
         return $this->syncAssets($assets);
     }
@@ -32,9 +37,7 @@ readonly class PriceSyncService
     /** @return array{synced: int, errors: int, error_details: array<int, string>} */
     public function syncAssetsOfType(AssetType $type): array
     {
-        $assets = Asset::query()
-            ->where('type', $type->value)
-            ->get();
+        $assets = $this->assetRepository->findByType($type);
 
         return $this->syncAssets($assets);
     }
@@ -49,22 +52,17 @@ readonly class PriceSyncService
         $errors = 0;
         $errorDetails = [];
 
-        foreach ($assets as $asset) {
-            if (! $this->yahooAdapter->supports($asset->type)) {
-                continue;
-            }
+        $supportedAssets = $assets->filter(fn ($a) => $this->yahooAdapter->supports($a->type));
 
+        foreach ($supportedAssets as $asset) {
             try {
                 $this->syncAssetPrices($asset);
                 $synced++;
+                Log::info(sprintf('Synced prices for asset %d (%s)', $asset->id, $asset->name));
             } catch (\Exception $e) {
                 $errors++;
-                $errorDetails[$asset->id] = sprintf(
-                    '%s (ID: %d): %s',
-                    $asset->name,
-                    $asset->id,
-                    $e->getMessage()
-                );
+                $errorDetails[$asset->id] = sprintf('%s (ID: %d): %s', $asset->name, $asset->id, $e->getMessage());
+                Log::warning(sprintf('Failed to sync asset %d: %s', $asset->id, $e->getMessage()));
             }
         }
 
@@ -77,8 +75,10 @@ readonly class PriceSyncService
 
     private function syncAssetPrices(Asset $asset): void
     {
-        $latestDate = $this->priceRepository->getLatestDateForAssets([$asset->id])[$asset->id] ?? null;
-        $startDate = $latestDate ? Carbon::parse($latestDate)->addDay() : now()->subYears(5);
+        $latestDate = $this->priceRepository->findLatestForAsset($asset->id)?->date->toDateString();
+        $startDate = $latestDate
+            ? Carbon::parse($latestDate)->addDay()
+            : now()->subYears(self::DEFAULT_HISTORY_YEARS);
 
         $priceHistory = $this->yahooAdapter->getPriceHistory(
             $asset->id,
@@ -90,20 +90,7 @@ readonly class PriceSyncService
             return;
         }
 
-        $prices = $priceHistory->map(fn (array $priceData) => [
-            'asset_id' => $asset->id,
-            'date' => $priceData['date'],
-            'open' => $priceData['open'] ?? $priceData['close'],
-            'high' => $priceData['high'] ?? $priceData['close'],
-            'low' => $priceData['low'] ?? $priceData['close'],
-            'close' => $priceData['close'],
-            'volume' => $priceData['volume'] ?? 0,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ])->toArray();
-
-        foreach (array_chunk($prices, 100) as $chunk) {
-            AssetPrice::insertOrIgnore($chunk);
-        }
+        $prices = $this->transformer->transform($asset->id, $priceHistory);
+        $this->persister->persist($prices);
     }
 }
