@@ -5,7 +5,6 @@ namespace App\Domains\Asset\Infrastructure\Eloquent;
 use App\Domains\Asset\Contracts\AssetRepositoryInterface;
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Models\Asset;
-use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Wallet;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -13,7 +12,7 @@ class EloquentAssetRepository implements AssetRepositoryInterface
 {
     public function findById(int $id): ?Asset
     {
-        return Stock::query()->find($id);
+        return Asset::query()->find($id);
     }
 
     public function forWallet(int $walletId): Collection
@@ -24,7 +23,7 @@ class EloquentAssetRepository implements AssetRepositoryInterface
             return collect();
         }
 
-        return Stock::query()
+        return Asset::query()
             ->forWallet($wallet)
             ->with('latestPrice')
             ->get();
@@ -38,7 +37,7 @@ class EloquentAssetRepository implements AssetRepositoryInterface
             return [];
         }
 
-        return Stock::query()
+        return Asset::query()
             ->forWallet($wallet)
             ->pluck('securities.id')
             ->all();
@@ -46,7 +45,7 @@ class EloquentAssetRepository implements AssetRepositoryInterface
 
     public function findByType(AssetType $type): Collection
     {
-        return Stock::query()
+        return Asset::query()
             ->where('type', $type)
             ->get();
     }

@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\DB;
  * @property-read \Illuminate\Support\Carbon $created_at
  * @property-read \Illuminate\Support\Carbon $updated_at
  */
-abstract class Asset extends Model
+class Asset extends Model
 {
     /** @use HasFactory<\Database\Factories\Domains\Asset\Models\AssetFactory> */
     use HasFactory;
@@ -32,6 +32,8 @@ abstract class Asset extends Model
     protected $fillable = [
         'name',
         'type',
+        'isin',
+        'ticker',
     ];
 
     /** @return array<string, string> */
@@ -40,6 +42,34 @@ abstract class Asset extends Model
         return [
             'type' => AssetType::class,
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    public function newFromBuilder($attributes = [], $connection = null): static
+    {
+        $type = $attributes->type ?? $attributes['type'] ?? AssetType::Stock->value;
+
+        $class = match ($type) {
+            AssetType::Stock->value => \App\Domains\Asset\Models\Stock::class,
+            AssetType::ETF->value => \App\Domains\Asset\Models\ETF::class,
+            AssetType::Crypto->value => \App\Domains\Asset\Models\Crypto::class,
+            AssetType::RealEstate->value => \App\Domains\Asset\Models\RealEstate::class,
+            AssetType::Bond->value => \App\Domains\Asset\Models\Bond::class,
+            AssetType::Savings->value => \App\Domains\Asset\Models\Savings::class,
+            default => static::class,
+        };
+
+        if ($class === static::class) {
+            return parent::newFromBuilder($attributes, $connection);
+        }
+
+        /** @var static $instance */
+        $instance = new $class;
+        $instance->setConnection($connection ?? $this->getConnectionName());
+
+        return $instance->newFromBuilder($attributes, $connection);
     }
 
     public function transactions(): HasMany
