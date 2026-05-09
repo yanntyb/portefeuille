@@ -94,9 +94,7 @@ readonly class PriceSyncService
 
         $priceDataCollection = $this->transformer->transform($priceHistory);
         $assetPrices = $priceDataCollection
-            ->map(fn (PriceData $priceData) => AssetPriceData::fromPriceData($asset->id, $priceData)->toArray())
-            ->values()
-            ->toArray();
+            ->map(fn (PriceData $priceData) => AssetPriceData::fromPriceData($asset->id, $priceData));
 
         $this->persister->persist($assetPrices);
     }

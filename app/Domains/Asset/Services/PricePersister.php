@@ -3,6 +3,8 @@
 namespace App\Domains\Asset\Services;
 
 use App\Domains\Asset\Models\AssetPrice;
+use App\Domains\Asset\ValueObjects\AssetPriceData;
+use Illuminate\Support\Collection;
 
 readonly class PricePersister
 {
@@ -11,12 +13,15 @@ readonly class PricePersister
     /**
      * Persist price data in batches, ignoring duplicates.
      *
-     * @param  array<int, array{asset_id: int, date: string, open: string, high: string, low: string, close: string, volume: int, created_at: string, updated_at: string}>  $prices
+     * @param  Collection<int, AssetPriceData>|array<int, AssetPriceData>  $prices
      */
-    public function persist(array $prices): void
+    public function persist(Collection|array $prices): void
     {
-        foreach (array_chunk($prices, self::BATCH_SIZE) as $chunk) {
-            AssetPrice::insertOrIgnore($chunk);
-        }
+        $collection = $prices instanceof Collection ? $prices : collect($prices);
+
+        $collection
+            ->map(fn (AssetPriceData $priceData) => $priceData->toArray())
+            ->chunk(self::BATCH_SIZE)
+            ->each(fn (Collection $chunk) => AssetPrice::insertOrIgnore($chunk->toArray()));
     }
 }
