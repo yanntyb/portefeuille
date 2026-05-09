@@ -45,7 +45,7 @@ class Asset extends Model
     }
 
     /**
-     * @param  array<string, mixed>  $attributes
+     * @param  object|array<string, mixed>  $attributes
      */
     public function newFromBuilder($attributes = [], $connection = null): static
     {

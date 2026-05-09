@@ -3,11 +3,9 @@
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Models\Asset;
 use App\Domains\Asset\Models\ETF;
-use App\Domains\Security\Models\Security;
 
 it('ETF has correct asset type', function () {
-    $security = Security::factory()->create(['type' => AssetType::ETF->value]);
-    $etf = ETF::find($security->id);
+    $etf = ETF::factory()->create();
     expect($etf->type)->toBe(AssetType::ETF);
 });
 

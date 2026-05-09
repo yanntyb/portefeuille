@@ -26,6 +26,6 @@ class Stock extends Asset
 
     public function sectors(): HasMany
     {
-        return $this->hasMany(SecuritySector::class);
+        return $this->hasMany(SecuritySector::class, 'security_id');
     }
 }
