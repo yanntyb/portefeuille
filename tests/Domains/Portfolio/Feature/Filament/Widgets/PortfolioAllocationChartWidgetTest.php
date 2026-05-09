@@ -4,7 +4,7 @@ use App\Domains\Analytics\Filament\Widgets\Dashboard\PortfolioAllocationChartWid
 use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
@@ -28,13 +28,13 @@ it('returns labels matching account types and correct valuations', function () {
         'unit_price' => 200,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityPea->id,
         'date' => now(),
         'close' => 120,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityCto->id,
         'date' => now(),
         'close' => 250,

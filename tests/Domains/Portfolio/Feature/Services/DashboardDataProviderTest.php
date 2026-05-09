@@ -4,14 +4,14 @@ use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Portfolio\Services\DashboardDataProvider;
-use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Asset\Models\AssetPrice;
 
 it('returns securities with latest price for a given wallet', function () {
     $peaWallet = Wallet::factory()->pea()->create();
     $security = Stock::factory()->create();
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $security->id]);
 
-    SecurityPrice::factory()->create(['asset_id' => $security->id, 'date' => today(), 'close' => 150]);
+    AssetPrice::factory()->create(['asset_id' => $security->id, 'date' => today(), 'close' => 150]);
 
     $provider = app(DashboardDataProvider::class);
     $securities = $provider->securitiesForWallet($peaWallet);
@@ -27,7 +27,7 @@ it('caches results within the same instance', function () {
     $security = Stock::factory()->create();
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $security->id]);
 
-    SecurityPrice::factory()->create(['asset_id' => $security->id, 'date' => today(), 'close' => 100]);
+    AssetPrice::factory()->create(['asset_id' => $security->id, 'date' => today(), 'close' => 100]);
 
     $provider = app(DashboardDataProvider::class);
 

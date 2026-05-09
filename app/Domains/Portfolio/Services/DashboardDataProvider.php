@@ -2,14 +2,14 @@
 
 namespace App\Domains\Portfolio\Services;
 
+use App\Domains\Asset\Contracts\AssetRepositoryInterface;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Contracts\SecurityRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 
 class DashboardDataProvider
 {
     public function __construct(
-        private SecurityRepositoryInterface $securityRepository,
+        private AssetRepositoryInterface $assetRepository,
     ) {}
 
     /**
@@ -31,13 +31,13 @@ class DashboardDataProvider
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Domains\Security\Models\Security>
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Domains\Asset\Models\Asset>
      */
     public function securitiesForWallet(Wallet $wallet): Collection
     {
         $key = (string) $wallet->id;
 
-        return $this->securitiesByWallet[$key] ??= $this->securityRepository->forWallet($wallet->id);
+        return $this->securitiesByWallet[$key] ??= $this->assetRepository->forWallet($wallet->id);
     }
 
     /**

@@ -4,7 +4,7 @@ use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardGainStatsOverview;
 use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
@@ -28,7 +28,7 @@ it('calculates unrealized gains from buy transaction', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
     $security = Stock::factory()->create();
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'close' => 150,
         'date' => now(),
@@ -59,7 +59,7 @@ it('calculates realized gains from sell transaction', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
     $security = Stock::factory()->create();
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'close' => 150,
         'date' => now(),
@@ -101,7 +101,7 @@ it('includes fees in calculations', function () {
     $wallet = Wallet::factory()->create(['user_id' => $user->id]);
     $security = Stock::factory()->create();
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'close' => 100,
         'date' => now(),

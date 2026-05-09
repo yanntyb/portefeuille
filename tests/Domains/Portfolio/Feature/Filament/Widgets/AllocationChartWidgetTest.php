@@ -5,7 +5,7 @@ use App\Domains\Portfolio\Filament\Pages\WalletPage;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Filament\Widgets\AllocationChartWidget;
-use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
@@ -29,13 +29,13 @@ it('returns labels and percentages per security', function () {
         'unit_price' => 200,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityA->id,
         'date' => now(),
         'close' => 120,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityB->id,
         'date' => now(),
         'close' => 250,

@@ -5,7 +5,7 @@ namespace Tests\Feature\Domains\Portfolio\Services;
 use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Portfolio\Services\PortfolioPerformanceService;
-use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\User\Models\User;
 use App\Infrastructure\Support\MarketCalendar;
 use Tests\TestCase;
@@ -42,7 +42,7 @@ class PortfolioPerformanceServiceTest extends TestCase
         $lastTradingDate = MarketCalendar::lastTradingDate();
         foreach ($securities as $security) {
 
-            SecurityPrice::factory()
+            AssetPrice::factory()
                 ->for($security)
                 ->create(['date' => $lastTradingDate, 'close' => 100.00]);
         }
@@ -70,7 +70,7 @@ class PortfolioPerformanceServiceTest extends TestCase
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
 
-        SecurityPrice::factory()
+        AssetPrice::factory()
             ->for($pricedSecurity)
             ->create(['date' => $lastTradingDate]);
 
@@ -93,7 +93,7 @@ class PortfolioPerformanceServiceTest extends TestCase
         $lastTradingDate = MarketCalendar::lastTradingDate();
         foreach ($securities as $security) {
 
-            SecurityPrice::factory()
+            AssetPrice::factory()
                 ->for($security)
                 ->create(['date' => $lastTradingDate, 'close' => 100.00]);
         }
@@ -131,7 +131,7 @@ class PortfolioPerformanceServiceTest extends TestCase
         $lastTradingDate = MarketCalendar::lastTradingDate();
         foreach ($securities as $security) {
 
-            SecurityPrice::factory()
+            AssetPrice::factory()
                 ->for($security)
                 ->create(['date' => $lastTradingDate, 'close' => 100.00]);
         }
@@ -153,11 +153,11 @@ class PortfolioPerformanceServiceTest extends TestCase
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
 
-        SecurityPrice::factory()
+        AssetPrice::factory()
             ->for($security1)
             ->create(['date' => $lastTradingDate, 'close' => 100.00]);
 
-        SecurityPrice::factory()
+        AssetPrice::factory()
             ->for($security2)
             ->create(['date' => $lastTradingDate, 'close' => 100.00]);
 
@@ -192,7 +192,7 @@ class PortfolioPerformanceServiceTest extends TestCase
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
 
-        SecurityPrice::factory()
+        AssetPrice::factory()
             ->for($security)
             ->create(['date' => $lastTradingDate, 'close' => 150.00]);
 
@@ -239,7 +239,7 @@ class PortfolioPerformanceServiceTest extends TestCase
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
 
-        SecurityPrice::factory()
+        AssetPrice::factory()
             ->for($security)
             ->create(['date' => $lastTradingDate, 'close' => 100.00]);
 
@@ -257,7 +257,7 @@ class PortfolioPerformanceServiceTest extends TestCase
 
         $lastTradingDate = MarketCalendar::lastTradingDate();
 
-        SecurityPrice::factory()
+        AssetPrice::factory()
             ->for($security)
             ->create(['date' => $lastTradingDate, 'close' => 100.00]);
 

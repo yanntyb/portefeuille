@@ -3,7 +3,7 @@
 use App\Domains\Analytics\Services\VolatilityCalculator;
 use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Asset\Models\AssetPrice;
 
 describe('VolatilityCalculator', function () {
     it('returns null if less than 30 prices', function () {
@@ -39,7 +39,7 @@ describe('VolatilityCalculator', function () {
 
         for ($i = 0; $i < 30; $i++) {
 
-            SecurityPrice::factory()
+            AssetPrice::factory()
                 ->for($security)
                 ->create(['close' => 100.0 + $i]);
         }
@@ -66,7 +66,7 @@ describe('VolatilityCalculator', function () {
         $security = Stock::factory()->create();
         for ($i = 0; $i < 30; $i++) {
 
-            SecurityPrice::factory()
+            AssetPrice::factory()
                 ->for($security)
                 ->create(['close' => 100.0 + $i]);
         }
@@ -91,9 +91,9 @@ describe('VolatilityCalculator', function () {
 
         for ($i = 0; $i < 30; $i++) {
 
-            SecurityPrice::factory()->for($security1)->create(['close' => 100.0 + $i]);
+            AssetPrice::factory()->for($security1)->create(['close' => 100.0 + $i]);
 
-            SecurityPrice::factory()->for($security2)->create(['close' => 200.0 + $i]);
+            AssetPrice::factory()->for($security2)->create(['close' => 200.0 + $i]);
         }
 
         \App\Domains\Portfolio\Models\Transaction::factory()

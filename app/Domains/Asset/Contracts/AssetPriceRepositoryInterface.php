@@ -34,4 +34,10 @@ interface AssetPriceRepositoryInterface
      * @return Collection<int, AssetPrice>
      */
     public function getForAssets(array $assetIds, Carbon $since): Collection;
+
+    /**
+     * @param  array<int>  $assetIds
+     * @return array<int>
+     */
+    public function getAssetIdsWithRecentPrice(array $assetIds, string $sinceDate): array;
 }

@@ -5,7 +5,7 @@ use App\Domains\Portfolio\Filament\Pages\WalletPage;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Filament\Widgets\ValuationChartWidget;
-use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
@@ -23,13 +23,13 @@ it('defaults to total mode with aggregated valuation', function () {
         'date' => '2024-01-15',
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2024-01-15',
         'close' => 105,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2024-02-15',
         'close' => 110,
@@ -81,13 +81,13 @@ it('shows stacked areas per security in per_security mode', function () {
         'date' => '2024-01-15',
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityA->id,
         'date' => '2024-01-15',
         'close' => 105,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityB->id,
         'date' => '2024-01-15',
         'close' => 210,
@@ -139,13 +139,13 @@ it('computes cumulative fees from transactions', function () {
         'date' => '2024-02-10',
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2024-01-15',
         'close' => 105,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2024-02-15',
         'close' => 110,
@@ -179,13 +179,13 @@ it('excludes prices before the first transaction date', function () {
         'date' => '2024-06-01',
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2024-01-01',
         'close' => 50,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2024-06-03',
         'close' => 105,
@@ -219,7 +219,7 @@ it('invested reflects mid-week transactions in the same week', function () {
         'date' => '2024-01-10',
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2024-01-12',
         'close' => 105,
@@ -261,13 +261,13 @@ it('extrapolates missing prices using the last known close in total mode', funct
 
     // Both have prices on day 1
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityA->id,
         'date' => '2024-01-15',
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityB->id,
         'date' => '2024-01-15',
         'close' => 200,
@@ -275,7 +275,7 @@ it('extrapolates missing prices using the last known close in total mode', funct
 
     // Only securityA has a price on day 2
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityA->id,
         'date' => '2024-01-16',
         'close' => 110,
@@ -318,13 +318,13 @@ it('extrapolates missing prices using the last known close in per_security mode'
         'date' => '2024-01-10',
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityA->id,
         'date' => '2024-01-15',
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityB->id,
         'date' => '2024-01-15',
         'close' => 200,
@@ -332,7 +332,7 @@ it('extrapolates missing prices using the last known close in per_security mode'
 
     // Only securityA has a price on day 2
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityA->id,
         'date' => '2024-01-16',
         'close' => 110,

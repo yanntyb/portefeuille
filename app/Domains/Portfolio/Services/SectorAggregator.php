@@ -2,9 +2,9 @@
 
 namespace App\Domains\Portfolio\Services;
 
+use App\Domains\Asset\Enums\Sector;
 use App\Domains\Asset\Models\Asset;
-use App\Domains\Security\Enums\Sector;
-use App\Domains\Security\Models\SecuritySector;
+use App\Domains\Asset\Models\AssetSector;
 use App\Infrastructure\Support\ChartColors;
 use Illuminate\Support\Collection;
 
@@ -34,7 +34,7 @@ class SectorAggregator
             $securityNames[$security->id] = $security->name;
 
             foreach ($security->sectors as $sectorRecord) {
-                /** @var SecuritySector $sectorRecord */
+                /** @var AssetSector $sectorRecord */
                 $key = $sectorRecord->sector->value;
                 $amount = $valuation * (float) $sectorRecord->weight;
                 $sectorBySecurity[$key][$security->id] = ($sectorBySecurity[$key][$security->id] ?? 0) + $amount;

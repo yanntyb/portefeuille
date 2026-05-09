@@ -4,7 +4,7 @@ use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Portfolio\Services\SingleSecurityStatsProvider;
-use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\User\Models\User;
 
 it('returns all zeros when no transactions exist', function () {
@@ -131,7 +131,7 @@ it('calculates valuation with latest price', function () {
     app(\App\Infrastructure\Services\UserId::class)->setOverride($user->id);
     $security = Stock::factory()->create();
 
-    SecurityPrice::factory()->create(['asset_id' => $security->id, 'close' => 150, 'date' => now()]);
+    AssetPrice::factory()->create(['asset_id' => $security->id, 'close' => 150, 'date' => now()]);
 
     Transaction::factory()->pea()->create([
         'asset_id' => $security->id,

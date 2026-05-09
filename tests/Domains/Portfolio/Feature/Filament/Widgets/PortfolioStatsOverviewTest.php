@@ -3,7 +3,7 @@
 use App\Domains\Analytics\Filament\Widgets\Dashboard\PortfolioStatsOverview;
 use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
-use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
@@ -21,7 +21,7 @@ it('computes valuation, plus-value, and fees correctly', function () {
         'fees' => 5,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => now(),
         'close' => 120,
@@ -63,13 +63,13 @@ it('aggregates across PEA and CTO accounts', function () {
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityPea->id,
         'date' => now(),
         'close' => 120,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityCto->id,
         'date' => now(),
         'close' => 250,
@@ -93,7 +93,7 @@ it('shows success color when plus-value is positive', function () {
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => now(),
         'close' => 150,
@@ -118,7 +118,7 @@ it('shows danger color when plus-value is negative', function () {
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => now(),
         'close' => 80,
@@ -143,7 +143,7 @@ it('displays plus-value percentage in description', function () {
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => now(),
         'close' => 120,
@@ -170,7 +170,7 @@ it('displays fees percentage in description', function () {
         'fees' => 15,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => now(),
         'close' => 120,

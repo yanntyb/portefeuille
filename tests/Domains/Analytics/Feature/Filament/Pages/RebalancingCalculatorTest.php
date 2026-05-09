@@ -6,7 +6,7 @@ use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\AllocationProfile;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
@@ -173,7 +173,7 @@ it('validates that total percentage equals 100', function () {
     $user = User::factory()->create();
     $security = Stock::factory()->create();
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'close' => 50.0,
     ]);
@@ -198,9 +198,9 @@ it('calculates and displays results', function () {
     $security1 = Stock::factory()->create(['name' => 'NASDAQ ETF']);
     $security2 = Stock::factory()->create(['name' => 'STOXX ETF']);
 
-    SecurityPrice::factory()->create(['asset_id' => $security1->id, 'close' => 50.0]);
+    AssetPrice::factory()->create(['asset_id' => $security1->id, 'close' => 50.0]);
 
-    SecurityPrice::factory()->create(['asset_id' => $security2->id, 'close' => 30.0]);
+    AssetPrice::factory()->create(['asset_id' => $security2->id, 'close' => 30.0]);
 
     $this->actingAs($user);
 
@@ -223,7 +223,7 @@ it('can save and load a profile', function () {
     $user = User::factory()->create();
     $security = Stock::factory()->create();
 
-    SecurityPrice::factory()->create(['asset_id' => $security->id, 'close' => 100.0]);
+    AssetPrice::factory()->create(['asset_id' => $security->id, 'close' => 100.0]);
 
     $this->actingAs($user);
 
@@ -251,7 +251,7 @@ it('considers wallet when calculating quantities', function () {
     $user = User::factory()->create();
     $security = Stock::factory()->create();
 
-    SecurityPrice::factory()->create(['asset_id' => $security->id, 'close' => 100.0]);
+    AssetPrice::factory()->create(['asset_id' => $security->id, 'close' => 100.0]);
 
     $peaWallet = Wallet::factory()->pea()->create(['user_id' => $user->id]);
     $ctoWallet = Wallet::factory()->cto()->create(['user_id' => $user->id]);

@@ -3,7 +3,7 @@
 use App\Domains\Analytics\Filament\Pages\Dashboard;
 use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
-use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\Security\Services\YahooFinanceService;
 use App\Domains\User\Models\User;
 use App\Infrastructure\Support\MarketCalendar;
@@ -21,7 +21,7 @@ it('updates prices when securities have no recent price', function () {
         'asset_id' => $security->id,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => MarketCalendar::lastTradingDate()->subDay(),
         'close' => 100,
@@ -44,7 +44,7 @@ it('skips price update when securities have a price on last trading date', funct
         'asset_id' => $security->id,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => MarketCalendar::lastTradingDate(),
         'close' => 100,
@@ -65,7 +65,7 @@ it('skips price update when all securities have today price', function () {
         'asset_id' => $security->id,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => now(),
         'close' => 100,
@@ -126,7 +126,7 @@ it('does not dispatch event when no update needed', function () {
         'asset_id' => $security->id,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => now(),
         'close' => 100,

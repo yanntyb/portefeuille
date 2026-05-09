@@ -4,7 +4,7 @@ use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Portfolio\Services\PortfolioPerformanceCalculator;
-use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\User\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -25,13 +25,13 @@ it('computes basic return without cash flows', function () {
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2025-01-15',
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 120,
@@ -79,13 +79,13 @@ it('computes return with cash flows during period', function () {
 
     // Prix au début de la période 6m (proche du 2024-12-15)
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2024-12-15',
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 120,
@@ -122,7 +122,7 @@ it('returns null when period predates first transaction', function () {
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 120,
@@ -158,13 +158,13 @@ it('uses closest available price when exact start date has no price', function (
 
     // Pas de prix au 2025-03-15 exactement, mais un prix au 2025-03-10
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2025-03-10',
         'close' => 105,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 120,

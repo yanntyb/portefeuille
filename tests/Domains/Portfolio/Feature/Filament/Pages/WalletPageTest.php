@@ -11,7 +11,7 @@ use App\Domains\Security\Filament\Widgets\PerformanceStatsOverview;
 use App\Domains\Security\Filament\Widgets\SectorAllocationChartWidget;
 use App\Domains\Security\Filament\Widgets\ValuationChartWidget;
 use App\Domains\Security\Filament\Widgets\ValuationStatOverview;
-use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
@@ -124,7 +124,7 @@ it('renders wallet page with all widgets', function () {
     $security = Stock::factory()->create();
     Transaction::factory()->pea()->create(['asset_id' => $security->id]);
 
-    SecurityPrice::factory()->create(['asset_id' => $security->id, 'date' => now()]);
+    AssetPrice::factory()->create(['asset_id' => $security->id, 'date' => now()]);
     $peaWallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
 
     livewire(WalletPage::class, ['walletId' => $peaWallet->id])

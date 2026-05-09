@@ -3,17 +3,17 @@
 namespace App\Domains\Analytics\Services;
 
 use App\Domains\Analytics\Contracts\VolatilityCalculating;
+use App\Domains\Asset\Contracts\AssetPriceRepositoryInterface;
+use App\Domains\Asset\Contracts\AssetRepositoryInterface;
 use App\Domains\Asset\Models\Asset;
-use App\Domains\Security\Contracts\SecurityPriceRepositoryInterface;
-use App\Domains\Security\Contracts\SecurityRepositoryInterface;
-use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Asset\Models\AssetPrice;
 use Illuminate\Support\Collection;
 
 class VolatilityCalculator implements VolatilityCalculating
 {
     public function __construct(
-        private SecurityRepositoryInterface $securityRepository,
-        private SecurityPriceRepositoryInterface $priceRepository,
+        private AssetRepositoryInterface $assetRepository,
+        private AssetPriceRepositoryInterface $priceRepository,
     ) {}
 
     /**
@@ -74,7 +74,7 @@ class VolatilityCalculator implements VolatilityCalculating
 
     public function forWallet(int $walletId, ?array $shownSecurityIds = null): float
     {
-        $records = $this->securityRepository->forWallet($walletId);
+        $records = $this->assetRepository->forWallet($walletId);
 
         $totalValuation = (float) $records->sum(function (Asset $record) {
             $close = $record->latestPrice?->close;

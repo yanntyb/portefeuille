@@ -3,11 +3,11 @@
 namespace App\Domains\Portfolio\Services;
 
 use App\Domains\Analytics\Services\VolatilityCalculator;
+use App\Domains\Asset\Contracts\AssetPriceRepositoryInterface;
+use App\Domains\Asset\Contracts\AssetRepositoryInterface;
 use App\Domains\Asset\Models\Asset;
 use App\Domains\Portfolio\Contracts\TransactionRepositoryInterface;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Contracts\SecurityPriceRepositoryInterface;
-use App\Domains\Security\Contracts\SecurityRepositoryInterface;
 use App\Infrastructure\Support\MarketCalendar;
 use Illuminate\Support\Number;
 
@@ -18,8 +18,8 @@ class PortfolioPerformanceService
 
     public function __construct(
         private VolatilityCalculator $volatilityCalculator,
-        private SecurityRepositoryInterface $securityRepository,
-        private SecurityPriceRepositoryInterface $priceRepository,
+        private AssetRepositoryInterface $assetRepository,
+        private AssetPriceRepositoryInterface $priceRepository,
         private TransactionRepositoryInterface $transactionRepository,
     ) {}
 
@@ -28,7 +28,7 @@ class PortfolioPerformanceService
      */
     private function getSecurities(Wallet $wallet): \Illuminate\Database\Eloquent\Collection
     {
-        return $this->securitiesCache[$wallet->id] ??= $this->securityRepository->forWallet($wallet->id);
+        return $this->securitiesCache[$wallet->id] ??= $this->assetRepository->forWallet($wallet->id);
     }
 
     /**
@@ -37,9 +37,9 @@ class PortfolioPerformanceService
      */
     public function computeSecurityVisibility(Wallet $wallet, array $hiddenSecurityIds): array
     {
-        $allIds = $this->securityRepository->getIdsForWallet($wallet->id);
+        $allIds = $this->assetRepository->getIdsForWallet($wallet->id);
 
-        $idsWithPrice = $this->priceRepository->getSecurityIdsWithRecentPrice(
+        $idsWithPrice = $this->priceRepository->getAssetIdsWithRecentPrice(
             $allIds,
             MarketCalendar::lastTradingDate()->toDateString()
         );

@@ -2,11 +2,11 @@
 
 use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardPerformanceStatsOverview;
 use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardSectorAllocationChartWidget;
+use App\Domains\Asset\Enums\Sector;
+use App\Domains\Asset\Models\AssetPrice;
+use App\Domains\Asset\Models\AssetSector;
 use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
-use App\Domains\Security\Enums\Sector;
-use App\Domains\Security\Models\SecurityPrice;
-use App\Domains\Security\Models\SecuritySector;
 use App\Domains\User\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -33,27 +33,27 @@ it('aggregates sector data from all accounts', function () {
         'unit_price' => 200,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityPea->id,
         'date' => now(),
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityCto->id,
         'date' => now(),
         'close' => 200,
     ]);
 
     // ETF PEA: valuation = 10 * 100 = 1000
-    SecuritySector::factory()->create([
+    AssetSector::factory()->create([
         'asset_id' => $securityPea->id,
         'sector' => Sector::Technology,
         'weight' => 0.6,
     ]);
 
     // ETF CTO: valuation = 5 * 200 = 1000
-    SecuritySector::factory()->create([
+    AssetSector::factory()->create([
         'asset_id' => $securityCto->id,
         'sector' => Sector::Healthcare,
         'weight' => 0.5,
@@ -118,25 +118,25 @@ it('displays performance stats across all accounts', function () {
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityPea->id,
         'date' => '2025-01-15',
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityPea->id,
         'date' => '2025-06-15',
         'close' => 120,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityCto->id,
         'date' => '2025-01-15',
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityCto->id,
         'date' => '2025-06-15',
         'close' => 110,

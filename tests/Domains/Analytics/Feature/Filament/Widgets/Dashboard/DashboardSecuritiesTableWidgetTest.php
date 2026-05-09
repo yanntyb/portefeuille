@@ -4,7 +4,7 @@ use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardSecuritiesTableWid
 use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
@@ -54,7 +54,7 @@ it('flags priceless securities in pricelessSecurityIds', function () {
         'asset_id' => $securityWithoutPrice->id,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $securityWithPrice->id,
         'date' => now()->toDateString(),
     ]);

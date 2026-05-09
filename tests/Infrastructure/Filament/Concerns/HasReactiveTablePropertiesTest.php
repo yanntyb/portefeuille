@@ -1,9 +1,9 @@
 <?php
 
+use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardGainStatsOverview;
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Filament\Widgets\GainStatsOverview;
-use App\Domains\Security\Models\SecurityPrice;
 use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
@@ -12,7 +12,7 @@ it('returns empty collection when tablePageClass is null', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    $widget = livewire(GainStatsOverview::class)->instance();
+    $widget = livewire(DashboardGainStatsOverview::class)->instance();
     $result = invade($widget)->getFilteredSecurities();
 
     expect($result)->toBeEmpty();
@@ -31,12 +31,12 @@ it('returns securities from page table query when tablePageClass is set', functi
         'asset_id' => $security->id,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'close' => 100,
     ]);
 
-    $widget = livewire(GainStatsOverview::class, [
+    $widget = livewire(DashboardGainStatsOverview::class, [
         'tablePageClass' => \App\Domains\Portfolio\Filament\Pages\WalletPage::class,
         'walletId' => $wallet->id,
     ])->instance();
@@ -67,11 +67,11 @@ it('filters by shownSecurityIds when set', function () {
         'asset_id' => $security2->id,
     ]);
 
-    SecurityPrice::factory()->create(['asset_id' => $security1->id]);
+    AssetPrice::factory()->create(['asset_id' => $security1->id]);
 
-    SecurityPrice::factory()->create(['asset_id' => $security2->id]);
+    AssetPrice::factory()->create(['asset_id' => $security2->id]);
 
-    $widget = livewire(GainStatsOverview::class, [
+    $widget = livewire(DashboardGainStatsOverview::class, [
         'tablePageClass' => \App\Domains\Portfolio\Filament\Pages\WalletPage::class,
         'walletId' => $wallet->id,
     ])->instance();
@@ -96,12 +96,12 @@ it('loads latestPrice relationship when withPrice is true', function () {
         'asset_id' => $security->id,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'close' => 100,
     ]);
 
-    $widget = livewire(GainStatsOverview::class, [
+    $widget = livewire(DashboardGainStatsOverview::class, [
         'tablePageClass' => \App\Domains\Portfolio\Filament\Pages\WalletPage::class,
         'walletId' => $wallet->id,
     ])->instance();
@@ -124,12 +124,12 @@ it('calls getFilteredSecurities with withPrice parameter', function () {
         'asset_id' => $security->id,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'close' => 100,
     ]);
 
-    $widget = livewire(GainStatsOverview::class, [
+    $widget = livewire(DashboardGainStatsOverview::class, [
         'tablePageClass' => \App\Domains\Portfolio\Filament\Pages\WalletPage::class,
         'walletId' => $wallet->id,
     ])->instance();

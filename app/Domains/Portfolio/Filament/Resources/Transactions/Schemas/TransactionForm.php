@@ -2,11 +2,11 @@
 
 namespace App\Domains\Portfolio\Filament\Resources\Transactions\Schemas;
 
+use App\Domains\Asset\Models\Asset;
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\Portfolio\Enums\TransactionType;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Security\Models\Security;
-use App\Domains\Security\Models\SecurityPrice;
 use Closure;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
@@ -23,15 +23,15 @@ class TransactionForm
 {
     private static function fillUnitPrice(Get $get, Set $set): void
     {
-        $securityId = $get('asset_id');
+        $assetId = $get('asset_id');
         $date = $get('date');
 
-        if (! $securityId || ! $date) {
+        if (! $assetId || ! $date) {
             return;
         }
 
-        $price = SecurityPrice::query()
-            ->where('asset_id', $securityId)
+        $price = AssetPrice::query()
+            ->where('asset_id', $assetId)
             ->where('date', '<=', $date)
             ->orderByDesc('date')
             ->value('close');
@@ -53,7 +53,7 @@ class TransactionForm
         $set('wallet_type', $name ? strtolower($name) : null);
     }
 
-    public static function configure(Schema $schema, ?int $walletId = null, ?int $securityId = null): Schema
+    public static function configure(Schema $schema, ?int $walletId = null, ?int $assetId = null): Schema
     {
         return $schema
             ->components([
@@ -87,13 +87,13 @@ class TransactionForm
 
                 Select::make('asset_id')
                     ->label('Titre')
-                    ->options(fn (): array => Security::query()
+                    ->options(fn (): array => Asset::query()
                         ->orderBy('isin')
                         ->get()
-                        ->mapWithKeys(fn (Security $security): array => [
-                            $security->id => $security->name
-                                ? "{$security->isin} — {$security->name}"
-                                : $security->isin,
+                        ->mapWithKeys(fn (Asset $asset): array => [
+                            $asset->id => $asset->name
+                                ? "{$asset->isin} — {$asset->name}"
+                                : $asset->isin,
                         ])
                         ->all())
                     ->searchable()
@@ -112,14 +112,14 @@ class TransactionForm
                         TextInput::make('ticker')
                             ->label('Ticker'),
                     ])
-                    ->createOptionUsing(fn (array $data): int => Security::create($data)->id)
-                    ->afterStateHydrated(function (Get $get, Set $set) use ($securityId): void {
-                        if ($securityId !== null) {
+                    ->createOptionUsing(fn (array $data): int => Asset::create($data)->id)
+                    ->afterStateHydrated(function (Get $get, Set $set) use ($assetId): void {
+                        if ($assetId !== null) {
                             self::fillUnitPrice($get, $set);
                         }
                     })
-                    ->hidden($securityId !== null)
-                    ->default($securityId)
+                    ->hidden($assetId !== null)
+                    ->default($assetId)
                     ->hiddenJs(<<<'JS'
                         ! ['pea', 'cto'].includes($get('wallet_type'))
                         JS),
@@ -146,15 +146,15 @@ class TransactionForm
                                 return;
                             }
 
-                            $securityId = $get('asset_id');
+                            $assetId = $get('asset_id');
                             $walletId = $get('wallet_id');
 
-                            if (! $securityId || ! $walletId) {
+                            if (! $assetId || ! $walletId) {
                                 return;
                             }
 
                             $ownedQuantity = (float) Transaction::withoutGlobalScopes()
-                                ->where('asset_id', $securityId)
+                                ->where('asset_id', $assetId)
                                 ->where('wallet_id', $walletId)
                                 ->where('user_id', auth()->id())
                                 ->when($record instanceof Transaction, fn ($query) => $query->where('id', '!=', $record->id))

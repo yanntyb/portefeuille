@@ -5,7 +5,7 @@ use App\Domains\Portfolio\Filament\Pages\WalletPage;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Security\Filament\Widgets\PerformanceStatsOverview;
-use App\Domains\Security\Models\SecurityPrice;
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\User\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -27,13 +27,13 @@ it('displays performance stats with correct values', function () {
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2025-01-15',
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 120,
@@ -72,7 +72,7 @@ it('displays dash for periods without data', function () {
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 120,
@@ -109,13 +109,13 @@ it('shows danger color for negative returns', function () {
         'fees' => 0,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2025-01-15',
         'close' => 100,
     ]);
 
-    SecurityPrice::factory()->create([
+    AssetPrice::factory()->create([
         'asset_id' => $security->id,
         'date' => '2025-06-15',
         'close' => 80,

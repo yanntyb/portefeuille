@@ -1,7 +1,7 @@
 <?php
 
+use App\Domains\Asset\Enums\Sector;
 use App\Domains\Portfolio\Services\SectorAggregator;
-use App\Domains\Security\Enums\Sector;
 
 it('returns empty data for empty securities collection', function () {
     $aggregator = new SectorAggregator;
