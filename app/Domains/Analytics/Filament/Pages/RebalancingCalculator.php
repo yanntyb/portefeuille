@@ -114,7 +114,7 @@ class RebalancingCalculator extends Page implements HasTable
                                 ->options(fn (): array => Asset::query()
                                     ->get()
                                     ->mapWithKeys(fn ($security): array => [
-                                        $security->id => $security->name ?? $security->ticker ?? $security->isin,
+                                        $security->id => $security->name ?? $security->ticker,
                                     ])
                                     ->all())
                                 ->searchable()

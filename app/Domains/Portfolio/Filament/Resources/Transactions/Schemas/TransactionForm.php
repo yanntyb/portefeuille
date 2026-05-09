@@ -88,12 +88,10 @@ class TransactionForm
                 Select::make('asset_id')
                     ->label('Titre')
                     ->options(fn (): array => Asset::query()
-                        ->orderBy('isin')
+                        ->orderBy('name')
                         ->get()
                         ->mapWithKeys(fn (Asset $asset): array => [
-                            $asset->id => $asset->name
-                                ? "{$asset->isin} — {$asset->name}"
-                                : $asset->isin,
+                            $asset->id => $asset->name ?? $asset->ticker,
                         ])
                         ->all())
                     ->searchable()

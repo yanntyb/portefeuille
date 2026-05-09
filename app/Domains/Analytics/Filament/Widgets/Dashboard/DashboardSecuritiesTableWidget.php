@@ -65,9 +65,7 @@ class DashboardSecuritiesTableWidget extends TableWidget
             ->heading(null)
             ->query(fn (): Builder => app(AssetQueryService::class)->forAuthenticatedUser())
             ->columns([
-                TextColumn::make('isin')->label('ISIN')->searchable()->sortable(),
-                TextColumn::make('name')->label('Nom')->searchable(),
-                TextColumn::make('ticker')->label('Ticker'),
+                TextColumn::make('name')->label('Nom')->searchable()->sortable(),
             ]);
     }
 }

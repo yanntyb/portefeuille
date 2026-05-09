@@ -29,11 +29,7 @@ class TransactionsTable
                     ->label('Type')
                     ->badge()
                     ->sortable(),
-                TextColumn::make('security.isin')
-                    ->label('ISIN')
-                    ->searchable()
-                    ->placeholder('—')
-                    ->toggleable(),
+
                 TextColumn::make('broker')
                     ->label('Courtier')
                     ->searchable()
