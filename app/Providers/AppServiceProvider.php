@@ -11,6 +11,7 @@ use App\Domains\Asset\Contracts\AssetPriceRepositoryInterface;
 use App\Domains\Asset\Contracts\AssetRepositoryInterface;
 use App\Domains\Asset\Infrastructure\Eloquent\EloquentAssetPriceRepository;
 use App\Domains\Asset\Infrastructure\Eloquent\EloquentAssetRepository;
+use App\Domains\Asset\Services\PriceSyncService;
 use App\Domains\Portfolio\Contracts\PortfolioPerformanceCalculating;
 use App\Domains\Portfolio\Contracts\TransactionRepositoryInterface;
 use App\Domains\Portfolio\Infrastructure\Eloquent\EloquentTransactionRepository;
@@ -42,6 +43,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Asset domain services
         $this->app->scoped(\App\Domains\Asset\Services\AssetValuationService::class);
+        $this->app->scoped(PriceSyncService::class);
 
         // Service interfaces → implementations (scoped for per-request safety)
         $this->app->scoped(VolatilityCalculating::class, VolatilityCalculator::class);
