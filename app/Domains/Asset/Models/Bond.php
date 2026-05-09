@@ -2,4 +2,10 @@
 
 namespace App\Domains\Asset\Models;
 
-class Bond extends Asset {}
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class Bond extends Asset
+{
+    /** @use HasFactory<\Database\Factories\Domains\Asset\Models\BondFactory> */
+    use HasFactory;
+}

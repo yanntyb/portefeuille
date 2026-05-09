@@ -2,4 +2,10 @@
 
 namespace App\Domains\Asset\Models;
 
-class Crypto extends Asset {}
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class Crypto extends Asset
+{
+    /** @use HasFactory<\Database\Factories\Domains\Asset\Models\CryptoFactory> */
+    use HasFactory;
+}

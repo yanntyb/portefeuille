@@ -5,7 +5,6 @@ namespace App\Domains\Asset\Models;
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Services\AssetValuationService;
 use App\Domains\Portfolio\Models\Transaction;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -20,8 +19,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class Asset extends Model
 {
-    use HasFactory;
-
     protected $table = 'securities';
 
     /** @var list<string> */

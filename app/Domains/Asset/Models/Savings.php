@@ -2,4 +2,10 @@
 
 namespace App\Domains\Asset\Models;
 
-class Savings extends Asset {}
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class Savings extends Asset
+{
+    /** @use HasFactory<\Database\Factories\Domains\Asset\Models\SavingsFactory> */
+    use HasFactory;
+}

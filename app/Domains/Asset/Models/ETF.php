@@ -2,6 +2,7 @@
 
 namespace App\Domains\Asset\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -14,6 +15,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class ETF extends Asset
 {
+    /** @use HasFactory<\Database\Factories\Domains\Asset\Models\ETFFactory> */
+    use HasFactory;
+
     public function sectors(): HasMany
     {
         return $this->hasMany(AssetSector::class, 'asset_id');
