@@ -21,7 +21,7 @@ it('creates projection on first buy', function () {
     Transaction::factory()
         ->for($user)
         ->for($wallet)
-        ->for($stock, 'security')
+        ->for($stock, 'asset')
         ->create([
             'type' => TransactionType::Buy,
             'quantity' => 10,
@@ -46,7 +46,7 @@ it('updates projection on second buy', function () {
     Transaction::factory()
         ->for($user)
         ->for($wallet)
-        ->for($stock, 'security')
+        ->for($stock, 'asset')
         ->create([
             'type' => TransactionType::Buy,
             'quantity' => 10,
@@ -57,7 +57,7 @@ it('updates projection on second buy', function () {
     Transaction::factory()
         ->for($user)
         ->for($wallet)
-        ->for($stock, 'security')
+        ->for($stock, 'asset')
         ->create([
             'type' => TransactionType::Buy,
             'quantity' => 5,
@@ -83,7 +83,7 @@ it('reduces projection on sell', function () {
     Transaction::factory()
         ->for($user)
         ->for($wallet)
-        ->for($stock, 'security')
+        ->for($stock, 'asset')
         ->create([
             'type' => TransactionType::Buy,
             'quantity' => 10,
@@ -94,7 +94,7 @@ it('reduces projection on sell', function () {
     Transaction::factory()
         ->for($user)
         ->for($wallet)
-        ->for($stock, 'security')
+        ->for($stock, 'asset')
         ->create([
             'type' => TransactionType::Sell,
             'quantity' => 3,
@@ -118,13 +118,13 @@ it('separates projections by asset', function () {
     Transaction::factory()
         ->for($user)
         ->for($wallet)
-        ->for($stock1, 'security')
+        ->for($stock1, 'asset')
         ->create(['quantity' => 10, 'unit_price' => 100.0]);
 
     Transaction::factory()
         ->for($user)
         ->for($wallet)
-        ->for($stock2, 'security')
+        ->for($stock2, 'asset')
         ->create(['quantity' => 5, 'unit_price' => 200.0]);
 
     $projections = HoldingsProjection::where('wallet_id', $wallet->id)->get();
@@ -143,13 +143,13 @@ it('separates projections by wallet', function () {
     Transaction::factory()
         ->for($user)
         ->for($wallet1)
-        ->for($stock, 'security')
+        ->for($stock, 'asset')
         ->create(['quantity' => 10]);
 
     Transaction::factory()
         ->for($user)
         ->for($wallet2)
-        ->for($stock, 'security')
+        ->for($stock, 'asset')
         ->create(['quantity' => 20]);
 
     $w1Projection = HoldingsProjection::where('asset_id', $stock->id)
@@ -174,7 +174,7 @@ it('scopes projections to user', function () {
     Transaction::factory()
         ->for($user1)
         ->for($wallet1)
-        ->for($stock, 'security')
+        ->for($stock, 'asset')
         ->create(['quantity' => 10]);
 
     $projection = HoldingsProjection::where('user_id', $user2->id)->first();
