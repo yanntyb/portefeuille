@@ -77,14 +77,4 @@ class Transaction extends Model
     {
         return $this->belongsTo(User::class);
     }
-
-    public function stock(): BelongsTo
-    {
-        return $this->asset();
-    }
-
-    public function security(): BelongsTo
-    {
-        return $this->asset();
-    }
 }

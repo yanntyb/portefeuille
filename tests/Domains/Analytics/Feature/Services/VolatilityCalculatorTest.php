@@ -40,7 +40,7 @@ describe('VolatilityCalculator', function () {
         for ($i = 0; $i < 30; $i++) {
 
             AssetPrice::factory()
-                ->for($security)
+                ->for($security, 'asset')
                 ->create(['close' => 100.0 + $i]);
         }
 
@@ -67,13 +67,13 @@ describe('VolatilityCalculator', function () {
         for ($i = 0; $i < 30; $i++) {
 
             AssetPrice::factory()
-                ->for($security)
+                ->for($security, 'asset')
                 ->create(['close' => 100.0 + $i]);
         }
 
         \App\Domains\Portfolio\Models\Transaction::factory()
             ->for($wallet)
-            ->for($security)
+            ->for($security, 'asset')
             ->create(['quantity' => 10, 'unit_price' => 115.0]);
 
         $calculator = app(VolatilityCalculator::class);
@@ -91,19 +91,19 @@ describe('VolatilityCalculator', function () {
 
         for ($i = 0; $i < 30; $i++) {
 
-            AssetPrice::factory()->for($security1)->create(['close' => 100.0 + $i]);
+            AssetPrice::factory()->for($security1, 'asset')->create(['close' => 100.0 + $i]);
 
-            AssetPrice::factory()->for($security2)->create(['close' => 200.0 + $i]);
+            AssetPrice::factory()->for($security2, 'asset')->create(['close' => 200.0 + $i]);
         }
 
         \App\Domains\Portfolio\Models\Transaction::factory()
             ->for($wallet)
-            ->for($security1)
+            ->for($security1, 'asset')
             ->create(['quantity' => 10, 'unit_price' => 115.0]);
 
         \App\Domains\Portfolio\Models\Transaction::factory()
             ->for($wallet)
-            ->for($security2)
+            ->for($security2, 'asset')
             ->create(['quantity' => 5, 'unit_price' => 215.0]);
 
         $calculator = app(VolatilityCalculator::class);

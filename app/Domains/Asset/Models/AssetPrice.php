@@ -53,9 +53,4 @@ class AssetPrice extends Model
     {
         return $this->belongsTo(Asset::class, 'asset_id');
     }
-
-    public function stock(): BelongsTo
-    {
-        return $this->asset();
-    }
 }
