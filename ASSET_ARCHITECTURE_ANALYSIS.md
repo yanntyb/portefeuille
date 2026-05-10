@@ -26,63 +26,60 @@ La table `securities` définit `isin` comme `VARCHAR NOT NULL` avec un index `UN
 
 ---
 
-## Solution : Class Table Inheritance (CTI)
+## Solution : CTI simplifié (une table de détails générique)
 
-Conserver `securities` comme table parent avec les champs communs uniquement. Chaque type possède sa propre table de détail.
+Renommer `securities` → `assets` (parent commun). Une seule table `asset_infos` contient tous les détails, colonnes optionnelles nullables selon le type.
 
 ### Schéma cible
 
 ```
-securities
+assets
   id, name, type, created_at, updated_at
 
-stocks          → isin (required), ticker (required)
-etfs            → isin (required), ticker (required)
-bonds           → isin (required), ticker (nullable)
-cryptos         → ticker (required)
-real_estates    → isin (nullable)
-savings         → (aucun champ spécifique)
+asset_infos
+  id, asset_id (FK), isin (nullable), ticker (nullable), created_at, updated_at
+  
+Type-specific constraints appliquées au niveau applicatif :
+  - Stock/ETF/Bond : isin required, ticker required (Bond : ticker nullable)
+  - Crypto : ticker required, isin null
+  - RealEstate : isin nullable, ticker null
+  - Savings : isin null, ticker null
 ```
 
 ### Modèles Eloquent
 
-Trait générique `HasDetailsRelation` pour réduire la duplication :
+Trait générique `HasDetailsRelation` — tous les modèles pointent vers `AssetInfo` :
 
 ```php
 // app/Infrastructure/Eloquent/Traits/HasDetailsRelation.php
 trait HasDetailsRelation
 {
-    abstract protected function getDetailsModel(): string;
-    abstract protected function getDetailsForeignKey(): string;
-
     public function details(): HasOne
     {
-        return $this->hasOne(
-            $this->getDetailsModel(),
-            $this->getDetailsForeignKey(),
-            $this->getKeyName()
-        );
+        return $this->hasOne(AssetInfo::class, 'asset_id');
     }
 }
 ```
 
-Chaque sous-classe implémente :
+Chaque sous-classe l'utilise :
 
 ```php
-// Stock.php
+// Stock.php, ETF.php, Crypto.php, etc.
 use HasDetailsRelation;
 
-protected function getDetailsModel(): string { return StockDetails::class; }
-protected function getDetailsForeignKey(): string { return 'asset_id'; }
-
-// Accesseur de rétro-compatibilité
+// Accesseurs de rétro-compatibilité
 public function getIsinAttribute(): ?string
 {
     return $this->details?->isin;
 }
+
+public function getTickerAttribute(): ?string
+{
+    return $this->details?->ticker;
+}
 ```
 
-Accesseurs restent manuels par type (logique spécifique `isin`, `ticker`, etc.)
+Validation des contraintes par type : au niveau du modèle ou FormRequest, pas à la DB.
 
 ---
 
@@ -117,7 +114,7 @@ Accesseurs restent manuels par type (logique spécifique `isin`, `ticker`, etc.)
 - **Adapters** (YahooFinanceAdapter) : 1 fichier → 4 pts
 - **Filament Portfolio** : 2 fichiers → 6 pts
 - **Filament Analytics** : 2 fichiers → 4 pts
-- **Migrations** : 2 existantes + 6 nouvelles
+- **Migrations** : 2 existantes + 3-4 nouvelles (create `asset_infos`, migrate data, cleanup `securities`)
 - **Seeders** : 2 fichiers → 1 fichier → ~8 pts (NuclearSecuritiesSeeder supprimé)
 - **Tests** : 1 fichier → 4 pts
 
@@ -130,11 +127,19 @@ Accesseurs restent manuels par type (logique spécifique `isin`, `ticker`, etc.)
 
 ### Stratégie de migration
 
-1. **Nouvelles migrations** — créer les tables de détail, migrer les données existantes, supprimer `isin`/`ticker` de `securities`
-2. **Modèles** — ajouter `hasOne` + accesseurs de délégation sur chaque sous-classe
-3. **Factories** — `afterCreating` pour créer le détail au moment de la création de l'actif
-4. **Adapters + Seeders** — accéder via `$asset->details->ticker`
-5. **Filament** — mettre à jour dot-notation (`security.details.isin`) ou utiliser des accesseurs Eloquent
+1. **Migrations** :
+   - Créer table `asset_infos` (asset_id FK, isin, ticker)
+   - Migrer isin/ticker de `securities` → `asset_infos`
+   - Supprimer isin/ticker de `securities`
+   - Renommer `securities` → `assets`
+
+2. **Modèles** — ajouter `use HasDetailsRelation` + accesseurs de délégation sur chaque sous-classe
+
+3. **Factories** — `afterCreating` pour créer le détail au moment de la création
+
+4. **Validation** — ajouter contraintes par type (Stock: isin required, Crypto: isin null, etc) au niveau applicatif
+
+5. **Filament** — utiliser accesseurs Eloquent `$asset->isin`, `$asset->ticker`
 
 ### Priorité
 

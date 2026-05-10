@@ -6,16 +6,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 trait HasDetailsRelation
 {
-    abstract protected function getDetailsModel(): string;
-
-    abstract protected function getDetailsForeignKey(): string;
-
+    // Returns relation to AssetInfo (created during CTI migration)
     public function details(): HasOne
     {
-        return $this->hasOne(
-            $this->getDetailsModel(),
-            $this->getDetailsForeignKey(),
-            $this->getKeyName()
-        );
+        return $this->hasOne('App\Domains\Asset\Models\AssetInfo', 'asset_id');
     }
 }
