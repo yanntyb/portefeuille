@@ -3,13 +3,13 @@
 namespace App\Domains\Asset\Database\Factories\AssetInfos;
 
 use App\Domains\Asset\Models\AssetInfos\SavingsAssetInfo;
-use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<SavingsAssetInfo>
+ * @extends AssetInfoFactory<SavingsAssetInfo>
  */
-class SavingsAssetInfoFactory extends Factory
+class SavingsAssetInfoFactory extends AssetInfoFactory
 {
+    /** @var class-string<SavingsAssetInfo> */
     protected $model = SavingsAssetInfo::class;
 
     /** @return array<string, mixed> */

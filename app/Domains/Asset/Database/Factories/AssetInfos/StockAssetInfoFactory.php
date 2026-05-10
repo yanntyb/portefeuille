@@ -3,13 +3,13 @@
 namespace App\Domains\Asset\Database\Factories\AssetInfos;
 
 use App\Domains\Asset\Models\AssetInfos\StockAssetInfo;
-use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<StockAssetInfo>
+ * @extends AssetInfoFactory<StockAssetInfo>
  */
-class StockAssetInfoFactory extends Factory
+class StockAssetInfoFactory extends AssetInfoFactory
 {
+    /** @var class-string<StockAssetInfo> */
     protected $model = StockAssetInfo::class;
 
     /** @return array<string, mixed> */

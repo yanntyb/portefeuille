@@ -3,13 +3,13 @@
 namespace App\Domains\Asset\Database\Factories\AssetInfos;
 
 use App\Domains\Asset\Models\AssetInfos\ETFAssetInfo;
-use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<ETFAssetInfo>
+ * @extends AssetInfoFactory<ETFAssetInfo>
  */
-class ETFAssetInfoFactory extends Factory
+class ETFAssetInfoFactory extends AssetInfoFactory
 {
+    /** @var class-string<ETFAssetInfo> */
     protected $model = ETFAssetInfo::class;
 
     /** @return array<string, mixed> */
