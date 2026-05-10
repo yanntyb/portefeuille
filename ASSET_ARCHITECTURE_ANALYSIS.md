@@ -26,9 +26,9 @@ La table `securities` définit `isin` comme `VARCHAR NOT NULL` avec un index `UN
 
 ---
 
-## Solution : CTI simplifié (une table de détails générique)
+## Solution : Class Table Inheritance (CTI)
 
-Renommer `securities` → `assets` (parent commun). Une seule table `asset_infos` contient tous les détails, colonnes optionnelles nullables selon le type.
+Renommer `securities` → `assets` (parent commun). Une table de détails par type d'actif.
 
 ### Schéma cible
 
@@ -36,50 +36,54 @@ Renommer `securities` → `assets` (parent commun). Une seule table `asset_infos
 assets
   id, name, type, created_at, updated_at
 
-asset_infos
-  id, asset_id (FK), isin (nullable), ticker (nullable), created_at, updated_at
-  
-Type-specific constraints appliquées au niveau applicatif :
-  - Stock/ETF/Bond : isin required, ticker required (Bond : ticker nullable)
-  - Crypto : ticker required, isin null
-  - RealEstate : isin nullable, ticker null
-  - Savings : isin null, ticker null
+stock_infos        → asset_id (FK), isin (required), ticker (required)
+etf_infos          → asset_id (FK), isin (required), ticker (required)
+bond_infos         → asset_id (FK), isin (required), ticker (nullable)
+crypto_infos       → asset_id (FK), ticker (required)
+realestate_infos   → asset_id (FK), isin (nullable)
+savings_infos      → asset_id (FK)  [no fields except FK]
 ```
 
 ### Modèles Eloquent
 
-Trait générique `HasDetailsRelation` — tous les modèles pointent vers `AssetInfo` :
+Trait générique `HasDetailsRelation` avec abstract methods pour flexibilité :
 
 ```php
 // app/Infrastructure/Eloquent/Traits/HasDetailsRelation.php
 trait HasDetailsRelation
 {
+    abstract protected function getDetailsModel(): string;
+
     public function details(): HasOne
     {
-        return $this->hasOne(AssetInfo::class, 'asset_id');
+        return $this->hasOne($this->getDetailsModel(), 'asset_id');
     }
 }
 ```
 
-Chaque sous-classe l'utilise :
+Chaque sous-classe implémente :
 
 ```php
-// Stock.php, ETF.php, Crypto.php, etc.
+// Stock.php
 use HasDetailsRelation;
 
-// Accesseurs de rétro-compatibilité
-public function getIsinAttribute(): ?string
-{
-    return $this->details?->isin;
-}
+protected function getDetailsModel(): string { return StockInfo::class; }
 
-public function getTickerAttribute(): ?string
-{
-    return $this->details?->ticker;
-}
+// Accesseurs de rétro-compatibilité
+public function getIsinAttribute(): ?string { return $this->details?->isin; }
+public function getTickerAttribute(): ?string { return $this->details?->ticker; }
+
+// ETF.php
+protected function getDetailsModel(): string { return ETFInfo::class; }
+// ... idem accesseurs
+
+// Crypto.php
+protected function getDetailsModel(): string { return CryptoInfo::class; }
+public function getTickerAttribute(): ?string { return $this->details?->ticker; }
+// isin accesseur returns null (colonne inexistante)
 ```
 
-Validation des contraintes par type : au niveau du modèle ou FormRequest, pas à la DB.
+DB constraints appliquent les règles ; accesseurs les exposent.
 
 ---
 
@@ -114,7 +118,7 @@ Validation des contraintes par type : au niveau du modèle ou FormRequest, pas �
 - **Adapters** (YahooFinanceAdapter) : 1 fichier → 4 pts
 - **Filament Portfolio** : 2 fichiers → 6 pts
 - **Filament Analytics** : 2 fichiers → 4 pts
-- **Migrations** : 2 existantes + 3-4 nouvelles (create `asset_infos`, migrate data, cleanup `securities`)
+- **Migrations** : 2 existantes + 8-9 nouvelles (6 create detail tables, migrate data, cleanup, rename `securities` → `assets`)
 - **Seeders** : 2 fichiers → 1 fichier → ~8 pts (NuclearSecuritiesSeeder supprimé)
 - **Tests** : 1 fichier → 4 pts
 
@@ -128,18 +132,19 @@ Validation des contraintes par type : au niveau du modèle ou FormRequest, pas �
 ### Stratégie de migration
 
 1. **Migrations** :
-   - Créer table `asset_infos` (asset_id FK, isin, ticker)
-   - Migrer isin/ticker de `securities` → `asset_infos`
+   - Créer 6 tables de détail (stock_infos, etf_infos, bond_infos, crypto_infos, realestate_infos, savings_infos)
+   - Migrer isin/ticker de `securities` par type vers la table correspondante
    - Supprimer isin/ticker de `securities`
    - Renommer `securities` → `assets`
 
-2. **Modèles** — ajouter `use HasDetailsRelation` + accesseurs de délégation sur chaque sous-classe
+2. **Modèles** :
+   - Stock/ETF/Bond/Crypto/RealEstate/Savings : `use HasDetailsRelation`
+   - Chaque implémente `getDetailsModel()` → sa table (StockInfo, ETFInfo, etc)
+   - Accesseurs pour `isin`, `ticker` délégant vers `details()`
 
-3. **Factories** — `afterCreating` pour créer le détail au moment de la création
+3. **Factories** — `afterCreating` pour créer le détail correspondant
 
-4. **Validation** — ajouter contraintes par type (Stock: isin required, Crypto: isin null, etc) au niveau applicatif
-
-5. **Filament** — utiliser accesseurs Eloquent `$asset->isin`, `$asset->ticker`
+4. **Filament + Seeders** — utilisent accesseurs Eloquent (pas de changement apparent si accesseurs bien implémentés)
 
 ### Priorité
 
