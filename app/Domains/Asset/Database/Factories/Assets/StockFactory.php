@@ -2,8 +2,8 @@
 
 namespace App\Domains\Asset\Database\Factories\Assets;
 
+use App\Domains\Asset\Database\Factories\AssetInfos\StockAssetInfoFactory;
 use App\Domains\Asset\Enums\AssetType;
-use App\Domains\Asset\Models\AssetInfos\StockAssetInfo;
 use App\Domains\Asset\Models\Assets\Stock;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -17,15 +17,8 @@ class StockFactory extends Factory
     public function configure(): static
     {
         return $this->afterCreating(function (Stock $stock) {
-            $countryPrefixes = ['FR', 'US', 'DE', 'LU', 'IE'];
-            $prefix = fake()->randomElement($countryPrefixes);
-            $digits = fake()->numerify('##########');
-            $isin = $prefix.$digits;
-
-            StockAssetInfo::create([
+            StockAssetInfoFactory::new()->create([
                 'asset_id' => $stock->id,
-                'isin' => $isin,
-                'ticker' => fake()->randomAscii(),
             ]);
         });
     }

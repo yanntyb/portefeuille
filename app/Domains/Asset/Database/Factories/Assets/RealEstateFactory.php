@@ -2,8 +2,8 @@
 
 namespace App\Domains\Asset\Database\Factories\Assets;
 
+use App\Domains\Asset\Database\Factories\AssetInfos\RealEstateAssetInfoFactory;
 use App\Domains\Asset\Enums\AssetType;
-use App\Domains\Asset\Models\AssetInfos\RealEstateAssetInfo;
 use App\Domains\Asset\Models\Assets\RealEstate;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -17,7 +17,7 @@ class RealEstateFactory extends Factory
     public function configure(): static
     {
         return $this->afterCreating(function (RealEstate $realEstate) {
-            RealEstateAssetInfo::create([
+            RealEstateAssetInfoFactory::new()->create([
                 'asset_id' => $realEstate->id,
             ]);
         });

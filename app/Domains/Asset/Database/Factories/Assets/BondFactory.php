@@ -2,8 +2,8 @@
 
 namespace App\Domains\Asset\Database\Factories\Assets;
 
+use App\Domains\Asset\Database\Factories\AssetInfos\BondAssetInfoFactory;
 use App\Domains\Asset\Enums\AssetType;
-use App\Domains\Asset\Models\AssetInfos\BondAssetInfo;
 use App\Domains\Asset\Models\Assets\Bond;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -17,10 +17,8 @@ class BondFactory extends Factory
     public function configure(): static
     {
         return $this->afterCreating(function (Bond $bond) {
-            BondAssetInfo::create([
+            BondAssetInfoFactory::new()->create([
                 'asset_id' => $bond->id,
-                'isin' => 'XS'.fake()->numerify('##############'),
-                'ticker' => fake()->lexify('????'),
             ]);
         });
     }

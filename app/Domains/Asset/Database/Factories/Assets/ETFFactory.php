@@ -2,8 +2,8 @@
 
 namespace App\Domains\Asset\Database\Factories\Assets;
 
+use App\Domains\Asset\Database\Factories\AssetInfos\ETFAssetInfoFactory;
 use App\Domains\Asset\Enums\AssetType;
-use App\Domains\Asset\Models\AssetInfos\ETFAssetInfo;
 use App\Domains\Asset\Models\Assets\ETF;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -17,15 +17,8 @@ class ETFFactory extends Factory
     public function configure(): static
     {
         return $this->afterCreating(function (ETF $etf) {
-            $countryPrefixes = ['FR', 'US', 'DE', 'LU', 'IE'];
-            $prefix = fake()->randomElement($countryPrefixes);
-            $digits = fake()->numerify('##########');
-            $isin = $prefix.$digits;
-
-            ETFAssetInfo::create([
+            ETFAssetInfoFactory::new()->create([
                 'asset_id' => $etf->id,
-                'isin' => $isin,
-                'ticker' => fake()->lexify('????').'.PA',
             ]);
         });
     }
