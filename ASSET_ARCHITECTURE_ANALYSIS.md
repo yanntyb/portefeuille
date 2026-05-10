@@ -46,14 +46,34 @@ savings         → (aucun champ spécifique)
 
 ### Modèles Eloquent
 
-Chaque sous-classe déclare `hasOne` vers sa table de détail + accesseurs de délégation :
+Trait générique `HasDetailsRelation` pour réduire la duplication :
+
+```php
+// app/Infrastructure/Eloquent/Traits/HasDetailsRelation.php
+trait HasDetailsRelation
+{
+    abstract protected function getDetailsModel(): string;
+    abstract protected function getDetailsForeignKey(): string;
+
+    public function details(): HasOne
+    {
+        return $this->hasOne(
+            $this->getDetailsModel(),
+            $this->getDetailsForeignKey(),
+            $this->getKeyName()
+        );
+    }
+}
+```
+
+Chaque sous-classe implémente :
 
 ```php
 // Stock.php
-public function details(): HasOne
-{
-    return $this->hasOne(StockDetails::class, 'security_id');
-}
+use HasDetailsRelation;
+
+protected function getDetailsModel(): string { return StockDetails::class; }
+protected function getDetailsForeignKey(): string { return 'asset_id'; }
 
 // Accesseur de rétro-compatibilité
 public function getIsinAttribute(): ?string
@@ -62,17 +82,25 @@ public function getIsinAttribute(): ?string
 }
 ```
 
+Accesseurs restent manuels par type (logique spécifique `isin`, `ticker`, etc.)
+
 ---
 
-## Cleanup pre-CTI (Commit 98a8c6f)
+## Cleanup pre-CTI
 
-Réductions effectuées avant la migration CTI pour simplifier le chantier :
+### Étape 1 : réductions de contact points (Commit 98a8c6f)
 
 - ✅ Suppression `NuclearSecuritiesSeeder` (imports cassés, jamais enregistré)
 - ✅ Migration: `isin` `NOT NULL` → `nullable` + drop `UNIQUE`
 - ✅ Factories Crypto, RealEstate, Savings : suppression `isin`/`ticker`
 
 **Résultat :** -4 fichiers, -14 contact points
+
+### Étape 2 : préparation architecturale pour CTI
+
+- ✅ Trait `HasDetailsRelation` (`app/Infrastructure/Eloquent/Traits/HasDetailsRelation.php`)
+  - Réduit duplication : chaque sous-classe (Stock, ETF, etc) implémente 2 abstract methods au lieu de `hasOne()` manuel
+  - Prêt pour appel lors de la CTI
 
 ---
 
