@@ -36,12 +36,12 @@ Renommer `securities` → `assets` (parent commun). Une table de détails par ty
 assets
   id, name, type, created_at, updated_at
 
-stock_infos        → asset_id (FK), isin (required), ticker (required)
-etf_infos          → asset_id (FK), isin (required), ticker (required)
-bond_infos         → asset_id (FK), isin (required), ticker (nullable)
-crypto_infos       → asset_id (FK), ticker (required)
-realestate_infos   → asset_id (FK), isin (nullable)
-savings_infos      → asset_id (FK)  [no fields except FK]
+stock_asset_infos      → asset_id (FK), isin (required), ticker (required)
+etf_asset_infos        → asset_id (FK), isin (required), ticker (required)
+bond_asset_infos       → asset_id (FK), isin (required), ticker (nullable)
+crypto_asset_infos     → asset_id (FK), ticker (required)
+realestate_asset_infos → asset_id (FK), isin (nullable)
+savings_asset_infos    → asset_id (FK)  [no fields except FK]
 ```
 
 ### Modèles Eloquent
@@ -67,20 +67,18 @@ Chaque sous-classe implémente :
 // Stock.php
 use HasDetailsRelation;
 
-protected function getDetailsModel(): string { return StockInfo::class; }
+protected function getDetailsModel(): string { return StockAssetInfo::class; }
 
-// Accesseurs de rétro-compatibilité
 public function getIsinAttribute(): ?string { return $this->details?->isin; }
 public function getTickerAttribute(): ?string { return $this->details?->ticker; }
 
 // ETF.php
-protected function getDetailsModel(): string { return ETFInfo::class; }
+protected function getDetailsModel(): string { return ETFAssetInfo::class; }
 // ... idem accesseurs
 
 // Crypto.php
-protected function getDetailsModel(): string { return CryptoInfo::class; }
+protected function getDetailsModel(): string { return CryptoAssetInfo::class; }
 public function getTickerAttribute(): ?string { return $this->details?->ticker; }
-// isin accesseur returns null (colonne inexistante)
 ```
 
 DB constraints appliquent les règles ; accesseurs les exposent.
@@ -132,14 +130,14 @@ DB constraints appliquent les règles ; accesseurs les exposent.
 ### Stratégie de migration
 
 1. **Migrations** :
-   - Créer 6 tables de détail (stock_infos, etf_infos, bond_infos, crypto_infos, realestate_infos, savings_infos)
+   - Créer 6 tables de détail (stock_asset_infos, etf_asset_infos, bond_asset_infos, crypto_asset_infos, realestate_asset_infos, savings_asset_infos)
    - Migrer isin/ticker de `securities` par type vers la table correspondante
    - Supprimer isin/ticker de `securities`
    - Renommer `securities` → `assets`
 
 2. **Modèles** :
    - Stock/ETF/Bond/Crypto/RealEstate/Savings : `use HasDetailsRelation`
-   - Chaque implémente `getDetailsModel()` → sa table (StockInfo, ETFInfo, etc)
+   - Chaque implémente `getDetailsModel()` → sa classe (StockAssetInfo, ETFAssetInfo, etc)
    - Accesseurs pour `isin`, `ticker` délégant vers `details()`
 
 3. **Factories** — `afterCreating` pour créer le détail correspondant
