@@ -10,6 +10,10 @@ trait HasDetailsRelation
 
     public function details(): HasOne
     {
-        return $this->hasOne($this->getDetailsModel(), 'asset_id');
+        return $this->hasOne(
+            $this->getDetailsModel(),
+            'asset_id',
+            $this->getKeyName()
+        );
     }
 }

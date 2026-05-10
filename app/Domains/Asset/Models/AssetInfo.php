@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Domains\Asset\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+abstract class AssetInfo extends Model
+{
+    protected $guarded = ['id'];
+
+    public function asset(): BelongsTo
+    {
+        return $this->belongsTo(Asset::class, 'asset_id');
+    }
+
+    abstract public function getIsinAttribute(): ?string;
+
+    abstract public function getTickerAttribute(): ?string;
+}

@@ -4,6 +4,7 @@ namespace App\Domains\Asset\Database\Factories;
 
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Models\Crypto;
+use App\Domains\Asset\Models\CryptoAssetInfo;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -12,6 +13,16 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class CryptoFactory extends Factory
 {
     protected $model = Crypto::class;
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Crypto $crypto) {
+            CryptoAssetInfo::create([
+                'asset_id' => $crypto->id,
+                'ticker' => fake()->lexify('????'),
+            ]);
+        });
+    }
 
     /** @return array<string, mixed> */
     public function definition(): array
