@@ -1,7 +1,7 @@
 <?php
 
 use App\Domains\Asset\Models\AssetPrice;
-use App\Domains\Asset\Models\Stock;
+use App\Domains\Asset\Models\Assets\Stock;
 
 it('stock loads prices relationship', function () {
     $security = Stock::factory()->create();

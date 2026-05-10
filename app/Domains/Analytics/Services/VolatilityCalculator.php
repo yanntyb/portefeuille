@@ -5,8 +5,8 @@ namespace App\Domains\Analytics\Services;
 use App\Domains\Analytics\Contracts\VolatilityCalculating;
 use App\Domains\Asset\Contracts\AssetPriceRepositoryInterface;
 use App\Domains\Asset\Contracts\AssetRepositoryInterface;
-use App\Domains\Asset\Models\Asset;
 use App\Domains\Asset\Models\AssetPrice;
+use App\Domains\Asset\Models\Assets\Asset;
 use Illuminate\Support\Collection;
 
 class VolatilityCalculator implements VolatilityCalculating

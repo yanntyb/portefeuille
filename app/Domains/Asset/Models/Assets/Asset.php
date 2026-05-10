@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Domains\Asset\Models;
+namespace App\Domains\Asset\Models\Assets;
 
 use App\Domains\Asset\Enums\AssetType;
+use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\Asset\Services\AssetValuationService;
 use App\Domains\Portfolio\Models\Transaction;
 use Illuminate\Database\Eloquent\Model;
@@ -45,12 +46,12 @@ class Asset extends Model
         $type = $attributes->type ?? $attributes['type'] ?? AssetType::Stock->value;
 
         $class = match ($type) {
-            AssetType::Stock->value => \App\Domains\Asset\Models\Stock::class,
-            AssetType::ETF->value => \App\Domains\Asset\Models\ETF::class,
-            AssetType::Crypto->value => \App\Domains\Asset\Models\Crypto::class,
-            AssetType::RealEstate->value => \App\Domains\Asset\Models\RealEstate::class,
-            AssetType::Bond->value => \App\Domains\Asset\Models\Bond::class,
-            AssetType::Savings->value => \App\Domains\Asset\Models\Savings::class,
+            AssetType::Stock->value => \App\Domains\Asset\Models\Assets\Stock::class,
+            AssetType::ETF->value => \App\Domains\Asset\Models\Assets\ETF::class,
+            AssetType::Crypto->value => \App\Domains\Asset\Models\Assets\Crypto::class,
+            AssetType::RealEstate->value => \App\Domains\Asset\Models\Assets\RealEstate::class,
+            AssetType::Bond->value => \App\Domains\Asset\Models\Assets\Bond::class,
+            AssetType::Savings->value => \App\Domains\Asset\Models\Assets\Savings::class,
             default => static::class,
         };
 

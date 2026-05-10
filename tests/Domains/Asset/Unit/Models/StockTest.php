@@ -1,10 +1,14 @@
 <?php
 
-use App\Domains\Asset\Models\Stock;
+use App\Domains\Asset\Models\AssetInfos\StockAssetInfo;
+use App\Domains\Asset\Models\Assets\Stock;
 
 it('creates stock from security', function () {
     $security = Stock::factory()->create([
         'name' => 'Apple Inc',
+    ]);
+
+    StockAssetInfo::query()->where('asset_id', $security->id)->update([
         'ticker' => 'AAPL',
         'isin' => 'US0378331005',
     ]);

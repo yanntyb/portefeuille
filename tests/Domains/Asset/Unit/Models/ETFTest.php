@@ -1,8 +1,8 @@
 <?php
 
 use App\Domains\Asset\Enums\AssetType;
-use App\Domains\Asset\Models\Asset;
-use App\Domains\Asset\Models\ETF;
+use App\Domains\Asset\Models\Assets\Asset;
+use App\Domains\Asset\Models\Assets\ETF;
 
 it('ETF has correct asset type', function () {
     $etf = ETF::factory()->create();

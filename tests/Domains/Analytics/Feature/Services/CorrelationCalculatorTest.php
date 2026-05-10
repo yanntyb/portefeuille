@@ -2,8 +2,8 @@
 
 use App\Domains\Analytics\Enums\CorrelationPeriod;
 use App\Domains\Analytics\Services\CorrelationCalculator;
-use App\Domains\Asset\Models\Stock;
 use App\Domains\Asset\Models\AssetPrice;
+use App\Domains\Asset\Models\Assets\Stock;
 use Illuminate\Support\Carbon;
 
 it('returns null when less than 2 securities', function () {

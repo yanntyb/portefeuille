@@ -3,8 +3,8 @@
 namespace App\Domains\Asset\Database\Factories;
 
 use App\Domains\Asset\Enums\AssetType;
-use App\Domains\Asset\Models\ETF;
-use App\Domains\Asset\Models\ETFAssetInfo;
+use App\Domains\Asset\Models\AssetInfos\ETFAssetInfo;
+use App\Domains\Asset\Models\Assets\ETF;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Domains\Asset\Models;
+namespace App\Domains\Asset\Models\AssetInfos;
 
+use App\Domains\Asset\Models\Assets\Asset;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 

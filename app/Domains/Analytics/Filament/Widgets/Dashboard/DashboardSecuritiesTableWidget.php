@@ -2,8 +2,8 @@
 
 namespace App\Domains\Analytics\Filament\Widgets\Dashboard;
 
-use App\Domains\Asset\Models\Asset;
 use App\Domains\Asset\Models\AssetPrice;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Portfolio\Services\AssetQueryService;
 use App\Infrastructure\Support\MarketCalendar;
 use Filament\Tables\Columns\TextColumn;

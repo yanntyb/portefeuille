@@ -3,7 +3,7 @@
 namespace App\Domains\Analytics\Services;
 
 use App\Domains\Analytics\Contracts\Rebalancing;
-use App\Domains\Asset\Models\Asset;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Portfolio\Models\HoldingsProjection;
 use App\Domains\Portfolio\Models\Wallet;
 

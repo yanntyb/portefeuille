@@ -5,7 +5,6 @@ namespace App\Domains\Portfolio\Listeners;
 use App\Domains\Portfolio\Events\TransactionCreated;
 use App\Domains\Portfolio\Models\HoldingsProjection;
 use App\Domains\Portfolio\Models\Transaction;
-use Illuminate\Database\Query\JoinClause;
 
 class UpdateHoldingsProjectionListener
 {
@@ -40,6 +39,7 @@ class UpdateHoldingsProjectionListener
             HoldingsProjection::where('asset_id', $transaction->asset_id)
                 ->where('wallet_id', $transaction->wallet_id)
                 ->delete();
+
             return;
         }
 

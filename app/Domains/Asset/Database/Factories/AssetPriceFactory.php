@@ -3,7 +3,7 @@
 namespace App\Domains\Asset\Database\Factories;
 
 use App\Domains\Asset\Models\AssetPrice;
-use App\Domains\Asset\Models\Stock;
+use App\Domains\Asset\Models\Assets\Stock;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

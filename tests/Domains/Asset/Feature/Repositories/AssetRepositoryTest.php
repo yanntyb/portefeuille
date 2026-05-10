@@ -2,7 +2,7 @@
 
 use App\Domains\Asset\Contracts\AssetRepositoryInterface;
 use App\Domains\Asset\Enums\AssetType;
-use App\Domains\Asset\Models\Stock;
+use App\Domains\Asset\Models\Assets\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\User\Models\User;

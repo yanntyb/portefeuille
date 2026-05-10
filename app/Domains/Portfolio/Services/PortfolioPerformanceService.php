@@ -5,7 +5,7 @@ namespace App\Domains\Portfolio\Services;
 use App\Domains\Analytics\Services\VolatilityCalculator;
 use App\Domains\Asset\Contracts\AssetPriceRepositoryInterface;
 use App\Domains\Asset\Contracts\AssetRepositoryInterface;
-use App\Domains\Asset\Models\Asset;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Portfolio\Contracts\TransactionRepositoryInterface;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Infrastructure\Support\MarketCalendar;

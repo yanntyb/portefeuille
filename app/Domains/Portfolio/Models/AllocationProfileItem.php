@@ -2,7 +2,7 @@
 
 namespace App\Domains\Portfolio\Models;
 
-use App\Domains\Asset\Models\Asset;
+use App\Domains\Asset\Models\Assets\Asset;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

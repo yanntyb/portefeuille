@@ -4,7 +4,7 @@ namespace App\Domains\Analytics\Filament\Pages;
 
 use App\Domains\Analytics\Events\PortfolioRebalanced;
 use App\Domains\Analytics\Services\RebalancingCalculatorOrchestrator;
-use App\Domains\Asset\Models\Asset;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Portfolio\Models\AllocationProfile;
 use App\Domains\Portfolio\Models\AllocationProfileItem;
 use App\Domains\Portfolio\Models\Wallet;

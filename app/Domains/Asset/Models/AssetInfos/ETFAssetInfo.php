@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\Asset\Models;
+namespace App\Domains\Asset\Models\AssetInfos;
 
 class ETFAssetInfo extends AssetInfo
 {

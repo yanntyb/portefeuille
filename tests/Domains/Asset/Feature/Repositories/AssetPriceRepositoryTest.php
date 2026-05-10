@@ -2,7 +2,7 @@
 
 use App\Domains\Asset\Contracts\AssetPriceRepositoryInterface;
 use App\Domains\Asset\Models\AssetPrice;
-use App\Domains\Asset\Models\Stock;
+use App\Domains\Asset\Models\Assets\Stock;
 use Carbon\Carbon;
 
 it('finds the latest price for an asset', function (): void {

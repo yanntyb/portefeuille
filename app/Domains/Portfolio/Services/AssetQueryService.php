@@ -2,7 +2,7 @@
 
 namespace App\Domains\Portfolio\Services;
 
-use App\Domains\Asset\Models\Asset;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Portfolio\Models\Wallet;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;

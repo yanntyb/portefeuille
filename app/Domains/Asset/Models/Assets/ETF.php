@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Domains\Asset\Models;
+namespace App\Domains\Asset\Models\Assets;
 
 use App\Domains\Asset\Database\Factories\ETFFactory;
+use App\Domains\Asset\Models\AssetInfos\ETFAssetInfo;
+use App\Domains\Asset\Models\AssetSector;
 use App\Infrastructure\Eloquent\Traits\HasDetailsRelation;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

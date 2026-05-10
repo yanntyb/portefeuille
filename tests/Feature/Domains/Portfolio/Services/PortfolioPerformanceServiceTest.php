@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Domains\Portfolio\Services;
 
-use App\Domains\Asset\Models\Stock;
+use App\Domains\Asset\Models\AssetPrice;
+use App\Domains\Asset\Models\Assets\Stock;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Portfolio\Services\PortfolioPerformanceService;
-use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\User\Models\User;
 use App\Infrastructure\Support\MarketCalendar;
 use Tests\TestCase;

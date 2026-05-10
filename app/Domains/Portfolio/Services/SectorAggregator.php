@@ -3,7 +3,7 @@
 namespace App\Domains\Portfolio\Services;
 
 use App\Domains\Asset\Enums\Sector;
-use App\Domains\Asset\Models\Asset;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Asset\Models\AssetSector;
 use App\Infrastructure\Support\ChartColors;
 use Illuminate\Support\Collection;

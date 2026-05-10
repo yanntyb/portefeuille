@@ -6,7 +6,7 @@ use App\Domains\Asset\Contracts\AssetPriceRepositoryInterface;
 use App\Domains\Asset\Contracts\AssetRepositoryInterface;
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Infrastructure\Adapters\YahooFinanceAdapter;
-use App\Domains\Asset\Models\Asset;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Asset\ValueObjects\AssetPriceData;
 use App\Domains\Asset\ValueObjects\PriceData;
 use Carbon\Carbon;

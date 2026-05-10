@@ -3,7 +3,7 @@
 namespace App\Domains\Asset\Infrastructure\Adapters;
 
 use App\Domains\Asset\Enums\AssetType;
-use App\Domains\Asset\Models\Asset;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Asset\Ports\AssetPriceProviderPort;
 use App\Infrastructure\Support\PythonScriptCaller;
 use Illuminate\Support\Collection;

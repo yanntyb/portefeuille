@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Domains\Asset\Models;
+namespace App\Domains\Asset\Models\Assets;
 
 use App\Domains\Asset\Database\Factories\CryptoFactory;
+use App\Domains\Asset\Models\AssetInfos\CryptoAssetInfo;
 use App\Infrastructure\Eloquent\Traits\HasDetailsRelation;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

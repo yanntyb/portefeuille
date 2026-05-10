@@ -4,7 +4,7 @@ namespace App\Domains\Asset\Infrastructure\Eloquent;
 
 use App\Domains\Asset\Contracts\AssetRepositoryInterface;
 use App\Domains\Asset\Enums\AssetType;
-use App\Domains\Asset\Models\Asset;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Portfolio\Services\AssetQueryService;
 use Illuminate\Database\Eloquent\Collection;

@@ -2,7 +2,7 @@
 
 namespace App\Domains\Analytics\Contracts;
 
-use App\Domains\Asset\Models\Asset;
+use App\Domains\Asset\Models\Assets\Asset;
 
 interface VolatilityCalculating
 {

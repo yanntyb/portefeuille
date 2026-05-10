@@ -3,8 +3,8 @@
 namespace App\Domains\Asset\Database\Factories;
 
 use App\Domains\Asset\Enums\AssetType;
-use App\Domains\Asset\Models\Savings;
-use App\Domains\Asset\Models\SavingsAssetInfo;
+use App\Domains\Asset\Models\AssetInfos\SavingsAssetInfo;
+use App\Domains\Asset\Models\Assets\Savings;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

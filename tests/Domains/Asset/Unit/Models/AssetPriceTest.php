@@ -1,7 +1,7 @@
 <?php
 
 use App\Domains\Asset\Models\AssetPrice;
-use App\Domains\Asset\Models\Stock;
+use App\Domains\Asset\Models\Assets\Stock;
 
 it('uses the asset_prices table', function (): void {
     expect((new AssetPrice)->getTable())->toBe('asset_prices');

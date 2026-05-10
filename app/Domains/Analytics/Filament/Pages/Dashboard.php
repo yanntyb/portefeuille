@@ -8,7 +8,6 @@ use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardPerformanceStatsOv
 use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardSectorAllocationChartWidget;
 use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardSecuritiesTableWidget;
 use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardValuationWidget;
-use App\Domains\Asset\Models\Asset;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;

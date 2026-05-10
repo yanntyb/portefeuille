@@ -2,7 +2,7 @@
 
 namespace App\Domains\Analytics\Filament\Widgets\Dashboard;
 
-use App\Domains\Asset\Models\Asset;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Portfolio\Services\DashboardDataProvider;
 use App\Infrastructure\Filament\Concerns\ComputesCorrelationMatrix;
 use Filament\Actions\Contracts\HasActions;

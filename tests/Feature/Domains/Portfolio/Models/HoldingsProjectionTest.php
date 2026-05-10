@@ -2,12 +2,12 @@
 
 namespace Tests\Feature\Domains\Portfolio\Models;
 
+use App\Domains\Asset\Models\Assets\Stock;
 use App\Domains\Portfolio\Enums\TransactionType;
 use App\Domains\Portfolio\Models\HoldingsProjection;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\User\Models\User;
-use App\Domains\Asset\Models\Stock;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

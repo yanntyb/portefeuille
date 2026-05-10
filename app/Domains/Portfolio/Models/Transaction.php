@@ -2,7 +2,7 @@
 
 namespace App\Domains\Portfolio\Models;
 
-use App\Domains\Asset\Models\Asset;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Portfolio\Enums\TransactionType;
 use App\Domains\Portfolio\Observers\TransactionObserver;
 use App\Domains\User\Models\User;

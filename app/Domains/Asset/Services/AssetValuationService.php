@@ -3,7 +3,7 @@
 namespace App\Domains\Asset\Services;
 
 use App\Domains\Asset\Contracts\AssetPriceRepositoryInterface;
-use App\Domains\Asset\Models\Asset;
+use App\Domains\Asset\Models\Assets\Asset;
 
 readonly class AssetValuationService
 {

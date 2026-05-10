@@ -1,6 +1,6 @@
 <?php
 
-use App\Domains\Asset\Models\Stock;
+use App\Domains\Asset\Models\Assets\Stock;
 use App\Domains\Portfolio\Filament\Resources\Transactions\Pages\CreateTransaction;
 use App\Domains\Portfolio\Filament\Resources\Transactions\Pages\EditTransaction;
 use App\Domains\Portfolio\Filament\Resources\Transactions\Pages\ListTransactions;

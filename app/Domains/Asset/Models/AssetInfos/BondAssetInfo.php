@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Domains\Asset\Models;
+namespace App\Domains\Asset\Models\AssetInfos;
 
-class StockAssetInfo extends AssetInfo
+class BondAssetInfo extends AssetInfo
 {
-    protected $table = 'stock_asset_infos';
+    protected $table = 'bond_asset_infos';
 
     protected $fillable = ['asset_id', 'isin', 'ticker'];
 

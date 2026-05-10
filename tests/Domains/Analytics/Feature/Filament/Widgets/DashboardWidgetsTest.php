@@ -4,8 +4,8 @@ use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardPerformanceStatsOv
 use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardSectorAllocationChartWidget;
 use App\Domains\Asset\Enums\Sector;
 use App\Domains\Asset\Models\AssetPrice;
+use App\Domains\Asset\Models\Assets\Stock;
 use App\Domains\Asset\Models\AssetSector;
-use App\Domains\Asset\Models\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\User\Models\User;
 use Illuminate\Support\Carbon;

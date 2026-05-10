@@ -1,13 +1,13 @@
 <?php
 
 use App\Domains\Asset\Enums\AssetType;
-use App\Domains\Asset\Models\Asset;
-use App\Domains\Asset\Models\Bond;
-use App\Domains\Asset\Models\Crypto;
-use App\Domains\Asset\Models\ETF;
-use App\Domains\Asset\Models\RealEstate;
-use App\Domains\Asset\Models\Savings;
-use App\Domains\Asset\Models\Stock;
+use App\Domains\Asset\Models\Assets\Asset;
+use App\Domains\Asset\Models\Assets\Bond;
+use App\Domains\Asset\Models\Assets\Crypto;
+use App\Domains\Asset\Models\Assets\ETF;
+use App\Domains\Asset\Models\Assets\RealEstate;
+use App\Domains\Asset\Models\Assets\Savings;
+use App\Domains\Asset\Models\Assets\Stock;
 
 it('Asset is not abstract', function () {
     $reflection = new ReflectionClass(Asset::class);

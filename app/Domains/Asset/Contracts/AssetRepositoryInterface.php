@@ -3,7 +3,7 @@
 namespace App\Domains\Asset\Contracts;
 
 use App\Domains\Asset\Enums\AssetType;
-use App\Domains\Asset\Models\Asset;
+use App\Domains\Asset\Models\Assets\Asset;
 use Illuminate\Database\Eloquent\Collection;
 
 interface AssetRepositoryInterface

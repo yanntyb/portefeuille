@@ -2,7 +2,7 @@
 
 use App\Domains\Analytics\Filament\Widgets\Dashboard\DashboardGainStatsOverview;
 use App\Domains\Asset\Models\AssetPrice;
-use App\Domains\Asset\Models\Stock;
+use App\Domains\Asset\Models\Assets\Stock;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\User\Models\User;
 

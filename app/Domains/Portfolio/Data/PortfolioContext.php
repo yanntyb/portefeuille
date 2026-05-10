@@ -2,7 +2,7 @@
 
 namespace App\Domains\Portfolio\Data;
 
-use App\Domains\Asset\Models\Asset;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Infrastructure\Data\TimeSeriesPoint;
 use Illuminate\Support\Collection;

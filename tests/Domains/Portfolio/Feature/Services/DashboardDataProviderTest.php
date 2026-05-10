@@ -1,10 +1,10 @@
 <?php
 
-use App\Domains\Asset\Models\Stock;
+use App\Domains\Asset\Models\AssetPrice;
+use App\Domains\Asset\Models\Assets\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Portfolio\Services\DashboardDataProvider;
-use App\Domains\Asset\Models\AssetPrice;
 
 it('returns securities with latest price for a given wallet', function () {
     $peaWallet = Wallet::factory()->pea()->create();

@@ -3,8 +3,8 @@
 namespace App\Domains\Asset\Database\Factories;
 
 use App\Domains\Asset\Enums\AssetType;
-use App\Domains\Asset\Models\Crypto;
-use App\Domains\Asset\Models\CryptoAssetInfo;
+use App\Domains\Asset\Models\AssetInfos\CryptoAssetInfo;
+use App\Domains\Asset\Models\Assets\Crypto;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

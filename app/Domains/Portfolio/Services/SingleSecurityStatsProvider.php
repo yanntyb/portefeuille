@@ -2,7 +2,7 @@
 
 namespace App\Domains\Portfolio\Services;
 
-use App\Domains\Asset\Models\Asset;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Portfolio\Contracts\TransactionRepositoryInterface;
 use App\Domains\Portfolio\Enums\TransactionType;
 use App\Infrastructure\Services\UserId;

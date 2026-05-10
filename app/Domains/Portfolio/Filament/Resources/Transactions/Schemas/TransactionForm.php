@@ -2,8 +2,8 @@
 
 namespace App\Domains\Portfolio\Filament\Resources\Transactions\Schemas;
 
-use App\Domains\Asset\Models\Asset;
 use App\Domains\Asset\Models\AssetPrice;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Portfolio\Enums\TransactionType;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;

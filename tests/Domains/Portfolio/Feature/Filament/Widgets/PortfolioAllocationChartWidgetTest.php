@@ -1,10 +1,10 @@
 <?php
 
 use App\Domains\Analytics\Filament\Widgets\Dashboard\PortfolioAllocationChartWidget;
-use App\Domains\Asset\Models\Stock;
+use App\Domains\Asset\Models\AssetPrice;
+use App\Domains\Asset\Models\Assets\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\User\Models\User;
 
 use function Pest\Livewire\livewire;
