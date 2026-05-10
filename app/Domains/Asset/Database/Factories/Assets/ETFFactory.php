@@ -24,10 +24,8 @@ class ETFFactory extends AssetFactory
         ];
     }
 
-    protected function createAssetInfo(Asset $asset): void
+    protected function getAssetInfoFactory()
     {
-        ETFAssetInfoFactory::new()->create([
-            'asset_id' => $asset->id,
-        ]);
+        return ETFAssetInfoFactory::new();
     }
 }

@@ -24,10 +24,8 @@ class StockFactory extends AssetFactory
         ];
     }
 
-    protected function createAssetInfo(Asset $asset): void
+    protected function getAssetInfoFactory()
     {
-        StockAssetInfoFactory::new()->create([
-            'asset_id' => $asset->id,
-        ]);
+        return StockAssetInfoFactory::new();
     }
 }

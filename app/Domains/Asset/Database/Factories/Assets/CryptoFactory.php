@@ -27,10 +27,8 @@ class CryptoFactory extends AssetFactory
         ];
     }
 
-    protected function createAssetInfo(Asset $asset): void
+    protected function getAssetInfoFactory()
     {
-        CryptoAssetInfoFactory::new()->create([
-            'asset_id' => $asset->id,
-        ]);
+        return CryptoAssetInfoFactory::new();
     }
 }

@@ -24,10 +24,8 @@ class RealEstateFactory extends AssetFactory
         ];
     }
 
-    protected function createAssetInfo(Asset $asset): void
+    protected function getAssetInfoFactory()
     {
-        RealEstateAssetInfoFactory::new()->create([
-            'asset_id' => $asset->id,
-        ]);
+        return RealEstateAssetInfoFactory::new();
     }
 }
