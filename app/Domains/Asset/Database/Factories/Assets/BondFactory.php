@@ -4,24 +4,16 @@ namespace App\Domains\Asset\Database\Factories\Assets;
 
 use App\Domains\Asset\Database\Factories\AssetInfos\BondAssetInfoFactory;
 use App\Domains\Asset\Enums\AssetType;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Asset\Models\Assets\Bond;
-use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Bond>
+ * @extends AssetFactory<Bond>
  */
-class BondFactory extends Factory
+class BondFactory extends AssetFactory
 {
+    /** @var class-string<Bond> */
     protected $model = Bond::class;
-
-    public function configure(): static
-    {
-        return $this->afterCreating(function (Bond $bond) {
-            BondAssetInfoFactory::new()->create([
-                'asset_id' => $bond->id,
-            ]);
-        });
-    }
 
     /** @return array<string, mixed> */
     public function definition(): array
@@ -30,5 +22,12 @@ class BondFactory extends Factory
             'name' => fake()->company().' Bond',
             'type' => AssetType::Bond->value,
         ];
+    }
+
+    protected function createAssetInfo(Asset $asset): void
+    {
+        BondAssetInfoFactory::new()->create([
+            'asset_id' => $asset->id,
+        ]);
     }
 }

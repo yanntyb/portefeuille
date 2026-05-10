@@ -4,24 +4,16 @@ namespace App\Domains\Asset\Database\Factories\Assets;
 
 use App\Domains\Asset\Database\Factories\AssetInfos\ETFAssetInfoFactory;
 use App\Domains\Asset\Enums\AssetType;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Asset\Models\Assets\ETF;
-use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<ETF>
+ * @extends AssetFactory<ETF>
  */
-class ETFFactory extends Factory
+class ETFFactory extends AssetFactory
 {
+    /** @var class-string<ETF> */
     protected $model = ETF::class;
-
-    public function configure(): static
-    {
-        return $this->afterCreating(function (ETF $etf) {
-            ETFAssetInfoFactory::new()->create([
-                'asset_id' => $etf->id,
-            ]);
-        });
-    }
 
     /** @return array<string, mixed> */
     public function definition(): array
@@ -30,5 +22,12 @@ class ETFFactory extends Factory
             'name' => fake()->company().' ETF',
             'type' => AssetType::ETF->value,
         ];
+    }
+
+    protected function createAssetInfo(Asset $asset): void
+    {
+        ETFAssetInfoFactory::new()->create([
+            'asset_id' => $asset->id,
+        ]);
     }
 }

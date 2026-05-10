@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Domains\Asset\Enums\Sector;
 use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\Asset\Models\AssetSector;
-use App\Domains\Asset\Models\Stock;
+use App\Domains\Asset\Models\Assets\Stock;
 use App\Domains\Portfolio\Enums\CurrencyModificationUnit;
 use App\Domains\Portfolio\Enums\FeeScope;
 use App\Domains\Portfolio\Models\Transaction;

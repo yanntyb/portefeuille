@@ -4,24 +4,16 @@ namespace App\Domains\Asset\Database\Factories\Assets;
 
 use App\Domains\Asset\Database\Factories\AssetInfos\SavingsAssetInfoFactory;
 use App\Domains\Asset\Enums\AssetType;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Asset\Models\Assets\Savings;
-use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Savings>
+ * @extends AssetFactory<Savings>
  */
-class SavingsFactory extends Factory
+class SavingsFactory extends AssetFactory
 {
+    /** @var class-string<Savings> */
     protected $model = Savings::class;
-
-    public function configure(): static
-    {
-        return $this->afterCreating(function (Savings $savings) {
-            SavingsAssetInfoFactory::new()->create([
-                'asset_id' => $savings->id,
-            ]);
-        });
-    }
 
     /** @return array<string, mixed> */
     public function definition(): array
@@ -30,5 +22,12 @@ class SavingsFactory extends Factory
             'name' => fake()->company().' Account',
             'type' => AssetType::Savings->value,
         ];
+    }
+
+    protected function createAssetInfo(Asset $asset): void
+    {
+        SavingsAssetInfoFactory::new()->create([
+            'asset_id' => $asset->id,
+        ]);
     }
 }

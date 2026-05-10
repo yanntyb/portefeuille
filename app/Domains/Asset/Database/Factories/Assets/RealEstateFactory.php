@@ -4,24 +4,16 @@ namespace App\Domains\Asset\Database\Factories\Assets;
 
 use App\Domains\Asset\Database\Factories\AssetInfos\RealEstateAssetInfoFactory;
 use App\Domains\Asset\Enums\AssetType;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Asset\Models\Assets\RealEstate;
-use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<RealEstate>
+ * @extends AssetFactory<RealEstate>
  */
-class RealEstateFactory extends Factory
+class RealEstateFactory extends AssetFactory
 {
+    /** @var class-string<RealEstate> */
     protected $model = RealEstate::class;
-
-    public function configure(): static
-    {
-        return $this->afterCreating(function (RealEstate $realEstate) {
-            RealEstateAssetInfoFactory::new()->create([
-                'asset_id' => $realEstate->id,
-            ]);
-        });
-    }
 
     /** @return array<string, mixed> */
     public function definition(): array
@@ -30,5 +22,12 @@ class RealEstateFactory extends Factory
             'name' => fake()->city().' Property',
             'type' => AssetType::RealEstate->value,
         ];
+    }
+
+    protected function createAssetInfo(Asset $asset): void
+    {
+        RealEstateAssetInfoFactory::new()->create([
+            'asset_id' => $asset->id,
+        ]);
     }
 }

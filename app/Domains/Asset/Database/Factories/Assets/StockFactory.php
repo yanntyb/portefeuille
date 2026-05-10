@@ -4,24 +4,16 @@ namespace App\Domains\Asset\Database\Factories\Assets;
 
 use App\Domains\Asset\Database\Factories\AssetInfos\StockAssetInfoFactory;
 use App\Domains\Asset\Enums\AssetType;
+use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Asset\Models\Assets\Stock;
-use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Stock>
+ * @extends AssetFactory<Stock>
  */
-class StockFactory extends Factory
+class StockFactory extends AssetFactory
 {
+    /** @var class-string<Stock> */
     protected $model = Stock::class;
-
-    public function configure(): static
-    {
-        return $this->afterCreating(function (Stock $stock) {
-            StockAssetInfoFactory::new()->create([
-                'asset_id' => $stock->id,
-            ]);
-        });
-    }
 
     /** @return array<string, mixed> */
     public function definition(): array
@@ -30,5 +22,12 @@ class StockFactory extends Factory
             'name' => fake()->company().' Stock',
             'type' => AssetType::Stock,
         ];
+    }
+
+    protected function createAssetInfo(Asset $asset): void
+    {
+        StockAssetInfoFactory::new()->create([
+            'asset_id' => $asset->id,
+        ]);
     }
 }
