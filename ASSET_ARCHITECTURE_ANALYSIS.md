@@ -46,10 +46,45 @@ savings_asset_infos    → asset_id (FK)  [no fields except FK]
 
 ### Modèles Eloquent
 
-Trait générique `HasDetailsRelation` avec abstract methods pour flexibilité :
+**Hiérarchie des classes info :**
 
 ```php
-// app/Infrastructure/Eloquent/Traits/HasDetailsRelation.php
+// AssetInfo base class (abstract)
+abstract class AssetInfo extends Model
+{
+    protected $table; // chaque sous-classe la définit (stock_asset_infos, etf_asset_infos, etc)
+    
+    public function asset(): BelongsTo { return $this->belongsTo(Asset::class, 'asset_id'); }
+    
+    // Abstract getters pour forcer implémentation
+    abstract public function isin(): ?string;
+    abstract public function ticker(): ?string;
+}
+
+// Sous-classes info — chacune porte ses colonnes
+class StockAssetInfo extends AssetInfo
+{
+    protected $table = 'stock_asset_infos';
+    protected $fillable = ['asset_id', 'isin', 'ticker'];
+    
+    public function isin(): ?string { return $this->attributes['isin'] ?? null; }
+    public function ticker(): ?string { return $this->attributes['ticker'] ?? null; }
+}
+
+class CryptoAssetInfo extends AssetInfo
+{
+    protected $table = 'crypto_asset_infos';
+    protected $fillable = ['asset_id', 'ticker'];
+    
+    public function isin(): ?string { return null; }  // Crypto n'a pas d'isin
+    public function ticker(): ?string { return $this->attributes['ticker'] ?? null; }
+}
+```
+
+**Trait + modèles Asset :**
+
+```php
+// HasDetailsRelation — tous les assets utilisent le trait
 trait HasDetailsRelation
 {
     abstract protected function getDetailsModel(): string;
@@ -59,29 +94,29 @@ trait HasDetailsRelation
         return $this->hasOne($this->getDetailsModel(), 'asset_id');
     }
 }
-```
 
-Chaque sous-classe implémente :
-
-```php
 // Stock.php
-use HasDetailsRelation;
-
-protected function getDetailsModel(): string { return StockAssetInfo::class; }
-
-public function getIsinAttribute(): ?string { return $this->details?->isin; }
-public function getTickerAttribute(): ?string { return $this->details?->ticker; }
-
-// ETF.php
-protected function getDetailsModel(): string { return ETFAssetInfo::class; }
-// ... idem accesseurs
+class Stock extends Asset
+{
+    use HasDetailsRelation;
+    
+    protected function getDetailsModel(): string { return StockAssetInfo::class; }
+    
+    public function getIsinAttribute(): ?string { return $this->details?->isin(); }
+    public function getTickerAttribute(): ?string { return $this->details?->ticker(); }
+}
 
 // Crypto.php
-protected function getDetailsModel(): string { return CryptoAssetInfo::class; }
-public function getTickerAttribute(): ?string { return $this->details?->ticker; }
+class Crypto extends Asset
+{
+    use HasDetailsRelation;
+    
+    protected function getDetailsModel(): string { return CryptoAssetInfo::class; }
+    
+    public function getTickerAttribute(): ?string { return $this->details?->ticker(); }
+    // isin() retourne null via la classe info
+}
 ```
-
-DB constraints appliquent les règles ; accesseurs les exposent.
 
 ---
 
