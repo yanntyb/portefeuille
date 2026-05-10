@@ -20,9 +20,7 @@ class CryptoFactory extends Factory
         $name = fake()->randomElement($cryptos);
 
         return [
-            'isin' => fake()->numerify('###############'),
             'name' => $name,
-            'ticker' => fake()->lexify('????'),
             'type' => AssetType::Crypto->value,
         ];
     }

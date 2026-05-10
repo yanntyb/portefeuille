@@ -17,9 +17,7 @@ class SavingsFactory extends Factory
     public function definition(): array
     {
         return [
-            'isin' => fake()->numerify('###############'),
             'name' => fake()->company().' Account',
-            'ticker' => 'SAV',
             'type' => AssetType::Savings->value,
         ];
     }

@@ -17,9 +17,7 @@ class RealEstateFactory extends Factory
     public function definition(): array
     {
         return [
-            'isin' => fake()->numerify('###############'),
             'name' => fake()->city().' Property',
-            'ticker' => fake()->lexify('????'),
             'type' => AssetType::RealEstate->value,
         ];
     }
