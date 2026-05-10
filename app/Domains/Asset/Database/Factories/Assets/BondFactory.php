@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\Asset\Database\Factories;
+namespace App\Domains\Asset\Database\Factories\Assets;
 
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Models\AssetInfos\BondAssetInfo;
