@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property-read \Illuminate\Support\Carbon $created_at
  * @property-read \Illuminate\Support\Carbon $updated_at
  */
-abstract class Asset extends Model
+class Asset extends Model
 {
     protected $table = 'securities';
 
@@ -85,15 +85,5 @@ abstract class Asset extends Model
     {
         return resolve(AssetValuationService::class)
             ->computeCurrentValuation($this);
-    }
-
-    /**
-     * @param  array<string, mixed>  $attributes
-     */
-    public static function create(array $attributes = []): static
-    {
-        throw new \BadMethodCallException(
-            'Cannot create abstract Asset directly. Use specific subclass (Stock, ETF, etc) or ensure type is set for STI hydration.'
-        );
     }
 }

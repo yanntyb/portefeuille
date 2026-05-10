@@ -2,15 +2,8 @@
 
 namespace App\Domains\Portfolio\Filament\Resources\Transactions\Schemas;
 
-use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\Asset\Models\Assets\Asset;
-use App\Domains\Asset\Models\Assets\Bond;
-use App\Domains\Asset\Models\Assets\Crypto;
-use App\Domains\Asset\Models\Assets\ETF;
-use App\Domains\Asset\Models\Assets\RealEstate;
-use App\Domains\Asset\Models\Assets\Savings;
-use App\Domains\Asset\Models\Assets\Stock;
 use App\Domains\Portfolio\Enums\TransactionType;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
@@ -106,13 +99,10 @@ class TransactionForm
                     ->live()
                     ->afterStateUpdated(fn (Get $get, Set $set) => self::fillUnitPrice($get, $set))
                     ->createOptionForm([
-                        ToggleButtons::make('type')
-                            ->label('Type')
-                            ->options(AssetType::class)
-                            ->required()
-                            ->inline(),
                         TextInput::make('isin')
                             ->label('ISIN')
+                            ->required()
+                            ->unique()
                             ->maxLength(12),
                         TextInput::make('name')
                             ->label('Nom')
@@ -120,19 +110,7 @@ class TransactionForm
                         TextInput::make('ticker')
                             ->label('Ticker'),
                     ])
-                    ->createOptionUsing(function (array $data): int {
-                        $class = match ($data['type'] ?? null) {
-                            AssetType::Stock->value => Stock::class,
-                            AssetType::ETF->value => ETF::class,
-                            AssetType::Bond->value => Bond::class,
-                            AssetType::Crypto->value => Crypto::class,
-                            AssetType::RealEstate->value => RealEstate::class,
-                            AssetType::Savings->value => Savings::class,
-                            default => throw new \InvalidArgumentException('Invalid asset type'),
-                        };
-
-                        return $class::create($data)->id;
-                    })
+                    ->createOptionUsing(fn (array $data): int => Asset::create($data)->id)
                     ->afterStateHydrated(function (Get $get, Set $set) use ($assetId): void {
                         if ($assetId !== null) {
                             self::fillUnitPrice($get, $set);
