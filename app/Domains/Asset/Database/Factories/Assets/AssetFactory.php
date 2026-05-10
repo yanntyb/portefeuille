@@ -28,23 +28,12 @@ abstract class AssetFactory extends Factory
     abstract protected function infos();
 
     /**
-     * @param int|\Closure $count Count or closure to configure factory
-     * @param \Closure|null $configure Optional closure to configure factory
+     * @param callable(AssetPriceFactory): AssetPriceFactory $configure Closure to configure price factory
      */
-    public function withPrices(int|callable $count = 1, ?callable $configure = null): static
+    public function withPrices(callable $configure): static
     {
-        return $this->afterCreating(function (Asset $asset) use ($count, $configure) {
-            $factory = AssetPriceFactory::new();
-
-            if (is_callable($count)) {
-                $factory = $count($factory) ?? $factory;
-            } else {
-                $factory = $factory->count($count);
-            }
-
-            if ($configure !== null) {
-                $factory = $configure($factory) ?? $factory;
-            }
+        return $this->afterCreating(function (Asset $asset) use ($configure) {
+            $factory = $configure(AssetPriceFactory::new());
 
             $factory->create([
                 'asset_id' => $asset->id,

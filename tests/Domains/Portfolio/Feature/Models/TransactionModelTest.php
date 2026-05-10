@@ -1,11 +1,12 @@
 <?php
 
+use App\Domains\Asset\Models\Assets\Stock;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\User\Models\User;
 
 it('belongs to an asset', function () {
-    $stock = \App\Domains\Asset\Models\Stock::factory()->create();
+    $stock = Stock::factory()->create();
     $transaction = Transaction::factory()->pea()->create(['asset_id' => $stock->id]);
 
     expect($transaction->asset->id)->toBe($stock->id);
