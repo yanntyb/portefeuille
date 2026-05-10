@@ -4,8 +4,9 @@ use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\Asset\Models\Assets\Stock;
 
 it('stock loads prices relationship', function () {
-    $security = Stock::factory()->create();
-    AssetPrice::factory(5)->create(['asset_id' => $security->id]);
+    $security = Stock::factory()
+        ->withPrices(fn($f) => $f->count(5))
+        ->create();
 
     $asset = Stock::find($security->id);
 

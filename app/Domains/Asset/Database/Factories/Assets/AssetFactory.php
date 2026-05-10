@@ -15,11 +15,7 @@ abstract class AssetFactory extends Factory
 
     public function configure(): static
     {
-        return $this->afterCreating(function (Asset $asset) {
-            $this->infos()->create([
-                'asset_id' => $asset->id,
-            ]);
-        });
+        return $this;
     }
 
     /**
