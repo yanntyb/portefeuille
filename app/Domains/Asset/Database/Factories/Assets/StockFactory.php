@@ -24,7 +24,7 @@ class StockFactory extends AssetFactory
         ];
     }
 
-    protected function getAssetInfoFactory()
+    protected function infos()
     {
         return StockAssetInfoFactory::new();
     }

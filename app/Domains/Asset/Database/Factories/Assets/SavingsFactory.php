@@ -24,7 +24,7 @@ class SavingsFactory extends AssetFactory
         ];
     }
 
-    protected function getAssetInfoFactory()
+    protected function infos()
     {
         return SavingsAssetInfoFactory::new();
     }

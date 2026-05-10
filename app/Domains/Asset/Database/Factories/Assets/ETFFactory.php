@@ -24,7 +24,7 @@ class ETFFactory extends AssetFactory
         ];
     }
 
-    protected function getAssetInfoFactory()
+    protected function infos()
     {
         return ETFAssetInfoFactory::new();
     }

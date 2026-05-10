@@ -24,7 +24,7 @@ class BondFactory extends AssetFactory
         ];
     }
 
-    protected function getAssetInfoFactory()
+    protected function infos()
     {
         return BondAssetInfoFactory::new();
     }

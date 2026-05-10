@@ -27,7 +27,7 @@ class CryptoFactory extends AssetFactory
         ];
     }
 
-    protected function getAssetInfoFactory()
+    protected function infos()
     {
         return CryptoAssetInfoFactory::new();
     }
