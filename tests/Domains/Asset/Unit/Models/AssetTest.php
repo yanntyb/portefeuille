@@ -1,7 +1,6 @@
 <?php
 
 use App\Domains\Asset\Database\Factories\AssetPriceFactory;
-use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\Asset\Models\Assets\Stock;
 
 it('stock loads prices relationship', function () {
@@ -15,21 +14,17 @@ it('stock loads prices relationship', function () {
 });
 
 it('stock calculates current price from latest price record', function () {
-    $security = Stock::factory()->create();
+    $asset = Stock::factory()
+        ->withPrices(fn(AssetPriceFactory $f) => $f->state([
+            'date' => '2026-05-06',
+            'close' => 100.0,
+        ]))
+        ->withPrices(fn(AssetPriceFactory $f) => $f->state([
+            'date' => '2026-05-08',
+            'close' => 125.5,
+        ]))
+        ->create();
 
-    AssetPrice::factory()->create([
-        'asset_id' => $security->id,
-        'date' => '2026-05-06',
-        'close' => 100.0,
-    ]);
-
-    AssetPrice::factory()->create([
-        'asset_id' => $security->id,
-        'date' => '2026-05-08',
-        'close' => 125.5,
-    ]);
-
-    $asset = Stock::find($security->id);
     $currentPrice = $asset->prices()->latest('date')->value('close');
 
     expect($currentPrice)->toBe('125.5000');
