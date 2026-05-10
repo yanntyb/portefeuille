@@ -24,8 +24,14 @@ class StockFactory extends AssetFactory
         ];
     }
 
-    protected function infos()
+    protected function infos(?callable $configure = null)
     {
-        return StockAssetInfoFactory::new();
+        $factory = StockAssetInfoFactory::new();
+
+        if ($configure !== null) {
+            $factory = $configure($factory) ?? $factory;
+        }
+
+        return $factory;
     }
 }

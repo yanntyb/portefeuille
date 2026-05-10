@@ -28,6 +28,20 @@ abstract class AssetFactory extends Factory
     abstract protected function infos();
 
     /**
+     * @param callable(Factory): Factory $configure Closure to configure info factory
+     */
+    public function withInfos(callable $configure): static
+    {
+        return $this->afterCreating(function (Asset $asset) use ($configure) {
+            $factory = $configure($this->infos());
+
+            $factory->create([
+                'asset_id' => $asset->id,
+            ]);
+        });
+    }
+
+    /**
      * @param callable(AssetPriceFactory): AssetPriceFactory $configure Closure to configure price factory
      */
     public function withPrices(callable $configure): static
