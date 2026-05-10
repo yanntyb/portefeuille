@@ -1,7 +1,7 @@
 <?php
 
 use App\Domains\Asset\Contracts\AssetPriceRepositoryInterface;
-use App\Domains\Asset\Database\Factories\AssetPriceFactory;
+use App\Domains\Asset\Factories\AssetPriceFactory;
 use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\Asset\Models\Assets\Stock;
 use Carbon\Carbon;

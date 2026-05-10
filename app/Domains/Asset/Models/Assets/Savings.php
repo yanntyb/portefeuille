@@ -2,7 +2,7 @@
 
 namespace App\Domains\Asset\Models\Assets;
 
-use App\Domains\Asset\Database\Factories\Assets\SavingsFactory;
+use App\Domains\Asset\Factories\Assets\SavingsFactory;
 use App\Domains\Asset\Models\AssetInfos\SavingsAssetInfo;
 use App\Infrastructure\Eloquent\Traits\HasDetailsRelation;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;

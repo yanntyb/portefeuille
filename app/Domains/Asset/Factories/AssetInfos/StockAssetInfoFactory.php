@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Domains\Asset\Database\Factories\AssetInfos;
+namespace App\Domains\Asset\Factories\AssetInfos;
 
-use App\Domains\Asset\Models\AssetInfos\ETFAssetInfo;
+use App\Domains\Asset\Models\AssetInfos\StockAssetInfo;
 
 /**
- * @extends AssetInfoFactory<ETFAssetInfo>
+ * @extends AssetInfoFactory<StockAssetInfo>
  */
-class ETFAssetInfoFactory extends AssetInfoFactory
+class StockAssetInfoFactory extends AssetInfoFactory
 {
-    /** @var class-string<ETFAssetInfo> */
-    protected $model = ETFAssetInfo::class;
+    /** @var class-string<StockAssetInfo> */
+    protected $model = StockAssetInfo::class;
 
     /** @return array<string, mixed> */
     public function definition(): array
@@ -21,7 +21,7 @@ class ETFAssetInfoFactory extends AssetInfoFactory
 
         return [
             'isin' => $prefix.$digits,
-            'ticker' => fake()->lexify('????').'.PA',
+            'ticker' => fake()->randomAscii(),
         ];
     }
 }

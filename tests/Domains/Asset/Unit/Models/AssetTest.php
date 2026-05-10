@@ -1,6 +1,6 @@
 <?php
 
-use App\Domains\Asset\Database\Factories\AssetPriceFactory;
+use App\Domains\Asset\Factories\AssetPriceFactory;
 use App\Domains\Asset\Models\Assets\Stock;
 
 it('stock loads prices relationship', function () {

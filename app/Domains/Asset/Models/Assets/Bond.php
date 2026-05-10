@@ -2,7 +2,7 @@
 
 namespace App\Domains\Asset\Models\Assets;
 
-use App\Domains\Asset\Database\Factories\Assets\BondFactory;
+use App\Domains\Asset\Factories\Assets\BondFactory;
 use App\Domains\Asset\Models\AssetInfos\BondAssetInfo;
 use App\Infrastructure\Eloquent\Traits\HasDetailsRelation;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;

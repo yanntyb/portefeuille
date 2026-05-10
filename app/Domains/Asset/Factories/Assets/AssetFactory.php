@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Domains\Asset\Database\Factories\Assets;
+namespace App\Domains\Asset\Factories\Assets;
 
-use App\Domains\Asset\Database\Factories\AssetPriceFactory;
+use App\Domains\Asset\Factories\AssetPriceFactory;
 use App\Domains\Asset\Models\Assets\Asset;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

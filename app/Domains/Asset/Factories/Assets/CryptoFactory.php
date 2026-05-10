@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Domains\Asset\Database\Factories\Assets;
+namespace App\Domains\Asset\Factories\Assets;
 
-use App\Domains\Asset\Database\Factories\AssetInfos\CryptoAssetInfoFactory;
+use App\Domains\Asset\Factories\AssetInfos\CryptoAssetInfoFactory;
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Asset\Models\Assets\Crypto;

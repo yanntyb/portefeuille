@@ -2,7 +2,7 @@
 
 namespace App\Domains\Asset\Models\Assets;
 
-use App\Domains\Asset\Database\Factories\Assets\StockFactory;
+use App\Domains\Asset\Factories\Assets\StockFactory;
 use App\Domains\Asset\Models\AssetInfos\StockAssetInfo;
 use App\Domains\Asset\Models\AssetSector;
 use App\Infrastructure\Eloquent\Traits\HasDetailsRelation;

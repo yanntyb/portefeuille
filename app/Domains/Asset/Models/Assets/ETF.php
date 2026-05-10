@@ -2,7 +2,7 @@
 
 namespace App\Domains\Asset\Models\Assets;
 
-use App\Domains\Asset\Database\Factories\Assets\ETFFactory;
+use App\Domains\Asset\Factories\Assets\ETFFactory;
 use App\Domains\Asset\Models\AssetInfos\ETFAssetInfo;
 use App\Domains\Asset\Models\AssetSector;
 use App\Infrastructure\Eloquent\Traits\HasDetailsRelation;

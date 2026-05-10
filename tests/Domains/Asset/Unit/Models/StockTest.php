@@ -1,6 +1,6 @@
 <?php
 
-use App\Domains\Asset\Database\Factories\AssetInfos\StockAssetInfoFactory;
+use App\Domains\Asset\Factories\AssetInfos\StockAssetInfoFactory;
 use App\Domains\Asset\Models\AssetInfos\StockAssetInfo;
 use App\Domains\Asset\Models\Assets\Stock;
 

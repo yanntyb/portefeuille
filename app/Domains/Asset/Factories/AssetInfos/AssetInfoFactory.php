@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\Asset\Database\Factories\AssetInfos;
+namespace App\Domains\Asset\Factories\AssetInfos;
 
 use App\Domains\Asset\Models\AssetInfos\AssetInfo;
 use Illuminate\Database\Eloquent\Factories\Factory;
