@@ -64,19 +64,34 @@ public function getIsinAttribute(): ?string
 
 ---
 
-## Portée de la migration
+## Cleanup pre-CTI (Commit 98a8c6f)
 
-| Catégorie | Fichiers | Points de contact |
-|---|---|---|
-| Modèles (`$fillable`, PHPDoc) | 3 | 6 |
-| Factories | 6 | 13 |
-| Adapters (YahooFinanceAdapter) | 1 | 4 |
-| Filament Portfolio | 2 | 6 |
-| Filament Analytics | 2 | 4 |
-| Migrations | 2 existantes + 6 nouvelles | — |
-| Seeders | 2 | 16 |
-| Tests | 1 | 4 |
-| **Total** | **19** | **~56** |
+Réductions effectuées avant la migration CTI pour simplifier le chantier :
+
+- ✅ Suppression `NuclearSecuritiesSeeder` (imports cassés, jamais enregistré)
+- ✅ Migration: `isin` `NOT NULL` → `nullable` + drop `UNIQUE`
+- ✅ Factories Crypto, RealEstate, Savings : suppression `isin`/`ticker`
+
+**Résultat :** -4 fichiers, -14 contact points
+
+---
+
+## Portée de la migration CTI (post-cleanup)
+
+**Avant cleanup :** 19 fichiers, ~56 contact points  
+**Après cleanup :** 15 fichiers, ~39 contact points  
+**Gain :** -4 fichiers, -17 contact points
+
+### Détail par catégorie
+
+- **Modèles** (`$fillable`, PHPDoc) : 3 fichiers → 6 pts
+- **Factories** : 6 fichiers → 3 fichiers → 7 pts (Crypto/RealEstate/Savings exclus)
+- **Adapters** (YahooFinanceAdapter) : 1 fichier → 4 pts
+- **Filament Portfolio** : 2 fichiers → 6 pts
+- **Filament Analytics** : 2 fichiers → 4 pts
+- **Migrations** : 2 existantes + 6 nouvelles
+- **Seeders** : 2 fichiers → 1 fichier → ~8 pts (NuclearSecuritiesSeeder supprimé)
+- **Tests** : 1 fichier → 4 pts
 
 ### Points critiques
 
