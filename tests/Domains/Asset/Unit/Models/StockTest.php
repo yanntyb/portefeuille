@@ -1,11 +1,12 @@
 <?php
 
+use App\Domains\Asset\Database\Factories\AssetInfos\StockAssetInfoFactory;
 use App\Domains\Asset\Models\AssetInfos\StockAssetInfo;
 use App\Domains\Asset\Models\Assets\Stock;
 
 it('creates stock from security', function () {
     $security = Stock::factory()
-        ->withInfos(fn($f) => $f->state([
+        ->withInfos(fn(StockAssetInfoFactory $f) => $f->state([
             'ticker' => 'AAPL',
             'isin' => 'US0378331005',
         ]))
