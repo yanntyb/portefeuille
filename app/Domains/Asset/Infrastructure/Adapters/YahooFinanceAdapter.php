@@ -7,11 +7,13 @@ use App\Domains\Asset\Enums\Sector;
 use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Asset\Ports\AssetPriceProviderPort;
 use App\Domains\Asset\Ports\AssetProviderPort;
+use App\Domains\Asset\Ports\AssetSectorProviderPort;
 use App\Domains\Asset\ValueObjects\AssetData;
+use App\Domains\Asset\ValueObjects\SectorAllocation;
 use App\Infrastructure\Support\PythonScriptCaller;
 use Illuminate\Support\Collection;
 
-class YahooFinanceAdapter implements AssetPriceProviderPort, AssetProviderPort
+class YahooFinanceAdapter implements AssetPriceProviderPort, AssetProviderPort, AssetSectorProviderPort
 {
     public function getCurrentPrice(int $assetId): ?float
     {
@@ -89,15 +91,14 @@ class YahooFinanceAdapter implements AssetPriceProviderPort, AssetProviderPort
                 name: $hit['name'],
                 type: $type,
                 exchange: $hit['exchange'] ?? null,
-                sectors: $this->resolveSectors($symbol),
+                sectors: $this->getSectorAllocations($symbol, $type),
             );
         } catch (\Exception) {
             return null;
         }
     }
 
-    /** @return array<int, Sector> */
-    private function resolveSectors(string $symbol): array
+    public function getSectorAllocations(string $symbol, AssetType $type): array
     {
         try {
             $result = PythonScriptCaller::call('fetch_sectors.py', ['ticker' => $symbol]);
@@ -106,9 +107,15 @@ class YahooFinanceAdapter implements AssetPriceProviderPort, AssetProviderPort
                 return [];
             }
 
-            return array_values(array_filter(
-                array_map(fn (string $key) => Sector::tryFrom($key), array_keys($result['data']))
-            ));
+            $allocations = [];
+            foreach ($result['data'] as $key => $weight) {
+                $sector = Sector::tryFrom($key);
+                if ($sector !== null) {
+                    $allocations[] = new SectorAllocation($sector, (float) $weight);
+                }
+            }
+
+            return $allocations;
         } catch (\Exception) {
             return [];
         }
