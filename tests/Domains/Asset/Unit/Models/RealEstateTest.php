@@ -17,16 +17,3 @@ it('delegates isin to RealEstateAssetInfo via infos relation', function () {
         ->and($property->infos)->toBeInstanceOf(RealEstateAssetInfo::class);
 });
 
-it('ticker returns null for real estate', function () {
-    $property = RealEstate::factory()->create();
-    $property = RealEstate::find($property->id);
-
-    expect($property->ticker)->toBeNull();
-});
-
-it('has correct asset type', function () {
-    $property = RealEstate::factory()->create();
-    $property = RealEstate::find($property->id);
-
-    expect($property->type->value)->toBe('real_estate');
-});

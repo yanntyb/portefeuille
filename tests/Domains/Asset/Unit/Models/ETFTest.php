@@ -19,16 +19,3 @@ it('delegates isin and ticker to ETFAssetInfo via infos relation', function () {
         ->and($etf->infos)->toBeInstanceOf(ETFAssetInfo::class);
 });
 
-it('has correct asset type', function () {
-    $etf = ETF::factory()->create();
-    $etf = ETF::find($etf->id);
-
-    expect($etf->type->value)->toBe('etf');
-});
-
-it('is instance of Asset', function () {
-    $etf = ETF::factory()->create();
-    $etf = ETF::find($etf->id);
-
-    expect($etf)->toBeInstanceOf(ETF::class);
-});

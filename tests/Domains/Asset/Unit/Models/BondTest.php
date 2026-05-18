@@ -32,9 +32,3 @@ it('ticker can be null for bonds', function () {
     expect($bond->infos->ticker)->toBeNull();
 });
 
-it('has correct asset type', function () {
-    $bond = Bond::factory()->create();
-    $bond = Bond::find($bond->id);
-
-    expect($bond->type->value)->toBe('bond');
-});

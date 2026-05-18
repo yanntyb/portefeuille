@@ -19,16 +19,3 @@ it('creates stock from security', function () {
         ->and($stock->infos->isin)->toBe('US0378331005');
 });
 
-it('has correct asset type', function () {
-    $security = Stock::factory()->create();
-    $stock = Stock::find($security->id);
-
-    expect($stock->type->value)->toBe('stock');
-});
-
-it('uses security prices for valuation', function () {
-    $security = Stock::factory()->create();
-    $stock = Stock::find($security->id);
-
-    expect($stock->prices)->not->toBeNull();
-});

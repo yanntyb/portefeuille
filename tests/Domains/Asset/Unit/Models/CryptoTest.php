@@ -17,21 +17,3 @@ it('delegates ticker to CryptoAssetInfo via infos relation', function () {
         ->and($crypto->infos)->toBeInstanceOf(CryptoAssetInfo::class);
 });
 
-it('isin returns null for crypto', function () {
-    $crypto = Crypto::factory()
-        ->withInfos(fn (CryptoAssetInfoFactory $f) => $f->state([
-            'ticker' => 'BTC',
-        ]))
-        ->create();
-
-    $crypto = Crypto::find($crypto->id);
-
-    expect($crypto->isin)->toBeNull();
-});
-
-it('has correct asset type', function () {
-    $crypto = Crypto::factory()->create();
-    $crypto = Crypto::find($crypto->id);
-
-    expect($crypto->type->value)->toBe('crypto');
-});

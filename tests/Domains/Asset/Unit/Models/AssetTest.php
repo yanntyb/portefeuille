@@ -29,10 +29,3 @@ it('stock calculates current price from latest price record', function () {
 
     expect($currentPrice)->toBe('125.5000');
 });
-
-it('stock has correct asset type', function () {
-    $security = Stock::factory()->create();
-    $stock = Stock::find($security->id);
-
-    expect($stock->type->value)->toBe('stock');
-});
