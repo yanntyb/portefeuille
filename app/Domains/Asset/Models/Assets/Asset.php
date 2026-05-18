@@ -20,6 +20,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class Asset extends Model
 {
+    protected $table = 'assets';
+
     /** @var list<string> */
     protected $fillable = [
         'name',
