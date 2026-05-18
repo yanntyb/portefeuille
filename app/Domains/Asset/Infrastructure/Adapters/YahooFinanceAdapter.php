@@ -3,12 +3,15 @@
 namespace App\Domains\Asset\Infrastructure\Adapters;
 
 use App\Domains\Asset\Enums\AssetType;
+use App\Domains\Asset\Enums\Sector;
 use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Asset\Ports\AssetPriceProviderPort;
+use App\Domains\Asset\Ports\AssetProviderPort;
+use App\Domains\Asset\ValueObjects\AssetData;
 use App\Infrastructure\Support\PythonScriptCaller;
 use Illuminate\Support\Collection;
 
-class YahooFinanceAdapter implements AssetPriceProviderPort
+class YahooFinanceAdapter implements AssetPriceProviderPort, AssetProviderPort
 {
     public function getCurrentPrice(int $assetId): ?float
     {
@@ -68,5 +71,46 @@ class YahooFinanceAdapter implements AssetPriceProviderPort
     public function supports(AssetType $type): bool
     {
         return in_array($type, [AssetType::Stock, AssetType::ETF]);
+    }
+
+    public function findBySymbol(string $symbol, AssetType $type): ?AssetData
+    {
+        try {
+            $search = PythonScriptCaller::call('search_ticker.py', ['query' => $symbol]);
+
+            if ($search['status'] !== 'ok' || empty($search['data'])) {
+                return null;
+            }
+
+            $hit = $search['data'][0];
+
+            return new AssetData(
+                symbol: $hit['symbol'],
+                name: $hit['name'],
+                type: $type,
+                exchange: $hit['exchange'] ?? null,
+                sectors: $this->resolveSectors($symbol),
+            );
+        } catch (\Exception) {
+            return null;
+        }
+    }
+
+    /** @return array<int, Sector> */
+    private function resolveSectors(string $symbol): array
+    {
+        try {
+            $result = PythonScriptCaller::call('fetch_sectors.py', ['ticker' => $symbol]);
+
+            if ($result['status'] !== 'ok' || empty($result['data'])) {
+                return [];
+            }
+
+            return array_values(array_filter(
+                array_map(fn (string $key) => Sector::tryFrom($key), array_keys($result['data']))
+            ));
+        } catch (\Exception) {
+            return [];
+        }
     }
 }
