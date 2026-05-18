@@ -13,7 +13,7 @@ interface AssetPriceRepositoryInterface
     public function findForAssetOnDate(int $assetId, Carbon $date): ?AssetPrice;
 
     /** @return Collection<int, AssetPrice> */
-    public function forAssetSince(int $assetId, Carbon $since): Collection;
+    public function forAssetSince(int $id, Carbon $since): Collection;
 
     public function save(AssetPrice $price): void;
 

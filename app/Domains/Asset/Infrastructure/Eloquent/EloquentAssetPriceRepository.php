@@ -25,10 +25,10 @@ class EloquentAssetPriceRepository implements AssetPriceRepositoryInterface
             ->first();
     }
 
-    public function forAssetSince(int $assetId, Carbon $since): Collection
+    public function forAssetSince(int $id, Carbon $since): Collection
     {
         return AssetPrice::query()
-            ->where('asset_id', $assetId)
+            ->where('asset_id', $id)
             ->where('date', '>=', $since)
             ->orderBy('date')
             ->get();
