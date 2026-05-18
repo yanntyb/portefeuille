@@ -48,11 +48,11 @@ class EloquentAssetPriceRepository implements AssetPriceRepositoryInterface
             ->get();
     }
 
-    public function filterAssetIdsHavingPriceSince(array $assetIds, string $sinceDate): array
+    public function filterAssetIdsHavingPriceSince(array $assetIds, Carbon $since): array
     {
         return AssetPrice::query()
             ->whereIn('asset_id', $assetIds)
-            ->where('date', '>=', $sinceDate)
+            ->where('date', '>=', $since)
             ->distinct()
             ->pluck('asset_id')
             ->all();

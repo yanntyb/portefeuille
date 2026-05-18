@@ -43,7 +43,7 @@ class PortfolioPerformanceService
 
         $idsWithPrice = $this->priceRepository->filterAssetIdsHavingPriceSince(
             $allIds,
-            MarketCalendar::lastTradingDate()->toDateString()
+            MarketCalendar::lastTradingDate()
         );
 
         $pricelessIds = array_diff($allIds, $idsWithPrice);
