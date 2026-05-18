@@ -57,7 +57,7 @@ class RebalancingCalculatorOrchestrator
 
         // Bulk load latest prices
         $priceMap = collect($securityIds)
-            ->mapWithKeys(fn ($id) => [$id => $this->priceRepository->findLatestForAsset($id)])
+            ->mapWithKeys(fn ($id) => [$id => $this->priceRepository->latestForAsset($id)])
             ->all();
 
         // Bulk load quantities from HoldingsProjection read model

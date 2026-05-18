@@ -78,7 +78,7 @@ class VolatilityCalculator implements VolatilityCalculating
 
         $ids = $records->pluck('id')->all();
         $priceMap = collect($ids)
-            ->mapWithKeys(fn ($id) => [$id => $this->priceRepository->findLatestForAsset($id)])
+            ->mapWithKeys(fn ($id) => [$id => $this->priceRepository->latestForAsset($id)])
             ->all();
 
         $totalValuation = (float) $records->sum(function (Asset $record) use ($priceMap) {

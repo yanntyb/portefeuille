@@ -67,7 +67,7 @@ class SingleSecurityStatsProvider
 
         $totalRealizedGain = (float) $sellTransactions->sum('realized_gain');
 
-        $latestPrice = $this->priceRepository->findLatestForAsset($record->id);
+        $latestPrice = $this->priceRepository->latestForAsset($record->id);
         $close = $latestPrice?->close;
         $valuation = ($close !== null) ? $totalQuantity * (float) $close : 0;
 

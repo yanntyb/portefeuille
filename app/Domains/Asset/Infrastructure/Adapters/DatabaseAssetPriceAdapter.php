@@ -15,7 +15,7 @@ readonly class DatabaseAssetPriceAdapter implements AssetPriceProviderPort
 
     public function getCurrentPrice(int $assetId): ?float
     {
-        $price = $this->repository->findLatestForAsset($assetId);
+        $price = $this->repository->latestForAsset($assetId);
 
         return $price?->close ? (float) $price->close : null;
     }

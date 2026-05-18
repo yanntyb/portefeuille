@@ -23,7 +23,7 @@ class SectorAggregator
     {
         $securityIds = $securities->pluck('id')->all();
         $priceMap = collect($securityIds)
-            ->mapWithKeys(fn ($id) => [$id => $this->priceRepository->findLatestForAsset($id)])
+            ->mapWithKeys(fn ($id) => [$id => $this->priceRepository->latestForAsset($id)])
             ->all();
 
         /** @var array<string, array<int, float>> */

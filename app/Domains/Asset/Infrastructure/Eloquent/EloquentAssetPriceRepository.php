@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 class EloquentAssetPriceRepository implements AssetPriceRepositoryInterface
 {
-    public function findLatestForAsset(int $id): ?AssetPrice
+    public function latestForAsset(int $id): ?AssetPrice
     {
         return AssetPrice::query()
             ->where('asset_id', $id)

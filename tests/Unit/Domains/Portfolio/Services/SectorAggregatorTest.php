@@ -11,7 +11,7 @@ function makePriceRepository(array $prices = []): MockInterface
     return mock(AssetPriceRepositoryInterface::class, function (MockInterface $mock) use ($prices) {
         foreach ($prices as $assetId => $close) {
             $price = new AssetPrice(['close' => $close]);
-            $mock->shouldReceive('findLatestForAsset')->with($assetId)->andReturn($price);
+            $mock->shouldReceive('latestForAsset')->with($assetId)->andReturn($price);
         }
     });
 }
@@ -45,7 +45,7 @@ it('skips securities with zero quantity', function () {
 
 it('skips securities with no latest price', function () {
     $priceRepository = makePriceRepository();
-    $priceRepository->shouldReceive('findLatestForAsset')->with(1)->andReturn(null);
+    $priceRepository->shouldReceive('latestForAsset')->with(1)->andReturn(null);
     $aggregator = new SectorAggregator($priceRepository);
 
     $security = new stdClass;

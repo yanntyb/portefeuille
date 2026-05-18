@@ -12,7 +12,7 @@ it('finds the latest price for an asset', function (): void {
         ->withPrices(fn (AssetPriceFactory $f) => $f->state(['date' => '2026-05-08', 'close' => 125.5]))
         ->create();
 
-    $latest = app(AssetPriceRepositoryInterface::class)->findLatestForAsset($security->id);
+    $latest = app(AssetPriceRepositoryInterface::class)->latestForAsset($security->id);
 
     expect($latest)->not->toBeNull()
         ->and($latest->date->format('Y-m-d'))->toBe('2026-05-08');
@@ -21,7 +21,7 @@ it('finds the latest price for an asset', function (): void {
 it('returns null when no prices exist for asset', function (): void {
     $security = Stock::factory()->create();
 
-    expect(app(AssetPriceRepositoryInterface::class)->findLatestForAsset($security->id))->toBeNull();
+    expect(app(AssetPriceRepositoryInterface::class)->latestForAsset($security->id))->toBeNull();
 });
 
 it('finds a price for an asset on a specific date', function (): void {

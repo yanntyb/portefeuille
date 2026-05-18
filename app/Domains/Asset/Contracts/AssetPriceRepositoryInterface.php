@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 interface AssetPriceRepositoryInterface
 {
-    public function findLatestForAsset(int $id): ?AssetPrice;
+    public function latestForAsset(int $id): ?AssetPrice;
 
     public function forAssetOnDate(int $id, Carbon $date): ?AssetPrice;
 

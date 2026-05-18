@@ -77,7 +77,7 @@ readonly class PriceSyncService
 
     private function syncAssetPrices(Asset $asset): void
     {
-        $latestDate = $this->priceRepository->findLatestForAsset($asset->id)?->date->toDateString();
+        $latestDate = $this->priceRepository->latestForAsset($asset->id)?->date->toDateString();
         $startDate = $latestDate
             ? Carbon::parse($latestDate)->addDay()
             : now()->subYears(self::DEFAULT_HISTORY_YEARS);

@@ -64,7 +64,7 @@ class PortfolioPerformanceCalculator implements PortfolioPerformanceCalculating
         $totalQuantity = (float) $transactions
             ->sum(fn (Transaction $t) => $t->type === TransactionType::Sell ? -(float) $t->quantity : (float) $t->quantity);
 
-        $latestPrice = $this->priceRepository->findLatestForAsset($security->id);
+        $latestPrice = $this->priceRepository->latestForAsset($security->id);
         $close = $latestPrice?->close;
         $endValuation = ($close !== null) ? $totalQuantity * (float) $close : 0;
 
