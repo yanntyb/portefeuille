@@ -14,8 +14,4 @@ abstract class AssetInfo extends Model
     {
         return $this->belongsTo(Asset::class, 'asset_id');
     }
-
-    abstract public function getIsinAttribute(): ?string;
-
-    abstract public function getTickerAttribute(): ?string;
 }

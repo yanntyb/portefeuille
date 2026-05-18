@@ -4,19 +4,19 @@ namespace App\Domains\Asset\Models\Assets;
 
 use App\Domains\Asset\Factories\Assets\CryptoFactory;
 use App\Domains\Asset\Models\AssetInfos\CryptoAssetInfo;
-use App\Infrastructure\Eloquent\Traits\HasDetailsRelation;
+use App\Infrastructure\Eloquent\Traits\HasInfos;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 #[UseFactory(CryptoFactory::class)]
 class Crypto extends Asset
 {
-    use HasDetailsRelation;
-
     /** @use HasFactory<CryptoFactory> */
     use HasFactory;
 
-    protected function getDetailsModel(): string
+    use HasInfos;
+
+    protected function infosModel(): string
     {
         return CryptoAssetInfo::class;
     }
@@ -24,10 +24,5 @@ class Crypto extends Asset
     public function getIsinAttribute(): ?string
     {
         return null;
-    }
-
-    public function getTickerAttribute(): ?string
-    {
-        return $this->details?->ticker;
     }
 }

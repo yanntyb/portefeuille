@@ -4,14 +4,14 @@ namespace App\Infrastructure\Eloquent\Traits;
 
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-trait HasDetailsRelation
+trait HasInfos
 {
-    abstract protected function getDetailsModel(): string;
+    abstract protected function infosModel(): string;
 
-    public function details(): HasOne
+    public function infos(): HasOne
     {
         return $this->hasOne(
-            $this->getDetailsModel(),
+            $this->infosModel(),
             'asset_id',
             $this->getKeyName()
         );

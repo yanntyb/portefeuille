@@ -4,7 +4,7 @@ use App\Domains\Asset\Factories\AssetInfos\CryptoAssetInfoFactory;
 use App\Domains\Asset\Models\AssetInfos\CryptoAssetInfo;
 use App\Domains\Asset\Models\Assets\Crypto;
 
-it('delegates ticker to CryptoAssetInfo via details relation', function () {
+it('delegates ticker to CryptoAssetInfo via infos relation', function () {
     $crypto = Crypto::factory()
         ->withInfos(fn (CryptoAssetInfoFactory $f) => $f->state([
             'ticker' => 'BTC',
@@ -13,8 +13,8 @@ it('delegates ticker to CryptoAssetInfo via details relation', function () {
 
     $crypto = Crypto::find($crypto->id);
 
-    expect($crypto->ticker)->toBe('BTC')
-        ->and($crypto->details)->toBeInstanceOf(CryptoAssetInfo::class);
+    expect($crypto->infos->ticker)->toBe('BTC')
+        ->and($crypto->infos)->toBeInstanceOf(CryptoAssetInfo::class);
 });
 
 it('isin returns null for crypto', function () {

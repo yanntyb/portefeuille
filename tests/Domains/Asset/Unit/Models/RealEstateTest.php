@@ -4,7 +4,7 @@ use App\Domains\Asset\Factories\AssetInfos\RealEstateAssetInfoFactory;
 use App\Domains\Asset\Models\AssetInfos\RealEstateAssetInfo;
 use App\Domains\Asset\Models\Assets\RealEstate;
 
-it('delegates isin to RealEstateAssetInfo via details relation', function () {
+it('delegates isin to RealEstateAssetInfo via infos relation', function () {
     $property = RealEstate::factory()
         ->withInfos(fn (RealEstateAssetInfoFactory $f) => $f->state([
             'isin' => 'FR1111111111',
@@ -13,8 +13,8 @@ it('delegates isin to RealEstateAssetInfo via details relation', function () {
 
     $property = RealEstate::find($property->id);
 
-    expect($property->isin)->toBe('FR1111111111')
-        ->and($property->details)->toBeInstanceOf(RealEstateAssetInfo::class);
+    expect($property->infos->isin)->toBe('FR1111111111')
+        ->and($property->infos)->toBeInstanceOf(RealEstateAssetInfo::class);
 });
 
 it('ticker returns null for real estate', function () {

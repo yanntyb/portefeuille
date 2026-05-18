@@ -4,7 +4,7 @@ use App\Domains\Asset\Factories\AssetInfos\ETFAssetInfoFactory;
 use App\Domains\Asset\Models\AssetInfos\ETFAssetInfo;
 use App\Domains\Asset\Models\Assets\ETF;
 
-it('delegates isin and ticker to ETFAssetInfo via details relation', function () {
+it('delegates isin and ticker to ETFAssetInfo via infos relation', function () {
     $etf = ETF::factory()
         ->withInfos(fn (ETFAssetInfoFactory $f) => $f->state([
             'isin' => 'FR0010296061',
@@ -14,9 +14,9 @@ it('delegates isin and ticker to ETFAssetInfo via details relation', function ()
 
     $etf = ETF::find($etf->id);
 
-    expect($etf->ticker)->toBe('EWLD.PA')
-        ->and($etf->isin)->toBe('FR0010296061')
-        ->and($etf->details)->toBeInstanceOf(ETFAssetInfo::class);
+    expect($etf->infos->ticker)->toBe('EWLD.PA')
+        ->and($etf->infos->isin)->toBe('FR0010296061')
+        ->and($etf->infos)->toBeInstanceOf(ETFAssetInfo::class);
 });
 
 it('has correct asset type', function () {
