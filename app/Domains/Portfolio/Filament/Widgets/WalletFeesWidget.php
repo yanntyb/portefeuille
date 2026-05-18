@@ -59,7 +59,7 @@ class WalletFeesWidget extends Widget
         $query = $this->getPageTableQuery();
 
         if ($this->shownSecurityIds !== null) {
-            $query->whereIn('securities.id', $this->shownSecurityIds);
+            $query->whereIn('assets.id', $this->shownSecurityIds);
         }
 
         $records = $query->with('latestPrice')->get();

@@ -119,7 +119,7 @@ trait HasReactiveTableProperties
         }
 
         if ($this->shownSecurityIds !== null) {
-            $query->whereIn('securities.id', $this->shownSecurityIds);
+            $query->whereIn('assets.id', $this->shownSecurityIds);
         }
 
         if ($withPrice) {

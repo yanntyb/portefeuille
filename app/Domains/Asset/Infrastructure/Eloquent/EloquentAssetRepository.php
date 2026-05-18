@@ -40,7 +40,7 @@ class EloquentAssetRepository implements AssetRepositoryInterface
 
         return app(AssetQueryService::class)
             ->forWallet($wallet)
-            ->pluck('securities.id')
+            ->pluck('assets.id')
             ->all();
     }
 
