@@ -18,10 +18,10 @@ interface AssetPriceRepositoryInterface
     public function save(AssetPrice $price): void;
 
     /**
-     * @param  array<int>  $assetIds
+     * @param  array<int>  $ids
      * @return Collection<int, AssetPrice>
      */
-    public function getForAssets(array $assetIds, Carbon $since): Collection;
+    public function getForAssets(array $ids, Carbon $since): Collection;
 
     /**
      * @param  array<int>  $ids

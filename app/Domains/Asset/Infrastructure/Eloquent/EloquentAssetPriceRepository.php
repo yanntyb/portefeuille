@@ -39,10 +39,10 @@ class EloquentAssetPriceRepository implements AssetPriceRepositoryInterface
         $price->save();
     }
 
-    public function getForAssets(array $assetIds, Carbon $since): Collection
+    public function getForAssets(array $ids, Carbon $since): Collection
     {
         return AssetPrice::query()
-            ->whereIn('asset_id', $assetIds)
+            ->whereIn('asset_id', $ids)
             ->where('date', '>=', $since)
             ->orderBy('date')
             ->get();
