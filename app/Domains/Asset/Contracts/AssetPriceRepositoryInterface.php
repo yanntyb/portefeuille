@@ -15,8 +15,6 @@ interface AssetPriceRepositoryInterface
     /** @return Collection<int, AssetPrice> */
     public function forAssetSince(int $id, Carbon $since): Collection;
 
-    public function save(AssetPrice $price): void;
-
     /**
      * @param  array<int>  $ids
      * @return Collection<int, AssetPrice>

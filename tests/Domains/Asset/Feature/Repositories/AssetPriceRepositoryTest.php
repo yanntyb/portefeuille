@@ -57,23 +57,6 @@ it('returns prices for asset since a given date', function (): void {
     expect($prices)->toHaveCount(2);
 });
 
-it('saves an asset price', function (): void {
-    $security = Stock::factory()->create();
-    $price = new AssetPrice([
-        'asset_id' => $security->id,
-        'date' => '2026-05-09',
-        'open' => 100.0,
-        'high' => 102.0,
-        'low' => 99.0,
-        'close' => 101.0,
-        'volume' => 5000,
-    ]);
-
-    app(AssetPriceRepositoryInterface::class)->save($price);
-
-    $this->assertDatabaseHas('asset_prices', ['asset_id' => $security->id, 'close' => 101.0]);
-});
-
 it('gets prices for multiple assets since a date', function (): void {
     $s1 = Stock::factory()
         ->withPrices(fn (AssetPriceFactory $f) => $f->state(['date' => '2026-04-30']))

@@ -34,11 +34,6 @@ class EloquentAssetPriceRepository implements AssetPriceRepositoryInterface
             ->get();
     }
 
-    public function save(AssetPrice $price): void
-    {
-        $price->save();
-    }
-
     public function getForAssets(array $ids, Carbon $since): Collection
     {
         return AssetPrice::query()
