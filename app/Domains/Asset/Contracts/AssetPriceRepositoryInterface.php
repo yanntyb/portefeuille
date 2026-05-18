@@ -24,8 +24,8 @@ interface AssetPriceRepositoryInterface
     public function getForAssets(array $assetIds, Carbon $since): Collection;
 
     /**
-     * @param  array<int>  $assetIds
+     * @param  array<int>  $ids
      * @return array<int>
      */
-    public function filterAssetIdsHavingPriceSince(array $assetIds, Carbon $since): array;
+    public function filterAssetIdsHavingPriceSince(array $ids, Carbon $since): array;
 }
