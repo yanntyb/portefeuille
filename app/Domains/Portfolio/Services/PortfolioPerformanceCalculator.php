@@ -5,6 +5,7 @@ namespace App\Domains\Portfolio\Services;
 use App\Domains\Analytics\Enums\PerformancePeriod;
 use App\Domains\Asset\Contracts\AssetPriceRepositoryInterface;
 use App\Domains\Asset\Models\Assets\Asset;
+use App\Domains\Asset\Services\AssetValuationService;
 use App\Domains\Portfolio\Contracts\PortfolioPerformanceCalculating;
 use App\Domains\Portfolio\Data\PortfolioContext;
 use App\Domains\Portfolio\Enums\TransactionType;
@@ -17,6 +18,7 @@ class PortfolioPerformanceCalculator implements PortfolioPerformanceCalculating
     public function __construct(
         private TransactionAggregator $aggregator,
         private AssetPriceRepositoryInterface $priceRepository,
+        private AssetValuationService $valuationService,
     ) {}
 
     /**
@@ -62,8 +64,8 @@ class PortfolioPerformanceCalculator implements PortfolioPerformanceCalculating
         $totalQuantity = (float) $transactions
             ->sum(fn (Transaction $t) => $t->type === TransactionType::Sell ? -(float) $t->quantity : (float) $t->quantity);
 
-        $security->loadMissing('latestPrice');
-        $close = $security->latestPrice?->close;
+        $latestPrice = $this->priceRepository->findLatestForAsset($security->id);
+        $close = $latestPrice?->close;
         $endValuation = ($close !== null) ? $totalQuantity * (float) $close : 0;
 
         $context = new PortfolioContext(
@@ -237,6 +239,6 @@ class PortfolioPerformanceCalculator implements PortfolioPerformanceCalculating
      */
     private function computeCurrentValuation(Collection $securities): float
     {
-        return $securities->sum(fn ($security) => $security->currentValuation());
+        return $securities->sum(fn ($security) => $this->valuationService->computeCurrentValuation($security));
     }
 }

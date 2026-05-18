@@ -2,6 +2,7 @@
 
 namespace App\Domains\Portfolio\Services;
 
+use App\Domains\Asset\Contracts\AssetPriceRepositoryInterface;
 use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Portfolio\Contracts\TransactionRepositoryInterface;
 use App\Domains\Portfolio\Enums\TransactionType;
@@ -15,6 +16,7 @@ class SingleSecurityStatsProvider
     public function __construct(
         private TransactionRepositoryInterface $transactionRepository,
         private UserId $userId,
+        private AssetPriceRepositoryInterface $priceRepository,
     ) {}
 
     /**
@@ -65,15 +67,15 @@ class SingleSecurityStatsProvider
 
         $totalRealizedGain = (float) $sellTransactions->sum('realized_gain');
 
-        $record->loadMissing('latestPrice');
-        $close = $record->latestPrice?->close;
+        $latestPrice = $this->priceRepository->findLatestForAsset($record->id);
+        $close = $latestPrice?->close;
         $valuation = ($close !== null) ? $totalQuantity * (float) $close : 0;
 
         $plusValue = $valuation - $totalInvested;
         $plusValuePercentage = $totalInvested > 0 ? ($plusValue / $totalInvested) * 100 : 0;
         $feesPercentage = $totalInvested > 0 ? ($totalFees / $totalInvested) * 100 : 0;
 
-        $priceDate = $record->latestPrice?->date?->translatedFormat('d M Y');
+        $priceDate = $latestPrice?->date?->translatedFormat('d M Y');
 
         return [
             'totalQuantity' => $totalQuantity,

@@ -20,14 +20,4 @@ class Savings extends Asset
     {
         return SavingsAssetInfo::class;
     }
-
-    public function getIsinAttribute(): ?string
-    {
-        return null;
-    }
-
-    public function getTickerAttribute(): ?string
-    {
-        return null;
-    }
 }

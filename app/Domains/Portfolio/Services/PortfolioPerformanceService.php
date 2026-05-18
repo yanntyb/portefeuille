@@ -6,6 +6,7 @@ use App\Domains\Analytics\Services\VolatilityCalculator;
 use App\Domains\Asset\Contracts\AssetPriceRepositoryInterface;
 use App\Domains\Asset\Contracts\AssetRepositoryInterface;
 use App\Domains\Asset\Models\Assets\Asset;
+use App\Domains\Asset\Services\AssetValuationService;
 use App\Domains\Portfolio\Contracts\TransactionRepositoryInterface;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Infrastructure\Support\MarketCalendar;
@@ -21,6 +22,7 @@ class PortfolioPerformanceService
         private AssetRepositoryInterface $assetRepository,
         private AssetPriceRepositoryInterface $priceRepository,
         private TransactionRepositoryInterface $transactionRepository,
+        private AssetValuationService $valuationService,
     ) {}
 
     /**
@@ -70,7 +72,7 @@ class PortfolioPerformanceService
             $records = $records->whereIn('id', $shownSecurityIds);
         }
 
-        return (float) $records->sum(fn ($record) => $record->currentValuation());
+        return (float) $records->sum(fn ($record) => $this->valuationService->computeCurrentValuation($record));
     }
 
     public function computeAnnualizedReturn(?Wallet $wallet): float
@@ -81,7 +83,7 @@ class PortfolioPerformanceService
 
         $records = $this->getSecurities($wallet);
 
-        $valuation = (float) $records->sum(fn ($record) => $record->currentValuation());
+        $valuation = (float) $records->sum(fn ($record) => $this->valuationService->computeCurrentValuation($record));
         $totalInvested = (float) $records->sum(fn ($record) => (float) ($record->total_invested ?? 0));
 
         if ($totalInvested <= 0 || $valuation <= 0) {
@@ -125,7 +127,7 @@ class PortfolioPerformanceService
             $records = $records->whereIn('id', $shownSecurityIds);
         }
 
-        $valuation = $records->sum(fn ($record) => $record->currentValuation());
+        $valuation = $records->sum(fn ($record) => $this->valuationService->computeCurrentValuation($record));
         $totalInvested = $records->sum(fn ($record) => (float) ($record->total_invested ?? 0));
         $isPositive = $valuation >= $totalInvested;
         $colorClass = $isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';

@@ -3,6 +3,7 @@
 namespace App\Domains\Analytics\Services;
 
 use App\Domains\Analytics\Contracts\Rebalancing;
+use App\Domains\Asset\Contracts\AssetPriceRepositoryInterface;
 use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Portfolio\Models\HoldingsProjection;
 use App\Domains\Portfolio\Models\Wallet;
@@ -11,6 +12,7 @@ class RebalancingCalculatorOrchestrator
 {
     public function __construct(
         private Rebalancing $calculator,
+        private AssetPriceRepositoryInterface $priceRepository,
     ) {}
 
     /**
@@ -47,12 +49,16 @@ class RebalancingCalculatorOrchestrator
             return [];
         }
 
-        // Bulk load securities with prices
+        // Bulk load securities
         $securities = Asset::query()
-            ->with('latestPrice')
             ->whereIn('id', $securityIds)
             ->get()
             ->keyBy('id');
+
+        // Bulk load latest prices
+        $priceMap = collect($securityIds)
+            ->mapWithKeys(fn ($id) => [$id => $this->priceRepository->findLatestForAsset($id)])
+            ->all();
 
         // Bulk load quantities from HoldingsProjection read model
         $quantitiesQuery = HoldingsProjection::query()
@@ -85,7 +91,7 @@ class RebalancingCalculatorOrchestrator
             $result[] = [
                 'asset_id' => $securityId,
                 'name' => $security->name,
-                'price' => (float) ($security->latestPrice?->close ?? 0),
+                'price' => (float) ($priceMap[$securityId]?->close ?? 0),
                 'quantity' => (float) ($quantities->get($securityId) ?? 0),
                 'target_percentage' => (float) ($allocation['target_percentage'] ?? 0),
             ];

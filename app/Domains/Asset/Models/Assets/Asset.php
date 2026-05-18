@@ -4,11 +4,9 @@ namespace App\Domains\Asset\Models\Assets;
 
 use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Models\AssetPrice;
-use App\Domains\Asset\Services\AssetValuationService;
 use App\Domains\Portfolio\Models\Transaction;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property-read int $id
@@ -72,16 +70,5 @@ class Asset extends Model
     public function prices(): HasMany
     {
         return $this->hasMany(AssetPrice::class, 'asset_id');
-    }
-
-    public function latestPrice(): HasOne
-    {
-        return $this->hasOne(AssetPrice::class, 'asset_id')->latestOfMany('date');
-    }
-
-    public function currentValuation(): float
-    {
-        return resolve(AssetValuationService::class)
-            ->computeCurrentValuation($this);
     }
 }

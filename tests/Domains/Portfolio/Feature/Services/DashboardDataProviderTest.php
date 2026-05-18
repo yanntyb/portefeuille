@@ -6,7 +6,7 @@ use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
 use App\Domains\Portfolio\Services\DashboardDataProvider;
 
-it('returns securities with latest price for a given wallet', function () {
+it('returns securities for a given wallet', function () {
     $peaWallet = Wallet::factory()->pea()->create();
     $security = Stock::factory()->create();
     Transaction::factory()->create(['wallet_id' => $peaWallet->id, 'asset_id' => $security->id]);
@@ -17,9 +17,7 @@ it('returns securities with latest price for a given wallet', function () {
     $securities = $provider->securitiesForWallet($peaWallet);
 
     expect($securities)->toHaveCount(1)
-        ->and($securities->first()->id)->toBe($security->id)
-        ->and($securities->first()->latestPrice)->not->toBeNull()
-        ->and((float) $securities->first()->latestPrice->close)->toBe(150.0);
+        ->and($securities->first()->id)->toBe($security->id);
 });
 
 it('caches results within the same instance', function () {

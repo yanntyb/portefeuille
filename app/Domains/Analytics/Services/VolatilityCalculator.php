@@ -76,8 +76,14 @@ class VolatilityCalculator implements VolatilityCalculating
     {
         $records = $this->assetRepository->forWallet($walletId);
 
-        $totalValuation = (float) $records->sum(function (Asset $record) {
-            $close = $record->latestPrice?->close;
+        $ids = $records->pluck('id')->all();
+        $priceMap = collect($ids)
+            ->mapWithKeys(fn ($id) => [$id => $this->priceRepository->findLatestForAsset($id)])
+            ->all();
+
+        $totalValuation = (float) $records->sum(function (Asset $record) use ($priceMap) {
+            $latestPrice = $priceMap[$record->id];
+            $close = $latestPrice?->close;
 
             if ($close === null || $record->total_quantity === null) {
                 return 0;
@@ -94,15 +100,14 @@ class VolatilityCalculator implements VolatilityCalculating
             $records = $records->whereIn('id', $shownSecurityIds);
         }
 
-        $ids = $records->pluck('id')->all();
-
         $allPrices = $this->getPricesForSecurities($ids);
 
         $weightedVolatility = 0.0;
 
         foreach ($records as $record) {
             /** @var Asset $record */
-            $close = $record->latestPrice?->close;
+            $latestPrice = $priceMap[$record->id];
+            $close = $latestPrice?->close;
 
             if ($close === null || $record->total_quantity === null || (float) $record->total_quantity <= 0) {
                 continue;

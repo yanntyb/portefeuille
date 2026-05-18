@@ -2,6 +2,7 @@
 
 namespace App\Domains\Portfolio\Services;
 
+use App\Domains\Asset\Contracts\AssetPriceRepositoryInterface;
 use App\Domains\Asset\Enums\Sector;
 use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Asset\Models\AssetSector;
@@ -10,12 +11,21 @@ use Illuminate\Support\Collection;
 
 class SectorAggregator
 {
+    public function __construct(
+        private AssetPriceRepositoryInterface $priceRepository,
+    ) {}
+
     /**
-     * @param  Collection<int, Asset>  $securities  With latestPrice and sectors loaded
+     * @param  Collection<int, Asset>  $securities  With sectors loaded
      * @return array{datasets: list<array<string, mixed>>, labels: list<string>}
      */
     public function buildStackedSectorData(Collection $securities): array
     {
+        $securityIds = $securities->pluck('id')->all();
+        $priceMap = collect($securityIds)
+            ->mapWithKeys(fn ($id) => [$id => $this->priceRepository->findLatestForAsset($id)])
+            ->all();
+
         /** @var array<string, array<int, float>> */
         $sectorBySecurity = [];
         $sectorTotals = [];
@@ -24,7 +34,8 @@ class SectorAggregator
         foreach ($securities as $security) {
             /** @var Asset $security */
             $quantity = (float) $security->total_quantity;
-            $price = $security->latestPrice?->close;
+            $latestPrice = $priceMap[$security->id];
+            $price = $latestPrice?->close;
 
             if ($quantity <= 0 || $price === null) {
                 continue;

@@ -41,7 +41,6 @@ it('computes basic return without cash flows', function () {
     $wallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
     $securities = app(AssetQueryService::class)
         ->forWallet($wallet)
-        ->with('latestPrice')
         ->get();
 
     $returns = app(PortfolioPerformanceCalculator::class)->computeReturns($securities);
@@ -96,7 +95,6 @@ it('computes return with cash flows during period', function () {
     $wallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
     $securities = app(AssetQueryService::class)
         ->forWallet($wallet)
-        ->with('latestPrice')
         ->get();
 
     $returns = app(PortfolioPerformanceCalculator::class)->computeReturns($securities);
@@ -134,7 +132,6 @@ it('returns null when period predates first transaction', function () {
     $wallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
     $securities = app(AssetQueryService::class)
         ->forWallet($wallet)
-        ->with('latestPrice')
         ->get();
 
     $returns = app(PortfolioPerformanceCalculator::class)->computeReturns($securities);
@@ -177,7 +174,6 @@ it('uses closest available price when exact start date has no price', function (
     $wallet = Wallet::firstOrCreate(['user_id' => auth()->id(), 'name' => 'PEA']);
     $securities = app(AssetQueryService::class)
         ->forWallet($wallet)
-        ->with('latestPrice')
         ->get();
 
     $returns = app(PortfolioPerformanceCalculator::class)->computeReturns($securities);

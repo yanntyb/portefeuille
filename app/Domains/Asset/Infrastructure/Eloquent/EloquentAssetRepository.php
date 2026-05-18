@@ -26,7 +26,6 @@ class EloquentAssetRepository implements AssetRepositoryInterface
 
         return app(AssetQueryService::class)
             ->forWallet($wallet)
-            ->with('latestPrice')
             ->get();
     }
 

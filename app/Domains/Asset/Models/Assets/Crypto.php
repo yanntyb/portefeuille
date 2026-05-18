@@ -20,9 +20,4 @@ class Crypto extends Asset
     {
         return CryptoAssetInfo::class;
     }
-
-    public function getIsinAttribute(): ?string
-    {
-        return null;
-    }
 }

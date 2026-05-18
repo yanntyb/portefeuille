@@ -20,9 +20,4 @@ class RealEstate extends Asset
     {
         return RealEstateAssetInfo::class;
     }
-
-    public function getTickerAttribute(): ?string
-    {
-        return null;
-    }
 }
