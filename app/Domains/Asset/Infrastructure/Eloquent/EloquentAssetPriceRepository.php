@@ -48,7 +48,7 @@ class EloquentAssetPriceRepository implements AssetPriceRepositoryInterface
             ->get();
     }
 
-    public function getAssetIdsWithRecentPrice(array $assetIds, string $sinceDate): array
+    public function filterAssetIdsHavingPriceSince(array $assetIds, string $sinceDate): array
     {
         return AssetPrice::query()
             ->whereIn('asset_id', $assetIds)

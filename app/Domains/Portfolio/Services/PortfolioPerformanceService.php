@@ -41,7 +41,7 @@ class PortfolioPerformanceService
     {
         $allIds = $this->assetRepository->getIdsForWallet($wallet->id);
 
-        $idsWithPrice = $this->priceRepository->getAssetIdsWithRecentPrice(
+        $idsWithPrice = $this->priceRepository->filterAssetIdsHavingPriceSince(
             $allIds,
             MarketCalendar::lastTradingDate()->toDateString()
         );
