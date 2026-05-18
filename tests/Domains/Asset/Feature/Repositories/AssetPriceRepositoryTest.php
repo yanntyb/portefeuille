@@ -29,7 +29,7 @@ it('finds a price for an asset on a specific date', function (): void {
     AssetPrice::factory()->create(['asset_id' => $security->id, 'date' => '2026-05-07']);
 
     $price = app(AssetPriceRepositoryInterface::class)
-        ->findForAssetOnDate($security->id, Carbon::parse('2026-05-07'));
+        ->forAssetOnDate($security->id, Carbon::parse('2026-05-07'));
 
     expect($price)->not->toBeNull()
         ->and($price->date->format('Y-m-d'))->toBe('2026-05-07');
@@ -40,7 +40,7 @@ it('returns null when no price exists on date', function (): void {
 
     expect(
         app(AssetPriceRepositoryInterface::class)
-            ->findForAssetOnDate($security->id, Carbon::parse('2026-05-07'))
+            ->forAssetOnDate($security->id, Carbon::parse('2026-05-07'))
     )->toBeNull();
 });
 

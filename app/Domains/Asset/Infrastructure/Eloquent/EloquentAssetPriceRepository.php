@@ -9,18 +9,18 @@ use Illuminate\Database\Eloquent\Collection;
 
 class EloquentAssetPriceRepository implements AssetPriceRepositoryInterface
 {
-    public function findLatestForAsset(int $assetId): ?AssetPrice
+    public function findLatestForAsset(int $id): ?AssetPrice
     {
         return AssetPrice::query()
-            ->where('asset_id', $assetId)
+            ->where('asset_id', $id)
             ->orderByDesc('date')
             ->first();
     }
 
-    public function findForAssetOnDate(int $assetId, Carbon $date): ?AssetPrice
+    public function forAssetOnDate(int $id, Carbon $date): ?AssetPrice
     {
         return AssetPrice::query()
-            ->where('asset_id', $assetId)
+            ->where('asset_id', $id)
             ->whereDate('date', $date)
             ->first();
     }
