@@ -21,7 +21,7 @@ class StockAssetInfoFactory extends AssetInfoFactory
 
         return [
             'isin' => $prefix.$digits,
-            'ticker' => fake()->randomAscii(),
+            'ticker' => fake()->lexify('????'),
         ];
     }
 }

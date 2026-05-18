@@ -26,8 +26,6 @@ class Asset extends Model
     protected $fillable = [
         'name',
         'type',
-        'isin',
-        'ticker',
     ];
 
     /** @return array<string, string> */

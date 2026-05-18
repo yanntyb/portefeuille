@@ -21,6 +21,11 @@ class Crypto extends Asset
         return CryptoAssetInfo::class;
     }
 
+    public function getIsinAttribute(): ?string
+    {
+        return null;
+    }
+
     public function getTickerAttribute(): ?string
     {
         return $this->details?->ticker;

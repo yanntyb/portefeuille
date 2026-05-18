@@ -2,9 +2,8 @@
 
 namespace App\Domains\Asset\Factories\Assets;
 
-use App\Domains\Asset\Factories\AssetInfos\StockAssetInfoFactory;
 use App\Domains\Asset\Enums\AssetType;
-use App\Domains\Asset\Models\Assets\Asset;
+use App\Domains\Asset\Factories\AssetInfos\StockAssetInfoFactory;
 use App\Domains\Asset\Models\Assets\Stock;
 
 /**
@@ -24,14 +23,8 @@ class StockFactory extends AssetFactory
         ];
     }
 
-    protected function infos(?callable $configure = null)
+    protected function infos()
     {
-        $factory = StockAssetInfoFactory::new();
-
-        if ($configure !== null) {
-            $factory = $configure($factory) ?? $factory;
-        }
-
-        return $factory;
+        return StockAssetInfoFactory::new();
     }
 }

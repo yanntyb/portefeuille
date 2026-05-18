@@ -16,7 +16,7 @@ class RealEstateAssetInfoFactory extends AssetInfoFactory
     public function definition(): array
     {
         return [
-            'isin' => fake()->uuid(),
+            'isin' => fake()->regexify('[A-Z]{2}[A-Z0-9]{10}'),
         ];
     }
 }

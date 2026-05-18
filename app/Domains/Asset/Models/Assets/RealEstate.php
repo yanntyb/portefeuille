@@ -25,4 +25,9 @@ class RealEstate extends Asset
     {
         return $this->details?->isin;
     }
+
+    public function getTickerAttribute(): ?string
+    {
+        return null;
+    }
 }
