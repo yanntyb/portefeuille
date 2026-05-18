@@ -8,8 +8,8 @@ use Carbon\Carbon;
 
 it('finds the latest price for an asset', function (): void {
     $security = Stock::factory()
-        ->withPrices(fn(AssetPriceFactory $f) => $f->state(['date' => '2026-05-06', 'close' => 100.0]))
-        ->withPrices(fn(AssetPriceFactory $f) => $f->state(['date' => '2026-05-08', 'close' => 125.5]))
+        ->withPrices(fn (AssetPriceFactory $f) => $f->state(['date' => '2026-05-06', 'close' => 100.0]))
+        ->withPrices(fn (AssetPriceFactory $f) => $f->state(['date' => '2026-05-08', 'close' => 125.5]))
         ->create();
 
     $latest = app(AssetPriceRepositoryInterface::class)->findLatestForAsset($security->id);
@@ -46,9 +46,9 @@ it('returns null when no price exists on date', function (): void {
 
 it('returns prices for asset since a given date', function (): void {
     $security = Stock::factory()
-        ->withPrices(fn(AssetPriceFactory $f) => $f->state(['date' => '2026-04-30']))
-        ->withPrices(fn(AssetPriceFactory $f) => $f->state(['date' => '2026-05-01']))
-        ->withPrices(fn(AssetPriceFactory $f) => $f->state(['date' => '2026-05-08']))
+        ->withPrices(fn (AssetPriceFactory $f) => $f->state(['date' => '2026-04-30']))
+        ->withPrices(fn (AssetPriceFactory $f) => $f->state(['date' => '2026-05-01']))
+        ->withPrices(fn (AssetPriceFactory $f) => $f->state(['date' => '2026-05-08']))
         ->create();
 
     $prices = app(AssetPriceRepositoryInterface::class)
@@ -74,39 +74,13 @@ it('saves an asset price', function (): void {
     $this->assertDatabaseHas('asset_prices', ['asset_id' => $security->id, 'close' => 101.0]);
 });
 
-it('gets latest date for multiple assets', function (): void {
-    $s1 = Stock::factory()
-        ->withPrices(fn(AssetPriceFactory $f) => $f->state(['date' => '2026-05-06']))
-        ->withPrices(fn(AssetPriceFactory $f) => $f->state(['date' => '2026-05-08']))
-        ->create();
-    $s2 = Stock::factory()
-        ->withPrices(fn(AssetPriceFactory $f) => $f->state(['date' => '2026-05-07']))
-        ->create();
-
-    $dates = app(AssetPriceRepositoryInterface::class)->getLatestDateForAssets([$s1->id, $s2->id]);
-
-    expect($dates[$s1->id])->toBe('2026-05-08')
-        ->and($dates[$s2->id])->toBe('2026-05-07');
-});
-
-it('gets earliest date for multiple assets', function (): void {
-    $s1 = Stock::factory()
-        ->withPrices(fn(AssetPriceFactory $f) => $f->state(['date' => '2026-04-01']))
-        ->withPrices(fn(AssetPriceFactory $f) => $f->state(['date' => '2026-05-08']))
-        ->create();
-
-    $dates = app(AssetPriceRepositoryInterface::class)->getEarliestDateForAssets([$s1->id]);
-
-    expect($dates[$s1->id])->toBe('2026-04-01');
-});
-
 it('gets prices for multiple assets since a date', function (): void {
     $s1 = Stock::factory()
-        ->withPrices(fn(AssetPriceFactory $f) => $f->state(['date' => '2026-04-30']))
-        ->withPrices(fn(AssetPriceFactory $f) => $f->state(['date' => '2026-05-01']))
+        ->withPrices(fn (AssetPriceFactory $f) => $f->state(['date' => '2026-04-30']))
+        ->withPrices(fn (AssetPriceFactory $f) => $f->state(['date' => '2026-05-01']))
         ->create();
     $s2 = Stock::factory()
-        ->withPrices(fn(AssetPriceFactory $f) => $f->state(['date' => '2026-05-02']))
+        ->withPrices(fn (AssetPriceFactory $f) => $f->state(['date' => '2026-05-02']))
         ->create();
 
     $prices = app(AssetPriceRepositoryInterface::class)

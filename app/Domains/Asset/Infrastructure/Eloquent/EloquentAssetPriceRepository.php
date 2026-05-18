@@ -39,28 +39,6 @@ class EloquentAssetPriceRepository implements AssetPriceRepositoryInterface
         $price->save();
     }
 
-    /** @return array<int, string> */
-    public function getLatestDateForAssets(array $assetIds): array
-    {
-        return AssetPrice::query()
-            ->selectRaw('asset_id, DATE(MAX(date)) as latest_date')
-            ->whereIn('asset_id', $assetIds)
-            ->groupBy('asset_id')
-            ->pluck('latest_date', 'asset_id')
-            ->all();
-    }
-
-    /** @return array<int, string> */
-    public function getEarliestDateForAssets(array $assetIds): array
-    {
-        return AssetPrice::query()
-            ->selectRaw('asset_id, DATE(MIN(date)) as earliest_date')
-            ->whereIn('asset_id', $assetIds)
-            ->groupBy('asset_id')
-            ->pluck('earliest_date', 'asset_id')
-            ->all();
-    }
-
     public function getForAssets(array $assetIds, Carbon $since): Collection
     {
         return AssetPrice::query()

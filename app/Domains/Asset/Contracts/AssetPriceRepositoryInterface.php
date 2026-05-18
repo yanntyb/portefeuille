@@ -19,18 +19,6 @@ interface AssetPriceRepositoryInterface
 
     /**
      * @param  array<int>  $assetIds
-     * @return array<int, string>
-     */
-    public function getLatestDateForAssets(array $assetIds): array;
-
-    /**
-     * @param  array<int>  $assetIds
-     * @return array<int, string>
-     */
-    public function getEarliestDateForAssets(array $assetIds): array;
-
-    /**
-     * @param  array<int>  $assetIds
      * @return Collection<int, AssetPrice>
      */
     public function getForAssets(array $assetIds, Carbon $since): Collection;
