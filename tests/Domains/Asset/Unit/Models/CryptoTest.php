@@ -16,4 +16,3 @@ it('delegates ticker to CryptoAssetInfo via infos relation', function () {
     expect($crypto->infos->ticker)->toBe('BTC')
         ->and($crypto->infos)->toBeInstanceOf(CryptoAssetInfo::class);
 });
-

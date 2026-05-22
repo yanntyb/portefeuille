@@ -18,4 +18,3 @@ it('creates stock from security', function () {
         ->and($stock->infos->ticker)->toBe('AAPL')
         ->and($stock->infos->isin)->toBe('US0378331005');
 });
-

@@ -2,8 +2,8 @@
 
 namespace App\Domains\Asset\Models;
 
-use App\Domains\Asset\Factories\AssetSectorFactory;
 use App\Domains\Asset\Enums\Sector;
+use App\Domains\Asset\Factories\AssetSectorFactory;
 use App\Domains\Asset\Models\Assets\Asset;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

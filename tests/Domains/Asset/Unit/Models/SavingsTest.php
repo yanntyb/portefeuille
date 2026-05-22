@@ -10,4 +10,3 @@ it('factory creates asset without details', function () {
     expect($savings)->not->toBeNull()
         ->and($savings->name)->toBe('Savings Account');
 });
-

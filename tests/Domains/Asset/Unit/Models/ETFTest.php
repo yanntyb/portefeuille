@@ -18,4 +18,3 @@ it('delegates isin and ticker to ETFAssetInfo via infos relation', function () {
         ->and($etf->infos->isin)->toBe('FR0010296061')
         ->and($etf->infos)->toBeInstanceOf(ETFAssetInfo::class);
 });
-

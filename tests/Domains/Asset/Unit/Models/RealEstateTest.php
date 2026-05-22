@@ -16,4 +16,3 @@ it('delegates isin to RealEstateAssetInfo via infos relation', function () {
     expect($property->infos->isin)->toBe('FR1111111111')
         ->and($property->infos)->toBeInstanceOf(RealEstateAssetInfo::class);
 });
-

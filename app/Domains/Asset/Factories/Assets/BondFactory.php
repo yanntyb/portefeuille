@@ -2,9 +2,8 @@
 
 namespace App\Domains\Asset\Factories\Assets;
 
-use App\Domains\Asset\Factories\AssetInfos\BondAssetInfoFactory;
 use App\Domains\Asset\Enums\AssetType;
-use App\Domains\Asset\Models\Assets\Asset;
+use App\Domains\Asset\Factories\AssetInfos\BondAssetInfoFactory;
 use App\Domains\Asset\Models\Assets\Bond;
 
 /**

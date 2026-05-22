@@ -5,7 +5,7 @@ use App\Domains\Asset\Models\Assets\Stock;
 
 it('stock loads prices relationship', function () {
     $security = Stock::factory()
-        ->withPrices(fn(AssetPriceFactory $f) => $f->count(5))
+        ->withPrices(fn (AssetPriceFactory $f) => $f->count(5))
         ->create();
 
     $asset = Stock::find($security->id);
@@ -15,11 +15,11 @@ it('stock loads prices relationship', function () {
 
 it('stock calculates current price from latest price record', function () {
     $asset = Stock::factory()
-        ->withPrices(fn(AssetPriceFactory $f) => $f->state([
+        ->withPrices(fn (AssetPriceFactory $f) => $f->state([
             'date' => '2026-05-06',
             'close' => 100.0,
         ]))
-        ->withPrices(fn(AssetPriceFactory $f) => $f->state([
+        ->withPrices(fn (AssetPriceFactory $f) => $f->state([
             'date' => '2026-05-08',
             'close' => 125.5,
         ]))

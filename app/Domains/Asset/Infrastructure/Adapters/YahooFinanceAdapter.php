@@ -15,6 +15,11 @@ use Illuminate\Support\Collection;
 
 class YahooFinanceAdapter implements AssetPriceProviderPort, AssetProviderPort, AssetSectorProviderPort
 {
+    public function supports(AssetType $type): bool
+    {
+        return in_array($type, [AssetType::Stock, AssetType::ETF]);
+    }
+
     public function getCurrentPrice(int $assetId): ?float
     {
         $asset = Asset::query()->find($assetId);
@@ -68,11 +73,6 @@ class YahooFinanceAdapter implements AssetPriceProviderPort, AssetProviderPort, 
         } catch (\Exception) {
             return collect();
         }
-    }
-
-    public function supports(AssetType $type): bool
-    {
-        return in_array($type, [AssetType::Stock, AssetType::ETF]);
     }
 
     public function findBySymbol(string $symbol, AssetType $type): ?AssetData

@@ -24,7 +24,7 @@ abstract class AssetFactory extends Factory
     abstract protected function infos();
 
     /**
-     * @param callable(Factory): Factory $configure Closure to configure info factory
+     * @param  callable(Factory): Factory  $configure  Closure to configure info factory
      */
     public function withInfos(callable $configure): static
     {
@@ -38,7 +38,7 @@ abstract class AssetFactory extends Factory
     }
 
     /**
-     * @param callable(AssetPriceFactory): AssetPriceFactory $configure Closure to configure price factory
+     * @param  callable(AssetPriceFactory): AssetPriceFactory  $configure  Closure to configure price factory
      */
     public function withPrices(callable $configure): static
     {

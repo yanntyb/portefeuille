@@ -2,9 +2,8 @@
 
 namespace App\Domains\Asset\Factories\Assets;
 
-use App\Domains\Asset\Factories\AssetInfos\RealEstateAssetInfoFactory;
 use App\Domains\Asset\Enums\AssetType;
-use App\Domains\Asset\Models\Assets\Asset;
+use App\Domains\Asset\Factories\AssetInfos\RealEstateAssetInfoFactory;
 use App\Domains\Asset\Models\Assets\RealEstate;
 
 /**

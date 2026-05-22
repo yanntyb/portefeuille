@@ -31,4 +31,3 @@ it('ticker can be null for bonds', function () {
 
     expect($bond->infos->ticker)->toBeNull();
 });
-
