@@ -22,6 +22,7 @@ class AppServiceProvider extends ServiceProvider
         // Ports → Adapters
         $this->app->bind(AssetPriceProviderPort::class, \App\Domains\Asset\Infrastructure\Adapters\DatabaseAssetPriceAdapter::class);
         $this->app->bind(\App\Domains\AssetView\Ports\AssetPriceViewPort::class, \App\Domains\AssetView\Infrastructure\Adapters\EloquentAssetPriceViewAdapter::class);
+        $this->app->bind(\App\Domains\AssetView\Ports\AssetSectorViewPort::class, \App\Domains\AssetView\Infrastructure\Adapters\EloquentAssetSectorViewAdapter::class);
 
         // Asset domain services
         $this->app->scoped(\App\Domains\Asset\Services\AssetValuationService::class);
