@@ -54,3 +54,11 @@ it('findByType returns only stocks', function (): void {
         expect($stock->type)->toBe(AssetType::Stock);
     });
 });
+
+it('finds all assets', function (): void {
+    Stock::factory()->count(3)->create();
+
+    $result = app(AssetRepositoryInterface::class)->findAll();
+
+    expect($result)->toHaveCount(3);
+});

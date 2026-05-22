@@ -19,5 +19,8 @@ interface AssetRepositoryInterface
     /** @return Collection<int, Asset> */
     public function findByType(AssetType $type): Collection;
 
+    /** @return Collection<int, Asset> */
+    public function findAll(): Collection;
+
     public function save(Asset $asset): void;
 }

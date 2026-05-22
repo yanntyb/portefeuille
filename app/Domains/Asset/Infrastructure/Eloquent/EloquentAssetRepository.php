@@ -50,6 +50,11 @@ class EloquentAssetRepository implements AssetRepositoryInterface
             ->get();
     }
 
+    public function findAll(): Collection
+    {
+        return Asset::query()->get();
+    }
+
     public function save(Asset $asset): void
     {
         $asset->save();
