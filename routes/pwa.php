@@ -22,3 +22,5 @@ Route::get('sw.js', function () {
         ->header('Content-Type', 'application/javascript')
         ->header('Cache-Control', 'no-cache');
 })->name('pwa.sw');
+
+Route::get('assets/{assetId}', [\App\Http\Controllers\AssetPriceController::class, 'show']);

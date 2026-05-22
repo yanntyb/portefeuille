@@ -1,10 +1,3 @@
 <?php
 
-use App\Domains\User\Livewire\InvitationRegistration;
-use Illuminate\Support\Facades\Route;
-
-Route::get('/invitation/{token}', InvitationRegistration::class)
-    ->name('invitation.register')
-    ->middleware('guest');
-
 require __DIR__.'/pwa.php';

@@ -1,6 +1,6 @@
 <?php
 
-use App\Infrastructure\Support\PythonScriptCaller;
+use App\Infrastructure\Support\Python;
 use Illuminate\Support\Facades\Process;
 
 test('it calls python script and returns decoded json', function () {
@@ -14,7 +14,7 @@ test('it calls python script and returns decoded json', function () {
         '*' => Process::result(output: $expectedOutput),
     ]);
 
-    $result = PythonScriptCaller::call('test.py', ['hello' => 'world']);
+    $result = Python::call('test.py', ['hello' => 'world']);
 
     expect($result)
         ->toBeArray()
@@ -29,7 +29,7 @@ test('it calls python script and returns decoded json', function () {
 });
 
 test('it throws exception when script does not exist', function () {
-    PythonScriptCaller::call('nonexistent.py');
+    Python::call('nonexistent.py');
 })->throws(RuntimeException::class, 'Python script not found');
 
 test('it throws exception when process fails', function () {
@@ -37,7 +37,7 @@ test('it throws exception when process fails', function () {
         '*' => Process::result(exitCode: 1, errorOutput: 'some error'),
     ]);
 
-    PythonScriptCaller::call('test.py', ['hello' => 'world']);
+    Python::call('test.py', ['hello' => 'world']);
 })->throws(RuntimeException::class, 'Python script failed');
 
 test('it throws exception when python returns invalid json', function () {
@@ -45,7 +45,7 @@ test('it throws exception when python returns invalid json', function () {
         '*' => Process::result(output: 'not json'),
     ]);
 
-    PythonScriptCaller::call('test.py', ['hello' => 'world']);
+    Python::call('test.py', ['hello' => 'world']);
 })->throws(RuntimeException::class, 'Invalid JSON returned from Python script');
 
 test('it uses custom timeout when provided', function () {
@@ -53,7 +53,7 @@ test('it uses custom timeout when provided', function () {
         '*' => Process::result(output: json_encode(['status' => 'ok'])),
     ]);
 
-    PythonScriptCaller::call('test.py', ['hello' => 'world'], timeout: 60);
+    Python::call('test.py', ['hello' => 'world'], timeout: 60);
 
     Process::assertRan(function ($process) {
         return $process->timeout === 60;
@@ -65,7 +65,7 @@ test('it uses default 30s timeout', function () {
         '*' => Process::result(output: json_encode(['status' => 'ok'])),
     ]);
 
-    PythonScriptCaller::call('test.py');
+    Python::call('test.py');
 
     Process::assertRan(function ($process) {
         return $process->timeout === 30;
@@ -73,11 +73,11 @@ test('it uses default 30s timeout', function () {
 });
 
 test('pythonBin returns the venv python binary path', function () {
-    expect(PythonScriptCaller::pythonBin())
+    expect(Python::pythonBin())
         ->toBe(base_path('.venv/bin/python'));
 });
 
 test('scriptPath returns the full path to a python script', function () {
-    expect(PythonScriptCaller::scriptPath('fetch_prices.py'))
+    expect(Python::scriptPath('fetch_prices.py'))
         ->toBe(storage_path('python/scripts/fetch_prices.py'));
 });

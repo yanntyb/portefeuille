@@ -20,7 +20,7 @@ class AssetPriceChartWidget extends ChartWidget
 
     protected static bool $isDiscovered = false;
 
-    protected static string $view = 'filament.widgets.asset-price-chart-widget';
+    protected string $view = 'filament.widgets.asset-price-chart-widget';
 
     protected function getType(): string
     {

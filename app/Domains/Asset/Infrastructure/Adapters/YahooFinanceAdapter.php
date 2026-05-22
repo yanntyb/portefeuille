@@ -10,7 +10,7 @@ use App\Domains\Asset\Ports\AssetProviderPort;
 use App\Domains\Asset\Ports\AssetSectorProviderPort;
 use App\Domains\Asset\ValueObjects\AssetData;
 use App\Domains\Asset\ValueObjects\SectorAllocation;
-use App\Infrastructure\Support\PythonScriptCaller;
+use App\Infrastructure\Support\Python;
 use Illuminate\Support\Collection;
 
 class YahooFinanceAdapter implements AssetPriceProviderPort, AssetProviderPort, AssetSectorProviderPort
@@ -29,7 +29,7 @@ class YahooFinanceAdapter implements AssetPriceProviderPort, AssetProviderPort, 
         }
 
         try {
-            $result = PythonScriptCaller::call('fetch_prices.py', [
+            $result = Python::call('fetch_prices.py', [
                 'ticker' => $asset->ticker,
                 'start_date' => now()->subYear()->format('Y-m-d'),
                 'end_date' => now()->format('Y-m-d'),
@@ -59,7 +59,7 @@ class YahooFinanceAdapter implements AssetPriceProviderPort, AssetProviderPort, 
         $endDate ??= now()->format('Y-m-d');
 
         try {
-            $result = PythonScriptCaller::call('fetch_prices.py', [
+            $result = Python::call('fetch_prices.py', [
                 'ticker' => $asset->ticker,
                 'start_date' => $startDate,
                 'end_date' => $endDate,
@@ -78,7 +78,7 @@ class YahooFinanceAdapter implements AssetPriceProviderPort, AssetProviderPort, 
     public function findBySymbol(string $symbol, AssetType $type): ?AssetData
     {
         try {
-            $search = PythonScriptCaller::call('search_ticker.py', ['query' => $symbol]);
+            $search = Python::call('search_ticker.py', ['query' => $symbol]);
 
             if ($search['status'] !== 'ok' || empty($search['data'])) {
                 return null;
@@ -101,7 +101,7 @@ class YahooFinanceAdapter implements AssetPriceProviderPort, AssetProviderPort, 
     public function getSectorAllocations(string $symbol, AssetType $type): array
     {
         try {
-            $result = PythonScriptCaller::call('fetch_sectors.py', ['ticker' => $symbol]);
+            $result = Python::call('fetch_sectors.py', ['ticker' => $symbol]);
 
             if ($result['status'] !== 'ok' || empty($result['data'])) {
                 return [];
