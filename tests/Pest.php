@@ -19,6 +19,10 @@ pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Infrastructure');
 
+pest()->extend(Tests\TestCase::class)
+    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    ->in('../app/Domains');
+
 /*
 |--------------------------------------------------------------------------
 | Expectations
