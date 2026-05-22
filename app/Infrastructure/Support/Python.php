@@ -5,7 +5,7 @@ namespace App\Infrastructure\Support;
 use Illuminate\Support\Facades\Process;
 use RuntimeException;
 
-class PythonScriptCaller
+class Python
 {
     public static function pythonBin(): string
     {

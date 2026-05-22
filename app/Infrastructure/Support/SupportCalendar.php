@@ -5,7 +5,7 @@ namespace App\Infrastructure\Support;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 
-class MarketCalendar
+class SupportCalendar
 {
     public static function lastTradingDate(): CarbonInterface
     {
