@@ -22,8 +22,7 @@ class AssetPricePage extends Page
 
     public static function routes(Panel $panel): void
     {
-        Route::get('/assets/{assetId}', static::class)
-            ->middleware($panel->getAuthMiddleware());
+        Route::get('/assets/{assetId}', static::class);
     }
 
     public static function getSlug(?Panel $panel = null): string
