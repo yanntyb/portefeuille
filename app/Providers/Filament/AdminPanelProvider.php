@@ -2,19 +2,11 @@
 
 namespace App\Providers\Filament;
 
-use App\Domains\User\Filament\Pages\Auth\Login;
-use App\Infrastructure\Extensions\Debug;
-use App\Infrastructure\Extensions\Pwa;
-use App\Infrastructure\Extensions\Store;
-use App\Infrastructure\Extensions\Style;
-use App\Infrastructure\Extensions\TablePersistence;
-use App\Infrastructure\Extensions\Transition;
-use Filament\Actions\Action;
+use App\Infrastructure\Filament\Pages\AssetPricePage;
+use App\Infrastructure\Filament\Widgets\AssetPriceChartWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Navigation\NavigationGroup;
-use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -36,42 +28,15 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('')
             ->viteTheme('resources/css/filament/admin/theme.css')
-            ->spa(hasPrefetching: true)
-            ->login(Login::class)
             ->colors([
                 'primary' => Color::Amber,
             ])
-            ->discoverResources(in: app_path('Domains/User/Filament/Resources'), for: 'App\Domains\User\Filament\Resources')
-            ->discoverResources(in: app_path('Domains/Portfolio/Filament/Resources'), for: 'App\Domains\Portfolio\Filament\Resources')
-            ->discoverPages(in: app_path('Domains/User/Filament/Pages'), for: 'App\Domains\User\Filament\Pages')
-            ->discoverPages(in: app_path('Domains/Portfolio/Filament/Pages'), for: 'App\Domains\Portfolio\Filament\Pages')
-            ->discoverPages(in: app_path('Domains/Analytics/Filament/Pages'), for: 'App\Domains\Analytics\Filament\Pages')
-            ->discoverWidgets(in: app_path('Domains/Portfolio/Filament/Widgets'), for: 'App\Domains\Portfolio\Filament\Widgets')
-            ->discoverWidgets(in: app_path('Domains/Analytics/Filament/Widgets'), for: 'App\Domains\Analytics\Filament\Widgets')
-            ->pages([])
-            ->widgets([])
-            ->navigationGroups([
-                NavigationGroup::make('Portefeuille'),
-                NavigationGroup::make('Outils'),
-                NavigationGroup::make('Administration'),
+            ->darkMode()
+            ->pages([
+                AssetPricePage::class,
             ])
-            ->navigationItems([
-                NavigationItem::make('Simulation')
-                    ->url('#')
-                    ->icon('heroicon-o-calculator')
-                    ->group('Outils')
-                    ->sort(1),
-                NavigationItem::make('Logs')
-                    ->url('/log-viewer', shouldOpenInNewTab: true)
-                    ->icon('heroicon-o-document-text')
-                    ->group('Administration')
-                    ->sort(100)
-                    ->visible(fn () => auth()->user()?->isAdmin()),
-            ])
-            ->brandName('')
-            ->darkMode(isForced: true)
-            ->userMenuItems([
-                'profile' => fn (Action $action) => $action->hidden(),
+            ->widgets([
+                AssetPriceChartWidget::class,
             ])
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_AFTER,
@@ -100,14 +65,6 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
                 fn (): string => Blade::render(file_get_contents(resource_path('views/filament/pages/auth/demo-button.blade.php'))),
             )
-            ->plugins([
-                Pwa::make(),
-                Style::make(),
-                Debug::make(),
-                Transition::make(),
-                Store::make(),
-                TablePersistence::make(),
-            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
