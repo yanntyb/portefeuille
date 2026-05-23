@@ -15,7 +15,7 @@ class DemoSeeder extends Seeder
             ['email' => 'demo@example.com'],
             [
                 'name' => 'Démo',
-                'password' => Str::random(32),
+                'password' => bcrypt(Str::random(32)),
                 'role' => Role::User,
             ],
         );
@@ -25,6 +25,7 @@ class DemoSeeder extends Seeder
 
         $this->call(TransactionSeeder::class, parameters: ['user' => $user]);
         $this->call(FeedbackSeeder::class, parameters: ['user' => $user]);
+        $this->call(PriceSyncSeeder::class);
 
         return $user;
     }
