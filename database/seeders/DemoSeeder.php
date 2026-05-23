@@ -11,8 +11,6 @@ class DemoSeeder extends Seeder
 {
     public function run(): User
     {
-        $this->call(AssetSeeder::class);
-
         $user = User::firstOrCreate(
             ['email' => 'demo@example.com'],
             [
