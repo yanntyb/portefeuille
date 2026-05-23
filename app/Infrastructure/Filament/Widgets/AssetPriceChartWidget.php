@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\Filament\Widgets;
 
+use App\Domains\Asset\Services\AssetPriceAggregator;
 use App\Domains\AssetView\Ports\AssetPriceViewPort;
 use Carbon\Carbon;
 use Filament\Widgets\ChartWidget;
@@ -67,59 +68,21 @@ class AssetPriceChartWidget extends ChartWidget
             ];
         }
 
-        $dates = $history->pluck('date')->toArray();
-        $closes = $history->pluck('close')->toArray();
-        $opens = $history->pluck('open')->toArray();
-        $highs = $history->pluck('high')->toArray();
-        $lows = $history->pluck('low')->toArray();
+        $aggregator = app(AssetPriceAggregator::class);
+        $aggregated = $aggregator->aggregateByWeek($history);
+
+        $dates = $aggregated->pluck('date')->toArray();
+        $closes = $aggregated->pluck('close')->toArray();
 
         return [
             'datasets' => [
                 [
-                    'label' => 'Clôture',
+                    'label' => 'Clôture (moyenne hebdomadaire)',
                     'data' => $closes,
                     'borderColor' => 'rgb(52, 211, 153)',
                     'backgroundColor' => 'rgba(52, 211, 153, 0.15)',
                     'tension' => 0.3,
                     'fill' => 'origin',
-                ],
-                [
-                    'label' => 'Ouverture',
-                    'data' => $opens,
-                    'borderColor' => 'rgb(34, 197, 94)',
-                    'backgroundColor' => 'rgba(34, 197, 94, 0.1)',
-                    'tension' => 0.3,
-                    'fill' => false,
-                    'hidden' => true,
-                ],
-                [
-                    'label' => 'Plus haut',
-                    'data' => $highs,
-                    'borderColor' => 'rgb(239, 68, 68)',
-                    'backgroundColor' => 'rgba(239, 68, 68, 0.1)',
-                    'tension' => 0.3,
-                    'fill' => false,
-                    'hidden' => true,
-                ],
-                [
-                    'label' => 'Plus bas',
-                    'data' => $lows,
-                    'borderColor' => 'rgb(168, 85, 247)',
-                    'backgroundColor' => 'rgba(168, 85, 247, 0.1)',
-                    'tension' => 0.3,
-                    'fill' => false,
-                    'hidden' => true,
-                ],
-                [
-                    'label' => 'Référence',
-                    'data' => array_fill(0, count($dates), $closes[0]),
-                    'borderColor' => 'rgba(156, 163, 175, 0.6)',
-                    'borderDash' => [4, 4],
-                    'borderWidth' => 1,
-                    'pointRadius' => 0,
-                    'fill' => false,
-                    'tension' => 0,
-                    'hidden' => true,
                 ],
             ],
             'labels' => $dates,

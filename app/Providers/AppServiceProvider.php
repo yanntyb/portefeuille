@@ -7,6 +7,7 @@ use App\Domains\Asset\Contracts\AssetRepositoryInterface;
 use App\Domains\Asset\Infrastructure\Eloquent\EloquentAssetPriceRepository;
 use App\Domains\Asset\Infrastructure\Eloquent\EloquentAssetRepository;
 use App\Domains\Asset\Ports\AssetPriceProviderPort;
+use App\Domains\Asset\Services\AssetPriceAggregator;
 use App\Domains\Asset\Services\PriceSyncService;
 use Carbon\Carbon;
 use Illuminate\Support\ServiceProvider;
@@ -26,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Domains\AssetView\Ports\AssetMetaViewPort::class, \App\Domains\AssetView\Infrastructure\Adapters\EloquentAssetMetaViewAdapter::class);
 
         // Asset domain services
+        $this->app->singleton(AssetPriceAggregator::class);
         $this->app->scoped(\App\Domains\Asset\Services\AssetValuationService::class);
         $this->app->scoped(PriceSyncService::class);
     }
