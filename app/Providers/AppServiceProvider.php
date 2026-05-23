@@ -33,5 +33,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Carbon::setLocale('fr');
+        $this->registerViewNamespaces();
+    }
+
+    private function registerViewNamespaces(): void
+    {
+        view()->addNamespace('asset-filament', app_path('Domains/Asset/Infrastructure/Filament/Views'));
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Infrastructure\Filament\Pages\AssetPricePage;
+use App\Infrastructure\Filament\Resources\AssetResource;
 use App\Infrastructure\Filament\Widgets\AssetPriceChartWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -32,6 +33,9 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Amber,
             ])
             ->darkMode()
+            ->resources([
+                AssetResource::class,
+            ])
             ->pages([
                 AssetPricePage::class,
             ])
