@@ -2,7 +2,6 @@
 
 namespace App\Domains\AssetView\DTOs;
 
-use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Models\Assets\Asset;
 
 readonly class AssetMetaDTO
@@ -10,7 +9,7 @@ readonly class AssetMetaDTO
     public function __construct(
         public int $id,
         public string $name,
-        public AssetType $type,
+        public string $type,
         public ?string $ticker = null,
         public ?string $isin = null,
     ) {}
@@ -23,7 +22,7 @@ readonly class AssetMetaDTO
         return new self(
             id: $asset->id,
             name: $asset->name,
-            type: $asset->type,
+            type: $asset->type->value,
             ticker: $infos?->ticker ?? null,
             isin: $infos?->isin ?? null,
         );
