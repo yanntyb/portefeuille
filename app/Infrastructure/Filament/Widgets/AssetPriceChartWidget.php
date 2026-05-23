@@ -27,6 +27,32 @@ class AssetPriceChartWidget extends ChartWidget
         return 'line';
     }
 
+    protected function getOptions(): array
+    {
+        return [
+            'interaction' => [
+                'mode' => 'index',
+                'intersect' => false,
+            ],
+            'plugins' => [
+                'tooltip' => [
+                    'mode' => 'index',
+                    'intersect' => false,
+                ],
+            ],
+            'scales' => [
+                'y' => [
+                    'grid' => ['color' => 'rgba(156, 163, 175, 0.15)'],
+                    'ticks' => ['maxTicksLimit' => 6],
+                ],
+                'x' => [
+                    'grid' => ['display' => false],
+                    'ticks' => ['maxTicksLimit' => 8],
+                ],
+            ],
+        ];
+    }
+
     protected function getData(): array
     {
         [$from, $to] = $this->resolveDateRange();
@@ -52,10 +78,10 @@ class AssetPriceChartWidget extends ChartWidget
                 [
                     'label' => 'Clôture',
                     'data' => $closes,
-                    'borderColor' => 'rgb(59, 130, 246)',
-                    'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
+                    'borderColor' => 'rgb(52, 211, 153)',
+                    'backgroundColor' => 'rgba(52, 211, 153, 0.15)',
                     'tension' => 0.3,
-                    'fill' => false,
+                    'fill' => 'origin',
                 ],
                 [
                     'label' => 'Ouverture',
@@ -82,6 +108,17 @@ class AssetPriceChartWidget extends ChartWidget
                     'backgroundColor' => 'rgba(168, 85, 247, 0.1)',
                     'tension' => 0.3,
                     'fill' => false,
+                    'hidden' => true,
+                ],
+                [
+                    'label' => 'Référence',
+                    'data' => array_fill(0, count($dates), $closes[0]),
+                    'borderColor' => 'rgba(156, 163, 175, 0.6)',
+                    'borderDash' => [4, 4],
+                    'borderWidth' => 1,
+                    'pointRadius' => 0,
+                    'fill' => false,
+                    'tension' => 0,
                     'hidden' => true,
                 ],
             ],
