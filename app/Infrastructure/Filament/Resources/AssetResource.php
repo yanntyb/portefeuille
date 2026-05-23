@@ -2,8 +2,8 @@
 
 namespace App\Infrastructure\Filament\Resources;
 
+use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Models\Assets\Asset;
-use App\Domains\Asset\Models\Enums\AssetType;
 use App\Infrastructure\Filament\Resources\Pages\ListAssets;
 use App\Infrastructure\Filament\Resources\Pages\ViewAsset;
 use Filament\Resources\Resource;
@@ -35,12 +35,7 @@ class AssetResource extends Resource
                     ->color(fn (AssetType $state): string => $state->getColor())
                     ->formatStateUsing(fn (AssetType $state): string => $state->getLabel()),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([]),
-            ]);
+            ->recordUrl(fn (Asset $record): string => static::getUrl('view', ['record' => $record]));
     }
 
     public static function getPages(): array
