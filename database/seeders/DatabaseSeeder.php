@@ -20,8 +20,11 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
 
-        $this->call(TransactionSeeder::class, parameters: ['user' => $user]);
-        $this->call(FeedbackSeeder::class, parameters: ['user' => $user]);
+        // TODO: Create Wallet/Portfolio models
+        // $this->call(TransactionSeeder::class, parameters: ['user' => $user]);
+        // $this->call(FeedbackSeeder::class, parameters: ['user' => $user]);
+
+        $this->call(TestAssetSeeder::class);
         $this->call(PriceSyncSeeder::class);
     }
 }
