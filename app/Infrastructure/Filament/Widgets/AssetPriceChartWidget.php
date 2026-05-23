@@ -21,8 +21,6 @@ class AssetPriceChartWidget extends ChartWidget
 
     protected static bool $isDiscovered = false;
 
-    protected string $view = 'filament.widgets.asset-price-chart-widget';
-
     protected function getType(): string
     {
         return 'line';
