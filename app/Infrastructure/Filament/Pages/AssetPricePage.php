@@ -58,8 +58,13 @@ class AssetPricePage extends Page
     protected function getHeaderWidgets(): array
     {
         return [
-            AssetPriceChartWidget::class,
+            AssetPriceChartWidget::class => ['columnSpan' => 'full'],
         ];
+    }
+
+    public function getHeaderWidgetsColumns(): int | array
+    {
+        return 1;
     }
 
     public function getWidgetData(): array
