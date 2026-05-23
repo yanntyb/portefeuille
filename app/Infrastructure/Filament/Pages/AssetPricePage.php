@@ -7,6 +7,7 @@ use App\Domains\AssetView\Ports\AssetMetaViewPort;
 use App\Infrastructure\Filament\Widgets\AssetPriceChartWidget;
 use Filament\Pages\Page;
 use Filament\Panel;
+use Filament\Widgets\WidgetConfiguration;
 use Illuminate\Support\Facades\Route;
 use Livewire\Attributes\Locked;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -58,7 +59,8 @@ class AssetPricePage extends Page
     protected function getHeaderWidgets(): array
     {
         return [
-            AssetPriceChartWidget::class => ['columnSpan' => 'full'],
+            WidgetConfiguration::make(AssetPriceChartWidget::class)
+                ->columnSpan('full'),
         ];
     }
 
