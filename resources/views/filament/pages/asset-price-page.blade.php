@@ -15,6 +15,4 @@
             @endif
         </div>
     </div>
-
-    @livewire(\App\Infrastructure\Filament\Widgets\AssetPriceChartWidget::class, ['assetId' => $assetId])
 </x-filament-panels::page>
