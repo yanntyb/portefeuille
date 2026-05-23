@@ -7,7 +7,6 @@ use App\Domains\AssetView\Ports\AssetMetaViewPort;
 use App\Infrastructure\Filament\Widgets\AssetPriceChartWidget;
 use Filament\Pages\Page;
 use Filament\Panel;
-use Filament\Widgets\WidgetConfiguration;
 use Illuminate\Support\Facades\Route;
 use Livewire\Attributes\Locked;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -21,7 +20,8 @@ class AssetPricePage extends Page
     #[Locked]
     public int $assetId;
 
-    private ?AssetMetaDTO $meta = null;
+    #[Locked]
+    public ?AssetMetaDTO $meta = null;
 
     public static function routes(Panel $panel): void
     {
@@ -49,22 +49,14 @@ class AssetPricePage extends Page
         return $this->meta?->name ?? 'Asset';
     }
 
-    protected function getViewData(): array
-    {
-        return [
-            'meta' => $this->meta,
-        ];
-    }
-
     protected function getHeaderWidgets(): array
     {
         return [
-            WidgetConfiguration::make(AssetPriceChartWidget::class)
-                ->columnSpan('full'),
+            AssetPriceChartWidget::class,
         ];
     }
 
-    public function getHeaderWidgetsColumns(): int | array
+    public function getHeaderWidgetsColumns(): int|array
     {
         return 1;
     }

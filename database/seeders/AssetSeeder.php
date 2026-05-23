@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Domains\Asset\Models\Assets\Asset;
 use App\Domains\Asset\Models\AssetPrice;
-use Carbon\Carbon;
+use App\Domains\Asset\Models\Assets\Asset;
 use Illuminate\Database\Seeder;
 
 class AssetSeeder extends Seeder

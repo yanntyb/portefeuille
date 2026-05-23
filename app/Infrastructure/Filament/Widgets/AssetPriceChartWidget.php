@@ -21,6 +21,8 @@ class AssetPriceChartWidget extends ChartWidget
 
     protected static bool $isDiscovered = false;
 
+    protected string|int|array $columnSpan = 'full';
+
     protected function getType(): string
     {
         return 'line';
