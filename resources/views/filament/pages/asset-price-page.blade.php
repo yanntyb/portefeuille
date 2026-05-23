@@ -7,8 +7,8 @@
             @endif
         </div>
         <div class="flex items-center gap-3 flex-wrap text-sm">
-            <x-filament::badge :color="$meta->type->getColor()">
-                {{ $meta->type->getLabel() }}
+            <x-filament::badge color="info">
+                {{ ucfirst($meta->type) }}
             </x-filament::badge>
             @if ($meta->isin)
                 <span class="text-gray-600 dark:text-gray-400">ISIN: {{ $meta->isin }}</span>

@@ -20,8 +20,7 @@ class AssetPricePage extends Page
     #[Locked]
     public int $assetId;
 
-    #[Locked]
-    public ?AssetMetaDTO $meta = null;
+    private ?AssetMetaDTO $meta = null;
 
     public static function routes(Panel $panel): void
     {
