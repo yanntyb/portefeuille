@@ -15,10 +15,10 @@ describe('AssetResource', function () {
         expect($page)->toBeInstanceOf(ListAssets::class);
     });
 
-    test('ViewAsset uses custom view', function () {
+    test('ViewAsset uses Filament default layout', function () {
         $page = new ViewAsset;
 
-        expect($page->getView())->toBe('asset-filament::view-asset');
+        expect($page->getView())->toBe('filament-panels::pages.page');
     });
 
     test('ViewAsset passes assetId to widgets', function () {

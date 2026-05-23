@@ -10,8 +10,6 @@ class ViewAsset extends ViewRecord
 {
     protected static string $resource = AssetResource::class;
 
-    protected string $view = 'asset-filament::view-asset';
-
     protected function getHeaderWidgets(): array
     {
         return [
