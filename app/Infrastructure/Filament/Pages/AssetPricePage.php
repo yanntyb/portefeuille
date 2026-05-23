@@ -8,6 +8,7 @@ use App\Infrastructure\Filament\Widgets\AssetPriceChartWidget;
 use Filament\Pages\Page;
 use Filament\Panel;
 use Illuminate\Support\Facades\Route;
+use Livewire\Attributes\Locked;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class AssetPricePage extends Page
@@ -16,8 +17,10 @@ class AssetPricePage extends Page
 
     protected static bool $shouldRegisterNavigation = false;
 
+    #[Locked]
     public int $assetId;
 
+    #[Locked]
     public ?AssetMetaDTO $meta = null;
 
     public static function routes(Panel $panel): void
