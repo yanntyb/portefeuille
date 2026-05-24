@@ -38,6 +38,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 AssetPriceChartWidget::class,
             ])
+            ->spa()
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
