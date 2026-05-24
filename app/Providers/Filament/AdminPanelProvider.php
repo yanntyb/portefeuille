@@ -2,7 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use App\Infrastructure\Filament\Pages\AssetPricePage;
 use App\Infrastructure\Filament\Resources\AssetResource;
 use App\Infrastructure\Filament\Widgets\AssetPriceChartWidget;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -34,7 +33,7 @@ class AdminPanelProvider extends PanelProvider
                 AssetResource::class,
             ])
             ->pages([
-                AssetPricePage::class,
+                //AssetPricePage::class,
             ])
             ->widgets([
                 AssetPriceChartWidget::class,
