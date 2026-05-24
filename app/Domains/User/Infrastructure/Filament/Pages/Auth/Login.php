@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\User\Filament\Pages\Auth;
+namespace App\Domains\User\Infrastructure\Filament\Pages\Auth;
 
 use Database\Seeders\DemoSeeder;
 use Filament\Auth\Pages\Login as BaseLogin;

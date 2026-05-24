@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\User\Livewire;
+namespace App\Domains\User\Infrastructure\Livewire;
 
 use App\Domains\User\Enums\Role;
 use App\Domains\User\Models\Invitation;

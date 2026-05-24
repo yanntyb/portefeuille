@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\User\Filament\Resources\Invitations\Pages;
+namespace App\Domains\User\Infrastructure\Filament\Resources\Invitations\Pages;
 
 use App\Domains\User\Filament\Resources\Invitations\InvitationResource;
 use App\Domains\User\Models\Invitation;

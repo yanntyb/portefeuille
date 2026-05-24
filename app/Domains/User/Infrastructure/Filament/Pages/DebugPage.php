@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\User\Filament\Pages;
+namespace App\Domains\User\Infrastructure\Filament\Pages;
 
 use BackedEnum;
 use Filament\Actions\Action;

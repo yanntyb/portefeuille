@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\User\Filament\Resources\Users;
+namespace App\Domains\User\Infrastructure\Filament\Resources\Users;
 
 use App\Domains\User\Enums\Role;
 use App\Domains\User\Filament\Resources\Users\Pages\CreateUser;
