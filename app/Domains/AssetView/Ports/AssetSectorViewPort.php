@@ -2,7 +2,7 @@
 
 namespace App\Domains\AssetView\Ports;
 
-use App\Domains\AssetView\DTOs\SectorWeightDTO;
+use App\Domains\AssetView\ValueObjects\SectorWeightDTO;
 use Illuminate\Support\Collection;
 
 interface AssetSectorViewPort

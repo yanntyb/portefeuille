@@ -2,7 +2,7 @@
 
 namespace App\Domains\AssetView\Ports;
 
-use App\Domains\AssetView\DTOs\PriceHistoryDTO;
+use App\Domains\AssetView\ValueObjects\PriceHistoryDTO;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 

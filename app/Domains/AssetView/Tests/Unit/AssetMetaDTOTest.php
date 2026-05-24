@@ -4,7 +4,7 @@ use App\Domains\Asset\Enums\AssetType;
 use App\Domains\Asset\Factories\AssetInfos\StockAssetInfoFactory;
 use App\Domains\Asset\Models\Assets\Savings;
 use App\Domains\Asset\Models\Assets\Stock;
-use App\Domains\AssetView\DTOs\AssetMetaDTO;
+use App\Domains\AssetView\ValueObjects\AssetMetaDTO;
 
 it('maps id, name, type, ticker and isin from Stock model', function (): void {
     $stock = Stock::factory()
@@ -18,7 +18,7 @@ it('maps id, name, type, ticker and isin from Stock model', function (): void {
 
     expect($dto->id)->toBe($stock->id)
         ->and($dto->name)->toBe('Apple Inc')
-        ->and($dto->type)->toBe(AssetType::Stock)
+        ->and($dto->type)->toBe(AssetType::Stock->value)
         ->and($dto->ticker)->toBe('AAPL')
         ->and($dto->isin)->toBe('US0378331005');
 });

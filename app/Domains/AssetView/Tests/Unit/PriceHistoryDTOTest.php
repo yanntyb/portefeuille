@@ -2,7 +2,7 @@
 
 use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\Asset\Models\Assets\Stock;
-use App\Domains\AssetView\DTOs\PriceHistoryDTO;
+use App\Domains\AssetView\ValueObjects\PriceHistoryDTO;
 
 it('maps all fields from AssetPrice model', function (): void {
     $stock = Stock::factory()->create();

@@ -3,7 +3,7 @@
 use App\Domains\Asset\Enums\Sector;
 use App\Domains\Asset\Models\Assets\Stock;
 use App\Domains\Asset\Models\AssetSector;
-use App\Domains\AssetView\DTOs\SectorWeightDTO;
+use App\Domains\AssetView\ValueObjects\SectorWeightDTO;
 
 it('maps sector and weight from AssetSector model', function (): void {
     $stock = Stock::factory()->create();

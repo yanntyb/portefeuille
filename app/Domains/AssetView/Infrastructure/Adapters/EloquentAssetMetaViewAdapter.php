@@ -3,8 +3,8 @@
 namespace App\Domains\AssetView\Infrastructure\Adapters;
 
 use App\Domains\Asset\Contracts\AssetRepositoryInterface;
-use App\Domains\AssetView\DTOs\AssetMetaDTO;
 use App\Domains\AssetView\Ports\AssetMetaViewPort;
+use App\Domains\AssetView\ValueObjects\AssetMetaDTO;
 use Illuminate\Support\Collection;
 
 class EloquentAssetMetaViewAdapter implements AssetMetaViewPort

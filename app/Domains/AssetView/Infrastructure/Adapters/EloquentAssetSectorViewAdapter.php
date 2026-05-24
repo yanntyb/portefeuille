@@ -3,8 +3,8 @@
 namespace App\Domains\AssetView\Infrastructure\Adapters;
 
 use App\Domains\Asset\Models\AssetSector;
-use App\Domains\AssetView\DTOs\SectorWeightDTO;
 use App\Domains\AssetView\Ports\AssetSectorViewPort;
+use App\Domains\AssetView\ValueObjects\SectorWeightDTO;
 use Illuminate\Support\Collection;
 
 class EloquentAssetSectorViewAdapter implements AssetSectorViewPort

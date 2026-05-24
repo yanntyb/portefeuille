@@ -3,8 +3,8 @@
 namespace App\Domains\AssetView\Infrastructure\Adapters;
 
 use App\Domains\Asset\Contracts\AssetPriceRepositoryInterface;
-use App\Domains\AssetView\DTOs\PriceHistoryDTO;
 use App\Domains\AssetView\Ports\AssetPriceViewPort;
+use App\Domains\AssetView\ValueObjects\PriceHistoryDTO;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 

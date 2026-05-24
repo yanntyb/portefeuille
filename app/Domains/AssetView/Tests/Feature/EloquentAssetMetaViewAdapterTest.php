@@ -3,8 +3,8 @@
 use App\Domains\Asset\Factories\AssetInfos\StockAssetInfoFactory;
 use App\Domains\Asset\Models\Assets\Savings;
 use App\Domains\Asset\Models\Assets\Stock;
-use App\Domains\AssetView\DTOs\AssetMetaDTO;
 use App\Domains\AssetView\Ports\AssetMetaViewPort;
+use App\Domains\AssetView\ValueObjects\AssetMetaDTO;
 
 it('returns asset metadata as DTO', function () {
     $stock = Stock::factory()

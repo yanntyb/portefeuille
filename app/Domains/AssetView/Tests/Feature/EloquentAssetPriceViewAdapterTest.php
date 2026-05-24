@@ -2,8 +2,8 @@
 
 use App\Domains\Asset\Models\AssetPrice;
 use App\Domains\Asset\Models\Assets\Stock;
-use App\Domains\AssetView\DTOs\PriceHistoryDTO;
 use App\Domains\AssetView\Ports\AssetPriceViewPort;
+use App\Domains\AssetView\ValueObjects\PriceHistoryDTO;
 
 it('returns price history as DTOs within date range', function () {
     $stock = Stock::factory()->create();

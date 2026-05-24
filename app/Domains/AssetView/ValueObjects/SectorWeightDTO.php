@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\AssetView\DTOs;
+namespace App\Domains\AssetView\ValueObjects;
 
 use App\Domains\Asset\Enums\Sector;
 use App\Domains\Asset\Models\AssetSector;
