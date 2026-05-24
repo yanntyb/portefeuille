@@ -9,9 +9,12 @@ use App\Domains\AssetView\ValueObjects\SectorWeightDTO;
 it('returns sector weights as DTOs', function () {
     $stock = Stock::factory()->create();
 
-    AssetSector::factory()->count(3)->create([
-        'asset_id' => $stock->id,
-    ]);
+    foreach (array_slice(Sector::cases(), 0, 3) as $sector) {
+        AssetSector::factory()->create([
+            'asset_id' => $stock->id,
+            'sector' => $sector,
+        ]);
+    }
 
     $adapter = app(AssetSectorViewPort::class);
     $result = $adapter->getSectorWeights($stock->id);
