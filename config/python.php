@@ -3,17 +3,15 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Binaire & scripts
+    | Binaire Python
     |--------------------------------------------------------------------------
     |
-    | Chemin de l'interpréteur Python et dossier des scripts. Les défauts
-    | reproduisent le comportement historique (.venv du projet + storage).
+    | Chemin de l'interpréteur. Défaut = .venv du projet. Les scripts sont
+    | résolus par chaque context (chemins co-localisés), pas ici.
     |
     */
 
     'bin' => env('PYTHON_BIN', base_path('.venv/bin/python')),
-
-    'scripts_path' => env('PYTHON_SCRIPTS_PATH', storage_path('python/scripts')),
 
     /*
     |--------------------------------------------------------------------------

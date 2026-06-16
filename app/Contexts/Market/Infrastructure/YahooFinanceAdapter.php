@@ -6,6 +6,7 @@ use App\Contexts\Market\Datas\InstrumentData;
 use App\Contexts\Market\Datas\SectorAllocationData;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
+use App\Contexts\Market\Infrastructure\Python\YahooScript;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Ports\InstrumentProviderPort;
 use App\Contexts\Market\Ports\PriceProviderPort;
@@ -33,7 +34,7 @@ class YahooFinanceAdapter implements InstrumentProviderPort, PriceProviderPort, 
         }
 
         try {
-            $result = $this->python->run('fetch_prices.py', [
+            $result = $this->python->run(YahooScript::Prices->path(), [
                 'ticker' => $asset->ticker,
                 'start_date' => now()->subYear()->format('Y-m-d'),
                 'end_date' => now()->format('Y-m-d'),
@@ -63,7 +64,7 @@ class YahooFinanceAdapter implements InstrumentProviderPort, PriceProviderPort, 
         $endDate ??= now()->format('Y-m-d');
 
         try {
-            $result = $this->python->run('fetch_prices.py', [
+            $result = $this->python->run(YahooScript::Prices->path(), [
                 'ticker' => $asset->ticker,
                 'start_date' => $startDate,
                 'end_date' => $endDate,
@@ -82,7 +83,7 @@ class YahooFinanceAdapter implements InstrumentProviderPort, PriceProviderPort, 
     public function findBySymbol(string $symbol, InstrumentType $type): ?InstrumentData
     {
         try {
-            $search = $this->python->run('search_ticker.py', ['query' => $symbol]);
+            $search = $this->python->run(YahooScript::Search->path(), ['query' => $symbol]);
 
             if (! $search->ok() || empty($search->data)) {
                 return null;
@@ -105,7 +106,7 @@ class YahooFinanceAdapter implements InstrumentProviderPort, PriceProviderPort, 
     public function getSectorAllocations(string $symbol, InstrumentType $type): array
     {
         try {
-            $result = $this->python->run('fetch_sectors.py', ['ticker' => $symbol]);
+            $result = $this->python->run(YahooScript::Sectors->path(), ['ticker' => $symbol]);
 
             if (! $result->ok() || empty($result->data)) {
                 return [];

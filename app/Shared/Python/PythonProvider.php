@@ -16,7 +16,6 @@ class PythonProvider extends ServiceProvider
         $app->singleton(PythonRunner::class, fn (Application $app) => $app->make($pythonRunner, [
             'process' => $app->make(ProcessFactory::class),
             'bin' => config('python.bin'),
-            'scriptsPath' => config('python.scripts_path'),
             'defaultTimeout' => config()->integer('python.timeout'),
         ]));
     }

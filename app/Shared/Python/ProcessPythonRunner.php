@@ -9,23 +9,20 @@ class ProcessPythonRunner implements PythonRunner
     public function __construct(
         private readonly ProcessFactory $process,
         private readonly string $bin,
-        private readonly string $scriptsPath,
         private readonly int $defaultTimeout,
     ) {}
 
     public function run(string $script, array $input = [], ?int $timeout = null): PythonResult
     {
-        $scriptPath = rtrim($this->scriptsPath, '/')."/{$script}";
-
-        if (! file_exists($scriptPath)) {
-            throw PythonProcessException::scriptNotFound($scriptPath);
+        if (! file_exists($script)) {
+            throw PythonProcessException::scriptNotFound($script);
         }
 
         $result = $this->process
             ->timeout($timeout ?? $this->defaultTimeout)
             ->env(['PYTHONUNBUFFERED' => '1'])
             ->input(json_encode($input))
-            ->run("{$this->bin} {$scriptPath}");
+            ->run("{$this->bin} {$script}");
 
         if (! $result->successful()) {
             throw PythonProcessException::processFailed($result->errorOutput());

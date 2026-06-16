@@ -3,6 +3,7 @@
 use App\Contexts\Market\Datas\InstrumentData;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
+use App\Contexts\Market\Infrastructure\Python\YahooScript;
 use App\Contexts\Market\Infrastructure\YahooFinanceAdapter;
 use App\Contexts\Market\Models\Instrument;
 use App\Shared\Python\FakePythonRunner;
@@ -54,7 +55,7 @@ it('returns an empty history without a ticker', function () {
 
 it('returns the latest close from a successful price fetch', function () {
     $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
-    $this->python->withResult('fetch_prices.py', new PythonResult('ok', [
+    $this->python->withResult(YahooScript::Prices->path(), new PythonResult('ok', [
         ['date' => '2026-01-01', 'close' => 10.0],
         ['date' => '2026-01-02', 'close' => 20.5],
     ]));
@@ -64,21 +65,21 @@ it('returns the latest close from a successful price fetch', function () {
 
 it('returns null for the current price on an error envelope', function () {
     $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
-    $this->python->withResult('fetch_prices.py', new PythonResult('error', error: 'boom'));
+    $this->python->withResult(YahooScript::Prices->path(), new PythonResult('error', error: 'boom'));
 
     expect($this->adapter->getCurrentPrice($instrument->id))->toBeNull();
 });
 
 it('returns null for the current price when data is empty', function () {
     $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
-    $this->python->withResult('fetch_prices.py', new PythonResult('ok', []));
+    $this->python->withResult(YahooScript::Prices->path(), new PythonResult('ok', []));
 
     expect($this->adapter->getCurrentPrice($instrument->id))->toBeNull();
 });
 
 it('returns a populated history on a successful fetch', function () {
     $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
-    $this->python->withResult('fetch_prices.py', new PythonResult('ok', [
+    $this->python->withResult(YahooScript::Prices->path(), new PythonResult('ok', [
         ['date' => '2026-01-01', 'close' => 10.0],
         ['date' => '2026-01-02', 'close' => 11.0],
     ]));
@@ -90,17 +91,17 @@ it('returns a populated history on a successful fetch', function () {
 
 it('returns an empty history on an error envelope', function () {
     $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
-    $this->python->withResult('fetch_prices.py', new PythonResult('error'));
+    $this->python->withResult(YahooScript::Prices->path(), new PythonResult('error'));
 
     expect($this->adapter->getPriceHistory($instrument->id))->toBeEmpty();
 });
 
 it('builds an InstrumentData from a search hit with its sectors', function () {
     $this->python
-        ->withResult('search_ticker.py', new PythonResult('ok', [
+        ->withResult(YahooScript::Search->path(), new PythonResult('ok', [
             ['symbol' => 'AAPL', 'name' => 'Apple Inc.', 'exchange' => 'NASDAQ'],
         ]))
-        ->withResult('fetch_sectors.py', new PythonResult('ok', ['technology' => 1.0]));
+        ->withResult(YahooScript::Sectors->path(), new PythonResult('ok', ['technology' => 1.0]));
 
     $data = $this->adapter->findBySymbol('AAPL', InstrumentType::Stock);
 
@@ -114,13 +115,13 @@ it('builds an InstrumentData from a search hit with its sectors', function () {
 });
 
 it('returns null from findBySymbol when the search is empty', function () {
-    $this->python->withResult('search_ticker.py', new PythonResult('ok', []));
+    $this->python->withResult(YahooScript::Search->path(), new PythonResult('ok', []));
 
     expect($this->adapter->findBySymbol('NOPE', InstrumentType::Stock))->toBeNull();
 });
 
 it('maps known sector keys and skips unknown ones', function () {
-    $this->python->withResult('fetch_sectors.py', new PythonResult('ok', [
+    $this->python->withResult(YahooScript::Sectors->path(), new PythonResult('ok', [
         'technology' => '0.6',
         'financial_services' => 0.4,
         'unknown_sector' => 0.1,
