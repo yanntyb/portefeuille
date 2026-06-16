@@ -2,17 +2,18 @@
 
 namespace App\Shared\Python;
 
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Process\Factory as ProcessFactory;
 use Illuminate\Support\ServiceProvider;
 
 class PythonServiceProvider extends ServiceProvider
 {
-    public function register(): void
+    /**
+     * @param  class-string<PythonRunner>  $pythonRunner
+     */
+    public static function registers(Application $app, string $pythonRunner): void
     {
-        /** @var class-string<PythonRunner> $runner */
-        $runner = config('python.runner', ProcessPythonRunner::class);
-
-        $this->app->singleton(PythonRunner::class, fn ($app) => $app->make($runner, [
+        $app->singleton(PythonRunner::class, fn (Application $app) => $app->make($pythonRunner, [
             'process' => $app->make(ProcessFactory::class),
             'bin' => config('python.bin'),
             'scriptsPath' => config('python.scripts_path'),
