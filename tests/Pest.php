@@ -13,22 +13,7 @@
 
 pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
-    ->in('Domains');
-
-pest()->extend(Tests\TestCase::class)
-    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
-    ->in('Infrastructure');
-
-pest()->extend(Tests\TestCase::class)
-    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
-    ->in('Feature');
-
-pest()->extend(Tests\TestCase::class)
-    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
-    ->in('../app/Domains');
-
-pest()->extend(PHPUnit\Framework\TestCase::class)
-    ->in('Unit');
+    ->in('Feature', '../app/Contexts');
 
 /*
 |--------------------------------------------------------------------------

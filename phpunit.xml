@@ -7,13 +7,16 @@
     <testsuites>
         <testsuite name="Tests">
             <directory>tests</directory>
-            <directory>app/Domains</directory>
+            <directory>app/Contexts</directory>
         </testsuite>
     </testsuites>
     <source>
         <include>
             <directory>app</directory>
         </include>
+        <exclude>
+            <directory suffix="Test.php">app</directory>
+        </exclude>
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
