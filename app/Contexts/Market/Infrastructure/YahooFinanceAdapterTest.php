@@ -3,10 +3,12 @@
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Infrastructure\YahooFinanceAdapter;
 use App\Contexts\Market\Models\Instrument;
+use App\Shared\Python\FakePythonRunner;
 use Illuminate\Support\Collection;
 
 beforeEach(function () {
-    $this->adapter = new YahooFinanceAdapter;
+    $this->python = new FakePythonRunner;
+    $this->adapter = new YahooFinanceAdapter($this->python);
 });
 
 it('supports Stock and ETF but not Crypto or Bond', function () {
