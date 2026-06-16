@@ -16,6 +16,17 @@ beforeEach(function () {
     $this->adapter = new YahooFinanceAdapter($this->python);
 });
 
+function throwingAdapter(): YahooFinanceAdapter
+{
+    return new YahooFinanceAdapter(new class implements PythonRunner
+    {
+        public function run(string $script, array $input = [], ?int $timeout = null): PythonResult
+        {
+            throw new PythonProcessException('boom');
+        }
+    });
+}
+
 it('supports Stock and ETF but not Crypto or Bond', function () {
     expect($this->adapter->supports(InstrumentType::Stock))->toBeTrue()
         ->and($this->adapter->supports(InstrumentType::ETF))->toBeTrue()
@@ -124,15 +135,22 @@ it('maps known sector keys and skips unknown ones', function () {
         ->and($allocations[1]->weight)->toBe(0.4);
 });
 
-it('swallows runner exceptions and returns the empty value', function () {
+it('swallows runner exceptions in getCurrentPrice', function () {
     $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
-    $adapter = new YahooFinanceAdapter(new class implements PythonRunner
-    {
-        public function run(string $script, array $input = [], ?int $timeout = null): PythonResult
-        {
-            throw new PythonProcessException('boom');
-        }
-    });
 
-    expect($adapter->getCurrentPrice($instrument->id))->toBeNull();
+    expect(throwingAdapter()->getCurrentPrice($instrument->id))->toBeNull();
+});
+
+it('swallows runner exceptions in getPriceHistory', function () {
+    $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
+
+    expect(throwingAdapter()->getPriceHistory($instrument->id))->toBeEmpty();
+});
+
+it('swallows runner exceptions in findBySymbol', function () {
+    expect(throwingAdapter()->findBySymbol('AAPL', InstrumentType::Stock))->toBeNull();
+});
+
+it('swallows runner exceptions in getSectorAllocations', function () {
+    expect(throwingAdapter()->getSectorAllocations('AAPL', InstrumentType::ETF))->toBe([]);
 });
