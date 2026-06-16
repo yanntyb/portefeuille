@@ -3,14 +3,14 @@
 use App\Contexts\Market\Datas\SectorAllocationData;
 use App\Contexts\Market\Enums\Sector;
 
-it('construit depuis une valeur string de secteur', function () {
+it('builds from a string sector value', function () {
     $data = SectorAllocationData::fromArray(['sector' => 'healthcare', 'weight' => '0.42']);
 
     expect($data->sector)->toBe(Sector::Healthcare)
         ->and($data->weight)->toBe(0.42);
 });
 
-it('accepte une instance de Sector et caste le poids en float', function () {
+it('accepts a Sector instance and casts the weight to float', function () {
     $data = SectorAllocationData::fromArray(['sector' => Sector::Energy, 'weight' => 1]);
 
     expect($data->sector)->toBe(Sector::Energy)

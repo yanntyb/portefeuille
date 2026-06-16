@@ -4,7 +4,7 @@ use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use Illuminate\Support\Carbon;
 
-it('cast les colonnes', function () {
+it('casts the columns', function () {
     $price = Price::factory()->create([
         'date' => '2026-01-15',
         'close' => 123.4567,
@@ -18,7 +18,7 @@ it('cast les colonnes', function () {
         ->and($price->close)->toBe('123.4567');
 });
 
-it('appartient à un instrument', function () {
+it('belongs to an instrument', function () {
     $instrument = Instrument::factory()->create();
     $price = Price::factory()->create(['asset_id' => $instrument->id]);
 

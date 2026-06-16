@@ -12,18 +12,18 @@ beforeEach(function () {
     $this->instrument = Instrument::factory()->create();
 });
 
-it('retourne le prix courant (dernier close) en float', function () {
+it('returns the current price (latest close) as a float', function () {
     Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-01-01', 'close' => 10]);
     Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-02-01', 'close' => 42.5]);
 
     expect($this->adapter->getCurrentPrice($this->instrument->id))->toBe(42.5);
 });
 
-it('retourne null pour le prix courant sans données', function () {
+it('returns null for the current price when there is no data', function () {
     expect($this->adapter->getCurrentPrice($this->instrument->id))->toBeNull();
 });
 
-it('retourne un historique mappé en tableaux', function () {
+it('returns a history mapped to arrays', function () {
     Price::factory()->create([
         'asset_id' => $this->instrument->id,
         'date' => '2026-02-01',
@@ -41,7 +41,7 @@ it('retourne un historique mappé en tableaux', function () {
         ]);
 });
 
-it('filtre l’historique par date de fin', function () {
+it('filters the history by end date', function () {
     Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-02-01']);
     Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-05-01']);
 
@@ -49,6 +49,6 @@ it('filtre l’historique par date de fin', function () {
         ->toHaveCount(1);
 });
 
-it('supporte tout type d’instrument', function () {
+it('supports any instrument type', function () {
     expect($this->adapter->supports(InstrumentType::Crypto))->toBeTrue();
 });

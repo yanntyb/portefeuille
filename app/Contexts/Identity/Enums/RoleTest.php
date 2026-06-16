@@ -2,16 +2,16 @@
 
 use App\Contexts\Identity\Enums\Role;
 
-it('expose un label français par cas', function () {
+it('exposes a label per case', function () {
     expect(Role::Admin->getLabel())->toBe('Admin')
         ->and(Role::User->getLabel())->toBe('Utilisateur');
 });
 
-it('expose une couleur par cas', function () {
+it('exposes a color per case', function () {
     expect(Role::Admin->getColor())->toBe('danger')
         ->and(Role::User->getColor())->toBe('info');
 });
 
-it('a deux cas', function () {
+it('has two cases', function () {
     expect(Role::cases())->toHaveCount(2);
 });

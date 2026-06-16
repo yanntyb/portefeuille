@@ -3,7 +3,7 @@
 use App\Contexts\Market\Datas\AssetPriceData;
 use App\Contexts\Market\Datas\PriceData;
 
-it('reprend open/high/low du close quand ils sont absents', function () {
+it('falls back open/high/low to close when they are missing', function () {
     $data = AssetPriceData::fromPriceData(42, new PriceData(date: '2026-01-15', close: 100.0));
 
     expect($data->assetId)->toBe(42)
@@ -14,7 +14,7 @@ it('reprend open/high/low du close quand ils sont absents', function () {
         ->and($data->volume)->toBe(0);
 });
 
-it('conserve les valeurs fournies', function () {
+it('keeps the provided values', function () {
     $price = new PriceData(
         date: '2026-01-15',
         close: 100.0,
@@ -32,7 +32,7 @@ it('conserve les valeurs fournies', function () {
         ->and($data->volume)->toBe(5000);
 });
 
-it('sérialise en attributs de base de données', function () {
+it('serializes to database attributes', function () {
     $array = AssetPriceData::fromPriceData(1, new PriceData(date: '2026-01-15', close: 100.0))->toArray();
 
     expect($array)->toHaveKeys([

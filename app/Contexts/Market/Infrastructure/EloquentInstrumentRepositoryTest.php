@@ -8,17 +8,17 @@ beforeEach(function () {
     $this->repository = new EloquentInstrumentRepository;
 });
 
-it('trouve un instrument par id', function () {
+it('finds an instrument by id', function () {
     $instrument = Instrument::factory()->create();
 
     expect($this->repository->findById($instrument->id)?->id)->toBe($instrument->id);
 });
 
-it('retourne null pour un id inconnu', function () {
+it('returns null for an unknown id', function () {
     expect($this->repository->findById(999))->toBeNull();
 });
 
-it('trouve les instruments par type', function () {
+it('finds instruments by type', function () {
     Instrument::factory()->ofType(InstrumentType::Stock)->create();
     Instrument::factory()->ofType(InstrumentType::ETF)->create();
 
@@ -28,13 +28,13 @@ it('trouve les instruments par type', function () {
         ->and($stocks->first()->type)->toBe(InstrumentType::Stock);
 });
 
-it('retourne tous les instruments', function () {
+it('returns all instruments', function () {
     Instrument::factory()->count(3)->create();
 
     expect($this->repository->findAll())->toHaveCount(3);
 });
 
-it('persiste un instrument', function () {
+it('persists an instrument', function () {
     $instrument = Instrument::factory()->make();
 
     $this->repository->save($instrument);

@@ -2,7 +2,7 @@
 
 use App\Contexts\Market\Datas\PriceData;
 
-it('construit depuis un tableau complet', function () {
+it('builds from a complete array', function () {
     $data = PriceData::fromArray([
         'date' => '2026-01-15',
         'close' => 123.45,
@@ -20,7 +20,7 @@ it('construit depuis un tableau complet', function () {
         ->and($data->volume)->toBe(10000);
 });
 
-it('met les champs optionnels à null', function () {
+it('sets the optional fields to null', function () {
     $data = PriceData::fromArray([
         'date' => '2026-01-15',
         'close' => 100.0,

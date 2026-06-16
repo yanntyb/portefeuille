@@ -6,19 +6,19 @@ use App\Contexts\Market\Models\Price;
 use App\Contexts\Market\Models\SectorAllocation;
 use App\Contexts\Portfolio\Models\PersonalAsset;
 
-it('applique le type Stock par défaut à la création', function () {
+it('applies the Stock type by default on creation', function () {
     $instrument = Instrument::create(['name' => 'Sans type']);
 
     expect($instrument->type)->toBe(InstrumentType::Stock);
 });
 
-it('cast le type en enum', function () {
+it('casts the type to an enum', function () {
     $instrument = Instrument::factory()->ofType(InstrumentType::Crypto)->create();
 
     expect($instrument->refresh()->type)->toBe(InstrumentType::Crypto);
 });
 
-it('filtre les assets non-marché via le global scope', function () {
+it('filters out non-market assets via the global scope', function () {
     Instrument::factory()->create();
     PersonalAsset::factory()->create();
 
@@ -27,7 +27,7 @@ it('filtre les assets non-marché via le global scope', function () {
         ->each->toBeInstanceOf(InstrumentType::class);
 });
 
-it('a une relation prices', function () {
+it('has a prices relation', function () {
     $instrument = Instrument::factory()->create();
     Price::factory()->create(['asset_id' => $instrument->id]);
 
@@ -35,7 +35,7 @@ it('a une relation prices', function () {
         ->and($instrument->prices->first())->toBeInstanceOf(Price::class);
 });
 
-it('a une relation sectors', function () {
+it('has a sectors relation', function () {
     $instrument = Instrument::factory()->create();
     SectorAllocation::factory()->create(['asset_id' => $instrument->id]);
 

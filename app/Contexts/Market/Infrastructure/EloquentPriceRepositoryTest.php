@@ -10,7 +10,7 @@ beforeEach(function () {
     $this->instrument = Instrument::factory()->create();
 });
 
-it('retourne le dernier prix par date', function () {
+it('returns the latest price by date', function () {
     Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-01-01']);
     Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-03-01']);
     Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-02-01']);
@@ -19,18 +19,18 @@ it('retourne le dernier prix par date', function () {
         ->toBe('2026-03-01');
 });
 
-it('retourne null quand aucun prix', function () {
+it('returns null when there is no price', function () {
     expect($this->repository->latestForAsset($this->instrument->id))->toBeNull();
 });
 
-it('trouve un prix à une date donnée', function () {
+it('finds a price on a given date', function () {
     Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-02-10']);
 
     expect($this->repository->forAssetOnDate($this->instrument->id, Carbon::parse('2026-02-10')))
         ->not->toBeNull();
 });
 
-it('retourne les prix depuis une date, triés', function () {
+it('returns prices since a date, sorted', function () {
     Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-01-01']);
     Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-02-01']);
     Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-03-01']);
@@ -41,7 +41,7 @@ it('retourne les prix depuis une date, triés', function () {
         ->and($prices->first()->date->toDateString())->toBe('2026-02-01');
 });
 
-it('retourne les prix de plusieurs assets', function () {
+it('returns prices for multiple assets', function () {
     $other = Instrument::factory()->create();
     Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-02-01']);
     Price::factory()->create(['asset_id' => $other->id, 'date' => '2026-02-01']);
@@ -50,7 +50,7 @@ it('retourne les prix de plusieurs assets', function () {
         ->toHaveCount(2);
 });
 
-it('filtre les ids ayant un prix depuis une date', function () {
+it('filters ids having a price since a date', function () {
     $other = Instrument::factory()->create();
     Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-03-01']);
     Price::factory()->create(['asset_id' => $other->id, 'date' => '2025-01-01']);

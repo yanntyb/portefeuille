@@ -5,7 +5,7 @@ use App\Contexts\Market\Datas\SectorAllocationData;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
 
-it('construit depuis un tableau minimal', function () {
+it('builds from a minimal array', function () {
     $data = InstrumentData::fromArray([
         'symbol' => 'AAPL',
         'name' => 'Apple',
@@ -20,7 +20,7 @@ it('construit depuis un tableau minimal', function () {
         ->and($data->sectors)->toBe([]);
 });
 
-it('mappe les secteurs tableau en SectorAllocationData', function () {
+it('maps array sectors into SectorAllocationData', function () {
     $data = InstrumentData::fromArray([
         'symbol' => 'AAPL',
         'name' => 'Apple',
@@ -38,7 +38,7 @@ it('mappe les secteurs tableau en SectorAllocationData', function () {
         ->and($data->sectors[0]->weight)->toBe(1.0);
 });
 
-it('laisse passer un SectorAllocationData déjà construit', function () {
+it('passes through an already-built SectorAllocationData', function () {
     $allocation = new SectorAllocationData(Sector::Energy, 0.5);
 
     $data = InstrumentData::fromArray([

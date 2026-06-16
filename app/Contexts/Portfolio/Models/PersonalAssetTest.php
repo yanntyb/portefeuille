@@ -4,19 +4,19 @@ use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Portfolio\Enums\PersonalAssetType;
 use App\Contexts\Portfolio\Models\PersonalAsset;
 
-it('applique le type Savings par défaut à la création', function () {
+it('applies the Savings type by default on creation', function () {
     $asset = PersonalAsset::create(['name' => 'Livret A']);
 
     expect($asset->type)->toBe(PersonalAssetType::Savings);
 });
 
-it('cast le type en enum', function () {
+it('casts the type to an enum', function () {
     $asset = PersonalAsset::factory()->ofType(PersonalAssetType::RealEstate)->create();
 
     expect($asset->refresh()->type)->toBe(PersonalAssetType::RealEstate);
 });
 
-it('filtre les assets marché via le global scope', function () {
+it('filters out market assets via the global scope', function () {
     PersonalAsset::factory()->create();
     Instrument::factory()->create();
 
