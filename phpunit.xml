@@ -8,6 +8,7 @@
         <testsuite name="Tests">
             <directory>tests</directory>
             <directory>app/Contexts</directory>
+            <directory>app/Shared</directory>
         </testsuite>
     </testsuites>
     <source>

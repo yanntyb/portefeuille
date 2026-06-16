@@ -15,6 +15,9 @@ pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Feature', '../app/Contexts');
 
+pest()->extend(Tests\TestCase::class)
+    ->in('../app/Shared');
+
 /*
 |--------------------------------------------------------------------------
 | Expectations
