@@ -6,7 +6,7 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Process\Factory as ProcessFactory;
 use Illuminate\Support\ServiceProvider;
 
-class PythonServiceProvider extends ServiceProvider
+class PythonProvider extends ServiceProvider
 {
     /**
      * @param  class-string<PythonRunner>  $pythonRunner
@@ -17,7 +17,7 @@ class PythonServiceProvider extends ServiceProvider
             'process' => $app->make(ProcessFactory::class),
             'bin' => config('python.bin'),
             'scriptsPath' => config('python.scripts_path'),
-            'defaultTimeout' => (int) config('python.timeout'),
+            'defaultTimeout' => config()->integer('python.timeout'),
         ]));
     }
 }

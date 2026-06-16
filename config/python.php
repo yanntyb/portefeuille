@@ -1,22 +1,6 @@
 <?php
 
-use App\Shared\Python\ProcessPythonRunner;
-
 return [
-
-    /*
-    |--------------------------------------------------------------------------
-    | Runner
-    |--------------------------------------------------------------------------
-    |
-    | Implémentation de App\Shared\Python\PythonRunner liée dans le container.
-    | Point d'extension : pointer vers une autre implémentation (fake, runner
-    | distant, ...) sans toucher au code consommateur.
-    |
-    */
-
-    'runner' => env('PYTHON_RUNNER', ProcessPythonRunner::class),
-
     /*
     |--------------------------------------------------------------------------
     | Binaire & scripts

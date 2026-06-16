@@ -6,7 +6,8 @@ use App\Contexts\Market\Infrastructure\DatabaseAssetPriceAdapter;
 use App\Contexts\Market\Infrastructure\EloquentInstrumentRepository;
 use App\Contexts\Market\Infrastructure\EloquentPriceRepository;
 use App\Contexts\Market\MarketProvider;
-use App\Shared\Python\PythonServiceProvider;
+use App\Shared\Python\ProcessPythonRunner;
+use App\Shared\Python\PythonProvider;
 use Carbon\Carbon;
 use Illuminate\Support\ServiceProvider;
 
@@ -14,9 +15,9 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        PythonServiceProvider::registers(
+        PythonProvider::registers(
             app: $this->app,
-            pythonRunner: config('python.runner'),
+            pythonRunner: ProcessPythonRunner::class,
         );
 
         MarketProvider::registers(
