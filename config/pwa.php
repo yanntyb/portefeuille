@@ -14,7 +14,7 @@ return [
 
     'display' => 'standalone',
 
-    'start_url' => '/admin',
+    'start_url' => '/',
 
     'scope' => '/',
 

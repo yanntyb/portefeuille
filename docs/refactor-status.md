@@ -166,8 +166,8 @@ Etat des phases :
 - **Providers de contexte stubs non invoques.** `IdentityProvider::registers()` et
   `PortfolioProvider::registers()` ne font rien et ne sont appeles par aucun site (seuls
   `PythonProvider` et `MarketProvider` sont cables dans `AppServiceProvider`).
-- **PWA sous-implementee.** `start_url` du manifest pointe vers `/admin` (route inexistante depuis
-  le retrait de Filament) ; les vues `service-worker`/`meta-tags` sont vides. A repointer vers `/`.
+- **PWA sous-implementee.** `start_url` du manifest pointe desormais vers `/` (corrige apres le
+  retrait de Filament) ; les vues `service-worker`/`meta-tags` restent vides a completer.
 - **Index git non nettoye.** Des suppressions restent stagees (constatees uniquement sous `docs/`).
   L'index n'est pas aligne tant qu'un commit n'a pas ete realise. Note : les anciens repertoires
   `app/Domains/*` ne sont plus presents sur disque.
