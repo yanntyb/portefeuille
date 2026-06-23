@@ -14,8 +14,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withSchedule(function (Schedule $schedule): void {
-        $schedule->command('securities:fetch-prices')->daily();
-        $schedule->command('securities:fetch-sectors')->daily();
+        // TODO refacto DDD : les commandes securities:fetch-prices / securities:fetch-sectors
+        // ont ete supprimees (ancien app/Console/Commands). Le contexte Market actuel n'a pas
+        // encore de chemin d'ecriture (repos en lecture seule). Re-cabler le sync quotidien
+        // une fois le write-side Market construit. Voir docs/refactor-status.md.
+        // $schedule->command('securities:fetch-prices')->daily();
+        // $schedule->command('securities:fetch-sectors')->daily();
     })
     ->withMiddleware(function (Middleware $middleware): void {
         //

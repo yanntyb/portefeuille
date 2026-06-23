@@ -97,7 +97,7 @@ Legende : Fait / En cours / A faire.
 | `bootstrap/providers.php` (ordre : `AppServiceProvider` → `EventServiceProvider` → `AdminPanelProvider`) | Fait |
 | `app/Providers/EventServiceProvider.php` (`$listen = []`, vide) | A faire |
 | `app/Providers/AdminPanelProvider.php` (panel Filament, `->resources([])`, `->pages([...])` non peuples) | En cours (casse) |
-| `bootstrap/app.php` — scheduler (`securities:fetch-prices`, `securities:fetch-sectors`) | En cours (references mortes) |
+| `bootstrap/app.php` — scheduler (`securities:fetch-prices`, `securities:fetch-sectors`) | Neutralise (refs mortes commentees, sync en pause) |
 
 ---
 
@@ -137,7 +137,7 @@ Etat des phases :
 | 1 — Migration noyau Market | Fait | `Instrument`/`Price`/`SectorAllocation`, contrats, ports, adapters, factories, tests. |
 | 2 — UI Filament | En cours | `AdminPanelProvider` configure mais sans ressources ni pages. |
 | 3 — Portfolio | A faire | Contrats, relations, actions, modeles Wallet/Transaction/Position. |
-| 4 — Scheduler / commandes | A faire | Creer ou retirer `securities:fetch-prices` / `securities:fetch-sectors`. |
+| 4 — Scheduler / commandes | En cours | Refs mortes commentees dans `withSchedule` (scheduler non casse). Reste a recreer `securities:fetch-prices` / `securities:fetch-sectors` sur l'archi Contexts une fois le write-side Market construit. |
 | 5 — Identity / evenements | A faire | Contrats Identity, peuplement `EventServiceProvider`. |
 | 6 — Nettoyage | A faire | Vider l'index git des suppressions en attente, finaliser seeders. |
 
@@ -145,10 +145,12 @@ Etat des phases :
 
 ## 4. GAPS concrets (references mortes et trous de cablage)
 
-- **Scheduler vers commandes inexistantes.** `bootstrap/app.php` (`withSchedule`) planifie
-  `securities:fetch-prices` et `securities:fetch-sectors` en `daily()`, mais le repertoire
-  `app/Console/Commands` n'existe pas sur disque et aucune commande de ce nom n'est enregistree.
-  Le scheduler echoue donc a la resolution de ces commandes.
+- **Scheduler vers commandes inexistantes — NEUTRALISE.** `bootstrap/app.php` (`withSchedule`)
+  planifiait `securities:fetch-prices` et `securities:fetch-sectors` en `daily()`, mais le
+  repertoire `app/Console/Commands` n'existe plus sur disque et aucune commande de ce nom n'est
+  enregistree. Les deux lignes sont desormais commentees : `schedule:list` retourne « No scheduled
+  tasks » et le scheduler ne casse plus. Le sync quotidien des prix/secteurs reste **en pause**
+  tant que le write-side du contexte Market (persistance des prix/secteurs) n'est pas construit.
 - **UI Filament non cablee.** `app/Providers/AdminPanelProvider.php` definit `->resources([])`
   (vide) et un `->pages([...])` non peuple par des pages metier. Aucune ressource Filament n'expose
   `Instrument`, `Price` ou `PersonalAsset`. Aucun repertoire `app/Filament` ni
@@ -172,9 +174,10 @@ Etat des phases :
 
 ## 5. Recommandations — prochaines etapes priorisees
 
-1. **Resoudre la reference morte du scheduler (P0, bloquant runtime).** Soit creer les commandes
-   `securities:fetch-prices` / `securities:fetch-sectors` (consommant `YahooFinanceAdapter` +
-   `EloquentPriceRepository` du contexte Market), soit retirer les deux lignes de `bootstrap/app.php`.
+1. **Scheduler — FAIT (debranche).** Les deux lignes mortes de `bootstrap/app.php` sont commentees,
+   le scheduler ne casse plus. Reste a recreer `securities:fetch-prices` / `securities:fetch-sectors`
+   sur l'archi Contexts (consommant `YahooFinanceAdapter` + un write-side `PriceRepository`/`SectorRepository`
+   a construire), puis a re-decommenter le `withSchedule`.
 2. **Reconstruire l'UI Filament (P0, bloquant fonctionnel).** Creer les ressources Filament pour
    `Instrument`, `Price` et `PersonalAsset`, puis les declarer dans `AdminPanelProvider` (`->resources([...])`).
    Sans cela, le panel sert une page vide a la racine.
