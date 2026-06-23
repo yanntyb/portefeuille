@@ -29,7 +29,7 @@ Fichiers : `app/Contexts/Market/Models/Instrument.php`, `app/Contexts/Market/Mod
 
 ### Enum `InstrumentType`
 
-`app/Contexts/Market/Enums/InstrumentType.php` — enum string implémentant `HasColor`, `HasIcon`, `HasLabel` (intégration UI Filament). Expose `values(): list<string>` pour les requêtes du global scope.
+`app/Contexts/Market/Enums/InstrumentType.php` — enum string pur (sans dépendance framework). Méthodes de présentation `getLabel()`/`getColor()`/`getIcon()` retournant des primitives, et `values(): list<string>` pour les requêtes du global scope.
 
 | Case | Valeur | Label | Couleur | Icône |
 |---|---|---|---|---|
@@ -40,7 +40,7 @@ Fichiers : `app/Contexts/Market/Models/Instrument.php`, `app/Contexts/Market/Mod
 
 ### Enum `Sector`
 
-`app/Contexts/Market/Enums/Sector.php` — enum string implémentant `HasColor`, `HasLabel`. Classification d'inspiration GICS, 12 secteurs, labels en français et couleurs RGB.
+`app/Contexts/Market/Enums/Sector.php` — enum string pur (sans dépendance framework). Classification d'inspiration GICS, 12 secteurs, labels en français et couleurs RGB via `getLabel()`/`getColor()`.
 
 | Case | Valeur | Label | Couleur |
 |---|---|---|---|

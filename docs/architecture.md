@@ -28,7 +28,7 @@ Un contexte suit la convention de dossiers suivante. Tous les dossiers ne sont p
 | --- | --- |
 | `Models/` | Entités Eloquent (persistance ORM, relations, casts, factories). Représentent le modèle de domaine persisté. |
 | `Datas/` | DTO (Data Transfer Objects) readonly. Transportent les données entre adapters externes et le cœur, découplant les formats externes du modèle persisté. |
-| `Enums/` | Énumérations métier (valeurs admises). Intègrent les interfaces Filament (HasLabel, HasColor, HasIcon) pour l'UI. |
+| `Enums/` | Énumérations métier (valeurs admises). Pures, sans dépendance framework ; méthodes de présentation (`getLabel`/`getColor`/`getIcon`) retournant des primitives. |
 | `Contracts/` | Interfaces de **persistance interne** (repositories). Définissent le contrat avec la base de données locale. |
 | `Ports/` | Interfaces de **fournisseurs externes** (outbound). Définissent le contrat avec des sources externes (API Yahoo, ou la DB comme alternative). |
 | `Infrastructure/` | **Adapters** : implémentations concrètes des Contracts (Eloquent) et des Ports (API / DB). |
@@ -107,7 +107,7 @@ Chaque contexte expose un provider avec une méthode **statique** `registers(App
 | `IdentityProvider` | Stub (aucun binding) |
 | `PortfolioProvider` | Stub (aucun binding) |
 
-Ordre d'enregistrement des providers (via `bootstrap/providers.php`) : `AppServiceProvider` → `EventServiceProvider` → `AdminPanelProvider`.
+Ordre d'enregistrement des providers (via `bootstrap/providers.php`) : `AppServiceProvider` → `EventServiceProvider`.
 
 Appels concrets dans `AppServiceProvider::register()` :
 
@@ -122,7 +122,6 @@ Appels concrets dans `AppServiceProvider::register()` :
 flowchart TD
     Bootstrap["bootstrap/app.php"] --> AppSP["AppServiceProvider"]
     Bootstrap --> EventSP["EventServiceProvider (vide)"]
-    Bootstrap --> AdminSP["AdminPanelProvider (Filament)"]
 
     AppSP -->|"registers()"| PythonSP["PythonProvider"]
     AppSP -->|"registers()"| MarketSP["MarketProvider"]

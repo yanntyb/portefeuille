@@ -52,7 +52,7 @@ Legende : Fait / En cours / A faire.
 | Infrastructure — Python | `Infrastructure/Python/*.py` (4 scripts) + `Infrastructure/Python/YahooScript.php` | Fait |
 | Factories | `Factories/InstrumentFactory.php`, `Factories/PriceFactory.php`, `Factories/SectorAllocationFactory.php` | Fait |
 | DI | `MarketProvider.php` (bind 3 contrats/ports) | Fait |
-| Couche UI (Filament/HTTP) | aucune ressource cablee | A faire |
+| Couche UI | Filament retire ; aucune UI cablee | A definir |
 | Couche tache planifiee (commande `securities:*`) | aucune commande Artisan | A faire |
 
 ### Identity (`app/Contexts/Identity`)
@@ -63,7 +63,7 @@ Legende : Fait / En cours / A faire.
 | Domaine — Enums | `Enums/Role.php` (`admin`, `user`, + test) | Fait |
 | Application — Contracts | aucun contrat | A faire |
 | DI | `IdentityProvider.php` (stub, aucun binding) | En cours (stub) |
-| Couche UI / auth Filament | non cablee | A faire |
+| Couche UI / auth | Filament retire ; `User` decouple (plus de `FilamentUser`) | A definir |
 
 ### Portfolio (`app/Contexts/Portfolio`)
 
@@ -94,9 +94,9 @@ Legende : Fait / En cours / A faire.
 | Element | Etat |
 | --- | --- |
 | `app/Providers/AppServiceProvider.php` (appelle `PythonProvider::registers` + `MarketProvider::registers`, locale Carbon `fr`) | Fait |
-| `bootstrap/providers.php` (ordre : `AppServiceProvider` → `EventServiceProvider` → `AdminPanelProvider`) | Fait |
+| `bootstrap/providers.php` (ordre : `AppServiceProvider` → `EventServiceProvider`) | Fait |
 | `app/Providers/EventServiceProvider.php` (`$listen = []`, vide) | A faire |
-| `app/Providers/AdminPanelProvider.php` (panel Filament, `->resources([])`, `->pages([...])` non peuples) | En cours (casse) |
+| `routes/web.php` — racine `Route::view('/', 'welcome')` (le panel Filament servait `/`, retire) | Fait |
 | `bootstrap/app.php` — scheduler (`securities:fetch-prices`, `securities:fetch-sectors`) | Neutralise (refs mortes commentees, sync en pause) |
 
 ---
@@ -106,7 +106,7 @@ Legende : Fait / En cours / A faire.
 ```mermaid
 flowchart TD
     P1["Phase 1 - Migration noyau Market"]
-    P2["Phase 2 - Reconstruction UI Filament"]
+    P2["Phase 2 - Nouvelle UI (Filament retire)"]
     P3["Phase 3 - Contexte Portfolio (Wallet/Transaction/Position)"]
     P4["Phase 4 - Scheduler et commandes Artisan"]
     P5["Phase 5 - Contrats Identity et evenements de domaine"]
@@ -123,7 +123,7 @@ flowchart TD
     classDef todo fill:#7a1f1f,stroke:#3b0d0d,color:#ffffff
 
     class P1 done
-    class P2 wip
+    class P2 todo
     class P3 todo
     class P4 todo
     class P5 todo
@@ -135,7 +135,7 @@ Etat des phases :
 | Phase | Statut | Resume |
 | --- | --- | --- |
 | 1 — Migration noyau Market | Fait | `Instrument`/`Price`/`SectorAllocation`, contrats, ports, adapters, factories, tests. |
-| 2 — UI Filament | En cours | `AdminPanelProvider` configure mais sans ressources ni pages. |
+| 2 — Nouvelle UI | A faire | Filament retire (panel/`AdminPanelProvider`/assets supprimes). Racine sert `welcome`. UI à choisir (Livewire Flux disponible). |
 | 3 — Portfolio | A faire | Contrats, relations, actions, modeles Wallet/Transaction/Position. |
 | 4 — Scheduler / commandes | En cours | Refs mortes commentees dans `withSchedule` (scheduler non casse). Reste a recreer `securities:fetch-prices` / `securities:fetch-sectors` sur l'archi Contexts une fois le write-side Market construit. |
 | 5 — Identity / evenements | A faire | Contrats Identity, peuplement `EventServiceProvider`. |
@@ -151,21 +151,23 @@ Etat des phases :
   enregistree. Les deux lignes sont desormais commentees : `schedule:list` retourne « No scheduled
   tasks » et le scheduler ne casse plus. Le sync quotidien des prix/secteurs reste **en pause**
   tant que le write-side du contexte Market (persistance des prix/secteurs) n'est pas construit.
-- **UI Filament non cablee.** `app/Providers/AdminPanelProvider.php` definit `->resources([])`
-  (vide) et un `->pages([...])` non peuple par des pages metier. Aucune ressource Filament n'expose
-  `Instrument`, `Price` ou `PersonalAsset`. Aucun repertoire `app/Filament` ni
-  `app/Http/Controllers` sur disque : il n'existe plus aucune UI cablee.
+- **Aucune UI — Filament retire.** Filament (`filament/filament`, `stechstudio/filament-impersonate`)
+  a ete supprime : plus de `AdminPanelProvider`, d'assets (`resources/css/filament`,
+  `public/*/filament`) ni d'interfaces Filament dans le domaine. La racine `/` sert desormais
+  `welcome`. Aucune UI metier n'expose `Instrument`, `Price` ou `PersonalAsset` : une nouvelle UI
+  reste a choisir/construire (Livewire Flux est disponible).
 - **`EventServiceProvider` vide.** `$listen = []` : aucun evenement de domaine n'est propage.
 - **Contexte Portfolio non finalise.** `app/Contexts/Portfolio` ne contient que `PersonalAsset` +
   `PersonalAssetType` + factory + `PortfolioProvider` (stub sans binding). Manquent : contrat de
   repository, relations Eloquent, data objects, actions/services, et les modeles Wallet/Transaction/Position.
 - **Contexte Identity minimal.** `User` + `Role` presents, mais aucun contrat ; `IdentityProvider`
-  est un stub sans binding. Aucune integration auth cote panel Filament.
+  est un stub sans binding. `User` est decouple de Filament (plus de `FilamentUser`) ; l'auth de la
+  future UI reste a definir.
 - **Providers de contexte stubs non invoques.** `IdentityProvider::registers()` et
   `PortfolioProvider::registers()` ne font rien et ne sont appeles par aucun site (seuls
   `PythonProvider` et `MarketProvider` sont cables dans `AppServiceProvider`).
-- **PWA sous-implementee.** `start_url` du manifest pointe vers `/admin` (panel Filament non
-  fonctionnel) ; les vues `service-worker`/`meta-tags` sont vides.
+- **PWA sous-implementee.** `start_url` du manifest pointe vers `/admin` (route inexistante depuis
+  le retrait de Filament) ; les vues `service-worker`/`meta-tags` sont vides. A repointer vers `/`.
 - **Index git non nettoye.** Des suppressions restent stagees (constatees uniquement sous `docs/`).
   L'index n'est pas aligne tant qu'un commit n'a pas ete realise. Note : les anciens repertoires
   `app/Domains/*` ne sont plus presents sur disque.
@@ -178,13 +180,13 @@ Etat des phases :
    le scheduler ne casse plus. Reste a recreer `securities:fetch-prices` / `securities:fetch-sectors`
    sur l'archi Contexts (consommant `YahooFinanceAdapter` + un write-side `PriceRepository`/`SectorRepository`
    a construire), puis a re-decommenter le `withSchedule`.
-2. **Reconstruire l'UI Filament (P0, bloquant fonctionnel).** Creer les ressources Filament pour
-   `Instrument`, `Price` et `PersonalAsset`, puis les declarer dans `AdminPanelProvider` (`->resources([...])`).
-   Sans cela, le panel sert une page vide a la racine.
+2. **Choisir et construire une UI (P0, bloquant fonctionnel).** Filament etant retire, definir la
+   nouvelle interface (Livewire Flux est deja installe) exposant `Instrument`, `Price` et
+   `PersonalAsset`, puis recabler `start_url` du manifest PWA vers la route choisie.
 3. **Finaliser le contexte Portfolio (P1).** Definir un contrat de repository + implementation
    Eloquent, ajouter les relations Eloquent, les data objects et les actions CRUD ; cabler les
    bindings dans `PortfolioProvider`. Specifier ensuite Wallet/Transaction/Position.
-4. **Cabler Identity (P1).** Introduire un contrat pour `User`, brancher l'auth du panel Filament,
+4. **Cabler Identity (P1).** Introduire un contrat pour `User`, definir l'auth de la nouvelle UI,
    et activer le binding dans `IdentityProvider`.
 5. **Peupler `EventServiceProvider` (P2).** Definir et enregistrer les ecouteurs des evenements de
    domaine necessaires une fois Portfolio en place.

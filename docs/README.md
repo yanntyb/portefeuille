@@ -2,11 +2,13 @@
 
 Application personnelle de suivi de patrimoine et de finances. Elle agrège des
 instruments financiers, leur historique de prix et leurs allocations
-sectorielles, et expose le tout via une interface d'administration.
+sectorielles.
 
-Construite sur **Laravel 12** et **Filament 5**, l'application est en cours de
-refonte vers une architecture **DDD** (Domain-Driven Design) organisée en
-*bounded contexts* avec une approche hexagonale (ports & adapters).
+Construite sur **Laravel 12**, l'application est en cours de refonte vers une
+architecture **DDD** (Domain-Driven Design) organisée en *bounded contexts* avec
+une approche hexagonale (ports & adapters). La couche UI a été retirée avec
+Filament ; la racine sert une page d'accueil minimale en attendant une nouvelle
+interface (Livewire Flux est disponible).
 
 ## Stack technique
 
@@ -14,8 +16,7 @@ refonte vers une architecture **DDD** (Domain-Driven Design) organisée en
 | --- | --- | --- | --- |
 | Langage | PHP | `^8.2` | Backend |
 | Framework | Laravel | `^12.0` | Socle applicatif |
-| UI admin | Filament | `^5.0` | Panneau d'administration (SPA) |
-| Composants réactifs | Livewire Flux | `^2.12` | UI interactive |
+| Composants réactifs | Livewire Flux | `^2.12` | UI interactive (disponible, non câblée) |
 | Serveur applicatif | Laravel Octane | `^2.17` | Serveur haute-performance (Swoole/RoadRunner) |
 | Build front | Vite | `^7.0.7` | Bundler, HMR |
 | CSS | Tailwind CSS | `^4.2.1` | Styles utilitaires |
@@ -26,7 +27,6 @@ refonte vers une architecture **DDD** (Domain-Driven Design) organisée en
 | Formatage | Laravel Pint | `^1.24` | Linting PHP |
 | Logs | Pail, Log Viewer | `^1.2.2`, `^3.21` | Monitoring temps réel et viewer web |
 | Outillage dev | Laravel Boost | `^2.0` | Assistant dev (MCP, guidelines) |
-| Impersonation | Filament Impersonate | `^5.1` | Connexion en tant qu'utilisateur |
 
 ## Vue d'ensemble de l'architecture DDD
 
@@ -34,7 +34,7 @@ Le code métier est organisé sous `app/Contexts/` en trois *bounded contexts*,
 complétés par un *shared kernel* sous `app/Shared/`.
 
 - **Identity** (`app/Contexts/Identity/`) — Authentification et autorisation.
-  Modèle `User` (Authenticatable + FilamentUser), enum `Role` (Admin/User).
+  Modèle `User` (Authenticatable), enum `Role` (Admin/User).
 - **Market** (`app/Contexts/Market/`) — Cœur du domaine. Gère les instruments
   financiers (`Instrument`), l'historique de prix (`Price`) et les allocations
   sectorielles (`SectorAllocation`). Implémente l'architecture hexagonale
@@ -52,7 +52,7 @@ complétés par un *shared kernel* sous `app/Shared/`.
 flowchart TB
     User(["Utilisateur"])
 
-    subgraph App["argent — Laravel 12 + Filament 5"]
+    subgraph App["argent — Laravel 12"]
         Identity["Contexte Identity<br/>User, Role"]
         Market["Contexte Market<br/>Instrument, Price, SectorAllocation"]
         Portfolio["Contexte Portfolio<br/>PersonalAsset"]
