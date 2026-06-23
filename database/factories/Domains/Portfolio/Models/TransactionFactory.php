@@ -2,11 +2,11 @@
 
 namespace Database\Factories\Domains\Portfolio\Models;
 
-use App\Domains\Asset\Models\Assets\Stock;
+use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Models\Instrument;
 use App\Domains\Portfolio\Enums\TransactionType;
 use App\Domains\Portfolio\Models\Transaction;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -23,7 +23,7 @@ class TransactionFactory extends Factory
             'user_id' => auth()->id() ?? User::factory()->create()->id,
             'wallet_id' => Wallet::factory(),
             'date' => fake()->dateTimeBetween('-2 years', 'now'),
-            'asset_id' => Stock::factory(),
+            'asset_id' => Instrument::factory(),
             'quantity' => fake()->randomFloat(4, 1, 100),
             'unit_price' => fake()->randomFloat(4, 5, 500),
             'type' => TransactionType::Buy,

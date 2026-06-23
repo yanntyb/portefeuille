@@ -2,14 +2,14 @@
 
 namespace Database\Seeders;
 
-use App\Domains\Asset\Models\Assets\Stock;
+use App\Contexts\Market\Models\Instrument;
 use Illuminate\Database\Seeder;
 
 class TestAssetSeeder extends Seeder
 {
     public function run(): void
     {
-        Stock::firstOrCreate(
+        Instrument::firstOrCreate(
             ['isin' => 'US0378331005'],
             [
                 'name' => 'Apple Inc.',
@@ -17,7 +17,7 @@ class TestAssetSeeder extends Seeder
             ],
         );
 
-        Stock::firstOrCreate(
+        Instrument::firstOrCreate(
             ['isin' => 'US5949181045'],
             [
                 'name' => 'Microsoft Corporation',
@@ -25,7 +25,7 @@ class TestAssetSeeder extends Seeder
             ],
         );
 
-        Stock::firstOrCreate(
+        Instrument::firstOrCreate(
             ['isin' => 'IE00B0M63284'],
             [
                 'name' => 'iShares Core S&P 500 ETF',

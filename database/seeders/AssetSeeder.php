@@ -2,15 +2,15 @@
 
 namespace Database\Seeders;
 
-use App\Domains\Asset\Models\AssetPrice;
-use App\Domains\Asset\Models\Assets\Asset;
+use App\Contexts\Market\Models\Instrument;
+use App\Contexts\Market\Models\Price;
 use Illuminate\Database\Seeder;
 
 class AssetSeeder extends Seeder
 {
     public function run(): void
     {
-        $asset = Asset::firstOrCreate(
+        $asset = Instrument::firstOrCreate(
             ['isin' => 'LU0629459743'],
             [
                 'name' => 'Amundi PEA S&P 500 UCITS ETF',
@@ -34,7 +34,7 @@ class AssetSeeder extends Seeder
                 continue;
             }
 
-            AssetPrice::firstOrCreate(
+            Price::firstOrCreate(
                 [
                     'asset_id' => $asset->id,
                     'date' => $date,

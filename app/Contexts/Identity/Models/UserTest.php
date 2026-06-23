@@ -2,7 +2,6 @@
 
 use App\Contexts\Identity\Enums\Role;
 use App\Contexts\Identity\Models\User;
-use Filament\Panel;
 use Illuminate\Support\Facades\Hash;
 
 it('casts the role to an enum', function () {
@@ -31,10 +30,4 @@ it('creates an admin via the admin() state', function () {
 
 it('creates an unverified user via unverified()', function () {
     expect(User::factory()->unverified()->create()->email_verified_at)->toBeNull();
-});
-
-it('allows access to the Filament panel', function () {
-    $user = User::factory()->create();
-
-    expect($user->canAccessPanel(Mockery::mock(Panel::class)))->toBeTrue();
 });

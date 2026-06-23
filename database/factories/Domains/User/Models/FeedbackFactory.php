@@ -2,12 +2,12 @@
 
 namespace Database\Factories\Domains\User\Models;
 
-use App\Domains\User\Models\Feedback;
-use App\Domains\User\Models\User;
+use App\Contexts\Identity\Models\Feedback;
+use App\Contexts\Identity\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<\App\Domains\User\Models\Feedback>
+ * @extends Factory<\App\Contexts\Identity\Models\Feedback>
  */
 class FeedbackFactory extends Factory
 {

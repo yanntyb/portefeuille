@@ -2,7 +2,7 @@
 
 namespace Database\Factories\Domains\Portfolio\Models;
 
-use App\Domains\Asset\Models\Assets\Stock;
+use App\Contexts\Market\Models\Instrument;
 use App\Domains\Portfolio\Models\AllocationProfile;
 use App\Domains\Portfolio\Models\AllocationProfileItem;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -19,7 +19,7 @@ class AllocationProfileItemFactory extends Factory
     {
         return [
             'allocation_profile_id' => AllocationProfile::factory(),
-            'asset_id' => Stock::factory(),
+            'asset_id' => Instrument::factory(),
             'target_percentage' => fake()->randomFloat(2, 5, 60),
         ];
     }

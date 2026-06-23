@@ -8,9 +8,6 @@ enum YahooScript: string
     case Search = 'search_ticker.py';
     case Sectors = 'fetch_sectors.py';
 
-    /**
-     * Chemin absolu du script, co-localisé dans ce dossier.
-     */
     public function path(): string
     {
         return __DIR__.'/'.$this->value;

@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Domains\User\Models\Feedback;
-use App\Domains\User\Models\User;
+use App\Contexts\Identity\Models\Feedback;
+use App\Contexts\Identity\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 

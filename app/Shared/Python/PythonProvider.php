@@ -13,10 +13,12 @@ class PythonProvider extends ServiceProvider
      */
     public static function registers(Application $app, string $pythonRunner): void
     {
-        $app->singleton(PythonRunner::class, fn (Application $app) => $app->make($pythonRunner, [
-            'process' => $app->make(ProcessFactory::class),
-            'bin' => config('python.bin'),
-            'defaultTimeout' => config()->integer('python.timeout'),
-        ]));
+        $app->singleton(
+            PythonRunner::class,
+            fn (Application $app) => $app->make($pythonRunner, [
+                'process' => $app->make(ProcessFactory::class),
+                'bin' => config('python.bin'),
+                'defaultTimeout' => config()->integer('python.timeout'),
+            ]));
     }
 }

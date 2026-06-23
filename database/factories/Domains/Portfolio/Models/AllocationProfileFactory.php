@@ -2,9 +2,9 @@
 
 namespace Database\Factories\Domains\Portfolio\Models;
 
+use App\Contexts\Identity\Models\User;
 use App\Domains\Portfolio\Models\AllocationProfile;
 use App\Domains\Portfolio\Models\Wallet;
-use App\Domains\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

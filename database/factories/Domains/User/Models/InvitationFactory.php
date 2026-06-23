@@ -2,13 +2,13 @@
 
 namespace Database\Factories\Domains\User\Models;
 
-use App\Domains\User\Models\Invitation;
-use App\Domains\User\Models\User;
+use App\Contexts\Identity\Models\Invitation;
+use App\Contexts\Identity\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Domains\User\Models\Invitation>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Contexts\Identity\Models\Invitation>
  */
 class InvitationFactory extends Factory
 {
