@@ -10,3 +10,7 @@ Route::get('/', function () {
         'appName' => config('app.name'),
     ]);
 })->name('home');
+
+Route::get('/dashboard', function () {
+    return Inertia::render('Dashboard');
+})->name('dashboard');
