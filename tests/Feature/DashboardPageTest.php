@@ -77,3 +77,25 @@ it('defers the valuation series and loads it on demand', function () {
             )
         );
 });
+
+it('defers the invested-by-asset series and loads it on demand', function () {
+    User::query()->delete();
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $asset = Instrument::factory()->create(['name' => 'ACME']);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'quantity' => 10, 'unit_price' => 100, 'date' => '2026-01-01',
+    ]);
+
+    $this->get('/dashboard')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Dashboard')
+            ->missing('investedByAsset')
+            ->loadDeferredProps(fn (Assert $reload) => $reload
+                ->has('investedByAsset.series', 1)
+                ->where('investedByAsset.series.0.name', 'ACME')
+            )
+        );
+});

@@ -55,7 +55,18 @@ interface ValuationSeries {
     invested: number[];
 }
 
-const props = defineProps<{ overview: PortfolioOverview; valuationSeries?: ValuationSeries }>();
+interface AssetInvestedSeries {
+    assetId: number;
+    name: string;
+    invested: number[];
+}
+
+interface InvestedByAssetSeries {
+    labels: string[];
+    series: AssetInvestedSeries[];
+}
+
+const props = defineProps<{ overview: PortfolioOverview; valuationSeries?: ValuationSeries; investedByAsset?: InvestedByAssetSeries }>();
 
 const flatCard = 'border-0 bg-transparent shadow-none rounded-none';
 
@@ -113,6 +124,29 @@ const valuationChartOptions = computed<ApexOptions>(() => ({
     tooltip: { y: { formatter: (value: number): string => eur(value) } },
     legend: { position: 'top' },
 }));
+
+const hasInvestedByAsset = computed<boolean>(() => (props.investedByAsset?.series.length ?? 0) > 0);
+
+const investedByAssetSeries = computed(() =>
+    (props.investedByAsset?.series ?? []).map((serie) => ({ name: serie.name, data: serie.invested })),
+);
+
+const investedByAssetOptions = computed<ApexOptions>(() => ({
+    chart: { toolbar: { show: false }, fontFamily: 'inherit', animations: { enabled: false } },
+    stroke: { curve: 'stepline', width: 2 },
+    dataLabels: { enabled: false },
+    grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
+    xaxis: {
+        type: 'datetime',
+        categories: props.investedByAsset?.labels ?? [],
+        axisBorder: { show: false },
+        axisTicks: { show: false },
+        labels: { hideOverlappingLabels: true },
+    },
+    yaxis: { labels: { formatter: (value: number): string => eur(value) } },
+    tooltip: { y: { formatter: (value: number): string => eur(value) } },
+    legend: { position: 'bottom' },
+}));
 </script>
 
 <template>
@@ -145,6 +179,31 @@ const valuationChartOptions = computed<ApexOptions>(() => ({
                         />
                         <p v-else class="py-8 text-center text-sm text-muted-foreground">
                             Pas encore d'historique de valorisation.
+                        </p>
+                    </Deferred>
+                </CardContent>
+            </Card>
+
+            <Card :class="flatCard">
+                <CardHeader>
+                    <CardTitle>Investi par titre</CardTitle>
+                    <CardDescription>Montant investi cumulé sur chaque titre</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Deferred data="investedByAsset">
+                        <template #fallback>
+                            <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
+                        </template>
+
+                        <VueApexCharts
+                            v-if="hasInvestedByAsset"
+                            type="line"
+                            height="300"
+                            :options="investedByAssetOptions"
+                            :series="investedByAssetSeries"
+                        />
+                        <p v-else class="py-8 text-center text-sm text-muted-foreground">
+                            Pas encore d'investissement.
                         </p>
                     </Deferred>
                 </CardContent>

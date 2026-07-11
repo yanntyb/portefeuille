@@ -5,7 +5,9 @@ namespace App\Contexts\Portfolio\Http;
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Datas\PortfolioOverviewData;
+use App\Contexts\Valuation\Actions\BuildInvestedByAssetSeries;
 use App\Contexts\Valuation\Actions\BuildPortfolioValuationSeries;
+use App\Contexts\Valuation\Datas\InvestedByAssetSeriesData;
 use App\Contexts\Valuation\Datas\ValuationSeriesData;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,6 +29,9 @@ class DashboardController
             'valuationSeries' => Inertia::defer(fn () => $user !== null
                 ? app(BuildPortfolioValuationSeries::class)($user->id)
                 : ValuationSeriesData::empty()),
+            'investedByAsset' => Inertia::defer(fn () => $user !== null
+                ? app(BuildInvestedByAssetSeries::class)($user->id)
+                : InvestedByAssetSeriesData::empty()),
         ]);
     }
 }
