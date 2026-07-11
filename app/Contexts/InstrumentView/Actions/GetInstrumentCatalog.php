@@ -3,6 +3,7 @@
 namespace App\Contexts\InstrumentView\Actions;
 
 use App\Contexts\InstrumentView\Datas\CatalogLineData;
+use App\Contexts\InstrumentView\Datas\HoldingSnapshotData;
 use App\Contexts\InstrumentView\Datas\InstrumentCatalogData;
 use App\Contexts\InstrumentView\Datas\InstrumentSummaryData;
 use App\Contexts\InstrumentView\Ports\HoldingsPort;
@@ -30,7 +31,7 @@ class GetInstrumentCatalog
         return new InstrumentCatalogData(lines: $lines);
     }
 
-    private function toLine(InstrumentSummaryData $summary, ?object $holding): CatalogLineData
+    private function toLine(InstrumentSummaryData $summary, ?HoldingSnapshotData $holding): CatalogLineData
     {
         $lastPrice = $this->market->latestPrice($summary->id);
         $quantity = $holding?->quantity;
