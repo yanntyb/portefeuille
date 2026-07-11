@@ -50,6 +50,44 @@ it('ignores an asset that has no price', function () {
         ->and($series->invested)->toBe([1250.0]);
 });
 
+it('keeps every index when the count is within the cap', function () {
+    expect(ValuationCalculator::downsampleIndices(5, 200))->toBe([0, 1, 2, 3, 4])
+        ->and(ValuationCalculator::downsampleIndices(0, 200))->toBe([]);
+});
+
+it('caps a large index set while keeping the first and last', function () {
+    $indices = ValuationCalculator::downsampleIndices(1200, 200);
+
+    expect(count($indices))->toBeLessThanOrEqual(200)
+        ->and($indices[0])->toBe(0)
+        ->and($indices[count($indices) - 1])->toBe(1199)
+        // strictement croissant
+        ->and(collect($indices)->sliding(2)->every(fn ($pair) => $pair->last() > $pair->first()))->toBeTrue();
+});
+
+it('downsamples a long daily series to the point cap', function () {
+    $prices = [];
+    $day = Carbon::parse('2020-01-01');
+    for ($i = 0; $i < 400; $i++) {
+        $prices[] = new PriceRecordData(1, $day->copy()->addDays($i)->format('Y-m-d'), 100.0 + $i);
+    }
+
+    $series = (new ValuationCalculator)->calculate(
+        [tx('2020-01-01', 1, false, 1, 100)],
+        $prices,
+        200,
+    );
+
+    $labels = $series->labels;
+
+    expect(count($labels))->toBeLessThanOrEqual(200)
+        ->and(count($labels))->toBeGreaterThan(1)
+        ->and($labels[0])->toBe('2020-01-01')
+        ->and($labels[count($labels) - 1])->toBe('2021-02-03') // 2020-01-01 + 399 jours
+        ->and(count($series->valuations))->toBe(count($labels))
+        ->and(count($series->invested))->toBe(count($labels));
+});
+
 it('orders same-day buys before sells regardless of input order', function () {
     $prices = [new PriceRecordData(1, '2026-01-01', 150)];
     $buy = tx('2026-01-01', 1, false, 10, 100);

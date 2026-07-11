@@ -95,13 +95,14 @@ const valuationChartSeries = computed(() => [
 ]);
 
 const valuationChartOptions = computed<ApexOptions>(() => ({
-    chart: { toolbar: { show: false }, fontFamily: 'inherit' },
+    chart: { toolbar: { show: false }, fontFamily: 'inherit', animations: { enabled: false } },
     colors: ['#4f46e5', '#64748b'],
     stroke: { curve: 'smooth', width: 2 },
     fill: { type: 'gradient', gradient: { opacityFrom: 0.3, opacityTo: 0 } },
     dataLabels: { enabled: false },
     grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
     xaxis: {
+        type: 'datetime',
         categories: props.valuationSeries?.labels ?? [],
         axisBorder: { show: false },
         axisTicks: { show: false },

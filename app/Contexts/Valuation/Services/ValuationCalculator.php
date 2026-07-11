@@ -11,8 +11,9 @@ class ValuationCalculator
     /**
      * @param  list<TransactionRecordData>  $transactions
      * @param  list<PriceRecordData>  $prices
+     * @param  int  $maxPoints  plafond de points de la série (downsampling adaptatif)
      */
-    public function calculate(array $transactions, array $prices): ValuationSeriesData
+    public function calculate(array $transactions, array $prices, int $maxPoints = 200): ValuationSeriesData
     {
         if ($transactions === []) {
             return ValuationSeriesData::empty();
@@ -85,7 +86,44 @@ class ValuationCalculator
             $invested[] = round($this->valueAtDate($investedSeries, $day), 2);
         }
 
+        $indices = self::downsampleIndices(count($labels), $maxPoints);
+
+        if (count($indices) < count($labels)) {
+            $labels = array_map(fn (int $i): string => $labels[$i], $indices);
+            $valuations = array_map(fn (int $i): float => $valuations[$i], $indices);
+            $invested = array_map(fn (int $i): float => $invested[$i], $indices);
+        }
+
         return new ValuationSeriesData($labels, $valuations, $invested);
+    }
+
+    /**
+     * Indices à conserver pour plafonner une série à $maxPoints points : pas régulier
+     * adaptatif, premier et dernier points toujours inclus. Résultat trié croissant.
+     *
+     * @return list<int>
+     */
+    public static function downsampleIndices(int $count, int $maxPoints): array
+    {
+        if ($count <= 0) {
+            return [];
+        }
+
+        $maxPoints = max($maxPoints, 1);
+
+        if ($count <= $maxPoints) {
+            return range(0, $count - 1);
+        }
+
+        $step = (int) ceil($count / $maxPoints);
+        $indices = range(0, $count - 1, $step);
+        $last = count($indices) - 1;
+
+        if ($indices[$last] !== $count - 1) {
+            $indices[$last] = $count - 1;
+        }
+
+        return $indices;
     }
 
     /**
