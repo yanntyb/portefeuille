@@ -22,5 +22,6 @@ class DatabaseSeeder extends Seeder
         // $this->call(FeedbackSeeder::class, parameters: ['user' => $user]);
 
         $this->call(DashboardDemoSeeder::class);
+        $this->call(EtfHistorySeeder::class);
     }
 }
