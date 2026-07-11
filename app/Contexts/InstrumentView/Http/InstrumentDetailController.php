@@ -5,6 +5,7 @@ namespace App\Contexts\InstrumentView\Http;
 use App\Contexts\Identity\Models\User;
 use App\Contexts\InstrumentView\Actions\GetInstrumentDetail;
 use App\Contexts\InstrumentView\Ports\MarketDataPort;
+use App\Contexts\Valuation\Actions\BuildAssetValuationSeries;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -31,6 +32,9 @@ class InstrumentDetailController
             'instrument' => $detail,
             'priceHistory' => Inertia::defer(
                 fn () => $this->market->priceHistory($id, Carbon::now()->subMonths(12))
+            ),
+            'valuation' => Inertia::defer(
+                fn () => app(BuildAssetValuationSeries::class)($userId, $id)
             ),
         ]);
     }

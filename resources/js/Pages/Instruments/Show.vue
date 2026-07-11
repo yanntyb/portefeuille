@@ -61,7 +61,13 @@ interface PriceHistory {
     close: number[];
 }
 
-const props = defineProps<{ instrument: Instrument; priceHistory?: PriceHistory }>();
+interface ValuationSeries {
+    labels: string[];
+    valuations: number[];
+    invested: number[];
+}
+
+const props = defineProps<{ instrument: Instrument; priceHistory?: PriceHistory; valuation?: ValuationSeries }>();
 
 const flatCard = 'border-0 bg-transparent shadow-none rounded-none';
 
@@ -102,6 +108,32 @@ const priceChartOptions = computed<ApexOptions>(() => ({
     },
     yaxis: { labels: { formatter: (value: number): string => eur(value) } },
     tooltip: { y: { formatter: (value: number): string => eur(value) } },
+}));
+
+const hasValuation = computed<boolean>(() => (props.valuation?.labels.length ?? 0) > 0);
+
+const valuationChartSeries = computed(() => [
+    { name: 'Valeur', data: props.valuation?.valuations ?? [] },
+    { name: 'Investi', data: props.valuation?.invested ?? [] },
+]);
+
+const valuationChartOptions = computed<ApexOptions>(() => ({
+    chart: { toolbar: { show: false }, fontFamily: 'inherit', animations: { enabled: false } },
+    colors: ['#4f46e5', '#64748b'],
+    stroke: { curve: 'smooth', width: 2 },
+    fill: { type: 'gradient', gradient: { opacityFrom: 0.3, opacityTo: 0 } },
+    dataLabels: { enabled: false },
+    grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
+    xaxis: {
+        type: 'datetime',
+        categories: props.valuation?.labels ?? [],
+        axisBorder: { show: false },
+        axisTicks: { show: false },
+        labels: { hideOverlappingLabels: true },
+    },
+    yaxis: { labels: { formatter: (value: number): string => eur(value) } },
+    tooltip: { y: { formatter: (value: number): string => eur(value) } },
+    legend: { position: 'top' },
 }));
 </script>
 
@@ -176,6 +208,31 @@ const priceChartOptions = computed<ApexOptions>(() => ({
                         />
                         <p v-else class="py-8 text-center text-sm text-muted-foreground">
                             Pas d'historique de prix disponible.
+                        </p>
+                    </Deferred>
+                </CardContent>
+            </Card>
+
+            <Card :class="flatCard">
+                <CardHeader>
+                    <CardTitle>Valeur vs Investi</CardTitle>
+                    <CardDescription>Évolution de ma position sur ce titre</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Deferred data="valuation">
+                        <template #fallback>
+                            <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
+                        </template>
+
+                        <VueApexCharts
+                            v-if="hasValuation"
+                            type="area"
+                            height="300"
+                            :options="valuationChartOptions"
+                            :series="valuationChartSeries"
+                        />
+                        <p v-else class="py-8 text-center text-sm text-muted-foreground">
+                            Pas encore d'historique de valorisation.
                         </p>
                     </Deferred>
                 </CardContent>
