@@ -1,0 +1,38 @@
+<?php
+
+namespace App\Contexts\Portfolio\Datas;
+
+use App\Contexts\Market\Enums\InstrumentType;
+use JsonSerializable;
+
+readonly class HoldingLineData implements JsonSerializable
+{
+    public function __construct(
+        public string $assetName,
+        public ?string $ticker,
+        public InstrumentType $type,
+        public float $quantity,
+        public ?float $avgCost,
+        public ?float $lastPrice,
+        public ?float $marketValue,
+        public ?float $gain,
+        public ?float $gainPct,
+    ) {}
+
+    /** @return array<string, mixed> */
+    public function jsonSerialize(): array
+    {
+        return [
+            'assetName' => $this->assetName,
+            'ticker' => $this->ticker,
+            'type' => $this->type->value,
+            'typeLabel' => $this->type->getLabel(),
+            'quantity' => $this->quantity,
+            'avgCost' => $this->avgCost,
+            'lastPrice' => $this->lastPrice,
+            'marketValue' => $this->marketValue,
+            'gain' => $this->gain,
+            'gainPct' => $this->gainPct,
+        ];
+    }
+}
