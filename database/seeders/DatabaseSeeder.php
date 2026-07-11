@@ -3,13 +3,10 @@
 namespace Database\Seeders;
 
 use App\Contexts\Identity\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
      */
@@ -24,7 +21,6 @@ class DatabaseSeeder extends Seeder
         // $this->call(TransactionSeeder::class, parameters: ['user' => $user]);
         // $this->call(FeedbackSeeder::class, parameters: ['user' => $user]);
 
-        $this->call(TestAssetSeeder::class);
-        $this->call(PriceSyncSeeder::class);
+        $this->call(DashboardDemoSeeder::class);
     }
 }
