@@ -10,6 +10,7 @@ use App\Contexts\Market\Infrastructure\DatabaseAssetPriceAdapter;
 use App\Contexts\Market\Infrastructure\EloquentInstrumentRepository;
 use App\Contexts\Market\Infrastructure\EloquentPriceRepository;
 use App\Contexts\Market\MarketProvider;
+use App\Contexts\Valuation\Infrastructure\MarketInstrumentDirectory;
 use App\Contexts\Valuation\Infrastructure\MarketPriceHistory;
 use App\Contexts\Valuation\Infrastructure\PortfolioTransactionHistory;
 use App\Contexts\Valuation\ValuationProvider;
@@ -38,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
             app: $this->app,
             transactionHistory: PortfolioTransactionHistory::class,
             priceHistory: MarketPriceHistory::class,
+            instrumentDirectory: MarketInstrumentDirectory::class,
         );
 
         InstrumentViewProvider::registers(
