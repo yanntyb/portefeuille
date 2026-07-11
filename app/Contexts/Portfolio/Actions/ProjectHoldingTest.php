@@ -45,3 +45,33 @@ it('removes the holding when everything is sold', function () {
 
     expect(Holding::query()->where('asset_id', $asset->id)->where('wallet_id', $wallet->id)->exists())->toBeFalse();
 });
+
+it('keeps each wallet holding independent for the same asset', function () {
+    $user = User::factory()->create();
+    $walletA = Wallet::factory()->for($user)->create();
+    $walletB = Wallet::factory()->for($user)->create();
+    $asset = Instrument::factory()->create();
+
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $walletA->id, 'asset_id' => $asset->id,
+        'quantity' => 10, 'unit_price' => 100,
+    ]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $walletB->id, 'asset_id' => $asset->id,
+        'quantity' => 5, 'unit_price' => 200,
+    ]);
+
+    // A second buy on wallet A changes its projected quantity, forcing a genuine
+    // UPDATE (not a no-op) when the observer re-projects wallet A. Under the bug,
+    // that UPDATE is keyed on asset_id alone and clobbers wallet B's row too.
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $walletA->id, 'asset_id' => $asset->id,
+        'quantity' => 1, 'unit_price' => 100,
+    ]);
+
+    $a = Holding::query()->where('asset_id', $asset->id)->where('wallet_id', $walletA->id)->first();
+    $b = Holding::query()->where('asset_id', $asset->id)->where('wallet_id', $walletB->id)->first();
+
+    expect((float) $a->quantity)->toBe(11.0)
+        ->and((float) $b->quantity)->toBe(5.0);
+});

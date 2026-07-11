@@ -6,6 +6,7 @@ use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Portfolio\Factories\HoldingFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -53,5 +54,27 @@ class Holding extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @param  Builder<Holding>  $query
+     * @return Builder<Holding>
+     */
+    protected function setKeysForSaveQuery($query)
+    {
+        return $query
+            ->where('asset_id', $this->getAttribute('asset_id'))
+            ->where('wallet_id', $this->getAttribute('wallet_id'));
+    }
+
+    /**
+     * @param  Builder<Holding>  $query
+     * @return Builder<Holding>
+     */
+    protected function setKeysForSelectQuery($query)
+    {
+        return $query
+            ->where('asset_id', $this->getOriginal('asset_id', $this->getAttribute('asset_id')))
+            ->where('wallet_id', $this->getOriginal('wallet_id', $this->getAttribute('wallet_id')));
     }
 }
