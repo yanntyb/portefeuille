@@ -8,7 +8,6 @@
     "nightwatch_mcp": false,
     "sail": false,
     "skills": [
-        "fluxui-development",
         "pest-testing",
         "tailwindcss-development"
     ]

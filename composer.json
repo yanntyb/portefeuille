@@ -10,7 +10,6 @@
         "laravel/framework": "^12.0",
         "laravel/octane": "^2.17",
         "laravel/tinker": "^2.10.1",
-        "livewire/flux": "^2.12",
         "opcodesio/log-viewer": "^3.21"
     },
     "require-dev": {
@@ -25,7 +24,6 @@
         "nunomaduro/collision": "^8.6",
         "pestphp/pest": "^4.4",
         "pestphp/pest-plugin-laravel": "^4.0",
-        "pestphp/pest-plugin-livewire": "^4.1",
         "phpstan/phpstan": "^2.1"
     },
     "autoload": {
