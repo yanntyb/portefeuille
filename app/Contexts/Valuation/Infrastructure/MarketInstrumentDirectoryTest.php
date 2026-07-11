@@ -17,3 +17,13 @@ it('maps asset ids to instrument names', function () {
 it('returns an empty map for no ids', function () {
     expect(app(InstrumentDirectoryPort::class)->namesFor([]))->toBe([]);
 });
+
+it('omits instruments whose name is null so callers can fall back', function () {
+    $named = Instrument::factory()->create(['name' => 'ACME']);
+    $unnamed = Instrument::factory()->create(['name' => null]);
+
+    $names = app(InstrumentDirectoryPort::class)->namesFor([$named->id, $unnamed->id]);
+
+    expect($names[$named->id])->toBe('ACME');
+    expect($names)->not->toHaveKey($unnamed->id);
+});

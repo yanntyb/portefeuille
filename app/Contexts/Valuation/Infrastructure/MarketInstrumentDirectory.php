@@ -19,8 +19,8 @@ class MarketInstrumentDirectory implements InstrumentDirectoryPort
 
         return Instrument::query()
             ->whereIn('id', $assetIds)
+            ->whereNotNull('name')
             ->pluck('name', 'id')
-            ->map(fn (?string $name): string => (string) $name)
             ->all();
     }
 }
