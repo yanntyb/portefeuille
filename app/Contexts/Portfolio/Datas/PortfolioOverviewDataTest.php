@@ -12,6 +12,7 @@ it('serializes an overview to the expected json shape', function () {
         totalGain: 200.0,
         totalGainPct: 25.0,
         holdings: [new HoldingLineData(
+            assetId: 7,
             assetName: 'ACME',
             ticker: 'ACM',
             type: InstrumentType::Stock,
@@ -28,6 +29,7 @@ it('serializes an overview to the expected json shape', function () {
     $json = $overview->jsonSerialize();
 
     expect($json['totalValue'])->toBe(1000.0)
+        ->and($json['holdings'][0]['assetId'])->toBe(7)
         ->and($json['holdings'][0]['assetName'])->toBe('ACME')
         ->and($json['holdings'][0]['type'])->toBe('stock')
         ->and($json['holdings'][0]['typeLabel'])->toBe('Stock')
