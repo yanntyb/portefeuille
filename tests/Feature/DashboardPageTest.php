@@ -5,6 +5,7 @@ use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Portfolio\Models\Holding;
+use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -49,5 +50,29 @@ it('renders the Dashboard with the user portfolio overview', function () {
             ->has('overview.holdings', 1)
             ->has('overview.allocation', 1)
             ->where('overview.holdings.0.assetName', 'ACME')
+        );
+});
+
+it('defers the valuation series and loads it on demand', function () {
+    // See note above: clear any legacy seeded user so the fallback resolves to this test's user.
+    User::query()->delete();
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $asset = Instrument::factory()->ofType(InstrumentType::Stock)->create();
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'quantity' => 10, 'unit_price' => 100, 'date' => '2026-01-01',
+    ]);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 100]);
+
+    $this->get('/dashboard')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Dashboard')
+            ->missing('valuationSeries')
+            ->loadDeferredProps(fn (Assert $reload) => $reload
+                ->has('valuationSeries.labels', 1)
+                ->has('valuationSeries.valuations', 1)
+            )
         );
 });

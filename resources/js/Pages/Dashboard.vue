@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import { Deferred, Head } from '@inertiajs/vue3';
 import VueApexCharts from 'vue3-apexcharts';
 import type { ApexOptions } from 'apexcharts';
 import {
@@ -48,7 +48,13 @@ interface PortfolioOverview {
     allocation: AllocationSlice[];
 }
 
-const props = defineProps<{ overview: PortfolioOverview }>();
+interface ValuationSeries {
+    labels: string[];
+    valuations: number[];
+    invested: number[];
+}
+
+const props = defineProps<{ overview: PortfolioOverview; valuationSeries?: ValuationSeries }>();
 
 const flatCard = 'border-0 bg-transparent shadow-none rounded-none';
 
@@ -80,6 +86,31 @@ const allocationOptions = computed<ApexOptions>(() => ({
     stroke: { width: 0 },
     tooltip: { y: { formatter: (val: number): string => eur(val) } },
 }));
+
+const hasValuation = computed<boolean>(() => (props.valuationSeries?.labels.length ?? 0) > 0);
+
+const valuationChartSeries = computed(() => [
+    { name: 'Valeur', data: props.valuationSeries?.valuations ?? [] },
+    { name: 'Investi', data: props.valuationSeries?.invested ?? [] },
+]);
+
+const valuationChartOptions = computed<ApexOptions>(() => ({
+    chart: { toolbar: { show: false }, fontFamily: 'inherit' },
+    colors: ['#4f46e5', '#64748b'],
+    stroke: { curve: 'smooth', width: 2 },
+    fill: { type: 'gradient', gradient: { opacityFrom: 0.3, opacityTo: 0 } },
+    dataLabels: { enabled: false },
+    grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
+    xaxis: {
+        categories: props.valuationSeries?.labels ?? [],
+        axisBorder: { show: false },
+        axisTicks: { show: false },
+        labels: { hideOverlappingLabels: true },
+    },
+    yaxis: { labels: { formatter: (value: number): string => eur(value) } },
+    tooltip: { y: { formatter: (value: number): string => eur(value) } },
+    legend: { position: 'top' },
+}));
 </script>
 
 <template>
@@ -91,6 +122,31 @@ const allocationOptions = computed<ApexOptions>(() => ({
                 <h1 class="text-2xl font-semibold">Tableau de bord</h1>
                 <p class="text-sm text-muted-foreground">Suivi de vos investissements</p>
             </header>
+
+            <Card :class="flatCard">
+                <CardHeader>
+                    <CardTitle>Évolution</CardTitle>
+                    <CardDescription>Valeur du portefeuille vs investi</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Deferred data="valuationSeries">
+                        <template #fallback>
+                            <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
+                        </template>
+
+                        <VueApexCharts
+                            v-if="hasValuation"
+                            type="area"
+                            height="300"
+                            :options="valuationChartOptions"
+                            :series="valuationChartSeries"
+                        />
+                        <p v-else class="py-8 text-center text-sm text-muted-foreground">
+                            Pas encore d'historique de valorisation.
+                        </p>
+                    </Deferred>
+                </CardContent>
+            </Card>
 
             <section class="grid gap-4 sm:grid-cols-3">
                 <Card :class="flatCard">
