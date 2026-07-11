@@ -6,6 +6,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -28,7 +29,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (NotFoundHttpException $e) {
+        $exceptions->render(function (NotFoundHttpException $e, Request $request) {
+            // Only redirect truly unmatched URLs to the home page. When a route
+            // did match but its controller deliberately aborted with 404 (e.g. an
+            // unknown resource id), let the real 404 response through.
+            if ($request->route() !== null) {
+                return null;
+            }
+
             return new RedirectResponse('/');
         });
     })->create();
