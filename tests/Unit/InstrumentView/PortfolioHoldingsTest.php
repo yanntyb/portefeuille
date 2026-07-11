@@ -35,3 +35,19 @@ it('returns a single holding for a user and asset', function () {
     expect($this->adapter->holdingFor($user->id, $asset->id)->quantity)->toBe(3.0);
     expect($this->adapter->holdingFor($user->id, 999))->toBeNull();
 });
+
+it('aggregates the same asset held across multiple wallets', function () {
+    $user = User::factory()->create();
+    $walletA = Wallet::factory()->for($user)->create();
+    $walletB = Wallet::factory()->for($user)->create();
+    $asset = Instrument::factory()->create();
+    Holding::factory()->create(['user_id' => $user->id, 'wallet_id' => $walletA->id, 'asset_id' => $asset->id, 'quantity' => 10, 'avg_cost' => 100]);
+    Holding::factory()->create(['user_id' => $user->id, 'wallet_id' => $walletB->id, 'asset_id' => $asset->id, 'quantity' => 30, 'avg_cost' => 200]);
+
+    $holdings = $this->adapter->holdingsFor($user->id);
+
+    expect($holdings)->toHaveCount(1);
+    expect($holdings[0]->quantity)->toBe(40.0);
+    expect($holdings[0]->avgCost)->toBe(175.0); // (10*100 + 30*200) / 40
+    expect($this->adapter->holdingFor($user->id, $asset->id)->quantity)->toBe(40.0);
+});

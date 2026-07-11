@@ -5,6 +5,7 @@ namespace App\Contexts\InstrumentView\Infrastructure;
 use App\Contexts\InstrumentView\Datas\HoldingSnapshotData;
 use App\Contexts\InstrumentView\Ports\HoldingsPort;
 use App\Contexts\Portfolio\Models\Holding;
+use Illuminate\Support\Collection;
 
 class PortfolioHoldings implements HoldingsPort
 {
@@ -14,27 +15,37 @@ class PortfolioHoldings implements HoldingsPort
         return Holding::query()
             ->where('user_id', $userId)
             ->get()
-            ->map(fn (Holding $holding) => $this->toSnapshot($holding))
+            ->groupBy('asset_id')
+            ->map(fn (Collection $rows) => $this->aggregate((int) $rows->first()->asset_id, $rows))
             ->values()
             ->all();
     }
 
     public function holdingFor(int $userId, int $assetId): ?HoldingSnapshotData
     {
-        $holding = Holding::query()
+        $rows = Holding::query()
             ->where('user_id', $userId)
             ->where('asset_id', $assetId)
-            ->first();
+            ->get();
 
-        return $holding !== null ? $this->toSnapshot($holding) : null;
+        return $rows->isNotEmpty() ? $this->aggregate($assetId, $rows) : null;
     }
 
-    private function toSnapshot(Holding $holding): HoldingSnapshotData
+    /** @param Collection<int, Holding> $rows */
+    private function aggregate(int $assetId, Collection $rows): HoldingSnapshotData
     {
+        $quantity = (float) $rows->sum(fn (Holding $holding) => (float) $holding->quantity);
+
+        $costRows = $rows->filter(fn (Holding $holding) => $holding->avg_cost !== null);
+        $qtyWithCost = (float) $costRows->sum(fn (Holding $holding) => (float) $holding->quantity);
+        $avgCost = $qtyWithCost > 0.0
+            ? (float) $costRows->sum(fn (Holding $holding) => (float) $holding->quantity * (float) $holding->avg_cost) / $qtyWithCost
+            : null;
+
         return new HoldingSnapshotData(
-            assetId: (int) $holding->asset_id,
-            quantity: (float) $holding->quantity,
-            avgCost: $holding->avg_cost !== null ? (float) $holding->avg_cost : null,
+            assetId: $assetId,
+            quantity: $quantity,
+            avgCost: $avgCost,
         );
     }
 }
