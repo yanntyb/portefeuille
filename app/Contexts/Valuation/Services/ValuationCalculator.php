@@ -18,7 +18,8 @@ class ValuationCalculator
             return ValuationSeriesData::empty();
         }
 
-        usort($transactions, fn (TransactionRecordData $a, TransactionRecordData $b) => $a->date <=> $b->date);
+        usort($transactions, fn (TransactionRecordData $a, TransactionRecordData $b) => ($a->date <=> $b->date)
+            ?: (($a->isSell ? 1 : 0) <=> ($b->isSell ? 1 : 0)));
 
         /** @var array<int, list<array{date: string, value: float}>> $quantities */
         $quantities = [];

@@ -49,3 +49,18 @@ it('ignores an asset that has no price', function () {
     expect($series->valuations)->toBe([1000.0])
         ->and($series->invested)->toBe([1250.0]);
 });
+
+it('orders same-day buys before sells regardless of input order', function () {
+    $prices = [new PriceRecordData(1, '2026-01-01', 150)];
+    $buy = tx('2026-01-01', 1, false, 10, 100);
+    $sell = tx('2026-01-01', 1, true, 4, 150);
+
+    $sellFirst = (new ValuationCalculator)->calculate([$sell, $buy], $prices);
+    $buyFirst = (new ValuationCalculator)->calculate([$buy, $sell], $prices);
+
+    // both orderings must agree: qty 6 @150 = 900 ; invested 1000 - (4 × PRU 100) = 600
+    expect($sellFirst->valuations)->toBe([900.0])
+        ->and($sellFirst->invested)->toBe([600.0])
+        ->and($buyFirst->valuations)->toBe([900.0])
+        ->and($buyFirst->invested)->toBe([600.0]);
+});
