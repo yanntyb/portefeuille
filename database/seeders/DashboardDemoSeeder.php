@@ -51,16 +51,7 @@ class DashboardDemoSeeder extends Seeder
             );
 
             if ($position['close'] !== null) {
-                Price::query()->updateOrCreate(
-                    ['asset_id' => $instrument->id, 'date' => today()],
-                    [
-                        'open' => $position['close'],
-                        'high' => $position['close'],
-                        'low' => $position['close'],
-                        'close' => $position['close'],
-                        'volume' => 0,
-                    ],
-                );
+                $this->seedPriceHistory($instrument->id, $position['buyPrice'], $position['close']);
             }
 
             Transaction::query()->create([
@@ -68,7 +59,7 @@ class DashboardDemoSeeder extends Seeder
                 'wallet_id' => $wallet->id,
                 'asset_id' => $instrument->id,
                 'type' => TransactionType::Buy,
-                'date' => today()->subMonth(),
+                'date' => today()->subMonths(11),
                 'quantity' => $position['buyQty'],
                 'unit_price' => $position['buyPrice'],
                 'fees' => 0,
@@ -87,5 +78,32 @@ class DashboardDemoSeeder extends Seeder
                 ]);
             }
         }
+    }
+
+    /**
+     * Génère ~12 mois d'historique hebdomadaire, du prix d'achat vers le close actuel,
+     * avec une légère ondulation, afin que la courbe de valorisation soit visible.
+     */
+    private function seedPriceHistory(int $assetId, float $start, float $end): void
+    {
+        $weeks = 52;
+        $from = today()->subWeeks($weeks);
+
+        for ($i = 0; $i <= $weeks; $i++) {
+            $progress = $i / $weeks;
+            $base = $start + ($end - $start) * $progress;
+            $close = round($base * (1 + 0.03 * sin($i / 3.0)), 2);
+            $date = $from->copy()->addWeeks($i);
+
+            Price::query()->updateOrCreate(
+                ['asset_id' => $assetId, 'date' => $date],
+                ['open' => $close, 'high' => $close, 'low' => $close, 'close' => $close, 'volume' => 0],
+            );
+        }
+
+        Price::query()->updateOrCreate(
+            ['asset_id' => $assetId, 'date' => today()],
+            ['open' => $end, 'high' => $end, 'low' => $end, 'close' => $end, 'volume' => 0],
+        );
     }
 }

@@ -1,10 +1,12 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Models\Price;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
+use App\Contexts\Valuation\Actions\BuildPortfolioValuationSeries;
 use Database\Seeders\DashboardDemoSeeder;
 
 it('builds the demo portfolio from transactions', function () {
@@ -40,4 +42,20 @@ it('is idempotent', function () {
 
     expect(Holding::query()->count())->toBe($holdingCount)
         ->and(Transaction::query()->count())->toBe($txCount);
+});
+
+it('seeds a price history that yields a non-flat valuation curve', function () {
+    User::query()->delete();
+    $user = User::factory()->create();
+
+    $this->seed(DashboardDemoSeeder::class);
+
+    // multiple distinct price dates were seeded
+    expect(Price::query()->distinct()->count('date'))->toBeGreaterThan(1);
+
+    $series = app(BuildPortfolioValuationSeries::class)($user->id);
+
+    // several points, and the curve actually moves
+    expect(count($series->valuations))->toBeGreaterThan(1)
+        ->and(count(array_unique($series->valuations)))->toBeGreaterThan(1);
 });
