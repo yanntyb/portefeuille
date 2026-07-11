@@ -1,10 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 require __DIR__.'/pwa.php';
 
-// Le panel admin Filament servait auparavant la racine. Filament supprime : on
-// sert une page d'accueil minimale pour eviter une boucle de redirection
-// (le handler 404 redirige vers '/').
-Route::view('/', 'welcome');
+Route::get('/', function () {
+    return Inertia::render('Home', [
+        'appName' => config('app.name'),
+    ]);
+})->name('home');
