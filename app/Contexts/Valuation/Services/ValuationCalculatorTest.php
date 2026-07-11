@@ -102,3 +102,36 @@ it('orders same-day buys before sells regardless of input order', function () {
         ->and($buyFirst->valuations)->toBe([900.0])
         ->and($buyFirst->invested)->toBe([600.0]);
 });
+
+it('accumulates invested per asset on a shared date axis', function () {
+    $series = (new ValuationCalculator)->investedByAsset([
+        tx('2026-01-01', 1, false, 10, 100),          // asset 1 invests 1000
+        tx('2026-02-01', 2, false, 5, 50),            // asset 2 invests 250
+        tx('2026-03-01', 1, false, 2, 150),           // asset 1 invests +300 => 1300
+    ]);
+
+    expect($series->labels)->toBe(['2026-01-01', '2026-02-01', '2026-03-01']);
+
+    $byId = collect($series->series)->keyBy('assetId');
+    // asset 1: 1000 at d1, forward-fill 1000 at d2, 1300 at d3
+    expect($byId[1]->invested)->toBe([1000.0, 1000.0, 1300.0]);
+    expect($byId[1]->name)->toBe('#1');
+    // asset 2: 0 before its first tx, 250 from d2 onward
+    expect($byId[2]->invested)->toBe([0.0, 250.0, 250.0]);
+});
+
+it('reduces invested by cost basis on a sell (per asset)', function () {
+    $series = (new ValuationCalculator)->investedByAsset([
+        tx('2026-01-01', 1, false, 10, 100),          // invested 1000, PRU 100
+        tx('2026-02-01', 1, true, 4, 150),            // invested -= 4*100 => 600
+    ]);
+
+    $byId = collect($series->series)->keyBy('assetId');
+    expect($byId[1]->invested)->toBe([1000.0, 600.0]);
+});
+
+it('returns an empty invested-by-asset series without transactions', function () {
+    expect((new ValuationCalculator)->investedByAsset([]))->toEqual(
+        \App\Contexts\Valuation\Datas\InvestedByAssetSeriesData::empty()
+    );
+});

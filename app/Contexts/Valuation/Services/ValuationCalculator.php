@@ -2,6 +2,8 @@
 
 namespace App\Contexts\Valuation\Services;
 
+use App\Contexts\Valuation\Datas\AssetInvestedSeriesData;
+use App\Contexts\Valuation\Datas\InvestedByAssetSeriesData;
 use App\Contexts\Valuation\Datas\PriceRecordData;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
 use App\Contexts\Valuation\Datas\ValuationSeriesData;
@@ -124,6 +126,71 @@ class ValuationCalculator
         }
 
         return $indices;
+    }
+
+    /**
+     * Investi cumulé par asset dans le temps (fonction en escalier sur les dates
+     * de transaction, sans prix). `name` est laissé à `#<assetId>` — l'action
+     * qui consomme cette méthode y substitue le vrai nom.
+     *
+     * @param  list<TransactionRecordData>  $transactions
+     */
+    public function investedByAsset(array $transactions, int $maxPoints = 200): InvestedByAssetSeriesData
+    {
+        if ($transactions === []) {
+            return InvestedByAssetSeriesData::empty();
+        }
+
+        usort($transactions, fn (TransactionRecordData $a, TransactionRecordData $b) => ($a->date <=> $b->date)
+            ?: (($a->isSell ? 1 : 0) <=> ($b->isSell ? 1 : 0)));
+
+        /** @var array<int, list<array{date: string, value: float}>> $perAsset */
+        $perAsset = [];
+        $buyQty = [];
+        $buyCost = [];
+        $invested = [];
+        /** @var array<string, true> $dates */
+        $dates = [];
+
+        foreach ($transactions as $transaction) {
+            $day = $transaction->date->format('Y-m-d');
+            $assetId = $transaction->assetId;
+            $dates[$day] = true;
+            $invested[$assetId] ??= 0.0;
+            $perAsset[$assetId] ??= [];
+
+            if ($transaction->isSell) {
+                $qty = $buyQty[$assetId] ?? 0.0;
+                $cost = $buyCost[$assetId] ?? 0.0;
+                $pru = $qty > 0.0 ? $cost / $qty : 0.0;
+                $invested[$assetId] -= $transaction->quantity * $pru - $transaction->fees;
+            } else {
+                $buyQty[$assetId] = ($buyQty[$assetId] ?? 0.0) + $transaction->quantity;
+                $buyCost[$assetId] = ($buyCost[$assetId] ?? 0.0) + $transaction->quantity * $transaction->unitPrice;
+                $invested[$assetId] += $transaction->quantity * $transaction->unitPrice + $transaction->fees;
+            }
+
+            $perAsset[$assetId][] = ['date' => $day, 'value' => $invested[$assetId]];
+        }
+
+        $labels = array_keys($dates);
+        sort($labels);
+
+        $indices = self::downsampleIndices(count($labels), $maxPoints);
+        if (count($indices) < count($labels)) {
+            $labels = array_map(fn (int $i): string => $labels[$i], $indices);
+        }
+
+        $series = [];
+        foreach ($perAsset as $assetId => $entries) {
+            $series[] = new AssetInvestedSeriesData(
+                assetId: $assetId,
+                name: '#'.$assetId,
+                invested: array_map(fn (string $day): float => round($this->valueAtDate($entries, $day), 2), $labels),
+            );
+        }
+
+        return new InvestedByAssetSeriesData($labels, $series);
     }
 
     /**
