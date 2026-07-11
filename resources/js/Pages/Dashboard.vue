@@ -144,7 +144,7 @@ const allocationOptions = computed<ApexOptions>(() => ({
                                     <TableCell>{{ line.typeLabel }}</TableCell>
                                     <TableCell class="text-right">{{ line.quantity }}</TableCell>
                                     <TableCell class="text-right">
-                                        <span v-if="line.lastPrice === null" class="text-muted-foreground">prix indisponible</span>
+                                        <span v-if="line.lastPrice === null" class="text-muted-foreground" title="Prix indisponible">N/D</span>
                                         <span v-else>{{ eur(line.lastPrice) }}</span>
                                     </TableCell>
                                     <TableCell class="text-right">{{ eur(line.marketValue) }}</TableCell>
