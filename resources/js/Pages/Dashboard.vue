@@ -50,6 +50,8 @@ interface PortfolioOverview {
 
 const props = defineProps<{ overview: PortfolioOverview }>();
 
+const flatCard = 'border-0 bg-muted shadow-none';
+
 const eur = (value: number | null): string =>
     value === null
         ? '—'
@@ -91,13 +93,13 @@ const allocationOptions = computed<ApexOptions>(() => ({
             </header>
 
             <section class="grid gap-4 sm:grid-cols-3">
-                <Card>
+                <Card :class="flatCard">
                     <CardHeader>
                         <CardDescription>Valeur totale</CardDescription>
                         <CardTitle class="text-2xl">{{ eur(overview.totalValue) }}</CardTitle>
                     </CardHeader>
                 </Card>
-                <Card>
+                <Card :class="flatCard">
                     <CardHeader>
                         <CardDescription>Gains / pertes</CardDescription>
                         <CardTitle class="text-2xl" :class="gainClass(overview.totalGain)">
@@ -105,7 +107,7 @@ const allocationOptions = computed<ApexOptions>(() => ({
                         </CardTitle>
                     </CardHeader>
                 </Card>
-                <Card>
+                <Card :class="flatCard">
                     <CardHeader>
                         <CardDescription>Rendement</CardDescription>
                         <CardTitle class="text-2xl" :class="gainClass(overview.totalGain)">
@@ -116,7 +118,7 @@ const allocationOptions = computed<ApexOptions>(() => ({
             </section>
 
             <section class="grid gap-4 lg:grid-cols-3">
-                <Card class="lg:col-span-2">
+                <Card :class="[flatCard, 'lg:col-span-2']">
                     <CardHeader>
                         <CardTitle>Positions</CardTitle>
                         <CardDescription>Détail de vos lignes</CardDescription>
@@ -156,7 +158,7 @@ const allocationOptions = computed<ApexOptions>(() => ({
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card :class="flatCard">
                     <CardHeader>
                         <CardTitle>Répartition</CardTitle>
                         <CardDescription>Par type d'actif</CardDescription>
