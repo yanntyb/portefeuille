@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Deferred, Head } from '@inertiajs/vue3';
+import { Deferred, Head, Link } from '@inertiajs/vue3';
 import VueApexCharts from 'vue3-apexcharts';
 import type { ApexOptions } from 'apexcharts';
 import {
@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/table';
 
 interface HoldingLine {
+    assetId: number;
     assetName: string;
     ticker: string | null;
     type: string;
@@ -195,8 +196,10 @@ const valuationChartOptions = computed<ApexOptions>(() => ({
                             <TableBody>
                                 <TableRow v-for="(line, index) in overview.holdings" :key="index">
                                     <TableCell class="font-medium">
-                                        {{ line.assetName }}
-                                        <span v-if="line.ticker" class="text-muted-foreground">({{ line.ticker }})</span>
+                                        <Link :href="`/instruments/${line.assetId}`" class="hover:underline">
+                                            {{ line.assetName }}
+                                            <span v-if="line.ticker" class="text-muted-foreground">({{ line.ticker }})</span>
+                                        </Link>
                                     </TableCell>
                                     <TableCell>{{ line.typeLabel }}</TableCell>
                                     <TableCell class="text-right">{{ line.quantity }}</TableCell>

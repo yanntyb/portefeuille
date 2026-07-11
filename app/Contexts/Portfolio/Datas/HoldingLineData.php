@@ -8,6 +8,7 @@ use JsonSerializable;
 readonly class HoldingLineData implements JsonSerializable
 {
     public function __construct(
+        public int $assetId,
         public string $assetName,
         public ?string $ticker,
         public InstrumentType $type,
@@ -23,6 +24,7 @@ readonly class HoldingLineData implements JsonSerializable
     public function jsonSerialize(): array
     {
         return [
+            'assetId' => $this->assetId,
             'assetName' => $this->assetName,
             'ticker' => $this->ticker,
             'type' => $this->type->value,

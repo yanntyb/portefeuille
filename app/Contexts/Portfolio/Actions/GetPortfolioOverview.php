@@ -41,6 +41,7 @@ class GetPortfolioOverview
             $gainPct = ($gain !== null && $cost !== null && $cost > 0.0) ? $gain / $cost * 100 : null;
 
             $lines[] = new HoldingLineData(
+                assetId: (int) $holding->asset_id,
                 assetName: $holding->asset->name,
                 ticker: $holding->asset->ticker,
                 type: $holding->asset->type,

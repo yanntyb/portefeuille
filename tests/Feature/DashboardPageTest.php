@@ -50,6 +50,7 @@ it('renders the Dashboard with the user portfolio overview', function () {
             ->has('overview.holdings', 1)
             ->has('overview.allocation', 1)
             ->where('overview.holdings.0.assetName', 'ACME')
+            ->where('overview.holdings.0.assetId', $asset->id)
         );
 });
 
