@@ -5,6 +5,8 @@ namespace App\Contexts\Portfolio\Models;
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Factories\TransactionFactory;
+use App\Contexts\Portfolio\Observers\TransactionObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,6 +25,7 @@ use Illuminate\Support\Carbon;
  * @property string $fees
  * @property ?string $realized_gain
  */
+#[ObservedBy(TransactionObserver::class)]
 #[UseFactory(TransactionFactory::class)]
 class Transaction extends Model
 {
