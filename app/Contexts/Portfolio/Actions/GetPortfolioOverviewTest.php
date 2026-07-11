@@ -87,3 +87,32 @@ it('returns an empty overview when the user has no holdings', function () {
         ->and($overview->holdings)->toBe([])
         ->and($overview->allocation)->toBe([]);
 });
+
+it('keeps market value but excludes gain when avg_cost is unknown', function () {
+    $user = User::factory()->create();
+    makeHolding($user, InstrumentType::Stock, close: 100, qty: 10, avgCost: 80); // value 1000, cost 800
+
+    $wallet = Wallet::factory()->for($user)->create();
+    $asset = Instrument::factory()->ofType(InstrumentType::ETF)->create();
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => now(), 'close' => 50]);
+    Holding::factory()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $asset->id,
+        'quantity' => 4,
+        'avg_cost' => null,
+    ]);
+
+    $overview = app(GetPortfolioOverview::class)($user);
+
+    expect($overview->totalValue)->toBe(1200.0)
+        ->and($overview->totalCost)->toBe(800.0)
+        ->and($overview->totalGain)->toBe(200.0)
+        ->and($overview->totalGainPct)->toBe(25.0);
+
+    $etfLine = collect($overview->holdings)->firstWhere('type', InstrumentType::ETF);
+    expect($etfLine->marketValue)->toBe(200.0)
+        ->and($etfLine->gain)->toBeNull()
+        ->and($etfLine->gainPct)->toBeNull()
+        ->and($overview->allocation)->toHaveCount(2);
+});

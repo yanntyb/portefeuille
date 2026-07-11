@@ -24,6 +24,7 @@ class GetPortfolioOverview
         $lines = [];
         $totalValue = 0.0;
         $totalCost = 0.0;
+        $totalGain = 0.0;
         /** @var array<string, float> $valueByType */
         $valueByType = [];
 
@@ -53,15 +54,16 @@ class GetPortfolioOverview
 
             if ($marketValue !== null) {
                 $totalValue += $marketValue;
-                if ($cost !== null) {
-                    $totalCost += $cost;
-                }
                 $key = $holding->asset->type->value;
                 $valueByType[$key] = ($valueByType[$key] ?? 0.0) + $marketValue;
             }
+
+            if ($gain !== null) {
+                $totalCost += $cost;
+                $totalGain += $gain;
+            }
         }
 
-        $totalGain = $totalValue - $totalCost;
         $totalGainPct = $totalCost > 0.0 ? $totalGain / $totalCost * 100 : 0.0;
 
         $allocation = [];
