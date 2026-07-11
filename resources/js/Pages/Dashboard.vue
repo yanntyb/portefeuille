@@ -50,7 +50,7 @@ interface PortfolioOverview {
 
 const props = defineProps<{ overview: PortfolioOverview }>();
 
-const flatCard = 'border-0 bg-muted shadow-none';
+const flatCard = 'border-0 bg-transparent shadow-none rounded-none';
 
 const eur = (value: number | null): string =>
     value === null
