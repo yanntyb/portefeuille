@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Portfolio\Models\Holding;
@@ -17,15 +18,15 @@ class DashboardDemoSeeder extends Seeder
      * Chaque entrée : nom, ticker, type, prix de clôture courant (null = prix
      * indisponible), quantité détenue, coût d'achat moyen.
      *
-     * @var list<array{name: string, ticker: string, type: string, close: float|null, quantity: float, avgCost: float}>
+     * @var list<array{name: string, ticker: string, type: InstrumentType, close: float|null, quantity: float, avgCost: float}>
      */
     private const POSITIONS = [
-        ['name' => 'Apple Inc.', 'ticker' => 'AAPL', 'type' => 'stock', 'close' => 220.0, 'quantity' => 15, 'avgCost' => 150.0],
-        ['name' => 'NVIDIA Corp.', 'ticker' => 'NVDA', 'type' => 'stock', 'close' => 120.0, 'quantity' => 40, 'avgCost' => 140.0],
-        ['name' => 'Amundi PEA S&P 500 UCITS ETF', 'ticker' => 'AMS', 'type' => 'etf', 'close' => 45.0, 'quantity' => 200, 'avgCost' => 30.0],
-        ['name' => 'Bitcoin', 'ticker' => 'BTC', 'type' => 'crypto', 'close' => 58000.0, 'quantity' => 0.3, 'avgCost' => 62000.0],
-        ['name' => 'OAT France 2032', 'ticker' => 'OAT32', 'type' => 'bond', 'close' => 98.0, 'quantity' => 50, 'avgCost' => 100.0],
-        ['name' => 'Ethereum', 'ticker' => 'ETH', 'type' => 'crypto', 'close' => null, 'quantity' => 2, 'avgCost' => 3000.0],
+        ['name' => 'Apple Inc.', 'ticker' => 'AAPL', 'type' => InstrumentType::Stock, 'close' => 220.0, 'quantity' => 15, 'avgCost' => 150.0],
+        ['name' => 'NVIDIA Corp.', 'ticker' => 'NVDA', 'type' => InstrumentType::Stock, 'close' => 120.0, 'quantity' => 40, 'avgCost' => 140.0],
+        ['name' => 'Amundi PEA S&P 500 UCITS ETF', 'ticker' => 'AMS', 'type' => InstrumentType::ETF, 'close' => 45.0, 'quantity' => 200, 'avgCost' => 30.0],
+        ['name' => 'Bitcoin', 'ticker' => 'BTC', 'type' => InstrumentType::Crypto, 'close' => 58000.0, 'quantity' => 0.3, 'avgCost' => 62000.0],
+        ['name' => 'OAT France 2032', 'ticker' => 'OAT32', 'type' => InstrumentType::Bond, 'close' => 98.0, 'quantity' => 50, 'avgCost' => 100.0],
+        ['name' => 'Ethereum', 'ticker' => 'ETH', 'type' => InstrumentType::Crypto, 'close' => null, 'quantity' => 2, 'avgCost' => 3000.0],
     ];
 
     public function run(): void
