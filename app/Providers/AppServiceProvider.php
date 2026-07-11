@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Contexts\InstrumentView\Infrastructure\MarketData;
-use App\Contexts\InstrumentView\Ports\MarketDataPort;
+use App\Contexts\InstrumentView\Infrastructure\PortfolioHoldings;
+use App\Contexts\InstrumentView\Infrastructure\PortfolioTransactions;
+use App\Contexts\InstrumentView\InstrumentViewProvider;
 use App\Contexts\Market\Infrastructure\DatabaseAssetPriceAdapter;
 use App\Contexts\Market\Infrastructure\EloquentInstrumentRepository;
 use App\Contexts\Market\Infrastructure\EloquentPriceRepository;
@@ -38,9 +40,12 @@ class AppServiceProvider extends ServiceProvider
             priceHistory: MarketPriceHistory::class,
         );
 
-        // Binding temporaire : sera remplace par InstrumentViewProvider::registers(...) en Task 5,
-        // une fois les adapters HoldingsPort et TransactionsPort ecrits (Tasks 3-4).
-        $this->app->bind(MarketDataPort::class, MarketData::class);
+        InstrumentViewProvider::registers(
+            app: $this->app,
+            marketData: MarketData::class,
+            holdings: PortfolioHoldings::class,
+            transactions: PortfolioTransactions::class,
+        );
     }
 
     public function boot(): void
