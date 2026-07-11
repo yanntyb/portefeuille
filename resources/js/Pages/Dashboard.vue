@@ -134,7 +134,7 @@ const allocationOptions = computed<ApexOptions>(() => ({
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                <TableRow v-for="line in overview.holdings" :key="line.assetName + line.ticker">
+                                <TableRow v-for="(line, index) in overview.holdings" :key="index">
                                     <TableCell class="font-medium">
                                         {{ line.assetName }}
                                         <span v-if="line.ticker" class="text-muted-foreground">({{ line.ticker }})</span>
