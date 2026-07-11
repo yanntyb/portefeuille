@@ -13,7 +13,7 @@
 
 pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
-    ->in('Feature', '../app/Contexts');
+    ->in('Feature', 'Unit', '../app/Contexts');
 
 pest()->extend(Tests\TestCase::class)
     ->in('../app/Shared');
