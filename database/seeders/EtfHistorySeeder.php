@@ -12,6 +12,7 @@ use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class EtfHistorySeeder extends Seeder
@@ -30,9 +31,9 @@ class EtfHistorySeeder extends Seeder
 
     private const YEARS_OF_HISTORY = 5;
 
-    private const BUYS_PER_ETF = 5;
+    private const MONTHLY_BUDGET = 1000.0;
 
-    private const INVESTMENT_PER_BUY = 500.0;
+    private const LOOKBACK_MONTHS = 3;
 
     private const FEE_PER_ORDER = 1.00;
 
@@ -53,6 +54,9 @@ class EtfHistorySeeder extends Seeder
         $start = today()->subYears(self::YEARS_OF_HISTORY)->format('Y-m-d');
         $end = today()->format('Y-m-d');
 
+        /** @var list<array{instrument: Instrument, history: Collection<int, array{date: string, close: float}>}> $portfolio */
+        $portfolio = [];
+
         foreach (self::ETFS as $etf) {
             $instrument = Instrument::query()->firstOrCreate(
                 ['ticker' => $etf['ticker']],
@@ -71,8 +75,14 @@ class EtfHistorySeeder extends Seeder
             }
 
             $this->storePriceHistory($instrument->id, $history);
-            $this->seedRandomBuys($user->id, $wallet->id, $instrument->id, $history);
+            $portfolio[] = ['instrument' => $instrument, 'history' => $history];
         }
+
+        if ($portfolio === []) {
+            return;
+        }
+
+        $this->seedMomentumDca($user->id, $wallet->id, $portfolio);
     }
 
     /**
@@ -99,50 +109,105 @@ class EtfHistorySeeder extends Seeder
     }
 
     /**
-     * @param  Collection<int, array{date: string, close: float}>  $history
+     * DCA mensuel : chaque mois, 1000 € investis sur l'ETF au plus fort momentum
+     * (rendement sur LOOKBACK_MONTHS). Aucun achat si aucun momentum n'est positif.
+     *
+     * @param  list<array{instrument: Instrument, history: Collection<int, array{date: string, close: float}>}>  $portfolio
      */
-    private function seedRandomBuys(int $userId, int $walletId, int $assetId, Collection $history): void
+    private function seedMomentumDca(int $userId, int $walletId, array $portfolio): void
     {
-        foreach ($this->pickSpreadDates($history, self::BUYS_PER_ETF) as $row) {
-            $close = (float) $row['close'];
+        $firstDate = collect($portfolio)
+            ->map(fn (array $p): string => $p['history']->first()['date'])
+            ->min();
 
-            Transaction::query()->create([
-                'user_id' => $userId,
-                'wallet_id' => $walletId,
-                'asset_id' => $assetId,
-                'type' => TransactionType::Buy,
-                'date' => $row['date'],
-                'quantity' => round(self::INVESTMENT_PER_BUY / $close, 4),
-                'unit_price' => $close,
-                'fees' => self::FEE_PER_ORDER,
-            ]);
+        $cursor = Carbon::parse($firstDate)->startOfMonth();
+        $lastMonth = today()->startOfMonth();
+
+        while ($cursor <= $lastMonth) {
+            $monthStart = $cursor->format('Y-m-d');
+            $nextMonth = $cursor->copy()->addMonth()->format('Y-m-d');
+
+            /** @var array<int, float> $returns */
+            $returns = [];
+            /** @var array<int, array{date: string, close: float}> $buyRows */
+            $buyRows = [];
+
+            foreach ($portfolio as $p) {
+                $buyRow = $p['history']->first(
+                    fn (array $row): bool => $row['date'] >= $monthStart && $row['date'] < $nextMonth,
+                );
+
+                if ($buyRow === null) {
+                    continue;
+                }
+
+                $refDate = Carbon::parse($buyRow['date'])->subMonths(self::LOOKBACK_MONTHS)->format('Y-m-d');
+                $refClose = $this->closeOnOrBefore($p['history'], $refDate);
+
+                if ($refClose === null || $refClose <= 0) {
+                    continue;
+                }
+
+                $assetId = $p['instrument']->id;
+                $returns[$assetId] = (float) $buyRow['close'] / $refClose - 1;
+                $buyRows[$assetId] = $buyRow;
+            }
+
+            $winnerId = self::selectWinner($returns);
+
+            if ($winnerId !== null) {
+                $this->recordBuy($userId, $walletId, $winnerId, $buyRows[$winnerId]);
+            }
+
+            $cursor->addMonth();
         }
     }
 
     /**
-     * Sélectionne $count lignes réparties sur toute la période (une par tranche),
-     * avec une date aléatoire dans chaque tranche.
-     *
-     * @param  Collection<int, array{date: string, close: float}>  $rows
-     * @return Collection<int, array{date: string, close: float}>
+     * @param  array{date: string, close: float}  $row
      */
-    private function pickSpreadDates(Collection $rows, int $count): Collection
+    private function recordBuy(int $userId, int $walletId, int $assetId, array $row): void
     {
-        $total = $rows->count();
+        $close = (float) $row['close'];
 
-        if ($total <= $count) {
-            return $rows;
+        Transaction::query()->create([
+            'user_id' => $userId,
+            'wallet_id' => $walletId,
+            'asset_id' => $assetId,
+            'type' => TransactionType::Buy,
+            'date' => $row['date'],
+            'quantity' => round(self::MONTHLY_BUDGET / $close, 4),
+            'unit_price' => $close,
+            'fees' => self::FEE_PER_ORDER,
+        ]);
+    }
+
+    /**
+     * ETF gagnant du mois : plus fort momentum, à condition qu'il soit positif.
+     *
+     * @param  array<int, float>  $returns  assetId => momentum
+     */
+    public static function selectWinner(array $returns): ?int
+    {
+        if ($returns === []) {
+            return null;
         }
 
-        $bucketSize = intdiv($total, $count);
-        $picks = collect();
+        arsort($returns);
+        $bestId = array_key_first($returns);
 
-        for ($i = 0; $i < $count; $i++) {
-            $from = $i * $bucketSize;
-            $to = $i === $count - 1 ? $total - 1 : $from + $bucketSize - 1;
-            $picks->push($rows[random_int($from, $to)]);
-        }
+        return $returns[$bestId] > 0 ? $bestId : null;
+    }
 
-        return $picks;
+    /**
+     * Dernier close à une date <= $date dans une série triée croissant, sinon null.
+     *
+     * @param  Collection<int, array{date: string, close: float}>  $history
+     */
+    private function closeOnOrBefore(Collection $history, string $date): ?float
+    {
+        $row = $history->last(fn (array $r): bool => $r['date'] <= $date);
+
+        return $row !== null ? (float) $row['close'] : null;
     }
 }
