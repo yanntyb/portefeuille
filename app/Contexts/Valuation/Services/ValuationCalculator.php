@@ -164,6 +164,39 @@ class ValuationCalculator
     }
 
     /**
+     * Rendement de la position sur la fenêtre [$boundary, dernier jour], hors apports
+     * (Modified-Dietz simplifié) : (valeur_fin - valeur_début - apports) / valeur_début.
+     * Les apports sont l'évolution de l'investi cumulé sur la fenêtre. Retourne null si
+     * la série ne remonte pas jusqu'à $boundary ou si la valeur de début est nulle.
+     */
+    public function returnOverWindow(ValuationSeriesData $daily, string $boundary): ?float
+    {
+        $startIndex = null;
+        foreach ($daily->labels as $i => $label) {
+            if ($label > $boundary) {
+                break;
+            }
+            $startIndex = $i;
+        }
+
+        if ($startIndex === null) {
+            return null;
+        }
+
+        $valueStart = $daily->valuations[$startIndex];
+
+        if ($valueStart <= 0.0) {
+            return null;
+        }
+
+        $last = count($daily->labels) - 1;
+        $contributions = $daily->invested[$last] - $daily->invested[$startIndex];
+        $pnl = ($daily->valuations[$last] - $valueStart) - $contributions;
+
+        return $pnl / $valueStart * 100;
+    }
+
+    /**
      * Indices à conserver pour plafonner une série à $maxPoints points : pas régulier
      * adaptatif, premier et dernier points toujours inclus. Résultat trié croissant.
      *

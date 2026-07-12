@@ -255,3 +255,49 @@ it('keeps every point when granularity is Day', function () {
 
     expect($result->labels)->toBe($labels);
 });
+
+it('computes the window return excluding contributions', function () {
+    // Début 1000, apport de 200 pendant la fenêtre, fin 1400 => (1400 - 1000 - 200) / 1000 = +20%.
+    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+        ['2026-01-01', '2026-02-01', '2026-03-01'],
+        [1000.0, 1250.0, 1400.0],
+        [1000.0, 1200.0, 1200.0],
+        [100.0, 110.0, 120.0],
+    );
+
+    expect((new ValuationCalculator)->returnOverWindow($daily, '2026-01-01'))->toBe(20.0);
+});
+
+it('anchors the window start on the last day at or before the boundary', function () {
+    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+        ['2026-01-01', '2026-01-15', '2026-03-01'],
+        [1000.0, 2000.0, 3000.0],
+        [1000.0, 1000.0, 1000.0],
+        [10.0, 20.0, 30.0],
+    );
+
+    // Boundary 2026-02-01 => début pris au 2026-01-15 (valeur 2000) : (3000 - 2000) / 2000 = +50%.
+    expect((new ValuationCalculator)->returnOverWindow($daily, '2026-02-01'))->toBe(50.0);
+});
+
+it('returns null when the series does not reach the boundary', function () {
+    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+        ['2026-02-01', '2026-03-01'],
+        [1000.0, 1200.0],
+        [1000.0, 1000.0],
+        [100.0, 120.0],
+    );
+
+    expect((new ValuationCalculator)->returnOverWindow($daily, '2026-01-01'))->toBeNull();
+});
+
+it('returns null when the starting value is zero', function () {
+    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+        ['2026-01-01', '2026-02-01'],
+        [0.0, 500.0],
+        [0.0, 0.0],
+        [0.0, 50.0],
+    );
+
+    expect((new ValuationCalculator)->returnOverWindow($daily, '2026-01-01'))->toBeNull();
+});

@@ -5,6 +5,7 @@ namespace App\Contexts\InstrumentView\Http;
 use App\Contexts\Identity\Models\User;
 use App\Contexts\InstrumentView\Actions\GetInstrumentDetail;
 use App\Contexts\InstrumentView\Ports\MarketDataPort;
+use App\Contexts\Valuation\Actions\BuildAssetPerformances;
 use App\Contexts\Valuation\Actions\BuildAssetValuationSeries;
 use App\Contexts\Valuation\Enums\ValuationGranularity;
 use App\Contexts\Valuation\Enums\ValuationRange;
@@ -35,6 +36,7 @@ class InstrumentDetailController
 
         return Inertia::render('Instruments/Show', [
             'instrument' => $detail,
+            'performances' => app(BuildAssetPerformances::class)($userId, $id),
             'valuationRange' => $range->value,
             'valuationGranularity' => $granularity->value,
             'priceHistory' => Inertia::defer(
