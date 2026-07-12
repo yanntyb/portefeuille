@@ -198,6 +198,47 @@ class ValuationCalculator
     }
 
     /**
+     * Fenêtre + agrège une série investi-par-titre : coupe les labels avant le cutoff
+     * du range, puis garde le dernier label de chaque bucket de granularité. Les valeurs
+     * investies (cumulées) sont conservées telles quelles.
+     */
+    public function windowAndAggregateInvested(InvestedByAssetSeriesData $series, ValuationRange $range, ValuationGranularity $granularity): InvestedByAssetSeriesData
+    {
+        if ($series->labels === []) {
+            return $series;
+        }
+
+        $months = $range->months();
+        $cutoff = $months === null
+            ? null
+            : Carbon::parse($series->labels[count($series->labels) - 1])->subMonthsNoOverflow($months)->format('Y-m-d');
+
+        /** @var array<string, int> $lastIndexByBucket */
+        $lastIndexByBucket = [];
+        foreach ($series->labels as $i => $label) {
+            if ($cutoff !== null && $label < $cutoff) {
+                continue;
+            }
+            $lastIndexByBucket[$granularity->bucketKey($label)] = $i;
+        }
+
+        $keep = array_values($lastIndexByBucket);
+        sort($keep);
+
+        return new InvestedByAssetSeriesData(
+            array_map(fn (int $i): string => $series->labels[$i], $keep),
+            array_map(
+                fn (AssetInvestedSeriesData $serie): AssetInvestedSeriesData => new AssetInvestedSeriesData(
+                    assetId: $serie->assetId,
+                    name: $serie->name,
+                    invested: array_map(fn (int $i): float => $serie->invested[$i], $keep),
+                ),
+                $series->series,
+            ),
+        );
+    }
+
+    /**
      * Perfs de position par période sur la série quotidienne : YTD, 1/3/6 mois,
      * puis une card par année pleine jusqu'au premier jour de la série.
      *

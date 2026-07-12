@@ -321,3 +321,29 @@ it('builds trailing performances: YTD, monthly, then one card per full year', fu
 it('returns no trailing performances for an empty series', function () {
     expect((new ValuationCalculator)->trailingPerformances(App\Contexts\Valuation\Datas\ValuationSeriesData::empty()))->toBe([]);
 });
+
+it('windows and aggregates an invested-by-asset series', function () {
+    $series = new App\Contexts\Valuation\Datas\InvestedByAssetSeriesData(
+        ['2026-01-10', '2026-01-20', '2026-02-15', '2026-03-01'],
+        [new App\Contexts\Valuation\Datas\AssetInvestedSeriesData(1, 'A', [100.0, 200.0, 300.0, 400.0])],
+    );
+
+    $result = (new ValuationCalculator)->windowAndAggregateInvested($series, ValuationRange::Max, ValuationGranularity::Month);
+
+    // Buckets mensuels : 2026-01 -> dernier (2026-01-20), 2026-02, 2026-03.
+    expect($result->labels)->toBe(['2026-01-20', '2026-02-15', '2026-03-01'])
+        ->and($result->series[0]->invested)->toBe([200.0, 300.0, 400.0]);
+});
+
+it('windows an invested-by-asset series by range', function () {
+    $series = new App\Contexts\Valuation\Datas\InvestedByAssetSeriesData(
+        ['2026-01-10', '2026-02-15', '2026-03-01'],
+        [new App\Contexts\Valuation\Datas\AssetInvestedSeriesData(1, 'A', [100.0, 200.0, 300.0])],
+    );
+
+    // Dernier label 2026-03-01, range 1M => cutoff 2026-02-01 : seuls 2026-02-15 et 2026-03-01 restent.
+    $result = (new ValuationCalculator)->windowAndAggregateInvested($series, ValuationRange::OneMonth, ValuationGranularity::Day);
+
+    expect($result->labels)->toBe(['2026-02-15', '2026-03-01'])
+        ->and($result->series[0]->invested)->toBe([200.0, 300.0]);
+});
