@@ -6,6 +6,7 @@ use App\Contexts\Identity\Models\User;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Datas\PortfolioOverviewData;
 use App\Contexts\Valuation\Actions\BuildInvestedByAssetSeries;
+use App\Contexts\Valuation\Actions\BuildPortfolioPerformances;
 use App\Contexts\Valuation\Actions\BuildPortfolioValuationSeries;
 use App\Contexts\Valuation\Datas\InvestedByAssetSeriesData;
 use App\Contexts\Valuation\Datas\ValuationSeriesData;
@@ -26,6 +27,9 @@ class DashboardController
 
         return Inertia::render('Dashboard', [
             'overview' => $overview,
+            'performances' => Inertia::defer(fn () => $user !== null
+                ? app(BuildPortfolioPerformances::class)($user->id)
+                : []),
             'valuationSeries' => Inertia::defer(fn () => $user !== null
                 ? app(BuildPortfolioValuationSeries::class)($user->id)
                 : ValuationSeriesData::empty()),

@@ -49,6 +49,12 @@ interface PortfolioOverview {
     allocation: AllocationSlice[];
 }
 
+interface Performance {
+    key: string;
+    label: string;
+    pct: number | null;
+}
+
 interface ValuationSeries {
     labels: string[];
     valuations: number[];
@@ -66,7 +72,7 @@ interface InvestedByAssetSeries {
     series: AssetInvestedSeries[];
 }
 
-const props = defineProps<{ overview: PortfolioOverview; valuationSeries?: ValuationSeries; investedByAsset?: InvestedByAssetSeries }>();
+const props = defineProps<{ overview: PortfolioOverview; performances?: Performance[]; valuationSeries?: ValuationSeries; investedByAsset?: InvestedByAssetSeries }>();
 
 const flatCard = 'border-0 bg-transparent shadow-none rounded-none';
 
@@ -159,6 +165,40 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
                 <p class="text-sm text-muted-foreground">Suivi de vos investissements</p>
             </header>
 
+            <section v-if="overview.holdings.length" class="flex flex-col gap-3">
+                <div class="flex flex-col gap-0.5">
+                    <p class="text-sm text-muted-foreground">Gain / perte</p>
+                    <p class="text-2xl font-semibold" :class="gainClass(overview.totalGain)">
+                        {{ eur(overview.totalGain) }}
+                        <span class="text-sm">({{ pct(overview.totalGainPct) }})</span>
+                    </p>
+                    <p class="text-sm text-muted-foreground">Valeur totale {{ eur(overview.totalValue) }}</p>
+                </div>
+
+                <Deferred data="performances">
+                    <template #fallback>
+                        <div class="-mx-6 overflow-x-hidden px-6">
+                            <div class="flex min-w-max gap-2">
+                                <div v-for="n in 6" :key="n" class="h-[52px] w-[64px] animate-pulse rounded-md bg-muted"></div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div v-if="performances && performances.length" class="-mx-6 overflow-x-auto px-6">
+                        <div class="flex min-w-max gap-2">
+                            <div
+                                v-for="perf in performances"
+                                :key="perf.key"
+                                class="flex min-w-[64px] flex-col gap-0.5 rounded-md border border-border px-3 py-2"
+                            >
+                                <span class="text-xs text-muted-foreground">{{ perf.label }}</span>
+                                <span class="text-sm font-medium" :class="gainClass(perf.pct)">{{ pct(perf.pct) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </Deferred>
+            </section>
+
             <Card :class="[flatCard, '-mx-6 sm:mx-0']">
                 <CardHeader>
                     <CardTitle>Évolution</CardTitle>
@@ -209,30 +249,6 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
                 </CardContent>
             </Card>
 
-            <section class="grid gap-4 sm:grid-cols-3">
-                <Card :class="flatCard">
-                    <CardHeader>
-                        <CardDescription>Valeur totale</CardDescription>
-                        <CardTitle class="text-2xl">{{ eur(overview.totalValue) }}</CardTitle>
-                    </CardHeader>
-                </Card>
-                <Card :class="flatCard">
-                    <CardHeader>
-                        <CardDescription>Gains / pertes</CardDescription>
-                        <CardTitle class="text-2xl" :class="gainClass(overview.totalGain)">
-                            {{ eur(overview.totalGain) }}
-                        </CardTitle>
-                    </CardHeader>
-                </Card>
-                <Card :class="flatCard">
-                    <CardHeader>
-                        <CardDescription>Rendement</CardDescription>
-                        <CardTitle class="text-2xl" :class="gainClass(overview.totalGain)">
-                            {{ pct(overview.totalGainPct) }}
-                        </CardTitle>
-                    </CardHeader>
-                </Card>
-            </section>
 
             <section class="grid gap-4 lg:grid-cols-3">
                 <Card :class="[flatCard, 'min-w-0 lg:col-span-2']">
