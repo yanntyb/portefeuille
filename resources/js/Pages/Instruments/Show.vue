@@ -65,6 +65,7 @@ interface ValuationSeries {
     labels: string[];
     valuations: number[];
     invested: number[];
+    prices: number[];
 }
 
 const props = defineProps<{ instrument: Instrument; priceHistory?: PriceHistory; valuation?: ValuationSeries }>();
@@ -78,6 +79,16 @@ const eur = (value: number | null): string =>
 
 const pct = (value: number | null): string =>
     value === null ? '—' : `${value >= 0 ? '+' : ''}${value.toFixed(1)} %`;
+
+const signedPct = (value: number): string => {
+    const delta = value - 100;
+    return `${delta >= 0 ? '+' : ''}${delta.toFixed(1)} %`;
+};
+
+const base100 = (serie: number[]): number[] =>
+    serie.length === 0 || serie[0] === 0
+        ? serie.map((): number => 100)
+        : serie.map((value: number): number => (value / serie[0]) * 100);
 
 const gainClass = (value: number | null): string =>
     value === null || value === 0
@@ -110,18 +121,20 @@ const priceChartOptions = computed<ApexOptions>(() => ({
     tooltip: { y: { formatter: (value: number): string => eur(value) } },
 }));
 
+const hasPosition = computed<boolean>(() => props.instrument.position !== null);
+
 const hasValuation = computed<boolean>(() => (props.valuation?.labels.length ?? 0) > 0);
 
-const valuationChartSeries = computed(() => [
-    { name: 'Valeur', data: props.valuation?.valuations ?? [] },
-    { name: 'Investi', data: props.valuation?.invested ?? [] },
+const performanceChartSeries = computed(() => [
+    { name: 'Cours', data: base100(props.valuation?.prices ?? []) },
+    { name: 'Valeur', data: base100(props.valuation?.valuations ?? []) },
+    { name: 'Investi', data: base100(props.valuation?.invested ?? []) },
 ]);
 
-const valuationChartOptions = computed<ApexOptions>(() => ({
+const performanceChartOptions = computed<ApexOptions>(() => ({
     chart: { toolbar: { show: false }, fontFamily: 'inherit', animations: { enabled: false } },
-    colors: ['#4f46e5', '#64748b'],
+    colors: ['#10b981', '#4f46e5', '#64748b'],
     stroke: { curve: 'smooth', width: 2 },
-    fill: { type: 'gradient', gradient: { opacityFrom: 0.3, opacityTo: 0 } },
     dataLabels: { enabled: false },
     grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
     xaxis: {
@@ -131,8 +144,8 @@ const valuationChartOptions = computed<ApexOptions>(() => ({
         axisTicks: { show: false },
         labels: { hideOverlappingLabels: true },
     },
-    yaxis: { labels: { formatter: (value: number): string => eur(value) } },
-    tooltip: { y: { formatter: (value: number): string => eur(value) } },
+    yaxis: { labels: { formatter: (value: number): string => signedPct(value) } },
+    tooltip: { y: { formatter: (value: number): string => signedPct(value) } },
     legend: { position: 'top' },
 }));
 </script>
@@ -188,7 +201,32 @@ const valuationChartOptions = computed<ApexOptions>(() => ({
                 </Card>
             </section>
 
-            <Card :class="flatCard">
+            <Card v-if="hasPosition" :class="flatCard">
+                <CardHeader>
+                    <CardTitle>Performance</CardTitle>
+                    <CardDescription>Base 100 depuis la première transaction</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Deferred data="valuation">
+                        <template #fallback>
+                            <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
+                        </template>
+
+                        <VueApexCharts
+                            v-if="hasValuation"
+                            type="line"
+                            height="300"
+                            :options="performanceChartOptions"
+                            :series="performanceChartSeries"
+                        />
+                        <p v-else class="py-8 text-center text-sm text-muted-foreground">
+                            Pas encore d'historique de valorisation.
+                        </p>
+                    </Deferred>
+                </CardContent>
+            </Card>
+
+            <Card v-else :class="flatCard">
                 <CardHeader>
                     <CardTitle>Cours</CardTitle>
                     <CardDescription>Historique sur 12 mois</CardDescription>
@@ -208,31 +246,6 @@ const valuationChartOptions = computed<ApexOptions>(() => ({
                         />
                         <p v-else class="py-8 text-center text-sm text-muted-foreground">
                             Pas d'historique de prix disponible.
-                        </p>
-                    </Deferred>
-                </CardContent>
-            </Card>
-
-            <Card :class="flatCard">
-                <CardHeader>
-                    <CardTitle>Valeur vs Investi</CardTitle>
-                    <CardDescription>Évolution de ma position sur ce titre</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Deferred data="valuation">
-                        <template #fallback>
-                            <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
-                        </template>
-
-                        <VueApexCharts
-                            v-if="hasValuation"
-                            type="area"
-                            height="300"
-                            :options="valuationChartOptions"
-                            :series="valuationChartSeries"
-                        />
-                        <p v-else class="py-8 text-center text-sm text-muted-foreground">
-                            Pas encore d'historique de valorisation.
                         </p>
                     </Deferred>
                 </CardContent>
