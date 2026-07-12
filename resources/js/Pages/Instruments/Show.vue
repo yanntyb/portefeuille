@@ -260,7 +260,7 @@ const positionChartOptions = computed<ApexOptions>(() => ({
                 </p>
             </header>
 
-            <section v-if="props.instrument.position" class="grid gap-4 sm:grid-cols-4">
+            <section v-if="props.instrument.position" class="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 <Card :class="flatCard">
                     <CardHeader>
                         <CardDescription>Quantité</CardDescription>
