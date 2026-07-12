@@ -242,7 +242,7 @@ const positionChartOptions = computed<ApexOptions>(() => ({
 <template>
     <Head :title="props.instrument.name" />
 
-    <main class="min-h-screen bg-background p-6 text-foreground">
+    <main class="min-h-screen overflow-x-hidden bg-background p-6 text-foreground">
         <div class="mx-auto flex max-w-6xl flex-col gap-6">
             <header class="flex flex-col gap-1">
                 <Link href="/instruments" class="text-sm text-muted-foreground hover:underline">← Instruments</Link>
@@ -383,7 +383,7 @@ const positionChartOptions = computed<ApexOptions>(() => ({
             </Card>
 
             <section class="grid gap-4 lg:grid-cols-3">
-                <Card :class="[flatCard, 'lg:col-span-2']">
+                <Card :class="[flatCard, 'min-w-0 lg:col-span-2']">
                     <CardHeader>
                         <CardTitle>Transactions</CardTitle>
                         <CardDescription>Mes mouvements sur cet actif</CardDescription>
