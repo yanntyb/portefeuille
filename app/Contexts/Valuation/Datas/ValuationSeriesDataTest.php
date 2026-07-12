@@ -7,12 +7,14 @@ it('serializes to the expected json shape', function () {
         labels: ['2026-01-01', '2026-02-01'],
         valuations: [1000.0, 1200.0],
         invested: [1000.0, 1000.0],
+        prices: [100.0, 120.0],
     );
 
     expect($series->jsonSerialize())->toBe([
         'labels' => ['2026-01-01', '2026-02-01'],
         'valuations' => [1000.0, 1200.0],
         'invested' => [1000.0, 1000.0],
+        'prices' => [100.0, 120.0],
     ]);
 });
 
