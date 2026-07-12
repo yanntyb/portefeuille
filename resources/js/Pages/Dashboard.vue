@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { Deferred, Head, Link } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import { Deferred, Head, Link, router } from '@inertiajs/vue3';
 import VueApexCharts from 'vue3-apexcharts';
 import type { ApexOptions } from 'apexcharts';
 import {
@@ -72,7 +72,64 @@ interface InvestedByAssetSeries {
     series: AssetInvestedSeries[];
 }
 
-const props = defineProps<{ overview: PortfolioOverview; performances?: Performance[]; valuationSeries?: ValuationSeries; investedByAsset?: InvestedByAssetSeries }>();
+const props = defineProps<{ overview: PortfolioOverview; performances?: Performance[]; valuationSeries?: ValuationSeries; investedByAsset?: InvestedByAssetSeries; valuationRange?: string; valuationGranularity?: string }>();
+
+type RangeKey = '1M' | '6M' | '1Y' | 'max';
+type GranularityKey = 'day' | 'week' | 'month';
+
+const rangeOptions: { key: RangeKey; label: string }[] = [
+    { key: '1M', label: '1M' },
+    { key: '6M', label: '6M' },
+    { key: '1Y', label: '1A' },
+    { key: 'max', label: 'Max' },
+];
+
+const granularityOptions: { key: GranularityKey; label: string }[] = [
+    { key: 'day', label: 'Jour' },
+    { key: 'week', label: 'Sem' },
+    { key: 'month', label: 'Mois' },
+];
+
+const isRangeKey = (value: string | undefined): value is RangeKey =>
+    rangeOptions.some((option) => option.key === value);
+
+const isGranularityKey = (value: string | undefined): value is GranularityKey =>
+    granularityOptions.some((option) => option.key === value);
+
+const selectedRange = ref<RangeKey>(isRangeKey(props.valuationRange) ? props.valuationRange : 'max');
+const selectedGranularity = ref<GranularityKey>(
+    isGranularityKey(props.valuationGranularity) ? props.valuationGranularity : 'month',
+);
+const reloading = ref<boolean>(false);
+
+const reloadSeries = (): void => {
+    router.reload({
+        only: ['valuationSeries', 'investedByAsset'],
+        data: { range: selectedRange.value, granularity: selectedGranularity.value },
+        onStart: (): void => {
+            reloading.value = true;
+        },
+        onFinish: (): void => {
+            reloading.value = false;
+        },
+    });
+};
+
+const selectRange = (key: RangeKey): void => {
+    if (selectedRange.value === key) {
+        return;
+    }
+    selectedRange.value = key;
+    reloadSeries();
+};
+
+const selectGranularity = (key: GranularityKey): void => {
+    if (selectedGranularity.value === key) {
+        return;
+    }
+    selectedGranularity.value = key;
+    reloadSeries();
+};
 
 const flatCard = 'border-0 bg-transparent shadow-none rounded-none';
 
@@ -199,7 +256,34 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
                 </Deferred>
             </section>
 
-            <Card :class="[flatCard, '-mx-6 sm:mx-0']">
+            <div v-if="overview.holdings.length" class="flex flex-wrap items-center gap-3">
+                <div class="inline-flex rounded-md border border-border p-0.5">
+                    <button
+                        v-for="opt in rangeOptions"
+                        :key="opt.key"
+                        type="button"
+                        class="rounded px-3 py-1 text-sm transition-colors"
+                        :class="selectedRange === opt.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'"
+                        @click="selectRange(opt.key)"
+                    >
+                        {{ opt.label }}
+                    </button>
+                </div>
+                <div class="inline-flex rounded-md border border-border p-0.5">
+                    <button
+                        v-for="opt in granularityOptions"
+                        :key="opt.key"
+                        type="button"
+                        class="rounded px-3 py-1 text-sm transition-colors"
+                        :class="selectedGranularity === opt.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'"
+                        @click="selectGranularity(opt.key)"
+                    >
+                        {{ opt.label }}
+                    </button>
+                </div>
+            </div>
+
+            <Card :class="[flatCard, '-mx-6 transition-opacity sm:mx-0', reloading ? 'opacity-50' : '']">
                 <CardHeader>
                     <CardTitle>Évolution</CardTitle>
                     <CardDescription>Valeur du portefeuille vs investi</CardDescription>
@@ -224,7 +308,7 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
                 </CardContent>
             </Card>
 
-            <Card :class="[flatCard, '-mx-6 sm:mx-0']">
+            <Card :class="[flatCard, '-mx-6 transition-opacity sm:mx-0', reloading ? 'opacity-50' : '']">
                 <CardHeader>
                     <CardTitle>Investi par titre</CardTitle>
                     <CardDescription>Montant investi cumulé sur chaque titre</CardDescription>

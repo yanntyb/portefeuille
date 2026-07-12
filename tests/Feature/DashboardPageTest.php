@@ -100,6 +100,30 @@ it('defers the invested-by-asset series and loads it on demand', function () {
         );
 });
 
+it('accepts range and granularity query params for the dashboard series', function () {
+    User::query()->delete();
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $asset = Instrument::factory()->create();
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'quantity' => 10, 'unit_price' => 100, 'date' => '2026-01-01',
+    ]);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 100]);
+
+    $this->get('/dashboard?range=1M&granularity=week')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Dashboard')
+            ->where('valuationRange', '1M')
+            ->where('valuationGranularity', 'week')
+            ->loadDeferredProps(fn (Assert $reload) => $reload
+                ->has('valuationSeries.labels')
+                ->has('investedByAsset.series')
+            )
+        );
+});
+
 it('defers the portfolio performances and loads them on demand', function () {
     User::query()->delete();
     $user = User::factory()->create();

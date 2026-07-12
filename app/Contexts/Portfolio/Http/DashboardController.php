@@ -10,6 +10,8 @@ use App\Contexts\Valuation\Actions\BuildPortfolioPerformances;
 use App\Contexts\Valuation\Actions\BuildPortfolioValuationSeries;
 use App\Contexts\Valuation\Datas\InvestedByAssetSeriesData;
 use App\Contexts\Valuation\Datas\ValuationSeriesData;
+use App\Contexts\Valuation\Enums\ValuationGranularity;
+use App\Contexts\Valuation\Enums\ValuationRange;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,16 +27,21 @@ class DashboardController
             ? ($this->getPortfolioOverview)($user)
             : PortfolioOverviewData::empty();
 
+        $range = ValuationRange::fromRequest(request()->query('range'));
+        $granularity = ValuationGranularity::fromRequest(request()->query('granularity'));
+
         return Inertia::render('Dashboard', [
             'overview' => $overview,
+            'valuationRange' => $range->value,
+            'valuationGranularity' => $granularity->value,
             'performances' => Inertia::defer(fn () => $user !== null
                 ? app(BuildPortfolioPerformances::class)($user->id)
                 : []),
             'valuationSeries' => Inertia::defer(fn () => $user !== null
-                ? app(BuildPortfolioValuationSeries::class)($user->id)
+                ? app(BuildPortfolioValuationSeries::class)($user->id, $range, $granularity)
                 : ValuationSeriesData::empty()),
             'investedByAsset' => Inertia::defer(fn () => $user !== null
-                ? app(BuildInvestedByAssetSeries::class)($user->id)
+                ? app(BuildInvestedByAssetSeries::class)($user->id, $range, $granularity)
                 : InvestedByAssetSeriesData::empty()),
         ]);
     }
