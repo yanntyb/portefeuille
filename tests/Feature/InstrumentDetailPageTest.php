@@ -72,6 +72,7 @@ it('defers the per-title valuation series and loads it on demand', function () {
                 ->has('valuation.labels', 1)
                 ->has('valuation.valuations', 1)
                 ->has('valuation.invested', 1)
+                ->has('valuation.prices', 1)
             )
         );
 });
