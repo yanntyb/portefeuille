@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { Deferred, Head, Link } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import { Deferred, Head, Link, router } from '@inertiajs/vue3';
 import VueApexCharts from 'vue3-apexcharts';
 import type { ApexOptions } from 'apexcharts';
 import {
@@ -90,6 +90,55 @@ const base100 = (serie: number[]): number[] =>
         ? serie.map((): number => 100)
         : serie.map((value: number): number => (value / serie[0]) * 100);
 
+type RangeKey = '1M' | '6M' | '1Y' | 'max';
+type GranularityKey = 'day' | 'week' | 'month';
+
+const rangeOptions: { key: RangeKey; label: string }[] = [
+    { key: '1M', label: '1M' },
+    { key: '6M', label: '6M' },
+    { key: '1Y', label: '1A' },
+    { key: 'max', label: 'Max' },
+];
+
+const granularityOptions: { key: GranularityKey; label: string }[] = [
+    { key: 'day', label: 'Jour' },
+    { key: 'week', label: 'Sem' },
+    { key: 'month', label: 'Mois' },
+];
+
+const selectedRange = ref<RangeKey>('max');
+const selectedGranularity = ref<GranularityKey>('month');
+const reloading = ref<boolean>(false);
+
+const reloadValuation = (): void => {
+    router.reload({
+        only: ['valuation'],
+        data: { range: selectedRange.value, granularity: selectedGranularity.value },
+        onStart: (): void => {
+            reloading.value = true;
+        },
+        onFinish: (): void => {
+            reloading.value = false;
+        },
+    });
+};
+
+const selectRange = (key: RangeKey): void => {
+    if (selectedRange.value === key) {
+        return;
+    }
+    selectedRange.value = key;
+    reloadValuation();
+};
+
+const selectGranularity = (key: GranularityKey): void => {
+    if (selectedGranularity.value === key) {
+        return;
+    }
+    selectedGranularity.value = key;
+    reloadValuation();
+};
+
 const gainClass = (value: number | null): string =>
     value === null || value === 0
         ? 'text-muted-foreground'
@@ -125,15 +174,9 @@ const hasPosition = computed<boolean>(() => props.instrument.position !== null);
 
 const hasValuation = computed<boolean>(() => (props.valuation?.labels.length ?? 0) > 0);
 
-const performanceChartSeries = computed(() => [
-    { name: 'Cours', data: base100(props.valuation?.prices ?? []) },
-    { name: 'Valeur', data: base100(props.valuation?.valuations ?? []) },
-    { name: 'Investi', data: base100(props.valuation?.invested ?? []) },
-]);
-
-const performanceChartOptions = computed<ApexOptions>(() => ({
+const baseChartOptions = (colors: string[]): ApexOptions => ({
     chart: { toolbar: { show: false }, fontFamily: 'inherit', animations: { enabled: false } },
-    colors: ['#10b981', '#4f46e5', '#64748b'],
+    colors,
     stroke: { curve: 'smooth', width: 2 },
     dataLabels: { enabled: false },
     grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
@@ -147,7 +190,20 @@ const performanceChartOptions = computed<ApexOptions>(() => ({
     yaxis: { labels: { formatter: (value: number): string => signedPct(value) } },
     tooltip: { y: { formatter: (value: number): string => signedPct(value) } },
     legend: { position: 'top' },
-}));
+});
+
+const coursChartSeries = computed(() => [
+    { name: 'Cours', data: base100(props.valuation?.prices ?? []) },
+]);
+
+const coursChartOptions = computed<ApexOptions>(() => baseChartOptions(['#10b981']));
+
+const positionChartSeries = computed(() => [
+    { name: 'Valeur', data: base100(props.valuation?.valuations ?? []) },
+    { name: 'Investi', data: base100(props.valuation?.invested ?? []) },
+]);
+
+const positionChartOptions = computed<ApexOptions>(() => baseChartOptions(['#4f46e5', '#64748b']));
 </script>
 
 <template>
@@ -201,30 +257,72 @@ const performanceChartOptions = computed<ApexOptions>(() => ({
                 </Card>
             </section>
 
-            <Card v-if="hasPosition" :class="flatCard">
-                <CardHeader>
-                    <CardTitle>Performance</CardTitle>
-                    <CardDescription>Base 100 depuis la première transaction</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Deferred data="valuation">
-                        <template #fallback>
-                            <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
-                        </template>
+            <section v-if="hasPosition" class="flex flex-col gap-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="inline-flex rounded-md border border-border p-0.5">
+                        <button
+                            v-for="opt in rangeOptions"
+                            :key="opt.key"
+                            type="button"
+                            class="rounded px-3 py-1 text-sm transition-colors"
+                            :class="selectedRange === opt.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'"
+                            @click="selectRange(opt.key)"
+                        >
+                            {{ opt.label }}
+                        </button>
+                    </div>
+                    <div class="inline-flex rounded-md border border-border p-0.5">
+                        <button
+                            v-for="opt in granularityOptions"
+                            :key="opt.key"
+                            type="button"
+                            class="rounded px-3 py-1 text-sm transition-colors"
+                            :class="selectedGranularity === opt.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'"
+                            @click="selectGranularity(opt.key)"
+                        >
+                            {{ opt.label }}
+                        </button>
+                    </div>
+                </div>
 
-                        <VueApexCharts
-                            v-if="hasValuation"
-                            type="line"
-                            height="300"
-                            :options="performanceChartOptions"
-                            :series="performanceChartSeries"
-                        />
-                        <p v-else class="py-8 text-center text-sm text-muted-foreground">
-                            Pas encore d'historique de valorisation.
-                        </p>
-                    </Deferred>
-                </CardContent>
-            </Card>
+                <Deferred data="valuation">
+                    <template #fallback>
+                        <div class="grid gap-4 lg:grid-cols-2">
+                            <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
+                            <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
+                        </div>
+                    </template>
+
+                    <div
+                        v-if="hasValuation"
+                        class="grid gap-4 transition-opacity lg:grid-cols-2"
+                        :class="reloading ? 'opacity-50' : ''"
+                    >
+                        <Card :class="flatCard">
+                            <CardHeader>
+                                <CardTitle>Cours</CardTitle>
+                                <CardDescription>Performance base 100 sur la période</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <VueApexCharts type="line" height="300" :options="coursChartOptions" :series="coursChartSeries" />
+                            </CardContent>
+                        </Card>
+
+                        <Card :class="flatCard">
+                            <CardHeader>
+                                <CardTitle>Valeur vs Investi</CardTitle>
+                                <CardDescription>Performance base 100 sur la période</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <VueApexCharts type="line" height="300" :options="positionChartOptions" :series="positionChartSeries" />
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <p v-else class="py-8 text-center text-sm text-muted-foreground">
+                        Pas encore d'historique de valorisation.
+                    </p>
+                </Deferred>
+            </section>
 
             <Card v-else :class="flatCard">
                 <CardHeader>
