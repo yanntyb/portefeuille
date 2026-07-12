@@ -159,12 +159,12 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
                 <p class="text-sm text-muted-foreground">Suivi de vos investissements</p>
             </header>
 
-            <Card :class="flatCard">
+            <Card :class="[flatCard, '-mx-6 sm:mx-0']">
                 <CardHeader>
                     <CardTitle>Évolution</CardTitle>
                     <CardDescription>Valeur du portefeuille vs investi</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent class="px-0 sm:px-6">
                     <Deferred data="valuationSeries">
                         <template #fallback>
                             <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
@@ -184,12 +184,12 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
                 </CardContent>
             </Card>
 
-            <Card :class="flatCard">
+            <Card :class="[flatCard, '-mx-6 sm:mx-0']">
                 <CardHeader>
                     <CardTitle>Investi par titre</CardTitle>
                     <CardDescription>Montant investi cumulé sur chaque titre</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent class="px-0 sm:px-6">
                     <Deferred data="investedByAsset">
                         <template #fallback>
                             <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
