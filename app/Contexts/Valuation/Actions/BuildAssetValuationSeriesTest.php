@@ -6,6 +6,9 @@ use App\Contexts\Market\Models\Price;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 use App\Contexts\Valuation\Actions\BuildAssetValuationSeries;
+use App\Contexts\Valuation\Enums\ValuationGranularity;
+use App\Contexts\Valuation\Enums\ValuationRange;
+use Illuminate\Support\Carbon;
 
 it('builds the value/invested series for a single title, ignoring other titles', function () {
     $user = User::factory()->create();
@@ -39,4 +42,34 @@ it('returns an empty series when the user has no transaction for the title', fun
 
     expect($series->labels)->toBe([])
         ->and($series->valuations)->toBe([]);
+});
+
+it('windows and aggregates according to range and granularity', function () {
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $asset = Instrument::factory()->create();
+
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'quantity' => 10, 'unit_price' => 100, 'date' => '2026-01-01',
+    ]);
+
+    $day = Carbon::parse('2026-01-01');
+    $end = Carbon::parse('2026-03-31');
+    while ($day->lte($end)) {
+        Price::factory()->create(['asset_id' => $asset->id, 'date' => $day->format('Y-m-d'), 'close' => 100]);
+        $day = $day->copy()->addDay();
+    }
+
+    $series = app(BuildAssetValuationSeries::class)(
+        $user->id,
+        $asset->id,
+        ValuationRange::Max,
+        ValuationGranularity::Month,
+    );
+
+    $labels = $series->labels;
+
+    expect($labels)->toHaveCount(3)
+        ->and(end($labels))->toBe('2026-03-31');
 });
