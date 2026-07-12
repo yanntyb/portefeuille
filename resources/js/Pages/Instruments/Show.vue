@@ -174,9 +174,18 @@ const hasPosition = computed<boolean>(() => props.instrument.position !== null);
 
 const hasValuation = computed<boolean>(() => (props.valuation?.labels.length ?? 0) > 0);
 
-const baseChartOptions = (colors: string[]): ApexOptions => ({
+const valuationKey = computed<string>(() => {
+    const labels = props.valuation?.labels ?? [];
+    return `${labels.length}:${labels[0] ?? ''}:${labels[labels.length - 1] ?? ''}`;
+});
+
+const coursChartSeries = computed(() => [
+    { name: 'Cours', data: base100(props.valuation?.prices ?? []) },
+]);
+
+const coursChartOptions = computed<ApexOptions>(() => ({
     chart: { toolbar: { show: false }, fontFamily: 'inherit', animations: { enabled: false } },
-    colors,
+    colors: ['#10b981'],
     stroke: { curve: 'smooth', width: 2 },
     dataLabels: { enabled: false },
     grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
@@ -190,20 +199,30 @@ const baseChartOptions = (colors: string[]): ApexOptions => ({
     yaxis: { labels: { formatter: (value: number): string => signedPct(value) } },
     tooltip: { y: { formatter: (value: number): string => signedPct(value) } },
     legend: { position: 'top' },
-});
-
-const coursChartSeries = computed(() => [
-    { name: 'Cours', data: base100(props.valuation?.prices ?? []) },
-]);
-
-const coursChartOptions = computed<ApexOptions>(() => baseChartOptions(['#10b981']));
+}));
 
 const positionChartSeries = computed(() => [
     { name: 'Valeur', data: base100(props.valuation?.valuations ?? []) },
     { name: 'Investi', data: base100(props.valuation?.invested ?? []) },
 ]);
 
-const positionChartOptions = computed<ApexOptions>(() => baseChartOptions(['#4f46e5', '#64748b']));
+const positionChartOptions = computed<ApexOptions>(() => ({
+    chart: { toolbar: { show: false }, fontFamily: 'inherit', animations: { enabled: false } },
+    colors: ['#4f46e5', '#64748b'],
+    stroke: { curve: 'smooth', width: 2 },
+    dataLabels: { enabled: false },
+    grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
+    xaxis: {
+        type: 'datetime',
+        categories: props.valuation?.labels ?? [],
+        axisBorder: { show: false },
+        axisTicks: { show: false },
+        labels: { hideOverlappingLabels: true },
+    },
+    yaxis: { labels: { formatter: (value: number): string => signedPct(value) } },
+    tooltip: { y: { formatter: (value: number): string => signedPct(value) } },
+    legend: { position: 'top' },
+}));
 </script>
 
 <template>
@@ -304,7 +323,7 @@ const positionChartOptions = computed<ApexOptions>(() => baseChartOptions(['#4f4
                                 <CardDescription>Performance base 100 sur la période</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <VueApexCharts type="line" height="300" :options="coursChartOptions" :series="coursChartSeries" />
+                                <VueApexCharts :key="valuationKey" type="line" height="300" :options="coursChartOptions" :series="coursChartSeries" />
                             </CardContent>
                         </Card>
 
@@ -314,7 +333,7 @@ const positionChartOptions = computed<ApexOptions>(() => baseChartOptions(['#4f4
                                 <CardDescription>Performance base 100 sur la période</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <VueApexCharts type="line" height="300" :options="positionChartOptions" :series="positionChartSeries" />
+                                <VueApexCharts :key="valuationKey" type="line" height="300" :options="positionChartOptions" :series="positionChartSeries" />
                             </CardContent>
                         </Card>
                     </div>
