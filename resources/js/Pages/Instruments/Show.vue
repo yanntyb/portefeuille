@@ -167,7 +167,7 @@ const priceChartSeries = computed(() => [
 ]);
 
 const priceChartOptions = computed<ApexOptions>(() => ({
-    chart: { toolbar: { show: false }, fontFamily: 'inherit', animations: { enabled: false } },
+    chart: { toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
     colors: ['#4f46e5'],
     stroke: { curve: 'smooth', width: 2 },
     fill: { type: 'gradient', gradient: { opacityFrom: 0.3, opacityTo: 0 } },
@@ -198,7 +198,7 @@ const coursChartSeries = computed(() => [
 ]);
 
 const coursChartOptions = computed<ApexOptions>(() => ({
-    chart: { toolbar: { show: false }, fontFamily: 'inherit', animations: { enabled: false } },
+    chart: { toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
     colors: ['#10b981'],
     stroke: { curve: 'smooth', width: 2 },
     dataLabels: { enabled: false },
@@ -221,7 +221,7 @@ const positionChartSeries = computed(() => [
 ]);
 
 const positionChartOptions = computed<ApexOptions>(() => ({
-    chart: { toolbar: { show: false }, fontFamily: 'inherit', animations: { enabled: false } },
+    chart: { toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
     colors: ['#4f46e5', '#64748b'],
     stroke: { curve: 'smooth', width: 2 },
     dataLabels: { enabled: false },
