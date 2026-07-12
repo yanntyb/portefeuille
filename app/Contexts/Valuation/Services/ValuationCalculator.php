@@ -68,7 +68,7 @@ class ValuationCalculator
         $labels = [];
         $valuations = [];
         $invested = [];
-        $prices = [];
+        $unitPrices = [];
         $lastClose = [];
         $primaryAsset = $assetIds[0] ?? null;
 
@@ -88,7 +88,7 @@ class ValuationCalculator
             $labels[] = $day;
             $valuations[] = round($value, 2);
             $invested[] = round($this->valueAtDate($investedSeries, $day), 2);
-            $prices[] = round($primaryAsset === null ? 0.0 : ($lastClose[$primaryAsset] ?? 0.0), 2);
+            $unitPrices[] = round($primaryAsset === null ? 0.0 : ($lastClose[$primaryAsset] ?? 0.0), 2);
         }
 
         $indices = self::downsampleIndices(count($labels), $maxPoints);
@@ -97,10 +97,10 @@ class ValuationCalculator
             $labels = array_map(fn (int $i): string => $labels[$i], $indices);
             $valuations = array_map(fn (int $i): float => $valuations[$i], $indices);
             $invested = array_map(fn (int $i): float => $invested[$i], $indices);
-            $prices = array_map(fn (int $i): float => $prices[$i], $indices);
+            $unitPrices = array_map(fn (int $i): float => $unitPrices[$i], $indices);
         }
 
-        return new ValuationSeriesData($labels, $valuations, $invested, $prices);
+        return new ValuationSeriesData($labels, $valuations, $invested, $unitPrices);
     }
 
     /**

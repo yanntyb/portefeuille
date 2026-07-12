@@ -23,5 +23,6 @@ it('builds an empty series', function () {
 
     expect($series->labels)->toBe([])
         ->and($series->valuations)->toBe([])
-        ->and($series->invested)->toBe([]);
+        ->and($series->invested)->toBe([])
+        ->and($series->prices)->toBe([]);
 });
