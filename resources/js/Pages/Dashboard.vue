@@ -107,7 +107,7 @@ const valuationChartSeries = computed(() => [
 ]);
 
 const valuationChartOptions = computed<ApexOptions>(() => ({
-    chart: { toolbar: { show: false }, fontFamily: 'inherit', animations: { enabled: false } },
+    chart: { toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
     colors: ['#4f46e5', '#64748b'],
     stroke: { curve: 'smooth', width: 2 },
     fill: { type: 'gradient', gradient: { opacityFrom: 0.3, opacityTo: 0 } },
@@ -132,7 +132,7 @@ const investedByAssetSeries = computed(() =>
 );
 
 const investedByAssetOptions = computed<ApexOptions>(() => ({
-    chart: { toolbar: { show: false }, fontFamily: 'inherit', animations: { enabled: false } },
+    chart: { toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
     stroke: { curve: 'stepline', width: 2 },
     dataLabels: { enabled: false },
     grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
