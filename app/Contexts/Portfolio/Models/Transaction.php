@@ -42,7 +42,7 @@ class Transaction extends Model
         return [
             'date' => 'date',
             'type' => TransactionType::class,
-            'quantity' => 'decimal:4',
+            'quantity' => 'decimal:8',
             'unit_price' => 'decimal:4',
             'fees' => 'decimal:2',
             'realized_gain' => 'decimal:2',

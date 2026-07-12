@@ -36,7 +36,7 @@ class Holding extends Model
     protected function casts(): array
     {
         return [
-            'quantity' => 'decimal:4',
+            'quantity' => 'decimal:8',
             'avg_cost' => 'decimal:4',
         ];
     }
