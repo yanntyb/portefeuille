@@ -152,7 +152,7 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
 <template>
     <Head title="Tableau de bord" />
 
-    <main class="min-h-screen bg-background p-6 text-foreground">
+    <main class="min-h-screen overflow-x-hidden bg-background p-6 text-foreground">
         <div class="mx-auto flex max-w-6xl flex-col gap-6">
             <header>
                 <h1 class="text-2xl font-semibold">Tableau de bord</h1>
@@ -235,7 +235,7 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
             </section>
 
             <section class="grid gap-4 lg:grid-cols-3">
-                <Card :class="[flatCard, 'lg:col-span-2']">
+                <Card :class="[flatCard, 'min-w-0 lg:col-span-2']">
                     <CardHeader>
                         <CardTitle>Positions</CardTitle>
                         <CardDescription>Détail de vos lignes</CardDescription>
