@@ -82,3 +82,53 @@ Lecture attendue :
 - Toggle € / base 100.
 - Axe Y secondaire.
 - Modification du graphe investi cumulé du dashboard.
+
+---
+
+## Révision v2 (2026-07-12) — filtres range + granularité, server-side
+
+La v1 (un graphe base 100 unique) est remplacée, quand une position est détenue, par :
+
+- **Deux graphes en grid 2 colonnes** : à gauche **Cours** (base 100), à droite **Valeur / Investi** (base 100).
+- **Deux filtres synchronisés** pilotant les deux graphes :
+  - **Range** (fenêtre) : `1M`, `6M`, `1A`, `Max`.
+  - **Granularité** : `Jour`, `Semaine`, `Mois`.
+- **Base 100 dynamique** relative au **début de la fenêtre affichée** : le serveur ne renvoie que les points de la fenêtre, le client ancre 100 sur le premier point retourné. Changer un filtre recalcule les pourcentages.
+
+### Architecture retenue : server-side à la demande (Inertia partial reload)
+
+Sur changement de filtre : `router.reload({ only: ['valuation'], data: { range, granularity }, preserveState: true, preserveScroll: true })`. Le serveur fenêtre + agrège + renvoie uniquement les points nécessaires. Payload petit, buckets exacts côté serveur, scalable. Coût : un round-trip par changement (barre de progression Inertia + graphes atténués pendant le fetch).
+
+La normalisation **base 100 reste client-side** (réutilise `base100` / `signedPct` de la v1) : le serveur renvoie les valeurs brutes (€ / cours) de la fenêtre, le client rebase sur le premier point.
+
+### Backend (contexte Valuation)
+
+- **Enums** `ValuationRange` (`OneMonth`/`SixMonths`/`OneYear`/`Max`, backed string ; méthode `months(): ?int` → 1/6/12/null ; `fromRequest(?string): self` défaut `Max`) et `ValuationGranularity` (`Day`/`Week`/`Month` ; `fromRequest` défaut `Month`). Suivent le pattern `TransactionType` (backed string, `values()`, `getLabel()`).
+- **`ValuationCalculator::calculateDaily(transactions, prices): ValuationSeriesData`** : extraction de la série **quotidienne pleine** (sans downsampling). `calculate(maxPoints = 200)` devient `calculateDaily` + downsampling — comportement du **dashboard/portefeuille inchangé**.
+- **`ValuationCalculator::windowAndAggregate(ValuationSeriesData $daily, ValuationRange, ValuationGranularity): ValuationSeriesData`** : filtre la fenêtre (`range.months` mois avant la dernière date ; `Max` = tout), puis agrège par bucket de granularité en gardant le **dernier point du bucket** (dernier close, valeur / investi cumulés en fin de période). Le label conservé est la date réelle du dernier point du bucket.
+- **`BuildAssetValuationSeries::__invoke(userId, assetId, ValuationRange $range, ValuationGranularity $granularity)`** = `calculateDaily` → `windowAndAggregate`. Les prix restent récupérés depuis la première transaction (cumuls corrects avant le début de fenêtre), le fenêtrage s'applique à la sortie.
+- **`InstrumentDetailController`** : lit `range` / `granularity` en query (`ValuationRange::fromRequest` / `ValuationGranularity::fromRequest`, défaut si absent/invalide), les passe au prop déféré `valuation`.
+
+### Frontend (`Instruments/Show.vue`)
+
+- Deux segmented controls (Range, Granularité) au-dessus de la grid, labels FR (`1M 6M 1A Max` / `Jour Sem Mois`), état actif surligné.
+- Refs `selectedRange` / `selectedGranularity` (défauts `Max` / `Mois`). Sur changement : `router.reload(...)` ci-dessus, en renvoyant **les deux** paramètres.
+- Ref `reloading` (via `onStart`/`onFinish` du reload) : atténue les graphes pendant le fetch.
+- Grid `grid gap-4 lg:grid-cols-2` : Card **Cours** (série `base100(prices)`), Card **Valeur / Investi** (séries `base100(valuations)` + `base100(invested)`).
+- Base 100 ancrée sur le premier point retourné → pourcentages relatifs au début de la fenêtre.
+- Pas de position → inchangé (Cours 12 mois brut €, sans filtres).
+
+### Tests v2
+
+- **Unit** `ValuationRange` / `ValuationGranularity` : `months()`, `fromRequest` (défaut, valeur invalide), `getLabel`.
+- **Unit** `calculateDaily` : série quotidienne pleine (pas de cap), `prices` inclus ; `calculate` conserve son downsampling (portefeuille intact).
+- **Unit** `windowAndAggregate` : fenêtre `1M`/`6M`/`Max` filtre correctement ; agrégation `Week`/`Month` garde le dernier point par bucket ; `Day` = pas d'agrégation.
+- **Feature** `InstrumentDetailController` : accepte `?range=&granularity=`, prop `valuation` déféré chargé ; valeur invalide → défaut (pas d'erreur).
+- **Front** : `bun run typecheck` + vérif visuelle multi-filtres (changement range/granularité → reload → graphes mis à jour et rebasés).
+
+### Hors périmètre v2
+
+- Zoom interactif ApexCharts / brush.
+- Filtres sur le graphe du dashboard.
+- Streaming temps réel (SSE/websocket).
+- Résolution adaptative purement client (choix : agrégation côté serveur).
