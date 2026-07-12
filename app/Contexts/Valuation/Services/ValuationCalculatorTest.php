@@ -188,3 +188,28 @@ it('returns an empty prices array for an empty series', function () {
 
     expect($series->prices)->toBe([]);
 });
+
+it('calculateDaily returns one point per price day without downsampling', function () {
+    $transactions = [
+        new TransactionRecordData(
+            date: Carbon::parse('2026-01-01'),
+            assetId: 1,
+            isSell: false,
+            quantity: 10.0,
+            unitPrice: 100.0,
+            fees: 0.0,
+        ),
+    ];
+    $prices = [];
+    for ($d = 1; $d <= 250; $d++) {
+        $prices[] = new PriceRecordData(assetId: 1, date: Carbon::parse('2026-01-01')->addDays($d - 1)->format('Y-m-d'), close: 100.0 + $d);
+    }
+
+    $daily = (new ValuationCalculator)->calculateDaily($transactions, $prices);
+    $capped = (new ValuationCalculator)->calculate($transactions, $prices, maxPoints: 200);
+
+    expect($daily->labels)->toHaveCount(250)
+        ->and($daily->prices)->toHaveCount(250)
+        ->and(count($capped->labels))->toBeLessThanOrEqual(200)
+        ->and(count($capped->labels))->toBeLessThan(250);
+});

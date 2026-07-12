@@ -17,6 +17,29 @@ class ValuationCalculator
      */
     public function calculate(array $transactions, array $prices, int $maxPoints = 200): ValuationSeriesData
     {
+        $daily = $this->calculateDaily($transactions, $prices);
+        $indices = self::downsampleIndices(count($daily->labels), $maxPoints);
+
+        if (count($indices) === count($daily->labels)) {
+            return $daily;
+        }
+
+        return new ValuationSeriesData(
+            array_map(fn (int $i): string => $daily->labels[$i], $indices),
+            array_map(fn (int $i): float => $daily->valuations[$i], $indices),
+            array_map(fn (int $i): float => $daily->invested[$i], $indices),
+            array_map(fn (int $i): float => $daily->prices[$i], $indices),
+        );
+    }
+
+    /**
+     * Série quotidienne pleine (un point par jour de prix), sans downsampling.
+     *
+     * @param  list<TransactionRecordData>  $transactions
+     * @param  list<PriceRecordData>  $prices
+     */
+    public function calculateDaily(array $transactions, array $prices): ValuationSeriesData
+    {
         if ($transactions === []) {
             return ValuationSeriesData::empty();
         }
@@ -89,15 +112,6 @@ class ValuationCalculator
             $valuations[] = round($value, 2);
             $invested[] = round($this->valueAtDate($investedSeries, $day), 2);
             $unitPrices[] = round($primaryAsset === null ? 0.0 : ($lastClose[$primaryAsset] ?? 0.0), 2);
-        }
-
-        $indices = self::downsampleIndices(count($labels), $maxPoints);
-
-        if (count($indices) < count($labels)) {
-            $labels = array_map(fn (int $i): string => $labels[$i], $indices);
-            $valuations = array_map(fn (int $i): float => $valuations[$i], $indices);
-            $invested = array_map(fn (int $i): float => $invested[$i], $indices);
-            $unitPrices = array_map(fn (int $i): float => $unitPrices[$i], $indices);
         }
 
         return new ValuationSeriesData($labels, $valuations, $invested, $unitPrices);
