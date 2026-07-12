@@ -222,7 +222,7 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
                     <p class="text-sm text-muted-foreground">Investi + gain / perte</p>
                     <p class="text-2xl font-semibold">
                         <span class="text-muted-foreground">{{ eur(overview.totalCost) }}</span>
-                        <span :class="gainClass(overview.totalGain)">
+                        <span class="ml-2" :class="gainClass(overview.totalGain)">
                             {{ overview.totalGain >= 0 ? '+' : '−' }} {{ eur(Math.abs(overview.totalGain)) }}
                             <span class="text-sm">({{ pct(overview.totalGainPct) }})</span>
                         </span>
