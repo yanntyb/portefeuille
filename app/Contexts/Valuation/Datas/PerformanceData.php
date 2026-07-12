@@ -4,7 +4,7 @@ namespace App\Contexts\Valuation\Datas;
 
 use JsonSerializable;
 
-readonly class AssetPerformanceData implements JsonSerializable
+readonly class PerformanceData implements JsonSerializable
 {
     public function __construct(
         public string $key,

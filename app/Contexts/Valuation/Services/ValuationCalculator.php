@@ -4,6 +4,7 @@ namespace App\Contexts\Valuation\Services;
 
 use App\Contexts\Valuation\Datas\AssetInvestedSeriesData;
 use App\Contexts\Valuation\Datas\InvestedByAssetSeriesData;
+use App\Contexts\Valuation\Datas\PerformanceData;
 use App\Contexts\Valuation\Datas\PriceRecordData;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
 use App\Contexts\Valuation\Datas\ValuationSeriesData;
@@ -194,6 +195,47 @@ class ValuationCalculator
         $pnl = ($daily->valuations[$last] - $valueStart) - $contributions;
 
         return $pnl / $valueStart * 100;
+    }
+
+    /**
+     * Perfs de position par période sur la série quotidienne : YTD, 1/3/6 mois,
+     * puis une card par année pleine jusqu'au premier jour de la série.
+     *
+     * @return list<PerformanceData>
+     */
+    public function trailingPerformances(ValuationSeriesData $daily): array
+    {
+        if ($daily->labels === []) {
+            return [];
+        }
+
+        $anchor = Carbon::parse($daily->labels[count($daily->labels) - 1]);
+        $firstDay = $daily->labels[0];
+
+        $performances = [
+            new PerformanceData('YTD', 'YTD', $this->returnOverWindow($daily, $anchor->copy()->startOfYear()->format('Y-m-d'))),
+        ];
+
+        foreach ([['1M', '1 mois', 1], ['3M', '3 mois', 3], ['6M', '6 mois', 6]] as [$key, $label, $months]) {
+            $boundary = $anchor->copy()->subMonthsNoOverflow($months)->format('Y-m-d');
+            $performances[] = new PerformanceData($key, $label, $this->returnOverWindow($daily, $boundary));
+        }
+
+        $fullYears = 0;
+        while ($anchor->copy()->subYearsNoOverflow($fullYears + 1)->format('Y-m-d') >= $firstDay) {
+            $fullYears++;
+        }
+
+        for ($year = 1; $year <= $fullYears; $year++) {
+            $boundary = $anchor->copy()->subYearsNoOverflow($year)->format('Y-m-d');
+            $performances[] = new PerformanceData(
+                $year.'Y',
+                $year === 1 ? '1 an' : $year.' ans',
+                $this->returnOverWindow($daily, $boundary),
+            );
+        }
+
+        return $performances;
     }
 
     /**

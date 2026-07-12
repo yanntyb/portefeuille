@@ -301,3 +301,23 @@ it('returns null when the starting value is zero', function () {
 
     expect((new ValuationCalculator)->returnOverWindow($daily, '2026-01-01'))->toBeNull();
 });
+
+it('builds trailing performances: YTD, monthly, then one card per full year', function () {
+    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+        ['2023-01-01', '2023-07-01', '2024-07-01', '2025-07-01', '2026-01-01', '2026-04-01', '2026-06-01', '2026-07-01'],
+        [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1200.0],
+        [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0],
+        [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 120.0],
+    );
+
+    $performances = (new ValuationCalculator)->trailingPerformances($daily);
+
+    expect(array_map(fn ($perf) => $perf->key, $performances))->toBe(['YTD', '1M', '3M', '6M', '1Y', '2Y', '3Y'])
+        ->and(array_map(fn ($perf) => $perf->label, $performances))->toBe(['YTD', '1 mois', '3 mois', '6 mois', '1 an', '2 ans', '3 ans'])
+        ->and($performances[0]->pct)->toBe(20.0)
+        ->and($performances[6]->pct)->toBe(20.0);
+});
+
+it('returns no trailing performances for an empty series', function () {
+    expect((new ValuationCalculator)->trailingPerformances(App\Contexts\Valuation\Datas\ValuationSeriesData::empty()))->toBe([]);
+});
