@@ -217,11 +217,6 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
 
     <main class="min-h-screen overflow-x-hidden bg-background p-6 text-foreground">
         <div class="mx-auto flex max-w-6xl flex-col gap-6">
-            <header>
-                <h1 class="text-2xl font-semibold">Tableau de bord</h1>
-                <p class="text-sm text-muted-foreground">Suivi de vos investissements</p>
-            </header>
-
             <section v-if="overview.holdings.length" class="flex flex-col gap-3">
                 <div class="flex flex-col gap-0.5">
                     <p class="text-sm text-muted-foreground">Gain / perte</p>
