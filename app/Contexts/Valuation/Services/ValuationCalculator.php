@@ -7,6 +7,9 @@ use App\Contexts\Valuation\Datas\InvestedByAssetSeriesData;
 use App\Contexts\Valuation\Datas\PriceRecordData;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
 use App\Contexts\Valuation\Datas\ValuationSeriesData;
+use App\Contexts\Valuation\Enums\ValuationGranularity;
+use App\Contexts\Valuation\Enums\ValuationRange;
+use Illuminate\Support\Carbon;
 
 class ValuationCalculator
 {
@@ -115,6 +118,49 @@ class ValuationCalculator
         }
 
         return new ValuationSeriesData($labels, $valuations, $invested, $unitPrices);
+    }
+
+    public function windowAndAggregate(ValuationSeriesData $series, ValuationRange $range, ValuationGranularity $granularity): ValuationSeriesData
+    {
+        if ($series->labels === []) {
+            return $series;
+        }
+
+        $months = $range->months();
+        $cutoff = $months === null
+            ? null
+            : Carbon::parse($series->labels[count($series->labels) - 1])->subMonthsNoOverflow($months)->format('Y-m-d');
+
+        $labels = [];
+        $valuations = [];
+        $invested = [];
+        $prices = [];
+
+        foreach ($series->labels as $i => $label) {
+            if ($cutoff !== null && $label < $cutoff) {
+                continue;
+            }
+            $labels[] = $label;
+            $valuations[] = $series->valuations[$i];
+            $invested[] = $series->invested[$i];
+            $prices[] = $series->prices[$i];
+        }
+
+        /** @var array<string, int> $lastIndexByBucket */
+        $lastIndexByBucket = [];
+        foreach ($labels as $i => $label) {
+            $lastIndexByBucket[$granularity->bucketKey($label)] = $i;
+        }
+
+        $keep = array_values($lastIndexByBucket);
+        sort($keep);
+
+        return new ValuationSeriesData(
+            array_map(fn (int $i): string => $labels[$i], $keep),
+            array_map(fn (int $i): float => $valuations[$i], $keep),
+            array_map(fn (int $i): float => $invested[$i], $keep),
+            array_map(fn (int $i): float => $prices[$i], $keep),
+        );
     }
 
     /**

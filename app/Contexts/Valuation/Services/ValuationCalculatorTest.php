@@ -2,6 +2,8 @@
 
 use App\Contexts\Valuation\Datas\PriceRecordData;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
+use App\Contexts\Valuation\Enums\ValuationGranularity;
+use App\Contexts\Valuation\Enums\ValuationRange;
 use App\Contexts\Valuation\Services\ValuationCalculator;
 use Illuminate\Support\Carbon;
 
@@ -212,4 +214,44 @@ it('calculateDaily returns one point per price day without downsampling', functi
         ->and($daily->prices)->toHaveCount(250)
         ->and(count($capped->labels))->toBeLessThanOrEqual(200)
         ->and(count($capped->labels))->toBeLessThan(250);
+});
+
+it('windows the series to the requested range', function () {
+    $labels = [];
+    $series = [];
+    for ($d = 0; $d < 400; $d++) {
+        $labels[] = Carbon::parse('2025-01-01')->addDays($d)->format('Y-m-d');
+    }
+    $values = array_map(fn (int $i): float => (float) ($i + 1), array_keys($labels));
+    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData($labels, $values, $values, $values);
+
+    $windowed = (new ValuationCalculator)->windowAndAggregate($daily, ValuationRange::OneMonth, ValuationGranularity::Day);
+
+    $lastDate = Carbon::parse($labels[399]);
+    $cutoff = $lastDate->copy()->subMonthsNoOverflow(1)->format('Y-m-d');
+    expect($windowed->labels[0])->toBeGreaterThanOrEqual($cutoff)
+        ->and($windowed->labels[count($windowed->labels) - 1])->toBe($labels[399])
+        ->and(count($windowed->labels))->toBeLessThan(400);
+});
+
+it('aggregates by keeping the last point of each month bucket', function () {
+    $labels = ['2026-01-10', '2026-01-20', '2026-01-31', '2026-02-05', '2026-02-28'];
+    $values = [1.0, 2.0, 3.0, 4.0, 5.0];
+    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData($labels, $values, $values, $values);
+
+    $monthly = (new ValuationCalculator)->windowAndAggregate($daily, ValuationRange::Max, ValuationGranularity::Month);
+
+    expect($monthly->labels)->toBe(['2026-01-31', '2026-02-28'])
+        ->and($monthly->valuations)->toBe([3.0, 5.0])
+        ->and($monthly->prices)->toBe([3.0, 5.0]);
+});
+
+it('keeps every point when granularity is Day', function () {
+    $labels = ['2026-01-10', '2026-01-20', '2026-01-31'];
+    $values = [1.0, 2.0, 3.0];
+    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData($labels, $values, $values, $values);
+
+    $result = (new ValuationCalculator)->windowAndAggregate($daily, ValuationRange::Max, ValuationGranularity::Day);
+
+    expect($result->labels)->toBe($labels);
 });
