@@ -219,12 +219,14 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
         <div class="mx-auto flex max-w-6xl flex-col gap-6">
             <section v-if="overview.holdings.length" class="flex flex-col gap-3">
                 <div class="flex flex-col gap-0.5">
-                    <p class="text-sm text-muted-foreground">Gain / perte</p>
-                    <p class="text-2xl font-semibold" :class="gainClass(overview.totalGain)">
-                        {{ eur(overview.totalGain) }}
-                        <span class="text-sm">({{ pct(overview.totalGainPct) }})</span>
+                    <p class="text-sm text-muted-foreground">Investi + gain / perte</p>
+                    <p class="text-2xl font-semibold">
+                        <span class="text-muted-foreground">{{ eur(overview.totalCost) }}</span>
+                        <span :class="gainClass(overview.totalGain)">
+                            {{ overview.totalGain >= 0 ? '+' : '−' }} {{ eur(Math.abs(overview.totalGain)) }}
+                            <span class="text-sm">({{ pct(overview.totalGainPct) }})</span>
+                        </span>
                     </p>
-                    <p class="text-sm text-muted-foreground">Investi {{ eur(overview.totalCost) }}</p>
                 </div>
 
                 <Deferred data="performances">
