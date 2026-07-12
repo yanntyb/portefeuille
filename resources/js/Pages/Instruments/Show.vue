@@ -68,7 +68,13 @@ interface ValuationSeries {
     prices: number[];
 }
 
-const props = defineProps<{ instrument: Instrument; priceHistory?: PriceHistory; valuation?: ValuationSeries }>();
+const props = defineProps<{
+    instrument: Instrument;
+    priceHistory?: PriceHistory;
+    valuation?: ValuationSeries;
+    valuationRange?: string;
+    valuationGranularity?: string;
+}>();
 
 const flatCard = 'border-0 bg-transparent shadow-none rounded-none';
 
@@ -106,8 +112,16 @@ const granularityOptions: { key: GranularityKey; label: string }[] = [
     { key: 'month', label: 'Mois' },
 ];
 
-const selectedRange = ref<RangeKey>('max');
-const selectedGranularity = ref<GranularityKey>('month');
+const isRangeKey = (value: string | undefined): value is RangeKey =>
+    rangeOptions.some((option) => option.key === value);
+
+const isGranularityKey = (value: string | undefined): value is GranularityKey =>
+    granularityOptions.some((option) => option.key === value);
+
+const selectedRange = ref<RangeKey>(isRangeKey(props.valuationRange) ? props.valuationRange : 'max');
+const selectedGranularity = ref<GranularityKey>(
+    isGranularityKey(props.valuationGranularity) ? props.valuationGranularity : 'month',
+);
 const reloading = ref<boolean>(false);
 
 const reloadValuation = (): void => {
@@ -306,7 +320,7 @@ const positionChartOptions = computed<ApexOptions>(() => ({
 
                 <Deferred data="valuation">
                     <template #fallback>
-                        <div class="grid gap-4 lg:grid-cols-2">
+                        <div class="-mx-6 grid gap-4 sm:mx-0 lg:grid-cols-2">
                             <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
                             <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
                         </div>
@@ -314,7 +328,7 @@ const positionChartOptions = computed<ApexOptions>(() => ({
 
                     <div
                         v-if="hasValuation"
-                        class="grid gap-4 transition-opacity lg:grid-cols-2"
+                        class="-mx-6 grid gap-4 transition-opacity sm:mx-0 lg:grid-cols-2"
                         :class="reloading ? 'opacity-50' : ''"
                     >
                         <Card :class="flatCard">
@@ -322,7 +336,7 @@ const positionChartOptions = computed<ApexOptions>(() => ({
                                 <CardTitle>Cours</CardTitle>
                                 <CardDescription>Performance base 100 sur la période</CardDescription>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent class="px-0 sm:px-6">
                                 <VueApexCharts :key="valuationKey" type="line" height="300" :options="coursChartOptions" :series="coursChartSeries" />
                             </CardContent>
                         </Card>
@@ -332,7 +346,7 @@ const positionChartOptions = computed<ApexOptions>(() => ({
                                 <CardTitle>Valeur vs Investi</CardTitle>
                                 <CardDescription>Performance base 100 sur la période</CardDescription>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent class="px-0 sm:px-6">
                                 <VueApexCharts :key="valuationKey" type="line" height="300" :options="positionChartOptions" :series="positionChartSeries" />
                             </CardContent>
                         </Card>

@@ -35,6 +35,8 @@ class InstrumentDetailController
 
         return Inertia::render('Instruments/Show', [
             'instrument' => $detail,
+            'valuationRange' => $range->value,
+            'valuationGranularity' => $granularity->value,
             'priceHistory' => Inertia::defer(
                 fn () => $this->market->priceHistory($id, Carbon::now()->subMonths(12))
             ),
