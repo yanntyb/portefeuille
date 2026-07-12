@@ -4,25 +4,25 @@ namespace Database\Seeders;
 
 use App\Contexts\Market\Enums\InstrumentType;
 
-class BtcDcaSeeder extends FixedDcaSeeder
+class GoldDcaSeeder extends FixedDcaSeeder
 {
     protected function ticker(): string
     {
-        return 'BTC-EUR';
+        return '4GLD.DE';
     }
 
     protected function instrumentName(): string
     {
-        return 'Bitcoin';
+        return 'Or (Xetra-Gold)';
     }
 
     protected function instrumentType(): InstrumentType
     {
-        return InstrumentType::Crypto;
+        return InstrumentType::Commodity;
     }
 
     protected function walletName(): string
     {
-        return 'Portefeuille Crypto';
+        return 'Portefeuille Or';
     }
 }

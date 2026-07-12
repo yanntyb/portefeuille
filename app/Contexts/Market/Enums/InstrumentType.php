@@ -8,6 +8,7 @@ enum InstrumentType: string
     case ETF = 'etf';
     case Crypto = 'crypto';
     case Bond = 'bond';
+    case Commodity = 'commodity';
 
     /** @return list<string> */
     public static function values(): array
@@ -22,6 +23,7 @@ enum InstrumentType: string
             self::ETF => 'ETF',
             self::Crypto => 'Cryptocurrency',
             self::Bond => 'Bond',
+            self::Commodity => 'Commodity',
         };
     }
 
@@ -32,6 +34,7 @@ enum InstrumentType: string
             self::ETF => 'cyan',
             self::Crypto => 'yellow',
             self::Bond => 'violet',
+            self::Commodity => 'amber',
         };
     }
 
@@ -42,6 +45,7 @@ enum InstrumentType: string
             self::ETF => 'heroicon-o-squares-2x2',
             self::Crypto => 'heroicon-o-currency-bitcoin',
             self::Bond => 'heroicon-o-document-text',
+            self::Commodity => 'heroicon-o-cube',
         };
     }
 }

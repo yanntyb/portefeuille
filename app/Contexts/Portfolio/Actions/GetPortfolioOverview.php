@@ -95,6 +95,7 @@ class GetPortfolioOverview
             InstrumentType::ETF => '#0ea5e9',
             InstrumentType::Crypto => '#f59e0b',
             InstrumentType::Bond => '#8b5cf6',
+            InstrumentType::Commodity => '#eab308',
         };
     }
 }
