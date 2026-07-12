@@ -260,25 +260,7 @@ const positionChartOptions = computed<ApexOptions>(() => ({
                 </p>
             </header>
 
-            <section v-if="props.instrument.position" class="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <Card :class="flatCard">
-                    <CardHeader>
-                        <CardDescription>Quantité</CardDescription>
-                        <CardTitle class="text-2xl">{{ props.instrument.position.quantity }}</CardTitle>
-                    </CardHeader>
-                </Card>
-                <Card :class="flatCard">
-                    <CardHeader>
-                        <CardDescription>PRU</CardDescription>
-                        <CardTitle class="text-2xl">{{ eur(props.instrument.position.avgCost) }}</CardTitle>
-                    </CardHeader>
-                </Card>
-                <Card :class="flatCard">
-                    <CardHeader>
-                        <CardDescription>Valeur</CardDescription>
-                        <CardTitle class="text-2xl">{{ eur(props.instrument.position.marketValue) }}</CardTitle>
-                    </CardHeader>
-                </Card>
+            <section v-if="props.instrument.position">
                 <Card :class="flatCard">
                     <CardHeader>
                         <CardDescription>Gain / perte</CardDescription>
