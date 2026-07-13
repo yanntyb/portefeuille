@@ -19,6 +19,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
+import { buildTimeSeriesOptions } from '@/lib/chart';
 
 interface HoldingLine {
     assetId: number;
@@ -171,22 +172,9 @@ const valuationChartSeries = computed(() => [
 ]);
 
 const valuationChartOptions = computed<ApexOptions>(() => ({
-    chart: { toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
+    ...buildTimeSeriesOptions({ categories: props.valuationSeries?.labels ?? [], valueFormatter: eur }),
     colors: ['#4f46e5', '#64748b'],
-    stroke: { curve: 'smooth', width: 2 },
     fill: { type: 'gradient', gradient: { opacityFrom: 0.3, opacityTo: 0 } },
-    dataLabels: { enabled: false },
-    grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
-    xaxis: {
-        type: 'datetime',
-        categories: props.valuationSeries?.labels ?? [],
-        axisBorder: { show: false },
-        axisTicks: { show: false },
-        labels: { hideOverlappingLabels: true },
-    },
-    yaxis: { labels: { formatter: (value: number): string => eur(value) } },
-    tooltip: { y: { formatter: (value: number): string => eur(value) } },
-    legend: { position: 'top' },
 }));
 
 const hasInvestedByAsset = computed<boolean>(() => (props.investedByAsset?.series.length ?? 0) > 0);
@@ -196,20 +184,8 @@ const investedByAssetSeries = computed(() =>
 );
 
 const investedByAssetOptions = computed<ApexOptions>(() => ({
-    chart: { toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
+    ...buildTimeSeriesOptions({ categories: props.investedByAsset?.labels ?? [], valueFormatter: eur }),
     stroke: { curve: 'stepline', width: 2 },
-    dataLabels: { enabled: false },
-    grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
-    xaxis: {
-        type: 'datetime',
-        categories: props.investedByAsset?.labels ?? [],
-        axisBorder: { show: false },
-        axisTicks: { show: false },
-        labels: { hideOverlappingLabels: true },
-    },
-    yaxis: { labels: { formatter: (value: number): string => eur(value) } },
-    tooltip: { y: { formatter: (value: number): string => eur(value) } },
-    legend: { position: 'bottom' },
 }));
 </script>
 

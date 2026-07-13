@@ -18,6 +18,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { buildTimeSeriesOptions } from '@/lib/chart';
 
 interface Position {
     quantity: number;
@@ -174,21 +175,9 @@ const priceChartSeries = computed(() => [
 ]);
 
 const priceChartOptions = computed<ApexOptions>(() => ({
-    chart: { toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
+    ...buildTimeSeriesOptions({ categories: props.priceHistory?.labels ?? [], valueFormatter: eur }),
     colors: ['#4f46e5'],
-    stroke: { curve: 'smooth', width: 2 },
     fill: { type: 'gradient', gradient: { opacityFrom: 0.3, opacityTo: 0 } },
-    dataLabels: { enabled: false },
-    grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
-    xaxis: {
-        type: 'datetime',
-        categories: props.priceHistory?.labels ?? [],
-        axisBorder: { show: false },
-        axisTicks: { show: false },
-        labels: { hideOverlappingLabels: true },
-    },
-    yaxis: { labels: { formatter: (value: number): string => eur(value) } },
-    tooltip: { y: { formatter: (value: number): string => eur(value) } },
 }));
 
 const hasPosition = computed<boolean>(() => props.instrument.position !== null);
@@ -205,21 +194,8 @@ const coursChartSeries = computed(() => [
 ]);
 
 const coursChartOptions = computed<ApexOptions>(() => ({
-    chart: { toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
+    ...buildTimeSeriesOptions({ categories: props.valuation?.labels ?? [], valueFormatter: signedPct }),
     colors: ['#10b981'],
-    stroke: { curve: 'smooth', width: 2 },
-    dataLabels: { enabled: false },
-    grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
-    xaxis: {
-        type: 'datetime',
-        categories: props.valuation?.labels ?? [],
-        axisBorder: { show: false },
-        axisTicks: { show: false },
-        labels: { hideOverlappingLabels: true },
-    },
-    yaxis: { labels: { formatter: (value: number): string => signedPct(value) } },
-    tooltip: { y: { formatter: (value: number): string => signedPct(value) } },
-    legend: { position: 'top' },
 }));
 
 const positionChartSeries = computed(() => [
@@ -228,21 +204,8 @@ const positionChartSeries = computed(() => [
 ]);
 
 const positionChartOptions = computed<ApexOptions>(() => ({
-    chart: { toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
+    ...buildTimeSeriesOptions({ categories: props.valuation?.labels ?? [], valueFormatter: signedPct }),
     colors: ['#4f46e5', '#64748b'],
-    stroke: { curve: 'smooth', width: 2 },
-    dataLabels: { enabled: false },
-    grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
-    xaxis: {
-        type: 'datetime',
-        categories: props.valuation?.labels ?? [],
-        axisBorder: { show: false },
-        axisTicks: { show: false },
-        labels: { hideOverlappingLabels: true },
-    },
-    yaxis: { labels: { formatter: (value: number): string => signedPct(value) } },
-    tooltip: { y: { formatter: (value: number): string => signedPct(value) } },
-    legend: { position: 'top' },
 }));
 </script>
 
