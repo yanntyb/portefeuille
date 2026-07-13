@@ -25,7 +25,7 @@ export function buildTimeSeriesOptions({
         },
         yaxis: { labels: { formatter: (value: number): string => valueFormatter(value) } },
         tooltip: { y: { formatter: (value: number): string => valueFormatter(value) } },
-        legend: { position: legendPosition },
+        legend: { position: legendPosition, labels: { colors: '#fff' } },
     };
 }
 
@@ -46,7 +46,7 @@ export function buildDonutOptions({
         chart: { fontFamily: 'inherit' },
         labels,
         colors,
-        legend: { position: legendPosition },
+        legend: { position: legendPosition, labels: { colors: '#fff' } },
         dataLabels: { enabled: true, formatter: (value: number): string => `${Math.round(Number(value))}%` },
         stroke: { width: 0 },
         tooltip: { y: { formatter: (value: number): string => valueFormatter(value) } },
