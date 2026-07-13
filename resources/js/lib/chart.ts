@@ -1,5 +1,9 @@
 import type { ApexOptions } from 'apexcharts';
 
+const LEGEND_BELOW_ON_MOBILE: ApexOptions['responsive'] = [
+    { breakpoint: 640, options: { legend: { position: 'bottom' } } },
+];
+
 type TimeSeriesOptionsInput = {
     categories: (string | number)[];
     valueFormatter: (value: number) => string;
@@ -26,6 +30,7 @@ export function buildTimeSeriesOptions({
         yaxis: { labels: { formatter: (value: number): string => valueFormatter(value), style: { colors: 'oklch(0.708 0 0)' } } },
         tooltip: { y: { formatter: (value: number): string => valueFormatter(value) } },
         legend: { position: legendPosition, labels: { colors: '#fff' } },
+        responsive: LEGEND_BELOW_ON_MOBILE,
     };
 }
 
@@ -50,5 +55,6 @@ export function buildDonutOptions({
         dataLabels: { enabled: true, formatter: (value: number): string => `${Math.round(Number(value))}%` },
         stroke: { width: 0 },
         tooltip: { y: { formatter: (value: number): string => valueFormatter(value) } },
+        responsive: LEGEND_BELOW_ON_MOBILE,
     };
 }
