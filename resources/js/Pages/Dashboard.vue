@@ -18,6 +18,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
 
 interface HoldingLine {
     assetId: number;
@@ -219,7 +220,10 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
         <div class="mx-auto flex max-w-6xl flex-col gap-6">
             <section v-if="overview.holdings.length" class="flex flex-col gap-3">
                 <div class="flex flex-col gap-0.5">
-                    <p class="text-sm text-muted-foreground">Investi + gain / perte</p>
+                    <div class="flex items-center gap-1">
+                        <p class="text-sm text-muted-foreground">Investi + gain / perte</p>
+                        <PerformanceInfoDialog variant="global" />
+                    </div>
                     <p class="text-2xl font-semibold">
                         <span class="text-muted-foreground">{{ eur(overview.totalCost) }}</span>
                         <span class="ml-2" :class="gainClass(overview.totalGain)">
@@ -238,15 +242,21 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
                         </div>
                     </template>
 
-                    <div v-if="performances && performances.length" class="-mx-6 overflow-x-auto px-6">
-                        <div class="flex min-w-max gap-2">
-                            <div
-                                v-for="perf in performances"
-                                :key="perf.key"
-                                class="flex min-w-[64px] flex-col gap-0.5 rounded-md border border-border px-3 py-2"
-                            >
-                                <span class="text-xs text-muted-foreground">{{ perf.label }}</span>
-                                <span class="text-sm font-medium" :class="gainClass(perf.pct)">{{ pct(perf.pct) }}</span>
+                    <div v-if="performances && performances.length" class="flex flex-col gap-1">
+                        <div class="flex items-center gap-1">
+                            <p class="text-sm text-muted-foreground">Performance par période</p>
+                            <PerformanceInfoDialog variant="periods" />
+                        </div>
+                        <div class="-mx-6 overflow-x-auto px-6">
+                            <div class="flex min-w-max gap-2">
+                                <div
+                                    v-for="perf in performances"
+                                    :key="perf.key"
+                                    class="flex min-w-[64px] flex-col gap-0.5 rounded-md border border-border px-3 py-2"
+                                >
+                                    <span class="text-xs text-muted-foreground">{{ perf.label }}</span>
+                                    <span class="text-sm font-medium" :class="gainClass(perf.pct)">{{ pct(perf.pct) }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
