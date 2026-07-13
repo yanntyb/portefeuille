@@ -19,7 +19,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
-import { buildTimeSeriesOptions } from '@/lib/chart';
+import { buildDonutOptions, buildTimeSeriesOptions } from '@/lib/chart';
 
 interface HoldingLine {
     assetId: number;
@@ -154,15 +154,13 @@ const hasAllocation = computed<boolean>(() => props.overview.allocation.length >
 
 const allocationSeries = computed<number[]>(() => props.overview.allocation.map((slice) => slice.value));
 
-const allocationOptions = computed<ApexOptions>(() => ({
-    chart: { fontFamily: 'inherit' },
-    labels: props.overview.allocation.map((slice) => slice.label),
-    colors: props.overview.allocation.map((slice) => slice.color),
-    legend: { position: 'bottom' },
-    dataLabels: { enabled: true, formatter: (val: number): string => `${Math.round(Number(val))}%` },
-    stroke: { width: 0 },
-    tooltip: { y: { formatter: (val: number): string => eur(val) } },
-}));
+const allocationOptions = computed<ApexOptions>(() =>
+    buildDonutOptions({
+        labels: props.overview.allocation.map((slice) => slice.label),
+        colors: props.overview.allocation.map((slice) => slice.color),
+        valueFormatter: eur,
+    }),
+);
 
 const hasValuation = computed<boolean>(() => (props.valuationSeries?.labels.length ?? 0) > 0);
 

@@ -8,14 +8,14 @@ use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 
-it('renders both dashboard time-series charts with the legend on the left', function () {
+it('renders every dashboard chart with the legend on the left', function () {
     // A legacy data migration seeds a hardcoded user; clear it so the controller resolves this user.
     User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
 
-    foreach (['ACME', 'GLOBEX'] as $name) {
-        $asset = Instrument::factory()->ofType(InstrumentType::Stock)->create(['name' => $name]);
+    foreach ([['ACME', InstrumentType::Stock], ['GLOBEX', InstrumentType::ETF]] as [$name, $type]) {
+        $asset = Instrument::factory()->ofType($type)->create(['name' => $name]);
         Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 100]);
         Holding::factory()->create([
             'user_id' => $user->id,
@@ -40,8 +40,9 @@ it('renders both dashboard time-series charts with the legend on the left', func
 
     $page->assertSee('Évolution')
         ->assertSee('Investi par titre')
+        ->assertSee('Répartition')
         ->assertSee('Valeur')
         ->assertSee('GLOBEX')
-        ->assertCount('.apx-legend-position-left', 2)
+        ->assertCount('.apx-legend-position-left', 3)
         ->assertNoJavaScriptErrors();
 });
