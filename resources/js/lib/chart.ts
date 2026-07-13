@@ -21,9 +21,9 @@ export function buildTimeSeriesOptions({
             categories,
             axisBorder: { show: false },
             axisTicks: { show: false },
-            labels: { hideOverlappingLabels: true },
+            labels: { hideOverlappingLabels: true, style: { colors: 'oklch(0.708 0 0)' } },
         },
-        yaxis: { labels: { formatter: (value: number): string => valueFormatter(value) } },
+        yaxis: { labels: { formatter: (value: number): string => valueFormatter(value), style: { colors: 'oklch(0.708 0 0)' } } },
         tooltip: { y: { formatter: (value: number): string => valueFormatter(value) } },
         legend: { position: legendPosition, labels: { colors: '#fff' } },
     };
