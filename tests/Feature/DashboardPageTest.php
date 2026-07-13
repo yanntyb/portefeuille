@@ -16,7 +16,7 @@ it('renders the Dashboard with an empty overview when there is no data', functio
     User::query()->delete();
     User::factory()->create();
 
-    $this->get('/dashboard')
+    $this->get('/')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
@@ -41,7 +41,7 @@ it('renders the Dashboard with the user portfolio overview', function () {
         'avg_cost' => 80,
     ]);
 
-    $this->get('/dashboard')
+    $this->get('/')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
@@ -66,7 +66,7 @@ it('defers the valuation series and loads it on demand', function () {
     ]);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 100]);
 
-    $this->get('/dashboard')
+    $this->get('/')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
@@ -88,7 +88,7 @@ it('defers the invested-by-asset series and loads it on demand', function () {
         'quantity' => 10, 'unit_price' => 100, 'date' => '2026-01-01',
     ]);
 
-    $this->get('/dashboard')
+    $this->get('/')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
@@ -111,7 +111,7 @@ it('accepts range and granularity query params for the dashboard series', functi
     ]);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 100]);
 
-    $this->get('/dashboard?range=1M&granularity=week')
+    $this->get('/?range=1M&granularity=week')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
@@ -136,7 +136,7 @@ it('defers the portfolio performances and loads them on demand', function () {
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 100]);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-07-01', 'close' => 120]);
 
-    $this->get('/dashboard')
+    $this->get('/')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
