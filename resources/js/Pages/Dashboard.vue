@@ -195,15 +195,12 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
             <section v-if="overview.holdings.length" class="flex flex-col gap-3">
                 <div class="flex flex-col gap-0.5">
                     <div class="flex items-center gap-1">
-                        <p class="text-sm text-muted-foreground">Investi + gain / perte</p>
+                        <p class="text-sm text-muted-foreground">Valorisation</p>
                         <PerformanceInfoDialog variant="global" />
                     </div>
                     <p class="text-2xl font-semibold">
-                        <span class="text-muted-foreground">{{ eur(overview.totalCost) }}</span>
-                        <span class="ml-2" :class="gainClass(overview.totalGain)">
-                            {{ overview.totalGain >= 0 ? '+' : '−' }} {{ eur(Math.abs(overview.totalGain)) }}
-                            <span class="text-sm">({{ pct(overview.totalGainPct) }})</span>
-                        </span>
+                        {{ eur(overview.totalValue) }}
+                        <span class="ml-2 text-sm" :class="gainClass(overview.totalGain)">({{ pct(overview.totalGainPct) }})</span>
                     </p>
                 </div>
 
