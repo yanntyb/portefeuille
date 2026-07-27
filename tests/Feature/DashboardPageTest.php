@@ -54,12 +54,11 @@ it('renders the Dashboard with the user portfolio overview', function () {
         );
 });
 
-it('defers the valuation series and loads it on demand', function () {
-    // See note above: clear any legacy seeded user so the fallback resolves to this test's user.
+it('defers the evolution series and loads it on demand', function () {
     User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
-    $asset = Instrument::factory()->ofType(InstrumentType::Stock)->create();
+    $asset = Instrument::factory()->create(['name' => 'ACME']);
     Transaction::factory()->buy()->create([
         'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
         'quantity' => 10, 'unit_price' => 100, 'date' => '2026-01-01',
@@ -70,32 +69,13 @@ it('defers the valuation series and loads it on demand', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
-            ->missing('valuationSeries')
+            ->missing('evolutionSeries')
             ->loadDeferredProps(fn (Assert $reload) => $reload
-                ->has('valuationSeries.labels', 1)
-                ->has('valuationSeries.valuations', 1)
-            )
-        );
-});
-
-it('defers the invested-by-asset series and loads it on demand', function () {
-    User::query()->delete();
-    $user = User::factory()->create();
-    $wallet = Wallet::factory()->for($user)->create();
-    $asset = Instrument::factory()->create(['name' => 'ACME']);
-    Transaction::factory()->buy()->create([
-        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
-        'quantity' => 10, 'unit_price' => 100, 'date' => '2026-01-01',
-    ]);
-
-    $this->get('/')
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('Dashboard')
-            ->missing('investedByAsset')
-            ->loadDeferredProps(fn (Assert $reload) => $reload
-                ->has('investedByAsset.series', 1)
-                ->where('investedByAsset.series.0.name', 'ACME')
+                ->has('evolutionSeries.labels', 1)
+                ->has('evolutionSeries.value', 1)
+                ->has('evolutionSeries.totalInvested', 1)
+                ->has('evolutionSeries.perAsset', 1)
+                ->where('evolutionSeries.perAsset.0.name', 'ACME')
             )
         );
 });
@@ -118,8 +98,8 @@ it('accepts range and granularity query params for the dashboard series', functi
             ->where('valuationRange', '1M')
             ->where('valuationGranularity', 'week')
             ->loadDeferredProps(fn (Assert $reload) => $reload
-                ->has('valuationSeries.labels')
-                ->has('investedByAsset.series')
+                ->has('evolutionSeries.labels')
+                ->has('evolutionSeries.perAsset')
             )
         );
 });
