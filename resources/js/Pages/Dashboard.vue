@@ -174,12 +174,14 @@ const evolutionChart = computed(() =>
     }),
 );
 
-const evolutionKey = computed<string>(
-    () =>
-        `${selectedRange.value}-${selectedGranularity.value}-${Array.from(hiddenAssetIds.value)
-            .sort((a, b) => a - b)
-            .join('.')}`,
-);
+const evolutionKey = computed<string>(() => {
+    const labels = props.evolutionSeries?.labels ?? [];
+    const hidden = Array.from(hiddenAssetIds.value)
+        .sort((a, b) => a - b)
+        .join('.');
+
+    return `${selectedRange.value}-${selectedGranularity.value}-${labels.length}-${labels[0] ?? ''}-${labels[labels.length - 1] ?? ''}-${hidden}`;
+});
 </script>
 
 <template>
