@@ -101,6 +101,19 @@ export function buildEvolutionChart({
 }: EvolutionInput): { series: ApexAxisChartSeries; options: ApexOptions } {
     const point = (i: number, y: number | number[] | null): { x: string; y: number | number[] | null } => ({ x: labels[i], y });
 
+    const hideBandLegendItems = (chartContext: { el?: HTMLElement | null }): void => {
+        const root = chartContext?.el;
+        if (!root) {
+            return;
+        }
+        root.querySelectorAll('.apexcharts-legend-series').forEach((node) => {
+            const text = node.querySelector('.apexcharts-legend-text');
+            if (text == null || text.textContent?.trim() === '') {
+                (node as HTMLElement).style.display = 'none';
+            }
+        });
+    };
+
     const cumulative: number[][] = perAsset.map((_, k) =>
         labels.map((_label, i) => perAsset.slice(0, k + 1).reduce((sum, asset) => sum + (asset.invested[i] ?? 0), 0)),
     );
@@ -140,7 +153,17 @@ export function buildEvolutionChart({
     const fillOpacity = [...areaSeries.map(() => 0.9), 0.35, 0.35, 1];
 
     const options: ApexOptions = {
-        chart: { type: 'line', toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
+        chart: {
+            type: 'line',
+            toolbar: { show: false },
+            zoom: { enabled: false },
+            fontFamily: 'inherit',
+            animations: { enabled: false },
+            events: {
+                mounted: (chartContext: unknown): void => hideBandLegendItems(chartContext as { el?: HTMLElement | null }),
+                updated: (chartContext: unknown): void => hideBandLegendItems(chartContext as { el?: HTMLElement | null }),
+            },
+        },
         colors,
         stroke: { curve: 'smooth', width: strokeWidth },
         fill: { type: 'solid', opacity: fillOpacity },
@@ -153,7 +176,12 @@ export function buildEvolutionChart({
             axisTicks: { show: false },
             labels: { hideOverlappingLabels: true, style: { colors: 'oklch(0.708 0 0)' } },
         },
-        yaxis: { labels: { formatter: (v: number): string => valueFormatter(v), style: { colors: 'oklch(0.708 0 0)' } } },
+        yaxis: {
+            labels: {
+                formatter: (v: number): string => (v == null || !Number.isFinite(v) ? '' : valueFormatter(v)),
+                style: { colors: 'oklch(0.708 0 0)' },
+            },
+        },
         legend: {
             position: 'left',
             horizontalAlign: 'left',
