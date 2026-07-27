@@ -73,7 +73,7 @@ export function buildTimeSeriesOptions({
                 return `<div class="apexcharts-tooltip-title" style="font-family: inherit; font-size: 12px;">${title}</div>${rows}`;
             },
         },
-        legend: { position: legendPosition, labels: { colors: '#fff' } },
+        legend: { position: legendPosition, horizontalAlign: 'left', labels: { colors: '#fff' } },
         responsive: LEGEND_BELOW_ON_MOBILE,
     };
 }
