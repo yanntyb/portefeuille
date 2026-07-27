@@ -194,78 +194,75 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
         <div class="mx-auto flex max-w-6xl flex-col gap-6">
             <Card v-if="overview.holdings.length" :class="flatCard">
                 <CardContent class="flex flex-col gap-3">
-                <div class="flex flex-col gap-0.5">
-                    <p class="text-sm text-muted-foreground">Valorisation</p>
-                    <p class="text-2xl font-semibold">
-                        {{ eur(overview.totalValue) }}
-                        <span class="ml-2 text-sm" :class="gainClass(overview.totalGain)">({{ pct(overview.totalGainPct) }})</span>
-                    </p>
-                </div>
+                    <div class="flex flex-col gap-0.5">
+                        <p class="text-sm text-muted-foreground">Valorisation</p>
+                        <p class="text-2xl font-semibold">
+                            {{ eur(overview.totalValue) }}
+                            <span class="ml-2 text-sm" :class="gainClass(overview.totalGain)">({{ pct(overview.totalGainPct) }})</span>
+                        </p>
+                    </div>
 
-                <Deferred data="performances">
-                    <template #fallback>
-                        <div class="-mx-6 overflow-x-hidden px-6">
-                            <div class="flex min-w-max gap-2">
-                                <div v-for="n in 6" :key="n" class="h-[52px] w-[64px] animate-pulse rounded-md bg-muted"></div>
+                    <Deferred data="performances">
+                        <template #fallback>
+                            <div class="-mx-6 overflow-x-hidden px-6">
+                                <div class="flex min-w-max gap-2">
+                                    <div v-for="n in 6" :key="n" class="h-[52px] w-[64px] animate-pulse rounded-md bg-muted"></div>
+                                </div>
                             </div>
-                        </div>
-                    </template>
+                        </template>
 
-                    <div v-if="performances && performances.length" class="flex flex-col gap-1">
-                        <div class="flex items-center gap-1">
-                            <p class="text-sm text-muted-foreground">Performance par période</p>
-                            <PerformanceInfoDialog variant="periods" />
-                        </div>
-                        <div class="-mx-6 overflow-x-auto px-6">
-                            <div class="flex min-w-max gap-2">
-                                <div
-                                    v-for="perf in performances"
-                                    :key="perf.key"
-                                    class="flex min-w-[64px] flex-col gap-0.5 rounded-md border border-border px-3 py-2"
-                                >
-                                    <span class="text-xs text-muted-foreground">{{ perf.label }}</span>
-                                    <span class="text-sm font-medium" :class="gainClass(perf.pct)">{{ pct(perf.pct) }}</span>
+                        <div v-if="performances && performances.length" class="flex flex-col gap-1">
+                            <div class="flex items-center gap-1">
+                                <p class="text-sm text-muted-foreground">Performance par période</p>
+                                <PerformanceInfoDialog variant="periods" />
+                            </div>
+                            <div class="-mx-6 overflow-x-auto px-6">
+                                <div class="flex min-w-max gap-2">
+                                    <div
+                                        v-for="perf in performances"
+                                        :key="perf.key"
+                                        class="flex min-w-[64px] flex-col gap-0.5 rounded-md border border-border px-3 py-2"
+                                    >
+                                        <span class="text-xs text-muted-foreground">{{ perf.label }}</span>
+                                        <span class="text-sm font-medium" :class="gainClass(perf.pct)">{{ pct(perf.pct) }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </Deferred>
+                    </Deferred>
                 </CardContent>
             </Card>
 
-            <Card v-if="overview.holdings.length" :class="flatCard">
-                <CardContent class="flex flex-wrap items-center gap-3">
-                <div class="inline-flex rounded-md border border-border p-0.5">
-                    <button
-                        v-for="opt in rangeOptions"
-                        :key="opt.key"
-                        type="button"
-                        class="rounded px-3 py-1 text-sm transition-colors"
-                        :class="selectedRange === opt.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'"
-                        @click="selectRange(opt.key)"
-                    >
-                        {{ opt.label }}
-                    </button>
-                </div>
-                <div class="inline-flex rounded-md border border-border p-0.5">
-                    <button
-                        v-for="opt in granularityOptions"
-                        :key="opt.key"
-                        type="button"
-                        class="rounded px-3 py-1 text-sm transition-colors"
-                        :class="selectedGranularity === opt.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'"
-                        @click="selectGranularity(opt.key)"
-                    >
-                        {{ opt.label }}
-                    </button>
-                </div>
-                </CardContent>
-            </Card>
-
-            <Card :class="[flatCard, '-mx-6 transition-opacity sm:mx-0', reloading ? 'opacity-50' : '']">
+            <Card :class="[flatCard, 'transition-opacity sm:mx-0', reloading ? 'opacity-50' : '']">
                 <CardHeader>
                     <CardTitle>Évolution</CardTitle>
                     <CardDescription>Valeur du portefeuille vs investi</CardDescription>
+                    <div v-if="overview.holdings.length" class="flex flex-wrap items-center gap-3 pt-2">
+                        <div class="inline-flex rounded-md border border-border p-0.5">
+                            <button
+                                v-for="opt in rangeOptions"
+                                :key="opt.key"
+                                type="button"
+                                class="rounded px-3 py-1 text-sm transition-colors"
+                                :class="selectedRange === opt.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'"
+                                @click="selectRange(opt.key)"
+                            >
+                                {{ opt.label }}
+                            </button>
+                        </div>
+                        <div class="inline-flex rounded-md border border-border p-0.5">
+                            <button
+                                v-for="opt in granularityOptions"
+                                :key="opt.key"
+                                type="button"
+                                class="rounded px-3 py-1 text-sm transition-colors"
+                                :class="selectedGranularity === opt.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'"
+                                @click="selectGranularity(opt.key)"
+                            >
+                                {{ opt.label }}
+                            </button>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent class="px-0 sm:px-6">
                     <Deferred data="valuationSeries">
@@ -287,7 +284,7 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
                 </CardContent>
             </Card>
 
-            <Card :class="[flatCard, '-mx-6 transition-opacity sm:mx-0', reloading ? 'opacity-50' : '']">
+            <Card :class="[flatCard, 'transition-opacity sm:mx-0', reloading ? 'opacity-50' : '']">
                 <CardHeader>
                     <CardTitle>Investi par titre</CardTitle>
                     <CardDescription>Montant investi cumulé sur chaque titre</CardDescription>
