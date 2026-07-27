@@ -173,6 +173,13 @@ const evolutionChart = computed(() =>
         valueFormatter: eur,
     }),
 );
+
+const evolutionKey = computed<string>(
+    () =>
+        `${selectedRange.value}-${selectedGranularity.value}-${Array.from(hiddenAssetIds.value)
+            .sort((a, b) => a - b)
+            .join('.')}`,
+);
 </script>
 
 <template>
@@ -260,6 +267,7 @@ const evolutionChart = computed(() =>
 
                         <VueApexCharts
                             v-if="hasEvolution"
+                            :key="evolutionKey"
                             type="line"
                             height="300"
                             :options="evolutionChart.options"
