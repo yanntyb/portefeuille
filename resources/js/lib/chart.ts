@@ -28,7 +28,7 @@ export function buildTimeSeriesOptions({
             labels: { hideOverlappingLabels: true, style: { colors: 'oklch(0.708 0 0)' } },
         },
         yaxis: { labels: { formatter: (value: number): string => valueFormatter(value), style: { colors: 'oklch(0.708 0 0)' } } },
-        tooltip: { y: { formatter: (value: number): string => valueFormatter(value) } },
+        tooltip: { shared: false, intersect: false, y: { formatter: (value: number): string => valueFormatter(value) } },
         legend: { position: legendPosition, labels: { colors: '#fff' } },
         responsive: LEGEND_BELOW_ON_MOBILE,
     };
