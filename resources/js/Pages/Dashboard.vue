@@ -75,22 +75,11 @@ const rangeOptions: { key: RangeKey; label: string }[] = [
     { key: 'max', label: 'Max' },
 ];
 
-const granularityOptions: { key: GranularityKey; label: string }[] = [
-    { key: 'day', label: 'Jour' },
-    { key: 'week', label: 'Sem' },
-    { key: 'month', label: 'Mois' },
-];
-
 const isRangeKey = (value: string | undefined): value is RangeKey =>
     rangeOptions.some((option) => option.key === value);
 
-const isGranularityKey = (value: string | undefined): value is GranularityKey =>
-    granularityOptions.some((option) => option.key === value);
-
 const selectedRange = ref<RangeKey>(isRangeKey(props.valuationRange) ? props.valuationRange : 'max');
-const selectedGranularity = ref<GranularityKey>(
-    isGranularityKey(props.valuationGranularity) ? props.valuationGranularity : 'month',
-);
+const granularity: GranularityKey = 'month';
 const reloading = ref<boolean>(false);
 
 const hiddenAssetIds = ref<Set<number>>(new Set());
@@ -108,7 +97,7 @@ const toggleAsset = (assetId: number): void => {
 const reloadSeries = (): void => {
     router.reload({
         only: ['evolutionSeries'],
-        data: { range: selectedRange.value, granularity: selectedGranularity.value },
+        data: { range: selectedRange.value, granularity },
         onStart: (): void => {
             reloading.value = true;
         },
@@ -123,14 +112,6 @@ const selectRange = (key: RangeKey): void => {
         return;
     }
     selectedRange.value = key;
-    reloadSeries();
-};
-
-const selectGranularity = (key: GranularityKey): void => {
-    if (selectedGranularity.value === key) {
-        return;
-    }
-    selectedGranularity.value = key;
     reloadSeries();
 };
 
@@ -180,7 +161,7 @@ const evolutionKey = computed<string>(() => {
         .sort((a, b) => a - b)
         .join('.');
 
-    return `${selectedRange.value}-${selectedGranularity.value}-${labels.length}-${labels[0] ?? ''}-${labels[labels.length - 1] ?? ''}-${hidden}`;
+    return `${selectedRange.value}-${granularity}-${labels.length}-${labels[0] ?? ''}-${labels[labels.length - 1] ?? ''}-${hidden}`;
 });
 </script>
 
@@ -243,18 +224,6 @@ const evolutionKey = computed<string>(() => {
                                 class="rounded px-3 py-1 text-sm transition-colors"
                                 :class="selectedRange === opt.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'"
                                 @click="selectRange(opt.key)"
-                            >
-                                {{ opt.label }}
-                            </button>
-                        </div>
-                        <div class="inline-flex rounded-md border border-border p-0.5">
-                            <button
-                                v-for="opt in granularityOptions"
-                                :key="opt.key"
-                                type="button"
-                                class="rounded px-3 py-1 text-sm transition-colors"
-                                :class="selectedGranularity === opt.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'"
-                                @click="selectGranularity(opt.key)"
                             >
                                 {{ opt.label }}
                             </button>
