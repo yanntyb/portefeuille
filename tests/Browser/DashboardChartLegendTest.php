@@ -39,10 +39,9 @@ it('renders every dashboard chart with the legend on the left', function () {
     $page = visit('/');
 
     $page->assertSee('Évolution')
-        ->assertSee('Investi par titre')
         ->assertSee('Répartition')
         ->assertSee('Valeur')
         ->assertSee('GLOBEX')
-        ->assertCount('.apx-legend-position-left', 3)
+        ->assertCount('.apx-legend-position-left', 2)
         ->assertNoJavaScriptErrors();
 });

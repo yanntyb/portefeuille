@@ -19,7 +19,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
-import { buildDonutOptions, buildTimeSeriesOptions } from '@/lib/chart';
+import { buildDonutOptions, buildEvolutionChart } from '@/lib/chart';
 
 interface HoldingLine {
     assetId: number;
@@ -57,24 +57,14 @@ interface Performance {
     pct: number | null;
 }
 
-interface ValuationSeries {
+interface EvolutionSeries {
     labels: string[];
-    valuations: number[];
-    invested: number[];
+    value: number[];
+    totalInvested: number[];
+    perAsset: { name: string; invested: number[] }[];
 }
 
-interface AssetInvestedSeries {
-    assetId: number;
-    name: string;
-    invested: number[];
-}
-
-interface InvestedByAssetSeries {
-    labels: string[];
-    series: AssetInvestedSeries[];
-}
-
-const props = defineProps<{ overview: PortfolioOverview; performances?: Performance[]; valuationSeries?: ValuationSeries; investedByAsset?: InvestedByAssetSeries; valuationRange?: string; valuationGranularity?: string }>();
+const props = defineProps<{ overview: PortfolioOverview; performances?: Performance[]; evolutionSeries?: EvolutionSeries; valuationRange?: string; valuationGranularity?: string }>();
 
 type RangeKey = '1M' | '6M' | '1Y' | 'max';
 type GranularityKey = 'day' | 'week' | 'month';
@@ -106,7 +96,7 @@ const reloading = ref<boolean>(false);
 
 const reloadSeries = (): void => {
     router.reload({
-        only: ['valuationSeries', 'investedByAsset'],
+        only: ['evolutionSeries'],
         data: { range: selectedRange.value, granularity: selectedGranularity.value },
         onStart: (): void => {
             reloading.value = true;
@@ -162,29 +152,17 @@ const allocationOptions = computed<ApexOptions>(() =>
     }),
 );
 
-const hasValuation = computed<boolean>(() => (props.valuationSeries?.labels.length ?? 0) > 0);
+const hasEvolution = computed<boolean>(() => (props.evolutionSeries?.labels.length ?? 0) > 0);
 
-const valuationChartSeries = computed(() => [
-    { name: 'Valeur', data: props.valuationSeries?.valuations ?? [] },
-    { name: 'Investi', data: props.valuationSeries?.invested ?? [] },
-]);
-
-const valuationChartOptions = computed<ApexOptions>(() => ({
-    ...buildTimeSeriesOptions({ categories: props.valuationSeries?.labels ?? [], valueFormatter: eur }),
-    colors: ['#4f46e5', '#64748b'],
-    fill: { type: 'gradient', gradient: { opacityFrom: 0.3, opacityTo: 0 } },
-}));
-
-const hasInvestedByAsset = computed<boolean>(() => (props.investedByAsset?.series.length ?? 0) > 0);
-
-const investedByAssetSeries = computed(() =>
-    (props.investedByAsset?.series ?? []).map((serie) => ({ name: serie.name, data: serie.invested })),
+const evolutionChart = computed(() =>
+    buildEvolutionChart({
+        labels: props.evolutionSeries?.labels ?? [],
+        value: props.evolutionSeries?.value ?? [],
+        totalInvested: props.evolutionSeries?.totalInvested ?? [],
+        perAsset: props.evolutionSeries?.perAsset ?? [],
+        valueFormatter: eur,
+    }),
 );
-
-const investedByAssetOptions = computed<ApexOptions>(() => ({
-    ...buildTimeSeriesOptions({ categories: props.investedByAsset?.labels ?? [], valueFormatter: eur }),
-    stroke: { curve: 'stepline', width: 2 },
-}));
 </script>
 
 <template>
@@ -236,7 +214,7 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
             <Card :class="[flatCard, 'transition-opacity sm:mx-0', reloading ? 'opacity-50' : '']">
                 <CardHeader>
                     <CardTitle>Évolution</CardTitle>
-                    <CardDescription>Valeur du portefeuille vs investi</CardDescription>
+                    <CardDescription>Valeur, investi par titre et performance</CardDescription>
                     <div v-if="overview.holdings.length" class="flex flex-wrap items-center gap-3 pt-2">
                         <div class="inline-flex rounded-md border border-border p-0.5">
                             <button
@@ -265,17 +243,17 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
                     </div>
                 </CardHeader>
                 <CardContent class="px-0 sm:px-6">
-                    <Deferred data="valuationSeries">
+                    <Deferred data="evolutionSeries">
                         <template #fallback>
                             <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
                         </template>
 
                         <VueApexCharts
-                            v-if="hasValuation"
-                            type="area"
+                            v-if="hasEvolution"
+                            type="line"
                             height="300"
-                            :options="valuationChartOptions"
-                            :series="valuationChartSeries"
+                            :options="evolutionChart.options"
+                            :series="evolutionChart.series"
                         />
                         <p v-else class="py-8 text-center text-sm text-muted-foreground">
                             Pas encore d'historique de valorisation.
@@ -283,32 +261,6 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
                     </Deferred>
                 </CardContent>
             </Card>
-
-            <Card :class="[flatCard, 'transition-opacity sm:mx-0', reloading ? 'opacity-50' : '']">
-                <CardHeader>
-                    <CardTitle>Investi par titre</CardTitle>
-                    <CardDescription>Montant investi cumulé sur chaque titre</CardDescription>
-                </CardHeader>
-                <CardContent class="px-0 sm:px-6">
-                    <Deferred data="investedByAsset">
-                        <template #fallback>
-                            <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
-                        </template>
-
-                        <VueApexCharts
-                            v-if="hasInvestedByAsset"
-                            type="line"
-                            height="300"
-                            :options="investedByAssetOptions"
-                            :series="investedByAssetSeries"
-                        />
-                        <p v-else class="py-8 text-center text-sm text-muted-foreground">
-                            Pas encore d'investissement.
-                        </p>
-                    </Deferred>
-                </CardContent>
-            </Card>
-
 
             <section class="grid gap-4 lg:grid-cols-3">
                 <Card :class="[flatCard, 'min-w-0 lg:col-span-2']">
