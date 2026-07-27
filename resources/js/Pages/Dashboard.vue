@@ -231,7 +231,7 @@ const evolutionKey = computed<string>(
             <Card :class="[flatCard, 'transition-opacity sm:mx-0', reloading ? 'opacity-50' : '']">
                 <CardHeader>
                     <CardTitle>Évolution</CardTitle>
-                    <CardDescription>Valeur, investi par titre et performance</CardDescription>
+                    <CardDescription>Valeur de marché par titre</CardDescription>
                     <div v-if="overview.holdings.length" class="flex flex-wrap items-center gap-3 pt-2">
                         <div class="inline-flex rounded-md border border-border p-0.5">
                             <button
@@ -268,7 +268,7 @@ const evolutionKey = computed<string>(
                         <VueApexCharts
                             v-if="hasEvolution"
                             :key="evolutionKey"
-                            type="line"
+                            type="area"
                             height="300"
                             :options="evolutionChart.options"
                             :series="evolutionChart.series"
