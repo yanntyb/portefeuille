@@ -79,7 +79,7 @@ const isRangeKey = (value: string | undefined): value is RangeKey =>
     rangeOptions.some((option) => option.key === value);
 
 const selectedRange = ref<RangeKey>(isRangeKey(props.valuationRange) ? props.valuationRange : 'max');
-const granularity: GranularityKey = 'month';
+const granularity: GranularityKey = 'day';
 const reloading = ref<boolean>(false);
 
 const hiddenAssetIds = ref<Set<number>>(new Set());
