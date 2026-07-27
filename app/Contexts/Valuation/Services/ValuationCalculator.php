@@ -3,6 +3,7 @@
 namespace App\Contexts\Valuation\Services;
 
 use App\Contexts\Valuation\Datas\AssetInvestedSeriesData;
+use App\Contexts\Valuation\Datas\EvolutionSeriesData;
 use App\Contexts\Valuation\Datas\InvestedByAssetSeriesData;
 use App\Contexts\Valuation\Datas\PerformanceData;
 use App\Contexts\Valuation\Datas\PriceRecordData;
@@ -321,36 +322,14 @@ class ValuationCalculator
             return InvestedByAssetSeriesData::empty();
         }
 
-        usort($transactions, fn (TransactionRecordData $a, TransactionRecordData $b) => ($a->date <=> $b->date)
-            ?: (($a->isSell ? 1 : 0) <=> ($b->isSell ? 1 : 0)));
+        $perAsset = $this->perAssetInvestedTimelines($transactions);
 
-        /** @var array<int, list<array{date: string, value: float}>> $perAsset */
-        $perAsset = [];
-        $buyQty = [];
-        $buyCost = [];
-        $invested = [];
         /** @var array<string, true> $dates */
         $dates = [];
-
-        foreach ($transactions as $transaction) {
-            $day = $transaction->date->format('Y-m-d');
-            $assetId = $transaction->assetId;
-            $dates[$day] = true;
-            $invested[$assetId] ??= 0.0;
-            $perAsset[$assetId] ??= [];
-
-            if ($transaction->isSell) {
-                $qty = $buyQty[$assetId] ?? 0.0;
-                $cost = $buyCost[$assetId] ?? 0.0;
-                $pru = $qty > 0.0 ? $cost / $qty : 0.0;
-                $invested[$assetId] -= $transaction->quantity * $pru - $transaction->fees;
-            } else {
-                $buyQty[$assetId] = ($buyQty[$assetId] ?? 0.0) + $transaction->quantity;
-                $buyCost[$assetId] = ($buyCost[$assetId] ?? 0.0) + $transaction->quantity * $transaction->unitPrice;
-                $invested[$assetId] += $transaction->quantity * $transaction->unitPrice + $transaction->fees;
+        foreach ($perAsset as $entries) {
+            foreach ($entries as $entry) {
+                $dates[$entry['date']] = true;
             }
-
-            $perAsset[$assetId][] = ['date' => $day, 'value' => $invested[$assetId]];
         }
 
         $labels = array_keys($dates);
@@ -371,6 +350,93 @@ class ValuationCalculator
         }
 
         return new InvestedByAssetSeriesData($labels, $series);
+    }
+
+    /**
+     * Série d'évolution alignée : sur les labels de la valorisation windowée,
+     * expose la valeur totale, l'investi total et l'investi par asset.
+     *
+     * @param  list<TransactionRecordData>  $transactions
+     * @param  list<PriceRecordData>  $prices
+     */
+    public function evolution(
+        array $transactions,
+        array $prices,
+        ValuationRange $range,
+        ValuationGranularity $granularity,
+    ): EvolutionSeriesData {
+        if ($transactions === []) {
+            return EvolutionSeriesData::empty();
+        }
+
+        $windowed = $this->windowAndAggregate(
+            $this->calculateDaily($transactions, $prices),
+            $range,
+            $granularity,
+        );
+
+        if ($windowed->labels === []) {
+            return EvolutionSeriesData::empty();
+        }
+
+        $perAssetTimelines = $this->perAssetInvestedTimelines($transactions);
+
+        $perAsset = [];
+        foreach ($perAssetTimelines as $assetId => $entries) {
+            $perAsset[] = new AssetInvestedSeriesData(
+                assetId: $assetId,
+                name: '#'.$assetId,
+                invested: array_map(fn (string $day): float => round($this->valueAtDate($entries, $day), 2), $windowed->labels),
+            );
+        }
+
+        return new EvolutionSeriesData(
+            labels: $windowed->labels,
+            value: $windowed->valuations,
+            totalInvested: $windowed->invested,
+            perAsset: $perAsset,
+        );
+    }
+
+    /**
+     * Timelines d'investi cumulé par asset (fonction en escalier sur les dates de
+     * transaction), clé = assetId dans l'ordre d'apparition.
+     *
+     * @param  list<TransactionRecordData>  $transactions
+     * @return array<int, list<array{date: string, value: float}>>
+     */
+    private function perAssetInvestedTimelines(array $transactions): array
+    {
+        usort($transactions, fn (TransactionRecordData $a, TransactionRecordData $b) => ($a->date <=> $b->date)
+            ?: (($a->isSell ? 1 : 0) <=> ($b->isSell ? 1 : 0)));
+
+        /** @var array<int, list<array{date: string, value: float}>> $perAsset */
+        $perAsset = [];
+        $buyQty = [];
+        $buyCost = [];
+        $invested = [];
+
+        foreach ($transactions as $transaction) {
+            $day = $transaction->date->format('Y-m-d');
+            $assetId = $transaction->assetId;
+            $invested[$assetId] ??= 0.0;
+            $perAsset[$assetId] ??= [];
+
+            if ($transaction->isSell) {
+                $qty = $buyQty[$assetId] ?? 0.0;
+                $cost = $buyCost[$assetId] ?? 0.0;
+                $pru = $qty > 0.0 ? $cost / $qty : 0.0;
+                $invested[$assetId] -= $transaction->quantity * $pru - $transaction->fees;
+            } else {
+                $buyQty[$assetId] = ($buyQty[$assetId] ?? 0.0) + $transaction->quantity;
+                $buyCost[$assetId] = ($buyCost[$assetId] ?? 0.0) + $transaction->quantity * $transaction->unitPrice;
+                $invested[$assetId] += $transaction->quantity * $transaction->unitPrice + $transaction->fees;
+            }
+
+            $perAsset[$assetId][] = ['date' => $day, 'value' => $invested[$assetId]];
+        }
+
+        return $perAsset;
     }
 
     /**

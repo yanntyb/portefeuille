@@ -1,6 +1,7 @@
 <?php
 
 use App\Contexts\Valuation\Datas\PriceRecordData;
+use App\Contexts\Valuation\Datas\PriceRecordData as P;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
 use App\Contexts\Valuation\Enums\ValuationGranularity;
 use App\Contexts\Valuation\Enums\ValuationRange;
@@ -346,4 +347,44 @@ it('windows an invested-by-asset series by range', function () {
 
     expect($result->labels)->toBe(['2026-02-15', '2026-03-01'])
         ->and($result->series[0]->invested)->toBe([200.0, 300.0]);
+});
+
+it('aligns per-asset invested on the valuation labels (evolution)', function () {
+    $series = (new ValuationCalculator)->evolution(
+        [tx('2026-01-01', 1, false, 10, 100), tx('2026-02-01', 2, false, 5, 50)],
+        [
+            new P(1, '2026-01-01', 100), new P(1, '2026-02-01', 120),
+            new P(2, '2026-02-01', 50),
+        ],
+        ValuationRange::Max,
+        ValuationGranularity::Day,
+    );
+
+    expect($series->labels)->toBe(['2026-01-01', '2026-02-01'])
+        // valeur = 10*120 (asset1) + 5*50 (asset2) au 2026-02-01
+        ->and($series->value)->toBe([1000.0, 1450.0])
+        ->and($series->totalInvested)->toBe([1000.0, 1250.0]);
+
+    $byName = collect($series->perAsset)->keyBy('name');
+    expect($byName['#1']->invested)->toBe([1000.0, 1000.0])
+        ->and($byName['#2']->invested)->toBe([0.0, 250.0]);
+});
+
+it('keeps sum of per-asset invested equal to totalInvested (evolution invariant)', function () {
+    $series = (new ValuationCalculator)->evolution(
+        [tx('2026-01-01', 1, false, 10, 100), tx('2026-01-01', 2, false, 4, 25)],
+        [new P(1, '2026-01-01', 100), new P(2, '2026-01-01', 25)],
+        ValuationRange::Max,
+        ValuationGranularity::Day,
+    );
+
+    foreach ($series->labels as $i => $label) {
+        $sum = collect($series->perAsset)->sum(fn ($s) => $s->invested[$i]);
+        expect(round($sum, 2))->toBe($series->totalInvested[$i]);
+    }
+});
+
+it('returns an empty evolution series without transactions', function () {
+    expect((new ValuationCalculator)->evolution([], [], ValuationRange::Max, ValuationGranularity::Day))
+        ->toEqual(\App\Contexts\Valuation\Datas\EvolutionSeriesData::empty());
 });
