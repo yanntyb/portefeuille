@@ -72,10 +72,10 @@ it('defers the evolution series and loads it on demand', function () {
             ->missing('evolutionSeries')
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->has('evolutionSeries.labels', 1)
-                ->has('evolutionSeries.value', 1)
-                ->has('evolutionSeries.totalInvested', 1)
                 ->has('evolutionSeries.perAsset', 1)
                 ->where('evolutionSeries.perAsset.0.name', 'ACME')
+                ->has('evolutionSeries.perAsset.0.value')
+                ->has('evolutionSeries.perAsset.0.invested')
             )
         );
 });

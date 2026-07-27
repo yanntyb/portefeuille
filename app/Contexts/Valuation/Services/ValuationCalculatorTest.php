@@ -349,7 +349,7 @@ it('windows an invested-by-asset series by range', function () {
         ->and($result->series[0]->invested)->toBe([200.0, 300.0]);
 });
 
-it('aligns per-asset invested on the valuation labels (evolution)', function () {
+it('exposes per-asset market value aligned on the valuation labels (evolution)', function () {
     $series = (new ValuationCalculator)->evolution(
         [tx('2026-01-01', 1, false, 10, 100), tx('2026-02-01', 2, false, 5, 50)],
         [
@@ -360,27 +360,28 @@ it('aligns per-asset invested on the valuation labels (evolution)', function () 
         ValuationGranularity::Day,
     );
 
-    expect($series->labels)->toBe(['2026-01-01', '2026-02-01'])
-        // valeur = 10*120 (asset1) + 5*50 (asset2) au 2026-02-01
-        ->and($series->value)->toBe([1000.0, 1450.0])
-        ->and($series->totalInvested)->toBe([1000.0, 1250.0]);
+    expect($series->labels)->toBe(['2026-01-01', '2026-02-01']);
 
     $byName = collect($series->perAsset)->keyBy('name');
-    expect($byName['#1']->invested)->toBe([1000.0, 1000.0])
+    // asset 1: 10@100 → 1000 puis 10@120 → 1200 ; investi 1000/1000
+    expect($byName['#1']->value)->toBe([1000.0, 1200.0])
+        ->and($byName['#1']->invested)->toBe([1000.0, 1000.0])
+        // asset 2 acheté au 2026-02-01 : valeur 0 puis 5@50 = 250 ; investi 0/250
+        ->and($byName['#2']->value)->toBe([0.0, 250.0])
         ->and($byName['#2']->invested)->toBe([0.0, 250.0]);
 });
 
-it('keeps sum of per-asset invested equal to totalInvested (evolution invariant)', function () {
-    $series = (new ValuationCalculator)->evolution(
-        [tx('2026-01-01', 1, false, 10, 100), tx('2026-01-01', 2, false, 4, 25)],
-        [new P(1, '2026-01-01', 100), new P(2, '2026-01-01', 25)],
-        ValuationRange::Max,
-        ValuationGranularity::Day,
-    );
+it('keeps sum of per-asset value equal to the total valuation (evolution invariant)', function () {
+    $calc = new ValuationCalculator;
+    $transactions = [tx('2026-01-01', 1, false, 10, 100), tx('2026-01-01', 2, false, 4, 25)];
+    $prices = [new P(1, '2026-01-01', 110), new P(2, '2026-01-01', 30)];
+
+    $series = $calc->evolution($transactions, $prices, ValuationRange::Max, ValuationGranularity::Day);
+    $daily = $calc->calculateDaily($transactions, $prices);
 
     foreach ($series->labels as $i => $label) {
-        $sum = collect($series->perAsset)->sum(fn ($s) => $s->invested[$i]);
-        expect(round($sum, 2))->toBe($series->totalInvested[$i]);
+        $sum = collect($series->perAsset)->sum(fn ($s) => $s->value[$i]);
+        expect(round($sum, 2))->toBe($daily->valuations[$i]);
     }
 });
 

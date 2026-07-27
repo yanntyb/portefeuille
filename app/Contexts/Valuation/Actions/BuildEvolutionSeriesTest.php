@@ -28,13 +28,13 @@ it('builds the merged evolution series with named per-asset invested', function 
 
     $data = app(BuildEvolutionSeries::class)($user->id, ValuationRange::Max, ValuationGranularity::Day);
 
-    expect($data->labels)->toBe(['2026-01-01'])
-        ->and($data->value)->toBe([1250.0])
-        ->and($data->totalInvested)->toBe([1250.0]);
+    expect($data->labels)->toBe(['2026-01-01']);
 
     $byName = collect($data->perAsset)->keyBy('name');
     expect($byName)->toHaveKeys(['Apple', 'Amazon'])
+        ->and($byName['Apple']->value)->toBe([1000.0])
         ->and($byName['Apple']->invested)->toBe([1000.0])
+        ->and($byName['Amazon']->value)->toBe([250.0])
         ->and($byName['Amazon']->invested)->toBe([250.0]);
 });
 

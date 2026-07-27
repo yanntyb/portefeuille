@@ -3,6 +3,7 @@
 namespace App\Contexts\Valuation\Services;
 
 use App\Contexts\Valuation\Datas\AssetInvestedSeriesData;
+use App\Contexts\Valuation\Datas\AssetSeriesData;
 use App\Contexts\Valuation\Datas\EvolutionSeriesData;
 use App\Contexts\Valuation\Datas\InvestedByAssetSeriesData;
 use App\Contexts\Valuation\Datas\PerformanceData;
@@ -354,7 +355,7 @@ class ValuationCalculator
 
     /**
      * Série d'évolution alignée : sur les labels de la valorisation windowée,
-     * expose la valeur totale, l'investi total et l'investi par asset.
+     * expose par asset la valeur de marché (quantité × prix, forward-fill) et l'investi.
      *
      * @param  list<TransactionRecordData>  $transactions
      * @param  list<PriceRecordData>  $prices
@@ -379,23 +380,39 @@ class ValuationCalculator
             return EvolutionSeriesData::empty();
         }
 
-        $perAssetTimelines = $this->perAssetInvestedTimelines($transactions);
+        $investedTimelines = $this->perAssetInvestedTimelines($transactions);
+        $quantityTimelines = $this->perAssetQuantityTimelines($transactions);
+
+        /** @var array<int, list<array{date: string, value: float}>> $priceTimelines */
+        $priceTimelines = [];
+        foreach ($prices as $price) {
+            $priceTimelines[$price->assetId][] = ['date' => $price->date, 'value' => $price->close];
+        }
+        foreach ($priceTimelines as &$entries) {
+            usort($entries, fn (array $a, array $b): int => $a['date'] <=> $b['date']);
+        }
+        unset($entries);
 
         $perAsset = [];
-        foreach ($perAssetTimelines as $assetId => $entries) {
-            $perAsset[] = new AssetInvestedSeriesData(
+        foreach ($investedTimelines as $assetId => $investedEntries) {
+            $qtyEntries = $quantityTimelines[$assetId] ?? [];
+            $priceEntries = $priceTimelines[$assetId] ?? [];
+
+            $perAsset[] = new AssetSeriesData(
                 assetId: $assetId,
                 name: '#'.$assetId,
-                invested: array_map(fn (string $day): float => round($this->valueAtDate($entries, $day), 2), $windowed->labels),
+                value: array_map(
+                    fn (string $day): float => round($this->valueAtDate($qtyEntries, $day) * $this->valueAtDate($priceEntries, $day), 2),
+                    $windowed->labels,
+                ),
+                invested: array_map(
+                    fn (string $day): float => round($this->valueAtDate($investedEntries, $day), 2),
+                    $windowed->labels,
+                ),
             );
         }
 
-        return new EvolutionSeriesData(
-            labels: $windowed->labels,
-            value: $windowed->valuations,
-            totalInvested: $windowed->invested,
-            perAsset: $perAsset,
-        );
+        return new EvolutionSeriesData(labels: $windowed->labels, perAsset: $perAsset);
     }
 
     /**
@@ -437,6 +454,33 @@ class ValuationCalculator
         }
 
         return $perAsset;
+    }
+
+    /**
+     * Timelines de quantité cumulée par asset (escalier sur les dates de transaction).
+     *
+     * @param  list<TransactionRecordData>  $transactions
+     * @return array<int, list<array{date: string, value: float}>>
+     */
+    private function perAssetQuantityTimelines(array $transactions): array
+    {
+        usort($transactions, fn (TransactionRecordData $a, TransactionRecordData $b) => ($a->date <=> $b->date)
+            ?: (($a->isSell ? 1 : 0) <=> ($b->isSell ? 1 : 0)));
+
+        /** @var array<int, list<array{date: string, value: float}>> $quantities */
+        $quantities = [];
+
+        foreach ($transactions as $transaction) {
+            $day = $transaction->date->format('Y-m-d');
+            $assetId = $transaction->assetId;
+            $quantities[$assetId] ??= [];
+            $previous = end($quantities[$assetId]);
+            $previousQty = $previous === false ? 0.0 : $previous['value'];
+            $delta = $transaction->isSell ? -$transaction->quantity : $transaction->quantity;
+            $quantities[$assetId][] = ['date' => $day, 'value' => $previousQty + $delta];
+        }
+
+        return $quantities;
     }
 
     /**

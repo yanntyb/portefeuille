@@ -2,7 +2,7 @@
 
 namespace App\Contexts\Valuation\Actions;
 
-use App\Contexts\Valuation\Datas\AssetInvestedSeriesData;
+use App\Contexts\Valuation\Datas\AssetSeriesData;
 use App\Contexts\Valuation\Datas\EvolutionSeriesData;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
 use App\Contexts\Valuation\Enums\ValuationGranularity;
@@ -43,19 +43,20 @@ class BuildEvolutionSeries
         $raw = $this->calculator->evolution($transactions, $prices, $range, $granularity);
 
         $names = $this->directory->namesFor(array_map(
-            fn (AssetInvestedSeriesData $serie): int => $serie->assetId,
+            fn (AssetSeriesData $serie): int => $serie->assetId,
             $raw->perAsset,
         ));
 
         $perAsset = array_map(
-            fn (AssetInvestedSeriesData $serie): AssetInvestedSeriesData => new AssetInvestedSeriesData(
+            fn (AssetSeriesData $serie): AssetSeriesData => new AssetSeriesData(
                 assetId: $serie->assetId,
                 name: $names[$serie->assetId] ?? $serie->name,
+                value: $serie->value,
                 invested: $serie->invested,
             ),
             $raw->perAsset,
         );
 
-        return new EvolutionSeriesData($raw->labels, $raw->value, $raw->totalInvested, $perAsset);
+        return new EvolutionSeriesData($raw->labels, $perAsset);
     }
 }
