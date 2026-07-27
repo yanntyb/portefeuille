@@ -190,9 +190,10 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
 <template>
     <Head title="Tableau de bord" />
 
-    <main class="min-h-screen overflow-x-hidden bg-background p-6 text-foreground">
+    <main class="min-h-screen overflow-x-hidden bg-background text-foreground">
         <div class="mx-auto flex max-w-6xl flex-col gap-6">
-            <section v-if="overview.holdings.length" class="flex flex-col gap-3">
+            <Card v-if="overview.holdings.length" :class="flatCard">
+                <CardContent class="flex flex-col gap-3">
                 <div class="flex flex-col gap-0.5">
                     <p class="text-sm text-muted-foreground">Valorisation</p>
                     <p class="text-2xl font-semibold">
@@ -229,9 +230,11 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
                         </div>
                     </div>
                 </Deferred>
-            </section>
+                </CardContent>
+            </Card>
 
-            <div v-if="overview.holdings.length" class="flex flex-wrap items-center gap-3">
+            <Card v-if="overview.holdings.length" :class="flatCard">
+                <CardContent class="flex flex-wrap items-center gap-3">
                 <div class="inline-flex rounded-md border border-border p-0.5">
                     <button
                         v-for="opt in rangeOptions"
@@ -256,7 +259,8 @@ const investedByAssetOptions = computed<ApexOptions>(() => ({
                         {{ opt.label }}
                     </button>
                 </div>
-            </div>
+                </CardContent>
+            </Card>
 
             <Card :class="[flatCard, '-mx-6 transition-opacity sm:mx-0', reloading ? 'opacity-50' : '']">
                 <CardHeader>
