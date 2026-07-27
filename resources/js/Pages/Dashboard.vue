@@ -249,15 +249,7 @@ const evolutionKey = computed<string>(() => {
                         </p>
                     </Deferred>
                 </CardContent>
-            </Card>
-
-            <section class="grid gap-4 lg:grid-cols-3">
-                <Card :class="[flatCard, 'min-w-0 lg:col-span-2']">
-                    <CardHeader>
-                        <CardTitle>Positions</CardTitle>
-                        <CardDescription>Détail de vos lignes</CardDescription>
-                    </CardHeader>
-                    <CardContent>
+                <CardContent>
                         <Table v-if="overview.holdings.length">
                             <TableHeader>
                                 <TableRow>
@@ -304,9 +296,9 @@ const evolutionKey = computed<string>(() => {
                             Aucune position pour le moment.
                         </p>
                     </CardContent>
-                </Card>
+            </Card>
 
-                <Card :class="flatCard">
+            <Card :class="flatCard">
                     <CardHeader>
                         <CardTitle>Répartition</CardTitle>
                         <CardDescription>Par type d'actif</CardDescription>
@@ -323,8 +315,7 @@ const evolutionKey = computed<string>(() => {
                             Pas de données de répartition.
                         </p>
                     </CardContent>
-                </Card>
-            </section>
+            </Card>
         </div>
     </main>
 </template>
