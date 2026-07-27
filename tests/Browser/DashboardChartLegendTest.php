@@ -40,8 +40,7 @@ it('renders every dashboard chart with the legend on the left', function () {
 
     $page->assertSee('Évolution')
         ->assertSee('Répartition')
-        ->assertSee('Valeur')
         ->assertSee('GLOBEX')
-        ->assertCount('.apx-legend-position-left', 2)
+        ->assertCount('.apx-legend-position-left', 1)
         ->assertNoJavaScriptErrors();
 });

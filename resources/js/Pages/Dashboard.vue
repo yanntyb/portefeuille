@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/table';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
 import { buildDonutOptions, buildEvolutionChart } from '@/lib/chart';
+import { Eye, EyeOff } from 'lucide-vue-next';
 
 interface HoldingLine {
     assetId: number;
@@ -59,9 +60,7 @@ interface Performance {
 
 interface EvolutionSeries {
     labels: string[];
-    value: number[];
-    totalInvested: number[];
-    perAsset: { name: string; invested: number[] }[];
+    perAsset: { assetId: number; name: string; value: number[]; invested: number[] }[];
 }
 
 const props = defineProps<{ overview: PortfolioOverview; performances?: Performance[]; evolutionSeries?: EvolutionSeries; valuationRange?: string; valuationGranularity?: string }>();
@@ -93,6 +92,18 @@ const selectedGranularity = ref<GranularityKey>(
     isGranularityKey(props.valuationGranularity) ? props.valuationGranularity : 'month',
 );
 const reloading = ref<boolean>(false);
+
+const hiddenAssetIds = ref<Set<number>>(new Set());
+
+const toggleAsset = (assetId: number): void => {
+    const next = new Set(hiddenAssetIds.value);
+    if (next.has(assetId)) {
+        next.delete(assetId);
+    } else {
+        next.add(assetId);
+    }
+    hiddenAssetIds.value = next;
+};
 
 const reloadSeries = (): void => {
     router.reload({
@@ -157,9 +168,8 @@ const hasEvolution = computed<boolean>(() => (props.evolutionSeries?.labels.leng
 const evolutionChart = computed(() =>
     buildEvolutionChart({
         labels: props.evolutionSeries?.labels ?? [],
-        value: props.evolutionSeries?.value ?? [],
-        totalInvested: props.evolutionSeries?.totalInvested ?? [],
         perAsset: props.evolutionSeries?.perAsset ?? [],
+        hiddenIds: hiddenAssetIds.value,
         valueFormatter: eur,
     }),
 );
@@ -272,6 +282,7 @@ const evolutionChart = computed(() =>
                         <Table v-if="overview.holdings.length">
                             <TableHeader>
                                 <TableRow>
+                                    <TableHead class="w-10"></TableHead>
                                     <TableHead>Actif</TableHead>
                                     <TableHead>Type</TableHead>
                                     <TableHead class="text-right">Quantité</TableHead>
@@ -282,7 +293,18 @@ const evolutionChart = computed(() =>
                             </TableHeader>
                             <TableBody>
                                 <TableRow v-for="(line, index) in overview.holdings" :key="index">
-                                    <TableCell class="font-medium">
+                                    <TableCell class="w-10">
+                                        <button
+                                            type="button"
+                                            class="text-muted-foreground transition-colors hover:text-foreground"
+                                            :aria-label="hiddenAssetIds.has(line.assetId) ? 'Afficher' : 'Masquer'"
+                                            @click="toggleAsset(line.assetId)"
+                                        >
+                                            <EyeOff v-if="hiddenAssetIds.has(line.assetId)" class="size-4" />
+                                            <Eye v-else class="size-4" />
+                                        </button>
+                                    </TableCell>
+                                    <TableCell class="font-medium" :class="hiddenAssetIds.has(line.assetId) ? 'opacity-40' : ''">
                                         <Link :href="`/instruments/${line.assetId}`" class="hover:underline">
                                             {{ line.assetName }}
                                             <span v-if="line.ticker" class="text-muted-foreground">({{ line.ticker }})</span>
