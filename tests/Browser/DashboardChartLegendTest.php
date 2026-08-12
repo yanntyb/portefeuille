@@ -38,7 +38,8 @@ it('renders the evolution chart without the allocation donut', function () {
 
     $page = visit('/');
 
-    $page->assertSee('Évolution')
+    $page->assertSee('Valeur de marché par titre')
+        ->assertDontSee('Évolution')
         ->assertDontSee('Répartition')
         ->assertSee('GLOBEX')
         ->assertCount('.apexcharts-canvas', 1)

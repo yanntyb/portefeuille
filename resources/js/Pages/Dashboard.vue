@@ -7,7 +7,6 @@ import {
     CardContent,
     CardDescription,
     CardHeader,
-    CardTitle,
 } from '@/components/ui/card';
 import {
     Table,
@@ -148,7 +147,6 @@ const evolutionKey = computed<string>(() => {
 
             <Card data-section="evolution" :class="[flatCard, 'transition-opacity sm:mx-0', reloading ? 'opacity-50' : '']">
                 <CardHeader>
-                    <CardTitle>Évolution</CardTitle>
                     <CardDescription>Valeur de marché par titre</CardDescription>
                     <div v-if="overview.holdings.length" class="flex flex-wrap items-center gap-3 pt-2">
                         <div class="inline-flex rounded-md border border-border p-0.5">
