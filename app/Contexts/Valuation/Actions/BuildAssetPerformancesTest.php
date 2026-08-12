@@ -28,10 +28,14 @@ it('builds YTD, monthly and one card per full year up to the first invest', func
         ->and(array_map(fn ($perf) => $perf->key, $performances))->toBe(['YTD', '1M', '3M', '6M', '1Y', '2Y', '3Y'])
         ->and(array_map(fn ($perf) => $perf->label, $performances))->toBe(['YTD', '1 mois', '3 mois', '6 mois', '1 an', '2 ans', '3 ans'])
         ->and($performances[0]->pct)->toBe(20.0)
-        ->and($performances[6]->pct)->toBe(20.0);
+        ->and($performances[6]->pct)->toBe(20.0)
+        ->and($performances[0]->startDate)->toBe('2026-01-01')
+        ->and($performances[0]->valueStart)->toBe(1000.0)
+        ->and($performances[0]->contributions)->toBe(0.0)
+        ->and($performances[0]->gain)->toBe(200.0);
 });
 
-it('shows only YTD and monthly cards when history is under a year', function () {
+it('keeps only the periods the price history covers', function () {
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->create();
@@ -45,7 +49,7 @@ it('shows only YTD and monthly cards when history is under a year', function () 
 
     $performances = app(BuildAssetPerformances::class)($user->id, $asset->id);
 
-    expect(array_map(fn ($perf) => $perf->key, $performances))->toBe(['YTD', '1M', '3M', '6M']);
+    expect(array_map(fn ($perf) => $perf->key, $performances))->toBe(['1M']);
 });
 
 it('returns no performances when the user has no transaction for the asset', function () {

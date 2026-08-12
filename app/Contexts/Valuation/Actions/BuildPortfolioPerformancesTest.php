@@ -34,7 +34,10 @@ it('aggregates two holdings into portfolio trailing performances', function () {
     // Historique 2024-01-01 -> 2026-07-01 => 2 années pleines.
     expect(array_map(fn ($perf) => $perf->key, $performances))->toBe(['YTD', '1M', '3M', '6M', '1Y', '2Y'])
         ->and($performances[0]->key)->toBe('YTD')
-        ->and($performances[5]->pct)->toBe(20.0);
+        ->and($performances[5]->pct)->toBe(20.0)
+        ->and($performances[0]->valueStart)->toBe(1500.0)
+        ->and($performances[0]->gain)->toBe(300.0)
+        ->and($performances[0]->contributions)->toBe(0.0);
 });
 
 it('returns no performances without any transaction', function () {

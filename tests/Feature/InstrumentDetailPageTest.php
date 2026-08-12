@@ -14,6 +14,7 @@ it('renders a held instrument sheet with its position and transactions', functio
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->create(['name' => 'ACME']);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-07-01', 'close' => 100]);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 80]);
     Holding::factory()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id, 'quantity' => 10, 'avg_cost' => 80]);
     Transaction::factory()->buy()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id, 'date' => '2026-01-01', 'quantity' => 10, 'unit_price' => 80]);
 
@@ -26,9 +27,10 @@ it('renders a held instrument sheet with its position and transactions', functio
             ->has('instrument.transactions', 1)
             ->has('performances', 4)
             ->where('performances.0.key', 'YTD')
+            ->where('performances.0.startDate', '2026-01-01')
             ->missing('priceHistory')
             ->loadDeferredProps(fn (Assert $reload) => $reload
-                ->has('priceHistory.labels', 1)
+                ->has('priceHistory.labels', 2)
             )
         );
 });

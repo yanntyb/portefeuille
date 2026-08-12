@@ -248,8 +248,9 @@ class ValuationCalculator
     }
 
     /**
-     * Perfs de position par période sur la série quotidienne : YTD, 1/3/6 mois,
-     * puis une card par année pleine jusqu'au premier jour de la série.
+     * Perfs de position par période sur la série quotidienne : YTD, 1/3/6 mois, puis une
+     * ligne par année pleine jusqu'au premier jour de la série. Les périodes que la série
+     * ne couvre pas sont absentes du résultat.
      *
      * @return list<PerformanceData>
      */
@@ -262,13 +263,11 @@ class ValuationCalculator
         $anchor = Carbon::parse($daily->labels[count($daily->labels) - 1]);
         $firstDay = $daily->labels[0];
 
-        $performances = [
-            new PerformanceData('YTD', 'YTD', $this->returnOverWindow($daily, $anchor->copy()->startOfYear()->format('Y-m-d'))?->pct),
-        ];
+        /** @var list<array{0: string, 1: string, 2: string}> $windows */
+        $windows = [['YTD', 'YTD', $anchor->copy()->startOfYear()->format('Y-m-d')]];
 
         foreach ([['1M', '1 mois', 1], ['3M', '3 mois', 3], ['6M', '6 mois', 6]] as [$key, $label, $months]) {
-            $boundary = $anchor->copy()->subMonthsNoOverflow($months)->format('Y-m-d');
-            $performances[] = new PerformanceData($key, $label, $this->returnOverWindow($daily, $boundary)?->pct);
+            $windows[] = [$key, $label, $anchor->copy()->subMonthsNoOverflow($months)->format('Y-m-d')];
         }
 
         $fullYears = 0;
@@ -277,11 +276,30 @@ class ValuationCalculator
         }
 
         for ($year = 1; $year <= $fullYears; $year++) {
-            $boundary = $anchor->copy()->subYearsNoOverflow($year)->format('Y-m-d');
-            $performances[] = new PerformanceData(
+            $windows[] = [
                 $year.'Y',
                 $year === 1 ? '1 an' : $year.' ans',
-                $this->returnOverWindow($daily, $boundary)?->pct,
+                $anchor->copy()->subYearsNoOverflow($year)->format('Y-m-d'),
+            ];
+        }
+
+        $performances = [];
+
+        foreach ($windows as [$key, $label, $boundary]) {
+            $window = $this->returnOverWindow($daily, $boundary);
+
+            if ($window === null) {
+                continue;
+            }
+
+            $performances[] = new PerformanceData(
+                key: $key,
+                label: $label,
+                startDate: $window->startDate,
+                valueStart: $window->valueStart,
+                contributions: $window->contributions,
+                gain: $window->pnl,
+                pct: $window->pct,
             );
         }
 

@@ -8,13 +8,14 @@ use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 
-it('explains both performance metrics through info dialogs', function () {
+it('explains the period performances through an info dialog', function () {
     // A legacy data migration seeds a hardcoded user; clear it so the controller resolves this user.
     User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->ofType(InstrumentType::Stock)->create(['name' => 'ACME', 'ticker' => 'ACM']);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => now(), 'close' => 100]);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => now()->startOfYear(), 'close' => 80]);
     Holding::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
@@ -34,13 +35,6 @@ it('explains both performance metrics through info dialogs', function () {
     $this->actingAs($user);
 
     $page = visit('/');
-
-    $page->assertSee('Investi + gain / perte')
-        ->click('[aria-label="Comment lire le gain global"]')
-        ->assertSee('Comment lire le gain global')
-        ->assertSee('tout l\'argent placé depuis le début')
-        ->press('Fermer')
-        ->assertDontSee('tout l\'argent placé depuis le début');
 
     $page->assertSee('Performance par période')
         ->click('[aria-label="Comment lire les performances par période"]')

@@ -124,6 +124,10 @@ it('defers the portfolio performances and loads them on demand', function () {
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->has('performances')
                 ->where('performances.0.key', 'YTD')
+                ->where('performances.0.startDate', '2026-01-01')
+                ->has('performances.0.gain')
+                ->has('performances.0.contributions')
+                ->has('performances.0.valueStart')
             )
         );
 });
