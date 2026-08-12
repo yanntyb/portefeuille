@@ -54,36 +54,39 @@ defineProps<{ variant: "global" | "periods" }>()
       <template v-else>
         <DialogHeader>
           <DialogTitle>Comment lire les performances par période</DialogTitle>
-          <DialogDescription>Le tableau YTD, 1 mois, … 4 ans.</DialogDescription>
+          <DialogDescription>Le tableau YTD, 1 mois, … Max.</DialogDescription>
         </DialogHeader>
         <div class="flex flex-col gap-3 text-sm text-foreground">
           <p>
             Chaque ligne montre la <strong>performance du portefeuille sur une période</strong>
             (depuis le début d'année, le dernier mois, la dernière année, etc.).
+            <strong>Max</strong> couvre tout l'historique, depuis le premier achat.
           </p>
           <p class="rounded-md bg-muted px-3 py-2 font-mono text-xs">
-            (valeur fin - valeur début - versements de la période) / valeur au début
+            chaque jour : (valeur du jour - valeur de la veille - versements du jour) / valeur de la veille
+            <br />
+            puis on enchaîne les jours de la période
           </p>
           <p>
             On <strong>retire les versements</strong> faits pendant la période (tes achats
             programmés) pour ne mesurer que la vraie performance, pas l'argent ajouté.
+            Comme le calcul se fait jour par jour, <strong>la date de tes versements ne
+            change rien</strong> au pourcentage.
           </p>
           <p>
             La colonne <strong>Apports</strong> montre justement les versements de la période
             qui sont retirés du calcul, et <strong>Gain</strong> le résultat en euros une fois
-            ces versements exclus. <strong>Valeur début</strong> est le dénominateur, pris au
-            jour indiqué dans <strong>Depuis</strong>.
+            ces versements exclus. <strong>Valeur début</strong> est la valorisation au jour
+            indiqué dans <strong>Depuis</strong>.
           </p>
           <p>
-            C'est pour ça que ça diffère du % global : ici le dénominateur est la valeur
-            <strong>au début de la période</strong> (pas le coût total), et les versements
-            sont exclus.
+            C'est pour ça que ça diffère du % global : celui-ci compare le gain au coût total
+            de tes positions, alors qu'ici on suit la variation de valeur d'un jour au
+            suivant, versements exclus.
           </p>
           <p class="text-muted-foreground">
-            Ces chiffres sont <strong>cumulés, pas annualisés</strong> : « 4 ans +640 % »
-            veut dire ×7,4 par rapport à il y a 4 ans, pas 640 % par an. Ils paraissent
-            énormes sur les longues périodes car au démarrage le portefeuille était petit
-            (petite base de départ = grand pourcentage).
+            Ces chiffres sont <strong>cumulés, pas annualisés</strong> : « Max +640 % » veut
+            dire ×7,4 depuis le premier achat, pas 640 % par an.
           </p>
         </div>
       </template>

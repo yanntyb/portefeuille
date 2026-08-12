@@ -42,5 +42,6 @@ it('explains the period performances through an info dialog', function () {
         ->assertSee('cumulés, pas annualisés')
         ->assertSee('Apports')
         ->assertSee('les versements de la période')
+        ->assertSee('la date de tes versements ne change rien')
         ->assertNoJavascriptErrors();
 });

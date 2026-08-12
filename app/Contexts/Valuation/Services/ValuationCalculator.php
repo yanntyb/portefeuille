@@ -168,10 +168,12 @@ class ValuationCalculator
     }
 
     /**
-     * Rendement de la position sur la fenêtre [$boundary, dernier jour], hors apports
-     * (Modified-Dietz simplifié) : (valeur_fin - valeur_début - apports) / valeur_début.
-     * Les apports sont l'évolution de l'investi cumulé sur la fenêtre. Retourne null si
-     * la série ne remonte pas jusqu'à $boundary ou si la valeur de début est nulle.
+     * Rendement de la position sur la fenêtre [$boundary, dernier jour], hors apports.
+     * Le pourcentage est un TWR (time-weighted return) : les rendements quotidiens
+     * (valeur_jour - valeur_veille - flux_jour) / valeur_veille sont enchaînés, donc la
+     * date des apports n'influence pas le résultat. Les flux sont l'évolution de l'investi
+     * cumulé, et les pas où la veille valait zéro sont ignorés. Retourne null si la série
+     * ne remonte pas jusqu'à $boundary ou si la valeur de début est nulle.
      */
     public function returnOverWindow(ValuationSeriesData $daily, string $boundary): ?PerformanceWindowData
     {
@@ -197,12 +199,25 @@ class ValuationCalculator
         $contributions = $daily->invested[$last] - $daily->invested[$startIndex];
         $pnl = ($daily->valuations[$last] - $valueStart) - $contributions;
 
+        $growth = 1.0;
+
+        for ($i = $startIndex + 1; $i <= $last; $i++) {
+            $previousValue = $daily->valuations[$i - 1];
+
+            if ($previousValue <= 0.0) {
+                continue;
+            }
+
+            $flow = $daily->invested[$i] - $daily->invested[$i - 1];
+            $growth *= 1 + ($daily->valuations[$i] - $previousValue - $flow) / $previousValue;
+        }
+
         return new PerformanceWindowData(
             startDate: $daily->labels[$startIndex],
             valueStart: $valueStart,
             contributions: $contributions,
             pnl: $pnl,
-            pct: $pnl / $valueStart * 100,
+            pct: round(($growth - 1) * 100, 4),
         );
     }
 

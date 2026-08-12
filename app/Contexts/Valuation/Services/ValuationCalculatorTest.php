@@ -257,8 +257,9 @@ it('keeps every point when granularity is Day', function () {
     expect($result->labels)->toBe($labels);
 });
 
-it('computes the window return excluding contributions', function () {
-    // Début 1000, apport de 200 pendant la fenêtre, fin 1400 => (1400 - 1000 - 200) / 1000 = +20%.
+it('computes the window return by chaining the daily returns', function () {
+    // Pas 1 : (1250 - 1000 - 200) / 1000 = +5 %. Pas 2 : (1400 - 1250) / 1250 = +12 %.
+    // TWR = 1,05 × 1,12 - 1 = +17,6 %.
     $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
         ['2026-01-01', '2026-02-01', '2026-03-01'],
         [1000.0, 1250.0, 1400.0],
@@ -266,7 +267,38 @@ it('computes the window return excluding contributions', function () {
         [100.0, 110.0, 120.0],
     );
 
-    expect((new ValuationCalculator)->returnOverWindow($daily, '2026-01-01')->pct)->toBe(20.0);
+    expect((new ValuationCalculator)->returnOverWindow($daily, '2026-01-01')->pct)->toBe(17.6);
+});
+
+it('does not let the contribution date inflate the performance', function () {
+    // Marché +10 % deux jours de suite, avec un apport de 10 000 € le premier jour.
+    // TWR = 1,1 × 1,1 - 1 = +21 %, là où gain / valeur de début donnerait +1021 %.
+    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+        ['2026-01-01', '2026-01-02', '2026-01-03'],
+        [100.0, 10110.0, 11121.0],
+        [100.0, 10100.0, 10100.0],
+        [1.0, 1.1, 1.21],
+    );
+
+    $window = (new ValuationCalculator)->returnOverWindow($daily, '2026-01-01');
+
+    expect($window->pct)->toBe(21.0)
+        ->and($window->valueStart)->toBe(100.0)
+        ->and($window->contributions)->toBe(10000.0)
+        ->and($window->pnl)->toBe(1021.0);
+});
+
+it('skips the steps where the position was empty', function () {
+    // Tout vendu au prix de revient les jours 2 et 3, racheté au prix de revient le jour 4 :
+    // aucune division par zéro, et aucune performance à compter.
+    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+        ['2026-01-01', '2026-01-02', '2026-01-03', '2026-01-04'],
+        [1000.0, 0.0, 0.0, 1200.0],
+        [1000.0, 0.0, 0.0, 1200.0],
+        [100.0, 0.0, 0.0, 120.0],
+    );
+
+    expect((new ValuationCalculator)->returnOverWindow($daily, '2026-01-01')->pct)->toBe(0.0);
 });
 
 it('exposes the window start, value, contributions and gain', function () {
@@ -283,7 +315,7 @@ it('exposes the window start, value, contributions and gain', function () {
         ->and($window->valueStart)->toBe(1000.0)
         ->and($window->contributions)->toBe(200.0)
         ->and($window->pnl)->toBe(200.0)
-        ->and($window->pct)->toBe(20.0);
+        ->and($window->pct)->toBe(17.6);
 });
 
 it('anchors the window start on the last day at or before the boundary', function () {
