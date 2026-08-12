@@ -7,6 +7,7 @@ use App\Contexts\Valuation\Datas\AssetSeriesData;
 use App\Contexts\Valuation\Datas\EvolutionSeriesData;
 use App\Contexts\Valuation\Datas\InvestedByAssetSeriesData;
 use App\Contexts\Valuation\Datas\PerformanceData;
+use App\Contexts\Valuation\Datas\PerformanceWindowData;
 use App\Contexts\Valuation\Datas\PriceRecordData;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
 use App\Contexts\Valuation\Datas\ValuationSeriesData;
@@ -172,7 +173,7 @@ class ValuationCalculator
      * Les apports sont l'évolution de l'investi cumulé sur la fenêtre. Retourne null si
      * la série ne remonte pas jusqu'à $boundary ou si la valeur de début est nulle.
      */
-    public function returnOverWindow(ValuationSeriesData $daily, string $boundary): ?float
+    public function returnOverWindow(ValuationSeriesData $daily, string $boundary): ?PerformanceWindowData
     {
         $startIndex = null;
         foreach ($daily->labels as $i => $label) {
@@ -196,7 +197,13 @@ class ValuationCalculator
         $contributions = $daily->invested[$last] - $daily->invested[$startIndex];
         $pnl = ($daily->valuations[$last] - $valueStart) - $contributions;
 
-        return $pnl / $valueStart * 100;
+        return new PerformanceWindowData(
+            startDate: $daily->labels[$startIndex],
+            valueStart: $valueStart,
+            contributions: $contributions,
+            pnl: $pnl,
+            pct: $pnl / $valueStart * 100,
+        );
     }
 
     /**
@@ -256,12 +263,12 @@ class ValuationCalculator
         $firstDay = $daily->labels[0];
 
         $performances = [
-            new PerformanceData('YTD', 'YTD', $this->returnOverWindow($daily, $anchor->copy()->startOfYear()->format('Y-m-d'))),
+            new PerformanceData('YTD', 'YTD', $this->returnOverWindow($daily, $anchor->copy()->startOfYear()->format('Y-m-d'))?->pct),
         ];
 
         foreach ([['1M', '1 mois', 1], ['3M', '3 mois', 3], ['6M', '6 mois', 6]] as [$key, $label, $months]) {
             $boundary = $anchor->copy()->subMonthsNoOverflow($months)->format('Y-m-d');
-            $performances[] = new PerformanceData($key, $label, $this->returnOverWindow($daily, $boundary));
+            $performances[] = new PerformanceData($key, $label, $this->returnOverWindow($daily, $boundary)?->pct);
         }
 
         $fullYears = 0;
@@ -274,7 +281,7 @@ class ValuationCalculator
             $performances[] = new PerformanceData(
                 $year.'Y',
                 $year === 1 ? '1 an' : $year.' ans',
-                $this->returnOverWindow($daily, $boundary),
+                $this->returnOverWindow($daily, $boundary)?->pct,
             );
         }
 

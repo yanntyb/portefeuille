@@ -266,7 +266,24 @@ it('computes the window return excluding contributions', function () {
         [100.0, 110.0, 120.0],
     );
 
-    expect((new ValuationCalculator)->returnOverWindow($daily, '2026-01-01'))->toBe(20.0);
+    expect((new ValuationCalculator)->returnOverWindow($daily, '2026-01-01')->pct)->toBe(20.0);
+});
+
+it('exposes the window start, value, contributions and gain', function () {
+    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+        ['2026-01-01', '2026-02-01', '2026-03-01'],
+        [1000.0, 1250.0, 1400.0],
+        [1000.0, 1200.0, 1200.0],
+        [100.0, 110.0, 120.0],
+    );
+
+    $window = (new ValuationCalculator)->returnOverWindow($daily, '2026-01-01');
+
+    expect($window->startDate)->toBe('2026-01-01')
+        ->and($window->valueStart)->toBe(1000.0)
+        ->and($window->contributions)->toBe(200.0)
+        ->and($window->pnl)->toBe(200.0)
+        ->and($window->pct)->toBe(20.0);
 });
 
 it('anchors the window start on the last day at or before the boundary', function () {
@@ -278,7 +295,12 @@ it('anchors the window start on the last day at or before the boundary', functio
     );
 
     // Boundary 2026-02-01 => début pris au 2026-01-15 (valeur 2000) : (3000 - 2000) / 2000 = +50%.
-    expect((new ValuationCalculator)->returnOverWindow($daily, '2026-02-01'))->toBe(50.0);
+    $window = (new ValuationCalculator)->returnOverWindow($daily, '2026-02-01');
+
+    expect($window->pct)->toBe(50.0)
+        ->and($window->startDate)->toBe('2026-01-15')
+        ->and($window->valueStart)->toBe(2000.0)
+        ->and($window->contributions)->toBe(0.0);
 });
 
 it('returns null when the series does not reach the boundary', function () {
