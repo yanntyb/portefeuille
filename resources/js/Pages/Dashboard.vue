@@ -2,7 +2,6 @@
 import { computed, ref } from 'vue';
 import { Deferred, Head, Link, router } from '@inertiajs/vue3';
 import VueApexCharts from 'vue3-apexcharts';
-import type { ApexOptions } from 'apexcharts';
 import {
     Card,
     CardContent,
@@ -20,7 +19,7 @@ import {
 } from '@/components/ui/table';
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
-import { buildDonutOptions, buildEvolutionChart } from '@/lib/chart';
+import { buildEvolutionChart } from '@/lib/chart';
 import { Eye, EyeOff } from 'lucide-vue-next';
 
 interface HoldingLine {
@@ -37,20 +36,12 @@ interface HoldingLine {
     gainPct: number | null;
 }
 
-interface AllocationSlice {
-    label: string;
-    value: number;
-    pct: number;
-    color: string;
-}
-
 interface PortfolioOverview {
     totalValue: number;
     totalCost: number;
     totalGain: number;
     totalGainPct: number;
     holdings: HoldingLine[];
-    allocation: AllocationSlice[];
 }
 
 interface Performance {
@@ -132,18 +123,6 @@ const gainClass = (value: number | null): string =>
         : value > 0
           ? 'text-emerald-600 dark:text-emerald-400'
           : 'text-red-600 dark:text-red-400';
-
-const hasAllocation = computed<boolean>(() => props.overview.allocation.length > 0);
-
-const allocationSeries = computed<number[]>(() => props.overview.allocation.map((slice) => slice.value));
-
-const allocationOptions = computed<ApexOptions>(() =>
-    buildDonutOptions({
-        labels: props.overview.allocation.map((slice) => slice.label),
-        colors: props.overview.allocation.map((slice) => slice.color),
-        valueFormatter: eur,
-    }),
-);
 
 const hasEvolution = computed<boolean>(() => (props.evolutionSeries?.labels.length ?? 0) > 0);
 
@@ -297,25 +276,6 @@ const evolutionKey = computed<string>(() => {
                         </Table>
                         <p v-else class="py-8 text-center text-sm text-muted-foreground">
                             Aucune position pour le moment.
-                        </p>
-                    </CardContent>
-            </Card>
-
-            <Card :class="flatCard">
-                    <CardHeader>
-                        <CardTitle>Répartition</CardTitle>
-                        <CardDescription>Par type d'actif</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <VueApexCharts
-                            v-if="hasAllocation"
-                            type="donut"
-                            height="300"
-                            :options="allocationOptions"
-                            :series="allocationSeries"
-                        />
-                        <p v-else class="py-8 text-center text-sm text-muted-foreground">
-                            Pas de données de répartition.
                         </p>
                     </CardContent>
             </Card>

@@ -172,28 +172,3 @@ export function buildEvolutionChart({
 
     return { series, options };
 }
-
-type DonutOptionsInput = {
-    labels: string[];
-    colors: string[];
-    valueFormatter: (value: number) => string;
-    legendPosition?: 'left' | 'top' | 'bottom' | 'right';
-};
-
-export function buildDonutOptions({
-    labels,
-    colors,
-    valueFormatter,
-    legendPosition = 'left',
-}: DonutOptionsInput): ApexOptions {
-    return {
-        chart: { fontFamily: 'inherit' },
-        labels,
-        colors,
-        legend: { position: legendPosition, labels: { colors: '#fff' } },
-        dataLabels: { enabled: true, formatter: (value: number): string => `${Math.round(Number(value))}%` },
-        stroke: { width: 0 },
-        tooltip: { y: { formatter: (value: number): string => valueFormatter(value) } },
-        responsive: LEGEND_BELOW_ON_MOBILE,
-    };
-}

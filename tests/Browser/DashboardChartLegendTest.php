@@ -8,7 +8,7 @@ use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 
-it('renders every dashboard chart with the legend on the left', function () {
+it('renders the evolution chart without the allocation donut', function () {
     // A legacy data migration seeds a hardcoded user; clear it so the controller resolves this user.
     User::query()->delete();
     $user = User::factory()->create();
@@ -39,8 +39,8 @@ it('renders every dashboard chart with the legend on the left', function () {
     $page = visit('/');
 
     $page->assertSee('Évolution')
-        ->assertSee('Répartition')
+        ->assertDontSee('Répartition')
         ->assertSee('GLOBEX')
-        ->assertCount('.apx-legend-position-left', 1)
+        ->assertCount('.apexcharts-canvas', 1)
         ->assertNoJavaScriptErrors();
 });
