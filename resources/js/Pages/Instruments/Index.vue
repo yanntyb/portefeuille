@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
 import {
     Card,
     CardContent,
@@ -38,6 +39,8 @@ const eur = (value: number | null): string =>
 
 <template>
     <Head title="Instruments" />
+
+    <AppBreadcrumb :items="[{ label: 'Tableau de bord', href: '/' }, { label: 'Instruments' }]" />
 
     <main class="min-h-screen bg-background p-6 text-foreground">
         <div class="mx-auto flex max-w-6xl flex-col gap-6">

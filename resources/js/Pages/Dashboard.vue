@@ -18,6 +18,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
 import { buildDonutOptions, buildEvolutionChart } from '@/lib/chart';
 import { Eye, EyeOff } from 'lucide-vue-next';
@@ -167,6 +168,8 @@ const evolutionKey = computed<string>(() => {
 
 <template>
     <Head title="Tableau de bord" />
+
+    <AppBreadcrumb :items="[{ label: 'Tableau de bord' }]" />
 
     <main class="min-h-screen overflow-x-hidden bg-background text-foreground">
         <div class="mx-auto flex max-w-6xl flex-col gap-6">

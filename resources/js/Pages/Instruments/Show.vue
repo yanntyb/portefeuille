@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Deferred, Head, Link, router } from '@inertiajs/vue3';
+import { Deferred, Head, router } from '@inertiajs/vue3';
 import VueApexCharts from 'vue3-apexcharts';
 import type { ApexOptions } from 'apexcharts';
 import {
@@ -18,6 +18,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
 import { buildTimeSeriesOptions } from '@/lib/chart';
 
 interface Position {
@@ -212,10 +213,17 @@ const positionChartOptions = computed<ApexOptions>(() => ({
 <template>
     <Head :title="props.instrument.name" />
 
+    <AppBreadcrumb
+        :items="[
+            { label: 'Tableau de bord', href: '/' },
+            { label: 'Instruments', href: '/instruments' },
+            { label: props.instrument.name },
+        ]"
+    />
+
     <main class="min-h-screen overflow-x-hidden bg-background p-6 text-foreground">
         <div class="mx-auto flex max-w-6xl flex-col gap-6">
             <header class="flex flex-col gap-1">
-                <Link href="/instruments" class="text-sm text-muted-foreground hover:underline">← Instruments</Link>
                 <h1 class="text-2xl font-semibold">
                     {{ props.instrument.name }}
                     <span v-if="props.instrument.ticker" class="text-muted-foreground">({{ props.instrument.ticker }})</span>
