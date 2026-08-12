@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/table';
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
+import PerformanceTable from '@/components/PerformanceTable.vue';
 import { buildEvolutionChart } from '@/lib/chart';
 import { eur as formatEur, gainClass, pct } from '@/lib/format';
 import type { Performance } from '@/lib/performance';
@@ -147,10 +148,8 @@ const evolutionKey = computed<string>(() => {
 
                     <Deferred data="performances">
                         <template #fallback>
-                            <div class="-mx-6 overflow-x-hidden px-6">
-                                <div class="flex min-w-max gap-2">
-                                    <div v-for="n in 6" :key="n" class="h-[52px] w-[64px] animate-pulse rounded-md bg-muted"></div>
-                                </div>
+                            <div class="flex flex-col gap-2">
+                                <div v-for="n in 5" :key="n" class="h-8 w-full animate-pulse rounded-md bg-muted"></div>
                             </div>
                         </template>
 
@@ -159,18 +158,7 @@ const evolutionKey = computed<string>(() => {
                                 <p class="text-sm text-muted-foreground">Performance par période</p>
                                 <PerformanceInfoDialog variant="periods" />
                             </div>
-                            <div class="-mx-6 overflow-x-auto px-6">
-                                <div class="flex min-w-max gap-2">
-                                    <div
-                                        v-for="perf in performances"
-                                        :key="perf.key"
-                                        class="flex min-w-[64px] flex-col gap-0.5 rounded-md border border-border px-3 py-2"
-                                    >
-                                        <span class="text-xs text-muted-foreground">{{ perf.label }}</span>
-                                        <span class="text-sm font-medium" :class="gainClass(perf.pct)">{{ pct(perf.pct) }}</span>
-                                    </div>
-                                </div>
-                            </div>
+                            <PerformanceTable :performances="performances" :currency-digits="0" />
                         </div>
                     </Deferred>
                 </CardContent>

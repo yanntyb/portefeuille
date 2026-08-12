@@ -19,6 +19,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
+import PerformanceTable from '@/components/PerformanceTable.vue';
 import { buildTimeSeriesOptions } from '@/lib/chart';
 import { eur, gainClass, pct } from '@/lib/format';
 import type { Performance } from '@/lib/performance';
@@ -228,18 +229,7 @@ const positionChartOptions = computed<ApexOptions>(() => ({
                     </p>
                 </div>
 
-                <div v-if="props.performances.length" class="-mx-6 overflow-x-auto px-6">
-                    <div class="flex min-w-max gap-2">
-                        <div
-                            v-for="perf in props.performances"
-                            :key="perf.key"
-                            class="flex min-w-[64px] flex-col gap-0.5 rounded-md border border-border px-3 py-2"
-                        >
-                            <span class="text-xs text-muted-foreground">{{ perf.label }}</span>
-                            <span class="text-sm font-medium" :class="gainClass(perf.pct)">{{ pct(perf.pct) }}</span>
-                        </div>
-                    </div>
-                </div>
+                <PerformanceTable v-if="props.performances.length" :performances="props.performances" />
             </section>
 
             <section v-if="hasPosition" class="flex flex-col gap-4">
