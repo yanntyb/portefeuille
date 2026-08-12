@@ -237,11 +237,11 @@ const evolutionKey = computed<string>(() => {
                                 <TableRow>
                                     <TableHead class="w-10"></TableHead>
                                     <TableHead>Actif</TableHead>
+                                    <TableHead class="text-right">Valeur</TableHead>
+                                    <TableHead class="text-right">+/-</TableHead>
                                     <TableHead>Type</TableHead>
                                     <TableHead class="text-right">Quantité</TableHead>
                                     <TableHead class="text-right">Dernier prix</TableHead>
-                                    <TableHead class="text-right">Valeur</TableHead>
-                                    <TableHead class="text-right">+/-</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -263,14 +263,14 @@ const evolutionKey = computed<string>(() => {
                                             <span v-if="line.ticker" class="text-muted-foreground">({{ line.ticker }})</span>
                                         </Link>
                                     </TableCell>
+                                    <TableCell class="text-right">{{ eur(line.marketValue) }}</TableCell>
+                                    <TableCell class="text-right" :class="gainClass(line.gain)">{{ pct(line.gainPct) }}</TableCell>
                                     <TableCell>{{ line.typeLabel }}</TableCell>
                                     <TableCell class="text-right">{{ line.quantity }}</TableCell>
                                     <TableCell class="text-right">
                                         <span v-if="line.lastPrice === null" class="text-muted-foreground" title="Prix indisponible">N/D</span>
                                         <span v-else>{{ eur(line.lastPrice) }}</span>
                                     </TableCell>
-                                    <TableCell class="text-right">{{ eur(line.marketValue) }}</TableCell>
-                                    <TableCell class="text-right" :class="gainClass(line.gain)">{{ pct(line.gainPct) }}</TableCell>
                                 </TableRow>
                             </TableBody>
                         </Table>
