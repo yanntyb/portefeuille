@@ -25,9 +25,10 @@ it('renders a held instrument sheet with its position and transactions', functio
             ->where('instrument.name', 'ACME')
             ->where('instrument.position.marketValue', fn ($v) => (float) $v === 1000.0)
             ->has('instrument.transactions', 1)
-            ->has('performances', 4)
+            ->has('performances', 5)
             ->where('performances.0.key', 'YTD')
             ->where('performances.0.startDate', '2026-01-01')
+            ->where('performances.4.key', 'MAX')
             ->missing('priceHistory')
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->has('priceHistory.labels', 2)

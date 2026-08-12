@@ -44,11 +44,15 @@ it('renders the period performances as a table', function () {
         )
         ->assertScript(
             "document.querySelectorAll('[data-testid=performance-table] tbody tr').length",
-            4,
+            5,
         )
         ->assertScript(
             "document.querySelector('[data-testid=performance-table] tbody tr td').textContent.trim()",
             'YTD',
+        )
+        ->assertScript(
+            "document.querySelector('[data-testid=performance-table] tbody tr:last-child td').textContent.trim()",
+            'Max',
         )
         ->assertNoJavaScriptErrors();
 });

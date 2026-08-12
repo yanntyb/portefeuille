@@ -248,9 +248,10 @@ class ValuationCalculator
     }
 
     /**
-     * Perfs de position par période sur la série quotidienne : YTD, 1/3/6 mois, puis une
-     * ligne par année pleine jusqu'au premier jour de la série. Les périodes que la série
-     * ne couvre pas sont absentes du résultat.
+     * Perfs de position par période sur la série quotidienne : YTD, 1/3/6 mois, une ligne
+     * par année pleine, puis Max depuis le premier jour de la série. Max remplace la
+     * dernière année pleine, qui partirait presque du même jour. Les périodes que la
+     * série ne couvre pas sont absentes du résultat.
      *
      * @return list<PerformanceData>
      */
@@ -275,13 +276,15 @@ class ValuationCalculator
             $fullYears++;
         }
 
-        for ($year = 1; $year <= $fullYears; $year++) {
+        for ($year = 1; $year < $fullYears; $year++) {
             $windows[] = [
                 $year.'Y',
                 $year === 1 ? '1 an' : $year.' ans',
                 $anchor->copy()->subYearsNoOverflow($year)->format('Y-m-d'),
             ];
         }
+
+        $windows[] = ['MAX', 'Max', $firstDay];
 
         $performances = [];
 

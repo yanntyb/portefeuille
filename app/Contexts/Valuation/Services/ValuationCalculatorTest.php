@@ -325,7 +325,7 @@ it('returns null when the starting value is zero', function () {
     expect((new ValuationCalculator)->returnOverWindow($daily, '2026-01-01'))->toBeNull();
 });
 
-it('builds trailing performances: YTD, monthly, then one row per full year', function () {
+it('builds trailing performances: YTD, monthly, one row per full year, then Max', function () {
     $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
         ['2023-01-01', '2023-07-01', '2024-07-01', '2025-07-01', '2026-01-01', '2026-04-01', '2026-06-01', '2026-07-01'],
         [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1200.0],
@@ -335,14 +335,37 @@ it('builds trailing performances: YTD, monthly, then one row per full year', fun
 
     $performances = (new ValuationCalculator)->trailingPerformances($daily);
 
-    expect(array_map(fn ($perf) => $perf->key, $performances))->toBe(['YTD', '1M', '3M', '6M', '1Y', '2Y', '3Y'])
-        ->and(array_map(fn ($perf) => $perf->label, $performances))->toBe(['YTD', '1 mois', '3 mois', '6 mois', '1 an', '2 ans', '3 ans'])
+    expect(array_map(fn ($perf) => $perf->key, $performances))->toBe(['YTD', '1M', '3M', '6M', '1Y', '2Y', 'MAX'])
+        ->and(array_map(fn ($perf) => $perf->label, $performances))->toBe(['YTD', '1 mois', '3 mois', '6 mois', '1 an', '2 ans', 'Max'])
         ->and($performances[0]->pct)->toBe(20.0)
         ->and($performances[6]->pct)->toBe(20.0)
         ->and($performances[0]->startDate)->toBe('2026-01-01')
         ->and($performances[0]->valueStart)->toBe(1000.0)
         ->and($performances[0]->contributions)->toBe(0.0)
-        ->and($performances[0]->gain)->toBe(200.0);
+        ->and($performances[0]->gain)->toBe(200.0)
+        ->and($performances[6]->startDate)->toBe('2023-01-01');
+});
+
+it('starts the Max window on the first day of the series', function () {
+    // Trois ans pleins d'historique : la ligne « 3 ans » est remplacée par Max, qui part
+    // du 2023-01-01 (valeur 500) au lieu du 2023-07-01 que « 3 ans » aurait pris.
+    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+        ['2023-01-01', '2023-07-01', '2024-07-01', '2025-07-01', '2026-07-01'],
+        [500.0, 1000.0, 1000.0, 1000.0, 1200.0],
+        [500.0, 500.0, 500.0, 500.0, 500.0],
+        [50.0, 100.0, 100.0, 100.0, 120.0],
+    );
+
+    $performances = (new ValuationCalculator)->trailingPerformances($daily);
+    $max = $performances[count($performances) - 1];
+
+    expect($max->key)->toBe('MAX')
+        ->and($max->label)->toBe('Max')
+        ->and($max->startDate)->toBe('2023-01-01')
+        ->and($max->valueStart)->toBe(500.0)
+        ->and($max->contributions)->toBe(0.0)
+        ->and($max->gain)->toBe(700.0)
+        ->and($max->pct)->toBe(140.0);
 });
 
 it('omits the periods the series does not cover', function () {
@@ -356,8 +379,9 @@ it('omits the periods the series does not cover', function () {
 
     $performances = (new ValuationCalculator)->trailingPerformances($daily);
 
-    expect(array_map(fn ($perf) => $perf->key, $performances))->toBe(['1M'])
-        ->and($performances[0]->startDate)->toBe('2026-05-01');
+    expect(array_map(fn ($perf) => $perf->key, $performances))->toBe(['1M', 'MAX'])
+        ->and($performances[0]->startDate)->toBe('2026-05-01')
+        ->and($performances[1]->startDate)->toBe('2026-05-01');
 });
 
 it('returns no trailing performances for an empty series', function () {

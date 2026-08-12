@@ -31,9 +31,10 @@ it('aggregates two holdings into portfolio trailing performances', function () {
     $performances = app(BuildPortfolioPerformances::class)($user->id);
 
     // Portefeuille début 2026-07-01: (10+5)*100 = 1500 ; fin (10+5)*120 = 1800.
-    // Historique 2024-01-01 -> 2026-07-01 => 2 années pleines.
-    expect(array_map(fn ($perf) => $perf->key, $performances))->toBe(['YTD', '1M', '3M', '6M', '1Y', '2Y'])
+    // Historique 2024-01-01 -> 2026-07-01 => 2 années pleines, la 2e remplacée par Max.
+    expect(array_map(fn ($perf) => $perf->key, $performances))->toBe(['YTD', '1M', '3M', '6M', '1Y', 'MAX'])
         ->and($performances[0]->key)->toBe('YTD')
+        ->and($performances[5]->startDate)->toBe('2024-01-01')
         ->and($performances[5]->pct)->toBe(20.0)
         ->and($performances[0]->valueStart)->toBe(1500.0)
         ->and($performances[0]->gain)->toBe(300.0)

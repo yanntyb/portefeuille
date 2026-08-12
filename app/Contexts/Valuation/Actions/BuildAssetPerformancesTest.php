@@ -7,7 +7,7 @@ use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 use App\Contexts\Valuation\Actions\BuildAssetPerformances;
 
-it('builds YTD, monthly and one card per full year up to the first invest', function () {
+it('builds YTD, monthly, yearly and Max rows up to the first invest', function () {
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->create();
@@ -23,12 +23,13 @@ it('builds YTD, monthly and one card per full year up to the first invest', func
 
     $performances = app(BuildAssetPerformances::class)($user->id, $asset->id);
 
-    // Historique 2023-01-01 -> 2026-07-01 => 3 années pleines.
+    // Historique 2023-01-01 -> 2026-07-01 => 3 années pleines, la 3e remplacée par Max.
     expect($performances)->toHaveCount(7)
-        ->and(array_map(fn ($perf) => $perf->key, $performances))->toBe(['YTD', '1M', '3M', '6M', '1Y', '2Y', '3Y'])
-        ->and(array_map(fn ($perf) => $perf->label, $performances))->toBe(['YTD', '1 mois', '3 mois', '6 mois', '1 an', '2 ans', '3 ans'])
+        ->and(array_map(fn ($perf) => $perf->key, $performances))->toBe(['YTD', '1M', '3M', '6M', '1Y', '2Y', 'MAX'])
+        ->and(array_map(fn ($perf) => $perf->label, $performances))->toBe(['YTD', '1 mois', '3 mois', '6 mois', '1 an', '2 ans', 'Max'])
         ->and($performances[0]->pct)->toBe(20.0)
         ->and($performances[6]->pct)->toBe(20.0)
+        ->and($performances[6]->startDate)->toBe('2023-01-01')
         ->and($performances[0]->startDate)->toBe('2026-01-01')
         ->and($performances[0]->valueStart)->toBe(1000.0)
         ->and($performances[0]->contributions)->toBe(0.0)
@@ -49,7 +50,7 @@ it('keeps only the periods the price history covers', function () {
 
     $performances = app(BuildAssetPerformances::class)($user->id, $asset->id);
 
-    expect(array_map(fn ($perf) => $perf->key, $performances))->toBe(['1M']);
+    expect(array_map(fn ($perf) => $perf->key, $performances))->toBe(['1M', 'MAX']);
 });
 
 it('returns no performances when the user has no transaction for the asset', function () {
