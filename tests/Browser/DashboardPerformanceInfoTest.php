@@ -40,5 +40,7 @@ it('explains the period performances through an info dialog', function () {
         ->click('[aria-label="Comment lire les performances par période"]')
         ->assertSee('Comment lire les performances par période')
         ->assertSee('cumulés, pas annualisés')
+        ->assertSee('Apports')
+        ->assertSee('les versements de la période')
         ->assertNoJavascriptErrors();
 });

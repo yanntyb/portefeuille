@@ -54,11 +54,11 @@ defineProps<{ variant: "global" | "periods" }>()
       <template v-else>
         <DialogHeader>
           <DialogTitle>Comment lire les performances par période</DialogTitle>
-          <DialogDescription>Les petites cases YTD, 1 mois, … 4 ans.</DialogDescription>
+          <DialogDescription>Le tableau YTD, 1 mois, … 4 ans.</DialogDescription>
         </DialogHeader>
         <div class="flex flex-col gap-3 text-sm text-foreground">
           <p>
-            Chaque case montre la <strong>performance du portefeuille sur une période</strong>
+            Chaque ligne montre la <strong>performance du portefeuille sur une période</strong>
             (depuis le début d'année, le dernier mois, la dernière année, etc.).
           </p>
           <p class="rounded-md bg-muted px-3 py-2 font-mono text-xs">
@@ -67,6 +67,12 @@ defineProps<{ variant: "global" | "periods" }>()
           <p>
             On <strong>retire les versements</strong> faits pendant la période (tes achats
             programmés) pour ne mesurer que la vraie performance, pas l'argent ajouté.
+          </p>
+          <p>
+            La colonne <strong>Apports</strong> montre justement les versements de la période
+            qui sont retirés du calcul, et <strong>Gain</strong> le résultat en euros une fois
+            ces versements exclus. <strong>Valeur début</strong> est le dénominateur, pris au
+            jour indiqué dans <strong>Depuis</strong>.
           </p>
           <p>
             C'est pour ça que ça diffère du % global : ici le dénominateur est la valeur
