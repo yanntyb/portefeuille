@@ -221,9 +221,9 @@ const positionChartOptions = computed<ApexOptions>(() => ({
         ]"
     />
 
-    <main class="min-h-screen overflow-x-hidden bg-background p-6 text-foreground">
+    <main class="min-h-screen overflow-x-hidden bg-background py-6 text-foreground">
         <div class="mx-auto flex max-w-6xl flex-col gap-6">
-            <header class="flex flex-col gap-1">
+            <header class="flex flex-col gap-1 px-6">
                 <h1 class="text-2xl font-semibold">
                     {{ props.instrument.name }}
                     <span v-if="props.instrument.ticker" class="text-muted-foreground">({{ props.instrument.ticker }})</span>
@@ -238,7 +238,7 @@ const positionChartOptions = computed<ApexOptions>(() => ({
                 </p>
             </header>
 
-            <section v-if="props.instrument.position" class="flex flex-col gap-3">
+            <section v-if="props.instrument.position" class="flex flex-col gap-3 px-6">
                 <div class="flex flex-col gap-0.5">
                     <p class="text-sm text-muted-foreground">Gain / perte</p>
                     <p class="text-2xl font-semibold" :class="gainClass(props.instrument.position.gain)">
@@ -262,7 +262,7 @@ const positionChartOptions = computed<ApexOptions>(() => ({
             </section>
 
             <section v-if="hasPosition" class="flex flex-col gap-4">
-                <div class="flex flex-wrap items-center gap-3">
+                <div class="flex flex-wrap items-center gap-3 px-6">
                     <div class="inline-flex rounded-md border border-border p-0.5">
                         <button
                             v-for="opt in rangeOptions"
@@ -291,7 +291,7 @@ const positionChartOptions = computed<ApexOptions>(() => ({
 
                 <Deferred data="valuation">
                     <template #fallback>
-                        <div class="-mx-6 grid gap-4 sm:mx-0 lg:grid-cols-2">
+                        <div class="grid gap-4 sm:px-6 lg:grid-cols-2">
                             <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
                             <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
                         </div>
@@ -299,7 +299,7 @@ const positionChartOptions = computed<ApexOptions>(() => ({
 
                     <div
                         v-if="hasValuation"
-                        class="-mx-6 grid gap-4 transition-opacity sm:mx-0 lg:grid-cols-2"
+                        class="grid gap-4 transition-opacity lg:grid-cols-2"
                         :class="reloading ? 'opacity-50' : ''"
                     >
                         <Card :class="flatCard">

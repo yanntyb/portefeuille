@@ -50,6 +50,41 @@ it('shows a sticky breadcrumb on the dashboard', function () {
         ->assertNoJavaScriptErrors();
 });
 
+/**
+ * Every listed selector must start on the same horizontal axis as the breadcrumb.
+ */
+function alignmentScript(array $selectors): string
+{
+    $json = json_encode($selectors, JSON_THROW_ON_ERROR);
+
+    return <<<JS
+    (() => {
+        const left = (selector) => Math.round(document.querySelector(selector).getBoundingClientRect().left);
+        const reference = left('header nav > *');
+
+        return {$json}.every((selector) => left(selector) === reference);
+    })()
+    JS;
+}
+
+it('aligns the instrument page content with the breadcrumb', function () {
+    ['user' => $user, 'instrument' => $instrument] = seedBreadcrumbPortfolio();
+
+    $this->actingAs($user);
+
+    visit("/instruments/{$instrument->id}")
+        ->assertScript(alignmentScript(['main h1', 'main section p', 'main [data-slot=card-title]', 'main table th']), true);
+});
+
+it('aligns the catalogue page content with the breadcrumb', function () {
+    ['user' => $user] = seedBreadcrumbPortfolio();
+
+    $this->actingAs($user);
+
+    visit('/instruments')
+        ->assertScript(alignmentScript(['main h1', 'main [data-slot=card-title]', 'main table th']), true);
+});
+
 it('shows the full breadcrumb trail on an instrument page', function () {
     ['user' => $user, 'instrument' => $instrument] = seedBreadcrumbPortfolio();
 

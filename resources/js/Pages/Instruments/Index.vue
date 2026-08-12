@@ -42,9 +42,9 @@ const eur = (value: number | null): string =>
 
     <AppBreadcrumb :items="[{ label: 'Tableau de bord', href: '/' }, { label: 'Instruments' }]" />
 
-    <main class="min-h-screen bg-background p-6 text-foreground">
+    <main class="min-h-screen bg-background py-6 text-foreground">
         <div class="mx-auto flex max-w-6xl flex-col gap-6">
-            <header>
+            <header class="px-6">
                 <h1 class="text-2xl font-semibold">Instruments</h1>
                 <p class="text-sm text-muted-foreground">Catalogue de tous les instruments</p>
             </header>
