@@ -20,6 +20,8 @@ import {
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
 import { buildEvolutionChart } from '@/lib/chart';
+import { eur as formatEur, gainClass, pct } from '@/lib/format';
+import type { Performance } from '@/lib/performance';
 import { Eye, EyeOff } from 'lucide-vue-next';
 
 interface HoldingLine {
@@ -42,12 +44,6 @@ interface PortfolioOverview {
     totalGain: number;
     totalGainPct: number;
     holdings: HoldingLine[];
-}
-
-interface Performance {
-    key: string;
-    label: string;
-    pct: number | null;
 }
 
 interface EvolutionSeries {
@@ -109,20 +105,7 @@ const selectRange = (key: RangeKey): void => {
 
 const flatCard = 'border-0 bg-transparent shadow-none rounded-none';
 
-const eur = (value: number | null): string =>
-    value === null
-        ? '—'
-        : value.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
-
-const pct = (value: number | null): string =>
-    value === null ? '—' : `${value >= 0 ? '+' : ''}${value.toFixed(1)} %`;
-
-const gainClass = (value: number | null): string =>
-    value === null || value === 0
-        ? 'text-muted-foreground'
-        : value > 0
-          ? 'text-emerald-600 dark:text-emerald-400'
-          : 'text-red-600 dark:text-red-400';
+const eur = (value: number | null): string => formatEur(value, 0);
 
 const hasEvolution = computed<boolean>(() => (props.evolutionSeries?.labels.length ?? 0) > 0);
 

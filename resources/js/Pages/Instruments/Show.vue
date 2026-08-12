@@ -20,6 +20,8 @@ import {
 } from '@/components/ui/table';
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
 import { buildTimeSeriesOptions } from '@/lib/chart';
+import { eur, gainClass, pct } from '@/lib/format';
+import type { Performance } from '@/lib/performance';
 
 interface Position {
     quantity: number;
@@ -58,12 +60,6 @@ interface Instrument {
     sectors: SectorWeight[];
 }
 
-interface AssetPerformance {
-    key: string;
-    label: string;
-    pct: number | null;
-}
-
 interface PriceHistory {
     labels: string[];
     close: number[];
@@ -78,7 +74,7 @@ interface ValuationSeries {
 
 const props = defineProps<{
     instrument: Instrument;
-    performances: AssetPerformance[];
+    performances: Performance[];
     priceHistory?: PriceHistory;
     valuation?: ValuationSeries;
     valuationRange?: string;
@@ -86,14 +82,6 @@ const props = defineProps<{
 }>();
 
 const flatCard = 'border-0 bg-transparent shadow-none rounded-none';
-
-const eur = (value: number | null): string =>
-    value === null
-        ? '—'
-        : value.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 });
-
-const pct = (value: number | null): string =>
-    value === null ? '—' : `${value >= 0 ? '+' : ''}${value.toFixed(1)} %`;
 
 const signedPct = (value: number): string => {
     const delta = value - 100;
@@ -161,13 +149,6 @@ const selectGranularity = (key: GranularityKey): void => {
     selectedGranularity.value = key;
     reloadValuation();
 };
-
-const gainClass = (value: number | null): string =>
-    value === null || value === 0
-        ? 'text-muted-foreground'
-        : value > 0
-          ? 'text-emerald-600 dark:text-emerald-400'
-          : 'text-red-600 dark:text-red-400';
 
 const hasPriceHistory = computed<boolean>(() => (props.priceHistory?.labels.length ?? 0) > 0);
 
