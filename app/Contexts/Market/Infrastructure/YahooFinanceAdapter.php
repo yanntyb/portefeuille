@@ -15,13 +15,19 @@ use App\Contexts\Market\Ports\PriceFeedException;
 use App\Contexts\Market\Ports\PriceFeedPort;
 use App\Contexts\Market\Ports\PriceProviderPort;
 use App\Contexts\Market\Ports\SectorProviderPort;
-use App\Shared\Python\PythonProcessException;
 use App\Shared\Python\PythonRunner;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class YahooFinanceAdapter implements InstrumentProviderPort, PriceFeedPort, PriceProviderPort, SectorProviderPort
 {
+    /**
+     * The bulk fetch funnels the whole catalogue through a single Python process: one yfinance
+     * import plus one HTTP round trip per date window. The 30 seconds of `config('python.timeout')`
+     * are sized for a single ticker and would time out on a few dozen instruments.
+     */
+    private const BULK_TIMEOUT_SECONDS = 900;
+
     public function __construct(
         private readonly PythonRunner $python,
     ) {}
@@ -138,34 +144,40 @@ class YahooFinanceAdapter implements InstrumentProviderPort, PriceFeedPort, Pric
         }
 
         try {
-            $result = $this->python->run(YahooScript::PricesBulk->path(), [
-                'tickers' => array_map(
-                    fn (PriceRequestData $request): array => $this->window(
-                        $request->ticker,
-                        $request->startDate,
-                        $request->endDate,
+            $result = $this->python->run(
+                YahooScript::PricesBulk->path(),
+                [
+                    'tickers' => array_map(
+                        fn (PriceRequestData $request): array => $this->window(
+                            $request->ticker,
+                            $request->startDate,
+                            $request->endDate,
+                        ),
+                        $requests,
                     ),
-                    $requests,
-                ),
-            ]);
-        } catch (PythonProcessException $exception) {
-            throw PriceFeedException::fetchFailed($exception->getMessage());
-        }
-
-        if (! $result->ok()) {
-            throw PriceFeedException::fetchFailed($result->error ?? 'unknown error');
-        }
-
-        $prices = [];
-
-        foreach ($result->data ?? [] as $ticker => $rows) {
-            $prices[$ticker] = array_map(
-                fn (array $row): PriceData => PriceData::fromArray($row),
-                $rows,
+                ],
+                self::BULK_TIMEOUT_SECONDS,
             );
-        }
 
-        return $prices;
+            if (! $result->ok()) {
+                throw PriceFeedException::fetchFailed($result->error ?? 'unknown error');
+            }
+
+            $prices = [];
+
+            foreach ($result->data ?? [] as $ticker => $rows) {
+                $prices[(string) $ticker] = array_map(
+                    fn (array $row): PriceData => PriceData::fromArray($row),
+                    $rows,
+                );
+            }
+
+            return $prices;
+        } catch (PriceFeedException $exception) {
+            throw $exception;
+        } catch (\Throwable $exception) {
+            throw PriceFeedException::fetchFailed($exception->getMessage(), $exception);
+        }
     }
 
     /**

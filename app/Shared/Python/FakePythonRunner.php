@@ -7,7 +7,7 @@ class FakePythonRunner implements PythonRunner
     /** @var array<string, PythonResult> */
     private array $results = [];
 
-    /** @var list<array{script: string, input: array<string, mixed>}> */
+    /** @var list<array{script: string, input: array<string, mixed>, timeout: int|null}> */
     public array $calls = [];
 
     public function withResult(string $script, PythonResult $result): self
@@ -19,7 +19,7 @@ class FakePythonRunner implements PythonRunner
 
     public function run(string $script, array $input = [], ?int $timeout = null): PythonResult
     {
-        $this->calls[] = ['script' => $script, 'input' => $input];
+        $this->calls[] = ['script' => $script, 'input' => $input, 'timeout' => $timeout];
 
         return $this->results[$script] ?? new PythonResult(status: 'ok', data: []);
     }

@@ -13,7 +13,11 @@ use App\Shared\Python\FakePythonRunner;
 use App\Shared\Python\PythonProcessException;
 use App\Shared\Python\PythonResult;
 use App\Shared\Python\PythonRunner;
+use Illuminate\Process\Exceptions\ProcessTimedOutException;
+use Illuminate\Process\ProcessResult;
 use Illuminate\Support\Collection;
+use Symfony\Component\Process\Exception\ProcessTimedOutException as SymfonyTimeoutException;
+use Symfony\Component\Process\Process;
 
 beforeEach(function () {
     $this->python = new FakePythonRunner;
@@ -27,6 +31,26 @@ function throwingAdapter(): YahooFinanceAdapter
         public function run(string $script, array $input = [], ?int $timeout = null): PythonResult
         {
             throw new PythonProcessException('boom');
+        }
+    });
+}
+
+/**
+ * A runner that times out the way Illuminate's process layer does: FakePythonRunner cannot
+ * throw, and a timeout never surfaces as a PythonProcessException.
+ */
+function timingOutAdapter(): YahooFinanceAdapter
+{
+    return new YahooFinanceAdapter(new class implements PythonRunner
+    {
+        public function run(string $script, array $input = [], ?int $timeout = null): PythonResult
+        {
+            $process = new Process(['true']);
+
+            throw new ProcessTimedOutException(
+                new SymfonyTimeoutException($process, SymfonyTimeoutException::TYPE_GENERAL),
+                new ProcessResult($process),
+            );
         }
     });
 }
@@ -241,4 +265,31 @@ it('throws when the bulk script returns an error envelope', function () {
 
 it('throws when the runner itself fails', function () {
     throwingAdapter()->fetchPrices([new PriceRequestData('AAPL', '2026-08-11', '2026-08-13')]);
+})->throws(PriceFeedException::class);
+
+it('gives the bulk fetch a timeout sized for the whole catalogue', function () {
+    $this->adapter->fetchPrices([new PriceRequestData('AAPL', '2026-08-11', '2026-08-13')]);
+
+    expect($this->python->calls[0]['timeout'])->toBeGreaterThan((int) config('python.timeout'));
+});
+
+it('turns a Python timeout into a PriceFeedException chaining its cause', function () {
+    $caught = null;
+
+    try {
+        timingOutAdapter()->fetchPrices([new PriceRequestData('AAPL', '2026-08-11', '2026-08-13')]);
+    } catch (PriceFeedException $exception) {
+        $caught = $exception;
+    }
+
+    expect($caught)->toBeInstanceOf(PriceFeedException::class)
+        ->and($caught->getPrevious())->toBeInstanceOf(ProcessTimedOutException::class);
+});
+
+it('throws a PriceFeedException on a malformed row inside a successful envelope', function () {
+    $this->python->withResult(YahooScript::PricesBulk->path(), new PythonResult('ok', [
+        'AAPL' => ['not-a-row'],
+    ]));
+
+    $this->adapter->fetchPrices([new PriceRequestData('AAPL', '2026-08-11', '2026-08-13')]);
 })->throws(PriceFeedException::class);
