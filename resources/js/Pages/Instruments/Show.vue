@@ -18,11 +18,14 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
 import PerformanceTable from '@/components/PerformanceTable.vue';
+import SectorBreakdownList from '@/components/SectorBreakdownList.vue';
 import { buildTimeSeriesOptions } from '@/lib/chart';
 import { eur, gainClass, pct } from '@/lib/format';
 import type { Performance } from '@/lib/performance';
+import type { SectorBreakdownRow } from '@/lib/sector';
 
 interface Position {
     quantity: number;
@@ -83,6 +86,31 @@ const props = defineProps<{
 }>();
 
 const flatCard = 'border-0 bg-transparent shadow-none rounded-none';
+
+const COLLAPSED_TRANSACTION_COUNT = 10;
+
+const transactionsExpanded = ref<boolean>(false);
+
+const hiddenTransactionCount = computed<number>(() =>
+    Math.max(0, props.instrument.transactions.length - COLLAPSED_TRANSACTION_COUNT),
+);
+
+const visibleTransactions = computed<TransactionLine[]>(() =>
+    transactionsExpanded.value
+        ? props.instrument.transactions
+        : props.instrument.transactions.slice(0, COLLAPSED_TRANSACTION_COUNT),
+);
+
+/** Only a held instrument has a value to split across its sectors. */
+const sectorRows = computed<SectorBreakdownRow[]>(() => {
+    const marketValue = props.instrument.position?.marketValue ?? null;
+
+    return props.instrument.sectors.map((sector) => ({
+        label: sector.label,
+        share: sector.weight * 100,
+        amount: marketValue === null ? null : marketValue * sector.weight,
+    }));
+});
 
 const signedPct = (value: number): string => {
     const delta = value - 100;
@@ -343,7 +371,7 @@ const positionChartOptions = computed<ApexOptions>(() => ({
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                <TableRow v-for="(line, index) in props.instrument.transactions" :key="index">
+                                <TableRow v-for="(line, index) in visibleTransactions" :key="index" data-transaction-row>
                                     <TableCell>{{ line.date }}</TableCell>
                                     <TableCell :class="line.isSell ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'">
                                         {{ line.typeLabel }}
@@ -358,21 +386,23 @@ const positionChartOptions = computed<ApexOptions>(() => ({
                         <p v-else class="py-8 text-center text-sm text-muted-foreground">
                             Aucune transaction sur cet actif.
                         </p>
+
+                        <Button
+                            v-if="hiddenTransactionCount > 0"
+                            data-transactions-toggle
+                            variant="ghost"
+                            size="sm"
+                            class="mt-3 w-full text-muted-foreground"
+                            @click="transactionsExpanded = !transactionsExpanded"
+                        >
+                            {{ transactionsExpanded ? 'Réduire' : `Voir les ${hiddenTransactionCount} autres` }}
+                        </Button>
                     </CardContent>
                 </Card>
 
                 <Card v-if="props.instrument.sectors.length" :class="flatCard">
-                    <CardHeader>
-                        <CardTitle>Secteurs</CardTitle>
-                        <CardDescription>Répartition sectorielle</CardDescription>
-                    </CardHeader>
                     <CardContent>
-                        <ul class="flex flex-col gap-2">
-                            <li v-for="(sector, index) in props.instrument.sectors" :key="index" class="flex justify-between text-sm">
-                                <span>{{ sector.label }}</span>
-                                <span class="text-muted-foreground">{{ (sector.weight * 100).toFixed(1) }} %</span>
-                            </li>
-                        </ul>
+                        <SectorBreakdownList :rows="sectorRows" />
                     </CardContent>
                 </Card>
             </section>
