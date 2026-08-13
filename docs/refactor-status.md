@@ -46,13 +46,13 @@ Legende : Fait / En cours / A faire.
 | Domaine — Enums | `Enums/InstrumentType.php`, `Enums/Sector.php` (+ tests) | Fait |
 | Domaine — Datas | `Datas/InstrumentData.php`, `Datas/PriceData.php`, `Datas/AssetPriceData.php`, `Datas/SectorAllocationData.php` (+ tests) | Fait |
 | Application — Contracts | `Contracts/InstrumentRepositoryContract.php`, `Contracts/PriceRepositoryContract.php` | Fait |
-| Application — Ports | `Ports/InstrumentProviderPort.php`, `Ports/PriceProviderPort.php`, `Ports/SectorProviderPort.php` | Fait |
+| Application — Ports | `Ports/InstrumentProviderPort.php`, `Ports/PriceProviderPort.php`, `Ports/PriceFeedPort.php`, `Ports/SectorProviderPort.php` | Fait |
 | Infrastructure — Repositories | `Infrastructure/EloquentInstrumentRepository.php`, `Infrastructure/EloquentPriceRepository.php` (+ tests) | Fait |
 | Application — Write-side prix | `PriceRepositoryContract::upsertForAsset`, `Ports/PriceFeedPort.php`, `Actions/SyncAssetPrices.php` (+ tests) | Fait |
 | Infrastructure — Adapters | `Infrastructure/YahooFinanceAdapter.php`, `Infrastructure/DatabaseAssetPriceAdapter.php` (+ tests) | Fait |
 | Infrastructure — Python | `Infrastructure/Python/*.py` (4 scripts) + `Infrastructure/Python/YahooScript.php` | Fait |
 | Factories | `Factories/InstrumentFactory.php`, `Factories/PriceFactory.php`, `Factories/SectorAllocationFactory.php` | Fait |
-| DI | `MarketProvider.php` (bind 3 contrats/ports) | Fait |
+| DI | `MarketProvider.php` (bind 6 contrats/ports) | Fait |
 | Couche UI | Filament retire ; aucune UI cablee | A definir |
 | Couche tache planifiee | `Console/SyncPricesCommand.php` (`market:sync-prices`), `Console/SyncSectorsCommand.php` (`market:sync-sectors`) (+ tests) | Fait |
 
@@ -126,7 +126,7 @@ flowchart TD
     class P1 done
     class P2 todo
     class P3 todo
-    class P4 todo
+    class P4 done
     class P5 todo
     class P6 todo
 ```
@@ -138,7 +138,7 @@ Etat des phases :
 | 1 — Migration noyau Market | Fait | `Instrument`/`Price`/`SectorAllocation`, contrats, ports, adapters, factories, tests. |
 | 2 — Nouvelle UI | A faire | Filament retire (panel/`AdminPanelProvider`/assets supprimes). Racine sert `welcome`. UI à choisir (Livewire Flux disponible). |
 | 3 — Portfolio | A faire | Contrats, relations, actions, modeles Wallet/Transaction/Position. |
-| 4 — Scheduler / commandes | En cours | Refs mortes commentees dans `withSchedule` (scheduler non casse). Reste a recreer `securities:fetch-prices` / `securities:fetch-sectors` sur l'archi Contexts une fois le write-side Market construit. |
+| 4 — Scheduler / commandes | Fait | `market:sync-prices` (quotidien 23h30, sortie ajoutee a `storage/logs/market-sync-prices.log`) et `market:sync-sectors` (hebdomadaire) enregistrees via `withCommands` et planifiees dans `withSchedule`. Write-side prix construit : `upsertForAsset`, `PriceFeedPort`, `SyncAssetPrices`. |
 | 5 — Identity / evenements | A faire | Contrats Identity, peuplement `EventServiceProvider`. |
 | 6 — Nettoyage | A faire | Vider l'index git des suppressions en attente, finaliser seeders. |
 
@@ -146,12 +146,14 @@ Etat des phases :
 
 ## 4. GAPS concrets (references mortes et trous de cablage)
 
-- **Scheduler vers commandes inexistantes — NEUTRALISE.** `bootstrap/app.php` (`withSchedule`)
-  planifiait `securities:fetch-prices` et `securities:fetch-sectors` en `daily()`, mais le
-  repertoire `app/Console/Commands` n'existe plus sur disque et aucune commande de ce nom n'est
-  enregistree. Les deux lignes sont desormais commentees : `schedule:list` retourne « No scheduled
-  tasks » et le scheduler ne casse plus. Le sync quotidien des prix/secteurs reste **en pause**
-  tant que le write-side du contexte Market (persistance des prix/secteurs) n'est pas construit.
+- **Scheduler vers commandes inexistantes — RESOLU.** `bootstrap/app.php` planifiait
+  `securities:fetch-prices` et `securities:fetch-sectors`, disparues avec `app/Console/Commands`.
+  Ces references n'existent plus : `withCommands` enregistre `SyncPricesCommand` et
+  `SyncSectorsCommand`, et `withSchedule` planifie `market:sync-prices` (quotidien a 23h30, sortie
+  ajoutee a `storage/logs/market-sync-prices.log`) et `market:sync-sectors` (hebdomadaire). Le
+  write-side prix du contexte Market est construit (`PriceRepositoryContract::upsertForAsset`,
+  `Ports/PriceFeedPort`, `Actions/SyncAssetPrices`), donc le sync quotidien des prix n'est plus en
+  pause. Reste ouvert : `market:sync-sectors` n'a ni report d'echec ni journalisation.
 - **Aucune UI — Filament retire.** Filament (`filament/filament`, `stechstudio/filament-impersonate`)
   a ete supprime : plus de `AdminPanelProvider`, d'assets (`resources/css/filament`,
   `public/*/filament`) ni d'interfaces Filament dans le domaine. La racine `/` sert desormais
@@ -177,10 +179,11 @@ Etat des phases :
 
 ## 5. Recommandations — prochaines etapes priorisees
 
-1. **Scheduler — FAIT (debranche).** Les deux lignes mortes de `bootstrap/app.php` sont commentees,
-   le scheduler ne casse plus. Reste a recreer `securities:fetch-prices` / `securities:fetch-sectors`
-   sur l'archi Contexts (consommant `YahooFinanceAdapter` + un write-side `PriceRepository`/`SectorRepository`
-   a construire), puis a re-decommenter le `withSchedule`.
+1. **Scheduler — FAIT (branche).** `market:sync-prices` et `market:sync-sectors` sont enregistrees
+   et planifiees dans `bootstrap/app.php`, et le write-side prix du contexte Market est construit
+   (`upsertForAsset` + `PriceFeedPort` + `SyncAssetPrices`, consommant `YahooFinanceAdapter`).
+   Reste a doter `market:sync-sectors` du meme report d'echec et de la meme journalisation que
+   `market:sync-prices`.
 2. **Choisir et construire une UI (P0, bloquant fonctionnel).** Filament etant retire, definir la
    nouvelle interface (Livewire Flux est deja installe) exposant `Instrument`, `Price` et
    `PersonalAsset`, puis recabler `start_url` du manifest PWA vers la route choisie.

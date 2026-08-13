@@ -56,6 +56,16 @@ Hors périmètre : pas de déclenchement depuis l'UI, pas de job en file, pas de
 autre que Yahoo, pas de sync des métadonnées d'instrument (`findBySymbol` existe déjà), pas de
 migration de schéma.
 
+### Limite connue : les ajustements rétroactifs échappent au rattrapage
+
+Le script bulk demande des séries ajustées (`auto_adjust=True`, explicite dans ses deux branches).
+Un split ou un détachement de dividende réécrit **tout** l'historique chez Yahoo, alors que le
+rattrapage ne re-télécharge que la fenêtre qui part du dernier prix stocké : les lignes antérieures
+gardent leurs clôtures pré-ajustement, les nouvelles arrivent post-ajustement, et la série stockée
+reste durablement discontinue — ce que consomment ensuite toutes les valorisations. L'upsert qui
+écrase ne couvre que la révision du jour de bordure, pas ce cas. Le rattrapage complet est manuel :
+`market:sync-prices --since=<première date de l'historique>` après un split ou un dividende connu.
+
 ## Architecture
 
 ### Flux
