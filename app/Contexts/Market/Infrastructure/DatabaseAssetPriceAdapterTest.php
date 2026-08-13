@@ -50,5 +50,5 @@ it('filters the history by end date', function () {
 });
 
 it('supports any instrument type', function () {
-    expect($this->adapter->supports(InstrumentType::Crypto))->toBeTrue();
+    expect($this->adapter->supportsPrices(InstrumentType::Crypto))->toBeTrue();
 });

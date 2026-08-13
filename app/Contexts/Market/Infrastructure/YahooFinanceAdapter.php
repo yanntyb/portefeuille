@@ -32,9 +32,40 @@ class YahooFinanceAdapter implements InstrumentProviderPort, PriceFeedPort, Pric
         private readonly PythonRunner $python,
     ) {}
 
-    public function supports(InstrumentType $type): bool
+    public function supportsInstruments(InstrumentType $type): bool
+    {
+        return $this->covers($type);
+    }
+
+    public function supportsPrices(InstrumentType $type): bool
+    {
+        return $this->covers($type);
+    }
+
+    public function supportsPriceFeed(InstrumentType $type): bool
+    {
+        return $this->covers($type);
+    }
+
+    /**
+     * Yahoo only breaks down sectors for a company or a fund holding companies.
+     */
+    public function supportsSectors(InstrumentType $type): bool
     {
         return in_array($type, [InstrumentType::Stock, InstrumentType::ETF]);
+    }
+
+    /**
+     * Yahoo quotes stocks, ETFs, cryptocurrencies and commodities, but not bonds.
+     */
+    private function covers(InstrumentType $type): bool
+    {
+        return in_array($type, [
+            InstrumentType::Stock,
+            InstrumentType::ETF,
+            InstrumentType::Crypto,
+            InstrumentType::Commodity,
+        ]);
     }
 
     public function getCurrentPrice(int $assetId): ?float

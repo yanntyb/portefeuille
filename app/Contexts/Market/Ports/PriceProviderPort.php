@@ -20,7 +20,7 @@ interface PriceProviderPort
     public function getPriceHistory(int $assetId, ?string $startDate = null, ?string $endDate = null): Collection;
 
     /**
-     * Check if adapter supports asset type
+     * Check if the provider prices this instrument type.
      */
-    public function supports(InstrumentType $type): bool;
+    public function supportsPrices(InstrumentType $type): bool;
 }

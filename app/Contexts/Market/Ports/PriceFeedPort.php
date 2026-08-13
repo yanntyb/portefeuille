@@ -11,7 +11,7 @@ interface PriceFeedPort
     /**
      * Check if the feed covers this instrument type.
      */
-    public function supports(InstrumentType $type): bool;
+    public function supportsPriceFeed(InstrumentType $type): bool;
 
     /**
      * Fetch daily prices for several tickers at once.

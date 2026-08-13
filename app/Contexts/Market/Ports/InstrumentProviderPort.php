@@ -13,7 +13,7 @@ interface InstrumentProviderPort
     public function findBySymbol(string $symbol, InstrumentType $type): ?InstrumentData;
 
     /**
-     * Check if adapter supports this asset type
+     * Check if the provider exposes metadata for this instrument type.
      */
-    public function supports(InstrumentType $type): bool;
+    public function supportsInstruments(InstrumentType $type): bool;
 }

@@ -55,11 +55,25 @@ function timingOutAdapter(): YahooFinanceAdapter
     });
 }
 
-it('supports Stock and ETF but not Crypto or Bond', function () {
-    expect($this->adapter->supports(InstrumentType::Stock))->toBeTrue()
-        ->and($this->adapter->supports(InstrumentType::ETF))->toBeTrue()
-        ->and($this->adapter->supports(InstrumentType::Crypto))->toBeFalse()
-        ->and($this->adapter->supports(InstrumentType::Bond))->toBeFalse();
+it('feeds prices for every quoted type but bonds', function () {
+    expect($this->adapter->supportsPriceFeed(InstrumentType::Stock))->toBeTrue()
+        ->and($this->adapter->supportsPriceFeed(InstrumentType::ETF))->toBeTrue()
+        ->and($this->adapter->supportsPriceFeed(InstrumentType::Crypto))->toBeTrue()
+        ->and($this->adapter->supportsPriceFeed(InstrumentType::Commodity))->toBeTrue()
+        ->and($this->adapter->supportsPriceFeed(InstrumentType::Bond))->toBeFalse();
+});
+
+it('covers the same types on the instrument and price providers', function (InstrumentType $type) {
+    expect($this->adapter->supportsInstruments($type))->toBe($this->adapter->supportsPriceFeed($type))
+        ->and($this->adapter->supportsPrices($type))->toBe($this->adapter->supportsPriceFeed($type));
+})->with(InstrumentType::cases());
+
+it('only breaks down sectors for Stock and ETF', function () {
+    expect($this->adapter->supportsSectors(InstrumentType::Stock))->toBeTrue()
+        ->and($this->adapter->supportsSectors(InstrumentType::ETF))->toBeTrue()
+        ->and($this->adapter->supportsSectors(InstrumentType::Crypto))->toBeFalse()
+        ->and($this->adapter->supportsSectors(InstrumentType::Commodity))->toBeFalse()
+        ->and($this->adapter->supportsSectors(InstrumentType::Bond))->toBeFalse();
 });
 
 it('returns null for the current price without a ticker', function () {

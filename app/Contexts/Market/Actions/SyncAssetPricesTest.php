@@ -10,8 +10,8 @@ use App\Contexts\Market\Ports\PriceFeedPort;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Bind a feed that supports Stock and ETF, records the requests it receives
- * in $captured, and returns the given prices keyed by ticker.
+ * Bind a feed that covers every quoted type but bonds, records the requests it
+ * receives in $captured, and returns the given prices keyed by ticker.
  *
  * @param  array<string, array<int, PriceData>>  $prices
  * @param  array<int, mixed>  $captured
@@ -19,8 +19,8 @@ use Illuminate\Support\Facades\Log;
 function fakeFeed(array $prices, array &$captured = []): void
 {
     test()->mock(PriceFeedPort::class, function ($mock) use ($prices, &$captured) {
-        $mock->shouldReceive('supports')
-            ->andReturnUsing(fn (InstrumentType $type): bool => in_array($type, [InstrumentType::Stock, InstrumentType::ETF]));
+        $mock->shouldReceive('supportsPriceFeed')
+            ->andReturnUsing(fn (InstrumentType $type): bool => $type !== InstrumentType::Bond);
         $mock->shouldReceive('fetchPrices')
             ->andReturnUsing(function (array $requests) use ($prices, &$captured) {
                 $captured = $requests;
@@ -69,7 +69,7 @@ it('lets an explicit since date win over the stored history', function () {
 
 it('skips instruments without a ticker and unsupported types', function () {
     Instrument::factory()->create(['ticker' => null]);
-    Instrument::factory()->ofType(InstrumentType::Crypto)->create(['ticker' => 'BTC-EUR']);
+    Instrument::factory()->ofType(InstrumentType::Bond)->create(['ticker' => 'OAT.PA']);
     Instrument::factory()->create(['ticker' => 'AAPL']);
     $captured = [];
     fakeFeed([], $captured);
@@ -78,6 +78,18 @@ it('skips instruments without a ticker and unsupported types', function () {
 
     expect($captured)->toHaveCount(1)
         ->and($captured[0]->ticker)->toBe('AAPL');
+});
+
+it('sends cryptos and commodities to the feed', function () {
+    Instrument::factory()->ofType(InstrumentType::Crypto)->create(['ticker' => 'BTC-EUR']);
+    Instrument::factory()->ofType(InstrumentType::Commodity)->create(['ticker' => '4GLD.DE']);
+    $captured = [];
+    fakeFeed(['BTC-EUR' => [new PriceData(date: '2026-08-13', close: 52000.0)]], $captured);
+
+    $report = app(SyncAssetPrices::class)();
+
+    expect(collect($captured)->pluck('ticker')->all())->toBe(['BTC-EUR', '4GLD.DE'])
+        ->and($report->synced)->toBe(['BTC-EUR' => 1, '4GLD.DE' => 0]);
 });
 
 it('writes the fetched prices and reports the count per ticker', function () {
@@ -108,7 +120,7 @@ it('marks every ticker as failed when the feed throws', function () {
     Instrument::factory()->create(['ticker' => 'AAPL']);
     Instrument::factory()->create(['ticker' => 'PE500.PA']);
     $this->mock(PriceFeedPort::class, function ($mock) {
-        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('supportsPriceFeed')->andReturn(true);
         $mock->shouldReceive('fetchPrices')->andThrow(PriceFeedException::fetchFailed('boom'));
     });
 
@@ -123,7 +135,7 @@ it('reports and logs the provider error behind a total failure', function () {
     Instrument::factory()->create(['ticker' => 'AAPL']);
     Log::spy();
     $this->mock(PriceFeedPort::class, function ($mock) {
-        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('supportsPriceFeed')->andReturn(true);
         $mock->shouldReceive('fetchPrices')->andThrow(PriceFeedException::fetchFailed('yfinance rate limited'));
     });
 
@@ -159,7 +171,7 @@ it('restricts the sync to the given asset', function () {
 it('never calls the feed when no instrument is eligible', function () {
     Instrument::factory()->create(['ticker' => null]);
     $this->mock(PriceFeedPort::class, function ($mock) {
-        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('supportsPriceFeed')->andReturn(true);
         $mock->shouldReceive('fetchPrices')->never();
     });
 

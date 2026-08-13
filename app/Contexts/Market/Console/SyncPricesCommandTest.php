@@ -11,7 +11,7 @@ it('reports the number of prices per ticker and a summary', function () {
     Instrument::factory()->create(['ticker' => 'DEAD.PA']);
 
     $this->mock(PriceFeedPort::class, function ($mock) {
-        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('supportsPriceFeed')->andReturn(true);
         $mock->shouldReceive('fetchPrices')->andReturn(['AAPL' => [
             new PriceData(date: '2026-08-12', close: 10.0),
             new PriceData(date: '2026-08-13', close: 11.0),
@@ -29,7 +29,7 @@ it('warns when no instrument is eligible', function () {
     Instrument::factory()->create(['ticker' => null]);
 
     $this->mock(PriceFeedPort::class, function ($mock) {
-        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('supportsPriceFeed')->andReturn(true);
         $mock->shouldReceive('fetchPrices')->never();
     });
 
@@ -42,7 +42,7 @@ it('fails when the feed is unreachable', function () {
     Instrument::factory()->create(['ticker' => 'AAPL']);
 
     $this->mock(PriceFeedPort::class, function ($mock) {
-        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('supportsPriceFeed')->andReturn(true);
         $mock->shouldReceive('fetchPrices')->andThrow(PriceFeedException::fetchFailed('boom'));
     });
 
@@ -56,7 +56,7 @@ it('names the provider error behind a total failure', function () {
     Instrument::factory()->create(['ticker' => 'AAPL']);
 
     $this->mock(PriceFeedPort::class, function ($mock) {
-        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('supportsPriceFeed')->andReturn(true);
         $mock->shouldReceive('fetchPrices')->andThrow(PriceFeedException::fetchFailed('yfinance rate limited'));
     });
 
@@ -103,7 +103,7 @@ it('pluralizes the summary when several tickers fail', function () {
     Instrument::factory()->create(['ticker' => 'DEAD.PA']);
 
     $this->mock(PriceFeedPort::class, function ($mock) {
-        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('supportsPriceFeed')->andReturn(true);
         $mock->shouldReceive('fetchPrices')->andThrow(PriceFeedException::fetchFailed('boom'));
     });
 
@@ -117,7 +117,7 @@ it('restricts the sync to the given asset', function () {
     $second = Instrument::factory()->create(['ticker' => 'PE500.PA']);
 
     $this->mock(PriceFeedPort::class, function ($mock) {
-        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('supportsPriceFeed')->andReturn(true);
         $mock->shouldReceive('fetchPrices')->andReturn([
             'AAPL' => [new PriceData(date: '2026-08-13', close: 10.0)],
             'PE500.PA' => [new PriceData(date: '2026-08-13', close: 20.0)],
@@ -135,7 +135,7 @@ it('forwards the since option to the feed window', function () {
     $captured = [];
 
     $this->mock(PriceFeedPort::class, function ($mock) use (&$captured) {
-        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('supportsPriceFeed')->andReturn(true);
         $mock->shouldReceive('fetchPrices')->andReturnUsing(function (array $requests) use (&$captured) {
             $captured = $requests;
 
@@ -153,7 +153,7 @@ it('syncs every asset when the asset option is passed empty', function () {
     Instrument::factory()->create(['ticker' => 'PE500.PA']);
 
     $this->mock(PriceFeedPort::class, function ($mock) {
-        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('supportsPriceFeed')->andReturn(true);
         $mock->shouldReceive('fetchPrices')->andReturn([
             'AAPL' => [new PriceData(date: '2026-08-13', close: 10.0)],
             'PE500.PA' => [new PriceData(date: '2026-08-13', close: 20.0)],
@@ -171,7 +171,7 @@ it('resumes from the stored history when the since option is passed empty', func
     $captured = [];
 
     $this->mock(PriceFeedPort::class, function ($mock) use (&$captured) {
-        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('supportsPriceFeed')->andReturn(true);
         $mock->shouldReceive('fetchPrices')->andReturnUsing(function (array $requests) use (&$captured) {
             $captured = $requests;
 

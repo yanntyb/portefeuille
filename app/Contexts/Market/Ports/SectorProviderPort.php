@@ -16,7 +16,7 @@ interface SectorProviderPort
     public function getSectorAllocations(string $symbol, InstrumentType $type): array;
 
     /**
-     * Check if adapter supports this asset type
+     * Check if the provider breaks down the sectors of this instrument type.
      */
-    public function supports(InstrumentType $type): bool;
+    public function supportsSectors(InstrumentType $type): bool;
 }

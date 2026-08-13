@@ -38,7 +38,7 @@ readonly class DatabaseAssetPriceAdapter implements PriceProviderPort
         ]);
     }
 
-    public function supports(InstrumentType $type): bool
+    public function supportsPrices(InstrumentType $type): bool
     {
         // Adapter de prix en base : tout instrument marché est supporté.
         return true;

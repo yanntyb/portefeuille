@@ -31,7 +31,7 @@ class SyncAssetPrices
     {
         $instruments = $this->instrumentsToSync($assetId)->filter(
             fn (Instrument $instrument): bool => $instrument->ticker !== null
-                && $this->feed->supports($instrument->type),
+                && $this->feed->supportsPriceFeed($instrument->type),
         );
 
         if ($instruments->isEmpty()) {

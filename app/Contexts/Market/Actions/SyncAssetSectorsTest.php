@@ -28,7 +28,7 @@ function fakeSectorProvider(array $allocationsByTicker): SectorProviderPort
             return $this->allocationsByTicker[$symbol] ?? [];
         }
 
-        public function supports(InstrumentType $type): bool
+        public function supportsSectors(InstrumentType $type): bool
         {
             return in_array($type, [InstrumentType::Stock, InstrumentType::ETF]);
         }

@@ -26,7 +26,7 @@ class SyncAssetSectors
         $synced = [];
 
         foreach ($this->instrumentsToSync($assetId) as $instrument) {
-            if ($instrument->ticker === null || ! $this->provider->supports($instrument->type)) {
+            if ($instrument->ticker === null || ! $this->provider->supportsSectors($instrument->type)) {
                 continue;
             }
 

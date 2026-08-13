@@ -11,7 +11,7 @@ it('stores the sectors and reports one line per ticker', function () {
     $etf = Instrument::factory()->ofType(InstrumentType::ETF)->create(['ticker' => 'PE500.PA']);
 
     $this->mock(SectorProviderPort::class, function ($mock) {
-        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('supportsSectors')->andReturn(true);
         $mock->shouldReceive('getSectorAllocations')->andReturn([
             new SectorAllocationData(Sector::Technology, 0.37),
             new SectorAllocationData(Sector::Healthcare, 0.11),
@@ -29,7 +29,7 @@ it('warns when no sector could be fetched', function () {
     Instrument::factory()->ofType(InstrumentType::ETF)->create(['ticker' => 'PE500.PA']);
 
     $this->mock(SectorProviderPort::class, function ($mock) {
-        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('supportsSectors')->andReturn(true);
         $mock->shouldReceive('getSectorAllocations')->andReturn([]);
     });
 
@@ -43,7 +43,7 @@ it('restricts the sync to the given asset', function () {
     $second = Instrument::factory()->ofType(InstrumentType::ETF)->create(['ticker' => 'PUST.PA']);
 
     $this->mock(SectorProviderPort::class, function ($mock) {
-        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('supportsSectors')->andReturn(true);
         $mock->shouldReceive('getSectorAllocations')->andReturn([
             new SectorAllocationData(Sector::Technology, 1.0),
         ]);
