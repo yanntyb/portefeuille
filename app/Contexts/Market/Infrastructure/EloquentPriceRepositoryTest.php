@@ -1,5 +1,6 @@
 <?php
 
+use App\Contexts\Market\Datas\PriceData;
 use App\Contexts\Market\Infrastructure\EloquentPriceRepository;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
@@ -61,4 +62,34 @@ it('filters ids having a price since a date', function () {
     );
 
     expect($ids)->toBe([$this->instrument->id]);
+});
+
+it('inserts the given prices', function () {
+    $written = $this->repository->upsertForAsset($this->instrument->id, [
+        new PriceData(date: '2026-01-01', close: 10.0, open: 9.0, high: 11.0, low: 8.0, volume: 100),
+        new PriceData(date: '2026-01-02', close: 12.0),
+    ]);
+
+    expect($written)->toBe(2)
+        ->and(Price::query()->where('asset_id', $this->instrument->id)->count())->toBe(2);
+});
+
+it('overwrites an existing price on the same date', function () {
+    Price::factory()->create([
+        'asset_id' => $this->instrument->id,
+        'date' => '2026-01-01',
+        'close' => 10.0,
+    ]);
+
+    $this->repository->upsertForAsset($this->instrument->id, [
+        new PriceData(date: '2026-01-01', close: 42.5),
+    ]);
+
+    expect(Price::query()->where('asset_id', $this->instrument->id)->count())->toBe(1)
+        ->and((float) $this->repository->latestForAsset($this->instrument->id)->close)->toBe(42.5);
+});
+
+it('writes nothing for an empty list', function () {
+    expect($this->repository->upsertForAsset($this->instrument->id, []))->toBe(0)
+        ->and(Price::query()->count())->toBe(0);
 });
