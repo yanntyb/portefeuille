@@ -7,6 +7,7 @@ use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Market\Ports\PriceFeedException;
 use App\Contexts\Market\Ports\PriceFeedPort;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Bind a feed that supports Stock and ETF, records the requests it receives
@@ -116,6 +117,31 @@ it('marks every ticker as failed when the feed throws', function () {
     expect($report->failed)->toBe(['AAPL', 'PE500.PA'])
         ->and($report->synced)->toBe([])
         ->and($report->isTotalFailure())->toBeTrue();
+});
+
+it('reports and logs the provider error behind a total failure', function () {
+    Instrument::factory()->create(['ticker' => 'AAPL']);
+    Log::spy();
+    $this->mock(PriceFeedPort::class, function ($mock) {
+        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('fetchPrices')->andThrow(PriceFeedException::fetchFailed('yfinance rate limited'));
+    });
+
+    $report = app(SyncAssetPrices::class)();
+
+    expect($report->error)->toBe('yfinance rate limited');
+
+    Log::shouldHaveReceived('error')
+        ->once()
+        ->withArgs(fn (string $message, array $context): bool => str_contains($context['error'], 'yfinance rate limited')
+            && $context['tickers'] === ['AAPL']);
+});
+
+it('leaves the report error null on a successful sync', function () {
+    Instrument::factory()->create(['ticker' => 'AAPL']);
+    fakeFeed(['AAPL' => [new PriceData(date: '2026-08-13', close: 10.0)]]);
+
+    expect(app(SyncAssetPrices::class)()->error)->toBeNull();
 });
 
 it('restricts the sync to the given asset', function () {

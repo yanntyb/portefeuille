@@ -28,6 +28,13 @@ it('counts a ticker with zero new prices as synced', function () {
         ->and($report->isTotalFailure())->toBeFalse();
 });
 
+it('carries the provider error of a total failure', function () {
+    $report = new PriceSyncReportData(failed: ['AAPL'], error: 'yfinance rate limited');
+
+    expect($report->error)->toBe('yfinance rate limited')
+        ->and((new PriceSyncReportData)->error)->toBeNull();
+});
+
 it('is a total failure when nothing was synced', function () {
     $report = new PriceSyncReportData(failed: ['AAPL', 'PE500.PA']);
 

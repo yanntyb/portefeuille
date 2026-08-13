@@ -22,7 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
         SyncSectorsCommand::class,
     ])
     ->withSchedule(function (Schedule $schedule): void {
-        $schedule->command('market:sync-prices')->dailyAt('23:30');
+        $schedule->command('market:sync-prices')
+            ->dailyAt('23:30')
+            ->appendOutputTo(storage_path('logs/market-sync-prices.log'));
         $schedule->command('market:sync-sectors')->weekly();
     })
     ->withMiddleware(function (Middleware $middleware): void {

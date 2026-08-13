@@ -52,6 +52,52 @@ it('fails when the feed is unreachable', function () {
         ->assertFailed();
 });
 
+it('names the provider error behind a total failure', function () {
+    Instrument::factory()->create(['ticker' => 'AAPL']);
+
+    $this->mock(PriceFeedPort::class, function ($mock) {
+        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('fetchPrices')->andThrow(PriceFeedException::fetchFailed('yfinance rate limited'));
+    });
+
+    $this->artisan('market:sync-prices')
+        ->expectsOutputToContain('Échec de la récupération auprès du fournisseur : yfinance rate limited')
+        ->assertFailed();
+});
+
+it('fails on an unknown asset id instead of reporting nothing to sync', function () {
+    $this->mock(PriceFeedPort::class, function ($mock) {
+        $mock->shouldReceive('fetchPrices')->never();
+    });
+
+    $this->artisan('market:sync-prices', ['--asset' => 999])
+        ->expectsOutputToContain('Aucun instrument ne porte l\'identifiant « 999 ».')
+        ->doesntExpectOutputToContain('Aucun instrument à synchroniser.')
+        ->assertFailed();
+});
+
+it('fails on an asset id that is not a number', function () {
+    $this->mock(PriceFeedPort::class, function ($mock) {
+        $mock->shouldReceive('fetchPrices')->never();
+    });
+
+    $this->artisan('market:sync-prices', ['--asset' => 'abc'])
+        ->expectsOutputToContain('Aucun instrument ne porte l\'identifiant « abc ».')
+        ->assertFailed();
+});
+
+it('fails on a since date that is not a Y-m-d date', function () {
+    Instrument::factory()->create(['ticker' => 'AAPL']);
+
+    $this->mock(PriceFeedPort::class, function ($mock) {
+        $mock->shouldReceive('fetchPrices')->never();
+    });
+
+    $this->artisan('market:sync-prices', ['--since' => '13/08/2026'])
+        ->expectsOutputToContain('Date de début invalide : « 13/08/2026 ». Format attendu : AAAA-MM-JJ.')
+        ->assertFailed();
+});
+
 it('pluralizes the summary when several tickers fail', function () {
     Instrument::factory()->create(['ticker' => 'AAPL']);
     Instrument::factory()->create(['ticker' => 'DEAD.PA']);

@@ -10,6 +10,7 @@ use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Ports\PriceFeedException;
 use App\Contexts\Market\Ports\PriceFeedPort;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class SyncAssetPrices
 {
@@ -45,8 +46,15 @@ class SyncAssetPrices
 
         try {
             $fetched = $this->feed->fetchPrices($requests);
-        } catch (PriceFeedException) {
-            return new PriceSyncReportData(failed: $instruments->pluck('ticker')->values()->all());
+        } catch (PriceFeedException $exception) {
+            $tickers = $instruments->pluck('ticker')->values()->all();
+
+            Log::error('Price sync failed for every asset.', [
+                'error' => $exception->getMessage(),
+                'tickers' => $tickers,
+            ]);
+
+            return new PriceSyncReportData(failed: $tickers, error: $exception->reason);
         }
 
         $synced = [];
