@@ -8,6 +8,7 @@ use App\Contexts\Market\Infrastructure\EloquentInstrumentRepository;
 use App\Contexts\Market\Infrastructure\EloquentPriceRepository;
 use App\Contexts\Market\Infrastructure\EloquentSectorRepository;
 use App\Contexts\Market\Infrastructure\YahooFinanceAdapter;
+use App\Contexts\Market\Ports\PriceFeedPort;
 use App\Contexts\Market\Ports\PriceProviderPort;
 use App\Contexts\Market\Ports\SectorProviderPort;
 
@@ -16,5 +17,6 @@ it('binds each Market contract and port to its adapter', function () {
         ->and(app(PriceRepositoryContract::class))->toBeInstanceOf(EloquentPriceRepository::class)
         ->and(app(SectorRepositoryContract::class))->toBeInstanceOf(EloquentSectorRepository::class)
         ->and(app(PriceProviderPort::class))->toBeInstanceOf(DatabaseAssetPriceAdapter::class)
-        ->and(app(SectorProviderPort::class))->toBeInstanceOf(YahooFinanceAdapter::class);
+        ->and(app(SectorProviderPort::class))->toBeInstanceOf(YahooFinanceAdapter::class)
+        ->and(app(PriceFeedPort::class))->toBeInstanceOf(YahooFinanceAdapter::class);
 });

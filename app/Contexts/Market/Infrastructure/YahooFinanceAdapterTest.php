@@ -1,11 +1,14 @@
 <?php
 
 use App\Contexts\Market\Datas\InstrumentData;
+use App\Contexts\Market\Datas\PriceData;
+use App\Contexts\Market\Datas\PriceRequestData;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
 use App\Contexts\Market\Infrastructure\Python\YahooScript;
 use App\Contexts\Market\Infrastructure\YahooFinanceAdapter;
 use App\Contexts\Market\Models\Instrument;
+use App\Contexts\Market\Ports\PriceFeedException;
 use App\Shared\Python\FakePythonRunner;
 use App\Shared\Python\PythonProcessException;
 use App\Shared\Python\PythonResult;
@@ -186,3 +189,56 @@ it('includes today when fetching the current price', function () {
 
     expect($this->python->calls[0]['input']['end_date'])->toBe('2026-08-14');
 });
+
+it('sends one bulk entry per request with an inclusive end date', function () {
+    $this->adapter->fetchPrices([
+        new PriceRequestData('PE500.PA', '2026-08-11', '2026-08-13'),
+        new PriceRequestData('AAPL', '2025-08-13', '2026-08-13'),
+    ]);
+
+    expect($this->python->calls[0]['script'])->toBe(YahooScript::PricesBulk->path())
+        ->and($this->python->calls[0]['input']['tickers'])->toBe([
+            ['ticker' => 'PE500.PA', 'start_date' => '2026-08-11', 'end_date' => '2026-08-14'],
+            ['ticker' => 'AAPL', 'start_date' => '2025-08-13', 'end_date' => '2026-08-14'],
+        ]);
+});
+
+it('maps the bulk payload to PriceData keyed by ticker', function () {
+    $this->python->withResult(YahooScript::PricesBulk->path(), new PythonResult('ok', [
+        'AAPL' => [
+            ['date' => '2026-08-12', 'open' => 1.0, 'high' => 2.0, 'low' => 0.5, 'close' => 1.5, 'volume' => 10],
+            ['date' => '2026-08-13', 'open' => 1.5, 'high' => 2.5, 'low' => 1.0, 'close' => 2.0, 'volume' => 20],
+        ],
+    ]));
+
+    $prices = $this->adapter->fetchPrices([new PriceRequestData('AAPL', '2026-08-11', '2026-08-13')]);
+
+    expect($prices)->toHaveKey('AAPL')
+        ->and($prices['AAPL'])->toHaveCount(2)
+        ->and($prices['AAPL'][0])->toBeInstanceOf(PriceData::class)
+        ->and($prices['AAPL'][0]->date)->toBe('2026-08-12')
+        ->and($prices['AAPL'][0]->close)->toBe(1.5)
+        ->and($prices['AAPL'][0]->volume)->toBe(10);
+});
+
+it('omits tickers absent from the bulk payload', function () {
+    $this->python->withResult(YahooScript::PricesBulk->path(), new PythonResult('ok', []));
+
+    expect($this->adapter->fetchPrices([new PriceRequestData('DEAD.PA', '2026-08-11', '2026-08-13')]))
+        ->toBe([]);
+});
+
+it('never runs the script without requests', function () {
+    expect($this->adapter->fetchPrices([]))->toBe([])
+        ->and($this->python->calls)->toBe([]);
+});
+
+it('throws when the bulk script returns an error envelope', function () {
+    $this->python->withResult(YahooScript::PricesBulk->path(), new PythonResult('error', error: 'boom'));
+
+    $this->adapter->fetchPrices([new PriceRequestData('AAPL', '2026-08-11', '2026-08-13')]);
+})->throws(PriceFeedException::class);
+
+it('throws when the runner itself fails', function () {
+    throwingAdapter()->fetchPrices([new PriceRequestData('AAPL', '2026-08-11', '2026-08-13')]);
+})->throws(PriceFeedException::class);

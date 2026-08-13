@@ -36,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
             priceRepository: EloquentPriceRepository::class,
             sectorRepository: EloquentSectorRepository::class,
             priceProvider: DatabaseAssetPriceAdapter::class,
+            priceFeed: YahooFinanceAdapter::class,
             sectorProvider: YahooFinanceAdapter::class,
         );
 

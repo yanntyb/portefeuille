@@ -3,19 +3,24 @@
 namespace App\Contexts\Market\Infrastructure;
 
 use App\Contexts\Market\Datas\InstrumentData;
+use App\Contexts\Market\Datas\PriceData;
+use App\Contexts\Market\Datas\PriceRequestData;
 use App\Contexts\Market\Datas\SectorAllocationData;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
 use App\Contexts\Market\Infrastructure\Python\YahooScript;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Ports\InstrumentProviderPort;
+use App\Contexts\Market\Ports\PriceFeedException;
+use App\Contexts\Market\Ports\PriceFeedPort;
 use App\Contexts\Market\Ports\PriceProviderPort;
 use App\Contexts\Market\Ports\SectorProviderPort;
+use App\Shared\Python\PythonProcessException;
 use App\Shared\Python\PythonRunner;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
-class YahooFinanceAdapter implements InstrumentProviderPort, PriceProviderPort, SectorProviderPort
+class YahooFinanceAdapter implements InstrumentProviderPort, PriceFeedPort, PriceProviderPort, SectorProviderPort
 {
     public function __construct(
         private readonly PythonRunner $python,
@@ -124,6 +129,43 @@ class YahooFinanceAdapter implements InstrumentProviderPort, PriceProviderPort, 
         } catch (\Exception) {
             return [];
         }
+    }
+
+    public function fetchPrices(array $requests): array
+    {
+        if ($requests === []) {
+            return [];
+        }
+
+        try {
+            $result = $this->python->run(YahooScript::PricesBulk->path(), [
+                'tickers' => array_map(
+                    fn (PriceRequestData $request): array => $this->window(
+                        $request->ticker,
+                        $request->startDate,
+                        $request->endDate,
+                    ),
+                    $requests,
+                ),
+            ]);
+        } catch (PythonProcessException $exception) {
+            throw PriceFeedException::fetchFailed($exception->getMessage());
+        }
+
+        if (! $result->ok()) {
+            throw PriceFeedException::fetchFailed($result->error ?? 'unknown error');
+        }
+
+        $prices = [];
+
+        foreach ($result->data ?? [] as $ticker => $rows) {
+            $prices[$ticker] = array_map(
+                fn (array $row): PriceData => PriceData::fromArray($row),
+                $rows,
+            );
+        }
+
+        return $prices;
     }
 
     /**
