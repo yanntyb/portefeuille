@@ -203,8 +203,17 @@ export function buildSectorBarChart({
             axisTicks: { show: false },
             labels: { formatter: (value: string): string => valueFormatter(Number(value)), style: { colors: 'oklch(0.708 0 0)' } },
         },
-        yaxis: { labels: { style: { colors: 'oklch(0.708 0 0)' } } },
+        yaxis: { labels: { maxWidth: 200, style: { colors: 'oklch(0.708 0 0)' } } },
         legend: { show: false },
+        responsive: [
+            {
+                breakpoint: 640,
+                options: {
+                    yaxis: { labels: { maxWidth: 110 } },
+                    xaxis: { tickAmount: 3 },
+                },
+            },
+        ],
         tooltip: {
             custom: ({ dataPointIndex }): string => {
                 const slice = slices[dataPointIndex];
