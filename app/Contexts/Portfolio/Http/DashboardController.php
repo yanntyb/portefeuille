@@ -4,6 +4,7 @@ namespace App\Contexts\Portfolio\Http;
 
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
+use App\Contexts\Portfolio\Actions\GetSectorBreakdown;
 use App\Contexts\Portfolio\Datas\PortfolioOverviewData;
 use App\Contexts\Valuation\Actions\BuildEvolutionSeries;
 use App\Contexts\Valuation\Actions\BuildPortfolioPerformances;
@@ -38,6 +39,9 @@ class DashboardController
             'evolutionSeries' => Inertia::defer(fn () => $user !== null
                 ? app(BuildEvolutionSeries::class)($user->id, $range, $granularity)
                 : EvolutionSeriesData::empty()),
+            'sectorBreakdown' => Inertia::defer(fn () => $user !== null
+                ? app(GetSectorBreakdown::class)($user)
+                : []),
         ]);
     }
 }

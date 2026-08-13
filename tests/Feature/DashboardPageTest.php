@@ -2,8 +2,10 @@
 
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\Market\Enums\Sector;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
+use App\Contexts\Market\Models\SectorAllocation;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
@@ -100,6 +102,40 @@ it('accepts range and granularity query params for the dashboard series', functi
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->has('evolutionSeries.labels')
                 ->has('evolutionSeries.perAsset')
+            )
+        );
+});
+
+it('defers the sector breakdown and loads it on demand', function () {
+    User::query()->delete();
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $asset = Instrument::factory()->ofType(InstrumentType::ETF)->create(['name' => 'ACME ETF']);
+    SectorAllocation::factory()->create([
+        'asset_id' => $asset->id,
+        'sector' => Sector::Technology,
+        'weight' => 1.0,
+    ]);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => now(), 'close' => 100]);
+    Holding::factory()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $asset->id,
+        'quantity' => 10,
+        'avg_cost' => 80,
+    ]);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Dashboard')
+            ->missing('sectorBreakdown')
+            ->loadDeferredProps(fn (Assert $reload) => $reload
+                ->has('sectorBreakdown', 1)
+                ->where('sectorBreakdown.0.label', 'Technologie')
+                ->where('sectorBreakdown.0.value', fn ($value) => (float) $value === 1000.0)
+                ->where('sectorBreakdown.0.pct', fn ($value) => (float) $value === 100.0)
+                ->has('sectorBreakdown.0.color')
             )
         );
 });
