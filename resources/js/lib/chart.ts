@@ -1,4 +1,5 @@
 import type { ApexAxisChartSeries, ApexOptions } from 'apexcharts';
+import type { SectorSlice } from '@/lib/sector';
 
 const LEGEND_BELOW_ON_MOBILE: ApexOptions['responsive'] = [
     { breakpoint: 640, options: { legend: { position: 'bottom' } } },
@@ -166,6 +167,63 @@ export function buildEvolutionChart({
                     .join('');
 
                 return header + valueRow + gainRow + assetRows;
+            },
+        },
+    };
+
+    return { series, options };
+}
+
+type SectorBarInput = {
+    slices: SectorSlice[];
+    valueFormatter: (value: number) => string;
+};
+
+function formatShare(value: number): string {
+    return `${value.toFixed(1)} %`;
+}
+
+export function buildSectorBarChart({
+    slices,
+    valueFormatter,
+}: SectorBarInput): { series: ApexAxisChartSeries; options: ApexOptions } {
+    const series: ApexAxisChartSeries = [
+        { name: 'Valeur', data: slices.map((slice) => slice.value) },
+    ];
+
+    const options: ApexOptions = {
+        chart: { type: 'bar', toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
+        colors: slices.map((slice) => slice.color),
+        plotOptions: { bar: { horizontal: true, distributed: true, borderRadius: 4, barHeight: '70%' } },
+        dataLabels: { enabled: false },
+        grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
+        xaxis: {
+            categories: slices.map((slice) => slice.label),
+            axisBorder: { show: false },
+            axisTicks: { show: false },
+            labels: { formatter: (value: string): string => valueFormatter(Number(value)), style: { colors: 'oklch(0.708 0 0)' } },
+        },
+        yaxis: { labels: { style: { colors: 'oklch(0.708 0 0)' } } },
+        legend: { show: false },
+        tooltip: {
+            custom: ({ dataPointIndex }): string => {
+                const slice = slices[dataPointIndex];
+                if (slice == null) {
+                    return '';
+                }
+
+                const row = (label: string, text: string): string =>
+                    `<div class="apexcharts-tooltip-series-group apexcharts-active" style="display: flex;">`
+                    + `<span class="apexcharts-tooltip-marker" style="background-color: ${slice.color};"></span>`
+                    + `<div class="apexcharts-tooltip-text" style="font-family: inherit; font-size: 12px;">`
+                    + `<div class="apexcharts-tooltip-y-group">`
+                    + `<span class="apexcharts-tooltip-text-y-label">${label}: </span>`
+                    + `<span class="apexcharts-tooltip-text-y-value">${text}</span>`
+                    + `</div></div></div>`;
+
+                const header = `<div class="apexcharts-tooltip-title" style="font-family: inherit; font-size: 12px;">${slice.label}</div>`;
+
+                return header + row('Valeur', valueFormatter(slice.value)) + row('Part', formatShare(slice.pct));
             },
         },
     };

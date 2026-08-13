@@ -8,7 +8,7 @@ use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 
-it('renders the evolution chart without the allocation donut', function () {
+it('renders the evolution and sector charts without the allocation donut', function () {
     // A legacy data migration seeds a hardcoded user; clear it so the controller resolves this user.
     User::query()->delete();
     $user = User::factory()->create();
@@ -40,8 +40,8 @@ it('renders the evolution chart without the allocation donut', function () {
 
     $page->assertSee('Valeur de marché par titre')
         ->assertDontSee('Évolution')
-        ->assertDontSee('Répartition')
         ->assertSee('GLOBEX')
-        ->assertCount('.apexcharts-canvas', 1)
+        ->assertCount('.apexcharts-canvas', 2)
+        ->assertCount('.apexcharts-pie', 0)
         ->assertNoJavaScriptErrors();
 });

@@ -39,7 +39,7 @@ it('orders the dashboard sections from the valuation down to the holdings table'
     $page->assertSee('Performance par période')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'valuation|evolution|performances|holdings',
+            'valuation|evolution|performances|sectors|holdings',
         )
         ->assertNoJavaScriptErrors();
 });

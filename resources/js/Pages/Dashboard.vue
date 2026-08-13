@@ -13,9 +13,10 @@ import {
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
 import PerformanceTable from '@/components/PerformanceTable.vue';
-import { buildEvolutionChart } from '@/lib/chart';
+import { buildEvolutionChart, buildSectorBarChart } from '@/lib/chart';
 import { eur as formatEur, gainClass, pct } from '@/lib/format';
 import type { Performance } from '@/lib/performance';
+import type { SectorSlice } from '@/lib/sector';
 import { Eye, EyeOff } from 'lucide-vue-next';
 
 interface HoldingLine {
@@ -45,7 +46,7 @@ interface EvolutionSeries {
     perAsset: { assetId: number; name: string; value: number[]; invested: number[] }[];
 }
 
-const props = defineProps<{ overview: PortfolioOverview; performances?: Performance[]; evolutionSeries?: EvolutionSeries; valuationRange?: string; valuationGranularity?: string }>();
+const props = defineProps<{ overview: PortfolioOverview; performances?: Performance[]; evolutionSeries?: EvolutionSeries; sectorBreakdown?: SectorSlice[]; valuationRange?: string; valuationGranularity?: string }>();
 
 type RangeKey = '1M' | '6M' | '1Y' | 'max';
 type GranularityKey = 'day' | 'week' | 'month';
@@ -109,6 +110,17 @@ const evolutionChart = computed(() =>
         valueFormatter: eur,
     }),
 );
+
+const hasSectors = computed<boolean>(() => (props.sectorBreakdown?.length ?? 0) > 0);
+
+const sectorChart = computed(() =>
+    buildSectorBarChart({
+        slices: props.sectorBreakdown ?? [],
+        valueFormatter: eur,
+    }),
+);
+
+const sectorChartHeight = computed<number>(() => Math.max(200, (props.sectorBreakdown?.length ?? 0) * 40));
 
 const evolutionKey = computed<string>(() => {
     const labels = props.evolutionSeries?.labels ?? [];
@@ -190,6 +202,28 @@ const evolutionKey = computed<string>(() => {
                         <PerformanceTable :performances="performances" :currency-digits="0" />
                     </div>
                 </Deferred>
+            </section>
+
+            <section v-if="overview.holdings.length" data-section="sectors" class="flex flex-col gap-3">
+                <p class="px-6 text-sm text-muted-foreground">Répartition sectorielle</p>
+                <div class="px-0 sm:px-6">
+                    <Deferred data="sectorBreakdown">
+                        <template #fallback>
+                            <div class="h-[280px] w-full animate-pulse rounded-md bg-muted"></div>
+                        </template>
+
+                        <VueApexCharts
+                            v-if="hasSectors"
+                            type="bar"
+                            :height="sectorChartHeight"
+                            :options="sectorChart.options"
+                            :series="sectorChart.series"
+                        />
+                        <p v-else class="py-8 text-center text-sm text-muted-foreground">
+                            Pas encore de données sectorielles.
+                        </p>
+                    </Deferred>
+                </div>
             </section>
 
             <section data-section="holdings" class="px-6">
