@@ -21,7 +21,7 @@ it('reports the number of prices per ticker and a summary', function () {
     $this->artisan('market:sync-prices')
         ->expectsOutputToContain('AAPL : 2 prix')
         ->expectsOutputToContain('DEAD.PA : 0 prix')
-        ->expectsOutputToContain('2 instruments, 2 synchronisés, 0 échec')
+        ->expectsOutput('2 instruments, 2 synchronisés, 0 échec')
         ->assertSuccessful();
 });
 
@@ -48,7 +48,21 @@ it('fails when the feed is unreachable', function () {
 
     $this->artisan('market:sync-prices')
         ->expectsOutputToContain('AAPL : échec')
-        ->expectsOutputToContain('1 instrument, 0 synchronisé, 1 échec')
+        ->expectsOutput('1 instrument, 0 synchronisé, 1 échec')
+        ->assertFailed();
+});
+
+it('pluralizes the summary when several tickers fail', function () {
+    Instrument::factory()->create(['ticker' => 'AAPL']);
+    Instrument::factory()->create(['ticker' => 'DEAD.PA']);
+
+    $this->mock(PriceFeedPort::class, function ($mock) {
+        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('fetchPrices')->andThrow(PriceFeedException::fetchFailed('boom'));
+    });
+
+    $this->artisan('market:sync-prices')
+        ->expectsOutput('2 instruments, 0 synchronisé, 2 échecs')
         ->assertFailed();
 });
 
