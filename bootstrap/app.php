@@ -1,5 +1,6 @@
 <?php
 
+use App\Contexts\Market\Console\SyncPricesCommand;
 use App\Contexts\Market\Console\SyncSectorsCommand;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Console\Scheduling\Schedule;
@@ -17,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withCommands([
+        SyncPricesCommand::class,
         SyncSectorsCommand::class,
     ])
     ->withSchedule(function (Schedule $schedule): void {
