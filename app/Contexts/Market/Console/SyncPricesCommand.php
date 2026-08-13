@@ -18,7 +18,7 @@ class SyncPricesCommand extends Command
 
     public function handle(SyncAssetPrices $syncAssetPrices, InstrumentRepositoryContract $instruments): int
     {
-        $since = $this->option('since');
+        $since = $this->optionOrNull('since');
 
         if ($since !== null && ! Carbon::hasFormat($since, 'Y-m-d')) {
             $this->error("Date de début invalide : « {$since} ». Format attendu : AAAA-MM-JJ.");
@@ -26,7 +26,7 @@ class SyncPricesCommand extends Command
             return self::FAILURE;
         }
 
-        $asset = $this->option('asset');
+        $asset = $this->optionOrNull('asset');
 
         if ($asset !== null && $instruments->findById((int) $asset) === null) {
             $this->error("Aucun instrument ne porte l'identifiant « {$asset} ».");
@@ -45,6 +45,19 @@ class SyncPricesCommand extends Command
         $this->printReport($report);
 
         return $report->isTotalFailure() ? self::FAILURE : self::SUCCESS;
+    }
+
+    /**
+     * Read an option, treating an empty value as absent.
+     *
+     * `--asset=` means "every asset", not "the asset whose identifier is
+     * nothing", and `--since=` means "resume at the last known price".
+     */
+    private function optionOrNull(string $name): ?string
+    {
+        $value = $this->option($name);
+
+        return $value === null || $value === '' ? null : (string) $value;
     }
 
     private function printReport(PriceSyncReportData $report): void

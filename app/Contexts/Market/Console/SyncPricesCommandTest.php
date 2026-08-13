@@ -147,3 +147,39 @@ it('forwards the since option to the feed window', function () {
 
     expect($captured[0]->startDate)->toBe('2020-01-01');
 });
+
+it('syncs every asset when the asset option is passed empty', function () {
+    Instrument::factory()->create(['ticker' => 'AAPL']);
+    Instrument::factory()->create(['ticker' => 'PE500.PA']);
+
+    $this->mock(PriceFeedPort::class, function ($mock) {
+        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('fetchPrices')->andReturn([
+            'AAPL' => [new PriceData(date: '2026-08-13', close: 10.0)],
+            'PE500.PA' => [new PriceData(date: '2026-08-13', close: 20.0)],
+        ]);
+    });
+
+    $this->artisan('market:sync-prices', ['--asset' => ''])
+        ->expectsOutput('2 instruments, 2 synchronisés, 0 échec')
+        ->assertSuccessful();
+});
+
+it('resumes from the stored history when the since option is passed empty', function () {
+    $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
+    Price::factory()->create(['asset_id' => $instrument->id, 'date' => '2026-08-11']);
+    $captured = [];
+
+    $this->mock(PriceFeedPort::class, function ($mock) use (&$captured) {
+        $mock->shouldReceive('supports')->andReturn(true);
+        $mock->shouldReceive('fetchPrices')->andReturnUsing(function (array $requests) use (&$captured) {
+            $captured = $requests;
+
+            return [];
+        });
+    });
+
+    $this->artisan('market:sync-prices', ['--since' => ''])->assertSuccessful();
+
+    expect($captured[0]->startDate)->toBe('2026-08-11');
+});
