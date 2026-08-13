@@ -12,6 +12,7 @@ use App\Contexts\Market\Ports\InstrumentProviderPort;
 use App\Contexts\Market\Ports\PriceProviderPort;
 use App\Contexts\Market\Ports\SectorProviderPort;
 use App\Shared\Python\PythonRunner;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class YahooFinanceAdapter implements InstrumentProviderPort, PriceProviderPort, SectorProviderPort
@@ -34,11 +35,11 @@ class YahooFinanceAdapter implements InstrumentProviderPort, PriceProviderPort, 
         }
 
         try {
-            $result = $this->python->run(YahooScript::Prices->path(), [
-                'ticker' => $asset->ticker,
-                'start_date' => now()->subYear()->format('Y-m-d'),
-                'end_date' => now()->format('Y-m-d'),
-            ]);
+            $result = $this->python->run(YahooScript::Prices->path(), $this->window(
+                $asset->ticker,
+                now()->subYear()->format('Y-m-d'),
+                now()->format('Y-m-d'),
+            ));
 
             if (! $result->ok() || empty($result->data)) {
                 return null;
@@ -64,11 +65,10 @@ class YahooFinanceAdapter implements InstrumentProviderPort, PriceProviderPort, 
         $endDate ??= now()->format('Y-m-d');
 
         try {
-            $result = $this->python->run(YahooScript::Prices->path(), [
-                'ticker' => $asset->ticker,
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-            ]);
+            $result = $this->python->run(
+                YahooScript::Prices->path(),
+                $this->window($asset->ticker, $startDate, $endDate),
+            );
 
             if (! $result->ok()) {
                 return collect();
@@ -124,5 +124,21 @@ class YahooFinanceAdapter implements InstrumentProviderPort, PriceProviderPort, 
         } catch (\Exception) {
             return [];
         }
+    }
+
+    /**
+     * Build the script parameters for an inclusive date window.
+     *
+     * yfinance excludes its `end` bound, the port contract includes it.
+     *
+     * @return array{ticker: string, start_date: string, end_date: string}
+     */
+    private function window(string $ticker, string $startDate, string $endDate): array
+    {
+        return [
+            'ticker' => $ticker,
+            'start_date' => $startDate,
+            'end_date' => Carbon::parse($endDate)->addDay()->format('Y-m-d'),
+        ];
     }
 }

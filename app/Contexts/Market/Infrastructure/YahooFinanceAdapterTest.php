@@ -155,3 +155,34 @@ it('swallows runner exceptions in findBySymbol', function () {
 it('swallows runner exceptions in getSectorAllocations', function () {
     expect(throwingAdapter()->getSectorAllocations('AAPL', InstrumentType::ETF))->toBe([]);
 });
+
+it('includes the requested end date in the price history window', function () {
+    $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
+
+    $this->adapter->getPriceHistory($instrument->id, '2026-01-01', '2026-01-31');
+
+    expect($this->python->calls[0]['input'])->toBe([
+        'ticker' => 'AAPL',
+        'start_date' => '2026-01-01',
+        'end_date' => '2026-02-01',
+    ]);
+});
+
+it('includes today in the default price history window', function () {
+    $this->travelTo('2026-08-13 10:00:00');
+    $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
+
+    $this->adapter->getPriceHistory($instrument->id);
+
+    expect($this->python->calls[0]['input']['start_date'])->toBe('2025-08-13')
+        ->and($this->python->calls[0]['input']['end_date'])->toBe('2026-08-14');
+});
+
+it('includes today when fetching the current price', function () {
+    $this->travelTo('2026-08-13 10:00:00');
+    $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
+
+    $this->adapter->getCurrentPrice($instrument->id);
+
+    expect($this->python->calls[0]['input']['end_date'])->toBe('2026-08-14');
+});
