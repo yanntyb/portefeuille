@@ -191,9 +191,13 @@ export function buildSectorBarChart({
         { name: 'Valeur', data: slices.map((slice) => slice.value) },
     ];
 
+    // One monotonic light-to-dark ramp over the whole list, so the greys never restart mid-chart.
+    const greyFor = (index: number): string =>
+        GREY_SCALE[Math.min(GREY_SCALE.length - 1, Math.floor((index * GREY_SCALE.length) / Math.max(1, slices.length)))];
+
     const options: ApexOptions = {
         chart: { type: 'bar', toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
-        colors: slices.map((slice) => slice.color),
+        colors: slices.map((_slice, index) => greyFor(index)),
         plotOptions: { bar: { horizontal: true, distributed: true, borderRadius: 4, barHeight: '70%' } },
         dataLabels: { enabled: false },
         grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
@@ -223,7 +227,7 @@ export function buildSectorBarChart({
 
                 const row = (label: string, text: string): string =>
                     `<div class="apexcharts-tooltip-series-group apexcharts-active" style="display: flex;">`
-                    + `<span class="apexcharts-tooltip-marker" style="background-color: ${slice.color};"></span>`
+                    + `<span class="apexcharts-tooltip-marker" style="background-color: ${greyFor(dataPointIndex)};"></span>`
                     + `<div class="apexcharts-tooltip-text" style="font-family: inherit; font-size: 12px;">`
                     + `<div class="apexcharts-tooltip-y-group">`
                     + `<span class="apexcharts-tooltip-text-y-label">${label}: </span>`
