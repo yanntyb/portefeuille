@@ -48,12 +48,13 @@ Legende : Fait / En cours / A faire.
 | Application — Contracts | `Contracts/InstrumentRepositoryContract.php`, `Contracts/PriceRepositoryContract.php` | Fait |
 | Application — Ports | `Ports/InstrumentProviderPort.php`, `Ports/PriceProviderPort.php`, `Ports/SectorProviderPort.php` | Fait |
 | Infrastructure — Repositories | `Infrastructure/EloquentInstrumentRepository.php`, `Infrastructure/EloquentPriceRepository.php` (+ tests) | Fait |
+| Application — Write-side prix | `PriceRepositoryContract::upsertForAsset`, `Ports/PriceFeedPort.php`, `Actions/SyncAssetPrices.php` (+ tests) | Fait |
 | Infrastructure — Adapters | `Infrastructure/YahooFinanceAdapter.php`, `Infrastructure/DatabaseAssetPriceAdapter.php` (+ tests) | Fait |
 | Infrastructure — Python | `Infrastructure/Python/*.py` (4 scripts) + `Infrastructure/Python/YahooScript.php` | Fait |
 | Factories | `Factories/InstrumentFactory.php`, `Factories/PriceFactory.php`, `Factories/SectorAllocationFactory.php` | Fait |
 | DI | `MarketProvider.php` (bind 3 contrats/ports) | Fait |
 | Couche UI | Filament retire ; aucune UI cablee | A definir |
-| Couche tache planifiee (commande `securities:*`) | aucune commande Artisan | A faire |
+| Couche tache planifiee | `Console/SyncPricesCommand.php` (`market:sync-prices`), `Console/SyncSectorsCommand.php` (`market:sync-sectors`) (+ tests) | Fait |
 
 ### Identity (`app/Contexts/Identity`)
 
@@ -97,7 +98,7 @@ Legende : Fait / En cours / A faire.
 | `bootstrap/providers.php` (ordre : `AppServiceProvider` → `EventServiceProvider`) | Fait |
 | `app/Providers/EventServiceProvider.php` (`$listen = []`, vide) | A faire |
 | `routes/web.php` — racine `Route::view('/', 'welcome')` (le panel Filament servait `/`, retire) | Fait |
-| `bootstrap/app.php` — scheduler (`securities:fetch-prices`, `securities:fetch-sectors`) | Neutralise (refs mortes commentees, sync en pause) |
+| `bootstrap/app.php` — scheduler (`market:sync-prices` quotidien, `market:sync-sectors` hebdomadaire) | Fait |
 
 ---
 

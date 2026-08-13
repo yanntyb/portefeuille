@@ -22,11 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         SyncSectorsCommand::class,
     ])
     ->withSchedule(function (Schedule $schedule): void {
-        // TODO refacto DDD : la commande securities:fetch-prices a ete supprimee (ancien
-        // app/Console/Commands) et le write-side prix du contexte Market n'existe pas encore
-        // (repos en lecture seule). Re-cabler le sync quotidien des prix une fois construit.
-        // Voir docs/refactor-status.md.
-        // $schedule->command('securities:fetch-prices')->daily();
+        $schedule->command('market:sync-prices')->dailyAt('23:30');
         $schedule->command('market:sync-sectors')->weekly();
     })
     ->withMiddleware(function (Middleware $middleware): void {
