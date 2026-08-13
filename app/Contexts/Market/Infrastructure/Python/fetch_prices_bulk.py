@@ -29,7 +29,10 @@ def main() -> None:
     for (start_date, end_date), group_tickers in date_groups.items():
         if len(group_tickers) == 1:
             t = yf.Ticker(group_tickers[0])
-            history = t.history(start=start_date, end=end_date)
+            # auto_adjust is explicit in both branches: yf.download flipped its default
+            # in 0.2.51, so leaving it implicit made the two paths disagree on any
+            # older allowed version and mixed both conventions in the stored series.
+            history = t.history(start=start_date, end=end_date, auto_adjust=True)
             if not history.empty:
                 all_data[group_tickers[0]] = _dataframe_to_list(history)
         else:
@@ -39,6 +42,7 @@ def main() -> None:
                 end=end_date,
                 group_by="ticker",
                 threads=True,
+                auto_adjust=True,
             )
 
             if df.empty:
