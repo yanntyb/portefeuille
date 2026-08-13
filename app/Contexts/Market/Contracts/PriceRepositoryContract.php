@@ -35,7 +35,8 @@ interface PriceRepositoryContract
      * the provider revises past closes.
      *
      * @param  array<int, PriceData>  $prices
-     * @return int number of rows written
+     * @return int number of rows submitted to the database — an upsert cannot report how many of
+     *             them were inserts, so a resumed asset counts the re-sent boundary day too
      */
     public function upsertForAsset(int $assetId, array $prices): int;
 }

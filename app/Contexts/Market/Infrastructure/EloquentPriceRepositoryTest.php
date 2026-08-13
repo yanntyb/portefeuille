@@ -89,6 +89,37 @@ it('overwrites an existing price on the same date', function () {
         ->and((float) $this->repository->latestForAsset($this->instrument->id)->close)->toBe(42.5);
 });
 
+it('replaces a row whose date was stored in the bare Y-m-d format', function () {
+    Price::query()->insert([
+        'asset_id' => $this->instrument->id,
+        'date' => '2026-01-01',
+        'close' => 10.0,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $this->repository->upsertForAsset($this->instrument->id, [
+        new PriceData(date: '2026-01-01', close: 42.5),
+    ]);
+
+    expect(Price::query()->where('asset_id', $this->instrument->id)->count())->toBe(1)
+        ->and((float) $this->repository->latestForAsset($this->instrument->id)->close)->toBe(42.5);
+});
+
+it('leaves the rows of other days alone when clearing a bare date', function () {
+    Price::query()->insert([
+        ['asset_id' => $this->instrument->id, 'date' => '2026-01-01', 'close' => 10.0],
+        ['asset_id' => $this->instrument->id, 'date' => '2026-01-02 00:00:00', 'close' => 20.0],
+    ]);
+
+    $this->repository->upsertForAsset($this->instrument->id, [
+        new PriceData(date: '2026-01-01', close: 42.5),
+    ]);
+
+    expect(Price::query()->where('asset_id', $this->instrument->id)->count())->toBe(2)
+        ->and((float) $this->repository->latestForAsset($this->instrument->id)->close)->toBe(20.0);
+});
+
 it('writes nothing for an empty list', function () {
     expect($this->repository->upsertForAsset($this->instrument->id, []))->toBe(0)
         ->and(Price::query()->count())->toBe(0);

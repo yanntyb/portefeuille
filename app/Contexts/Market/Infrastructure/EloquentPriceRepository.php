@@ -54,6 +54,19 @@ class EloquentPriceRepository implements PriceRepositoryContract
             ->all();
     }
 
+    /**
+     * Insert or update the daily prices of an asset.
+     *
+     * The date is reformatted rather than passed through: `upsert()` writes raw values and
+     * bypasses Eloquent's casting, so the string must match what Eloquent itself writes for the
+     * `date` cast ('Y-m-d H:i:s'). Under SQLite's manifest typing '2026-01-03' and
+     * '2026-01-03 00:00:00' are distinct keys, so reverting to `$price->date` would silently stop
+     * `unique(['asset_id', 'date'])` from firing and insert duplicate rows for the same day.
+     *
+     * @param  array<int, PriceData>  $prices
+     * @return int number of rows submitted to the database — the whole batch, since an upsert
+     *             cannot tell an insert from an unchanged update
+     */
     public function upsertForAsset(int $assetId, array $prices): int
     {
         if ($prices === []) {
@@ -70,8 +83,36 @@ class EloquentPriceRepository implements PriceRepositoryContract
             'volume' => $price->volume,
         ], $prices);
 
+        $this->deleteBareDateRows($assetId, $rows);
+
         Price::query()->upsert($rows, ['asset_id', 'date'], ['open', 'high', 'low', 'close', 'volume']);
 
         return count($rows);
+    }
+
+    /**
+     * Drop the rows of the targeted days whose date was stored in the bare 'Y-m-d' form.
+     *
+     * Such rows come from writes that skipped Eloquent — the sync of the previous architecture
+     * used `insertOrIgnore()` with the raw Python date, and any query-builder insert does the
+     * same. SQLite compares them as text, so they never collide with the canonical
+     * 'Y-m-d H:i:s' key and the upsert below would add a second row for the same day. The extra
+     * inequality keeps this a no-op on drivers with a real date type, where both spellings
+     * compare equal.
+     *
+     * @param  array<int, array{asset_id: int, date: string}>  $rows
+     */
+    private function deleteBareDateRows(int $assetId, array $rows): void
+    {
+        $canonicalDates = array_column($rows, 'date');
+
+        Price::query()
+            ->where('asset_id', $assetId)
+            ->whereIn('date', array_map(
+                fn (string $date): string => substr($date, 0, 10),
+                $canonicalDates,
+            ))
+            ->whereNotIn('date', $canonicalDates)
+            ->delete();
     }
 }
