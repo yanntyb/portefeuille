@@ -1,5 +1,6 @@
 <?php
 
+use App\Contexts\Market\Console\SyncSectorsCommand;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
@@ -15,13 +16,16 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withCommands([
+        SyncSectorsCommand::class,
+    ])
     ->withSchedule(function (Schedule $schedule): void {
-        // TODO refacto DDD : les commandes securities:fetch-prices / securities:fetch-sectors
-        // ont ete supprimees (ancien app/Console/Commands). Le contexte Market actuel n'a pas
-        // encore de chemin d'ecriture (repos en lecture seule). Re-cabler le sync quotidien
-        // une fois le write-side Market construit. Voir docs/refactor-status.md.
+        // TODO refacto DDD : la commande securities:fetch-prices a ete supprimee (ancien
+        // app/Console/Commands) et le write-side prix du contexte Market n'existe pas encore
+        // (repos en lecture seule). Re-cabler le sync quotidien des prix une fois construit.
+        // Voir docs/refactor-status.md.
         // $schedule->command('securities:fetch-prices')->daily();
-        // $schedule->command('securities:fetch-sectors')->daily();
+        $schedule->command('market:sync-sectors')->weekly();
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [

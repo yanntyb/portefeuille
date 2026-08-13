@@ -4,7 +4,9 @@ namespace App\Contexts\Market;
 
 use App\Contexts\Market\Contracts\InstrumentRepositoryContract;
 use App\Contexts\Market\Contracts\PriceRepositoryContract;
+use App\Contexts\Market\Contracts\SectorRepositoryContract;
 use App\Contexts\Market\Ports\PriceProviderPort;
+use App\Contexts\Market\Ports\SectorProviderPort;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
@@ -13,16 +15,22 @@ class MarketProvider extends ServiceProvider
     /**
      * @param  class-string<InstrumentRepositoryContract>  $instrumentRepository
      * @param  class-string<PriceRepositoryContract>  $priceRepository
+     * @param  class-string<SectorRepositoryContract>  $sectorRepository
      * @param  class-string<PriceProviderPort>  $priceProvider
+     * @param  class-string<SectorProviderPort>  $sectorProvider
      */
     public static function registers(
         Application $app,
         string $instrumentRepository,
         string $priceRepository,
+        string $sectorRepository,
         string $priceProvider,
+        string $sectorProvider,
     ): void {
         $app->bind(InstrumentRepositoryContract::class, $instrumentRepository);
         $app->bind(PriceRepositoryContract::class, $priceRepository);
+        $app->bind(SectorRepositoryContract::class, $sectorRepository);
         $app->bind(PriceProviderPort::class, $priceProvider);
+        $app->bind(SectorProviderPort::class, $sectorProvider);
     }
 }

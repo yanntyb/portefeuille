@@ -9,6 +9,8 @@ use App\Contexts\InstrumentView\InstrumentViewProvider;
 use App\Contexts\Market\Infrastructure\DatabaseAssetPriceAdapter;
 use App\Contexts\Market\Infrastructure\EloquentInstrumentRepository;
 use App\Contexts\Market\Infrastructure\EloquentPriceRepository;
+use App\Contexts\Market\Infrastructure\EloquentSectorRepository;
+use App\Contexts\Market\Infrastructure\YahooFinanceAdapter;
 use App\Contexts\Market\MarketProvider;
 use App\Contexts\Valuation\Infrastructure\MarketInstrumentDirectory;
 use App\Contexts\Valuation\Infrastructure\MarketPriceHistory;
@@ -32,7 +34,9 @@ class AppServiceProvider extends ServiceProvider
             app: $this->app,
             instrumentRepository: EloquentInstrumentRepository::class,
             priceRepository: EloquentPriceRepository::class,
+            sectorRepository: EloquentSectorRepository::class,
             priceProvider: DatabaseAssetPriceAdapter::class,
+            sectorProvider: YahooFinanceAdapter::class,
         );
 
         ValuationProvider::registers(
