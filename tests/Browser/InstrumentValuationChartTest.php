@@ -55,12 +55,25 @@ it('plots the position value against what was invested, in euros', function () {
 
     visit("/instruments/{$asset->id}")
         ->assertScript(
-            "Array.from(document.querySelectorAll('[data-section=valuation] .apexcharts-legend-text')).map(el => el.textContent.trim()).join('|')",
+            "Array.from(document.querySelectorAll('[data-section=valuation] .apexcharts-series')).map(el => el.getAttribute('seriesName')).join('|')",
             'Valeur|Investi',
         )
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section=valuation] .apexcharts-yaxis-label')).every(el => el.textContent.includes('€'))",
             true,
+        )
+        ->assertNoJavaScriptErrors();
+});
+
+it('leaves the chart legend out, the lines speak for themselves', function () {
+    ['user' => $user, 'instrument' => $asset] = instrumentWithValuation();
+
+    $this->actingAs($user);
+
+    visit("/instruments/{$asset->id}")
+        ->assertScript(
+            "document.querySelectorAll('[data-section=valuation] .apexcharts-legend-text').length",
+            0,
         )
         ->assertNoJavaScriptErrors();
 });

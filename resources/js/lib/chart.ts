@@ -1,9 +1,5 @@
 import type { ApexAxisChartSeries, ApexOptions } from 'apexcharts';
 
-const LEGEND_BELOW_ON_MOBILE: ApexOptions['responsive'] = [
-    { breakpoint: 640, options: { legend: { position: 'bottom' } } },
-];
-
 const OVERLAP_PX = 6;
 
 function formatTooltipDate(label: string | number): string {
@@ -17,13 +13,11 @@ function formatTooltipDate(label: string | number): string {
 type TimeSeriesOptionsInput = {
     categories: (string | number)[];
     valueFormatter: (value: number) => string;
-    legendPosition?: 'left' | 'top' | 'bottom' | 'right';
 };
 
 export function buildTimeSeriesOptions({
     categories,
     valueFormatter,
-    legendPosition = 'left',
 }: TimeSeriesOptionsInput): ApexOptions {
     return {
         chart: { toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
@@ -73,8 +67,7 @@ export function buildTimeSeriesOptions({
                 return `<div class="apexcharts-tooltip-title" style="font-family: inherit; font-size: 12px;">${title}</div>${rows}`;
             },
         },
-        legend: { position: legendPosition, horizontalAlign: 'left', labels: { colors: '#fff' } },
-        responsive: LEGEND_BELOW_ON_MOBILE,
+        legend: { show: false },
     };
 }
 

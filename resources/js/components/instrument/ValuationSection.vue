@@ -59,7 +59,6 @@ const positionChartOptions = computed<ApexOptions>(() => ({
     ...buildTimeSeriesOptions({
         categories: props.valuation?.labels ?? [],
         valueFormatter: (value) => eur(value, 0),
-        legendPosition: 'top',
     }),
     colors: [VALUE_LINE_COLOR, INVESTED_LINE_COLOR],
     stroke: { curve: ['smooth', 'stepline'], width: [2, 2], dashArray: [0, 4] },
