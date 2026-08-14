@@ -31,7 +31,7 @@ function instrumentWithSectors(array $sectors): array
     return ['user' => $user, 'instrument' => $asset];
 }
 
-it('splits the instrument into a single stacked bar', function () {
+it('lists one row per sector, sorted by decreasing weight', function () {
     ['user' => $user, 'instrument' => $asset] = instrumentWithSectors([
         Sector::Technology->value => 0.6,
         Sector::Healthcare->value => 0.4,
@@ -44,11 +44,34 @@ it('splits the instrument into a single stacked bar', function () {
             "Array.from(document.querySelectorAll('[data-sector-label]')).map(el => el.textContent).join('|')",
             'Technologie|Santé',
         )
-        ->assertScript(
-            "Array.from(document.querySelectorAll('[data-sector-bar]')).map(el => el.style.width).join('|')",
-            '60%|40%',
-        )
+        ->assertScript("document.querySelector('[data-sector-bar]').style.width", '100%')
         ->assertScript("document.querySelector('[data-sector-share]').textContent", '60,0 %')
+        ->assertNoJavaScriptErrors();
+});
+
+it('collapses the sectors past the sixth behind a toggle', function () {
+    ['user' => $user, 'instrument' => $asset] = instrumentWithSectors([
+        Sector::Technology->value => 0.3,
+        Sector::Healthcare->value => 0.2,
+        Sector::FinancialServices->value => 0.15,
+        Sector::CommunicationServices->value => 0.12,
+        Sector::ConsumerCyclical->value => 0.1,
+        Sector::Industrials->value => 0.07,
+        Sector::Energy->value => 0.04,
+        Sector::RealEstate->value => 0.02,
+    ]);
+
+    $this->actingAs($user);
+
+    visit("/instruments/{$asset->id}")
+        ->assertScript("document.querySelectorAll('[data-sector-label]').length", 6)
+        ->assertDontSee('Énergie')
+        ->click('Voir les 2 autres')
+        ->assertScript("document.querySelectorAll('[data-sector-label]').length", 8)
+        ->assertSee('Énergie')
+        ->assertSee('Immobilier')
+        ->click('Réduire')
+        ->assertScript("document.querySelectorAll('[data-sector-label]').length", 6)
         ->assertNoJavaScriptErrors();
 });
 
