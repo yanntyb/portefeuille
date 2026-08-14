@@ -32,11 +32,7 @@ const props = defineProps<{
 
     <main class="min-h-screen overflow-x-hidden bg-background py-6 text-foreground">
         <div class="mx-auto flex max-w-6xl flex-col gap-6">
-            <HeroSection
-                :instrument="props.instrument"
-                :valuation="props.valuation"
-                :price-history="props.priceHistory"
-            />
+            <HeroSection :instrument="props.instrument" />
 
             <ValuationSection
                 v-if="props.instrument.position"

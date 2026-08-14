@@ -95,25 +95,6 @@ export function granularityForRange(range: ValuationRangeKey): 'day' | 'week' | 
     return range === 'max' ? 'month' : 'week';
 }
 
-/** A bare trend line meant to sit next to a figure, without axes, grid or tooltip. */
-export function buildSparklineOptions(serie: number[]): ApexOptions {
-    const rising = serie.length < 2 || serie[serie.length - 1] >= serie[0];
-
-    return {
-        chart: {
-            sparkline: { enabled: true },
-            toolbar: { show: false },
-            animations: { enabled: false },
-            fontFamily: 'inherit',
-        },
-        colors: [rising ? GAIN_COLOR : LOSS_COLOR],
-        stroke: { curve: 'smooth', width: 2 },
-        fill: { type: 'gradient', gradient: { opacityFrom: 0.25, opacityTo: 0 } },
-        markers: { size: 0 },
-        tooltip: { enabled: false },
-    };
-}
-
 type AssetSeries = { assetId: number; name: string; value: number[]; invested: number[] };
 
 type EvolutionInput = {

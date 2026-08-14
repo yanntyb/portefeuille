@@ -73,12 +73,12 @@ it('leads the unheld instrument sheet with its last price', function () {
         ->assertNoJavaScriptErrors();
 });
 
-it('draws a sparkline next to the hero figure', function () {
+it('keeps the hero free of a sparkline', function () {
     ['user' => $user, 'instrument' => $asset] = instrumentHero(held: true, withHistory: true);
 
     $this->actingAs($user);
 
     visit("/instruments/{$asset->id}")
-        ->assertScript("document.querySelectorAll('[data-hero-spark] svg').length", 1)
+        ->assertScript("document.querySelectorAll('[data-hero-spark]').length", 0)
         ->assertNoJavaScriptErrors();
 });
