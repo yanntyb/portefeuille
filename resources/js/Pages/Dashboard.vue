@@ -49,9 +49,6 @@ const toggleAsset = (assetId: number): void => {
                 :initial-range="valuationRange"
             />
 
-            <PerformancesSection v-if="overview.holdings.length" :performances="performances" />
-
-            <SectorsSection v-if="overview.holdings.length" :slices="sectorBreakdown" />
 
             <HoldingsSection
                 :holdings="overview.holdings"
@@ -59,6 +56,12 @@ const toggleAsset = (assetId: number): void => {
                 :series="evolutionSeries"
                 @toggle="toggleAsset"
             />
+
+            <SectorsSection v-if="overview.holdings.length" :slices="sectorBreakdown" />
+
+            <PerformancesSection v-if="overview.holdings.length" :performances="performances" />
+
+
 
         </div>
     </main>

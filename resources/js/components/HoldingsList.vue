@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { Eye, EyeOff } from 'lucide-vue-next';
 import Sparkline from '@/components/Sparkline.vue';
-import { eur as formatEur, gainClass, pct, quantity, signedEur } from '@/lib/format';
+import { eur as formatEur, gainClass, pct, signedEur } from '@/lib/format';
 import type { EvolutionSeries, HoldingLine } from '@/lib/portfolio';
 
 const FAINTEST_BAR_OPACITY = 0.35;
@@ -52,10 +52,6 @@ const share = (value: number): string =>
 
 const value = (amount: number | null): string => formatEur(amount, 0);
 
-/** The columns the table used to spend width on, folded into one muted line. */
-const meta = (line: HoldingLine): string =>
-    `${line.typeLabel} · ${quantity(line.quantity)} × ${formatEur(line.lastPrice, 2)}`;
-
 const isHidden = (assetId: number): boolean => props.hiddenAssetIds.has(assetId);
 </script>
 
@@ -93,10 +89,7 @@ const isHidden = (assetId: number): boolean => props.hiddenAssetIds.has(assetId)
                     </span>
                 </div>
 
-                <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs">
-                    <span data-holding-meta class="min-w-0 break-words text-muted-foreground">
-                        {{ meta(line) }}
-                    </span>
+                <div class="flex items-baseline justify-end gap-x-3 text-xs">
                     <span class="flex shrink-0 items-baseline gap-2 tabular-nums" :class="gainClass(line.gain)">
                         <span data-holding-gain>{{ signedEur(line.gain, 0) }}</span>
                         <span data-holding-gain-pct>{{ pct(line.gainPct) }}</span>

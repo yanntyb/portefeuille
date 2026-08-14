@@ -13,7 +13,6 @@ defineEmits<{ toggle: [assetId: number] }>();
 
 <template>
     <section data-section="holdings" class="flex flex-col gap-6 px-6">
-        <h2 class="leading-none font-semibold">Positions</h2>
         <div class="min-w-0">
             <HoldingsList
                 v-if="holdings.length"

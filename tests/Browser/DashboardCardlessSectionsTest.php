@@ -39,7 +39,7 @@ it('renders the dashboard sections without card wrappers', function () {
         ->assertScript("document.querySelectorAll('main [data-slot=card]').length", 0)
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'valuation|evolution|performances|sectors|holdings',
+            'valuation|evolution|holdings|sectors|performances',
         )
         ->assertNoJavaScriptErrors();
 });
