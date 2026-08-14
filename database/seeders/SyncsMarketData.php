@@ -34,4 +34,16 @@ trait SyncsMarketData
             ->filter(fn (array $row): bool => $row['close'] > 0)
             ->values();
     }
+
+    /**
+     * Remplit les prix et les secteurs de tous les actifs en une passe.
+     *
+     * Le fournisseur récupère les cours par lot : une commande sans `--asset` coûte un seul
+     * appel là où une boucle par actif en coûterait autant que d'instruments.
+     */
+    private function syncAllMarketData(string $since): void
+    {
+        Artisan::call('market:sync-prices', ['--since' => $since]);
+        Artisan::call('market:sync-sectors');
+    }
 }
