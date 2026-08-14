@@ -3,10 +3,7 @@
 namespace Database\Seeders;
 
 use App\Contexts\Identity\Models\User;
-use App\Contexts\Market\Contracts\PriceRepositoryContract;
-use App\Contexts\Market\Datas\PriceData;
 use App\Contexts\Market\Enums\InstrumentType;
-use App\Contexts\Market\Infrastructure\YahooFinanceAdapter;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Holding;
@@ -18,6 +15,8 @@ use Illuminate\Support\Collection;
 
 class EtfHistorySeeder extends Seeder
 {
+    use SyncsMarketData;
+
     /**
      * ETF Amundi (Euronext Paris) dont l'historique est récupéré chez Yahoo.
      *
@@ -38,8 +37,6 @@ class EtfHistorySeeder extends Seeder
 
     private const FEE_PER_ORDER = 1.00;
 
-    public function __construct(private PriceRepositoryContract $prices) {}
-
     public function run(): void
     {
         $user = User::query()->first() ?? User::factory()->create();
@@ -53,9 +50,7 @@ class EtfHistorySeeder extends Seeder
         Transaction::query()->where('wallet_id', $wallet->id)->delete();
         Holding::query()->where('wallet_id', $wallet->id)->delete();
 
-        $yahoo = app(YahooFinanceAdapter::class);
         $start = today()->subYears(self::YEARS_OF_HISTORY)->format('Y-m-d');
-        $end = today()->format('Y-m-d');
 
         /** @var list<array{instrument: Instrument, history: Collection<int, array{date: string, close: float}>}> $portfolio */
         $portfolio = [];
@@ -66,10 +61,7 @@ class EtfHistorySeeder extends Seeder
                 ['name' => $etf['name'], 'isin' => $etf['isin'], 'type' => InstrumentType::ETF],
             );
 
-            $history = $yahoo->getPriceHistory($instrument->id, $start, $end)
-                ->filter(fn (array $row): bool => ($row['close'] ?? 0) > 0)
-                ->sortBy('date')
-                ->values();
+            $history = $this->syncMarketData($instrument->id, $start);
 
             if ($history->isEmpty()) {
                 $this->command?->warn("Yahoo: pas de données pour {$etf['ticker']}, ignoré");
@@ -77,7 +69,6 @@ class EtfHistorySeeder extends Seeder
                 continue;
             }
 
-            $this->storePriceHistory($instrument->id, $history);
             $portfolio[] = ['instrument' => $instrument, 'history' => $history];
         }
 
@@ -86,22 +77,6 @@ class EtfHistorySeeder extends Seeder
         }
 
         $this->seedMomentumDca($user->id, $wallet->id, $portfolio);
-    }
-
-    /**
-     * Persiste l'historique via le repository : lui seul écrit la date au format
-     * 'Y-m-d H:i:s' attendu par l'index unique (asset_id, date). Écrire ici la date brute
-     * 'Y-m-d' du script Python créerait, sous le typage dynamique de SQLite, une seconde
-     * ligne pour un jour déjà synchronisé.
-     *
-     * @param  Collection<int, array{date: string, open?: float, high?: float, low?: float, close: float, volume?: int}>  $history
-     */
-    private function storePriceHistory(int $assetId, Collection $history): void
-    {
-        $this->prices->upsertForAsset(
-            $assetId,
-            $history->map(fn (array $row): PriceData => PriceData::fromArray($row))->all(),
-        );
     }
 
     /**

@@ -5,6 +5,7 @@ use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Infrastructure\Python\YahooScript;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
+use App\Contexts\Market\Models\SectorAllocation;
 use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Shared\Python\FakePythonRunner;
@@ -42,9 +43,23 @@ function etfMonthlyRows(): array
 /** Nombre de mois investissables : ceux ayant un close 3 mois avant (24 points - 3). */
 const INVESTABLE_MONTHS = 21;
 
-function fakeYahoo(PythonResult $result): void
+/** Tickers servis par le script de récupération groupée, tous avec le même historique. */
+const ETF_TICKERS = ['PE500.PA', 'PUST.PA', 'MEUD.PA', 'AEEM.PA'];
+
+/**
+ * Le seeder délègue aux commandes market:sync-prices et market:sync-sectors : les scripts
+ * Python à simuler sont donc ceux du fetch groupé et des secteurs.
+ */
+function fakeYahoo(PythonResult $prices, ?PythonResult $sectors = null): void
 {
-    $fake = (new FakePythonRunner)->withResult(YahooScript::Prices->path(), $result);
+    $bulk = $prices->ok()
+        ? new PythonResult('ok', array_fill_keys(ETF_TICKERS, $prices->data))
+        : $prices;
+
+    $fake = (new FakePythonRunner)
+        ->withResult(YahooScript::PricesBulk->path(), $bulk)
+        ->withResult(YahooScript::Sectors->path(), $sectors ?? new PythonResult('ok', []));
+
     app()->instance(PythonRunner::class, $fake);
 }
 
@@ -91,6 +106,22 @@ it('is idempotent', function () {
     $this->seed(EtfHistorySeeder::class);
 
     expect(Transaction::query()->count())->toBe($txCount);
+});
+
+it('fetches prices and sectors through the sync commands', function () {
+    fakeYahoo(
+        new PythonResult('ok', etfMonthlyRows()),
+        new PythonResult('ok', ['technology' => 0.42, 'healthcare' => 0.11]),
+    );
+    User::factory()->create();
+
+    $this->seed(EtfHistorySeeder::class);
+
+    $scripts = collect(app(PythonRunner::class)->calls)->pluck('script')->unique();
+
+    expect($scripts)->toContain(YahooScript::PricesBulk->path(), YahooScript::Sectors->path())
+        ->and($scripts)->not->toContain(YahooScript::Prices->path())
+        ->and(SectorAllocation::query()->count())->toBe(2 * count(ETF_TICKERS));
 });
 
 it('stores prices with the canonical date format, one row per day', function () {

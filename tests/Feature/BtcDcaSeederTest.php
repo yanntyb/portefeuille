@@ -39,9 +39,17 @@ function btcMonthlyRows(): array
     return $rows;
 }
 
+/**
+ * Le seeder délègue à market:sync-prices : le script Python à simuler est celui du fetch
+ * groupé, dont la réponse est indexée par ticker.
+ */
 function fakeBtcYahoo(PythonResult $result): void
 {
-    $fake = (new FakePythonRunner)->withResult(YahooScript::Prices->path(), $result);
+    $bulk = $result->ok()
+        ? new PythonResult('ok', ['BTC-EUR' => $result->data])
+        : $result;
+
+    $fake = (new FakePythonRunner)->withResult(YahooScript::PricesBulk->path(), $bulk);
     app()->instance(PythonRunner::class, $fake);
 }
 
