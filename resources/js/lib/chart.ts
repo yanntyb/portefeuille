@@ -84,6 +84,24 @@ export const INVESTED_LINE_COLOR = '#94a3b8';
 export const GAIN_COLOR = '#10b981';
 export const LOSS_COLOR = '#ef4444';
 
+export type ValuationRangeKey = '1M' | '6M' | '1Y' | 'max';
+
+export const VALUATION_RANGES: { key: ValuationRangeKey; label: string }[] = [
+    { key: '1M', label: '1M' },
+    { key: '6M', label: '6M' },
+    { key: '1Y', label: '1A' },
+    { key: 'max', label: 'Max' },
+];
+
+/** One point per day only makes sense over a short window, so the period picks the step. */
+export function granularityForRange(range: ValuationRangeKey): 'day' | 'week' | 'month' {
+    if (range === '1M') {
+        return 'day';
+    }
+
+    return range === 'max' ? 'month' : 'week';
+}
+
 /** A bare trend line meant to sit next to a figure, without axes, grid or tooltip. */
 export function buildSparklineOptions(serie: number[]): ApexOptions {
     const rising = serie.length < 2 || serie[serie.length - 1] >= serie[0];

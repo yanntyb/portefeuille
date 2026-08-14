@@ -16,7 +16,6 @@ const props = defineProps<{
     priceHistory?: PriceHistory;
     valuation?: ValuationSeries;
     valuationRange?: string;
-    valuationGranularity?: string;
 }>();
 </script>
 
@@ -43,7 +42,6 @@ const props = defineProps<{
                 v-if="props.instrument.position"
                 :valuation="props.valuation"
                 :initial-range="props.valuationRange"
-                :initial-granularity="props.valuationGranularity"
             />
 
             <PriceHistorySection v-else :price-history="props.priceHistory" />
