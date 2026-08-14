@@ -61,12 +61,12 @@ const isHidden = (assetId: number): boolean => props.hiddenAssetIds.has(assetId)
             v-for="(line, index) in sortedHoldings"
             :key="line.assetId"
             data-holding-row
-            class="flex items-start gap-3 border-b border-border py-4 last:border-b-0"
+            class="flex items-center gap-3 border-b border-border py-2.5 last:border-b-0"
             :class="isHidden(line.assetId) ? 'opacity-40' : ''"
         >
             <button
                 type="button"
-                class="mt-0.5 shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+                class="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
                 :aria-label="isHidden(line.assetId) ? 'Afficher' : 'Masquer'"
                 @click="$emit('toggle', line.assetId)"
             >
@@ -74,49 +74,51 @@ const isHidden = (assetId: number): boolean => props.hiddenAssetIds.has(assetId)
                 <Eye v-else class="size-4" />
             </button>
 
-            <div class="flex min-w-0 flex-1 flex-col gap-1.5">
-                <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                    <Link
-                        :href="`/instruments/${line.assetId}`"
-                        data-holding-name
-                        class="min-w-0 font-medium break-words hover:underline"
-                    >
-                        {{ line.assetName }}
-                        <span v-if="line.ticker" class="text-muted-foreground">({{ line.ticker }})</span>
-                    </Link>
-                    <span data-holding-value class="shrink-0 font-medium tabular-nums">
-                        {{ value(line.marketValue) }}
-                    </span>
-                </div>
+            <Link
+                :href="`/instruments/${line.assetId}`"
+                data-holding-name
+                class="block min-w-0 flex-1 truncate font-medium hover:underline"
+            >
+                {{ line.assetName }}
+                <span v-if="line.ticker" class="text-muted-foreground">({{ line.ticker }})</span>
+            </Link>
 
-                <div class="flex items-baseline justify-end gap-x-3 text-xs">
-                    <span class="flex shrink-0 items-baseline gap-2 tabular-nums" :class="gainClass(line.gain)">
-                        <span data-holding-gain>{{ signedEur(line.gain, 0) }}</span>
-                        <span data-holding-gain-pct>{{ pct(line.gainPct) }}</span>
-                    </span>
-                </div>
+            <span class="hidden h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-muted sm:block md:w-28">
+                <span
+                    data-holding-bar
+                    class="block h-full rounded-full bg-foreground"
+                    :style="{ width: barWidth(line), opacity: opacityAt(index) }"
+                ></span>
+            </span>
+            <span
+                data-holding-weight
+                class="hidden w-12 shrink-0 text-right text-xs tabular-nums text-muted-foreground sm:block"
+            >
+                {{ share(shareOf(line)) }}
+            </span>
 
-                <div class="flex items-center gap-3">
-                    <span class="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
-                        <span
-                            data-holding-bar
-                            class="block h-full rounded-full bg-foreground"
-                            :style="{ width: barWidth(line), opacity: opacityAt(index) }"
-                        ></span>
-                    </span>
-                    <span
-                        data-holding-weight
-                        class="w-14 shrink-0 text-right text-xs tabular-nums text-muted-foreground"
-                    >
-                        {{ share(shareOf(line)) }}
-                    </span>
-                </div>
-            </div>
-
-            <div class="hidden w-16 shrink-0 sm:block">
+            <span class="hidden w-16 shrink-0 lg:block">
                 <Sparkline v-if="valuesFor(line.assetId).length > 1" :values="valuesFor(line.assetId)" />
                 <span v-else-if="!series" class="block h-5 w-full animate-pulse rounded bg-muted"></span>
-            </div>
+            </span>
+
+            <span data-holding-value class="w-24 shrink-0 text-right font-medium tabular-nums">
+                {{ value(line.marketValue) }}
+            </span>
+            <span
+                data-holding-gain
+                class="hidden w-24 shrink-0 text-right text-sm tabular-nums md:block"
+                :class="gainClass(line.gain)"
+            >
+                {{ signedEur(line.gain, 0) }}
+            </span>
+            <span
+                data-holding-gain-pct
+                class="w-20 shrink-0 text-right text-sm tabular-nums"
+                :class="gainClass(line.gain)"
+            >
+                {{ pct(line.gainPct) }}
+            </span>
         </li>
     </ul>
 </template>
