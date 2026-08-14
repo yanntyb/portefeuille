@@ -33,13 +33,12 @@ function instrumentWithPerformances(): array
     return ['user' => $user, 'instrument' => $asset];
 }
 
-it('replaces the performance table with one bar per period', function () {
+it('renders one bar per period', function () {
     ['user' => $user, 'instrument' => $asset] = instrumentWithPerformances();
 
     $this->actingAs($user);
 
     visit("/instruments/{$asset->id}")
-        ->assertScript("document.querySelectorAll('[data-testid=performance-table]').length", 0)
         ->assertScript("document.querySelectorAll('[data-perf-row]').length", 5)
         ->assertScript("document.querySelector('[data-perf-row] [data-perf-label]').textContent.trim()", 'YTD')
         ->assertNoJavaScriptErrors();

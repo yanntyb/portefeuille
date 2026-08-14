@@ -54,7 +54,7 @@ defineProps<{ variant: "global" | "periods" }>()
       <template v-else>
         <DialogHeader>
           <DialogTitle>Comment lire les performances par période</DialogTitle>
-          <DialogDescription>Le tableau YTD, 1 mois, … Max.</DialogDescription>
+          <DialogDescription>La liste YTD, 1 mois, … Max.</DialogDescription>
         </DialogHeader>
         <div class="flex flex-col gap-3 text-sm text-foreground">
           <p>
@@ -74,10 +74,10 @@ defineProps<{ variant: "global" | "periods" }>()
             change rien</strong> au pourcentage.
           </p>
           <p>
-            La colonne <strong>Apports</strong> montre justement les versements de la période
-            qui sont retirés du calcul, et <strong>Gain</strong> le résultat en euros une fois
-            ces versements exclus. <strong>Valeur début</strong> est la valorisation au jour
-            indiqué dans <strong>Depuis</strong>.
+            <strong>Gain</strong> est le résultat en euros une fois ces versements exclus. Au
+            survol d'une ligne, <strong>Apports</strong> montre justement les versements de la
+            période retirés du calcul, et <strong>Valeur début</strong> la valorisation au
+            premier jour de la période.
           </p>
           <p>
             C'est pour ça que ça diffère du % global : celui-ci compare le gain au coût total

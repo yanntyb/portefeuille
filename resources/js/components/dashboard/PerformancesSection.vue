@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Deferred } from '@inertiajs/vue3';
+import PerformanceBars from '@/components/PerformanceBars.vue';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
-import PerformanceTable from '@/components/PerformanceTable.vue';
 import type { Performance } from '@/lib/performance';
 
 defineProps<{ performances?: Performance[] }>();
@@ -20,10 +20,9 @@ defineProps<{ performances?: Performance[] }>();
                 </div>
             </template>
 
-            <PerformanceTable
+            <PerformanceBars
                 v-if="performances && performances.length"
                 :performances="performances"
-                :currency-digits="0"
             />
         </Deferred>
     </section>
