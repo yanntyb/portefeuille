@@ -1,5 +1,4 @@
 import type { ApexAxisChartSeries, ApexOptions } from 'apexcharts';
-import type { SectorSlice } from '@/lib/sector';
 
 const LEGEND_BELOW_ON_MOBILE: ApexOptions['responsive'] = [
     { breakpoint: 640, options: { legend: { position: 'bottom' } } },
@@ -80,9 +79,29 @@ export function buildTimeSeriesOptions({
 }
 
 const GREY_SCALE = ['#e2e8f0', '#cbd5e1', '#94a3b8', '#64748b', '#475569', '#334155'];
-const VALUE_LINE_COLOR = '#4f46e5';
-const GAIN_COLOR = '#10b981';
-const LOSS_COLOR = '#ef4444';
+export const VALUE_LINE_COLOR = '#4f46e5';
+export const INVESTED_LINE_COLOR = '#94a3b8';
+export const GAIN_COLOR = '#10b981';
+export const LOSS_COLOR = '#ef4444';
+
+/** A bare trend line meant to sit next to a figure, without axes, grid or tooltip. */
+export function buildSparklineOptions(serie: number[]): ApexOptions {
+    const rising = serie.length < 2 || serie[serie.length - 1] >= serie[0];
+
+    return {
+        chart: {
+            sparkline: { enabled: true },
+            toolbar: { show: false },
+            animations: { enabled: false },
+            fontFamily: 'inherit',
+        },
+        colors: [rising ? GAIN_COLOR : LOSS_COLOR],
+        stroke: { curve: 'smooth', width: 2 },
+        fill: { type: 'gradient', gradient: { opacityFrom: 0.25, opacityTo: 0 } },
+        markers: { size: 0 },
+        tooltip: { enabled: false },
+    };
+}
 
 type AssetSeries = { assetId: number; name: string; value: number[]; invested: number[] };
 
@@ -174,72 +193,9 @@ export function buildEvolutionChart({
     return { series, options };
 }
 
-type SectorBarInput = {
-    slices: SectorSlice[];
-    valueFormatter: (value: number) => string;
-};
-
-function formatShare(value: number): string {
-    return `${value.toFixed(1)} %`;
-}
-
-export function buildSectorBarChart({
-    slices,
-    valueFormatter,
-}: SectorBarInput): { series: ApexAxisChartSeries; options: ApexOptions } {
-    const series: ApexAxisChartSeries = [
-        { name: 'Valeur', data: slices.map((slice) => slice.value) },
-    ];
-
-    // One monotonic light-to-dark ramp over the whole list, so the greys never restart mid-chart.
-    const greyFor = (index: number): string =>
-        GREY_SCALE[Math.min(GREY_SCALE.length - 1, Math.floor((index * GREY_SCALE.length) / Math.max(1, slices.length)))];
-
-    const options: ApexOptions = {
-        chart: { type: 'bar', toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
-        colors: slices.map((_slice, index) => greyFor(index)),
-        plotOptions: { bar: { horizontal: true, distributed: true, borderRadius: 4, barHeight: '70%' } },
-        dataLabels: { enabled: false },
-        grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
-        xaxis: {
-            categories: slices.map((slice) => slice.label),
-            axisBorder: { show: false },
-            axisTicks: { show: false },
-            labels: { formatter: (value: string): string => valueFormatter(Number(value)), style: { colors: 'oklch(0.708 0 0)' } },
-        },
-        yaxis: { labels: { maxWidth: 200, style: { colors: 'oklch(0.708 0 0)' } } },
-        legend: { show: false },
-        responsive: [
-            {
-                breakpoint: 640,
-                options: {
-                    yaxis: { labels: { maxWidth: 110 } },
-                    xaxis: { tickAmount: 3 },
-                },
-            },
-        ],
-        tooltip: {
-            custom: ({ dataPointIndex }): string => {
-                const slice = slices[dataPointIndex];
-                if (slice == null) {
-                    return '';
-                }
-
-                const row = (label: string, text: string): string =>
-                    `<div class="apexcharts-tooltip-series-group apexcharts-active" style="display: flex;">`
-                    + `<span class="apexcharts-tooltip-marker" style="background-color: ${greyFor(dataPointIndex)};"></span>`
-                    + `<div class="apexcharts-tooltip-text" style="font-family: inherit; font-size: 12px;">`
-                    + `<div class="apexcharts-tooltip-y-group">`
-                    + `<span class="apexcharts-tooltip-text-y-label">${label}: </span>`
-                    + `<span class="apexcharts-tooltip-text-y-value">${text}</span>`
-                    + `</div></div></div>`;
-
-                const header = `<div class="apexcharts-tooltip-title" style="font-family: inherit; font-size: 12px;">${slice.label}</div>`;
-
-                return header + row('Valeur', valueFormatter(slice.value)) + row('Part', formatShare(slice.pct));
-            },
-        },
-    };
-
-    return { series, options };
+/** Rebases a serie on its first point so several series share a comparable scale. */
+export function base100(serie: number[]): number[] {
+    return serie.length === 0 || serie[0] === 0
+        ? serie.map((): number => 100)
+        : serie.map((value: number): number => (value / serie[0]) * 100);
 }
