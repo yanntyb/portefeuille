@@ -23,3 +23,45 @@ it('renders the instrument catalogue with a held flag', function () {
             ->has('catalog.lines', 2)
         );
 });
+
+it('defers the catalogue trends and loads them on demand', function () {
+    User::query()->delete();
+    User::factory()->create();
+    $asset = Instrument::factory()->create(['name' => 'Trending Co']);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => now()->subDays(10), 'close' => 100]);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => now(), 'close' => 150]);
+
+    $this->get('/instruments')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Instruments/Index')
+            ->where('catalogRange', 'max')
+            ->missing('trends')
+            ->loadDeferredProps(fn (Assert $reload) => $reload
+                ->has('trends', 1)
+                ->where('trends.0.assetId', $asset->id)
+                ->where('trends.0.changePct', fn ($value) => (float) $value === 50.0)
+                ->has('trends.0.points', 2)
+            )
+        );
+});
+
+it('accepts the range query param for the catalogue trends', function () {
+    User::query()->delete();
+    User::factory()->create();
+    $asset = Instrument::factory()->create();
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => now()->subMonths(6), 'close' => 10]);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => now()->subDays(10), 'close' => 100]);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => now(), 'close' => 150]);
+
+    $this->get('/instruments?range=1M')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Instruments/Index')
+            ->where('catalogRange', '1M')
+            ->loadDeferredProps(fn (Assert $reload) => $reload
+                ->where('trends.0.changePct', fn ($value) => (float) $value === 50.0)
+                ->has('trends.0.points', 2)
+            )
+        );
+});

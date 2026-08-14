@@ -1,40 +1,39 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
+import CatalogHeader from '@/components/instruments/CatalogHeader.vue';
+import CatalogList from '@/components/instruments/CatalogList.vue';
+import { isRangeKey, joinTrends, type CatalogLine, type CatalogRow, type CatalogTrend, type RangeKey } from '@/lib/catalog';
 
-interface CatalogLine {
-    id: number;
-    name: string;
-    ticker: string | null;
-    type: string;
-    typeLabel: string;
-    lastPrice: number | null;
-    held: boolean;
-    quantity: number | null;
-    marketValue: number | null;
-}
+const props = defineProps<{
+    catalog: { lines: CatalogLine[] };
+    catalogRange?: string;
+    trends?: CatalogTrend[];
+}>();
 
-defineProps<{ catalog: { lines: CatalogLine[] } }>();
+const selectedRange = ref<RangeKey>(isRangeKey(props.catalogRange) ? props.catalogRange : 'max');
+const reloading = ref<boolean>(false);
 
-const eur = (value: number | null): string =>
-    value === null
-        ? '—'
-        : value.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+/** The catalogue itself ships with the page; only the trends of the selected period are deferred. */
+const loading = computed<boolean>(() => props.trends === undefined || reloading.value);
+
+const rows = computed<CatalogRow[]>(() => joinTrends(props.catalog.lines, props.trends));
+
+const selectRange = (key: RangeKey): void => {
+    selectedRange.value = key;
+
+    router.reload({
+        only: ['trends'],
+        data: { range: key },
+        onStart: (): void => {
+            reloading.value = true;
+        },
+        onFinish: (): void => {
+            reloading.value = false;
+        },
+    });
+};
 </script>
 
 <template>
@@ -42,50 +41,16 @@ const eur = (value: number | null): string =>
 
     <AppBreadcrumb :items="[{ label: 'Tableau de bord', href: '/' }, { label: 'Instruments' }]" />
 
-    <main class="min-h-screen bg-background py-6 text-foreground">
+    <main class="min-h-screen overflow-x-hidden bg-background py-6 text-foreground">
         <div class="mx-auto flex max-w-6xl flex-col gap-6">
-            <Card class="border-0 bg-transparent shadow-none rounded-none">
-                <CardContent>
-                    <Table v-if="catalog.lines.length">
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Nom</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead class="text-right">Dernier prix</TableHead>
-                                <TableHead class="text-right">Détenu</TableHead>
-                                <TableHead class="text-right">Valeur</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            <TableRow
-                                v-for="line in catalog.lines"
-                                :key="line.id"
-                                class="cursor-pointer hover:bg-muted/50"
-                            >
-                                <TableCell class="font-medium">
-                                    <Link :href="`/instruments/${line.id}`" class="block">
-                                        {{ line.name }}
-                                        <span v-if="line.ticker" class="text-muted-foreground">({{ line.ticker }})</span>
-                                    </Link>
-                                </TableCell>
-                                <TableCell>{{ line.typeLabel }}</TableCell>
-                                <TableCell class="text-right">
-                                    <span v-if="line.lastPrice === null" class="text-muted-foreground">N/D</span>
-                                    <span v-else>{{ eur(line.lastPrice) }}</span>
-                                </TableCell>
-                                <TableCell class="text-right">
-                                    <span v-if="line.held" class="text-emerald-600 dark:text-emerald-400">Oui</span>
-                                    <span v-else class="text-muted-foreground">—</span>
-                                </TableCell>
-                                <TableCell class="text-right">{{ eur(line.marketValue) }}</TableCell>
-                            </TableRow>
-                        </TableBody>
-                    </Table>
-                    <p v-else class="py-8 text-center text-sm text-muted-foreground">
-                        Aucun instrument connu.
-                    </p>
-                </CardContent>
-            </Card>
+            <CatalogHeader
+                :rows="rows"
+                :range="selectedRange"
+                :loading="loading"
+                @update:range="selectRange"
+            />
+
+            <CatalogList :rows="rows" :loading="loading" />
         </div>
     </main>
 </template>
