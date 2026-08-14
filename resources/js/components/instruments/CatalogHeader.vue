@@ -32,15 +32,13 @@ const countLabel = computed<string>(() => {
                 <p data-catalog-count class="text-sm text-muted-foreground">{{ countLabel }}</p>
             </div>
 
-            <div class="flex flex-1 flex-wrap items-center justify-end gap-3">
-                <CatalogSearch v-model="query" />
-
-                <ChartRangeToggle
-                    :options="rangeOptions"
-                    :model-value="props.range"
-                    @update:model-value="$emit('update:range', $event)"
-                />
-            </div>
+            <ChartRangeToggle
+                :options="rangeOptions"
+                :model-value="props.range"
+                @update:model-value="$emit('update:range', $event)"
+            />
         </div>
+
+        <CatalogSearch v-model="query" />
     </header>
 </template>

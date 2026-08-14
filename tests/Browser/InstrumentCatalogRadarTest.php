@@ -125,6 +125,30 @@ it('searches on the isin and ignores the accents', function () {
         ->assertNoJavaScriptErrors();
 });
 
+it('spans the search bar across the header and holds its width while typing', function () {
+    $this->actingAs(userWithCatalog());
+
+    seedCatalogInstrument('Alpha Fund', 100, 150);
+    seedCatalogInstrument('Beta Fund', 100, 80);
+    seedCatalogInstrument('Gamma Trust', 100, 105);
+
+    $fillsHeader = "(() => {
+        const field = document.querySelector('[data-catalog-search]');
+        const header = document.querySelector('[data-section=catalog-header]');
+        const padding = parseFloat(getComputedStyle(header).paddingLeft) + parseFloat(getComputedStyle(header).paddingRight);
+
+        return Math.abs(field.offsetWidth - (header.clientWidth - padding)) < 1;
+    })()";
+
+    visit('/instruments')
+        ->assertSee('Alpha Fund')
+        ->assertScript($fillsHeader, true)
+        ->type('[data-catalog-search]', 'fund')
+        ->assertScript(textOfCatalog('[data-catalog-count]'), '2 instruments')
+        ->assertScript($fillsHeader, true)
+        ->assertNoJavaScriptErrors();
+});
+
 it('recounts the instruments on the searched ones', function () {
     $this->actingAs(userWithCatalog());
 
