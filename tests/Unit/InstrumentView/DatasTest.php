@@ -17,7 +17,7 @@ it('serializes a catalog line with a type label', function () {
 
     expect($line->jsonSerialize())->toMatchArray([
         'id' => 7, 'name' => 'ACME', 'ticker' => 'ACM',
-        'type' => 'stock', 'typeLabel' => 'Stock',
+        'type' => 'stock', 'typeLabel' => 'Action',
         'lastPrice' => 100.0, 'held' => true, 'quantity' => 10.0, 'marketValue' => 1000.0,
     ]);
 });
@@ -39,7 +39,7 @@ it('serializes an instrument detail with nested position', function () {
 
     $json = $detail->jsonSerialize();
 
-    expect($json['typeLabel'])->toBe('Stock');
+    expect($json['typeLabel'])->toBe('Action');
     expect($json['position'])->toBeInstanceOf(PositionData::class);
     expect($json['transactions'])->toHaveCount(1);
     expect($json['sectors'][0])->toBeInstanceOf(SectorWeightData::class);

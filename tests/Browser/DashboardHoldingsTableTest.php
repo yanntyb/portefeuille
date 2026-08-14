@@ -53,7 +53,7 @@ it('lists the holdings from the heaviest to the lightest, with their weight and 
         ->assertScript($textOf('[data-holding-weight]'), '80,0 %|20,0 %')
         ->assertScript($textOf('[data-holding-gain]'), '+200 €|+50 €')
         ->assertScript($textOf('[data-holding-gain-pct]'), '+25,0 %|+25,0 %')
-        ->assertScript($textOf('[data-holding-meta]'), 'Stock · 10 × 100,00 €|Stock · 5 × 50,00 €')
+        ->assertScript($textOf('[data-holding-meta]'), 'Action · 10 × 100,00 €|Action · 5 × 50,00 €')
         ->assertNoJavaScriptErrors();
 });
 

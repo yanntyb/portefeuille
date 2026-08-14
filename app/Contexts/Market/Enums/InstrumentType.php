@@ -19,11 +19,11 @@ enum InstrumentType: string
     public function getLabel(): string
     {
         return match ($this) {
-            self::Stock => 'Stock',
+            self::Stock => 'Action',
             self::ETF => 'ETF',
-            self::Crypto => 'Cryptocurrency',
-            self::Bond => 'Bond',
-            self::Commodity => 'Commodity',
+            self::Crypto => 'Cryptomonnaie',
+            self::Bond => 'Obligation',
+            self::Commodity => 'Matière première',
         };
     }
 

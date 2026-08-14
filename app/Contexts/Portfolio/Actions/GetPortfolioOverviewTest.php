@@ -50,8 +50,8 @@ it('aggregates allocation by instrument type', function () {
         ->and($overview->allocation)->toHaveCount(2);
 
     $byLabel = collect($overview->allocation)->keyBy('label');
-    expect($byLabel['Stock']->pct)->toBe(60.0)
-        ->and($byLabel['Cryptocurrency']->pct)->toBe(40.0);
+    expect($byLabel['Action']->pct)->toBe(60.0)
+        ->and($byLabel['Cryptomonnaie']->pct)->toBe(40.0);
 });
 
 it('excludes a holding without a known price from totals and allocation', function () {
