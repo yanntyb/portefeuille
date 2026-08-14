@@ -34,10 +34,20 @@ function holdingWithSectors(User $user, string $name, InstrumentType $type, floa
     }
 }
 
-it('renders one horizontal bar per sector, sorted by decreasing weight', function () {
-    // A legacy data migration seeds a hardcoded user; clear it so the controller resolves this user.
+/**
+ * A legacy data migration seeds a hardcoded user; clear it so the controller resolves the test user.
+ */
+function soleUser(): User
+{
     User::query()->delete();
-    $user = User::factory()->create();
+
+    return User::factory()->create();
+}
+
+const SECTOR_LABELS = "Array.from(document.querySelectorAll('[data-section=\"sectors\"] [data-sector-label]')).map(el => el.textContent).join('|')";
+
+it('renders one row per sector, sorted by decreasing weight', function () {
+    $user = soleUser();
 
     holdingWithSectors($user, 'ACME ETF', InstrumentType::ETF, 1000.0, [
         Sector::Technology->value => 0.6,
@@ -50,20 +60,87 @@ it('renders one horizontal bar per sector, sorted by decreasing weight', functio
     $page = visit('/');
 
     $page->assertSee('Répartition sectorielle')
+        ->assertScript(SECTOR_LABELS, 'Technologie|Autre|Santé')
+        ->assertNoJavaScriptErrors();
+});
+
+it('scales the bars against the largest sector, not the total', function () {
+    $user = soleUser();
+
+    holdingWithSectors($user, 'ACME ETF', InstrumentType::ETF, 1000.0, [
+        Sector::Technology->value => 0.6,
+        Sector::Healthcare->value => 0.4,
+    ]);
+
+    $this->actingAs($user);
+
+    visit('/')
         ->assertScript(
-            "Array.from(document.querySelectorAll('[data-section=\"sectors\"] .apexcharts-yaxis-texts-g text tspan')).map(el => el.textContent).join('|')",
-            'Technologie|Autre|Santé',
+            "document.querySelector('[data-section=\"sectors\"] [data-sector-bar]').style.width",
+            '100%',
         )
         ->assertScript(
-            "document.querySelectorAll('[data-section=\"sectors\"] .apexcharts-bar-area').length",
-            3,
+            "document.querySelector('[data-section=\"sectors\"] [data-sector-share]').textContent",
+            '60,0 %',
         )
         ->assertNoJavaScriptErrors();
 });
 
+it('collapses the sectors past the sixth behind a toggle', function () {
+    $user = soleUser();
+
+    holdingWithSectors($user, 'ACME ETF', InstrumentType::ETF, 1000.0, [
+        Sector::Technology->value => 0.3,
+        Sector::Healthcare->value => 0.2,
+        Sector::FinancialServices->value => 0.15,
+        Sector::CommunicationServices->value => 0.12,
+        Sector::ConsumerCyclical->value => 0.1,
+        Sector::Industrials->value => 0.07,
+        Sector::Energy->value => 0.04,
+        Sector::RealEstate->value => 0.02,
+    ]);
+
+    $this->actingAs($user);
+
+    $page = visit('/');
+
+    $page->assertScript(
+        "document.querySelectorAll('[data-section=\"sectors\"] [data-sector-label]').length",
+        6,
+    )
+        ->assertDontSee('Énergie')
+        ->click('Voir les 2 autres')
+        ->assertScript(
+            "document.querySelectorAll('[data-section=\"sectors\"] [data-sector-label]').length",
+            8,
+        )
+        ->assertSee('Énergie')
+        ->assertSee('Immobilier')
+        ->click('Réduire')
+        ->assertScript(
+            "document.querySelectorAll('[data-section=\"sectors\"] [data-sector-label]').length",
+            6,
+        )
+        ->assertNoJavaScriptErrors();
+});
+
+it('keeps every sector visible when there are six or fewer', function () {
+    $user = soleUser();
+
+    holdingWithSectors($user, 'ACME ETF', InstrumentType::ETF, 1000.0, [
+        Sector::Technology->value => 0.6,
+        Sector::Healthcare->value => 0.4,
+    ]);
+
+    $this->actingAs($user);
+
+    visit('/')
+        ->assertDontSee('Voir les')
+        ->assertNoJavaScriptErrors();
+});
+
 it('shows an empty state when no holding has a market value', function () {
-    User::query()->delete();
-    $user = User::factory()->create();
+    $user = soleUser();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->ofType(InstrumentType::ETF)->create(['name' => 'ACME ETF']);
     Holding::factory()->create([

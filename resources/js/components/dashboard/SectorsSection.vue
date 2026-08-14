@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Deferred } from '@inertiajs/vue3';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import SectorBreakdownList from '@/components/SectorBreakdownList.vue';
 import type { SectorBreakdownRow, SectorSlice } from '@/lib/sector';
 
@@ -15,23 +14,17 @@ const hasSectors = computed<boolean>(() => rows.value.length > 0);
 </script>
 
 <template>
-    <section data-section="sectors" class="px-6">
-        <Card>
-            <CardHeader>
-                <CardTitle>Répartition sectorielle</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <Deferred data="sectorBreakdown">
-                    <template #fallback>
-                        <div class="h-[280px] w-full animate-pulse rounded-md bg-muted"></div>
-                    </template>
+    <section data-section="sectors" class="flex flex-col gap-6 px-6">
+        <h2 class="leading-none font-semibold">Répartition sectorielle</h2>
+        <Deferred data="sectorBreakdown">
+            <template #fallback>
+                <div class="h-[280px] w-full animate-pulse rounded-md bg-muted"></div>
+            </template>
 
-                    <SectorBreakdownList v-if="hasSectors" :rows="rows" />
-                    <p v-else class="py-8 text-center text-sm text-muted-foreground">
-                        Pas encore de données sectorielles.
-                    </p>
-                </Deferred>
-            </CardContent>
-        </Card>
+            <SectorBreakdownList v-if="hasSectors" :rows="rows" />
+            <p v-else class="py-8 text-center text-sm text-muted-foreground">
+                Pas encore de données sectorielles.
+            </p>
+        </Deferred>
     </section>
 </template>

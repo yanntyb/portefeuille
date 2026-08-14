@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue';
 import { Deferred, router } from '@inertiajs/vue3';
 import VueApexCharts from 'vue3-apexcharts';
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import ChartRangeToggle from '@/components/ChartRangeToggle.vue';
 import { buildEvolutionChart } from '@/lib/chart';
 import { eur as formatEur } from '@/lib/format';
 import type { EvolutionSeries } from '@/lib/portfolio';
@@ -45,9 +45,6 @@ const reloadSeries = (): void => {
 };
 
 const selectRange = (key: RangeKey): void => {
-    if (selectedRange.value === key) {
-        return;
-    }
     selectedRange.value = key;
     reloadSeries();
 };
@@ -76,44 +73,32 @@ const evolutionKey = computed<string>(() => {
 </script>
 
 <template>
-    <section data-section="evolution" :class="['px-6 transition-opacity', reloading ? 'opacity-50' : '']">
-        <Card>
-            <CardHeader>
-                <CardTitle>Valeur de marché par titre</CardTitle>
-                <CardAction v-if="hasHoldings">
-                    <div class="inline-flex rounded-md border border-border p-0.5">
-                        <button
-                            v-for="opt in rangeOptions"
-                            :key="opt.key"
-                            type="button"
-                            class="rounded px-3 py-1 text-sm transition-colors"
-                            :class="selectedRange === opt.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'"
-                            @click="selectRange(opt.key)"
-                        >
-                            {{ opt.label }}
-                        </button>
-                    </div>
-                </CardAction>
-            </CardHeader>
-            <CardContent class="px-2 sm:px-6">
-                <Deferred data="evolutionSeries">
-                    <template #fallback>
-                        <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
-                    </template>
+    <section data-section="evolution" :class="['flex flex-col gap-6 px-6 transition-opacity', reloading ? 'opacity-50' : '']">
+        <h2 class="leading-none font-semibold">Valeur de marché par titre</h2>
+        <div>
+            <ChartRangeToggle
+                v-if="hasHoldings"
+                :options="rangeOptions"
+                :model-value="selectedRange"
+                @update:model-value="selectRange"
+            />
+            <Deferred data="evolutionSeries">
+                <template #fallback>
+                    <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
+                </template>
 
-                    <VueApexCharts
-                        v-if="hasEvolution"
-                        :key="evolutionKey"
-                        type="area"
-                        height="300"
-                        :options="evolutionChart.options"
-                        :series="evolutionChart.series"
-                    />
-                    <p v-else class="py-8 text-center text-sm text-muted-foreground">
-                        Pas encore d'historique de valorisation.
-                    </p>
-                </Deferred>
-            </CardContent>
-        </Card>
+                <VueApexCharts
+                    v-if="hasEvolution"
+                    :key="evolutionKey"
+                    type="area"
+                    height="300"
+                    :options="evolutionChart.options"
+                    :series="evolutionChart.series"
+                />
+                <p v-else class="py-8 text-center text-sm text-muted-foreground">
+                    Pas encore d'historique de valorisation.
+                </p>
+            </Deferred>
+        </div>
     </section>
 </template>

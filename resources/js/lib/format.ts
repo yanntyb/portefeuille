@@ -7,6 +7,10 @@ export const eur = (value: number | null, digits = 2): string =>
 export const signedEur = (value: number | null, digits = 2): string =>
     value === null ? '—' : value > 0 ? `+${eur(value, digits)}` : eur(value, digits);
 
+/** Fractional shares need decimals and whole ones do not; four digits keeps both readable. */
+export const quantity = (value: number): string =>
+    value.toLocaleString('fr-FR', { maximumFractionDigits: 4 });
+
 const oneDecimal = (value: number): string =>
     value.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
