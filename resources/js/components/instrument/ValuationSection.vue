@@ -56,7 +56,11 @@ const positionChartSeries = computed(() => [
 
 /** The invested line only moves on a buy or a sell, so steps read truer than a curve. */
 const positionChartOptions = computed<ApexOptions>(() => ({
-    ...buildTimeSeriesOptions({ categories: props.valuation?.labels ?? [], valueFormatter: (value) => eur(value, 0) }),
+    ...buildTimeSeriesOptions({
+        categories: props.valuation?.labels ?? [],
+        valueFormatter: (value) => eur(value, 0),
+        legendPosition: 'top',
+    }),
     colors: [VALUE_LINE_COLOR, INVESTED_LINE_COLOR],
     stroke: { curve: ['smooth', 'stepline'], width: [2, 2], dashArray: [0, 4] },
 }));
