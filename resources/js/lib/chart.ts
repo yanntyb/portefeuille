@@ -149,7 +149,6 @@ export function buildEvolutionChart({
             },
         },
         legend: { show: false },
-        responsive: LEGEND_BELOW_ON_MOBILE,
         tooltip: {
             shared: true,
             intersect: false,
