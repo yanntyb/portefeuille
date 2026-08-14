@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head } from '@inertiajs/vue3';
+import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
 import EvolutionSection from '@/components/dashboard/EvolutionSection.vue';
 import HoldingsSection from '@/components/dashboard/HoldingsSection.vue';
 import PerformancesSection from '@/components/dashboard/PerformancesSection.vue';
@@ -34,6 +35,8 @@ const toggleAsset = (assetId: number): void => {
 
 <template>
     <Head title="Tableau de bord" />
+
+    <AppBreadcrumb :items="[{ label: 'Tableau de bord' }]" />
 
     <main class="min-h-screen overflow-x-hidden bg-background py-6 text-foreground">
         <div class="mx-auto flex max-w-6xl flex-col gap-6">
