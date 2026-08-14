@@ -49,7 +49,7 @@ it('splits the held instrument sheet into cardless sections', function () {
         ->assertScript("document.querySelectorAll('main [data-slot=card]').length", 0)
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'hero|valuation|transactions|sectors',
+            'hero|valuation|sectors|transactions',
         )
         ->assertNoJavaScriptErrors();
 });
@@ -63,7 +63,7 @@ it('swaps the valuation section for the price history when the instrument is not
         ->assertScript("document.querySelectorAll('main [data-slot=card]').length", 0)
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'hero|price-history|transactions|sectors',
+            'hero|price-history|sectors|transactions',
         )
         ->assertNoJavaScriptErrors();
 });

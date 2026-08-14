@@ -51,18 +51,13 @@ const props = defineProps<{
                 :performances="props.performances"
             />
 
-            <div class="grid gap-4 lg:grid-cols-3">
-                <TransactionsSection
-                    class="min-w-0 lg:col-span-2"
-                    :transactions="props.instrument.transactions"
-                />
+            <SectorsSection
+                v-if="props.instrument.sectors.length"
+                :sectors="props.instrument.sectors"
+                :market-value="props.instrument.position?.marketValue ?? null"
+            />
 
-                <SectorsSection
-                    v-if="props.instrument.sectors.length"
-                    :sectors="props.instrument.sectors"
-                    :market-value="props.instrument.position?.marketValue ?? null"
-                />
-            </div>
+            <TransactionsSection :transactions="props.instrument.transactions" />
         </div>
     </main>
 </template>

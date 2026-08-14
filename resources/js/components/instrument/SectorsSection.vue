@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import SectorBreakdownList from '@/components/SectorBreakdownList.vue';
+import SectorStackedBar from '@/components/SectorStackedBar.vue';
 import type { SectorWeight } from '@/lib/instrument';
 import type { SectorBreakdownRow } from '@/lib/sector';
 
@@ -19,6 +19,6 @@ const rows = computed<SectorBreakdownRow[]>(() =>
 <template>
     <section data-section="sectors" class="flex flex-col gap-6 px-6">
         <h2 class="leading-none font-semibold">Répartition sectorielle</h2>
-        <SectorBreakdownList :rows="rows" />
+        <SectorStackedBar :rows="rows" />
     </section>
 </template>

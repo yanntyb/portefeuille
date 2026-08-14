@@ -32,29 +32,30 @@ function instrumentWithTransactions(int $count): array
     return ['user' => $user, 'instrument' => $asset];
 }
 
-it('collapses the transactions past the tenth behind a toggle', function () {
+it('keeps the transactions folded behind their count', function () {
     ['user' => $user, 'instrument' => $asset] = instrumentWithTransactions(13);
 
     $this->actingAs($user);
 
     visit("/instruments/{$asset->id}")
-        ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 10)
-        ->assertDontSee('2026-01-01')
-        ->click('Voir les 3 autres')
+        ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 0)
+        ->assertSee('Transactions (13)')
+        ->click('[data-transactions-toggle]')
         ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 13)
         ->assertSee('2026-01-01')
-        ->click('Réduire')
-        ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 10)
+        ->click('[data-transactions-toggle]')
+        ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 0)
         ->assertNoJavaScriptErrors();
 });
 
-it('hides the toggle when every transaction fits', function () {
+it('folds the transactions even when there are only a few', function () {
     ['user' => $user, 'instrument' => $asset] = instrumentWithTransactions(4);
 
     $this->actingAs($user);
 
     visit("/instruments/{$asset->id}")
+        ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 0)
+        ->click('[data-transactions-toggle]')
         ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 4)
-        ->assertScript("document.querySelectorAll('[data-transactions-toggle]').length", 0)
         ->assertNoJavaScriptErrors();
 });

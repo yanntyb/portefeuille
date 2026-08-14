@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
+import { ChevronRight } from 'lucide-vue-next';
 import {
     Table,
     TableBody,
@@ -8,33 +9,31 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import { eur } from '@/lib/format';
 import type { TransactionLine } from '@/lib/instrument';
 
-const COLLAPSED_TRANSACTION_COUNT = 10;
-
-const props = defineProps<{ transactions: TransactionLine[] }>();
+defineProps<{ transactions: TransactionLine[] }>();
 
 const isExpanded = ref<boolean>(false);
-
-const hiddenCount = computed<number>(() =>
-    Math.max(0, props.transactions.length - COLLAPSED_TRANSACTION_COUNT),
-);
-
-const visibleTransactions = computed<TransactionLine[]>(() =>
-    isExpanded.value ? props.transactions : props.transactions.slice(0, COLLAPSED_TRANSACTION_COUNT),
-);
 </script>
 
 <template>
     <section data-section="transactions" class="flex flex-col gap-6 px-6">
-        <div class="flex flex-col gap-1.5">
-            <h2 class="leading-none font-semibold">Transactions</h2>
-            <p class="text-sm text-muted-foreground">Mes mouvements sur cet actif</p>
-        </div>
+        <button
+            type="button"
+            data-transactions-toggle
+            class="flex items-center gap-1.5 self-start leading-none font-semibold"
+            :aria-expanded="isExpanded"
+            @click="isExpanded = !isExpanded"
+        >
+            <ChevronRight
+                class="size-4 text-muted-foreground transition-transform"
+                :class="isExpanded ? 'rotate-90' : ''"
+            />
+            Transactions ({{ transactions.length }})
+        </button>
 
-        <div class="min-w-0">
+        <div v-if="isExpanded" class="min-w-0">
             <Table v-if="transactions.length">
                 <TableHeader>
                     <TableRow>
@@ -47,7 +46,7 @@ const visibleTransactions = computed<TransactionLine[]>(() =>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    <TableRow v-for="(line, index) in visibleTransactions" :key="index" data-transaction-row>
+                    <TableRow v-for="(line, index) in transactions" :key="index" data-transaction-row>
                         <TableCell>{{ line.date }}</TableCell>
                         <TableCell :class="line.isSell ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'">
                             {{ line.typeLabel }}
@@ -62,17 +61,6 @@ const visibleTransactions = computed<TransactionLine[]>(() =>
             <p v-else class="py-8 text-center text-sm text-muted-foreground">
                 Aucune transaction sur cet actif.
             </p>
-
-            <Button
-                v-if="hiddenCount > 0"
-                data-transactions-toggle
-                variant="ghost"
-                size="sm"
-                class="mt-3 w-full text-muted-foreground"
-                @click="isExpanded = !isExpanded"
-            >
-                {{ isExpanded ? 'Réduire' : `Voir les ${hiddenCount} autres` }}
-            </Button>
         </div>
     </section>
 </template>

@@ -73,7 +73,8 @@ it('aligns the instrument page content with the breadcrumb', function () {
     $this->actingAs($user);
 
     visit("/instruments/{$instrument->id}")
-        ->assertScript(alignmentScript(['main h1', 'main section p', 'main h2', 'main table th']), true);
+        ->click('[data-transactions-toggle]')
+        ->assertScript(alignmentScript(['main h1', 'main h2', 'main table th']), true);
 });
 
 it('aligns the catalogue page content with the breadcrumb', function () {
