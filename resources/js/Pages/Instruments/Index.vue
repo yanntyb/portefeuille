@@ -58,7 +58,6 @@ const selectRange = (key: RangeKey): void => {
                 v-model:query="query"
                 :rows="rows"
                 :range="selectedRange"
-                :loading="loading"
                 @update:range="selectRange"
             />
 

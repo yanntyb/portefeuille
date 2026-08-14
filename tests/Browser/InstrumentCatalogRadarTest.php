@@ -39,33 +39,26 @@ function textOfCatalog(string $selector): string
     return "Array.from(document.querySelectorAll('{$selector}')).map(el => el.textContent.replace(/\\s+/g, ' ').trim()).join('|')";
 }
 
-it('sums up the period with the best riser, the worst faller and the share going up', function () {
-    $this->actingAs(userWithCatalog());
-
-    seedCatalogInstrument('Alpha', 100, 150);
+it('counts the catalogue instruments and the held ones', function () {
+    $user = userWithCatalog();
+    $wallet = Wallet::factory()->for($user)->create();
+    $held = seedCatalogInstrument('Alpha', 100, 150);
     seedCatalogInstrument('Beta', 100, 80);
     seedCatalogInstrument('Gamma', 100, 105);
 
-    visit('/instruments')
-        ->assertSee('Alpha')
-        ->assertScript(textOfCatalog('[data-catalog-best]'), 'Alpha +50,0 %')
-        ->assertScript(textOfCatalog('[data-catalog-worst]'), 'Beta -20,0 %')
-        ->assertScript(textOfCatalog('[data-catalog-worst-label]'), 'Pire baisse')
-        ->assertScript(textOfCatalog('[data-catalog-up]'), '2 / 3')
-        ->assertNoJavaScriptErrors();
-});
+    Holding::factory()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $held->id,
+        'quantity' => 10,
+        'avg_cost' => 80,
+    ]);
 
-it('renames the laggard when no instrument is down over the period', function () {
-    $this->actingAs(userWithCatalog());
-
-    seedCatalogInstrument('Alpha', 100, 150);
-    seedCatalogInstrument('Gamma', 100, 105);
+    $this->actingAs($user);
 
     visit('/instruments')
         ->assertSee('Alpha')
-        ->assertScript(textOfCatalog('[data-catalog-worst-label]'), 'Plus faible hausse')
-        ->assertScript(textOfCatalog('[data-catalog-worst]'), 'Gamma +5,0 %')
-        ->assertScript(textOfCatalog('[data-catalog-up]'), '2 / 2')
+        ->assertScript(textOfCatalog('[data-catalog-count]'), '3 instruments · 1 détenu')
         ->assertNoJavaScriptErrors();
 });
 
@@ -132,7 +125,7 @@ it('searches on the isin and ignores the accents', function () {
         ->assertNoJavaScriptErrors();
 });
 
-it('recomputes the header stats on the searched instruments', function () {
+it('recounts the instruments on the searched ones', function () {
     $this->actingAs(userWithCatalog());
 
     seedCatalogInstrument('Alpha Fund', 100, 150);
@@ -144,9 +137,6 @@ it('recomputes the header stats on the searched instruments', function () {
         ->assertScript(textOfCatalog('[data-catalog-count]'), '3 instruments')
         ->type('[data-catalog-search]', 'fund')
         ->assertScript(textOfCatalog('[data-catalog-count]'), '2 instruments')
-        ->assertScript(textOfCatalog('[data-catalog-best]'), 'Alpha Fund +50,0 %')
-        ->assertScript(textOfCatalog('[data-catalog-worst]'), 'Beta Fund -20,0 %')
-        ->assertScript(textOfCatalog('[data-catalog-up]'), '1 / 2')
         ->assertNoJavaScriptErrors();
 });
 
