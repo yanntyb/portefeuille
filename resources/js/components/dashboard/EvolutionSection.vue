@@ -73,32 +73,39 @@ const evolutionKey = computed<string>(() => {
 </script>
 
 <template>
-    <section data-section="evolution" :class="['flex flex-col gap-6 px-6 transition-opacity', reloading ? 'opacity-50' : '']">
-        <h2 class="leading-none font-semibold">Valeur de marché par titre</h2>
-        <div>
+    <section data-section="evolution" class="flex flex-col gap-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 px-6">
+            <div class="flex flex-col gap-1.5">
+                <h2 class="leading-none font-semibold">Valeur de marché par titre</h2>
+            </div>
+
             <ChartRangeToggle
                 v-if="hasHoldings"
                 :options="rangeOptions"
                 :model-value="selectedRange"
                 @update:model-value="selectRange"
             />
-            <Deferred data="evolutionSeries">
-                <template #fallback>
-                    <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
-                </template>
+        </div>
 
+        <Deferred data="evolutionSeries">
+            <template #fallback>
+                <div class="px-0 sm:px-6">
+                    <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
+                </div>
+            </template>
+
+            <div v-if="hasEvolution" class="px-0 transition-opacity sm:px-6" :class="reloading ? 'opacity-50' : ''">
                 <VueApexCharts
-                    v-if="hasEvolution"
                     :key="evolutionKey"
                     type="area"
                     height="300"
                     :options="evolutionChart.options"
                     :series="evolutionChart.series"
                 />
-                <p v-else class="py-8 text-center text-sm text-muted-foreground">
-                    Pas encore d'historique de valorisation.
-                </p>
-            </Deferred>
-        </div>
+            </div>
+            <p v-else class="py-8 text-center text-sm text-muted-foreground">
+                Pas encore d'historique de valorisation.
+            </p>
+        </Deferred>
     </section>
 </template>
