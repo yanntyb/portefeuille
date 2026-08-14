@@ -12,6 +12,7 @@ const props = defineProps<{
     holdings: HoldingLine[];
     hiddenAssetIds: Set<number>;
     series?: EvolutionSeries;
+    limit?: number;
 }>();
 
 defineEmits<{ toggle: [assetId: number] }>();
@@ -19,6 +20,11 @@ defineEmits<{ toggle: [assetId: number] }>();
 /** Sorting here makes the weight bars monotonic whatever order the caller passes. */
 const sortedHoldings = computed<HoldingLine[]>(() =>
     [...props.holdings].sort((left, right) => (right.marketValue ?? 0) - (left.marketValue ?? 0)),
+);
+
+/** Cropping only what is rendered leaves every aggregate below computed on the whole portfolio. */
+const visibleHoldings = computed<HoldingLine[]>(() =>
+    props.limit ? sortedHoldings.value.slice(0, props.limit) : sortedHoldings.value,
 );
 
 /** Summing the lines rather than reusing the overview total keeps the weights at 100 %. */
@@ -37,9 +43,9 @@ const largestShare = computed<number>(() =>
 const barWidth = (line: HoldingLine): string =>
     largestShare.value > 0 ? `${(shareOf(line) / largestShare.value) * 100}%` : '0%';
 
-/** A single monotonic fade over the whole list, so the faintest bar stays readable in both themes. */
+/** A single monotonic fade over the rendered rows, so the faintest bar stays readable in both themes. */
 const opacityAt = (index: number): number =>
-    1 - (index / Math.max(1, sortedHoldings.value.length - 1)) * (1 - FAINTEST_BAR_OPACITY);
+    1 - (index / Math.max(1, visibleHoldings.value.length - 1)) * (1 - FAINTEST_BAR_OPACITY);
 
 const seriesByAsset = computed<Map<number, number[]>>(
     () => new Map((props.series?.perAsset ?? []).map((asset) => [asset.assetId, asset.value])),
@@ -58,7 +64,7 @@ const isHidden = (assetId: number): boolean => props.hiddenAssetIds.has(assetId)
 <template>
     <ul class="flex flex-col">
         <li
-            v-for="(line, index) in sortedHoldings"
+            v-for="(line, index) in visibleHoldings"
             :key="line.assetId"
             data-holding-row
             class="flex items-center gap-3 border-b border-border py-2.5 last:border-b-0"

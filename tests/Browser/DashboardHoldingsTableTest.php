@@ -57,6 +57,68 @@ it('lists the holdings from the heaviest to the lightest, with their weight and 
         ->assertNoJavaScriptErrors();
 });
 
+it('titles the holdings section', function () {
+    // A legacy data migration seeds a hardcoded user; clear it so the controller resolves this user.
+    User::query()->delete();
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+
+    seedHoldingLine($user, $wallet, ['name' => 'ACME', 'ticker' => 'ACM', 'quantity' => 10, 'avgCost' => 80, 'close' => 100]);
+
+    $this->actingAs($user);
+
+    visit('/')
+        ->assertScript("document.querySelector('[data-section=holdings] h2').textContent.trim()", 'Positions')
+        ->assertNoJavaScriptErrors();
+});
+
+it('keeps only the ten heaviest holdings, weighted against the whole portfolio', function () {
+    // A legacy data migration seeds a hardcoded user; clear it so the controller resolves this user.
+    User::query()->delete();
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+
+    // Twelve lines worth 1 200 € down to 100 €, seeded lightest first so the order can only come from the sorting.
+    foreach (range(1, 12) as $rank) {
+        seedHoldingLine($user, $wallet, [
+            'name' => sprintf('LINE%02d', $rank),
+            'ticker' => sprintf('L%02d', $rank),
+            'quantity' => $rank,
+            'avgCost' => 80,
+            'close' => 100,
+        ]);
+    }
+
+    $this->actingAs($user);
+
+    $textOf = fn (string $selector): string => "Array.from(document.querySelectorAll('{$selector}')).map(el => el.textContent.replace(/\\s+/g, ' ').trim()).join('|')";
+
+    $heaviestTen = collect(range(12, 3))
+        ->map(fn (int $rank): string => sprintf('LINE%02d (L%02d)', $rank, $rank))
+        ->implode('|');
+
+    visit('/')
+        ->assertScript("document.querySelectorAll('[data-holding-row]').length", 10)
+        ->assertScript($textOf('[data-holding-name]'), $heaviestTen)
+        // 1 200 € out of the 7 800 € total of the twelve lines, not out of the ten rendered ones.
+        ->assertScript("document.querySelector('[data-holding-weight]').textContent.replace(/\\s+/g, ' ').trim()", '15,4 %')
+        ->assertNoJavaScriptErrors();
+});
+
+it('links to the instruments list below the holdings, even without any holding', function () {
+    // A legacy data migration seeds a hardcoded user; clear it so the controller resolves this user.
+    User::query()->delete();
+    $user = User::factory()->create();
+    Wallet::factory()->for($user)->create();
+
+    $this->actingAs($user);
+
+    visit('/')
+        ->assertScript("document.querySelectorAll('[data-holdings-all]').length", 1)
+        ->assertScript("document.querySelector('[data-holdings-all]').getAttribute('href')", '/instruments')
+        ->assertNoJavaScriptErrors();
+});
+
 it('drops the tabular header the holdings used to render', function () {
     // A legacy data migration seeds a hardcoded user; clear it so the controller resolves this user.
     User::query()->delete();
