@@ -11,6 +11,7 @@ use App\Shared\Python\FakePythonRunner;
 use App\Shared\Python\PythonResult;
 use App\Shared\Python\PythonRunner;
 use Database\Seeders\EtfHistorySeeder;
+use Illuminate\Support\Facades\DB;
 
 /**
  * 24 points mensuels (1er du mois, à partir de 2024-01) oscillant autour de 100,
@@ -90,6 +91,21 @@ it('is idempotent', function () {
     $this->seed(EtfHistorySeeder::class);
 
     expect(Transaction::query()->count())->toBe($txCount);
+});
+
+it('stores prices with the canonical date format, one row per day', function () {
+    fakeYahoo(new PythonResult('ok', etfMonthlyRows()));
+    User::factory()->create();
+
+    $this->seed(EtfHistorySeeder::class);
+    $this->seed(EtfHistorySeeder::class);
+
+    $dates = DB::table('asset_prices')->select('asset_id', 'date')->get();
+    $days = $dates->map(fn (object $row): string => $row->asset_id.'@'.substr((string) $row->date, 0, 10));
+
+    expect($dates)->not->toBeEmpty()
+        ->and($dates->every(fn (object $row): bool => strlen((string) $row->date) === 19))->toBeTrue()
+        ->and($days->unique()->count())->toBe($dates->count());
 });
 
 it('degrades gracefully when Yahoo returns no data', function () {
