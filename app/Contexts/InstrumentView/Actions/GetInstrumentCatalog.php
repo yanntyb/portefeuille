@@ -41,6 +41,7 @@ class GetInstrumentCatalog
             id: $summary->id,
             name: $summary->name,
             ticker: $summary->ticker,
+            isin: $summary->isin,
             type: $summary->type,
             lastPrice: $lastPrice,
             held: $holding !== null,

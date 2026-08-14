@@ -10,6 +10,7 @@ readonly class InstrumentSummaryData
         public int $id,
         public string $name,
         public ?string $ticker,
+        public ?string $isin,
         public InstrumentType $type,
     ) {}
 }

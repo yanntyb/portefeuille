@@ -14,7 +14,7 @@ beforeEach(function () {
 it('lists instruments and flags the ones held with value', function () {
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
-    $held = Instrument::factory()->create(['name' => 'Held Co']);
+    $held = Instrument::factory()->create(['name' => 'Held Co', 'isin' => 'FR0000000001']);
     $notHeld = Instrument::factory()->create(['name' => 'Absent Co']);
     Price::factory()->create(['asset_id' => $held->id, 'date' => '2026-07-01', 'close' => 100]);
     Holding::factory()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $held->id, 'quantity' => 10, 'avg_cost' => 80]);
@@ -23,6 +23,7 @@ it('lists instruments and flags the ones held with value', function () {
 
     $lines = collect($catalog->lines)->keyBy('id');
     expect($lines[$held->id]->held)->toBeTrue();
+    expect($lines[$held->id]->isin)->toBe('FR0000000001');
     expect($lines[$held->id]->lastPrice)->toBe(100.0);
     expect($lines[$held->id]->marketValue)->toBe(1000.0);
     expect($lines[$notHeld->id]->held)->toBeFalse();

@@ -11,12 +11,12 @@ use App\Contexts\Market\Enums\InstrumentType;
 
 it('serializes a catalog line with a type label', function () {
     $line = new CatalogLineData(
-        id: 7, name: 'ACME', ticker: 'ACM', type: InstrumentType::Stock,
+        id: 7, name: 'ACME', ticker: 'ACM', isin: 'US0000000001', type: InstrumentType::Stock,
         lastPrice: 100.0, held: true, quantity: 10.0, marketValue: 1000.0,
     );
 
     expect($line->jsonSerialize())->toMatchArray([
-        'id' => 7, 'name' => 'ACME', 'ticker' => 'ACM',
+        'id' => 7, 'name' => 'ACME', 'ticker' => 'ACM', 'isin' => 'US0000000001',
         'type' => 'stock', 'typeLabel' => 'Action',
         'lastPrice' => 100.0, 'held' => true, 'quantity' => 10.0, 'marketValue' => 1000.0,
     ]);

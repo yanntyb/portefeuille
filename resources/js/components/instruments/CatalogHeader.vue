@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import ChartRangeToggle from '@/components/ChartRangeToggle.vue';
+import CatalogSearch from '@/components/instruments/CatalogSearch.vue';
 import { gainClass, pct } from '@/lib/format';
 import { rangeOptions, type CatalogRow, type RangeKey } from '@/lib/catalog';
 
@@ -11,6 +12,8 @@ const props = defineProps<{
 }>();
 
 defineEmits<{ 'update:range': [value: RangeKey] }>();
+
+const query = defineModel<string>('query', { required: true });
 
 const rated = computed<CatalogRow[]>(() => props.rows.filter((row) => row.changePct !== null));
 
@@ -54,11 +57,15 @@ const worstLabel = computed<string>(() =>
                 <p data-catalog-count class="text-sm text-muted-foreground">{{ countLabel }}</p>
             </div>
 
-            <ChartRangeToggle
-                :options="rangeOptions"
-                :model-value="props.range"
-                @update:model-value="$emit('update:range', $event)"
-            />
+            <div class="flex flex-1 flex-wrap items-center justify-end gap-3">
+                <CatalogSearch v-model="query" />
+
+                <ChartRangeToggle
+                    :options="rangeOptions"
+                    :model-value="props.range"
+                    @update:model-value="$emit('update:range', $event)"
+                />
+            </div>
         </div>
 
         <dl v-if="loading" class="grid grid-cols-1 gap-4 sm:grid-cols-3">

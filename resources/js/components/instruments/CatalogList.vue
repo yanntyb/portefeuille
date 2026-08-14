@@ -18,6 +18,7 @@ type SortKey = 'name' | 'type' | 'change' | 'price' | 'value';
 const props = defineProps<{
     rows: CatalogRow[];
     loading: boolean;
+    emptyLabel: string;
 }>();
 
 const columns: { key: SortKey; label: string; numeric: boolean }[] = [
@@ -186,6 +187,6 @@ const sortMark = (key: SortKey): string =>
             </TableBody>
         </Table>
 
-        <p v-else class="py-8 text-center text-sm text-muted-foreground">Aucun instrument connu.</p>
+        <p v-else data-catalog-empty class="py-8 text-center text-sm text-muted-foreground">{{ emptyLabel }}</p>
     </section>
 </template>

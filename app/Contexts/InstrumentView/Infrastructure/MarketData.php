@@ -27,6 +27,7 @@ class MarketData implements MarketDataPort
                 id: $instrument->id,
                 name: (string) $instrument->name,
                 ticker: $instrument->ticker,
+                isin: $instrument->isin,
                 type: $instrument->type,
             ))
             ->values()

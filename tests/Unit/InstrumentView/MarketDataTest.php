@@ -13,12 +13,14 @@ beforeEach(function () {
 });
 
 it('lists all market instruments as summaries', function () {
-    Instrument::factory()->ofType(InstrumentType::ETF)->create(['name' => 'World ETF', 'ticker' => 'IWDA']);
+    Instrument::factory()->ofType(InstrumentType::ETF)->create(['name' => 'World ETF', 'ticker' => 'IWDA', 'isin' => 'IE00B4L5Y983']);
 
     $summaries = $this->market->listInstruments();
 
     expect($summaries)->toHaveCount(1);
     expect($summaries[0]->name)->toBe('World ETF');
+    expect($summaries[0]->ticker)->toBe('IWDA');
+    expect($summaries[0]->isin)->toBe('IE00B4L5Y983');
     expect($summaries[0]->type)->toBe(InstrumentType::ETF);
 });
 

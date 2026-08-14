@@ -11,7 +11,7 @@ it('renders the instrument catalogue with a held flag', function () {
     User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
-    $held = Instrument::factory()->create(['name' => 'Held Co']);
+    $held = Instrument::factory()->create(['name' => 'Held Co', 'ticker' => 'HLD', 'isin' => 'FR0000000001']);
     Instrument::factory()->create(['name' => 'Absent Co']);
     Price::factory()->create(['asset_id' => $held->id, 'date' => now(), 'close' => 100]);
     Holding::factory()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $held->id, 'quantity' => 10, 'avg_cost' => 80]);
@@ -21,6 +21,9 @@ it('renders the instrument catalogue with a held flag', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('Instruments/Index')
             ->has('catalog.lines', 2)
+            ->where('catalog.lines.1.held', true)
+            ->where('catalog.lines.1.ticker', 'HLD')
+            ->where('catalog.lines.1.isin', 'FR0000000001')
         );
 });
 

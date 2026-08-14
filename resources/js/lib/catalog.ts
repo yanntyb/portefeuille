@@ -2,6 +2,7 @@ export interface CatalogLine {
     id: number;
     name: string;
     ticker: string | null;
+    isin: string | null;
     type: string;
     typeLabel: string;
     lastPrice: number | null;
@@ -33,6 +34,25 @@ export const rangeOptions: { key: RangeKey; label: string }[] = [
 
 export const isRangeKey = (value: string | undefined): value is RangeKey =>
     rangeOptions.some((option) => option.key === value);
+
+/** Les accents ne doivent pas empêcher de retrouver « Société Générale » en tapant « societe ». */
+const normalize = (value: string): string =>
+    value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+
+/** La recherche porte sur le nom, le ticker et l'ISIN, les trois façons de nommer un instrument. */
+export const filterCatalog = (rows: CatalogRow[], query: string): CatalogRow[] => {
+    const needle = normalize(query.trim());
+
+    if (needle === '') {
+        return rows;
+    }
+
+    return rows.filter((row) =>
+        [row.name, row.ticker, row.isin].some(
+            (field) => field !== null && normalize(field).includes(needle),
+        ),
+    );
+};
 
 export const joinTrends = (lines: CatalogLine[], trends: CatalogTrend[] | undefined): CatalogRow[] => {
     const byAsset = new Map((trends ?? []).map((trend) => [trend.assetId, trend]));
