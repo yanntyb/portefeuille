@@ -11,7 +11,7 @@ defineProps<{ items: BreadcrumbItem[] }>();
 </script>
 
 <template>
-    <header class="sticky top-0 z-40 bg-black shadow-md shadow-black/60">
+    <header class="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
         <nav aria-label="Fil d'Ariane" class="mx-auto flex max-w-6xl items-center gap-1.5 overflow-x-auto px-6 py-3 text-sm">
             <template v-for="(item, index) in items" :key="index">
                 <ChevronRight v-if="index > 0" class="size-4 shrink-0 text-muted-foreground" />

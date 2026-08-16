@@ -1,6 +1,12 @@
 import type { ApexAxisChartSeries, ApexOptions, ApexYAxis } from 'apexcharts';
+import { isDark } from './theme';
 
 const OVERLAP_PX = 6;
+
+/** Les libellés d'axes sont peints en SVG : leur teinte suit le thème plutôt qu'un jeton CSS. */
+function axisLabelColor(): string {
+    return isDark.value ? 'oklch(0.708 0 0)' : 'oklch(0.556 0 0)';
+}
 
 function formatTooltipDate(label: string | number): string {
     const date = new Date(`${label}T00:00:00`);
@@ -29,9 +35,9 @@ export function buildTimeSeriesOptions({
             categories,
             axisBorder: { show: false },
             axisTicks: { show: false },
-            labels: { hideOverlappingLabels: true, style: { colors: 'oklch(0.708 0 0)' } },
+            labels: { hideOverlappingLabels: true, style: { colors: axisLabelColor() } },
         },
-        yaxis: { labels: { formatter: (value: number): string => valueFormatter(value), style: { colors: 'oklch(0.708 0 0)' } } },
+        yaxis: { labels: { formatter: (value: number): string => valueFormatter(value), style: { colors: axisLabelColor() } } },
         tooltip: {
             shared: false,
             intersect: false,
@@ -71,7 +77,14 @@ export function buildTimeSeriesOptions({
     };
 }
 
-const GREY_SCALE = ['#e2e8f0', '#cbd5e1', '#94a3b8', '#64748b', '#475569', '#334155'];
+const GREY_SCALE_ON_DARK = ['#e2e8f0', '#cbd5e1', '#94a3b8', '#64748b', '#475569', '#334155'];
+const GREY_SCALE_ON_LIGHT = ['#334155', '#475569', '#64748b', '#94a3b8', '#cbd5e1', '#e2e8f0'];
+
+/** Le dégradé part toujours de la teinte la plus contrastée avec le fond du thème courant. */
+function greyScale(): string[] {
+    return isDark.value ? GREY_SCALE_ON_DARK : GREY_SCALE_ON_LIGHT;
+}
+
 export const VALUE_LINE_COLOR = '#4f46e5';
 export const INVESTED_LINE_COLOR = '#94a3b8';
 export const GAIN_COLOR = '#10b981';
@@ -145,7 +158,7 @@ function evolutionGeometry(labels: string[], axisMax: number, valueFormatter: (v
                 rotateAlways: false,
                 hideOverlappingLabels: true,
                 formatter: (label: string): string => formatAxisDate(label),
-                style: { colors: 'oklch(0.708 0 0)' },
+                style: { colors: axisLabelColor() },
             },
         },
         yaxis: {
@@ -154,7 +167,7 @@ function evolutionGeometry(labels: string[], axisMax: number, valueFormatter: (v
             tickAmount: AXIS_TICKS,
             labels: {
                 formatter: (v: number): string => (v == null || !Number.isFinite(v) ? '' : valueFormatter(v)),
-                style: { colors: 'oklch(0.708 0 0)' },
+                style: { colors: axisLabelColor() },
             },
         },
     };
@@ -217,6 +230,7 @@ export function buildEvolutionChart({
     const visible = perAsset.filter((asset) => !hiddenIds.has(asset.assetId));
     const point = (i: number, y: number): { x: string; y: number } => ({ x: labels[i], y });
     const geometry = evolutionGeometry(labels, niceAxisMax(evolutionPeak(labels, visible)), valueFormatter);
+    const palette = greyScale();
 
     const cumulative: number[][] = visible.map((_, k) =>
         labels.map((_label, i) => visible.slice(0, k + 1).reduce((sum, asset) => sum + (asset.value[i] ?? 0), 0)),
@@ -230,7 +244,7 @@ export function buildEvolutionChart({
             type: 'area',
             data: labels.map((_label, i) => point(i, cumulative[k][i])),
         });
-        colors.push(GREY_SCALE[k % GREY_SCALE.length]);
+        colors.push(palette[k % palette.length]);
     }
 
     const options: ApexOptions = {
@@ -267,7 +281,7 @@ export function buildEvolutionChart({
                 const valueRow = row(VALUE_LINE_COLOR, 'Valeur', valueFormatter(totalValue));
                 const gainRow = row(gainColor, gain >= 0 ? 'Gain' : 'Perte', `${gainSign} ${valueFormatter(Math.abs(gain))}`);
                 const assetRows = visible
-                    .map((asset, k) => row(GREY_SCALE[k % GREY_SCALE.length], asset.name, valueFormatter(asset.value[i] ?? 0)))
+                    .map((asset, k) => row(palette[k % palette.length], asset.name, valueFormatter(asset.value[i] ?? 0)))
                     .join('');
 
                 return header + valueRow + gainRow + assetRows;
