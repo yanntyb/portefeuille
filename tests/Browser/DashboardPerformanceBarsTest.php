@@ -44,7 +44,7 @@ it('renders one bar per period, like the instrument page', function () {
 
     $page = visit('/');
 
-    $page->assertSee('Performance par période')
+    $page->assertSee('Performances')
         ->assertScript("document.querySelectorAll('[data-section=performances] [data-perf-row]').length", 5)
         ->assertScript(
             "document.querySelector('[data-section=performances] [data-perf-row] [data-perf-label]').textContent.trim()",

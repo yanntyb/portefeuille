@@ -36,7 +36,7 @@ it('keeps a single gap between the dashboard sections', function () {
 
     $page = visit('/');
 
-    $page->assertSee('Performance par période')
+    $page->assertSee('Performances')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).slice(1).map((el, i) => Math.round(el.getBoundingClientRect().top - document.querySelectorAll('[data-section]')[i].getBoundingClientRect().bottom)).join('|')",
             '24|24|24|24',

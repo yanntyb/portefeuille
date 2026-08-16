@@ -36,7 +36,7 @@ it('explains the period performances through an info dialog', function () {
 
     $page = visit('/');
 
-    $page->assertSee('Performance par période')
+    $page->assertSee('Performances')
         ->click('[aria-label="Comment lire les performances par période"]')
         ->assertSee('Comment lire les performances par période')
         ->assertSee('cumulés, pas annualisés')

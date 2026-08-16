@@ -35,11 +35,11 @@ it('renders the dashboard sections without card wrappers', function () {
     $this->actingAs($user);
 
     visit('/')
-        ->assertSee('Performance par période')
+        ->assertSee('Performances')
         ->assertScript("document.querySelectorAll('main [data-slot=card]').length", 0)
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'valuation|evolution|holdings|sectors|performances',
+            'valuation|evolution|performances|holdings|sectors',
         )
         ->assertNoJavaScriptErrors();
 });

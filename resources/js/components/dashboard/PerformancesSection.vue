@@ -10,7 +10,7 @@ defineProps<{ performances?: Performance[] }>();
 <template>
     <section data-section="performances" class="flex flex-col gap-6 px-6">
         <h2 class="flex items-center gap-1 leading-none font-semibold">
-            Performance par période
+            Performances
             <PerformanceInfoDialog variant="periods" />
         </h2>
         <Deferred data="performances">
