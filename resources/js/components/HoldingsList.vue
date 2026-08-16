@@ -82,6 +82,7 @@ const isHidden = (assetId: number): boolean => props.hiddenAssetIds.has(assetId)
 
             <Link
                 :href="`/instruments/${line.assetId}`"
+                prefetch
                 data-holding-name
                 class="block min-w-0 flex-1 truncate font-medium hover:underline"
             >

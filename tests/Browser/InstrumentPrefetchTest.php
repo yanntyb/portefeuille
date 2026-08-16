@@ -4,6 +4,9 @@ use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
+use App\Contexts\Portfolio\Models\Holding;
+use App\Contexts\Portfolio\Models\Transaction;
+use App\Contexts\Portfolio\Models\Wallet;
 
 /**
  * A legacy data migration seeds a hardcoded user; clear it so the controller resolves the test user.
@@ -47,6 +50,39 @@ it('prefetches the instrument page when hovering a radar row', function () {
     expect($page->script(hasRequestedPath("/instruments/{$asset->id}")))->toBeFalse();
 
     $page->hover('[data-catalog-row] a')->wait(1);
+
+    expect($page->script(hasRequestedPath("/instruments/{$asset->id}")))->toBeTrue();
+});
+
+it('prefetches the instrument page when hovering a dashboard holding', function () {
+    $user = userForPrefetch();
+    $asset = seedPrefetchInstrument('Alpha', 'ALP');
+    $wallet = Wallet::factory()->for($user)->create();
+
+    Holding::factory()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $asset->id,
+        'quantity' => 10,
+        'avg_cost' => 80,
+    ]);
+
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $asset->id,
+        'quantity' => 10,
+        'unit_price' => 80,
+        'date' => now()->subMonth(),
+    ]);
+
+    $this->actingAs($user);
+
+    $page = visit('/')->assertSee('Alpha');
+
+    expect($page->script(hasRequestedPath("/instruments/{$asset->id}")))->toBeFalse();
+
+    $page->hover('[data-holding-name]')->wait(1);
 
     expect($page->script(hasRequestedPath("/instruments/{$asset->id}")))->toBeTrue();
 });
