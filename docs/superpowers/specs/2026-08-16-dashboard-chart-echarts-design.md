@@ -198,6 +198,40 @@ vérifie que la réponse porte l'historique complet et ne contient plus de prop
 `EvolutionSeriesDataTest` et `ValuationCalculatorTest` perdent leurs
 assertions sur `hasMore`.
 
+## Écarts constatés à la mise en œuvre
+
+Quatre points ont évolué entre le design et le code livré.
+
+**L'axe des abscisses est temporel, pas catégoriel.** Un axe de catégories
+graduait par pas fixe et répétait le même libellé plusieurs fois de suite
+(« avr. 26, avr. 26, mai 26… »). L'axe `time` laisse ECharts choisir la
+granularité selon l'amplitude réellement visible. Les noms de mois viennent du
+paquet de langue `langFR`, enregistré au chargement et passé à chaque
+instance.
+
+**Les graphes portent une description accessible.** Le rendu SVG d'ECharts ne
+nomme pas ses séries dans le DOM, ce qui privait les tests de tout point
+d'accroche sémantique. Chaque constructeur d'options rédige une phrase
+française posée en `aria-label` sur le conteneur. Les tests s'y appuient, et
+un lecteur d'écran y gagne réellement.
+
+**La fenêtre de zoom est publiée en attribut.** `BaseChart` expose
+`data-zoom-window="70-100"` et émet un événement `zoom`. La section mémorise
+la fenêtre dans une variable délibérément non réactive : la réintroduire dans
+les options recalculerait et repeindrait le graphe à chaque pixel de
+glissement. Cette mémorisation permet à la fenêtre de survivre au masquage
+d'un titre depuis la liste des positions.
+
+**Les tests unitaires sur `lib/chart.ts` n'ont pas été écrits.** Le projet n'a
+pas de lanceur de tests JavaScript, et en ajouter un serait un changement de
+dépendance à décider séparément. Les constructeurs d'options sont couverts par
+les tests navigateur, conformément à la convention du dépôt.
+
+Mesures relevées après migration : le dossier `public/build/assets` passe de
+1512 à 920 Ko. Sur cinq ans d'historique quotidien pour six actifs, dix zooms
+molette consécutifs prennent 25 ms et le masquage d'un titre est
+imperceptible.
+
 ## Hors périmètre
 
 - Le rechargement par période de la page instrument, qui fonctionne.
