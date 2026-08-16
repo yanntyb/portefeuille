@@ -18,6 +18,7 @@ defineProps<{ items: BreadcrumbItem[] }>();
                 <Link
                     v-if="item.href"
                     :href="item.href"
+                    prefetch
                     class="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
                 >
                     {{ item.label }}

@@ -86,3 +86,18 @@ it('prefetches the instrument page when hovering a dashboard holding', function 
 
     expect($page->script(hasRequestedPath("/instruments/{$asset->id}")))->toBeTrue();
 });
+
+it('prefetches the radar when hovering the breadcrumb from an instrument page', function () {
+    $user = userForPrefetch();
+    $asset = seedPrefetchInstrument('Alpha', 'ALP');
+
+    $this->actingAs($user);
+
+    $page = visit("/instruments/{$asset->id}")->assertSee('Alpha');
+
+    expect($page->script(hasRequestedPath('/instruments')))->toBeFalse();
+
+    $page->hover('nav[aria-label="Fil d\'Ariane"] a[href="/instruments"]')->wait(1);
+
+    expect($page->script(hasRequestedPath('/instruments')))->toBeTrue();
+});
