@@ -85,6 +85,46 @@ const markReaderScroll = (): void => {
     scrolledByReader.value = true;
 };
 
+/** Origine du geste en cours : `null` tant qu'aucun doigt ne tient le graphe. */
+const dragStartX = ref<number | null>(null);
+const dragStartScrollLeft = ref<number>(0);
+
+/**
+ * Le défilement tactile est piloté à la main plutôt que laissé au navigateur : le doigt
+ * entraîne le graphe au pixel près et le relâchement l'arrête net, sans inertie qui
+ * continuerait de charger l'historique après le geste.
+ */
+const onTouchStart = (event: TouchEvent): void => {
+    const element = scroller.value;
+    if (element === null || event.touches.length !== 1) {
+        return;
+    }
+
+    dragStartX.value = event.touches[0].clientX;
+    dragStartScrollLeft.value = element.scrollLeft;
+};
+
+const onTouchMove = (event: TouchEvent): void => {
+    const element = scroller.value;
+    if (element === null || dragStartX.value === null || event.touches.length !== 1) {
+        return;
+    }
+
+    markReaderScroll();
+    element.scrollLeft = dragStartScrollLeft.value + (dragStartX.value - event.touches[0].clientX);
+};
+
+const onTouchEnd = (): void => {
+    dragStartX.value = null;
+};
+
+/** Un doigt posé n'est pas un défilement : le tactile ne compte qu'à partir du glissement. */
+const onPointerDown = (event: PointerEvent): void => {
+    if (event.pointerType !== 'touch') {
+        markReaderScroll();
+    }
+};
+
 const onScroll = (): void => {
     const element = scroller.value;
     if (element === null) {
@@ -213,11 +253,14 @@ onBeforeUnmount((): void => {
                 <div
                     ref="scroller"
                     data-evolution-scroller
-                    class="min-w-0 flex-1 overflow-x-auto"
+                    class="min-w-0 flex-1 touch-pan-y overflow-x-auto"
                     @scroll="onScroll"
                     @wheel="markReaderScroll"
-                    @pointerdown="markReaderScroll"
-                    @touchstart="markReaderScroll"
+                    @pointerdown="onPointerDown"
+                    @touchstart="onTouchStart"
+                    @touchmove="onTouchMove"
+                    @touchend="onTouchEnd"
+                    @touchcancel="onTouchEnd"
                     @keydown="markReaderScroll"
                 >
                     <div ref="content" class="w-fit">
