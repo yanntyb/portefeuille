@@ -197,6 +197,33 @@ it('drags the evolution chart with the finger and stops it as soon as the finger
     $page->assertNoJavaScriptErrors();
 });
 
+it('keeps the horizontal gesture inside the evolution scroller', function () {
+    $this->actingAs(userWithLongEvolution());
+
+    $page = visit('/')->assertScript("document.querySelector('[data-evolution-scroller]') !== null", true);
+
+    // Sans confinement, défiler au-delà du bord gauche entraîne la page entière et sort le graphe de l'écran.
+    $page->assertScript(
+        "getComputedStyle(document.querySelector('[data-evolution-scroller]')).overscrollBehaviorX",
+        'contain',
+    );
+
+    $page->script("(() => {
+        const scroller = document.querySelector('[data-evolution-scroller]');
+        scroller.dispatchEvent(new WheelEvent('wheel', { bubbles: true, deltaX: -400 }));
+        scroller.scrollLeft = 0;
+    })()");
+    $page->wait(3);
+
+    expect($page->script('document.documentElement.scrollLeft'))->toBe(0);
+    expect($page->script("(() => {
+        const section = document.querySelector('[data-section=evolution]');
+        return Math.round(section.getBoundingClientRect().right - document.documentElement.clientWidth);
+    })()"))->toBeLessThanOrEqual(0);
+
+    $page->assertNoJavaScriptErrors();
+});
+
 it('does not extend the evolution history before the reader scrolls', function () {
     $this->actingAs(userWithLongEvolution());
 

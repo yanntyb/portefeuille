@@ -253,7 +253,7 @@ onBeforeUnmount((): void => {
                 <div
                     ref="scroller"
                     data-evolution-scroller
-                    class="min-w-0 flex-1 touch-pan-y overflow-x-auto"
+                    class="min-w-0 flex-1 touch-pan-y overflow-x-auto overscroll-x-contain"
                     @scroll="onScroll"
                     @wheel="markReaderScroll"
                     @pointerdown="onPointerDown"
