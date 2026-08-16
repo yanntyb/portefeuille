@@ -127,7 +127,7 @@ const sortMark = (key: SortKey): string =>
                     class="group cursor-pointer hover:bg-muted/50"
                 >
                     <TableCell class="font-medium">
-                        <Link :href="`/instruments/${row.id}`" class="flex items-center gap-2">
+                        <Link :href="`/instruments/${row.id}`" prefetch class="flex items-center gap-2">
                             <span
                                 class="size-1.5 shrink-0 rounded-full"
                                 :class="row.held ? 'bg-foreground' : 'bg-transparent ring-1 ring-border'"
