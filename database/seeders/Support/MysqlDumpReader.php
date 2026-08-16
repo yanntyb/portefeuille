@@ -25,7 +25,11 @@ final class MysqlDumpReader
      */
     public function rows(string $table): Generator
     {
-        $handle = @fopen($this->path, 'rb');
+        if (! is_file($this->path)) {
+            return;
+        }
+
+        $handle = fopen($this->path, 'rb');
 
         if ($handle === false) {
             return;
