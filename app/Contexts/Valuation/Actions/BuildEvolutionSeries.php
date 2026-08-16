@@ -57,6 +57,6 @@ class BuildEvolutionSeries
             $raw->perAsset,
         );
 
-        return new EvolutionSeriesData($raw->labels, $perAsset, $raw->hasMore);
+        return new EvolutionSeriesData($raw->labels, $perAsset);
     }
 }

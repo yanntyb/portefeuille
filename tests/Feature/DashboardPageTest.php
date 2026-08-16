@@ -168,7 +168,7 @@ it('defers the portfolio performances and loads them on demand', function () {
         );
 });
 
-it('windows the dashboard evolution series to six months by default', function () {
+it('ships the whole evolution history in one go, the zoom being client-side', function () {
     User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
@@ -184,15 +184,15 @@ it('windows the dashboard evolution series to six months by default', function (
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
-            ->where('valuationMonths', 6)
+            ->missing('valuationMonths')
             ->loadDeferredProps(fn (Assert $reload) => $reload
-                ->where('evolutionSeries.hasMore', true)
-                ->where('evolutionSeries.labels.0', '2026-01-01')
+                ->where('evolutionSeries.labels.0', '2024-01-01')
+                ->missing('evolutionSeries.hasMore')
             )
         );
 });
 
-it('extends the dashboard evolution series when more months are requested', function () {
+it('ignores a months query parameter, the window no longer being server-driven', function () {
     User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
@@ -204,13 +204,11 @@ it('extends the dashboard evolution series when more months are requested', func
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2024-01-01', 'close' => 100]);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 120]);
 
-    $this->get('/?months=60')
+    $this->get('/?months=1')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
-            ->where('valuationMonths', 60)
             ->loadDeferredProps(fn (Assert $reload) => $reload
-                ->where('evolutionSeries.hasMore', false)
                 ->where('evolutionSeries.labels.0', '2024-01-01')
             )
         );

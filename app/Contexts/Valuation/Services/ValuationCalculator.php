@@ -421,8 +421,6 @@ class ValuationCalculator
             return EvolutionSeriesData::empty();
         }
 
-        $hasMore = $daily->labels !== [] && $daily->labels[0] < $windowed->labels[0];
-
         $investedTimelines = $this->perAssetInvestedTimelines($transactions);
         $quantityTimelines = $this->perAssetQuantityTimelines($transactions);
 
@@ -455,7 +453,7 @@ class ValuationCalculator
             );
         }
 
-        return new EvolutionSeriesData(labels: $windowed->labels, perAsset: $perAsset, hasMore: $hasMore);
+        return new EvolutionSeriesData(labels: $windowed->labels, perAsset: $perAsset);
     }
 
     /**

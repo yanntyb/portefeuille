@@ -501,7 +501,7 @@ it('windows the series to an arbitrary number of months', function () {
         ->and($windowed->labels[count($windowed->labels) - 1])->toBe($labels[399]);
 });
 
-it('flags remaining history when the evolution window cuts the timeline', function () {
+it('cuts the evolution timeline at the requested window', function () {
     $evolution = (new ValuationCalculator)->evolution(
         [tx('2025-01-01', 1, false, 10, 100)],
         [new P(1, '2025-01-01', 100), new P(1, '2026-01-01', 120)],
@@ -509,11 +509,10 @@ it('flags remaining history when the evolution window cuts the timeline', functi
         ValuationGranularity::Day,
     );
 
-    expect($evolution->hasMore)->toBeTrue()
-        ->and($evolution->labels[0])->toBeGreaterThan('2025-01-01');
+    expect($evolution->labels[0])->toBeGreaterThan('2025-01-01');
 });
 
-it('flags no remaining history when the evolution window covers everything', function () {
+it('keeps the whole evolution timeline when no window is given', function () {
     $evolution = (new ValuationCalculator)->evolution(
         [tx('2025-01-01', 1, false, 10, 100)],
         [new P(1, '2025-01-01', 100), new P(1, '2026-01-01', 120)],
@@ -521,6 +520,5 @@ it('flags no remaining history when the evolution window covers everything', fun
         ValuationGranularity::Day,
     );
 
-    expect($evolution->hasMore)->toBeFalse()
-        ->and($evolution->labels[0])->toBe('2025-01-01');
+    expect($evolution->labels[0])->toBe('2025-01-01');
 });

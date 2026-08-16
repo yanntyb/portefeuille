@@ -17,12 +17,6 @@ it('serializes the evolution series', function () {
 
 it('builds an empty evolution series', function () {
     expect(EvolutionSeriesData::empty()->jsonSerialize())->toBe([
-        'labels' => [], 'perAsset' => [], 'hasMore' => false,
+        'labels' => [], 'perAsset' => [],
     ]);
-});
-
-it('reports that the window hides older points', function () {
-    $data = new EvolutionSeriesData(labels: ['2026-02-01'], perAsset: [], hasMore: true);
-
-    expect($data->jsonSerialize()['hasMore'])->toBeTrue();
 });

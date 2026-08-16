@@ -13,7 +13,6 @@ readonly class EvolutionSeriesData implements JsonSerializable
     public function __construct(
         public array $labels,
         public array $perAsset,
-        public bool $hasMore = false,
     ) {}
 
     public static function empty(): self
@@ -27,7 +26,6 @@ readonly class EvolutionSeriesData implements JsonSerializable
         return [
             'labels' => $this->labels,
             'perAsset' => $this->perAsset,
-            'hasMore' => $this->hasMore,
         ];
     }
 }
