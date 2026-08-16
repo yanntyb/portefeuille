@@ -81,15 +81,18 @@ it('overflows the evolution chart into a horizontal scroller', function () {
 it('opens the evolution chart on the most recent point', function () {
     $this->actingAs(userWithLongEvolution());
 
-    visit('/')
-        ->assertScript(
-            "(() => {
-                const scroller = document.querySelector('[data-evolution-scroller]');
-                return scroller.scrollWidth - scroller.clientWidth - scroller.scrollLeft < 2;
-            })()",
-            true,
-        )
-        ->assertNoJavaScriptErrors();
+    $page = visit('/')->assertScript("document.querySelector('[data-evolution-scroller]') !== null", true);
+
+    // Les props différées continuent d'arriver après le premier rendu : chaque mise à jour
+    // d'Apex redessine son SVG et remettrait le conteneur à zéro sans réancrage.
+    $page->wait(3);
+
+    expect($page->script("(() => {
+        const scroller = document.querySelector('[data-evolution-scroller]');
+        return scroller.scrollWidth - scroller.clientWidth - scroller.scrollLeft;
+    })()"))->toBeLessThan(2);
+
+    $page->assertNoJavaScriptErrors();
 });
 
 it('keeps the value axis outside the scroller so it stays visible', function () {
@@ -113,7 +116,11 @@ it('loads older history when the evolution chart is scrolled to its left edge', 
 
     $before = $page->script("document.querySelector('[data-evolution-scroller]').scrollWidth");
 
-    $page->script("document.querySelector('[data-evolution-scroller]').scrollLeft = 0");
+    $page->script("(() => {
+        const scroller = document.querySelector('[data-evolution-scroller]');
+        scroller.dispatchEvent(new WheelEvent('wheel', { bubbles: true, deltaX: -400 }));
+        scroller.scrollLeft = 0;
+    })()");
     $page->wait(3);
 
     expect($page->script("document.querySelector('[data-evolution-scroller]').scrollWidth"))
@@ -137,4 +144,13 @@ it('aligns the fixed value axis with the plot area of the scrolling chart', func
             true,
         )
         ->assertNoJavaScriptErrors();
+});
+
+it('does not extend the evolution history before the reader scrolls', function () {
+    $this->actingAs(userWithLongEvolution());
+
+    $page = visit('/')->assertScript("document.querySelector('[data-evolution-scroller]') !== null", true);
+    $page->wait(3);
+
+    expect($page->script('window.location.search'))->toBe('');
 });

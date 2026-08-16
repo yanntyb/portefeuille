@@ -24,11 +24,14 @@ const viewportWidth = ref<number>(0);
 const scroller = ref<HTMLElement | null>(null);
 const content = ref<HTMLElement | null>(null);
 
-/**
- * Distance au bord droit de la dernière position lue. Le graphe s'ouvre à droite (null), puis
- * garde ce point d'ancrage à chaque élargissement : prolonger l'historique ne le fait pas sauter.
- */
+/** Distance au bord droit de la dernière position lue, restaurée à chaque élargissement du graphe. */
 const anchorFromRight = ref<number | null>(null);
+
+/**
+ * Tant que personne n'a fait défiler, le graphe se recolle au bord droit et ne charge rien :
+ * seuls les gestes du lecteur distinguent un vrai défilement du repositionnement automatique.
+ */
+const scrolledByReader = ref<boolean>(false);
 
 const eur = (value: number | null): string => formatEur(value, 0);
 
@@ -78,6 +81,10 @@ const loadOlderHistory = (): void => {
     });
 };
 
+const markReaderScroll = (): void => {
+    scrolledByReader.value = true;
+};
+
 const onScroll = (): void => {
     const element = scroller.value;
     if (element === null) {
@@ -86,7 +93,7 @@ const onScroll = (): void => {
 
     anchorFromRight.value = element.scrollWidth - element.scrollLeft;
 
-    if (element.scrollLeft <= LOAD_THRESHOLD_PX) {
+    if (scrolledByReader.value && element.scrollLeft <= LOAD_THRESHOLD_PX) {
         loadOlderHistory();
     }
 };
@@ -101,9 +108,37 @@ const anchorScroll = (): void => {
         return;
     }
 
-    element.scrollLeft = anchorFromRight.value === null
-        ? element.scrollWidth
-        : element.scrollWidth - anchorFromRight.value;
+    element.scrollLeft = scrolledByReader.value && anchorFromRight.value !== null
+        ? element.scrollWidth - anchorFromRight.value
+        : element.scrollWidth;
+};
+
+const MAX_ANCHOR_FRAMES = 30;
+
+/**
+ * Apex élargit son SVG sur plusieurs frames, et une seule notification de redimensionnement
+ * peut tomber avant la largeur définitive : on repositionne jusqu'à ce qu'elle se stabilise.
+ */
+const anchorUntilStable = (): void => {
+    let lastWidth = -1;
+    let frames = 0;
+
+    const step = (): void => {
+        const element = scroller.value;
+        if (element === null) {
+            return;
+        }
+
+        anchorScroll();
+
+        if (element.scrollWidth !== lastWidth && frames < MAX_ANCHOR_FRAMES) {
+            lastWidth = element.scrollWidth;
+            frames += 1;
+            requestAnimationFrame(step);
+        }
+    };
+
+    requestAnimationFrame(step);
 };
 
 const viewportObserver = new ResizeObserver((entries): void => {
@@ -115,7 +150,7 @@ const viewportObserver = new ResizeObserver((entries): void => {
 
 /** Repositionner depuis le callback ferait boucler l'observateur : on attend la frame suivante. */
 const contentObserver = new ResizeObserver((): void => {
-    requestAnimationFrame(anchorScroll);
+    anchorUntilStable();
 });
 
 watch(scroller, (element, previous): void => {
@@ -136,6 +171,10 @@ watch(content, (element, previous): void => {
         contentObserver.observe(element);
     }
 }, { immediate: true });
+
+watch(chartWidth, (): void => {
+    anchorUntilStable();
+}, { flush: 'post' });
 
 onBeforeUnmount((): void => {
     viewportObserver.disconnect();
@@ -171,7 +210,16 @@ onBeforeUnmount((): void => {
                     />
                 </div>
 
-                <div ref="scroller" data-evolution-scroller class="min-w-0 flex-1 overflow-x-auto" @scroll="onScroll">
+                <div
+                    ref="scroller"
+                    data-evolution-scroller
+                    class="min-w-0 flex-1 overflow-x-auto"
+                    @scroll="onScroll"
+                    @wheel="markReaderScroll"
+                    @pointerdown="markReaderScroll"
+                    @touchstart="markReaderScroll"
+                    @keydown="markReaderScroll"
+                >
                     <div ref="content" class="w-fit">
                         <VueApexCharts
                             v-if="isMeasured"
@@ -181,6 +229,8 @@ onBeforeUnmount((): void => {
                             :width="chartWidth"
                             :options="evolutionChart.options"
                             :series="evolutionChart.series"
+                            @mounted="anchorUntilStable"
+                            @updated="anchorUntilStable"
                         />
                         <div v-else class="h-[300px] animate-pulse rounded-md bg-muted" :style="{ width: `${AXIS_WIDTH}px` }"></div>
                     </div>
