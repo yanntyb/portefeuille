@@ -65,13 +65,14 @@ it('paints the sticky breadcrumb on the theme background rather than a hardcoded
 it('darkens the evolution areas so they stay visible on a light background', function () {
     $this->actingAs(seedSystemThemePortfolio());
 
-    $areaFills = "Array.from(document.querySelectorAll('.apexcharts-area')).map(path => path.getAttribute('fill')).join(',')";
+    $areaFills = "Array.from(document.querySelectorAll('[data-section=evolution] path'))"
+        .'.map(path => path.getAttribute("fill")).join(",")';
 
     visit('/')->inLightMode()
-        ->assertScript("{$areaFills}.includes('rgba(51,65,85')", true)
+        ->assertScript("{$areaFills}.includes('#334155')", true)
         ->assertNoJavaScriptErrors();
 
     visit('/')->inDarkMode()
-        ->assertScript("{$areaFills}.includes('rgba(226,232,240')", true)
+        ->assertScript("{$areaFills}.includes('#e2e8f0')", true)
         ->assertNoJavaScriptErrors();
 });

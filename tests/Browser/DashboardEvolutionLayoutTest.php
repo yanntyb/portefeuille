@@ -37,19 +37,12 @@ function userWithEvolution(): User
     return $user;
 }
 
-it('keeps the section title on its own header row, like the instrument chart', function () {
+it('leads the dashboard with the chart alone, without a header row', function () {
     $this->actingAs(userWithEvolution());
 
     visit('/')
-        ->assertScript(
-            "(() => {
-                const title = document.querySelector('[data-section=evolution] h2');
-                const row = title.closest('section > div');
-                return getComputedStyle(row).justifyContent === 'space-between'
-                    && row.querySelectorAll('button').length === 0;
-            })()",
-            true,
-        )
+        ->assertScript("document.querySelectorAll('[data-section=evolution] h2').length", 0)
+        ->assertScript("document.querySelectorAll('[data-section=evolution] [data-chart]').length", 1)
         ->assertNoJavaScriptErrors();
 });
 
@@ -60,7 +53,7 @@ it('pads the evolution chart like the instrument valuation chart', function () {
         ->assertScript(
             "(() => {
                 const section = document.querySelector('[data-section=evolution]');
-                const wrapper = section.querySelector('.apexcharts-canvas').closest('section > div');
+                const wrapper = section.querySelector('[data-chart]').closest('section > div');
                 const styles = getComputedStyle(wrapper);
                 return [
                     getComputedStyle(section).paddingLeft,

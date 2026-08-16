@@ -1,18 +1,16 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { Deferred, router } from '@inertiajs/vue3';
-import VueApexCharts from 'vue3-apexcharts';
-import type { ApexOptions } from 'apexcharts';
+import BaseChart from '@/components/BaseChart.vue';
 import ChartRangeToggle from '@/components/ChartRangeToggle.vue';
 import {
-    buildTimeSeriesOptions,
+    buildValuationOption,
     granularityForRange,
-    INVESTED_LINE_COLOR,
     VALUATION_RANGES,
-    VALUE_LINE_COLOR,
     type ValuationRangeKey,
 } from '@/lib/chart';
 import { eur } from '@/lib/format';
+import type { ChartOption } from '@/lib/echarts';
 import type { ValuationSeries } from '@/lib/instrument';
 
 const props = defineProps<{
@@ -43,25 +41,11 @@ const selectRange = (key: ValuationRangeKey): void => {
 
 const hasValuation = computed<boolean>(() => (props.valuation?.labels.length ?? 0) > 0);
 
-const valuationKey = computed<string>(() => {
-    const labels = props.valuation?.labels ?? [];
-
-    return `${labels.length}:${labels[0] ?? ''}:${labels[labels.length - 1] ?? ''}`;
-});
-
-const positionChartSeries = computed(() => [
-    { name: 'Valeur', data: props.valuation?.valuations ?? [] },
-    { name: 'Investi', data: props.valuation?.invested ?? [] },
-]);
-
-/** The invested line only moves on a buy or a sell, so steps read truer than a curve. */
-const positionChartOptions = computed<ApexOptions>(() => ({
-    ...buildTimeSeriesOptions({
-        categories: props.valuation?.labels ?? [],
-        valueFormatter: (value) => eur(value, 0),
-    }),
-    colors: [VALUE_LINE_COLOR, INVESTED_LINE_COLOR],
-    stroke: { curve: ['smooth', 'stepline'], width: [2, 2], dashArray: [0, 4] },
+const positionChartOption = computed<ChartOption>(() => buildValuationOption({
+    labels: props.valuation?.labels ?? [],
+    valuations: props.valuation?.valuations ?? [],
+    invested: props.valuation?.invested ?? [],
+    valueFormatter: (value: number): string => eur(value, 0),
 }));
 </script>
 
@@ -87,13 +71,7 @@ const positionChartOptions = computed<ApexOptions>(() => ({
             </template>
 
             <div v-if="hasValuation" class="px-0 sm:px-6" :class="reloading ? 'opacity-50' : ''">
-                <VueApexCharts
-                    :key="valuationKey"
-                    type="line"
-                    height="300"
-                    :options="positionChartOptions"
-                    :series="positionChartSeries"
-                />
+                <BaseChart :option="positionChartOption" />
             </div>
             <p v-else class="py-8 text-center text-sm text-muted-foreground">
                 Pas encore d'historique de valorisation.

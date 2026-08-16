@@ -1,81 +1,10 @@
-import type { ApexAxisChartSeries, ApexOptions, ApexYAxis } from 'apexcharts';
+import type { ChartOption } from './echarts';
 import { isDark } from './theme';
 
-const OVERLAP_PX = 6;
-
-/** Les libellés d'axes sont peints en SVG : leur teinte suit le thème plutôt qu'un jeton CSS. */
-function axisLabelColor(): string {
-    return isDark.value ? 'oklch(0.708 0 0)' : 'oklch(0.556 0 0)';
-}
-
-function formatTooltipDate(label: string | number): string {
-    const date = new Date(`${label}T00:00:00`);
-    if (Number.isNaN(date.getTime())) {
-        return String(label);
-    }
-    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
-type TimeSeriesOptionsInput = {
-    categories: (string | number)[];
-    valueFormatter: (value: number) => string;
-};
-
-export function buildTimeSeriesOptions({
-    categories,
-    valueFormatter,
-}: TimeSeriesOptionsInput): ApexOptions {
-    return {
-        chart: { toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
-        stroke: { curve: 'smooth', width: 2 },
-        dataLabels: { enabled: false },
-        grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
-        xaxis: {
-            type: 'datetime',
-            categories,
-            axisBorder: { show: false },
-            axisTicks: { show: false },
-            labels: { hideOverlappingLabels: true, style: { colors: axisLabelColor() } },
-        },
-        yaxis: { labels: { formatter: (value: number): string => valueFormatter(value), style: { colors: axisLabelColor() } } },
-        tooltip: {
-            shared: false,
-            intersect: false,
-            custom: ({ seriesIndex, dataPointIndex, w }): string => {
-                const values: number[][] = w.globals.series;
-                const hovered = values[seriesIndex]?.[dataPointIndex];
-                if (hovered == null) {
-                    return '';
-                }
-
-                const range = (w.globals.maxY - w.globals.minY) || 1;
-                const pxPerUnit = (w.globals.gridHeight || 1) / range;
-                const threshold = OVERLAP_PX / pxPerUnit;
-
-                const title = formatTooltipDate(categories[dataPointIndex]);
-                const rows = values
-                    .map((serie, index) => ({ index, value: serie?.[dataPointIndex] }))
-                    .filter(({ index, value }) => value != null && (index === seriesIndex || Math.abs(value - hovered) <= threshold))
-                    .map(({ index, value }) => {
-                        const color = w.globals.colors[index];
-                        const name = w.globals.seriesNames[index];
-
-                        return `<div class="apexcharts-tooltip-series-group apexcharts-active" style="display: flex;">`
-                            + `<span class="apexcharts-tooltip-marker" style="background-color: ${color};"></span>`
-                            + `<div class="apexcharts-tooltip-text" style="font-family: inherit; font-size: 12px;">`
-                            + `<div class="apexcharts-tooltip-y-group">`
-                            + `<span class="apexcharts-tooltip-text-y-label">${name}: </span>`
-                            + `<span class="apexcharts-tooltip-text-y-value">${valueFormatter(value)}</span>`
-                            + `</div></div></div>`;
-                    })
-                    .join('');
-
-                return `<div class="apexcharts-tooltip-title" style="font-family: inherit; font-size: 12px;">${title}</div>${rows}`;
-            },
-        },
-        legend: { show: false },
-    };
-}
+export const VALUE_LINE_COLOR = '#4f46e5';
+export const INVESTED_LINE_COLOR = '#94a3b8';
+export const GAIN_COLOR = '#10b981';
+export const LOSS_COLOR = '#ef4444';
 
 const GREY_SCALE_ON_DARK = ['#e2e8f0', '#cbd5e1', '#94a3b8', '#64748b', '#475569', '#334155'];
 const GREY_SCALE_ON_LIGHT = ['#334155', '#475569', '#64748b', '#94a3b8', '#cbd5e1', '#e2e8f0'];
@@ -85,10 +14,238 @@ function greyScale(): string[] {
     return isDark.value ? GREY_SCALE_ON_DARK : GREY_SCALE_ON_LIGHT;
 }
 
-export const VALUE_LINE_COLOR = '#4f46e5';
-export const INVESTED_LINE_COLOR = '#94a3b8';
-export const GAIN_COLOR = '#10b981';
-export const LOSS_COLOR = '#ef4444';
+/** Les libellés d'axes sont peints en SVG : leur teinte suit le thème plutôt qu'un jeton CSS. */
+function axisLabelColor(): string {
+    return isDark.value ? 'oklch(0.708 0 0)' : 'oklch(0.556 0 0)';
+}
+
+type TooltipTheme = { backgroundColor: string; borderColor: string; textColor: string };
+
+function tooltipTheme(): TooltipTheme {
+    return isDark.value
+        ? { backgroundColor: 'oklch(0.205 0 0)', borderColor: 'oklch(1 0 0 / 10%)', textColor: 'oklch(0.985 0 0)' }
+        : { backgroundColor: 'oklch(1 0 0)', borderColor: 'oklch(0.922 0 0)', textColor: 'oklch(0.145 0 0)' };
+}
+
+function formatTooltipDate(label: string): string {
+    const date = new Date(`${label}T00:00:00`);
+    if (Number.isNaN(date.getTime())) {
+        return label;
+    }
+
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function tooltipTitle(label: string): string {
+    return `<div style="font-size:12px;font-weight:600;margin-bottom:4px;">${formatTooltipDate(label)}</div>`;
+}
+
+function tooltipRow(color: string, label: string, value: string): string {
+    return '<div style="display:flex;align-items:center;gap:6px;font-size:12px;line-height:1.6;">'
+        + `<span style="width:8px;height:8px;border-radius:9999px;background:${color};"></span>`
+        + `<span style="flex:1;">${label}</span>`
+        + `<span style="font-weight:600;">${value}</span>`
+        + '</div>';
+}
+
+type ValueFormatter = (value: number) => string;
+
+/**
+ * Ossature partagée par les trois graphes : axes, grille et cadre d'infobulle suivent le thème.
+ * La description accessible est rédigée à la main plutôt que laissée au gabarit anglais d'ECharts.
+ */
+function chartFrame(valueFormatter: ValueFormatter, bottom: number, description: string): ChartOption {
+    const theme = tooltipTheme();
+
+    return {
+        animation: false,
+        aria: { enabled: true, label: { description } },
+        grid: { left: 64, right: 12, top: 12, bottom, containLabel: false },
+        /** Axe temporel plutôt que catégoriel : la graduation suit l'amplitude réellement visible. */
+        xAxis: {
+            type: 'time',
+            axisLine: { show: false },
+            axisTick: { show: false },
+            axisLabel: { color: axisLabelColor(), hideOverlap: true },
+        },
+        yAxis: {
+            type: 'value',
+            axisLine: { show: false },
+            axisTick: { show: false },
+            axisLabel: { color: axisLabelColor(), formatter: (value: number): string => valueFormatter(value) },
+            splitLine: { lineStyle: { color: 'rgba(128,128,128,0.15)', type: 'dashed' } },
+        },
+        tooltip: {
+            trigger: 'axis',
+            backgroundColor: theme.backgroundColor,
+            borderColor: theme.borderColor,
+            textStyle: { color: theme.textColor, fontFamily: 'inherit' },
+            axisPointer: { type: 'line', lineStyle: { color: 'rgba(128,128,128,0.4)' } },
+        },
+    };
+}
+
+export type AssetSeries = { assetId: number; name: string; value: number[]; invested: number[] };
+
+/** Un axe temporel attend des couples date/valeur, pas une suite de valeurs indexées. */
+function datedPoints(labels: string[], values: number[]): [string, number][] {
+    return labels.map((label: string, index: number): [string, number] => [label, values[index] ?? 0]);
+}
+
+export type ZoomWindow = { start: number; end: number };
+
+type EvolutionInput = {
+    labels: string[];
+    perAsset: AssetSeries[];
+    hiddenIds: Set<number>;
+    valueFormatter: ValueFormatter;
+    window: ZoomWindow;
+};
+
+/** Part de l'historique visible à l'ouverture : le graphe s'ouvre sur la période récente. */
+export const INITIAL_ZOOM_WINDOW: ZoomWindow = { start: 70, end: 100 };
+
+/** Hauteur réservée sous la grille à la mini-timeline du zoom, en pixels. */
+const ZOOM_SLIDER_HEIGHT = 40;
+
+/**
+ * Aires empilées du tableau de bord. La fenêtre temporelle est choisie côté client par le
+ * `dataZoom` : rien ici ne dépend du réseau ni de la taille du conteneur.
+ */
+export function buildEvolutionOption({ labels, perAsset, hiddenIds, valueFormatter, window }: EvolutionInput): ChartOption {
+    const visible = perAsset.filter((asset: AssetSeries): boolean => !hiddenIds.has(asset.assetId));
+    const palette = greyScale();
+    const theme = tooltipTheme();
+
+    const description = visible.length === 0
+        ? 'Évolution de la valeur du portefeuille. Aucun titre affiché.'
+        : `Évolution de la valeur du portefeuille, par titre : ${visible.map((asset) => asset.name).join(', ')}.`;
+
+    return {
+        ...chartFrame(valueFormatter, ZOOM_SLIDER_HEIGHT + 44, description),
+        color: visible.map((_asset: AssetSeries, index: number): string => palette[index % palette.length]),
+        series: visible.map((asset: AssetSeries) => ({
+            name: asset.name,
+            type: 'line' as const,
+            stack: 'total',
+            symbol: 'none' as const,
+            lineStyle: { width: 0 },
+            areaStyle: { opacity: 0.9 },
+            data: datedPoints(labels, asset.value),
+        })),
+        dataZoom: [
+            { type: 'inside', start: window.start, end: window.end },
+            {
+                type: 'slider',
+                start: window.start,
+                end: window.end,
+                height: ZOOM_SLIDER_HEIGHT,
+                bottom: 0,
+                borderColor: 'transparent',
+                fillerColor: 'rgba(128,128,128,0.15)',
+                handleStyle: { color: axisLabelColor() },
+                moveHandleStyle: { color: 'rgba(128,128,128,0.3)' },
+                textStyle: { color: axisLabelColor() },
+                dataBackground: { lineStyle: { opacity: 0 }, areaStyle: { color: 'rgba(128,128,128,0.2)' } },
+                selectedDataBackground: { lineStyle: { opacity: 0 }, areaStyle: { color: 'rgba(128,128,128,0.4)' } },
+            },
+        ],
+        tooltip: {
+            trigger: 'axis',
+            backgroundColor: theme.backgroundColor,
+            borderColor: theme.borderColor,
+            textStyle: { color: theme.textColor, fontFamily: 'inherit' },
+            axisPointer: { type: 'line', lineStyle: { color: 'rgba(128,128,128,0.4)' } },
+            formatter: (params: unknown): string => {
+                const index = pointIndex(params);
+                if (index === null) {
+                    return '';
+                }
+
+                const totalValue = visible.reduce((sum, asset) => sum + (asset.value[index] ?? 0), 0);
+                const totalInvested = visible.reduce((sum, asset) => sum + (asset.invested[index] ?? 0), 0);
+                const gain = totalValue - totalInvested;
+
+                return tooltipTitle(labels[index] ?? '')
+                    + tooltipRow(VALUE_LINE_COLOR, 'Valeur', valueFormatter(totalValue))
+                    + tooltipRow(
+                        gain >= 0 ? GAIN_COLOR : LOSS_COLOR,
+                        gain >= 0 ? 'Gain' : 'Perte',
+                        `${gain >= 0 ? '+' : '−'} ${valueFormatter(Math.abs(gain))}`,
+                    )
+                    + visible
+                        .map((asset, k) => tooltipRow(palette[k % palette.length], asset.name, valueFormatter(asset.value[index] ?? 0)))
+                        .join('');
+            },
+        },
+    };
+}
+
+/** ECharts passe un tableau de points survolés ; tous partagent le même index de catégorie. */
+function pointIndex(params: unknown): number | null {
+    const points = Array.isArray(params) ? params : [params];
+    const first = points[0] as { dataIndex?: number } | undefined;
+
+    return typeof first?.dataIndex === 'number' ? first.dataIndex : null;
+}
+
+type PriceHistoryInput = {
+    labels: string[];
+    close: number[];
+    valueFormatter: ValueFormatter;
+};
+
+/** Cours d'un instrument : une courbe unique, aire dégradée sous la ligne. */
+export function buildPriceHistoryOption({ labels, close, valueFormatter }: PriceHistoryInput): ChartOption {
+    return {
+        ...chartFrame(valueFormatter, 32, "Historique du cours de l'instrument."),
+        color: [VALUE_LINE_COLOR],
+        series: [{
+            name: 'Cours',
+            type: 'line',
+            smooth: true,
+            symbol: 'none',
+            sampling: 'lttb',
+            lineStyle: { width: 2 },
+            areaStyle: { opacity: 0.15 },
+            data: datedPoints(labels, close),
+        }],
+    };
+}
+
+type ValuationInput = {
+    labels: string[];
+    valuations: number[];
+    invested: number[];
+    valueFormatter: ValueFormatter;
+};
+
+/** Valeur contre investi. L'investi ne bouge qu'à un achat ou une vente : l'escalier lit plus juste. */
+export function buildValuationOption({ labels, valuations, invested, valueFormatter }: ValuationInput): ChartOption {
+    return {
+        ...chartFrame(valueFormatter, 32, 'Valeur de la position comparée au montant investi.'),
+        color: [VALUE_LINE_COLOR, INVESTED_LINE_COLOR],
+        series: [
+            {
+                name: 'Valeur',
+                type: 'line',
+                smooth: true,
+                symbol: 'none',
+                sampling: 'lttb',
+                lineStyle: { width: 2 },
+                data: datedPoints(labels, valuations),
+            },
+            {
+                name: 'Investi',
+                type: 'line',
+                step: 'end',
+                symbol: 'none',
+                lineStyle: { width: 2, type: 'dashed' },
+                data: datedPoints(labels, invested),
+            },
+        ],
+    };
+}
 
 export type ValuationRangeKey = '1M' | '6M' | '1Y' | 'max';
 
@@ -106,195 +263,4 @@ export function granularityForRange(range: ValuationRangeKey): 'day' | 'week' | 
     }
 
     return range === 'max' ? 'month' : 'week';
-}
-
-type AssetSeries = { assetId: number; name: string; value: number[]; invested: number[] };
-
-type EvolutionInput = {
-    labels: string[];
-    perAsset: AssetSeries[];
-    hiddenIds: Set<number>;
-    valueFormatter: (value: number) => string;
-};
-
-const AXIS_TICKS = 4;
-
-/**
- * Plafond « rond » de l'axe des valeurs. Le graphe défilant et sa colonne d'axe fixe sont
- * deux graphes distincts : ils ne partagent une graduation identique que si l'échelle est
- * imposée des deux côtés plutôt que déduite des données de chacun.
- */
-export function niceAxisMax(value: number, ticks: number = AXIS_TICKS): number {
-    if (!Number.isFinite(value) || value <= 0) {
-        return ticks;
-    }
-
-    const rawStep = value / ticks;
-    const magnitude = 10 ** Math.floor(Math.log10(rawStep));
-    const step = [1, 2, 2.5, 5, 10].map((factor) => factor * magnitude).find((candidate) => candidate >= rawStep)
-        ?? 10 * magnitude;
-
-    return step * ticks;
-}
-
-type EvolutionGeometry = {
-    grid: NonNullable<ApexOptions['grid']>;
-    xaxis: NonNullable<ApexOptions['xaxis']>;
-    yaxis: ApexYAxis;
-};
-
-/** Configuration partagée par le graphe et sa colonne d'axe, pour que leurs zones de tracé coïncident. */
-function evolutionGeometry(labels: string[], axisMax: number, valueFormatter: (value: number) => string): EvolutionGeometry {
-    return {
-        grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4, padding: { left: 0, right: 0 } },
-        xaxis: {
-            type: 'category',
-            categories: labels,
-            tickPlacement: 'on',
-            axisBorder: { show: false },
-            axisTicks: { show: false },
-            labels: {
-                rotate: 0,
-                rotateAlways: false,
-                hideOverlappingLabels: true,
-                formatter: (label: string): string => formatAxisDate(label),
-                style: { colors: axisLabelColor() },
-            },
-        },
-        yaxis: {
-            min: 0,
-            max: axisMax,
-            tickAmount: AXIS_TICKS,
-            labels: {
-                formatter: (v: number): string => (v == null || !Number.isFinite(v) ? '' : valueFormatter(v)),
-                style: { colors: axisLabelColor() },
-            },
-        },
-    };
-}
-
-function formatAxisDate(label: string | number): string {
-    const date = new Date(`${label}T00:00:00`);
-    if (Number.isNaN(date.getTime())) {
-        return String(label);
-    }
-
-    return date.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
-}
-
-/** Somme des valeurs visibles au point le plus haut de la série. */
-function evolutionPeak(labels: string[], visible: AssetSeries[]): number {
-    return labels.reduce(
-        (peak, _label, i) => Math.max(peak, visible.reduce((sum, asset) => sum + (asset.value[i] ?? 0), 0)),
-        0,
-    );
-}
-
-/** Colonne d'axe fixe : même échelle et même géométrie que le graphe, sans aucune donnée tracée. */
-export function buildEvolutionAxis({
-    labels,
-    perAsset,
-    hiddenIds,
-    valueFormatter,
-}: EvolutionInput): { series: ApexAxisChartSeries; options: ApexOptions } {
-    const visible = perAsset.filter((asset) => !hiddenIds.has(asset.assetId));
-    const axisMax = niceAxisMax(evolutionPeak(labels, visible));
-    const geometry = evolutionGeometry(labels, axisMax, valueFormatter);
-
-    return {
-        series: [{ name: 'axis', type: 'area', data: labels.map(() => 0) }],
-        options: {
-            ...geometry,
-            chart: { type: 'area', toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
-            grid: { ...geometry.grid, show: false },
-            xaxis: {
-                ...geometry.xaxis,
-                labels: { ...geometry.xaxis.labels, style: { colors: 'transparent' } },
-            },
-            stroke: { width: 0 },
-            fill: { type: 'solid', opacity: 0 },
-            dataLabels: { enabled: false },
-            markers: { size: 0 },
-            legend: { show: false },
-            tooltip: { enabled: false },
-        },
-    };
-}
-
-export function buildEvolutionChart({
-    labels,
-    perAsset,
-    hiddenIds,
-    valueFormatter,
-}: EvolutionInput): { series: ApexAxisChartSeries; options: ApexOptions } {
-    const visible = perAsset.filter((asset) => !hiddenIds.has(asset.assetId));
-    const point = (i: number, y: number): { x: string; y: number } => ({ x: labels[i], y });
-    const geometry = evolutionGeometry(labels, niceAxisMax(evolutionPeak(labels, visible)), valueFormatter);
-    const palette = greyScale();
-
-    const cumulative: number[][] = visible.map((_, k) =>
-        labels.map((_label, i) => visible.slice(0, k + 1).reduce((sum, asset) => sum + (asset.value[i] ?? 0), 0)),
-    );
-
-    const series: ApexAxisChartSeries = [];
-    const colors: string[] = [];
-    for (let k = visible.length - 1; k >= 0; k -= 1) {
-        series.push({
-            name: visible[k].name,
-            type: 'area',
-            data: labels.map((_label, i) => point(i, cumulative[k][i])),
-        });
-        colors.push(palette[k % palette.length]);
-    }
-
-    const options: ApexOptions = {
-        ...geometry,
-        chart: { type: 'area', toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
-        colors,
-        stroke: { curve: 'smooth', width: 0 },
-        fill: { type: 'solid', opacity: 0.9 },
-        dataLabels: { enabled: false },
-        markers: { size: 0 },
-        yaxis: { ...geometry.yaxis, labels: { ...geometry.yaxis.labels, show: false } },
-        legend: { show: false },
-        tooltip: {
-            shared: true,
-            intersect: false,
-            custom: ({ dataPointIndex }): string => {
-                const i = dataPointIndex;
-                const totalValue = visible.reduce((sum, asset) => sum + (asset.value[i] ?? 0), 0);
-                const totalInvested = visible.reduce((sum, asset) => sum + (asset.invested[i] ?? 0), 0);
-                const gain = totalValue - totalInvested;
-                const gainColor = gain >= 0 ? GAIN_COLOR : LOSS_COLOR;
-                const gainSign = gain >= 0 ? '+' : '−';
-
-                const row = (color: string, label: string, text: string): string =>
-                    `<div class="apexcharts-tooltip-series-group apexcharts-active" style="display: flex;">`
-                    + `<span class="apexcharts-tooltip-marker" style="background-color: ${color};"></span>`
-                    + `<div class="apexcharts-tooltip-text" style="font-family: inherit; font-size: 12px;">`
-                    + `<div class="apexcharts-tooltip-y-group">`
-                    + `<span class="apexcharts-tooltip-text-y-label">${label}: </span>`
-                    + `<span class="apexcharts-tooltip-text-y-value">${text}</span>`
-                    + `</div></div></div>`;
-
-                const header = `<div class="apexcharts-tooltip-title" style="font-family: inherit; font-size: 12px;">${formatTooltipDate(labels[i])}</div>`;
-                const valueRow = row(VALUE_LINE_COLOR, 'Valeur', valueFormatter(totalValue));
-                const gainRow = row(gainColor, gain >= 0 ? 'Gain' : 'Perte', `${gainSign} ${valueFormatter(Math.abs(gain))}`);
-                const assetRows = visible
-                    .map((asset, k) => row(palette[k % palette.length], asset.name, valueFormatter(asset.value[i] ?? 0)))
-                    .join('');
-
-                return header + valueRow + gainRow + assetRows;
-            },
-        },
-    };
-
-    return { series, options };
-}
-
-/** Rebases a serie on its first point so several series share a comparable scale. */
-export function base100(serie: number[]): number[] {
-    return serie.length === 0 || serie[0] === 0
-        ? serie.map((): number => 100)
-        : serie.map((value: number): number => (value / serie[0]) * 100);
 }

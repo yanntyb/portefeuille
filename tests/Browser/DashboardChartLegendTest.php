@@ -8,7 +8,7 @@ use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 
-it('renders the evolution chart without the allocation donut', function () {
+it('renders a single evolution chart, without the allocation donut', function () {
     // A legacy data migration seeds a hardcoded user; clear it so the controller resolves this user.
     User::query()->delete();
     $user = User::factory()->create();
@@ -38,10 +38,12 @@ it('renders the evolution chart without the allocation donut', function () {
 
     $page = visit('/');
 
-    $page->assertSee('Valeur de marché par titre')
-        ->assertDontSee('Évolution')
+    $page->assertDontSee('Évolution')
         ->assertSee('GLOBEX')
-        ->assertCount('.apexcharts-canvas', 2)
-        ->assertCount('.apexcharts-pie', 0)
+        ->assertCount('[data-section=evolution] [data-chart]', 1)
+        ->assertScript(
+            "document.querySelector('[data-section=evolution] [aria-label]')?.getAttribute('aria-label')",
+            'Évolution de la valeur du portefeuille, par titre : ACME, GLOBEX.',
+        )
         ->assertNoJavaScriptErrors();
 });

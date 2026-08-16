@@ -16,7 +16,6 @@ defineProps<{
     performances?: Performance[];
     evolutionSeries?: EvolutionSeries;
     sectorBreakdown?: SectorSlice[];
-    valuationMonths: number;
 }>();
 
 const hiddenAssetIds = ref<Set<number>>(new Set());
@@ -34,20 +33,21 @@ const toggleAsset = (assetId: number): void => {
 
 <template>
     <Head title="Tableau de bord" />
-
+<!-- CLAUDE => Le comment du breadcrum est volontaire, corriger les test -->
     <AppBreadcrumb :items="[{ label: 'Tableau de bord' }]" />
 
     <main class="min-h-screen overflow-x-hidden bg-background py-6 text-foreground">
         <div class="mx-auto flex max-w-6xl flex-col gap-6">
             <ValuationSection v-if="overview.holdings.length" :overview="overview" />
 
-            <PerformancesSection v-if="overview.holdings.length" :performances="performances" />
-
             <EvolutionSection
                 :hidden-asset-ids="hiddenAssetIds"
                 :series="evolutionSeries"
-                :initial-months="valuationMonths"
             />
+
+
+            <PerformancesSection v-if="overview.holdings.length" :performances="performances" />
+
 
 
             <HoldingsSection
