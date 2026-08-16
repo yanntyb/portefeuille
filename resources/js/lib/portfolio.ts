@@ -23,4 +23,5 @@ export interface PortfolioOverview {
 export interface EvolutionSeries {
     labels: string[];
     perAsset: { assetId: number; name: string; value: number[]; invested: number[] }[];
+    hasMore: boolean;
 }

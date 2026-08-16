@@ -39,6 +39,6 @@ class BuildPortfolioValuationSeries
 
         $daily = $this->calculator->calculateDaily($transactions, $prices);
 
-        return $this->calculator->windowAndAggregate($daily, $range, $granularity);
+        return $this->calculator->windowAndAggregate($daily, $range->months(), $granularity);
     }
 }

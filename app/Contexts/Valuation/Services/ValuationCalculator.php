@@ -12,7 +12,6 @@ use App\Contexts\Valuation\Datas\PriceRecordData;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
 use App\Contexts\Valuation\Datas\ValuationSeriesData;
 use App\Contexts\Valuation\Enums\ValuationGranularity;
-use App\Contexts\Valuation\Enums\ValuationRange;
 use Illuminate\Support\Carbon;
 
 class ValuationCalculator
@@ -124,13 +123,13 @@ class ValuationCalculator
         return new ValuationSeriesData($labels, $valuations, $invested, $unitPrices);
     }
 
-    public function windowAndAggregate(ValuationSeriesData $series, ValuationRange $range, ValuationGranularity $granularity): ValuationSeriesData
+    /** @param  ?int  $months  Profondeur de la fenêtre depuis le dernier point, null pour tout l'historique. */
+    public function windowAndAggregate(ValuationSeriesData $series, ?int $months, ValuationGranularity $granularity): ValuationSeriesData
     {
         if ($series->labels === []) {
             return $series;
         }
 
-        $months = $range->months();
         $cutoff = $months === null
             ? null
             : Carbon::parse($series->labels[count($series->labels) - 1])->subMonthsNoOverflow($months)->format('Y-m-d');
@@ -223,16 +222,17 @@ class ValuationCalculator
 
     /**
      * Fenêtre + agrège une série investi-par-titre : coupe les labels avant le cutoff
-     * du range, puis garde le dernier label de chaque bucket de granularité. Les valeurs
+     * de la fenêtre, puis garde le dernier label de chaque bucket de granularité. Les valeurs
      * investies (cumulées) sont conservées telles quelles.
+     *
+     * @param  ?int  $months  Profondeur de la fenêtre depuis le dernier point, null pour tout l'historique.
      */
-    public function windowAndAggregateInvested(InvestedByAssetSeriesData $series, ValuationRange $range, ValuationGranularity $granularity): InvestedByAssetSeriesData
+    public function windowAndAggregateInvested(InvestedByAssetSeriesData $series, ?int $months, ValuationGranularity $granularity): InvestedByAssetSeriesData
     {
         if ($series->labels === []) {
             return $series;
         }
 
-        $months = $range->months();
         $cutoff = $months === null
             ? null
             : Carbon::parse($series->labels[count($series->labels) - 1])->subMonthsNoOverflow($months)->format('Y-m-d');
@@ -402,26 +402,26 @@ class ValuationCalculator
      *
      * @param  list<TransactionRecordData>  $transactions
      * @param  list<PriceRecordData>  $prices
+     * @param  ?int  $months  Profondeur de la fenêtre depuis le dernier point, null pour tout l'historique.
      */
     public function evolution(
         array $transactions,
         array $prices,
-        ValuationRange $range,
+        ?int $months,
         ValuationGranularity $granularity,
     ): EvolutionSeriesData {
         if ($transactions === []) {
             return EvolutionSeriesData::empty();
         }
 
-        $windowed = $this->windowAndAggregate(
-            $this->calculateDaily($transactions, $prices),
-            $range,
-            $granularity,
-        );
+        $daily = $this->calculateDaily($transactions, $prices);
+        $windowed = $this->windowAndAggregate($daily, $months, $granularity);
 
         if ($windowed->labels === []) {
             return EvolutionSeriesData::empty();
         }
+
+        $hasMore = $daily->labels !== [] && $daily->labels[0] < $windowed->labels[0];
 
         $investedTimelines = $this->perAssetInvestedTimelines($transactions);
         $quantityTimelines = $this->perAssetQuantityTimelines($transactions);
@@ -455,7 +455,7 @@ class ValuationCalculator
             );
         }
 
-        return new EvolutionSeriesData(labels: $windowed->labels, perAsset: $perAsset);
+        return new EvolutionSeriesData(labels: $windowed->labels, perAsset: $perAsset, hasMore: $hasMore);
     }
 
     /**

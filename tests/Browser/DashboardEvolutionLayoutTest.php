@@ -37,16 +37,16 @@ function userWithEvolution(): User
     return $user;
 }
 
-it('lines the period picker up with the section title, like the instrument chart', function () {
+it('keeps the section title on its own header row, like the instrument chart', function () {
     $this->actingAs(userWithEvolution());
 
     visit('/')
         ->assertScript(
             "(() => {
                 const title = document.querySelector('[data-section=evolution] h2');
-                const button = document.querySelector('[data-section=evolution] button');
                 const row = title.closest('section > div');
-                return row.contains(button) && getComputedStyle(row).justifyContent === 'space-between';
+                return getComputedStyle(row).justifyContent === 'space-between'
+                    && row.querySelectorAll('button').length === 0;
             })()",
             true,
         )

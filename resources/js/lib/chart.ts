@@ -1,4 +1,4 @@
-import type { ApexAxisChartSeries, ApexOptions } from 'apexcharts';
+import type { ApexAxisChartSeries, ApexOptions, ApexYAxis } from 'apexcharts';
 
 const OVERLAP_PX = 6;
 
@@ -104,6 +104,110 @@ type EvolutionInput = {
     valueFormatter: (value: number) => string;
 };
 
+const AXIS_TICKS = 4;
+
+/**
+ * Plafond « rond » de l'axe des valeurs. Le graphe défilant et sa colonne d'axe fixe sont
+ * deux graphes distincts : ils ne partagent une graduation identique que si l'échelle est
+ * imposée des deux côtés plutôt que déduite des données de chacun.
+ */
+export function niceAxisMax(value: number, ticks: number = AXIS_TICKS): number {
+    if (!Number.isFinite(value) || value <= 0) {
+        return ticks;
+    }
+
+    const rawStep = value / ticks;
+    const magnitude = 10 ** Math.floor(Math.log10(rawStep));
+    const step = [1, 2, 2.5, 5, 10].map((factor) => factor * magnitude).find((candidate) => candidate >= rawStep)
+        ?? 10 * magnitude;
+
+    return step * ticks;
+}
+
+type EvolutionGeometry = {
+    grid: NonNullable<ApexOptions['grid']>;
+    xaxis: NonNullable<ApexOptions['xaxis']>;
+    yaxis: ApexYAxis;
+};
+
+/** Configuration partagée par le graphe et sa colonne d'axe, pour que leurs zones de tracé coïncident. */
+function evolutionGeometry(labels: string[], axisMax: number, valueFormatter: (value: number) => string): EvolutionGeometry {
+    return {
+        grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4, padding: { left: 0, right: 0 } },
+        xaxis: {
+            type: 'category',
+            categories: labels,
+            tickPlacement: 'on',
+            axisBorder: { show: false },
+            axisTicks: { show: false },
+            labels: {
+                rotate: 0,
+                rotateAlways: false,
+                hideOverlappingLabels: true,
+                formatter: (label: string): string => formatAxisDate(label),
+                style: { colors: 'oklch(0.708 0 0)' },
+            },
+        },
+        yaxis: {
+            min: 0,
+            max: axisMax,
+            tickAmount: AXIS_TICKS,
+            labels: {
+                formatter: (v: number): string => (v == null || !Number.isFinite(v) ? '' : valueFormatter(v)),
+                style: { colors: 'oklch(0.708 0 0)' },
+            },
+        },
+    };
+}
+
+function formatAxisDate(label: string | number): string {
+    const date = new Date(`${label}T00:00:00`);
+    if (Number.isNaN(date.getTime())) {
+        return String(label);
+    }
+
+    return date.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
+}
+
+/** Somme des valeurs visibles au point le plus haut de la série. */
+function evolutionPeak(labels: string[], visible: AssetSeries[]): number {
+    return labels.reduce(
+        (peak, _label, i) => Math.max(peak, visible.reduce((sum, asset) => sum + (asset.value[i] ?? 0), 0)),
+        0,
+    );
+}
+
+/** Colonne d'axe fixe : même échelle et même géométrie que le graphe, sans aucune donnée tracée. */
+export function buildEvolutionAxis({
+    labels,
+    perAsset,
+    hiddenIds,
+    valueFormatter,
+}: EvolutionInput): { series: ApexAxisChartSeries; options: ApexOptions } {
+    const visible = perAsset.filter((asset) => !hiddenIds.has(asset.assetId));
+    const axisMax = niceAxisMax(evolutionPeak(labels, visible));
+    const geometry = evolutionGeometry(labels, axisMax, valueFormatter);
+
+    return {
+        series: [{ name: 'axis', type: 'area', data: labels.map(() => 0) }],
+        options: {
+            ...geometry,
+            chart: { type: 'area', toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
+            grid: { ...geometry.grid, show: false },
+            xaxis: {
+                ...geometry.xaxis,
+                labels: { ...geometry.xaxis.labels, style: { colors: 'transparent' } },
+            },
+            stroke: { width: 0 },
+            fill: { type: 'solid', opacity: 0 },
+            dataLabels: { enabled: false },
+            markers: { size: 0 },
+            legend: { show: false },
+            tooltip: { enabled: false },
+        },
+    };
+}
+
 export function buildEvolutionChart({
     labels,
     perAsset,
@@ -112,6 +216,7 @@ export function buildEvolutionChart({
 }: EvolutionInput): { series: ApexAxisChartSeries; options: ApexOptions } {
     const visible = perAsset.filter((asset) => !hiddenIds.has(asset.assetId));
     const point = (i: number, y: number): { x: string; y: number } => ({ x: labels[i], y });
+    const geometry = evolutionGeometry(labels, niceAxisMax(evolutionPeak(labels, visible)), valueFormatter);
 
     const cumulative: number[][] = visible.map((_, k) =>
         labels.map((_label, i) => visible.slice(0, k + 1).reduce((sum, asset) => sum + (asset.value[i] ?? 0), 0)),
@@ -129,25 +234,14 @@ export function buildEvolutionChart({
     }
 
     const options: ApexOptions = {
+        ...geometry,
         chart: { type: 'area', toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', animations: { enabled: false } },
         colors,
         stroke: { curve: 'smooth', width: 0 },
         fill: { type: 'solid', opacity: 0.9 },
         dataLabels: { enabled: false },
         markers: { size: 0 },
-        grid: { borderColor: 'rgba(128,128,128,0.15)', strokeDashArray: 4 },
-        xaxis: {
-            type: 'datetime',
-            axisBorder: { show: false },
-            axisTicks: { show: false },
-            labels: { hideOverlappingLabels: true, style: { colors: 'oklch(0.708 0 0)' } },
-        },
-        yaxis: {
-            labels: {
-                formatter: (v: number): string => (v == null || !Number.isFinite(v) ? '' : valueFormatter(v)),
-                style: { colors: 'oklch(0.708 0 0)' },
-            },
-        },
+        yaxis: { ...geometry.yaxis, labels: { ...geometry.yaxis.labels, show: false } },
         legend: { show: false },
         tooltip: {
             shared: true,

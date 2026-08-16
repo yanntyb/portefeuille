@@ -167,3 +167,51 @@ it('defers the portfolio performances and loads them on demand', function () {
             )
         );
 });
+
+it('windows the dashboard evolution series to six months by default', function () {
+    User::query()->delete();
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $asset = Instrument::factory()->create();
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'quantity' => 10, 'unit_price' => 100, 'date' => '2024-01-01',
+    ]);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2024-01-01', 'close' => 100]);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 120]);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Dashboard')
+            ->where('valuationMonths', 6)
+            ->loadDeferredProps(fn (Assert $reload) => $reload
+                ->where('evolutionSeries.hasMore', true)
+                ->where('evolutionSeries.labels.0', '2026-01-01')
+            )
+        );
+});
+
+it('extends the dashboard evolution series when more months are requested', function () {
+    User::query()->delete();
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $asset = Instrument::factory()->create();
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'quantity' => 10, 'unit_price' => 100, 'date' => '2024-01-01',
+    ]);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2024-01-01', 'close' => 100]);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 120]);
+
+    $this->get('/?months=60')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Dashboard')
+            ->where('valuationMonths', 60)
+            ->loadDeferredProps(fn (Assert $reload) => $reload
+                ->where('evolutionSeries.hasMore', false)
+                ->where('evolutionSeries.labels.0', '2024-01-01')
+            )
+        );
+});

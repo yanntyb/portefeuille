@@ -7,7 +7,6 @@ use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 use App\Contexts\Valuation\Actions\BuildEvolutionSeries;
 use App\Contexts\Valuation\Enums\ValuationGranularity;
-use App\Contexts\Valuation\Enums\ValuationRange;
 
 it('builds the merged evolution series with named per-asset invested', function () {
     $user = User::factory()->create();
@@ -26,7 +25,7 @@ it('builds the merged evolution series with named per-asset invested', function 
     Price::factory()->create(['asset_id' => $apple->id, 'date' => '2026-01-01', 'close' => 100]);
     Price::factory()->create(['asset_id' => $amazon->id, 'date' => '2026-01-01', 'close' => 50]);
 
-    $data = app(BuildEvolutionSeries::class)($user->id, ValuationRange::Max, ValuationGranularity::Day);
+    $data = app(BuildEvolutionSeries::class)($user->id, null, ValuationGranularity::Day);
 
     expect($data->labels)->toBe(['2026-01-01']);
 

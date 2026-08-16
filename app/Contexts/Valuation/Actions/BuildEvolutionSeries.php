@@ -6,7 +6,6 @@ use App\Contexts\Valuation\Datas\AssetSeriesData;
 use App\Contexts\Valuation\Datas\EvolutionSeriesData;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
 use App\Contexts\Valuation\Enums\ValuationGranularity;
-use App\Contexts\Valuation\Enums\ValuationRange;
 use App\Contexts\Valuation\Ports\InstrumentDirectoryPort;
 use App\Contexts\Valuation\Ports\PriceHistoryPort;
 use App\Contexts\Valuation\Ports\TransactionHistoryPort;
@@ -21,9 +20,10 @@ class BuildEvolutionSeries
         private ValuationCalculator $calculator,
     ) {}
 
+    /** @param  ?int  $months  Profondeur de la fenêtre depuis aujourd'hui, null pour tout l'historique. */
     public function __invoke(
         int $userId,
-        ValuationRange $range = ValuationRange::Max,
+        ?int $months = null,
         ValuationGranularity $granularity = ValuationGranularity::Month,
     ): EvolutionSeriesData {
         $transactions = $this->transactions->forUser($userId);
@@ -40,7 +40,7 @@ class BuildEvolutionSeries
 
         $prices = $this->prices->forAssetsSince($assetIds, $since);
 
-        $raw = $this->calculator->evolution($transactions, $prices, $range, $granularity);
+        $raw = $this->calculator->evolution($transactions, $prices, $months, $granularity);
 
         $names = $this->directory->namesFor(array_map(
             fn (AssetSeriesData $serie): int => $serie->assetId,
@@ -57,6 +57,6 @@ class BuildEvolutionSeries
             $raw->perAsset,
         );
 
-        return new EvolutionSeriesData($raw->labels, $perAsset);
+        return new EvolutionSeriesData($raw->labels, $perAsset, $raw->hasMore);
     }
 }

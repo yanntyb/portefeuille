@@ -4,7 +4,6 @@ use App\Contexts\Valuation\Datas\PriceRecordData;
 use App\Contexts\Valuation\Datas\PriceRecordData as P;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
 use App\Contexts\Valuation\Enums\ValuationGranularity;
-use App\Contexts\Valuation\Enums\ValuationRange;
 use App\Contexts\Valuation\Services\ValuationCalculator;
 use Illuminate\Support\Carbon;
 
@@ -226,7 +225,7 @@ it('windows the series to the requested range', function () {
     $values = array_map(fn (int $i): float => (float) ($i + 1), array_keys($labels));
     $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData($labels, $values, $values, $values);
 
-    $windowed = (new ValuationCalculator)->windowAndAggregate($daily, ValuationRange::OneMonth, ValuationGranularity::Day);
+    $windowed = (new ValuationCalculator)->windowAndAggregate($daily, 1, ValuationGranularity::Day);
 
     $lastDate = Carbon::parse($labels[399]);
     $cutoff = $lastDate->copy()->subMonthsNoOverflow(1)->format('Y-m-d');
@@ -240,7 +239,7 @@ it('aggregates by keeping the last point of each month bucket', function () {
     $values = [1.0, 2.0, 3.0, 4.0, 5.0];
     $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData($labels, $values, $values, $values);
 
-    $monthly = (new ValuationCalculator)->windowAndAggregate($daily, ValuationRange::Max, ValuationGranularity::Month);
+    $monthly = (new ValuationCalculator)->windowAndAggregate($daily, null, ValuationGranularity::Month);
 
     expect($monthly->labels)->toBe(['2026-01-31', '2026-02-28'])
         ->and($monthly->valuations)->toBe([3.0, 5.0])
@@ -252,7 +251,7 @@ it('keeps every point when granularity is Day', function () {
     $values = [1.0, 2.0, 3.0];
     $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData($labels, $values, $values, $values);
 
-    $result = (new ValuationCalculator)->windowAndAggregate($daily, ValuationRange::Max, ValuationGranularity::Day);
+    $result = (new ValuationCalculator)->windowAndAggregate($daily, null, ValuationGranularity::Day);
 
     expect($result->labels)->toBe($labels);
 });
@@ -426,7 +425,7 @@ it('windows and aggregates an invested-by-asset series', function () {
         [new App\Contexts\Valuation\Datas\AssetInvestedSeriesData(1, 'A', [100.0, 200.0, 300.0, 400.0])],
     );
 
-    $result = (new ValuationCalculator)->windowAndAggregateInvested($series, ValuationRange::Max, ValuationGranularity::Month);
+    $result = (new ValuationCalculator)->windowAndAggregateInvested($series, null, ValuationGranularity::Month);
 
     // Buckets mensuels : 2026-01 -> dernier (2026-01-20), 2026-02, 2026-03.
     expect($result->labels)->toBe(['2026-01-20', '2026-02-15', '2026-03-01'])
@@ -440,7 +439,7 @@ it('windows an invested-by-asset series by range', function () {
     );
 
     // Dernier label 2026-03-01, range 1M => cutoff 2026-02-01 : seuls 2026-02-15 et 2026-03-01 restent.
-    $result = (new ValuationCalculator)->windowAndAggregateInvested($series, ValuationRange::OneMonth, ValuationGranularity::Day);
+    $result = (new ValuationCalculator)->windowAndAggregateInvested($series, 1, ValuationGranularity::Day);
 
     expect($result->labels)->toBe(['2026-02-15', '2026-03-01'])
         ->and($result->series[0]->invested)->toBe([200.0, 300.0]);
@@ -453,7 +452,7 @@ it('exposes per-asset market value aligned on the valuation labels (evolution)',
             new P(1, '2026-01-01', 100), new P(1, '2026-02-01', 120),
             new P(2, '2026-02-01', 50),
         ],
-        ValuationRange::Max,
+        null,
         ValuationGranularity::Day,
     );
 
@@ -473,7 +472,7 @@ it('keeps sum of per-asset value equal to the total valuation (evolution invaria
     $transactions = [tx('2026-01-01', 1, false, 10, 100), tx('2026-01-01', 2, false, 4, 25)];
     $prices = [new P(1, '2026-01-01', 110), new P(2, '2026-01-01', 30)];
 
-    $series = $calc->evolution($transactions, $prices, ValuationRange::Max, ValuationGranularity::Day);
+    $series = $calc->evolution($transactions, $prices, null, ValuationGranularity::Day);
     $daily = $calc->calculateDaily($transactions, $prices);
 
     foreach ($series->labels as $i => $label) {
@@ -483,6 +482,45 @@ it('keeps sum of per-asset value equal to the total valuation (evolution invaria
 });
 
 it('returns an empty evolution series without transactions', function () {
-    expect((new ValuationCalculator)->evolution([], [], ValuationRange::Max, ValuationGranularity::Day))
+    expect((new ValuationCalculator)->evolution([], [], null, ValuationGranularity::Day))
         ->toEqual(\App\Contexts\Valuation\Datas\EvolutionSeriesData::empty());
+});
+
+it('windows the series to an arbitrary number of months', function () {
+    $labels = [];
+    for ($d = 0; $d < 400; $d++) {
+        $labels[] = Carbon::parse('2025-01-01')->addDays($d)->format('Y-m-d');
+    }
+    $values = array_map(fn (int $i): float => (float) ($i + 1), array_keys($labels));
+    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData($labels, $values, $values, $values);
+
+    $windowed = (new ValuationCalculator)->windowAndAggregate($daily, 3, ValuationGranularity::Day);
+
+    $cutoff = Carbon::parse($labels[399])->subMonthsNoOverflow(3)->format('Y-m-d');
+    expect($windowed->labels[0])->toBe($cutoff)
+        ->and($windowed->labels[count($windowed->labels) - 1])->toBe($labels[399]);
+});
+
+it('flags remaining history when the evolution window cuts the timeline', function () {
+    $evolution = (new ValuationCalculator)->evolution(
+        [tx('2025-01-01', 1, false, 10, 100)],
+        [new P(1, '2025-01-01', 100), new P(1, '2026-01-01', 120)],
+        3,
+        ValuationGranularity::Day,
+    );
+
+    expect($evolution->hasMore)->toBeTrue()
+        ->and($evolution->labels[0])->toBeGreaterThan('2025-01-01');
+});
+
+it('flags no remaining history when the evolution window covers everything', function () {
+    $evolution = (new ValuationCalculator)->evolution(
+        [tx('2025-01-01', 1, false, 10, 100)],
+        [new P(1, '2025-01-01', 100), new P(1, '2026-01-01', 120)],
+        null,
+        ValuationGranularity::Day,
+    );
+
+    expect($evolution->hasMore)->toBeFalse()
+        ->and($evolution->labels[0])->toBe('2025-01-01');
 });

@@ -16,8 +16,7 @@ defineProps<{
     performances?: Performance[];
     evolutionSeries?: EvolutionSeries;
     sectorBreakdown?: SectorSlice[];
-    valuationRange?: string;
-    valuationGranularity?: string;
+    valuationMonths: number;
 }>();
 
 const hiddenAssetIds = ref<Set<number>>(new Set());
@@ -42,11 +41,12 @@ const toggleAsset = (assetId: number): void => {
         <div class="mx-auto flex max-w-6xl flex-col gap-6">
             <ValuationSection v-if="overview.holdings.length" :overview="overview" />
 
+            <PerformancesSection v-if="overview.holdings.length" :performances="performances" />
+
             <EvolutionSection
-                :has-holdings="overview.holdings.length > 0"
                 :hidden-asset-ids="hiddenAssetIds"
                 :series="evolutionSeries"
-                :initial-range="valuationRange"
+                :initial-months="valuationMonths"
             />
 
 
@@ -59,7 +59,6 @@ const toggleAsset = (assetId: number): void => {
 
             <SectorsSection v-if="overview.holdings.length" :slices="sectorBreakdown" />
 
-            <PerformancesSection v-if="overview.holdings.length" :performances="performances" />
 
 
 

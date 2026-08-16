@@ -47,7 +47,7 @@ class BuildInvestedByAssetSeries
 
         return $this->calculator->windowAndAggregateInvested(
             new InvestedByAssetSeriesData($raw->labels, $series),
-            $range,
+            $range->months(),
             $granularity,
         );
     }
