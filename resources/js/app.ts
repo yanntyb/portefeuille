@@ -21,4 +21,10 @@ createInertiaApp({
     progress: {
         color: '#4f46e5',
     },
+    defaults: {
+        prefetch: {
+            hoverDelay: 75,
+            cacheFor: ['30s', '5m'],
+        },
+    },
 });
