@@ -46,11 +46,11 @@ it('replie les secteurs au-delà du sixième derrière une bascule', function ()
     visit('/')
         ->assertScript($labels, 6)
         ->assertDontSee('Énergie')
-        ->click('Voir les 2 autres')
+        ->click('[data-sector-toggle]')
         ->assertScript($labels, 8)
         ->assertSee('Énergie')
         ->assertSee('Immobilier')
-        ->click('Réduire')
+        ->click('[data-sector-toggle]')
         ->assertScript($labels, 6)
         ->assertNoJavaScriptErrors();
 });

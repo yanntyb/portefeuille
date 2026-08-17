@@ -40,8 +40,14 @@ const amount = (value: number): string => formatEur(value, 0);
         </ul>
 
         <div v-if="view.hiddenCount > 0" class="flex justify-center pt-5">
-            <Button variant="outline" size="sm" class="text-[13.5px] text-muted-foreground" @click="isExpanded = !isExpanded">
-                {{ isExpanded ? 'Réduire' : `Voir les ${view.hiddenCount} autres` }}
+            <Button
+                variant="outline"
+                size="sm"
+                data-sector-toggle
+                class="text-[13.5px] text-muted-foreground"
+                @click="isExpanded = !isExpanded"
+            >
+                {{ isExpanded ? 'Réduire' : 'Voir plus' }}
             </Button>
         </div>
     </div>
