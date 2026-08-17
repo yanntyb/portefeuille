@@ -27,13 +27,12 @@ defineProps<{
 
         <EvolutionSection :series="evolutionSeries" />
 
-        <HoldingsSection :holdings="overview.holdings" :series="evolutionSeries" />
-
         <PerformancesSection v-if="overview.holdings.length" :performances="performances" />
+
+        <HoldingsSection :holdings="overview.holdings" :series="evolutionSeries" />
 
         <SectorsSection v-if="overview.holdings.length" :slices="sectorBreakdown" />
     </AppPage>
 
-<!-- CLAUDE => Le comment du breadcrum est volontaire, corriger les test -->
     <AppBreadcrumb :items="[{ label: 'Tableau de bord' }]" />
 </template>
