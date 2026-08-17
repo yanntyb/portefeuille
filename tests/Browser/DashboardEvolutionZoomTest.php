@@ -47,6 +47,20 @@ it('opens the evolution chart on the recent end of the history', function () {
         ->assertNoJavaScriptErrors();
 });
 
+it('keeps the zoom handles free of date labels', function () {
+    $this->actingAs(userWithDenseEvolution());
+
+    visit('/')
+        ->assertScript(
+            "(() => {
+                const texts = document.querySelectorAll('[data-section=evolution] [data-chart] svg text');
+                return [...texts].filter((text) => /\\d{4}-\\d{2}-\\d{2}/.test(text.textContent)).length;
+            })()",
+            0,
+        )
+        ->assertNoJavaScriptErrors();
+});
+
 it('narrows the visible window when the reader zooms in', function () {
     $this->actingAs(userWithDenseEvolution());
 

@@ -161,6 +161,9 @@ export function buildEvolutionOption({ labels, perAsset, valueFormatter, window 
                 end: window.end,
                 height: ZOOM_SLIDER_HEIGHT,
                 bottom: 0,
+                /** Les bornes de la fenêtre se lisent sur l'axe du graphe : les redire aux poignées encombre. */
+                handleLabel: { show: false },
+                showDetail: false,
                 borderColor: 'transparent',
                 fillerColor: 'rgba(128,128,128,0.15)',
                 handleStyle: { color: axisLabelColor() },
