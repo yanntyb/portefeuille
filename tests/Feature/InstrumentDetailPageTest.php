@@ -6,6 +6,8 @@ use App\Contexts\Market\Models\Price;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Inertia\Testing\AssertableInertia as Assert;
 
 it('renders a held instrument sheet with its position and transactions', function () {
@@ -82,7 +84,7 @@ it('defers the per-title valuation series and loads it on demand', function () {
         );
 });
 
-it('accepts range and granularity query params for the valuation series', function () {
+it('sends the whole valuation history, sampled week by week', function () {
     User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
@@ -91,33 +93,34 @@ it('accepts range and granularity query params for the valuation series', functi
         'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
         'quantity' => 10, 'unit_price' => 100, 'date' => '2026-01-01',
     ]);
-    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 100]);
 
-    $this->get("/instruments/{$asset->id}?range=1M&granularity=week")
+    foreach (range(0, 400) as $offset) {
+        Price::factory()->create([
+            'asset_id' => $asset->id,
+            'date' => Carbon::parse('2026-01-01')->addDays($offset)->format('Y-m-d'),
+            'close' => 100,
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get("/instruments/{$asset->id}")
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Instruments/Show')
             ->loadDeferredProps(fn (Assert $reload) => $reload
-                ->has('valuation.labels')
-                ->has('valuation.prices')
+                ->where('valuation.labels', function (Collection $labels): bool {
+                    $dates = $labels->map(fn (string $label): Carbon => Carbon::parse($label));
+                    $gaps = $dates->slice(1)->values()
+                        ->map(fn (Carbon $date, int $index): float => $dates[$index]->diffInDays($date));
+
+                    /**
+                     * Toute la fenêtre détenue, plus d'un an — le premier point tombe à la fin de
+                     * la semaine du premier achat — et jamais deux points dans la même semaine.
+                     */
+                    return Carbon::parse('2026-01-01')->diffInDays($dates->first()) < 7
+                        && $dates->first()->diffInDays($dates->last()) > 365
+                        && $gaps->min() >= 5;
+                })
             )
-        );
-});
-
-it('falls back to defaults for invalid range and granularity', function () {
-    User::query()->delete();
-    $user = User::factory()->create();
-    $wallet = Wallet::factory()->for($user)->create();
-    $asset = Instrument::factory()->create();
-    Transaction::factory()->buy()->create([
-        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
-        'quantity' => 10, 'unit_price' => 100, 'date' => '2026-01-01',
-    ]);
-    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 100]);
-
-    $this->get("/instruments/{$asset->id}?range=bogus&granularity=bogus")
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->loadDeferredProps(fn (Assert $reload) => $reload->has('valuation.labels'))
         );
 });

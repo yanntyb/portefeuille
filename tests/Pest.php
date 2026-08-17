@@ -76,3 +76,28 @@ function drawnLines(Pest\Browser\Api\PendingAwaitablePage $page, string $section
         return [value, invested].join('|');
     })()");
 }
+
+/** Amplitude de la fenêtre visible, en pourcentage de l'historique, publiée par le graphe en attribut. */
+function zoomWindowSpan(Pest\Browser\Api\PendingAwaitablePage $page, string $section): float
+{
+    $window = (string) $page->script("document.querySelector('[data-section={$section}] [data-chart]').getAttribute('data-zoom-window')");
+    [$start, $end] = array_map('floatval', explode('-', $window));
+
+    return $end - $start;
+}
+
+/** Molette sur le graphe : vers l'avant on zoome, vers l'arrière on dézoome. */
+function scrollChart(Pest\Browser\Api\PendingAwaitablePage $page, string $section, int $deltaY): void
+{
+    $page->script("(() => {
+        const chart = document.querySelector('[data-section={$section}] [data-chart]');
+        const box = chart.getBoundingClientRect();
+        chart.querySelector('svg').dispatchEvent(new WheelEvent('wheel', {
+            deltaY: {$deltaY},
+            clientX: box.left + box.width / 2,
+            clientY: box.top + box.height / 3,
+            bubbles: true,
+            cancelable: true,
+        }));
+    })()");
+}

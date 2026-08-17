@@ -15,7 +15,6 @@ const props = defineProps<{
     performances: Performance[];
     priceHistory?: PriceHistory;
     valuation?: ValuationSeries;
-    valuationRange?: string;
 }>();
 </script>
 
@@ -34,11 +33,7 @@ const props = defineProps<{
         <div class="mx-auto flex max-w-6xl flex-col gap-6">
             <HeroSection :instrument="props.instrument" />
 
-            <ValuationSection
-                v-if="props.instrument.position"
-                :valuation="props.valuation"
-                :initial-range="props.valuationRange"
-            />
+            <ValuationSection v-if="props.instrument.position" :valuation="props.valuation" />
 
             <PriceHistorySection v-else :price-history="props.priceHistory" />
 

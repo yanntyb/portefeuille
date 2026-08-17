@@ -232,6 +232,22 @@ qu'un an s'affiche en entier avec des poignées figées. La fenêtre d'ouverture
 n'est donc plus une constante mais une fonction de l'historique reçu ; la
 section passe `null` tant que le lecteur n'a rien déplacé.
 
+**Les deux pages tracent le même graphe, par le même composant.**
+`ValueVsInvestedChart` porte tout le commun : la prop différée et son squelette,
+l'état vide, la bascule Investi, la mémoire de zoom et l'instance `BaseChart`.
+Les sections des deux pages se réduisent à préparer leurs tableaux et à poser
+leur en-tête — le tableau de bord n'en a pas, la fiche instrument garde son
+titre. Côté options, `buildEvolutionOption` et `buildValuationOption` fusionnent
+en `buildValueVsInvestedOption` : la description accessible devient un
+paramètre, le `dataZoom` n'est plus une différence.
+
+Conséquence assumée : la fiche instrument reçoit tout l'historique d'un coup,
+échantillonné à la semaine, et se pilote au zoom comme le tableau de bord. Les
+boutons de période 1M/6M/1A/Max disparaissent, avec le rechargement Inertia
+qu'ils déclenchaient et les paramètres `range`/`granularity` que le contrôleur
+lisait. Le tableau de bord perd au passage les mêmes props, qu'aucune page ne
+consommait.
+
 **La courbe Investi est masquée par défaut, et se rappelle d'un clic.** La
 lecture courante porte sur la valeur ; l'investi n'intéresse que le temps d'une
 comparaison. Il n'est donc plus tracé au chargement, sur les deux graphes.

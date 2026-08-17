@@ -134,7 +134,7 @@ it('pads the evolution chart like the instrument valuation chart', function () {
         ->assertScript(
             "(() => {
                 const section = document.querySelector('[data-section=evolution]');
-                const wrapper = section.querySelector('[data-chart]').closest('section > div');
+                const wrapper = section.querySelector('[data-chart]').parentElement;
                 const styles = getComputedStyle(wrapper);
                 return [
                     getComputedStyle(section).paddingLeft,

@@ -31,19 +31,20 @@ class InstrumentDetailController
             abort(404);
         }
 
-        $range = ValuationRange::fromRequest(request()->query('range'));
-        $granularity = ValuationGranularity::fromRequest(request()->query('granularity'));
-
         return Inertia::render('Instruments/Show', [
             'instrument' => $detail,
             'performances' => app(BuildAssetPerformances::class)($userId, $id),
-            'valuationRange' => $range->value,
-            'valuationGranularity' => $granularity->value,
             'priceHistory' => Inertia::defer(
                 fn () => $this->market->priceHistory($id, Carbon::now()->subMonths(12))
             ),
+            /** Historique complet : la fenêtre visible est choisie côté client par le zoom du graphe. */
             'valuation' => Inertia::defer(
-                fn () => app(BuildAssetValuationSeries::class)($userId, $id, $range, $granularity)
+                fn () => app(BuildAssetValuationSeries::class)(
+                    $userId,
+                    $id,
+                    ValuationRange::Max,
+                    ValuationGranularity::Week,
+                )
             ),
         ]);
     }

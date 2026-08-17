@@ -39,30 +39,6 @@ function userWithDenseEvolution(int $days = 1095): User
     return $user;
 }
 
-/** La fenêtre visible est publiée en attribut sous la forme « début-fin », en pourcentage. */
-function zoomWindowSpan(Pest\Browser\Api\PendingAwaitablePage $page): float
-{
-    $window = (string) $page->script("document.querySelector('[data-section=evolution] [data-chart]').getAttribute('data-zoom-window')");
-    [$start, $end] = array_map('floatval', explode('-', $window));
-
-    return $end - $start;
-}
-
-function scrollChart(Pest\Browser\Api\PendingAwaitablePage $page, int $deltaY): void
-{
-    $page->script("(() => {
-        const chart = document.querySelector('[data-section=evolution] [data-chart]');
-        const box = chart.getBoundingClientRect();
-        chart.querySelector('svg').dispatchEvent(new WheelEvent('wheel', {
-            deltaY: {$deltaY},
-            clientX: box.left + box.width / 2,
-            clientY: box.top + box.height / 3,
-            bubbles: true,
-            cancelable: true,
-        }));
-    })()");
-}
-
 it('opens the evolution chart on the last twelve months', function () {
     $this->actingAs(userWithDenseEvolution());
 
@@ -99,10 +75,10 @@ it('never shows less than a year when the reader zooms in', function () {
     $page->assertScript("document.querySelector('[data-section=evolution] [data-chart]') !== null", true);
 
     foreach (range(1, 3) as $ignored) {
-        scrollChart($page, 400);
+        scrollChart($page, 'evolution', 400);
     }
 
-    expect(zoomWindowSpan($page))->toBeGreaterThan(32.0);
+    expect(zoomWindowSpan($page, 'evolution'))->toBeGreaterThan(32.0);
 
     $page->assertNoJavaScriptErrors();
 });
@@ -113,10 +89,10 @@ it('widens the visible window when the reader zooms out', function () {
     $page = visit('/');
     $page->assertScript("document.querySelector('[data-section=evolution] [data-chart]') !== null", true);
 
-    $before = zoomWindowSpan($page);
-    scrollChart($page, -400);
+    $before = zoomWindowSpan($page, 'evolution');
+    scrollChart($page, 'evolution', -400);
 
-    expect(zoomWindowSpan($page))->toBeGreaterThan($before);
+    expect(zoomWindowSpan($page, 'evolution'))->toBeGreaterThan($before);
 
     $page->assertNoJavaScriptErrors();
 });
@@ -127,11 +103,11 @@ it('shows the whole history when it is shorter than a year', function () {
     $page = visit('/');
     $page->assertScript("document.querySelector('[data-section=evolution] [data-chart]') !== null", true);
 
-    expect(zoomWindowSpan($page))->toBe(100.0);
+    expect(zoomWindowSpan($page, 'evolution'))->toBe(100.0);
 
-    scrollChart($page, 400);
+    scrollChart($page, 'evolution', 400);
 
-    expect(zoomWindowSpan($page))->toBe(100.0);
+    expect(zoomWindowSpan($page, 'evolution'))->toBe(100.0);
 
     $page->assertNoJavaScriptErrors();
 });
@@ -156,7 +132,7 @@ it('zooms without asking the server for more history', function () {
         };
     })()');
 
-    scrollChart($page, -400);
+    scrollChart($page, 'evolution', -400);
 
     expect($page->script('window.__requestsAfterLoad'))->toBe(0);
 
