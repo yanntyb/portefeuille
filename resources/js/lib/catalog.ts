@@ -40,7 +40,7 @@ const normalize = (value: string): string =>
     value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 
 /** La recherche porte sur le nom, le ticker et l'ISIN, les trois façons de nommer un instrument. */
-export const filterCatalog = (rows: CatalogRow[], query: string): CatalogRow[] => {
+export const filterCatalog = <Row extends CatalogRow>(rows: Row[], query: string): Row[] => {
     const needle = normalize(query.trim());
 
     if (needle === '') {
