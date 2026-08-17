@@ -5,6 +5,7 @@ namespace App\Contexts\Valuation\Actions;
 use App\Contexts\Valuation\Datas\PerformanceData;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
 use App\Contexts\Valuation\Ports\PriceHistoryPort;
+use App\Contexts\Valuation\Ports\SeriesCachePort;
 use App\Contexts\Valuation\Ports\TransactionHistoryPort;
 use App\Contexts\Valuation\Services\ValuationCalculator;
 
@@ -14,10 +15,17 @@ class BuildPortfolioPerformances
         private TransactionHistoryPort $transactions,
         private PriceHistoryPort $prices,
         private ValuationCalculator $calculator,
+        private SeriesCachePort $cache,
     ) {}
 
     /** @return list<PerformanceData> */
     public function __invoke(int $userId): array
+    {
+        return $this->cache->remember('performances', $userId, fn (): array => $this->build($userId));
+    }
+
+    /** @return list<PerformanceData> */
+    private function build(int $userId): array
     {
         $transactions = $this->transactions->forUser($userId);
 

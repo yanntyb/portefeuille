@@ -8,6 +8,7 @@ use App\Contexts\Valuation\Datas\TransactionRecordData;
 use App\Contexts\Valuation\Enums\ValuationGranularity;
 use App\Contexts\Valuation\Ports\InstrumentDirectoryPort;
 use App\Contexts\Valuation\Ports\PriceHistoryPort;
+use App\Contexts\Valuation\Ports\SeriesCachePort;
 use App\Contexts\Valuation\Ports\TransactionHistoryPort;
 use App\Contexts\Valuation\Services\ValuationCalculator;
 
@@ -18,6 +19,7 @@ class BuildEvolutionSeries
         private PriceHistoryPort $prices,
         private InstrumentDirectoryPort $directory,
         private ValuationCalculator $calculator,
+        private SeriesCachePort $cache,
     ) {}
 
     /** @param  ?int  $months  Profondeur de la fenêtre depuis aujourd'hui, null pour tout l'historique. */
@@ -25,6 +27,19 @@ class BuildEvolutionSeries
         int $userId,
         ?int $months = null,
         ValuationGranularity $granularity = ValuationGranularity::Month,
+    ): EvolutionSeriesData {
+        /** La fenêtre et le pas font partie du résultat : ils font donc partie du nom retenu. */
+        return $this->cache->remember(
+            sprintf('evolution.%s.%s', $months ?? 'tout', $granularity->value),
+            $userId,
+            fn (): EvolutionSeriesData => $this->build($userId, $months, $granularity),
+        );
+    }
+
+    private function build(
+        int $userId,
+        ?int $months,
+        ValuationGranularity $granularity,
     ): EvolutionSeriesData {
         $transactions = $this->transactions->forUser($userId);
 

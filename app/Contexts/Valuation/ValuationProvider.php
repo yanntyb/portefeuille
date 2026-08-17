@@ -6,6 +6,7 @@ use App\Contexts\Valuation\Infrastructure\MemoizedPriceHistory;
 use App\Contexts\Valuation\Infrastructure\MemoizedTransactionHistory;
 use App\Contexts\Valuation\Ports\InstrumentDirectoryPort;
 use App\Contexts\Valuation\Ports\PriceHistoryPort;
+use App\Contexts\Valuation\Ports\SeriesCachePort;
 use App\Contexts\Valuation\Ports\TransactionHistoryPort;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
@@ -16,12 +17,14 @@ class ValuationProvider extends ServiceProvider
      * @param  class-string<TransactionHistoryPort>  $transactionHistory
      * @param  class-string<PriceHistoryPort>  $priceHistory
      * @param  class-string<InstrumentDirectoryPort>  $instrumentDirectory
+     * @param  class-string<SeriesCachePort>  $seriesCache
      */
     public static function registers(
         Application $app,
         string $transactionHistory,
         string $priceHistory,
         string $instrumentDirectory,
+        string $seriesCache,
     ): void {
         /**
          * Les deux lectures d'historique sont mémoïsées le temps d'une requête : les propriétés
@@ -37,5 +40,8 @@ class ValuationProvider extends ServiceProvider
             fn (Application $app): PriceHistoryPort => new MemoizedPriceHistory($app->make($priceHistory)),
         );
         $app->bind(InstrumentDirectoryPort::class, $instrumentDirectory);
+
+        /** L'empreinte des données est calculée une fois par requête : `scoped()` là aussi. */
+        $app->scoped(SeriesCachePort::class, $seriesCache);
     }
 }
