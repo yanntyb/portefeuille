@@ -35,20 +35,24 @@ class DashboardController
 
         return Inertia::render('Dashboard', [
             'overview' => $overview,
+            /**
+             * Un groupe par section : Inertia résout un groupe par requête, donc chaque squelette
+             * se remplit à son rythme au lieu d'attendre le plus lent de la page.
+             */
             /** Le catalogue est différé : sans recherche, la liste se contente des positions déjà servies. */
-            'catalog' => Inertia::defer(fn () => ($this->getCatalog)($user?->id ?? 0)),
+            'catalog' => Inertia::defer(fn () => ($this->getCatalog)($user?->id ?? 0), 'catalogue'),
             'catalogRange' => $range->value,
-            'trends' => Inertia::defer(fn () => ($this->getTrends)($range)),
+            'trends' => Inertia::defer(fn () => ($this->getTrends)($range), 'catalogue'),
             'performances' => Inertia::defer(fn () => $user !== null
                 ? app(BuildPortfolioPerformances::class)($user->id)
-                : []),
+                : [], 'performances'),
             /** Historique complet : la fenêtre visible est choisie côté client par le zoom du graphe. */
             'evolutionSeries' => Inertia::defer(fn () => $user !== null
                 ? app(BuildEvolutionSeries::class)($user->id, null, ValuationGranularity::Week)
-                : EvolutionSeriesData::empty()),
+                : EvolutionSeriesData::empty(), 'evolution'),
             'sectorBreakdown' => Inertia::defer(fn () => $user !== null
                 ? app(GetSectorBreakdown::class)($user)
-                : []),
+                : [], 'secteurs'),
         ]);
     }
 }

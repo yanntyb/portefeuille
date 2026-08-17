@@ -52,6 +52,35 @@ it('renders the Dashboard with the user portfolio overview', function () {
         );
 });
 
+it('sépare les propriétés différées par section, chaque groupe se chargeant seul', function () {
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $asset = Instrument::factory()->create();
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'quantity' => 10, 'unit_price' => 100, 'date' => '2026-01-01',
+    ]);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 100]);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Dashboard')
+            // Le graphe n'attend plus les secteurs ni le catalogue : son groupe arrive seul.
+            ->loadDeferredProps('evolution', fn (Assert $reload) => $reload
+                ->has('evolutionSeries')
+                ->missing('sectorBreakdown')
+                ->missing('performances')
+                ->missing('catalog')
+                ->missing('trends')
+            )
+            ->loadDeferredProps('secteurs', fn (Assert $reload) => $reload
+                ->has('sectorBreakdown')
+                ->missing('evolutionSeries')
+            )
+        );
+});
+
 it('defers the evolution series and loads it on demand', function () {
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
