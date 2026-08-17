@@ -48,7 +48,7 @@ it('renders the dashboard sections without card wrappers, on a single white surf
         )
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'valuation|evolution|performances|holdings|sectors',
+            'valuation|evolution|holdings|performances|sectors',
         )
         ->assertNoJavaScriptErrors();
 });

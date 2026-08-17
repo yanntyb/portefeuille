@@ -12,9 +12,8 @@ defineProps<{
 </script>
 
 <template>
-    <section data-section="holdings" class="flex flex-col gap-6 px-6">
-        <h2 class="text-[17px] leading-none font-bold">Positions</h2>
-
+    <!-- Sans titre : la liste se lit d'elle-même, nom et valeur en tête de chaque ligne. -->
+    <section data-section="holdings" class="flex flex-col gap-6 px-6" aria-label="Positions">
         <div class="min-w-0">
             <HoldingsList
                 v-if="holdings.length"

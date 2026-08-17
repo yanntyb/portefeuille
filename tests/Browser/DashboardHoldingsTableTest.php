@@ -57,7 +57,7 @@ it('lists the holdings from the heaviest to the lightest, with their weight and 
         ->assertNoJavaScriptErrors();
 });
 
-it('titles the holdings section', function () {
+it('leaves the holdings list untitled, named only for assistive technologies', function () {
     // A legacy data migration seeds a hardcoded user; clear it so the controller resolves this user.
     User::query()->delete();
     $user = User::factory()->create();
@@ -68,7 +68,8 @@ it('titles the holdings section', function () {
     $this->actingAs($user);
 
     visit('/')
-        ->assertScript("document.querySelector('[data-section=holdings] h2').textContent.trim()", 'Positions')
+        ->assertScript("document.querySelectorAll('[data-section=holdings] h2').length", 0)
+        ->assertScript("document.querySelector('[data-section=holdings]').getAttribute('aria-label')", 'Positions')
         ->assertNoJavaScriptErrors();
 });
 

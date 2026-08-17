@@ -8,7 +8,7 @@ use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 
-it('orders the dashboard sections from the valuation down to the holdings table', function () {
+it('orders the dashboard sections from the valuation down to the sector breakdown', function () {
     // A legacy data migration seeds a hardcoded user; clear it so the controller resolves this user.
     User::query()->delete();
     $user = User::factory()->create();
@@ -39,7 +39,7 @@ it('orders the dashboard sections from the valuation down to the holdings table'
     $page->assertSee('Performances')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'valuation|evolution|performances|holdings|sectors',
+            'valuation|evolution|holdings|performances|sectors',
         )
         ->assertNoJavaScriptErrors();
 });
