@@ -200,7 +200,7 @@ assertions sur `hasMore`.
 
 ## Écarts constatés à la mise en œuvre
 
-Quatre points ont évolué entre le design et le code livré.
+Cinq points ont évolué entre le design et le code livré.
 
 **L'axe des abscisses est temporel, pas catégoriel.** Un axe de catégories
 graduait par pas fixe et répétait le même libellé plusieurs fois de suite
@@ -221,6 +221,19 @@ la fenêtre dans une variable délibérément non réactive : la réintroduire d
 les options recalculerait et repeindrait le graphe à chaque pixel de
 glissement. Cette mémorisation permet à la fenêtre de survivre au masquage
 d'un titre depuis la liste des positions.
+
+**Le graphe du tableau de bord a rejoint le style de la fiche instrument.** Les
+six aires empilées par actif du bloc `series` ci-dessus ont d'abord cédé la
+place à deux courbes, valeur contre investi, comme sur la fiche instrument.
+L'alignement a ensuite été mené jusqu'au bout : plus d'aire sous la courbe
+Valeur, graduations automatiques sur l'axe des valeurs — la variante « bornes
+exactes seules » a vécu deux commits — hauteur 300 comme la fiche instrument, et
+une seule infobulle pour les deux pages, celle qui détaille Valeur, Investi et
+Gain/Perte. `lib/chart.ts` porte désormais `valueVsInvestedSeries` et
+`valueVsInvestedTooltip`, partagées par `buildEvolutionOption` et
+`buildValuationOption`. Le tableau de réécriture ci-dessus cite « la palette des
+aires suit le thème » pour `SystemThemeTest` : ce test porte en réalité sur la
+teinte des libellés d'axe, et il n'y a plus d'aire sur ce graphe.
 
 **Les tests unitaires sur `lib/chart.ts` n'ont pas été écrits.** Le projet n'a
 pas de lanceur de tests JavaScript, et en ajouter un serait un changement de
