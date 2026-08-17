@@ -58,8 +58,9 @@
 
 :root {
     --radius: 0.625rem;
-    --background: #eef0f4;
+    --background: #ffffff;
     --foreground: #16181d;
+    /** Surface unique : la page et les cartes partagent le même fond, sans séparation visible. */
     --card: #ffffff;
     --card-foreground: #16181d;
     --popover: #ffffff;
@@ -97,7 +98,7 @@
 .dark {
     --background: #14161b;
     --foreground: #eceef2;
-    --card: #1c1f26;
+    --card: #14161b;
     --card-foreground: #eceef2;
     --popover: #1c1f26;
     --popover-foreground: #eceef2;

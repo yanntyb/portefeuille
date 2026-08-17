@@ -42,7 +42,7 @@ function palette(): ChartPalette {
             tooltipBackground: '#1c1f26',
             tooltipBorder: '#2f343e',
             tooltipText: '#eceef2',
-            surface: '#1c1f26',
+            surface: '#14161b',
         }
         : {
             value: '#5257d6',

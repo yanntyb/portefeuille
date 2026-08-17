@@ -48,7 +48,7 @@ it('drops the dark theme when the system prefers a light one', function () {
 
     visit('/')->inLightMode()
         ->assertScript("document.documentElement.classList.contains('dark')", false)
-        ->assertScript('getComputedStyle(document.body).backgroundColor', 'rgb(238, 240, 244)')
+        ->assertScript('getComputedStyle(document.body).backgroundColor', 'rgb(255, 255, 255)')
         ->assertNoJavaScriptErrors();
 });
 

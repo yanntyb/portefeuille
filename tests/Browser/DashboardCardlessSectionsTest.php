@@ -8,7 +8,7 @@ use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 
-it('gathers the dashboard sections inside a single card', function () {
+it('renders the dashboard sections without card wrappers, on a single white surface', function () {
     // A legacy data migration seeds a hardcoded user; clear it so the controller resolves this user.
     User::query()->delete();
     $user = User::factory()->create();
@@ -36,14 +36,15 @@ it('gathers the dashboard sections inside a single card', function () {
 
     visit('/')
         ->assertSee('Performances')
-        ->assertScript("document.querySelectorAll('main [data-slot=card]').length", 1)
+        ->assertScript("document.querySelectorAll('main [data-slot=card]').length", 0)
         ->assertScript(
             "(() => {
-                const card = getComputedStyle(document.querySelector('main [data-slot=card]')).backgroundColor;
                 const page = getComputedStyle(document.body).backgroundColor;
-                return card === page ? 'flat' : 'raised';
+                const main = getComputedStyle(document.querySelector('main')).backgroundColor;
+
+                return page === main ? 'single surface' : 'split';
             })()",
-            'raised',
+            'single surface',
         )
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
