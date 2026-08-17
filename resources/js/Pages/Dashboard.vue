@@ -27,9 +27,9 @@ defineProps<{
 
         <EvolutionSection :series="evolutionSeries" />
 
-        <PerformancesSection v-if="overview.holdings.length" :performances="performances" />
-
         <HoldingsSection :holdings="overview.holdings" :series="evolutionSeries" />
+
+        <PerformancesSection v-if="overview.holdings.length" :performances="performances" />
 
         <SectorsSection v-if="overview.holdings.length" :slices="sectorBreakdown" />
     </AppPage>
