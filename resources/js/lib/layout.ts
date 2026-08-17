@@ -2,7 +2,7 @@ export type PageWidth = 'narrow' | 'wide';
 
 /**
  * Le fil d'Ariane et le contenu de page partagent ces conteneurs : leurs bords gauches doivent
- * coïncider au pixel (cf. tests/Browser/BreadcrumbTest.php).
+ * coïncider au pixel (cf. layout.test.ts).
  */
 const CONTAINERS: Record<PageWidth, string> = {
     narrow: 'mx-auto w-full max-w-[520px]',
