@@ -5,16 +5,20 @@ import AppCarousel from '@/components/AppCarousel.vue';
 import AppCarouselPage from '@/components/AppCarouselPage.vue';
 import AppPage from '@/components/AppPage.vue';
 import EvolutionSection from '@/components/dashboard/EvolutionSection.vue';
-import HoldingsSection from '@/components/dashboard/HoldingsSection.vue';
+import InstrumentsSection from '@/components/dashboard/InstrumentsSection.vue';
 import PerformancesSection from '@/components/dashboard/PerformancesSection.vue';
 import SectorsSection from '@/components/dashboard/SectorsSection.vue';
 import ValuationSection from '@/components/dashboard/ValuationSection.vue';
+import type { CatalogLine, CatalogTrend } from '@/lib/catalog';
 import type { Performance } from '@/lib/performance';
 import type { EvolutionSeries, PortfolioOverview } from '@/lib/portfolio';
 import type { SectorSlice } from '@/lib/sector';
 
 defineProps<{
     overview: PortfolioOverview;
+    catalog?: { lines: CatalogLine[] };
+    catalogRange?: string;
+    trends?: CatalogTrend[];
     performances?: Performance[];
     evolutionSeries?: EvolutionSeries;
     sectorBreakdown?: SectorSlice[];
@@ -34,7 +38,12 @@ defineProps<{
             <AppCarousel>
                 <AppCarouselPage label="Valeur">
                     <ValuationSection v-if="overview.holdings.length" :overview="overview" />
-                    <HoldingsSection :holdings="overview.holdings" :series="evolutionSeries" />
+                    <InstrumentsSection
+                        :holdings="overview.holdings"
+                        :catalog="catalog"
+                        :catalog-range="catalogRange"
+                        :trends="trends"
+                    />
                 </AppCarouselPage>
 
                 <AppCarouselPage v-if="overview.holdings.length" label="Performances">

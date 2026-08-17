@@ -31,7 +31,7 @@ it('précharge la fiche instrument au survol d\'une position du tableau de bord'
 
     expect($page->script(hasRequestedPath("/instruments/{$instrument->id}")))->toBeFalse();
 
-    $page->hover('[data-holding-name]')->wait(1);
+    $page->hover('[data-instrument-name]')->wait(1);
 
     expect($page->script(hasRequestedPath("/instruments/{$instrument->id}")))->toBeTrue();
 });
