@@ -62,7 +62,7 @@ it('affiche le fil d\'Ariane complet sur une fiche instrument', function () {
     visit("/instruments/{$instrument->id}")
         ->assertVisible('nav[aria-label="Fil d\'Ariane"]')
         ->assertSeeIn('nav[aria-label="Fil d\'Ariane"]', 'Tableau de bord')
-        ->assertSeeIn('nav[aria-label="Fil d\'Ariane"]', 'Instruments')
         ->assertSeeIn('nav[aria-label="Fil d\'Ariane"]', 'ACME')
+        ->assertDontSeeIn('nav[aria-label="Fil d\'Ariane"]', 'Instruments')
         ->assertNoJavaScriptErrors();
 });
