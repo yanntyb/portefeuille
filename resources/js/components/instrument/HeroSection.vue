@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import GainPill from '@/components/GainPill.vue';
-import { eur, frDate, gainClass, pct, signedEur } from '@/lib/format';
-import { investedOf, type Instrument } from '@/lib/instrument';
+import { eur, gainClass, pct, signedEur } from '@/lib/format';
+import { heroMeta, heroValueOf, type HeroMetaEntry, type Instrument } from '@/lib/instrument';
 
 const props = defineProps<{
     instrument: Instrument;
@@ -10,32 +10,9 @@ const props = defineProps<{
 
 const position = computed(() => props.instrument.position);
 
-/** A held instrument is worth its market value; an unheld one is only worth its last quote. */
-const heroValue = computed<number | null>(
-    () => position.value?.marketValue ?? props.instrument.lastPrice,
-);
+const heroValue = computed<number | null>(() => heroValueOf(props.instrument));
 
-const invested = computed<number | null>(() =>
-    position.value === null ? null : investedOf(position.value),
-);
-
-const quantityLabel = computed<string>(() =>
-    position.value === null ? '' : position.value.quantity.toLocaleString('fr-FR'),
-);
-
-/** Paires libellé/valeur du pied de l'en-tête : le libellé s'efface, la valeur porte la lecture. */
-const metaEntries = computed<{ label: string; value: string }[]>(() => {
-    if (position.value === null) {
-        return [];
-    }
-
-    return [
-        { label: 'Titres', value: quantityLabel.value },
-        { label: 'PRU', value: eur(position.value.avgCost) },
-        { label: 'Investi', value: eur(invested.value) },
-        { label: 'Cours', value: eur(props.instrument.lastPrice) },
-    ];
-});
+const metaEntries = computed<HeroMetaEntry[]>(() => heroMeta(props.instrument));
 </script>
 
 <template>
@@ -76,14 +53,14 @@ const metaEntries = computed<{ label: string; value: string }[]>(() => {
             <p data-hero-meta class="grid grid-cols-2 gap-x-8 gap-y-1.5 pt-1.5 text-[13.5px] text-muted-foreground">
                 <span
                     v-for="entry in metaEntries"
-                    :key="entry.label"
+                    :key="entry.label || entry.value"
                     class="flex items-baseline justify-between gap-3 whitespace-nowrap"
                 >
-                    {{ entry.label }}
-                    <strong class="font-semibold text-foreground tabular-nums">{{ entry.value }}</strong>
-                </span>
-                <span v-if="position === null && instrument.lastPriceDate">
-                    au {{ frDate(instrument.lastPriceDate) }}
+                    <template v-if="entry.label">
+                        {{ entry.label }}
+                        <strong class="font-semibold text-foreground tabular-nums">{{ entry.value }}</strong>
+                    </template>
+                    <template v-else>{{ entry.value }}</template>
                 </span>
             </p>
         </div>

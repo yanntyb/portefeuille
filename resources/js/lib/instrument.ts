@@ -1,3 +1,5 @@
+import { eur, frDate } from '@/lib/format';
+
 export interface InstrumentPosition {
     quantity: number;
     avgCost: number | null;
@@ -51,3 +53,34 @@ export interface ValuationSeries {
     invested: number[];
     prices: number[];
 }
+
+export interface HeroMetaEntry {
+    label: string;
+    value: string;
+}
+
+/** Un instrument détenu vaut sa valeur de marché ; sinon il ne vaut que son dernier cours. */
+export const heroValueOf = (instrument: Instrument): number | null =>
+    instrument.position?.marketValue ?? instrument.lastPrice;
+
+/**
+ * Pied de l'en-tête : paires libellé/valeur où le libellé s'efface et la valeur porte la lecture.
+ * Sans position, il ne reste que la date du dernier cours — un instrument seulement suivi n'a ni
+ * prix de revient ni montant investi.
+ */
+export const heroMeta = (instrument: Instrument): HeroMetaEntry[] => {
+    const position = instrument.position;
+
+    if (position === null) {
+        return instrument.lastPriceDate === null
+            ? []
+            : [{ label: '', value: `au ${frDate(instrument.lastPriceDate)}` }];
+    }
+
+    return [
+        { label: 'Titres', value: position.quantity.toLocaleString('fr-FR') },
+        { label: 'PRU', value: eur(position.avgCost) },
+        { label: 'Investi', value: eur(investedOf(position)) },
+        { label: 'Cours', value: eur(instrument.lastPrice) },
+    ];
+};
