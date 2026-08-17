@@ -9,12 +9,12 @@
         "php": "^8.5",
         "inertiajs/inertia-laravel": "^3.1",
         "laravel/framework": "^13.0",
-        "laravel/octane": "^2.17",
         "laravel/tinker": "^3.0",
         "opcodesio/log-viewer": "^3.21"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "fruitcake/laravel-debugbar": "^4.4",
         "imsuperlative/phpstan-pest": "^0.5.0",
         "larastan/larastan": "^3.0",
         "laravel/boost": "^2.0",
@@ -51,11 +51,11 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan octane:start --watch\" \"php artisan queue:listen --tries=1 --timeout=0\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite --kill-others"
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1 --timeout=0\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite --kill-others"
         ],
         "dev:lan": [
             "Composer\\Config::disableProcessTimeout",
-            "bash -lc 'IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null); if [ -z \"$IP\" ]; then echo \"Aucune adresse IP locale detectee (Wi-Fi ou Ethernet eteint ?)\"; exit 1; fi; echo \"Application accessible sur le reseau local : http://$IP:8000\"; APP_URL=\"http://$IP:8000\" VITE_LAN_HOST=\"$IP\" npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan octane:start --host=0.0.0.0 --port=8000 --watch\" \"php artisan queue:listen --tries=1 --timeout=0\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite --kill-others'"
+            "bash -lc 'IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null); if [ -z \"$IP\" ]; then echo \"Aucune adresse IP locale detectee (Wi-Fi ou Ethernet eteint ?)\"; exit 1; fi; echo \"Application accessible sur le reseau local : http://$IP:8000\"; APP_URL=\"http://$IP:8000\" VITE_LAN_HOST=\"$IP\" npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve --host=0.0.0.0 --port=8000\" \"php artisan queue:listen --tries=1 --timeout=0\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite --kill-others'"
         ],
         "test": [
             "@php artisan config:clear --ansi",

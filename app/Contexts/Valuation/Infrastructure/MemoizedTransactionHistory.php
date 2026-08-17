@@ -10,7 +10,7 @@ use App\Contexts\Valuation\Ports\TransactionHistoryPort;
  * qui repartent chacune du même historique de transactions. Le décorateur ne le lit qu'une fois.
  *
  * La portée est celle de la requête : le service est enregistré en `scoped()`, jamais en
- * `singleton()`, sinon la mémoire survivrait d'une requête à l'autre sous Octane.
+ * `singleton()`, pour que la mémoire ne survive pas d'une requête à l'autre.
  */
 class MemoizedTransactionHistory implements TransactionHistoryPort
 {

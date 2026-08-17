@@ -17,7 +17,7 @@ interface (Livewire Flux est disponible).
 | Langage | PHP | `^8.2` | Backend |
 | Framework | Laravel | `^12.0` | Socle applicatif |
 | Composants réactifs | Livewire Flux | `^2.12` | UI interactive (disponible, non câblée) |
-| Serveur applicatif | Laravel Octane | `^2.17` | Serveur haute-performance (Swoole/RoadRunner) |
+| Serveur applicatif | PHP intégré / Laravel Herd | — | `php artisan serve` en local, `argent.test` via Herd |
 | Build front | Vite | `^7.0.7` | Bundler, HMR |
 | CSS | Tailwind CSS | `^4.2.1` | Styles utilitaires |
 | Base de données | SQLite | — | Persistance par défaut (support MySQL/PostgreSQL) |
@@ -135,10 +135,18 @@ Détail des étapes : `composer install`, copie de `.env` depuis `.env.example`,
 ### Développement
 
 Le script `dev` lance simultanément quatre processus via `concurrently`
-(serveur Octane en watch, worker de queue, logs Pail, Vite) :
+(serveur PHP intégré, worker de queue, logs Pail, Vite) :
 
 ```bash
 composer dev
+```
+
+Pour ouvrir l'application depuis un autre appareil du réseau local (téléphone,
+tablette), `dev:lan` détecte l'IP de la machine, écoute sur `0.0.0.0:8000` et
+fait s'annoncer Vite sur cette IP :
+
+```bash
+composer dev:lan
 ```
 
 ### Tests

@@ -29,6 +29,3 @@ Thumbs.db
 /.playwright-mcp/
 *.png
 
-**/caddy
-frankenphp
-frankenphp-worker.php
