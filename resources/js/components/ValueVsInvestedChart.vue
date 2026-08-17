@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { Deferred } from '@inertiajs/vue3';
 import BaseChart from '@/components/BaseChart.vue';
-import ChartSeriesToggle from '@/components/ChartSeriesToggle.vue';
-import { buildValueVsInvestedOption, investedLineColor, type ZoomWindow } from '@/lib/chart';
+import { buildValueVsInvestedOption, type ZoomWindow } from '@/lib/chart';
 import { eur } from '@/lib/format';
 import type { ChartOption } from '@/lib/echarts';
 
@@ -30,13 +29,7 @@ const rememberZoom = (window: ZoomWindow): void => {
     lastZoom = window;
 };
 
-/** L'investi encombre la lecture courante ; il se rappelle d'un clic quand la comparaison sert. */
-const showInvested = ref<boolean>(false);
-
 const hasHistory = computed<boolean>(() => props.labels.length > 0);
-
-/** Lue dans un `computed` pour que la pastille se reteinte au changement de thème système. */
-const investedColor = computed<string>(() => investedLineColor());
 
 const option = computed<ChartOption>(() => buildValueVsInvestedOption({
     labels: props.labels,
@@ -44,7 +37,6 @@ const option = computed<ChartOption>(() => buildValueVsInvestedOption({
     invested: props.invested,
     valueFormatter: (amount: number): string => eur(amount, 0),
     window: lastZoom,
-    showInvested: showInvested.value,
     description: props.description,
 }));
 </script>
@@ -58,20 +50,9 @@ const option = computed<ChartOption>(() => buildValueVsInvestedOption({
                 </div>
             </template>
 
-            <template v-if="hasHistory">
-                <div class="flex justify-end px-6">
-                    <ChartSeriesToggle
-                        v-model="showInvested"
-                        series="invested"
-                        label="Investi"
-                        :color="investedColor"
-                    />
-                </div>
-
-                <div class="px-0 sm:px-6">
-                    <BaseChart :option="option" :height="CHART_HEIGHT" @zoom="rememberZoom" />
-                </div>
-            </template>
+            <div v-if="hasHistory" class="px-0 sm:px-6">
+                <BaseChart :option="option" :height="CHART_HEIGHT" @zoom="rememberZoom" />
+            </div>
             <p v-else class="py-8 text-center text-sm text-muted-foreground">
                 Pas encore d'historique de valorisation.
             </p>

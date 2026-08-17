@@ -137,7 +137,7 @@ it('scales the value axis to the visible values instead of anchoring it at zero'
     $page->assertNoJavaScriptErrors();
 });
 
-it('draws the position value alone, the invested amount staying out of the way', function () {
+it('draws the position value against the invested amount, without asking', function () {
     ['user' => $user, 'instrument' => $asset] = instrumentWithValuation();
 
     $this->actingAs($user);
@@ -145,16 +145,13 @@ it('draws the position value alone, the invested amount staying out of the way',
     $page = visit("/instruments/{$asset->id}");
     $page->assertScript("document.querySelector('[data-section=valuation] [data-chart] svg') !== null", true);
 
-    expect(drawnLines($page, 'valuation'))->toBe('1|0');
-
-    $page->click('[data-section=valuation] [data-series-toggle=invested]');
-
     expect(drawnLines($page, 'valuation'))->toBe('1|1');
 
-    $page->assertNoJavaScriptErrors();
+    $page->assertScript("document.querySelectorAll('[data-section=valuation] [data-series-toggle]').length", 0)
+        ->assertNoJavaScriptErrors();
 });
 
-it('spells out the gain in the tooltip even while the invested line is hidden', function () {
+it('spells out the gain in the tooltip rather than leaving the two lines to be subtracted', function () {
     ['user' => $user, 'instrument' => $asset] = instrumentWithValuation();
 
     $this->actingAs($user);

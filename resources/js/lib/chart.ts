@@ -63,11 +63,6 @@ function palette(): ChartPalette {
         };
 }
 
-/** Teinte de la courbe Investi, reprise par la pastille de la bascule qui la commande. */
-export function investedLineColor(): string {
-    return palette().invested;
-}
-
 function formatTooltipDate(label: string): string {
     const date = new Date(`${label}T00:00:00`);
     if (Number.isNaN(date.getTime())) {
@@ -145,19 +140,14 @@ function datedPoints(labels: string[], values: number[]): [string, number][] {
 
 /**
  * Le couple de courbes « valeur contre investi », identique sur le tableau de bord et la fiche
- * instrument. L'investi ne bouge qu'à un achat ou une vente : l'escalier lit plus juste. Il n'est
- * tracé que sur demande — la valeur seule est la lecture courante, l'investi la comparaison.
+ * instrument. L'investi ne bouge qu'à un achat ou une vente : l'escalier lit plus juste. Les deux
+ * courbes sont toujours tracées — la comparaison est la lecture, pas une option.
  */
-function valueVsInvestedSeries(
-    labels: string[],
-    value: number[],
-    invested: number[],
-    showInvested: boolean,
-): LineSeriesOption[] {
+function valueVsInvestedSeries(labels: string[], value: number[], invested: number[]): LineSeriesOption[] {
     const colors = palette();
     const points = datedPoints(labels, value);
 
-    const series: LineSeriesOption[] = [
+    return [
         {
             name: 'Valeur',
             type: 'line',
@@ -181,14 +171,6 @@ function valueVsInvestedSeries(
             markPoint: lastPointMarker(points),
             data: points,
         },
-    ];
-
-    if (!showInvested) {
-        return series;
-    }
-
-    return [
-        ...series,
         {
             name: 'Investi',
             type: 'line',
@@ -273,7 +255,6 @@ type ValueVsInvestedInput = {
     valueFormatter: ValueFormatter;
     /** `null` à la première peinture : la fenêtre d'ouverture se déduit alors de l'historique. */
     window: ZoomWindow | null;
-    showInvested: boolean;
     description: string;
 };
 
@@ -319,7 +300,7 @@ const ZOOM_SLIDER_HEIGHT = 40;
  * choisie côté client par le `dataZoom` : rien ici ne dépend du réseau.
  */
 export function buildValueVsInvestedOption(
-    { labels, value, invested, valueFormatter, window, showInvested, description }: ValueVsInvestedInput,
+    { labels, value, invested, valueFormatter, window, description }: ValueVsInvestedInput,
 ): ChartOption {
     const visible = window ?? lastYearWindow(labels);
     const colors = palette();
@@ -327,7 +308,7 @@ export function buildValueVsInvestedOption(
     return {
         ...chartFrame(valueFormatter, ZOOM_SLIDER_HEIGHT + 32, description),
         color: [colors.value, colors.invested],
-        series: valueVsInvestedSeries(labels, value, invested, showInvested),
+        series: valueVsInvestedSeries(labels, value, invested),
         tooltip: valueVsInvestedTooltip(labels, value, invested, valueFormatter),
         dataZoom: [
             { type: 'inside', start: visible.start, end: visible.end, minValueSpan: MIN_ZOOM_SPAN_MS },
