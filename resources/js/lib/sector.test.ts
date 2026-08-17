@@ -10,6 +10,18 @@ const row = (label: string, share: number, amount: number | null = null): Sector
 const labelsOf = (view: { rows: { row: SectorBreakdownRow }[] }): string[] =>
     view.rows.map((entry) => entry.row.label);
 
+/** Huit secteurs dans le désordre : la coupe ne peut être juste que si le tri la précède. */
+const eightScrambled = (): SectorBreakdownRow[] => [
+    row('Conso', 50),
+    row('Immobilier', 10),
+    row('Santé', 80),
+    row('Télécom', 30),
+    row('Technologie', 90),
+    row('Énergie', 20),
+    row('Finance', 60),
+    row('Industrie', 40),
+];
+
 describe('collapsedSectors', () => {
     it('trie les secteurs de la plus grosse part à la plus petite', () => {
         const view = collapsedSectors([row('Santé', 40), row('Technologie', 60)], false);
@@ -23,26 +35,24 @@ describe('collapsedSectors', () => {
         expect(view.rows.map((entry) => entry.barWidth)).toEqual(['100%', `${(40 / 60) * 100}%`]);
     });
 
-    it('replie les secteurs au-delà du sixième et annonce le nombre caché', () => {
-        const eight = Array.from({ length: 8 }, (_unused, index) => row(`S${index}`, 80 - index * 10));
+    it('replie les secteurs au-delà du sixième, en gardant les six plus gros', () => {
+        const view = collapsedSectors(eightScrambled(), false);
 
-        const view = collapsedSectors(eight, false);
-
-        expect(view.rows).toHaveLength(6);
+        expect(labelsOf(view)).toEqual(['Technologie', 'Santé', 'Finance', 'Conso', 'Industrie', 'Télécom']);
         expect(view.hiddenCount).toBe(2);
     });
 
-    it('montre tout une fois déplié', () => {
-        const eight = Array.from({ length: 8 }, (_unused, index) => row(`S${index}`, 80 - index * 10));
+    it('montre tout une fois déplié, toujours du plus gros au plus petit', () => {
+        const view = collapsedSectors(eightScrambled(), true);
 
-        const view = collapsedSectors(eight, true);
-
-        expect(view.rows).toHaveLength(8);
+        expect(labelsOf(view)).toEqual([
+            'Technologie', 'Santé', 'Finance', 'Conso', 'Industrie', 'Télécom', 'Énergie', 'Immobilier',
+        ]);
         expect(view.hiddenCount).toBe(2);
     });
 
     it('ne cache rien quand il y a six secteurs ou moins', () => {
-        const six = Array.from({ length: 6 }, (_unused, index) => row(`S${index}`, 60 - index * 10));
+        const six = [row('Conso', 30), row('Immobilier', 10), row('Santé', 50), row('Télécom', 20), row('Technologie', 60), row('Énergie', 40)];
 
         expect(collapsedSectors(six, false).hiddenCount).toBe(0);
     });

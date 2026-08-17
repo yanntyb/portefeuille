@@ -18,8 +18,14 @@ export interface SectorBreakdownRow {
 /** Au-delà de six, la liste sectorielle cesse de se lire d'un coup d'œil. */
 const COLLAPSED_COUNT = 6;
 
+export interface SectorBar {
+    row: SectorBreakdownRow;
+    /** Largeur de la barre en pourcentage CSS, mesurée contre le plus gros secteur. */
+    barWidth: string;
+}
+
 export interface SectorView {
-    rows: { row: SectorBreakdownRow; barWidth: string }[];
+    rows: SectorBar[];
     /** Secteurs repliés, quel que soit l'état d'ouverture : le libellé du bouton s'en sert. */
     hiddenCount: number;
 }
@@ -41,7 +47,7 @@ export const collapsedSectors = (
     const visible = expanded ? sorted : sorted.slice(0, collapsedCount);
 
     return {
-        rows: visible.map((row: SectorBreakdownRow) => ({
+        rows: visible.map((row: SectorBreakdownRow): SectorBar => ({
             row,
             barWidth: relativeBarWidth(row.share, largest),
         })),
