@@ -17,9 +17,10 @@ const amount = (value: number): string => formatEur(value, 0);
 </script>
 
 <template>
-    <div>
-        <ul class="flex flex-col gap-4">
-            <li v-for="entry in view.rows" :key="entry.row.label" class="flex flex-col gap-1.5">
+    <!-- `grow` et non `flex-1` : sans hauteur libre à distribuer la liste garde exactement sa taille naturelle. -->
+    <div class="flex min-h-0 flex-col">
+        <ul class="flex min-h-0 grow flex-col gap-4 overflow-y-auto overscroll-y-contain md:overflow-visible">
+            <li v-for="entry in view.rows" :key="entry.row.label" class="flex max-h-20 grow flex-col justify-center gap-1.5 md:max-h-none md:grow-0">
                 <div class="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
                     <span data-sector-label class="min-w-0 break-words font-semibold">{{ entry.row.label }}</span>
                     <span class="text-[13.5px] tabular-nums text-subtle-foreground">

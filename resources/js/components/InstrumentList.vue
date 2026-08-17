@@ -18,13 +18,18 @@ const share = (value: number): string =>
 </script>
 
 <template>
-    <ul v-if="rows.length" class="flex flex-col">
+    <!--
+        La liste prend la hauteur restante et ses lignes s'y répartissent : sans cela un petit
+        portefeuille laisse un bloc vide sous lui, à un écran du bas de la page. Le `max-h` borne
+        l'étirement — trois positions ne doivent pas devenir trois bandeaux.
+    -->
+    <ul v-if="rows.length" class="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain md:flex-none md:overflow-visible">
         <li
             v-for="row in rows"
             :key="row.id"
             data-instrument-row
             :data-held="row.held ? 'true' : 'false'"
-            class="flex flex-col gap-1.5 border-b border-separator py-3 last:border-b-0"
+            class="flex max-h-24 grow flex-col justify-center gap-1.5 border-b border-separator py-3 last:border-b-0 md:max-h-none md:grow-0"
         >
             <div class="flex items-center gap-3">
                 <Link
@@ -92,7 +97,7 @@ const share = (value: number): string =>
         </li>
     </ul>
 
-    <p v-else data-instrument-empty class="py-8 text-center text-sm text-muted-foreground">
+    <p v-else data-instrument-empty class="min-h-0 flex-1 py-8 text-center text-sm text-muted-foreground md:flex-none">
         {{ emptyLabel }}
     </p>
 </template>

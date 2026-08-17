@@ -11,7 +11,7 @@ const signedRoundedEur = (value: number | null): string => signedEur(value, 0);
 </script>
 
 <template>
-    <section data-section="valuation" class="flex flex-col gap-1.5 px-6">
+    <section data-section="valuation" class="flex shrink-0 flex-col gap-1.5 px-6">
         <div class="flex flex-wrap items-baseline gap-3">
             <p data-portfolio-value class="text-4xl font-bold tracking-[-0.02em] tabular-nums">
                 {{ eur(overview.totalValue) }}

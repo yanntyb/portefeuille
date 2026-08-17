@@ -17,7 +17,7 @@ const clear = (): void => {
             data-instrument-search
             type="text"
             autocomplete="off"
-            placeholder="Rechercher un nom, un ticker, un ISIN"
+            placeholder="Nom, ticker ou ISIN"
             aria-label="Rechercher un instrument"
             class="h-9 w-full rounded-md border border-border bg-background pl-9 pr-9 text-sm transition-colors placeholder:text-muted-foreground focus:border-ring focus:outline-none"
         />

@@ -19,6 +19,17 @@ $scrolledPage = "(() => {
     return Math.round(track.scrollLeft / track.clientWidth);
 })()";
 
+/**
+ * Vrai quand la section touche le bas de sa page : c'est ce qui distingue un contenu qui occupe
+ * l'écran d'un contenu empilé en haut avec un bloc vide sous lui.
+ */
+$reachesPageBottom = fn (string $section): string => "(() => {
+    const node = document.querySelector('[data-section=\"{$section}\"]');
+    const page = node.closest('[data-carousel-page]');
+
+    return page.getBoundingClientRect().bottom - node.getBoundingClientRect().bottom < 2;
+})()";
+
 it('découpe le tableau de bord en trois pages glissables sur mobile', function () use ($markedDot) {
     ['user' => $user] = portfolioFixture();
 
@@ -55,6 +66,24 @@ it('tient dans la hauteur de l\'écran, sans défilement vertical de la page', f
     visit('/')->on()->iPhone14Pro()
         ->assertSee('Performances')
         ->assertScript('document.documentElement.scrollHeight <= window.innerHeight', true)
+        ->assertNoJavaScriptErrors();
+});
+
+it('étire le contenu de chaque page jusqu\'au bas de l\'écran sur mobile', function () use ($reachesPageBottom) {
+    ['user' => $user] = portfolioFixture();
+
+    $this->actingAs($user);
+
+    // La hauteur du graphe est mesurée sur la place laissée par la page : à hauteur fixe elle
+    // valait 300 px quel que soit l'écran, et le reste tombait en vide sous les performances.
+    $chartFillsItsShare = "document.querySelector('[data-section=\"evolution\"]').getBoundingClientRect().height > 320";
+
+    visit('/')->on()->iPhone14Pro()
+        ->assertSee('Performances')
+        ->assertScript($reachesPageBottom('instruments'), true)
+        ->assertScript($reachesPageBottom('performances'), true)
+        ->assertScript($reachesPageBottom('sectors'), true)
+        ->assertScript($chartFillsItsShare, true)
         ->assertNoJavaScriptErrors();
 });
 

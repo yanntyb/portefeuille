@@ -9,13 +9,14 @@ const bars = computed<PerformanceBar[]>(() => performanceBars(props.performances
 </script>
 
 <template>
-    <ul class="flex flex-col gap-3">
+    <!-- `grow` et non `flex-1` : sans hauteur libre à distribuer les barres gardent leur taille naturelle. -->
+    <ul class="flex min-h-0 grow flex-col gap-3">
         <li
             v-for="bar in bars"
             :key="bar.performance.key"
             data-perf-row
             :title="bar.title"
-            class="flex items-center gap-3 text-sm"
+            class="flex max-h-12 grow items-center gap-3 text-sm md:max-h-none md:grow-0"
         >
             <span data-perf-label class="w-14 shrink-0 font-semibold">{{ bar.performance.label }}</span>
 

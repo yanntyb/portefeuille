@@ -53,16 +53,20 @@ const selectRange = (key: RangeKey): void => {
 </script>
 
 <template>
-    <section data-section="instruments" class="flex flex-col gap-5 px-6" aria-label="Instruments">
-        <div class="flex justify-end">
-            <ChartRangeToggle
+    <!-- La section s'étire : sur mobile c'est elle, et pas le bas de la page, qui porte l'espace libre. -->
+    <section
+        data-section="instruments"
+        class="flex min-h-0 flex-1 flex-col gap-4 px-6 md:flex-none"
+        aria-label="Instruments"
+    >
+        <div class="flex shrink-0 gap-4">
+            <InstrumentSearch v-model="query" />
+<!--            <ChartRangeToggle
                 :options="rangeOptions"
                 :model-value="selectedRange"
                 @update:model-value="selectRange"
-            />
+            />-->
         </div>
-
-        <InstrumentSearch v-model="query" />
 
         <InstrumentList :rows="rows" :loading="loading" :empty-label="emptyLabel" />
     </section>

@@ -6,16 +6,16 @@ import { buildValueVsInvestedOption, type ZoomWindow } from '@/lib/chart';
 import { eur } from '@/lib/format';
 import type { ChartOption } from '@/lib/echarts';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     /** Prop différée dont dépend le graphe : le squelette tient tant qu'elle n'est pas arrivée. */
     deferKey: string;
     labels: string[];
     value: number[];
     invested: number[];
     description: string;
-}>();
-
-const CHART_HEIGHT = 300;
+    /** Hauteur du tracé : la section qui l'accueille sait seule la place dont elle dispose. */
+    height?: number;
+}>(), { height: 300 });
 
 /**
  * Echarts pèse à lui seul les deux tiers du JS de l'application. Il n'est demandé qu'au
@@ -56,12 +56,12 @@ const option = computed<ChartOption>(() => buildValueVsInvestedOption({
         <Deferred :data="deferKey">
             <template #fallback>
                 <div class="px-0 sm:px-6">
-                    <ChartSkeleton />
+                    <ChartSkeleton :height="props.height" />
                 </div>
             </template>
 
             <div v-if="hasHistory" class="px-0 sm:px-6">
-                <BaseChart :option="option" :height="CHART_HEIGHT" @zoom="rememberZoom" />
+                <BaseChart :option="option" :height="props.height" @zoom="rememberZoom" />
             </div>
             <p v-else class="py-8 text-center text-sm text-muted-foreground">
                 Pas encore d'historique de valorisation.
