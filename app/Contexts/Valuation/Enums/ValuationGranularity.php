@@ -19,11 +19,6 @@ enum ValuationGranularity: string
         };
     }
 
-    public static function fromRequest(?string $value): self
-    {
-        return ($value !== null ? self::tryFrom($value) : null) ?? self::Month;
-    }
-
     public function getLabel(): string
     {
         return match ($this) {
