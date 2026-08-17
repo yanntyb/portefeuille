@@ -18,6 +18,8 @@ function userWithEvolution(): User
     $asset = Instrument::factory()->create(['name' => 'ACME']);
 
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 100]);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-02-01', 'close' => 137.3]);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => now()->subDays(20)->format('Y-m-d'), 'close' => 152.7]);
     Holding::factory()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
@@ -46,16 +48,19 @@ it('leads the dashboard with the chart alone, without a header row', function ()
         ->assertNoJavaScriptErrors();
 });
 
-it('labels only the extremes of the value axis', function () {
+it('labels the value axis with the exact extremes, and nothing between them', function () {
     $this->actingAs(userWithEvolution());
 
     visit('/')
         ->assertScript(
             "(() => {
                 const texts = document.querySelectorAll('[data-section=evolution] [data-chart] svg text');
-                return [...texts].filter((text) => text.textContent.includes('€')).length;
+                const values = [...texts]
+                    .filter((text) => text.textContent.includes('€'))
+                    .map((text) => Number(text.textContent.replace(/\\D/g, '')));
+                return [values.length, Math.max(...values)].join('|');
             })()",
-            2,
+            '2|1527',
         )
         ->assertNoJavaScriptErrors();
 });

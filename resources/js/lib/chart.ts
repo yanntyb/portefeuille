@@ -50,11 +50,14 @@ function tooltipRow(color: string, label: string, value: string): string {
 
 type ValueFormatter = (value: number) => string;
 
+/** Bornes et graduation imposées à l'axe des valeurs, laissées à ECharts quand rien n'est passé. */
+type ValueAxisScale = { min?: number | string; max?: number | string; interval?: number };
+
 /**
  * Ossature partagée par les trois graphes : axes, grille et cadre d'infobulle suivent le thème.
  * La description accessible est rédigée à la main plutôt que laissée au gabarit anglais d'ECharts.
  */
-function chartFrame(valueFormatter: ValueFormatter, bottom: number, description: string, valueInterval?: number): ChartOption {
+function chartFrame(valueFormatter: ValueFormatter, bottom: number, description: string, valueAxis: ValueAxisScale = {}): ChartOption {
     const theme = tooltipTheme();
 
     return {
@@ -70,7 +73,7 @@ function chartFrame(valueFormatter: ValueFormatter, bottom: number, description:
         },
         yAxis: {
             type: 'value',
-            interval: valueInterval,
+            ...valueAxis,
             axisLine: { show: false },
             axisTick: { show: false },
             axisLabel: { color: axisLabelColor(), formatter: (value: number): string => valueFormatter(value) },
@@ -110,10 +113,11 @@ export const INITIAL_ZOOM_WINDOW: ZoomWindow = { start: 70, end: 100 };
 const ZOOM_SLIDER_HEIGHT = 40;
 
 /**
- * Un intervalle plus large que n'importe quelle amplitude ne laisse subsister que les deux
- * graduations extrêmes : le lecteur garde les bornes de l'échelle, sans les paliers du milieu.
+ * L'axe colle aux valeurs réellement affichées plutôt qu'à des paliers arrondis, et l'intervalle
+ * plus large que n'importe quelle amplitude ne laisse subsister que ces deux graduations. Les
+ * bornes se recalculent à chaque zoom, puisque le `dataZoom` retire les points hors fenêtre.
  */
-const EXTREME_TICKS_ONLY = Number.POSITIVE_INFINITY;
+const EXACT_EXTREMES_ONLY: ValueAxisScale = { min: 'dataMin', max: 'dataMax', interval: Number.POSITIVE_INFINITY };
 
 /**
  * Aires empilées du tableau de bord. La fenêtre temporelle est choisie côté client par le
@@ -129,7 +133,7 @@ export function buildEvolutionOption({ labels, perAsset, hiddenIds, valueFormatt
         : `Évolution de la valeur du portefeuille, par titre : ${visible.map((asset) => asset.name).join(', ')}.`;
 
     return {
-        ...chartFrame(valueFormatter, ZOOM_SLIDER_HEIGHT + 44, description, EXTREME_TICKS_ONLY),
+        ...chartFrame(valueFormatter, ZOOM_SLIDER_HEIGHT + 44, description, EXACT_EXTREMES_ONLY),
         color: visible.map((_asset: AssetSeries, index: number): string => palette[index % palette.length]),
         series: visible.map((asset: AssetSeries) => ({
             name: asset.name,
