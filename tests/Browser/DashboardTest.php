@@ -1,7 +1,11 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
+use App\Contexts\Market\Models\Instrument;
+use App\Contexts\Portfolio\Models\Holding;
+use App\Contexts\Portfolio\Models\Wallet;
 
 it('explique les performances par période à travers un dialogue', function () {
     ['user' => $user] = portfolioFixture();
@@ -49,6 +53,29 @@ it('replie les secteurs au-delà du sixième derrière une bascule', function ()
         ->assertSee('Immobilier')
         ->click('Réduire')
         ->assertScript($labels, 6)
+        ->assertNoJavaScriptErrors();
+});
+
+it('affiche un état vide quand aucune position n\'a de valeur de marché', function () {
+    // Aucun cours pour l'instrument : la position n'a pas de valeur de marché, la section
+    // sectorielle n'a donc rien à répartir.
+    User::query()->delete();
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $instrument = Instrument::factory()->ofType(InstrumentType::ETF)->create(['name' => 'ACME ETF']);
+
+    Holding::factory()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $instrument->id,
+        'quantity' => 1,
+        'avg_cost' => 100,
+    ]);
+
+    $this->actingAs($user);
+
+    visit('/')
+        ->assertSee('Pas encore de données sectorielles.')
         ->assertNoJavaScriptErrors();
 });
 
