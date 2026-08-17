@@ -36,14 +36,12 @@ defineProps<{
                     <ValuationSection v-if="overview.holdings.length" :overview="overview" />
 
                     <EvolutionSection :series="evolutionSeries" />
-                </AppCarouselPage>
+                    <PerformancesSection :performances="performances" />
 
-                <AppCarouselPage label="Positions">
-                    <HoldingsSection :holdings="overview.holdings" :series="evolutionSeries" />
                 </AppCarouselPage>
 
                 <AppCarouselPage v-if="overview.holdings.length" label="Performances">
-                    <PerformancesSection :performances="performances" />
+                    <HoldingsSection :holdings="overview.holdings" :series="evolutionSeries" />
                 </AppCarouselPage>
 
                 <AppCarouselPage v-if="overview.holdings.length" label="Secteurs">

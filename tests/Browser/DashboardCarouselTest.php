@@ -19,7 +19,7 @@ $scrolledPage = "(() => {
     return Math.round(track.scrollLeft / track.clientWidth);
 })()";
 
-it('découpe le tableau de bord en quatre pages glissables sur mobile', function () use ($markedDot) {
+it('découpe le tableau de bord en trois pages glissables sur mobile', function () use ($markedDot) {
     ['user' => $user] = portfolioFixture();
 
     $this->actingAs($user);
@@ -28,8 +28,8 @@ it('découpe le tableau de bord en quatre pages glissables sur mobile', function
     // avant l'hydratation de Vue toutes ces mesures valent zéro.
     visit('/')->on()->iPhone14Pro()
         ->assertSee('Performances')
-        ->assertScript("document.querySelectorAll('[data-carousel-page]').length", 4)
-        ->assertScript("document.querySelectorAll('[data-carousel-dot]').length", 4)
+        ->assertScript("document.querySelectorAll('[data-carousel-page]').length", 3)
+        ->assertScript("document.querySelectorAll('[data-carousel-dot]').length", 3)
         ->assertScript($markedDot, 0)
         ->assertNoJavaScriptErrors();
 });
@@ -67,8 +67,8 @@ it('mène à la page correspondante quand on touche un point de pagination', fun
         ->assertSee('Performances')
         ->assertScript($scrolledPage, 0)
         ->click('[aria-label="Aller à Performances"]')
-        ->assertScript($scrolledPage, 2)
-        ->assertScript($markedDot, 2)
+        ->assertScript($scrolledPage, 1)
+        ->assertScript($markedDot, 1)
         ->assertNoJavaScriptErrors();
 });
 
