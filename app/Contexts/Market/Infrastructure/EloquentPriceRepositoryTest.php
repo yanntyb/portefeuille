@@ -51,6 +51,29 @@ it('returns prices for multiple assets', function () {
         ->toHaveCount(2);
 });
 
+it('returns dated closes for multiple assets, without hydrating a model', function () {
+    $other = Instrument::factory()->create();
+    Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-02-01', 'close' => 10.0]);
+    Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-01-01', 'close' => 9.0]);
+    Price::factory()->create(['asset_id' => $other->id, 'date' => '2026-02-01', 'close' => 20.0]);
+    Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2025-12-01', 'close' => 8.0]);
+
+    $rows = $this->repository->dailyClosesForAssetsSince(
+        [$this->instrument->id, $other->id],
+        Carbon::parse('2026-01-01'),
+    );
+
+    expect($rows)->toBe([
+        ['assetId' => $this->instrument->id, 'date' => '2026-01-01', 'close' => 9.0],
+        ['assetId' => $this->instrument->id, 'date' => '2026-02-01', 'close' => 10.0],
+        ['assetId' => $other->id, 'date' => '2026-02-01', 'close' => 20.0],
+    ]);
+});
+
+it('returns no dated close without any asset', function () {
+    expect($this->repository->dailyClosesForAssetsSince([], Carbon::parse('2026-01-01')))->toBe([]);
+});
+
 it('filters ids having a price since a date', function () {
     $other = Instrument::factory()->create();
     Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-03-01']);

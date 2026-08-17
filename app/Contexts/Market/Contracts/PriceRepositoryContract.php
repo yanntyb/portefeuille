@@ -40,6 +40,17 @@ interface PriceRepositoryContract
     public function closesForAssetsSince(array $ids, Carbon $since): array;
 
     /**
+     * Daily closes of several assets since a date, ordered by asset then date, dates included.
+     *
+     * Same reasoning as closesForAssetsSince(): the valuation reads tens of thousands of rows per
+     * request and only needs three columns, so nothing is hydrated into a model.
+     *
+     * @param  array<int>  $ids
+     * @return list<array{assetId: int, date: string, close: float}>
+     */
+    public function dailyClosesForAssetsSince(array $ids, Carbon $since): array;
+
+    /**
      * Insert or update the daily prices of an asset.
      *
      * Rows are matched on (asset_id, date) and existing values are overwritten:

@@ -3,7 +3,6 @@
 namespace App\Contexts\Valuation\Infrastructure;
 
 use App\Contexts\Market\Contracts\PriceRepositoryContract;
-use App\Contexts\Market\Models\Price;
 use App\Contexts\Valuation\Datas\PriceRecordData;
 use App\Contexts\Valuation\Ports\PriceHistoryPort;
 use Illuminate\Support\Carbon;
@@ -18,13 +17,13 @@ class MarketPriceHistory implements PriceHistoryPort
      */
     public function forAssetsSince(array $assetIds, Carbon $since): array
     {
-        return $this->prices->forAssets($assetIds, $since)
-            ->map(fn (Price $price) => new PriceRecordData(
-                assetId: (int) $price->asset_id,
-                date: $price->date->format('Y-m-d'),
-                close: (float) $price->close,
-            ))
-            ->values()
-            ->all();
+        return array_map(
+            fn (array $row): PriceRecordData => new PriceRecordData(
+                assetId: $row['assetId'],
+                date: $row['date'],
+                close: $row['close'],
+            ),
+            $this->prices->dailyClosesForAssetsSince($assetIds, $since),
+        );
     }
 }
