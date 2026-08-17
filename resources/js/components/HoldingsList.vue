@@ -3,9 +3,7 @@ import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import Sparkline from '@/components/Sparkline.vue';
 import { eur as formatEur, gainClass, pct, signedEur } from '@/lib/format';
-import type { EvolutionSeries, HoldingLine } from '@/lib/portfolio';
-
-const FAINTEST_BAR_OPACITY = 0.35;
+import { holdingWeights, type EvolutionSeries, type HoldingLine, type HoldingWeight } from '@/lib/portfolio';
 
 /** Largeur de la colonne `w-24` qui porte la tendance, pour que le tracé la remplisse exactement. */
 const SPARKLINE_WIDTH = 96;
@@ -16,35 +14,7 @@ const props = defineProps<{
     limit?: number;
 }>();
 
-/** Sorting here makes the weight bars monotonic whatever order the caller passes. */
-const sortedHoldings = computed<HoldingLine[]>(() =>
-    [...props.holdings].sort((left, right) => (right.marketValue ?? 0) - (left.marketValue ?? 0)),
-);
-
-/** Cropping only what is rendered leaves every aggregate below computed on the whole portfolio. */
-const visibleHoldings = computed<HoldingLine[]>(() =>
-    props.limit ? sortedHoldings.value.slice(0, props.limit) : sortedHoldings.value,
-);
-
-/** Summing the lines rather than reusing the overview total keeps the weights at 100 %. */
-const totalValue = computed<number>(() =>
-    sortedHoldings.value.reduce((total, line) => total + (line.marketValue ?? 0), 0),
-);
-
-const shareOf = (line: HoldingLine): number =>
-    totalValue.value > 0 ? ((line.marketValue ?? 0) / totalValue.value) * 100 : 0;
-
-/** Bars are scaled against the largest position, not the total, so the smallest stays visible. */
-const largestShare = computed<number>(() =>
-    Math.max(0, ...sortedHoldings.value.map((line) => shareOf(line))),
-);
-
-const barWidth = (line: HoldingLine): string =>
-    largestShare.value > 0 ? `${(shareOf(line) / largestShare.value) * 100}%` : '0%';
-
-/** A single monotonic fade over the rendered rows, so the faintest bar stays readable in both themes. */
-const opacityAt = (index: number): number =>
-    1 - (index / Math.max(1, visibleHoldings.value.length - 1)) * (1 - FAINTEST_BAR_OPACITY);
+const weights = computed<HoldingWeight[]>(() => holdingWeights(props.holdings, props.limit));
 
 const seriesByAsset = computed<Map<number, number[]>>(
     () => new Map((props.series?.perAsset ?? []).map((asset) => [asset.assetId, asset.value])),
@@ -61,31 +31,31 @@ const value = (amount: number | null): string => formatEur(amount, 0);
 <template>
     <ul class="flex flex-col">
         <li
-            v-for="(line, index) in visibleHoldings"
-            :key="line.assetId"
+            v-for="weight in weights"
+            :key="weight.line.assetId"
             data-holding-row
             class="flex flex-col gap-1.5 border-b border-separator py-3 last:border-b-0"
         >
             <div class="flex items-center gap-3">
                 <Link
-                    :href="`/instruments/${line.assetId}`"
+                    :href="`/instruments/${weight.line.assetId}`"
                     prefetch
                     data-holding-name
                     class="block min-w-0 flex-1 truncate font-semibold hover:underline"
                 >
-                    {{ line.assetName }}
-                    <span v-if="line.ticker" class="text-muted-foreground">({{ line.ticker }})</span>
+                    {{ weight.line.assetName }}
+                    <span v-if="weight.line.ticker" class="text-muted-foreground">({{ weight.line.ticker }})</span>
                 </Link>
 
                 <span data-holding-value class="w-24 shrink-0 text-right font-bold tabular-nums">
-                    {{ value(line.marketValue) }}
+                    {{ value(weight.line.marketValue) }}
                 </span>
                 <span
                     data-holding-gain-pct
                     class="w-20 shrink-0 text-right text-sm font-semibold tabular-nums"
-                    :class="gainClass(line.gain)"
+                    :class="gainClass(weight.line.gain)"
                 >
-                    {{ pct(line.gainPct) }}
+                    {{ pct(weight.line.gainPct) }}
                 </span>
             </div>
 
@@ -95,25 +65,25 @@ const value = (amount: number | null): string => formatEur(amount, 0);
                     <span
                         data-holding-bar
                         class="block h-full rounded-full bg-sector-bar"
-                        :style="{ width: barWidth(line), opacity: opacityAt(index) }"
+                        :style="{ width: weight.barWidth, opacity: weight.opacity }"
                     ></span>
                 </span>
                 <span data-holding-weight class="w-12 shrink-0 tabular-nums text-subtle-foreground">
-                    {{ share(shareOf(line)) }}
+                    {{ share(weight.share) }}
                 </span>
 
                 <!-- Largeurs de queue identiques à la première ligne : tendance sous la valeur, gain sous le pourcentage. -->
                 <span data-holding-trend class="ml-auto w-24 shrink-0">
                     <Sparkline
-                        v-if="valuesFor(line.assetId).length > 1"
-                        :values="valuesFor(line.assetId)"
+                        v-if="valuesFor(weight.line.assetId).length > 1"
+                        :values="valuesFor(weight.line.assetId)"
                         :width="SPARKLINE_WIDTH"
                     />
                     <span v-else-if="!series" class="block h-5 w-full animate-pulse rounded bg-muted"></span>
                 </span>
 
-                <span data-holding-gain class="w-20 shrink-0 text-right tabular-nums" :class="gainClass(line.gain)">
-                    {{ signedEur(line.gain, 0) }}
+                <span data-holding-gain class="w-20 shrink-0 text-right tabular-nums" :class="gainClass(weight.line.gain)">
+                    {{ signedEur(weight.line.gain, 0) }}
                 </span>
             </div>
         </li>
