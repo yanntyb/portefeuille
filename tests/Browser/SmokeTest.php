@@ -34,6 +34,8 @@ it('charge la fiche instrument et ses sections, sans erreur', function () {
         ->assertSee('Répartition sectorielle')
         ->assertScript("document.querySelector('[data-hero-value]').textContent.trim() !== ''", true)
         ->assertScript("document.querySelectorAll('[data-hero-gain]').length", 1)
+        ->assertScript("document.querySelector('[data-hero-meta]').contains(document.querySelector('[data-hero-gain]'))", true)
+        ->assertScript("document.querySelector('[data-hero-gain]').textContent.includes('Gain')", true)
         ->assertScript("document.querySelectorAll('[data-hero-gain-pct]').length", 1)
         ->assertScript(
             "document.querySelector('[data-section=valuation] [aria-label]')?.getAttribute('aria-label')",

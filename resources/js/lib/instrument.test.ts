@@ -49,16 +49,29 @@ describe('heroValueOf', () => {
 });
 
 describe('heroMeta', () => {
-    it('énonce titres, prix de revient, investi et cours quand l\'instrument est détenu', () => {
+    it('énonce investi, gain, cours et prix de revient quand l\'instrument est détenu', () => {
         const entries = heroMeta(instrument());
 
-        expect(entries.map((entry) => entry.label)).toEqual(['Titres', 'PRU', 'Investi', 'Cours']);
+        expect(entries.map((entry) => entry.label)).toEqual(['Investi', 'Gain', 'Cours', 'PRU']);
         expect(entries.map((entry) => normalizeSpaces(entry.value))).toEqual([
-            '10',
-            '80,00 €',
             '800,00 €',
+            '+200,00 €',
             '100,00 €',
+            '80,00 €',
         ]);
+    });
+
+    it('marque le seul gain d\'un montant coloré, les autres stats restant neutres', () => {
+        const entries = heroMeta(instrument({ position: position({ gain: -50 }) }));
+
+        expect(entries[1].gain).toBe(-50);
+        expect(entries.filter((entry) => entry.gain !== undefined)).toHaveLength(1);
+    });
+
+    it('rend un tiret sur un gain absent plutôt que de masquer la ligne', () => {
+        const entries = heroMeta(instrument({ position: position({ gain: null }) }));
+
+        expect(entries[1]).toEqual({ label: 'Gain', value: '—', gain: null });
     });
 
     it('énonce la date du dernier cours quand l\'instrument n\'est pas détenu', () => {
@@ -74,7 +87,7 @@ describe('heroMeta', () => {
     it('rend un tiret sur un prix de revient absent plutôt que de masquer la ligne', () => {
         const entries = heroMeta(instrument({ position: position({ avgCost: null }) }));
 
-        expect(entries[1]).toEqual({ label: 'PRU', value: '—' });
-        expect(entries[2]).toEqual({ label: 'Investi', value: '—' });
+        expect(entries[0]).toEqual({ label: 'Investi', value: '—' });
+        expect(entries[3]).toEqual({ label: 'PRU', value: '—' });
     });
 });

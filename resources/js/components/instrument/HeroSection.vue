@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import GainPill from '@/components/GainPill.vue';
-import { eur, gainClass, pct, signedEur } from '@/lib/format';
+import { eur, gainClass, pct } from '@/lib/format';
 import { heroMeta, heroValueOf, type HeroMetaEntry, type Instrument } from '@/lib/instrument';
 
 const props = defineProps<{
@@ -40,25 +40,22 @@ const metaEntries = computed<HeroMetaEntry[]>(() => heroMeta(props.instrument));
                 />
             </div>
 
-            <p
-                v-if="position && position.gain !== null"
-                data-hero-gain
-                class="text-[15px] font-semibold tabular-nums"
-                :class="gainClass(position.gain)"
-            >
-                {{ signedEur(position.gain) }}
-            </p>
-
             <!-- Grille plutôt que flux : les libellés s'alignent en colonne, les valeurs sur leur bord droit. -->
             <p data-hero-meta class="grid grid-cols-2 gap-x-8 gap-y-1.5 pt-1.5 text-[13.5px] text-muted-foreground">
                 <span
                     v-for="entry in metaEntries"
                     :key="entry.label || entry.value"
+                    :data-hero-gain="entry.gain === undefined ? undefined : ''"
                     class="flex items-baseline justify-between gap-3 whitespace-nowrap"
                 >
                     <template v-if="entry.label">
                         {{ entry.label }}
-                        <strong class="font-semibold text-foreground tabular-nums">{{ entry.value }}</strong>
+                        <strong
+                            class="font-semibold tabular-nums"
+                            :class="entry.gain === undefined ? 'text-foreground' : gainClass(entry.gain)"
+                        >
+                            {{ entry.value }}
+                        </strong>
                     </template>
                     <template v-else>{{ entry.value }}</template>
                 </span>

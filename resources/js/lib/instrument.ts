@@ -1,4 +1,4 @@
-import { eur, frDate } from '@/lib/format';
+import { eur, frDate, signedEur } from '@/lib/format';
 
 export interface InstrumentPosition {
     quantity: number;
@@ -57,6 +57,8 @@ export interface ValuationSeries {
 export interface HeroMetaEntry {
     label: string;
     value: string;
+    /** Montant signé quand la valeur se colore comme un gain ; absent sur une stat neutre. */
+    gain?: number | null;
 }
 
 /** Un instrument détenu vaut sa valeur de marché ; sinon il ne vaut que son dernier cours. */
@@ -78,9 +80,9 @@ export const heroMeta = (instrument: Instrument): HeroMetaEntry[] => {
     }
 
     return [
-        { label: 'Titres', value: position.quantity.toLocaleString('fr-FR') },
-        { label: 'PRU', value: eur(position.avgCost) },
         { label: 'Investi', value: eur(investedOf(position)) },
+        { label: 'Gain', value: signedEur(position.gain), gain: position.gain },
         { label: 'Cours', value: eur(instrument.lastPrice) },
+        { label: 'PRU', value: eur(position.avgCost) },
     ];
 };
