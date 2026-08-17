@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { ChevronRight } from 'lucide-vue-next';
 import {
     Table,
@@ -10,16 +10,29 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { eur } from '@/lib/format';
+import { isWideViewport } from '@/lib/viewport';
 import type { TransactionLine } from '@/lib/instrument';
 
-defineProps<{ transactions: TransactionLine[] }>();
+const props = defineProps<{ transactions: TransactionLine[] }>();
 
 const isExpanded = ref<boolean>(false);
+
+/**
+ * Sur mobile la section occupe déjà sa propre page du carrousel : le pli n'aurait plus rien à
+ * cacher, il ajouterait un geste avant de lire le tableau. Le repli ne sert que le grand écran,
+ * où les sections se suivent dans une même colonne.
+ */
+const isFoldable = isWideViewport;
+
+const showsTransactions = computed<boolean>(() => !isFoldable.value || isExpanded.value);
+
+const heading = computed<string>(() => `Transactions (${props.transactions.length})`);
 </script>
 
 <template>
     <section data-section="transactions" class="flex flex-col gap-6 px-6">
         <button
+            v-if="isFoldable"
             type="button"
             data-transactions-toggle
             class="flex items-center gap-1.5 self-start text-[17px] leading-none font-bold"
@@ -30,10 +43,12 @@ const isExpanded = ref<boolean>(false);
                 class="size-4 text-muted-foreground transition-transform"
                 :class="isExpanded ? 'rotate-90' : ''"
             />
-            Transactions ({{ transactions.length }})
+            {{ heading }}
         </button>
 
-        <div v-if="isExpanded" class="min-w-0">
+        <h2 v-else class="text-[17px] leading-none font-bold">{{ heading }}</h2>
+
+        <div v-if="showsTransactions" class="min-w-0">
             <Table v-if="transactions.length">
                 <TableHeader>
                     <TableRow>
