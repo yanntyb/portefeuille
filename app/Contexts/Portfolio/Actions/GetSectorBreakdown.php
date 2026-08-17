@@ -29,19 +29,23 @@ class GetSectorBreakdown
             ->where('user_id', $user->id)
             ->get();
 
+        $lastPrices = $this->prices->latestClosesForAssets(
+            $holdings->pluck('asset_id')->map(fn ($assetId): int => (int) $assetId)->all(),
+        );
+
         /** @var array<int, float> $valueByAsset */
         $valueByAsset = [];
         $totalValue = 0.0;
 
         foreach ($holdings as $holding) {
-            $price = $this->prices->latestForAsset($holding->asset_id);
+            $assetId = (int) $holding->asset_id;
+            $close = $lastPrices[$assetId] ?? null;
 
-            if ($price === null) {
+            if ($close === null) {
                 continue;
             }
 
-            $marketValue = (float) $holding->quantity * (float) $price->close;
-            $assetId = (int) $holding->asset_id;
+            $marketValue = (float) $holding->quantity * $close;
 
             $valueByAsset[$assetId] = ($valueByAsset[$assetId] ?? 0.0) + $marketValue;
             $totalValue += $marketValue;

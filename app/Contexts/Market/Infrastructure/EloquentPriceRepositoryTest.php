@@ -5,6 +5,7 @@ use App\Contexts\Market\Infrastructure\EloquentPriceRepository;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
     $this->repository = new EloquentPriceRepository;
@@ -49,6 +50,27 @@ it('returns prices for multiple assets', function () {
 
     expect($this->repository->forAssets([$this->instrument->id, $other->id], Carbon::parse('2026-01-01')))
         ->toHaveCount(2);
+});
+
+it('returns the last close of every asset in a single query', function () {
+    $other = Instrument::factory()->create();
+    $priceless = Instrument::factory()->create();
+    Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-01-01', 'close' => 10.0]);
+    Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-03-01', 'close' => 30.0]);
+    Price::factory()->create(['asset_id' => $this->instrument->id, 'date' => '2026-02-01', 'close' => 20.0]);
+    Price::factory()->create(['asset_id' => $other->id, 'date' => '2026-02-01', 'close' => 99.0]);
+
+    DB::enableQueryLog();
+    $closes = $this->repository->latestClosesForAssets([$this->instrument->id, $other->id, $priceless->id]);
+    $queries = DB::getQueryLog();
+    DB::disableQueryLog();
+
+    expect($closes)->toBe([$this->instrument->id => 30.0, $other->id => 99.0])
+        ->and($queries)->toHaveCount(1);
+});
+
+it('returns no close without any asset', function () {
+    expect($this->repository->latestClosesForAssets([]))->toBe([]);
 });
 
 it('returns dated closes for multiple assets, without hydrating a model', function () {

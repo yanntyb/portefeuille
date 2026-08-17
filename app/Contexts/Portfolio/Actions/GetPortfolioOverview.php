@@ -21,6 +21,10 @@ class GetPortfolioOverview
             ->where('user_id', $user->id)
             ->get();
 
+        $lastPrices = $this->prices->latestClosesForAssets(
+            $holdings->pluck('asset_id')->map(fn ($assetId): int => (int) $assetId)->all(),
+        );
+
         $lines = [];
         $totalValue = 0.0;
         $totalCost = 0.0;
@@ -32,8 +36,7 @@ class GetPortfolioOverview
             $quantity = (float) $holding->quantity;
             $avgCost = $holding->avg_cost !== null ? (float) $holding->avg_cost : null;
 
-            $price = $this->prices->latestForAsset($holding->asset_id);
-            $lastPrice = $price !== null ? (float) $price->close : null;
+            $lastPrice = $lastPrices[(int) $holding->asset_id] ?? null;
 
             $marketValue = $lastPrice !== null ? $quantity * $lastPrice : null;
             $cost = $avgCost !== null ? $quantity * $avgCost : null;

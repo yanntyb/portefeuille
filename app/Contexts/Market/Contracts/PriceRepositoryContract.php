@@ -11,6 +11,17 @@ interface PriceRepositoryContract
 {
     public function latestForAsset(int $id): ?Price;
 
+    /**
+     * Last known close of each asset, keyed by asset. Assets without any price are absent.
+     *
+     * Spares the callers a query per position: the overview and the sector breakdown both walk
+     * the whole portfolio to value it.
+     *
+     * @param  array<int>  $ids
+     * @return array<int, float>
+     */
+    public function latestClosesForAssets(array $ids): array;
+
     public function forAssetOnDate(int $id, Carbon $date): ?Price;
 
     /** @return Collection<int, Price> */

@@ -18,6 +18,45 @@ class EloquentPriceRepository implements PriceRepositoryContract
             ->first();
     }
 
+    /**
+     * @param  array<int>  $ids
+     * @return array<int, float>
+     */
+    public function latestClosesForAssets(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        $table = (new Price)->getTable();
+
+        /** Le dernier jour coté de chaque actif, joint à sa ligne : une requête au lieu d'une par position. */
+        $latestDates = Price::query()
+            ->toBase()
+            ->select('asset_id')
+            ->selectRaw('max(date) as date')
+            ->whereIn('asset_id', $ids)
+            ->groupBy('asset_id');
+
+        $rows = Price::query()
+            ->toBase()
+            ->from($table.' as prices')
+            ->joinSub($latestDates, 'latest', function ($join): void {
+                $join->on('prices.asset_id', '=', 'latest.asset_id')
+                    ->on('prices.date', '=', 'latest.date');
+            })
+            ->select('prices.asset_id', 'prices.close')
+            ->get();
+
+        $closes = [];
+
+        foreach ($rows as $row) {
+            $closes[(int) $row->asset_id] = (float) $row->close;
+        }
+
+        return $closes;
+    }
+
     public function forAssetOnDate(int $id, Carbon $date): ?Price
     {
         return Price::query()
