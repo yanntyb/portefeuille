@@ -48,6 +48,24 @@ it('leads the dashboard with the chart alone, without a header row', function ()
         ->assertNoJavaScriptErrors();
 });
 
+it('draws the portfolio value against the invested amount, like the instrument chart', function () {
+    $this->actingAs(userWithEvolution());
+
+    visit('/')
+        ->assertScript(
+            "(() => {
+                const paths = document.querySelectorAll('[data-section=evolution] [data-chart] svg path');
+                const value = [...paths].filter((path) => path.getAttribute('stroke') === '#4f46e5').length;
+                const invested = [...paths]
+                    .filter((path) => path.getAttribute('stroke') === '#94a3b8' && path.hasAttribute('stroke-dasharray'))
+                    .length;
+                return [value, invested].join('|');
+            })()",
+            '1|1',
+        )
+        ->assertNoJavaScriptErrors();
+});
+
 it('labels the value axis with the exact extremes, and nothing between them', function () {
     $this->actingAs(userWithEvolution());
 

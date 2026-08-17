@@ -62,17 +62,17 @@ it('paints the sticky breadcrumb on the theme background rather than a hardcoded
         ->assertNoJavaScriptErrors();
 });
 
-it('darkens the evolution areas so they stay visible on a light background', function () {
+it('darkens the evolution axis labels so they stay readable on a light background', function () {
     $this->actingAs(seedSystemThemePortfolio());
 
-    $areaFills = "Array.from(document.querySelectorAll('[data-section=evolution] path'))"
-        .'.map(path => path.getAttribute("fill")).join(",")';
+    $labelFills = "Array.from(document.querySelectorAll('[data-section=evolution] text'))"
+        .'.map(text => text.getAttribute("fill")).join(",")';
 
     visit('/')->inLightMode()
-        ->assertScript("{$areaFills}.includes('#334155')", true)
+        ->assertScript("{$labelFills}.includes('oklch(0.556 0 0)')", true)
         ->assertNoJavaScriptErrors();
 
     visit('/')->inDarkMode()
-        ->assertScript("{$areaFills}.includes('#e2e8f0')", true)
+        ->assertScript("{$labelFills}.includes('oklch(0.708 0 0)')", true)
         ->assertNoJavaScriptErrors();
 });

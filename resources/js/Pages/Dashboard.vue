@@ -40,10 +40,7 @@ const toggleAsset = (assetId: number): void => {
         <div class="mx-auto flex max-w-6xl flex-col gap-6">
             <ValuationSection v-if="overview.holdings.length" :overview="overview" />
 
-            <EvolutionSection
-                :hidden-asset-ids="hiddenAssetIds"
-                :series="evolutionSeries"
-            />
+            <EvolutionSection :series="evolutionSeries" />
 
 
             <PerformancesSection v-if="overview.holdings.length" :performances="performances" />

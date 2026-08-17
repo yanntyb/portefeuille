@@ -43,7 +43,7 @@ it('renders a single evolution chart, without the allocation donut', function ()
         ->assertCount('[data-section=evolution] [data-chart]', 1)
         ->assertScript(
             "document.querySelector('[data-section=evolution] [aria-label]')?.getAttribute('aria-label')",
-            'Évolution de la valeur du portefeuille, par titre : ACME, GLOBEX.',
+            'Valeur du portefeuille comparée au montant investi.',
         )
         ->assertNoJavaScriptErrors();
 });

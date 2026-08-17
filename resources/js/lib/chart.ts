@@ -6,14 +6,6 @@ export const INVESTED_LINE_COLOR = '#94a3b8';
 export const GAIN_COLOR = '#10b981';
 export const LOSS_COLOR = '#ef4444';
 
-const GREY_SCALE_ON_DARK = ['#e2e8f0', '#cbd5e1', '#94a3b8', '#64748b', '#475569', '#334155'];
-const GREY_SCALE_ON_LIGHT = ['#334155', '#475569', '#64748b', '#94a3b8', '#cbd5e1', '#e2e8f0'];
-
-/** Le dégradé part toujours de la teinte la plus contrastée avec le fond du thème courant. */
-function greyScale(): string[] {
-    return isDark.value ? GREY_SCALE_ON_DARK : GREY_SCALE_ON_LIGHT;
-}
-
 /** Les libellés d'axes sont peints en SVG : leur teinte suit le thème plutôt qu'un jeton CSS. */
 function axisLabelColor(): string {
     return isDark.value ? 'oklch(0.708 0 0)' : 'oklch(0.556 0 0)';
@@ -101,10 +93,20 @@ export type ZoomWindow = { start: number; end: number };
 type EvolutionInput = {
     labels: string[];
     perAsset: AssetSeries[];
-    hiddenIds: Set<number>;
     valueFormatter: ValueFormatter;
     window: ZoomWindow;
 };
+
+/** Le tableau de bord raisonne sur le portefeuille entier : les titres ne sont qu'un détail de calcul. */
+function totalPerDate(perAsset: AssetSeries[], pick: (asset: AssetSeries) => number[], length: number): number[] {
+    return Array.from(
+        { length },
+        (_unused: unknown, index: number): number => perAsset.reduce(
+            (sum: number, asset: AssetSeries): number => sum + (pick(asset)[index] ?? 0),
+            0,
+        ),
+    );
+}
 
 /** Part de l'historique visible à l'ouverture : le graphe s'ouvre sur la période récente. */
 export const INITIAL_ZOOM_WINDOW: ZoomWindow = { start: 70, end: 100 };
@@ -120,30 +122,37 @@ const ZOOM_SLIDER_HEIGHT = 40;
 const EXACT_EXTREMES_ONLY: ValueAxisScale = { min: 'dataMin', max: 'dataMax', interval: Number.POSITIVE_INFINITY };
 
 /**
- * Aires empilées du tableau de bord. La fenêtre temporelle est choisie côté client par le
- * `dataZoom` : rien ici ne dépend du réseau ni de la taille du conteneur.
+ * Valeur du portefeuille contre montant investi, dans le style de la fiche instrument. La fenêtre
+ * temporelle est choisie côté client par le `dataZoom` : rien ici ne dépend du réseau.
  */
-export function buildEvolutionOption({ labels, perAsset, hiddenIds, valueFormatter, window }: EvolutionInput): ChartOption {
-    const visible = perAsset.filter((asset: AssetSeries): boolean => !hiddenIds.has(asset.assetId));
-    const palette = greyScale();
+export function buildEvolutionOption({ labels, perAsset, valueFormatter, window }: EvolutionInput): ChartOption {
     const theme = tooltipTheme();
-
-    const description = visible.length === 0
-        ? 'Évolution de la valeur du portefeuille. Aucun titre affiché.'
-        : `Évolution de la valeur du portefeuille, par titre : ${visible.map((asset) => asset.name).join(', ')}.`;
+    const value = totalPerDate(perAsset, (asset: AssetSeries): number[] => asset.value, labels.length);
+    const invested = totalPerDate(perAsset, (asset: AssetSeries): number[] => asset.invested, labels.length);
 
     return {
-        ...chartFrame(valueFormatter, ZOOM_SLIDER_HEIGHT + 44, description, EXACT_EXTREMES_ONLY),
-        color: visible.map((_asset: AssetSeries, index: number): string => palette[index % palette.length]),
-        series: visible.map((asset: AssetSeries) => ({
-            name: asset.name,
-            type: 'line' as const,
-            stack: 'total',
-            symbol: 'none' as const,
-            lineStyle: { width: 0 },
-            areaStyle: { opacity: 0.9 },
-            data: datedPoints(labels, asset.value),
-        })),
+        ...chartFrame(valueFormatter, ZOOM_SLIDER_HEIGHT + 44, 'Valeur du portefeuille comparée au montant investi.', EXACT_EXTREMES_ONLY),
+        color: [VALUE_LINE_COLOR, INVESTED_LINE_COLOR],
+        series: [
+            {
+                name: 'Valeur',
+                type: 'line',
+                smooth: true,
+                symbol: 'none',
+                sampling: 'lttb',
+                lineStyle: { width: 2 },
+                areaStyle: { opacity: 0.15 },
+                data: datedPoints(labels, value),
+            },
+            {
+                name: 'Investi',
+                type: 'line',
+                step: 'end',
+                symbol: 'none',
+                lineStyle: { width: 2, type: 'dashed' },
+                data: datedPoints(labels, invested),
+            },
+        ],
         dataZoom: [
             { type: 'inside', start: window.start, end: window.end },
             {
@@ -173,20 +182,18 @@ export function buildEvolutionOption({ labels, perAsset, hiddenIds, valueFormatt
                     return '';
                 }
 
-                const totalValue = visible.reduce((sum, asset) => sum + (asset.value[index] ?? 0), 0);
-                const totalInvested = visible.reduce((sum, asset) => sum + (asset.invested[index] ?? 0), 0);
+                const totalValue = value[index] ?? 0;
+                const totalInvested = invested[index] ?? 0;
                 const gain = totalValue - totalInvested;
 
                 return tooltipTitle(labels[index] ?? '')
                     + tooltipRow(VALUE_LINE_COLOR, 'Valeur', valueFormatter(totalValue))
+                    + tooltipRow(INVESTED_LINE_COLOR, 'Investi', valueFormatter(totalInvested))
                     + tooltipRow(
                         gain >= 0 ? GAIN_COLOR : LOSS_COLOR,
                         gain >= 0 ? 'Gain' : 'Perte',
                         `${gain >= 0 ? '+' : '−'} ${valueFormatter(Math.abs(gain))}`,
-                    )
-                    + visible
-                        .map((asset, k) => tooltipRow(palette[k % palette.length], asset.name, valueFormatter(asset.value[index] ?? 0)))
-                        .join('');
+                    );
             },
         },
     };

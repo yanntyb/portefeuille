@@ -8,7 +8,6 @@ import type { ChartOption } from '@/lib/echarts';
 import type { EvolutionSeries } from '@/lib/portfolio';
 
 const props = defineProps<{
-    hiddenAssetIds: Set<number>;
     series?: EvolutionSeries;
 }>();
 
@@ -31,7 +30,6 @@ const hasEvolution = computed<boolean>(() => labels.value.length > 0);
 const option = computed<ChartOption>(() => buildEvolutionOption({
     labels: labels.value,
     perAsset: props.series?.perAsset ?? [],
-    hiddenIds: props.hiddenAssetIds,
     valueFormatter: (value: number): string => formatEur(value, 0),
     window: lastZoom,
 }));
