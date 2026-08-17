@@ -63,3 +63,14 @@ export const joinTrends = (lines: CatalogLine[], trends: CatalogTrend[] | undefi
         points: byAsset.get(line.id)?.points ?? [],
     }));
 };
+
+/**
+ * L'en-tête du catalogue : combien d'instruments, et combien sont détenus. Se recompte sur la
+ * liste filtrée, la recherche devant répondre « 2 instruments » et non « 2 sur 3 ».
+ */
+export const catalogCount = (rows: CatalogRow[]): string => {
+    const held = rows.filter((row: CatalogRow): boolean => row.held).length;
+    const instruments = `${rows.length} instrument${rows.length > 1 ? 's' : ''}`;
+
+    return held === 0 ? instruments : `${instruments} · ${held} détenu${held > 1 ? 's' : ''}`;
+};

@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import ChartRangeToggle from '@/components/ChartRangeToggle.vue';
 import CatalogSearch from '@/components/instruments/CatalogSearch.vue';
-import { rangeOptions, type CatalogRow, type RangeKey } from '@/lib/catalog';
+import { catalogCount, rangeOptions, type CatalogRow, type RangeKey } from '@/lib/catalog';
 
 const props = defineProps<{
     rows: CatalogRow[];
@@ -13,15 +13,7 @@ defineEmits<{ 'update:range': [value: RangeKey] }>();
 
 const query = defineModel<string>('query', { required: true });
 
-const heldCount = computed<number>(() => props.rows.filter((row) => row.held).length);
-
-const countLabel = computed<string>(() => {
-    const instruments = `${props.rows.length} instrument${props.rows.length > 1 ? 's' : ''}`;
-
-    return heldCount.value === 0
-        ? instruments
-        : `${instruments} · ${heldCount.value} détenu${heldCount.value > 1 ? 's' : ''}`;
-});
+const countLabel = computed<string>(() => catalogCount(props.rows));
 </script>
 
 <template>
