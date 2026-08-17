@@ -1,8 +1,12 @@
 <?php
 
+use App\Contexts\Valuation\Datas\AssetInvestedSeriesData;
+use App\Contexts\Valuation\Datas\EvolutionSeriesData;
+use App\Contexts\Valuation\Datas\InvestedByAssetSeriesData;
 use App\Contexts\Valuation\Datas\PriceRecordData;
 use App\Contexts\Valuation\Datas\PriceRecordData as P;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
+use App\Contexts\Valuation\Datas\ValuationSeriesData;
 use App\Contexts\Valuation\Enums\ValuationGranularity;
 use App\Contexts\Valuation\Services\ValuationCalculator;
 use Illuminate\Support\Carbon;
@@ -14,7 +18,7 @@ function tx(string $date, int $assetId, bool $isSell, float $qty, float $price, 
 
 it('returns an empty series without transactions', function () {
     expect((new ValuationCalculator)->calculate([], []))->toEqual(
-        \App\Contexts\Valuation\Datas\ValuationSeriesData::empty()
+        ValuationSeriesData::empty()
     );
 });
 
@@ -134,7 +138,7 @@ it('reduces invested by cost basis on a sell (per asset)', function () {
 
 it('returns an empty invested-by-asset series without transactions', function () {
     expect((new ValuationCalculator)->investedByAsset([]))->toEqual(
-        \App\Contexts\Valuation\Datas\InvestedByAssetSeriesData::empty()
+        InvestedByAssetSeriesData::empty()
     );
 });
 
@@ -223,7 +227,7 @@ it('windows the series to the requested range', function () {
         $labels[] = Carbon::parse('2025-01-01')->addDays($d)->format('Y-m-d');
     }
     $values = array_map(fn (int $i): float => (float) ($i + 1), array_keys($labels));
-    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData($labels, $values, $values, $values);
+    $daily = new ValuationSeriesData($labels, $values, $values, $values);
 
     $windowed = (new ValuationCalculator)->windowAndAggregate($daily, 1, ValuationGranularity::Day);
 
@@ -237,7 +241,7 @@ it('windows the series to the requested range', function () {
 it('aggregates by keeping the last point of each month bucket', function () {
     $labels = ['2026-01-10', '2026-01-20', '2026-01-31', '2026-02-05', '2026-02-28'];
     $values = [1.0, 2.0, 3.0, 4.0, 5.0];
-    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData($labels, $values, $values, $values);
+    $daily = new ValuationSeriesData($labels, $values, $values, $values);
 
     $monthly = (new ValuationCalculator)->windowAndAggregate($daily, null, ValuationGranularity::Month);
 
@@ -249,7 +253,7 @@ it('aggregates by keeping the last point of each month bucket', function () {
 it('keeps every point when granularity is Day', function () {
     $labels = ['2026-01-10', '2026-01-20', '2026-01-31'];
     $values = [1.0, 2.0, 3.0];
-    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData($labels, $values, $values, $values);
+    $daily = new ValuationSeriesData($labels, $values, $values, $values);
 
     $result = (new ValuationCalculator)->windowAndAggregate($daily, null, ValuationGranularity::Day);
 
@@ -259,7 +263,7 @@ it('keeps every point when granularity is Day', function () {
 it('computes the window return by chaining the daily returns', function () {
     // Pas 1 : (1250 - 1000 - 200) / 1000 = +5 %. Pas 2 : (1400 - 1250) / 1250 = +12 %.
     // TWR = 1,05 × 1,12 - 1 = +17,6 %.
-    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+    $daily = new ValuationSeriesData(
         ['2026-01-01', '2026-02-01', '2026-03-01'],
         [1000.0, 1250.0, 1400.0],
         [1000.0, 1200.0, 1200.0],
@@ -272,7 +276,7 @@ it('computes the window return by chaining the daily returns', function () {
 it('does not let the contribution date inflate the performance', function () {
     // Marché +10 % deux jours de suite, avec un apport de 10 000 € le premier jour.
     // TWR = 1,1 × 1,1 - 1 = +21 %, là où gain / valeur de début donnerait +1021 %.
-    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+    $daily = new ValuationSeriesData(
         ['2026-01-01', '2026-01-02', '2026-01-03'],
         [100.0, 10110.0, 11121.0],
         [100.0, 10100.0, 10100.0],
@@ -290,7 +294,7 @@ it('does not let the contribution date inflate the performance', function () {
 it('skips the steps where the position was empty', function () {
     // Tout vendu au prix de revient les jours 2 et 3, racheté au prix de revient le jour 4 :
     // aucune division par zéro, et aucune performance à compter.
-    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+    $daily = new ValuationSeriesData(
         ['2026-01-01', '2026-01-02', '2026-01-03', '2026-01-04'],
         [1000.0, 0.0, 0.0, 1200.0],
         [1000.0, 0.0, 0.0, 1200.0],
@@ -301,7 +305,7 @@ it('skips the steps where the position was empty', function () {
 });
 
 it('exposes the window start, value, contributions and gain', function () {
-    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+    $daily = new ValuationSeriesData(
         ['2026-01-01', '2026-02-01', '2026-03-01'],
         [1000.0, 1250.0, 1400.0],
         [1000.0, 1200.0, 1200.0],
@@ -318,7 +322,7 @@ it('exposes the window start, value, contributions and gain', function () {
 });
 
 it('anchors the window start on the last day at or before the boundary', function () {
-    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+    $daily = new ValuationSeriesData(
         ['2026-01-01', '2026-01-15', '2026-03-01'],
         [1000.0, 2000.0, 3000.0],
         [1000.0, 1000.0, 1000.0],
@@ -335,7 +339,7 @@ it('anchors the window start on the last day at or before the boundary', functio
 });
 
 it('returns null when the series does not reach the boundary', function () {
-    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+    $daily = new ValuationSeriesData(
         ['2026-02-01', '2026-03-01'],
         [1000.0, 1200.0],
         [1000.0, 1000.0],
@@ -346,7 +350,7 @@ it('returns null when the series does not reach the boundary', function () {
 });
 
 it('returns null when the starting value is zero', function () {
-    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+    $daily = new ValuationSeriesData(
         ['2026-01-01', '2026-02-01'],
         [0.0, 500.0],
         [0.0, 0.0],
@@ -357,7 +361,7 @@ it('returns null when the starting value is zero', function () {
 });
 
 it('builds trailing performances: YTD, monthly, one row per full year, then Max', function () {
-    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+    $daily = new ValuationSeriesData(
         ['2023-01-01', '2023-07-01', '2024-07-01', '2025-07-01', '2026-01-01', '2026-04-01', '2026-06-01', '2026-07-01'],
         [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1200.0],
         [1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0, 1000.0],
@@ -380,7 +384,7 @@ it('builds trailing performances: YTD, monthly, one row per full year, then Max'
 it('starts the Max window on the first day of the series', function () {
     // Trois ans pleins d'historique : la ligne « 3 ans » est remplacée par Max, qui part
     // du 2023-01-01 (valeur 500) au lieu du 2023-07-01 que « 3 ans » aurait pris.
-    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+    $daily = new ValuationSeriesData(
         ['2023-01-01', '2023-07-01', '2024-07-01', '2025-07-01', '2026-07-01'],
         [500.0, 1000.0, 1000.0, 1000.0, 1200.0],
         [500.0, 500.0, 500.0, 500.0, 500.0],
@@ -401,7 +405,7 @@ it('starts the Max window on the first day of the series', function () {
 
 it('omits the periods the series does not cover', function () {
     // Série qui démarre le 2026-05-01 : ni le début d'année, ni 3 mois, ni 6 mois ne sont couverts.
-    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData(
+    $daily = new ValuationSeriesData(
         ['2026-05-01', '2026-07-01'],
         [1000.0, 1200.0],
         [1000.0, 1000.0],
@@ -416,13 +420,13 @@ it('omits the periods the series does not cover', function () {
 });
 
 it('returns no trailing performances for an empty series', function () {
-    expect((new ValuationCalculator)->trailingPerformances(App\Contexts\Valuation\Datas\ValuationSeriesData::empty()))->toBe([]);
+    expect((new ValuationCalculator)->trailingPerformances(ValuationSeriesData::empty()))->toBe([]);
 });
 
 it('windows and aggregates an invested-by-asset series', function () {
-    $series = new App\Contexts\Valuation\Datas\InvestedByAssetSeriesData(
+    $series = new InvestedByAssetSeriesData(
         ['2026-01-10', '2026-01-20', '2026-02-15', '2026-03-01'],
-        [new App\Contexts\Valuation\Datas\AssetInvestedSeriesData(1, 'A', [100.0, 200.0, 300.0, 400.0])],
+        [new AssetInvestedSeriesData(1, 'A', [100.0, 200.0, 300.0, 400.0])],
     );
 
     $result = (new ValuationCalculator)->windowAndAggregateInvested($series, null, ValuationGranularity::Month);
@@ -433,9 +437,9 @@ it('windows and aggregates an invested-by-asset series', function () {
 });
 
 it('windows an invested-by-asset series by range', function () {
-    $series = new App\Contexts\Valuation\Datas\InvestedByAssetSeriesData(
+    $series = new InvestedByAssetSeriesData(
         ['2026-01-10', '2026-02-15', '2026-03-01'],
-        [new App\Contexts\Valuation\Datas\AssetInvestedSeriesData(1, 'A', [100.0, 200.0, 300.0])],
+        [new AssetInvestedSeriesData(1, 'A', [100.0, 200.0, 300.0])],
     );
 
     // Dernier label 2026-03-01, range 1M => cutoff 2026-02-01 : seuls 2026-02-15 et 2026-03-01 restent.
@@ -483,7 +487,7 @@ it('keeps sum of per-asset value equal to the total valuation (evolution invaria
 
 it('returns an empty evolution series without transactions', function () {
     expect((new ValuationCalculator)->evolution([], [], null, ValuationGranularity::Day))
-        ->toEqual(\App\Contexts\Valuation\Datas\EvolutionSeriesData::empty());
+        ->toEqual(EvolutionSeriesData::empty());
 });
 
 it('windows the series to an arbitrary number of months', function () {
@@ -492,7 +496,7 @@ it('windows the series to an arbitrary number of months', function () {
         $labels[] = Carbon::parse('2025-01-01')->addDays($d)->format('Y-m-d');
     }
     $values = array_map(fn (int $i): float => (float) ($i + 1), array_keys($labels));
-    $daily = new App\Contexts\Valuation\Datas\ValuationSeriesData($labels, $values, $values, $values);
+    $daily = new ValuationSeriesData($labels, $values, $values, $values);
 
     $windowed = (new ValuationCalculator)->windowAndAggregate($daily, 3, ValuationGranularity::Day);
 

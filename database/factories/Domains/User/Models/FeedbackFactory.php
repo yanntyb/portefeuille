@@ -7,7 +7,7 @@ use App\Contexts\Identity\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<\App\Contexts\Identity\Models\Feedback>
+ * @extends Factory<Feedback>
  */
 class FeedbackFactory extends Factory
 {

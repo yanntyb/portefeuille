@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Contexts\Identity\Models\Invitation>
+ * @extends Factory<Invitation>
  */
 class InvitationFactory extends Factory
 {

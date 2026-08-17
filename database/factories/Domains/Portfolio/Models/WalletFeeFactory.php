@@ -9,7 +9,7 @@ use App\Domains\Portfolio\Models\WalletFee;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Domains\Portfolio\Models\WalletFee>
+ * @extends Factory<WalletFee>
  */
 class WalletFeeFactory extends Factory
 {

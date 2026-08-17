@@ -5,6 +5,7 @@ namespace App\Contexts\Market\Infrastructure;
 use App\Contexts\Market\Contracts\PriceRepositoryContract;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Ports\PriceProviderPort;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 readonly class DatabaseAssetPriceAdapter implements PriceProviderPort
@@ -22,7 +23,7 @@ readonly class DatabaseAssetPriceAdapter implements PriceProviderPort
 
     public function getPriceHistory(int $assetId, ?string $startDate = null, ?string $endDate = null): Collection
     {
-        $prices = $this->repository->forAssetSince($assetId, $startDate ? \Carbon\Carbon::parse($startDate) : now()->subYear());
+        $prices = $this->repository->forAssetSince($assetId, $startDate ? Carbon::parse($startDate) : now()->subYear());
 
         if ($endDate !== null) {
             $prices = $prices->filter(fn ($p) => $p->date->format('Y-m-d') <= $endDate);

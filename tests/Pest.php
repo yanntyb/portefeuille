@@ -9,6 +9,9 @@ use App\Contexts\Market\Models\SectorAllocation;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Pest\Browser\Api\PendingAwaitablePage;
+use Tests\TestCase;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,11 +24,11 @@ use App\Contexts\Portfolio\Models\Wallet;
 |
 */
 
-pest()->extend(Tests\TestCase::class)
-    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+pest()->extend(TestCase::class)
+    ->use(RefreshDatabase::class)
     ->in('Feature', 'Unit', 'Browser', '../app/Contexts');
 
-pest()->extend(Tests\TestCase::class)
+pest()->extend(TestCase::class)
     ->in('../app/Shared');
 
 /*
@@ -174,7 +177,7 @@ function holdingWithSectors(User $user, string $name, float $close, array $secto
 }
 
 /** Amplitude de la fenêtre visible, en pourcentage de l'historique, publiée par le graphe en attribut. */
-function zoomWindowSpan(Pest\Browser\Api\PendingAwaitablePage $page, string $section): float
+function zoomWindowSpan(PendingAwaitablePage $page, string $section): float
 {
     $window = (string) $page->script("document.querySelector('[data-section={$section}] [data-chart]').getAttribute('data-zoom-window')");
     [$start, $end] = array_map('floatval', explode('-', $window));
@@ -183,7 +186,7 @@ function zoomWindowSpan(Pest\Browser\Api\PendingAwaitablePage $page, string $sec
 }
 
 /** Molette sur le graphe : vers l'avant on zoome, vers l'arrière on dézoome. */
-function scrollChart(Pest\Browser\Api\PendingAwaitablePage $page, string $section, int $deltaY): void
+function scrollChart(PendingAwaitablePage $page, string $section, int $deltaY): void
 {
     $page->script("(() => {
         const chart = document.querySelector('[data-section={$section}] [data-chart]');

@@ -5,6 +5,7 @@ use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
+use Illuminate\Support\Carbon;
 
 it('casts attributes and links wallet and user', function () {
     $user = User::factory()->create();
@@ -21,7 +22,7 @@ it('casts attributes and links wallet and user', function () {
 
     expect($transaction->type)->toBe(TransactionType::Sell)
         ->and((float) $transaction->quantity)->toBe(5.0)
-        ->and($transaction->date)->toBeInstanceOf(\Illuminate\Support\Carbon::class)
+        ->and($transaction->date)->toBeInstanceOf(Carbon::class)
         ->and($transaction->wallet->is($wallet))->toBeTrue()
         ->and($transaction->user->is($user))->toBeTrue();
 });

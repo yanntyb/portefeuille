@@ -3,12 +3,14 @@
 namespace App\Contexts\InstrumentView\Ports;
 
 use App\Contexts\InstrumentView\Datas\InstrumentMetaData;
+use App\Contexts\InstrumentView\Datas\InstrumentSummaryData;
 use App\Contexts\InstrumentView\Datas\PriceHistoryData;
+use App\Contexts\InstrumentView\Datas\SectorWeightData;
 use Illuminate\Support\Carbon;
 
 interface MarketDataPort
 {
-    /** @return list<\App\Contexts\InstrumentView\Datas\InstrumentSummaryData> */
+    /** @return list<InstrumentSummaryData> */
     public function listInstruments(): array;
 
     public function findInstrument(int $id): ?InstrumentMetaData;
@@ -17,6 +19,6 @@ interface MarketDataPort
 
     public function priceHistory(int $id, Carbon $since): PriceHistoryData;
 
-    /** @return list<\App\Contexts\InstrumentView\Datas\SectorWeightData> */
+    /** @return list<SectorWeightData> */
     public function sectors(int $id): array;
 }
