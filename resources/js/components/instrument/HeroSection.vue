@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import GainPill from '@/components/GainPill.vue';
-import { eur, frDate, pct, signedEur } from '@/lib/format';
+import { eur, frDate, gainClass, pct, signedEur } from '@/lib/format';
 import { investedOf, type Instrument } from '@/lib/instrument';
 
 const props = defineProps<{
@@ -22,6 +22,20 @@ const invested = computed<number | null>(() =>
 const quantityLabel = computed<string>(() =>
     position.value === null ? '' : position.value.quantity.toLocaleString('fr-FR'),
 );
+
+/** Paires libellé/valeur du pied de l'en-tête : le libellé s'efface, la valeur porte la lecture. */
+const metaEntries = computed<{ label: string; value: string }[]>(() => {
+    if (position.value === null) {
+        return [];
+    }
+
+    return [
+        { label: 'Titres', value: quantityLabel.value },
+        { label: 'PRU', value: eur(position.value.avgCost) },
+        { label: 'Investi', value: eur(invested.value) },
+        { label: 'Cours', value: eur(props.instrument.lastPrice) },
+    ];
+});
 </script>
 
 <template>
@@ -37,26 +51,35 @@ const quantityLabel = computed<string>(() =>
             </p>
         </div>
 
-        <div class="flex min-w-0 flex-col gap-2">
+        <div class="flex min-w-0 flex-col gap-1.5">
             <div class="flex flex-wrap items-baseline gap-3">
                 <p data-hero-value class="text-4xl font-bold tracking-[-0.02em] tabular-nums">{{ eur(heroValue) }}</p>
 
                 <GainPill
-                    v-if="position && position.gain !== null"
-                    data-hero-gain
+                    v-if="position && position.gainPct !== null"
+                    data-hero-gain-pct
                     :value="position.gain"
-                    :label="`${signedEur(position.gain)} (${pct(position.gainPct)})`"
+                    :label="pct(position.gainPct)"
                 />
             </div>
 
-            <p data-hero-meta class="text-[13.5px] text-muted-foreground tabular-nums">
-                <template v-if="position">
-                    {{ quantityLabel }} titres · PRU {{ eur(position.avgCost) }} · investi
-                    {{ eur(invested) }} · cours {{ eur(instrument.lastPrice) }}
-                </template>
-                <template v-else-if="instrument.lastPriceDate">
+            <p
+                v-if="position && position.gain !== null"
+                data-hero-gain
+                class="text-[15px] font-semibold tabular-nums"
+                :class="gainClass(position.gain)"
+            >
+                {{ signedEur(position.gain) }}
+            </p>
+
+            <p data-hero-meta class="flex flex-wrap gap-x-8 gap-y-1 pt-1.5 text-[13.5px] text-muted-foreground">
+                <span v-for="entry in metaEntries" :key="entry.label" class="whitespace-nowrap">
+                    {{ entry.label }}
+                    <strong class="font-semibold text-foreground tabular-nums">{{ entry.value }}</strong>
+                </span>
+                <span v-if="position === null && instrument.lastPriceDate">
                     au {{ frDate(instrument.lastPriceDate) }}
-                </template>
+                </span>
             </p>
         </div>
     </header>

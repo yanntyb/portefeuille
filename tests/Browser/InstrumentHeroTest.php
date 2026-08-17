@@ -53,10 +53,13 @@ it('leads the held instrument sheet with its value, gain and cost basis', functi
 
     visit("/instruments/{$asset->id}")
         ->assertScript("document.querySelector('[data-hero-value]').textContent.replace(/\\s/g, ' ').trim()", '1 000,00 €')
-        ->assertScript("document.querySelector('[data-hero-gain]').textContent.replace(/\\s+/g, ' ').trim()", '+200,00 € (+25,0 %)')
+        ->assertScript("document.querySelector('[data-hero-gain]').textContent.replace(/\\s+/g, ' ').trim()", '+200,00 €')
+        ->assertScript("document.querySelector('[data-hero-gain-pct]').textContent.replace(/\\s+/g, ' ').trim()", '+25,0 %')
         ->assertScript(
-            "document.querySelector('[data-hero-meta]').textContent.replace(/\\s+/g, ' ').trim()",
-            '10 titres · PRU 80,00 € · investi 800,00 € · cours 100,00 €',
+            "Array.from(document.querySelectorAll('[data-hero-meta] > span'))
+                .map(entry => entry.textContent.replace(/\\s+/g, ' ').trim())
+                .join(' · ')",
+            'Titres 10 · PRU 80,00 € · Investi 800,00 € · Cours 100,00 €',
         )
         ->assertNoJavaScriptErrors();
 });
@@ -70,6 +73,7 @@ it('leads the unheld instrument sheet with its last price', function () {
         ->assertScript("document.querySelector('[data-hero-value]').textContent.replace(/\\s/g, ' ').trim()", '100,00 €')
         ->assertScript("document.querySelector('[data-hero-meta]').textContent.replace(/\\s+/g, ' ').trim()", 'au 01/07/2026')
         ->assertScript("document.querySelectorAll('[data-hero-gain]').length", 0)
+        ->assertScript("document.querySelectorAll('[data-hero-gain-pct]').length", 0)
         ->assertNoJavaScriptErrors();
 });
 
