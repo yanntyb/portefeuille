@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
+// import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
 import AppCarousel from '@/components/AppCarousel.vue';
 import AppCarouselPage from '@/components/AppCarouselPage.vue';
 import AppPage from '@/components/AppPage.vue';
@@ -25,10 +25,9 @@ defineProps<{
     <Head title="Tableau de bord" />
 
     <!--
-        Sur mobile la page et son fil d'Ariane partagent une boîte d'exactement un écran : un fil
-        `sticky` occupe sa place dans le flux, donc laissé au-dessous d'un `main` de 100dvh il
-        rendrait le document plus haut que l'écran et laisserait un résidu de défilement.
-        `dvh` et non `vh` : sous iOS `100vh` passe derrière la barre d'adresse.
+        Boîte d'exactement un écran : le carrousel a besoin d'une hauteur définie pour paginer, et
+        `AppPage fill` la prend de son parent. `dvh` et non `vh` : sous iOS `100vh` passe derrière
+        la barre d'adresse, la dernière ligne serait coupée.
     -->
     <div class="flex h-dvh flex-col overflow-hidden md:block md:h-auto md:overflow-visible">
         <AppPage fill>
@@ -53,6 +52,7 @@ defineProps<{
             </AppCarousel>
         </AppPage>
 
-        <AppBreadcrumb :items="[{ label: 'Tableau de bord' }]" />
+        <!-- Le tableau de bord est la racine : son fil d'Ariane n'aurait qu'un seul cran, et il coûte un écran de haut. -->
+        <!-- <AppBreadcrumb :items="[{ label: 'Tableau de bord' }]" /> -->
     </div>
 </template>

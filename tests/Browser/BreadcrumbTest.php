@@ -10,12 +10,23 @@ function breadcrumbGapToViewportBottom(): string
     })()';
 }
 
-it('affiche un fil d\'Ariane collant en bas du tableau de bord', function () {
+it('se passe de fil d\'Ariane sur le tableau de bord, qui n\'a nulle part à remonter', function () {
     ['user' => $user] = portfolioFixture();
 
     $this->actingAs($user);
 
-    $page = visit('/');
+    visit('/')
+        ->assertSee('Performances')
+        ->assertMissing('nav[aria-label="Fil d\'Ariane"]')
+        ->assertNoJavaScriptErrors();
+});
+
+it('affiche un fil d\'Ariane collant en bas d\'une fiche instrument', function () {
+    ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
+
+    $this->actingAs($user);
+
+    $page = visit("/instruments/{$instrument->id}");
 
     $page->assertSee('Tableau de bord')
         ->assertVisible('nav[aria-label="Fil d\'Ariane"]')
@@ -27,11 +38,11 @@ it('affiche un fil d\'Ariane collant en bas du tableau de bord', function () {
 });
 
 it('place le fil d\'Ariane après le contenu de la page', function () {
-    ['user' => $user] = portfolioFixture();
+    ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
 
     $this->actingAs($user);
 
-    $page = visit('/');
+    $page = visit("/instruments/{$instrument->id}");
 
     $page->assertScript('(() => {
         const main = document.querySelector("main");
