@@ -64,6 +64,8 @@ function chartFrame(valueFormatter: ValueFormatter, bottom: number, description:
         },
         yAxis: {
             type: 'value',
+            /** Sans `scale`, ECharts englobe zéro : la variation s'écrase alors dans le haut du cadre. */
+            scale: true,
             axisLine: { show: false },
             axisTick: { show: false },
             axisLabel: { color: axisLabelColor(), formatter: (value: number): string => valueFormatter(value) },

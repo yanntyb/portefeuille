@@ -232,6 +232,17 @@ qu'un an s'affiche en entier avec des poignées figées. La fenêtre d'ouverture
 n'est donc plus une constante mais une fonction de l'historique reçu ; la
 section passe `null` tant que le lecteur n'a rien déplacé.
 
+**L'axe des valeurs ne contient plus zéro.** Le défaut d'ECharts pour un axe de
+valeurs, `scale: false`, force l'échelle à englober zéro : un portefeuille
+oscillant entre 700 et 1 100 € était peint dans un cadre partant de 0, donc
+écrasé dans le tiers haut, et le plancher de zoom d'un an n'y changeait rien.
+`chartFrame` pose désormais `scale: true`, ce qui vaut pour les trois graphes.
+Les bornes restent arrondies par ECharts plutôt que collées aux extrêmes des
+données — la variante « bornes exactes » avait déjà été essayée et retirée. Sur
+le tableau de bord, l'axe suit la fenêtre zoomée sans réglage supplémentaire :
+le `dataZoom` écarte déjà les points hors fenêtre avec son `filterMode` par
+défaut.
+
 **Le graphe du tableau de bord a rejoint le style de la fiche instrument.** Les
 six aires empilées par actif du bloc `series` ci-dessus ont d'abord cédé la
 place à deux courbes, valeur contre investi, comme sur la fiche instrument.

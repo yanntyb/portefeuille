@@ -67,6 +67,19 @@ it('plots the position value against what was invested, in euros', function () {
         ->assertNoJavaScriptErrors();
 });
 
+it('scales the value axis to the visible values instead of anchoring it at zero', function () {
+    ['user' => $user, 'instrument' => $asset] = instrumentWithValuation();
+
+    $this->actingAs($user);
+
+    $page = visit("/instruments/{$asset->id}");
+    $page->assertScript("document.querySelector('[data-section=valuation] [data-chart] svg') !== null", true);
+
+    expect(lowestValueAxisLabel($page, 'valuation'))->toBeGreaterThan(0.0);
+
+    $page->assertNoJavaScriptErrors();
+});
+
 it('spells out the gain in the tooltip, like the dashboard chart', function () {
     ['user' => $user, 'instrument' => $asset] = instrumentWithValuation();
 

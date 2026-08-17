@@ -43,3 +43,19 @@ expect()->extend('toBeOne', function () {
 | global functions to help you to reduce the number of lines of code in your test files.
 |
 */
+
+/**
+ * Borne basse de l'axe des valeurs d'un graphe. ECharts peint ses libellés en SVG sans les
+ * nommer : les seuls alignés à droite sont ceux de l'axe des valeurs.
+ */
+function lowestValueAxisLabel(Pest\Browser\Api\PendingAwaitablePage $page, string $section): float
+{
+    return (float) $page->script("(() => {
+        const labels = [...document.querySelectorAll('[data-section={$section}] [data-chart] svg text')]
+            .filter((text) => text.getAttribute('text-anchor') === 'end')
+            .map((text) => parseFloat(text.textContent.replace(/[^0-9,.-]/g, '').replace(',', '.')))
+            .filter((value) => !Number.isNaN(value));
+
+        return labels.length === 0 ? -1 : Math.min(...labels);
+    })()");
+}

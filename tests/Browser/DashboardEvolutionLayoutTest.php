@@ -66,6 +66,17 @@ it('draws the portfolio value against the invested amount, like the instrument c
         ->assertNoJavaScriptErrors();
 });
 
+it('scales the value axis to the visible values instead of anchoring it at zero', function () {
+    $this->actingAs(userWithEvolution());
+
+    $page = visit('/');
+    $page->assertScript("document.querySelector('[data-section=evolution] [data-chart]') !== null", true);
+
+    expect(lowestValueAxisLabel($page, 'evolution'))->toBeGreaterThan(0.0);
+
+    $page->assertNoJavaScriptErrors();
+});
+
 it('graduates the value axis in euros like the instrument chart, not on its bounds alone', function () {
     $this->actingAs(userWithEvolution());
 

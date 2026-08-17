@@ -54,6 +54,22 @@ it('splits the held instrument sheet into cardless sections', function () {
         ->assertNoJavaScriptErrors();
 });
 
+it('scales the price axis to the visible quotes instead of anchoring it at zero', function () {
+    ['user' => $user, 'instrument' => $asset] = instrumentSheet(held: false);
+
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-07-08', 'close' => 90]);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-07-15', 'close' => 110]);
+
+    $this->actingAs($user);
+
+    $page = visit("/instruments/{$asset->id}");
+    $page->assertScript("document.querySelector('[data-section=price-history] [data-chart] svg') !== null", true);
+
+    expect(lowestValueAxisLabel($page, 'price-history'))->toBeGreaterThan(0.0);
+
+    $page->assertNoJavaScriptErrors();
+});
+
 it('swaps the valuation section for the price history when the instrument is not held', function () {
     ['user' => $user, 'instrument' => $asset] = instrumentSheet(held: false);
 
