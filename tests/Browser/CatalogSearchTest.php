@@ -28,7 +28,6 @@ function seedCatalogInstrument(string $name, float $open, float $close): Instrum
 }
 
 it('cherche, trie les résultats sur une colonne, puis restitue la liste une fois effacée', function () {
-    User::query()->delete();
     $user = User::factory()->create();
 
     seedCatalogInstrument('Alpha Fund', 100, 150);

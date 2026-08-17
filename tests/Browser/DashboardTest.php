@@ -26,7 +26,6 @@ it('explique les performances par période à travers un dialogue', function () 
 it('replie les secteurs au-delà du sixième derrière une bascule', function () {
     // Un utilisateur nu : portfolioFixture() créerait une position sans SectorAllocation, dont le
     // poids non alloué tombe dans un secteur « Autre » — neuf secteurs au lieu de huit.
-    User::query()->delete();
     $user = User::factory()->create();
 
     holdingWithSectors($user, 'ACME ETF', 1000.0, [
@@ -59,7 +58,6 @@ it('replie les secteurs au-delà du sixième derrière une bascule', function ()
 it('affiche un état vide quand aucune position n\'a de valeur de marché', function () {
     // Aucun cours pour l'instrument : la position n'a pas de valeur de marché, la section
     // sectorielle n'a donc rien à répartir.
-    User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $instrument = Instrument::factory()->ofType(InstrumentType::ETF)->create(['name' => 'ACME ETF']);

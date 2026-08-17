@@ -63,16 +63,11 @@ expect()->extend('toBeOne', function () {
  * rend plus du tout quand l'instrument n'a aucun `SectorAllocation`, elle ne se contente pas d'un
  * état vide.
  *
- * Une migration héritée sème un utilisateur en dur ; on l'efface pour que le contrôleur résolve
- * bien celui du test. Ce nettoyage disparaît en tâche 13, une fois la migration corrigée.
- *
  * @param  array{name?: string, ticker?: string, quantity?: float, avgCost?: float, close?: float}  $overrides
  * @return array{user: User, wallet: Wallet, instrument: Instrument}
  */
 function portfolioFixture(array $overrides = []): array
 {
-    User::query()->delete();
-
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
 
@@ -126,8 +121,6 @@ function portfolioFixture(array $overrides = []): array
  */
 function denseHistoryFixture(int $days = 1095): array
 {
-    User::query()->delete();
-
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $instrument = Instrument::factory()->create(['name' => 'ACME']);

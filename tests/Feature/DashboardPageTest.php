@@ -14,10 +14,6 @@ use Illuminate\Support\Collection;
 use Inertia\Testing\AssertableInertia as Assert;
 
 it('renders the Dashboard with an empty overview when there is no data', function () {
-    // A legacy data migration seeds a hardcoded user on every migrate:fresh, which would
-    // otherwise be picked up by the controller's `User::query()->first()` fallback instead
-    // of the user created below.
-    User::query()->delete();
     User::factory()->create();
 
     $this->get('/')
@@ -31,8 +27,6 @@ it('renders the Dashboard with an empty overview when there is no data', functio
 });
 
 it('renders the Dashboard with the user portfolio overview', function () {
-    // See note above: clear any legacy seeded user so the fallback resolves to this test's user.
-    User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->ofType(InstrumentType::Stock)->create(['name' => 'ACME', 'ticker' => 'ACM']);
@@ -59,7 +53,6 @@ it('renders the Dashboard with the user portfolio overview', function () {
 });
 
 it('defers the evolution series and loads it on demand', function () {
-    User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->create(['name' => 'ACME']);
@@ -85,7 +78,6 @@ it('defers the evolution series and loads it on demand', function () {
 });
 
 it('samples the evolution series week by week, not day by day', function () {
-    User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->create();
@@ -120,7 +112,6 @@ it('samples the evolution series week by week, not day by day', function () {
 });
 
 it('defers the sector breakdown and loads it on demand', function () {
-    User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->ofType(InstrumentType::ETF)->create(['name' => 'ACME ETF']);
@@ -154,7 +145,6 @@ it('defers the sector breakdown and loads it on demand', function () {
 });
 
 it('defers the portfolio performances and loads them on demand', function () {
-    User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->create();
@@ -182,7 +172,6 @@ it('defers the portfolio performances and loads them on demand', function () {
 });
 
 it('ships the whole evolution history in one go, the zoom being client-side', function () {
-    User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->create();
@@ -206,7 +195,6 @@ it('ships the whole evolution history in one go, the zoom being client-side', fu
 });
 
 it('ignores a months query parameter, the window no longer being server-driven', function () {
-    User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->create();

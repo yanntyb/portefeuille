@@ -8,7 +8,6 @@ use App\Contexts\Portfolio\Models\Wallet;
 use Inertia\Testing\AssertableInertia as Assert;
 
 it('renders the instrument catalogue with a held flag', function () {
-    User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $held = Instrument::factory()->create(['name' => 'Held Co', 'ticker' => 'HLD', 'isin' => 'FR0000000001']);
@@ -28,7 +27,6 @@ it('renders the instrument catalogue with a held flag', function () {
 });
 
 it('defers the catalogue trends and loads them on demand', function () {
-    User::query()->delete();
     User::factory()->create();
     $asset = Instrument::factory()->create(['name' => 'Trending Co']);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => now()->subDays(10), 'close' => 100]);
@@ -50,7 +48,6 @@ it('defers the catalogue trends and loads them on demand', function () {
 });
 
 it('accepts the range query param for the catalogue trends', function () {
-    User::query()->delete();
     User::factory()->create();
     $asset = Instrument::factory()->create();
     Price::factory()->create(['asset_id' => $asset->id, 'date' => now()->subMonths(6), 'close' => 10]);

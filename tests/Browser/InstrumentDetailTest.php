@@ -31,7 +31,6 @@ it('détaille le montant de chaque secteur quand l\'instrument est détenu', fun
     // Deux secteurs de poids distincts (60/40) sur une valeur de marché de 1 000 € : deux
     // montants différents l'un de l'autre et de la valeur totale, pour discriminer un mutant qui
     // afficherait la valeur brute ou intervertirait les poids.
-    User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $instrument = Instrument::factory()->create(['name' => 'ACME ETF']);
@@ -59,7 +58,6 @@ it('détaille le montant de chaque secteur quand l\'instrument est détenu', fun
 });
 
 it('affiche uniquement la part sectorielle quand l\'instrument n\'est pas détenu', function () {
-    User::query()->delete();
     $user = User::factory()->create();
     $instrument = Instrument::factory()->create(['name' => 'ACME ETF']);
     Price::factory()->create(['asset_id' => $instrument->id, 'date' => '2026-07-01', 'close' => 100]);

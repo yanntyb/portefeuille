@@ -9,10 +9,20 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Rattache les transactions existantes à un utilisateur. Le compte de repli n'est créé que s'il
+     * y a réellement des lignes orphelines : une base fraîche n'a rien à rattacher, et n'a donc pas
+     * à hériter d'un utilisateur.
      */
     public function up(): void
     {
+        Schema::table('transactions', function (Blueprint $table) {
+            $table->foreignId('user_id')->nullable()->after('id')->constrained()->nullOnDelete();
+        });
+
+        if (! DB::table('transactions')->whereNull('user_id')->exists()) {
+            return;
+        }
+
         $userId = DB::table('users')->where('email', 'yanntyb.lbc@gmail.com')->value('id');
 
         if (! $userId) {
@@ -24,10 +34,6 @@ return new class extends Migration
                 'updated_at' => now(),
             ]);
         }
-
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->foreignId('user_id')->nullable()->after('id')->constrained()->nullOnDelete();
-        });
 
         DB::table('transactions')->whereNull('user_id')->update(['user_id' => $userId]);
     }

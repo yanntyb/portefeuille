@@ -10,7 +10,6 @@ use App\Contexts\Valuation\Actions\BuildPortfolioValuationSeries;
 use Database\Seeders\DashboardDemoSeeder;
 
 it('builds the demo portfolio from transactions', function () {
-    User::query()->delete();
     $user = User::factory()->create();
 
     $this->seed(DashboardDemoSeeder::class);
@@ -31,7 +30,6 @@ it('builds the demo portfolio from transactions', function () {
 });
 
 it('is idempotent', function () {
-    User::query()->delete();
     User::factory()->create();
 
     $this->seed(DashboardDemoSeeder::class);
@@ -45,7 +43,6 @@ it('is idempotent', function () {
 });
 
 it('seeds a price history that yields a non-flat valuation curve', function () {
-    User::query()->delete();
     $user = User::factory()->create();
 
     $this->seed(DashboardDemoSeeder::class);

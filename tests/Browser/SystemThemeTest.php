@@ -10,8 +10,6 @@ use App\Contexts\Portfolio\Models\Wallet;
 
 function seedSystemThemePortfolio(): User
 {
-    // A legacy data migration seeds a hardcoded user; clear it so the controller resolves this user.
-    User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->ofType(InstrumentType::Stock)->create(['name' => 'ACME', 'ticker' => 'ACM']);

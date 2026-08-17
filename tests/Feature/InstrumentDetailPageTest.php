@@ -11,7 +11,6 @@ use Illuminate\Support\Collection;
 use Inertia\Testing\AssertableInertia as Assert;
 
 it('renders a held instrument sheet with its position and transactions', function () {
-    User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->create(['name' => 'ACME']);
@@ -39,7 +38,6 @@ it('renders a held instrument sheet with its position and transactions', functio
 });
 
 it('hides the position when the instrument is not held', function () {
-    User::query()->delete();
     $user = User::factory()->create();
     $asset = Instrument::factory()->create();
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-07-01', 'close' => 100]);
@@ -53,14 +51,12 @@ it('hides the position when the instrument is not held', function () {
 });
 
 it('returns 404 for an unknown instrument', function () {
-    User::query()->delete();
     User::factory()->create();
 
     $this->get('/instruments/999')->assertNotFound();
 });
 
 it('defers the per-title valuation series and loads it on demand', function () {
-    User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->create();
@@ -85,7 +81,6 @@ it('defers the per-title valuation series and loads it on demand', function () {
 });
 
 it('sends the whole valuation history, sampled week by week', function () {
-    User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->create();
