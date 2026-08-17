@@ -60,23 +60,6 @@ function lowestValueAxisLabel(Pest\Browser\Api\PendingAwaitablePage $page, strin
     })()");
 }
 
-/**
- * Courbes Valeur et Investi tracées dans le graphe d'une section, sous la forme « 1|0 ».
- * Les deux se distinguent par leur teinte, l'investi ajoutant des pointillés.
- */
-function drawnLines(Pest\Browser\Api\PendingAwaitablePage $page, string $section): string
-{
-    return (string) $page->script("(() => {
-        const paths = document.querySelectorAll('[data-section={$section}] [data-chart] svg path');
-        const value = [...paths].filter((path) => path.getAttribute('stroke') === '#5257d6').length;
-        const invested = [...paths]
-            .filter((path) => path.getAttribute('stroke') === '#b6bac4' && path.hasAttribute('stroke-dasharray'))
-            .length;
-
-        return [value, invested].join('|');
-    })()");
-}
-
 /** Amplitude de la fenêtre visible, en pourcentage de l'historique, publiée par le graphe en attribut. */
 function zoomWindowSpan(Pest\Browser\Api\PendingAwaitablePage $page, string $section): float
 {
