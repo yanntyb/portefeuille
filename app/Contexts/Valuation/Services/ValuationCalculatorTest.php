@@ -485,6 +485,45 @@ it('keeps sum of per-asset value equal to the total valuation (evolution invaria
     }
 });
 
+it('reporte le dernier cours connu sur les labels sans prix, et retient la dernière valeur d\'un jour agrégé', function () {
+    $series = (new ValuationCalculator)->evolution(
+        [tx('2026-01-05', 1, false, 10, 100), tx('2026-01-05', 2, false, 2, 10)],
+        [
+            // l'actif 1 cote tous les jours, l'actif 2 n'a qu'un cours ancien puis plus rien
+            new P(1, '2026-01-05', 100), new P(1, '2026-01-06', 110), new P(1, '2026-01-12', 130),
+            new P(2, '2026-01-05', 10),
+        ],
+        null,
+        ValuationGranularity::Week,
+    );
+
+    // Semaine agrégée sur son dernier jour coté : le 06 pour la première, le 12 pour la seconde.
+    expect($series->labels)->toBe(['2026-01-06', '2026-01-12']);
+
+    $byName = collect($series->perAsset)->keyBy('name');
+    expect($byName['#1']->value)->toBe([1100.0, 1300.0])
+        // cours du 05 reporté sur les deux labels, faute de cotation plus récente
+        ->and($byName['#2']->value)->toBe([20.0, 20.0])
+        ->and($byName['#2']->invested)->toBe([20.0, 20.0]);
+});
+
+it('ne valorise rien avant la première transaction d\'un actif', function () {
+    $series = (new ValuationCalculator)->evolution(
+        [tx('2026-01-01', 1, false, 10, 100), tx('2026-03-01', 2, false, 5, 40)],
+        [
+            new P(1, '2026-01-01', 100), new P(1, '2026-02-01', 100), new P(1, '2026-03-01', 100),
+            // l'actif 2 cote avant d'être détenu : la quantité, nulle, doit annuler ces cours
+            new P(2, '2026-01-01', 40), new P(2, '2026-02-01', 40), new P(2, '2026-03-01', 40),
+        ],
+        null,
+        ValuationGranularity::Day,
+    );
+
+    $byName = collect($series->perAsset)->keyBy('name');
+    expect($byName['#2']->value)->toBe([0.0, 0.0, 200.0])
+        ->and($byName['#2']->invested)->toBe([0.0, 0.0, 200.0]);
+});
+
 it('returns an empty evolution series without transactions', function () {
     expect((new ValuationCalculator)->evolution([], [], null, ValuationGranularity::Day))
         ->toEqual(EvolutionSeriesData::empty());

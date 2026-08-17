@@ -436,20 +436,19 @@ class ValuationCalculator
 
         $perAsset = [];
         foreach ($investedTimelines as $assetId => $investedEntries) {
-            $qtyEntries = $quantityTimelines[$assetId] ?? [];
-            $priceEntries = $priceTimelines[$assetId] ?? [];
+            $quantities = $this->forwardFill($quantityTimelines[$assetId] ?? [], $windowed->labels);
+            $closes = $this->forwardFill($priceTimelines[$assetId] ?? [], $windowed->labels);
+            $invested = $this->forwardFill($investedEntries, $windowed->labels);
 
             $perAsset[] = new AssetSeriesData(
                 assetId: $assetId,
                 name: '#'.$assetId,
                 value: array_map(
-                    fn (string $day): float => round($this->valueAtDate($qtyEntries, $day) * $this->valueAtDate($priceEntries, $day), 2),
-                    $windowed->labels,
+                    fn (float $quantity, float $close): float => round($quantity * $close, 2),
+                    $quantities,
+                    $closes,
                 ),
-                invested: array_map(
-                    fn (string $day): float => round($this->valueAtDate($investedEntries, $day), 2),
-                    $windowed->labels,
-                ),
+                invested: array_map(fn (float $value): float => round($value, 2), $invested),
             );
         }
 
@@ -522,6 +521,37 @@ class ValuationCalculator
         }
 
         return $quantities;
+    }
+
+    /**
+     * Valeur de l'escalier sur une suite de jours croissants, en un seul parcours.
+     *
+     * `valueAtDate` relit la timeline depuis le début à chaque jour demandé ; sur les séries
+     * d'évolution — un millier de cours par actif, autant de labels — ce quadratique était le
+     * poste le plus cher de la page. Les deux suites étant triées, un curseur qui n'avance
+     * jamais en arrière suffit et rend exactement les mêmes valeurs.
+     *
+     * @param  list<array{date: string, value: float}>  $entries
+     * @param  list<string>  $days  Jours croissants.
+     * @return list<float>
+     */
+    private function forwardFill(array $entries, array $days): array
+    {
+        $values = [];
+        $cursor = 0;
+        $count = count($entries);
+        $current = 0.0;
+
+        foreach ($days as $day) {
+            while ($cursor < $count && $entries[$cursor]['date'] <= $day) {
+                $current = $entries[$cursor]['value'];
+                $cursor++;
+            }
+
+            $values[] = $current;
+        }
+
+        return $values;
     }
 
     /**
