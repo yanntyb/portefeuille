@@ -7,11 +7,6 @@ describe('pageContainer', () => {
         expect(pageContainer('wide')).toBe('mx-auto w-full max-w-6xl');
     });
 
-    it('aligne le fil d\'Ariane et le contenu : même largeur, même conteneur', () => {
-        expect(pageContainer('narrow')).toBe(pageContainer('narrow'));
-        expect(pageContainer('wide')).toBe(pageContainer('wide'));
-    });
-
     it('distingue les deux largeurs de page', () => {
         expect(pageContainer('narrow')).not.toBe(pageContainer('wide'));
     });
