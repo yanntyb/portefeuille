@@ -2,6 +2,7 @@
 import { Link } from '@inertiajs/vue3';
 import HoldingsList from '@/components/HoldingsList.vue';
 import type { EvolutionSeries, HoldingLine } from '@/lib/portfolio';
+import PerformanceInfoDialog from "@/components/PerformanceInfoDialog.vue";
 
 const VISIBLE_HOLDINGS = 10;
 
@@ -12,7 +13,7 @@ defineProps<{
 </script>
 
 <template>
-    <!-- Sans titre : la liste se lit d'elle-même, nom et valeur en tête de chaque ligne. -->
+
     <section data-section="holdings" class="flex flex-col gap-6 px-6" aria-label="Positions">
         <div class="min-w-0">
             <HoldingsList

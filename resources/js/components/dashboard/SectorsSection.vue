@@ -15,7 +15,7 @@ const hasSectors = computed<boolean>(() => rows.value.length > 0);
 
 <template>
     <section data-section="sectors" class="flex flex-col gap-6 px-6">
-        <h2 class="text-[17px] leading-none font-bold">Répartition sectorielle</h2>
+        <h2 class="text-[17px] leading-none font-bold">Secteurs</h2>
         <Deferred data="sectorBreakdown">
             <template #fallback>
                 <div class="h-[280px] w-full animate-pulse rounded-md bg-muted"></div>
