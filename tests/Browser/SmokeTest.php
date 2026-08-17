@@ -44,13 +44,13 @@ it('charge la fiche instrument et ses sections, sans erreur', function () {
         ->assertNoJavaScriptErrors();
 });
 
-it('charge le catalogue et sa liste, sans erreur', function () {
+it('charge la liste des instruments du tableau de bord, sans erreur', function () {
     ['user' => $user] = portfolioFixture();
 
     $this->actingAs($user);
 
-    visit('/instruments')
+    visit('/')
         ->assertSee('ACME')
-        ->assertScript("document.querySelectorAll('[data-catalog-row]').length >= 1", true)
+        ->assertScript("document.querySelectorAll('[data-instrument-row]').length >= 1", true)
         ->assertNoJavaScriptErrors();
 });
