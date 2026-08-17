@@ -72,8 +72,13 @@ const metaEntries = computed<{ label: string; value: string }[]>(() => {
                 {{ signedEur(position.gain) }}
             </p>
 
-            <p data-hero-meta class="flex flex-wrap gap-x-8 gap-y-1 pt-1.5 text-[13.5px] text-muted-foreground">
-                <span v-for="entry in metaEntries" :key="entry.label" class="whitespace-nowrap">
+            <!-- Grille plutôt que flux : les libellés s'alignent en colonne, les valeurs sur leur bord droit. -->
+            <p data-hero-meta class="grid grid-cols-2 gap-x-8 gap-y-1.5 pt-1.5 text-[13.5px] text-muted-foreground">
+                <span
+                    v-for="entry in metaEntries"
+                    :key="entry.label"
+                    class="flex items-baseline justify-between gap-3 whitespace-nowrap"
+                >
                     {{ entry.label }}
                     <strong class="font-semibold text-foreground tabular-nums">{{ entry.value }}</strong>
                 </span>
