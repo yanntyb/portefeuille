@@ -54,7 +54,7 @@ type ValueFormatter = (value: number) => string;
  * Ossature partagée par les trois graphes : axes, grille et cadre d'infobulle suivent le thème.
  * La description accessible est rédigée à la main plutôt que laissée au gabarit anglais d'ECharts.
  */
-function chartFrame(valueFormatter: ValueFormatter, bottom: number, description: string): ChartOption {
+function chartFrame(valueFormatter: ValueFormatter, bottom: number, description: string, valueInterval?: number): ChartOption {
     const theme = tooltipTheme();
 
     return {
@@ -70,6 +70,7 @@ function chartFrame(valueFormatter: ValueFormatter, bottom: number, description:
         },
         yAxis: {
             type: 'value',
+            interval: valueInterval,
             axisLine: { show: false },
             axisTick: { show: false },
             axisLabel: { color: axisLabelColor(), formatter: (value: number): string => valueFormatter(value) },
@@ -109,6 +110,12 @@ export const INITIAL_ZOOM_WINDOW: ZoomWindow = { start: 70, end: 100 };
 const ZOOM_SLIDER_HEIGHT = 40;
 
 /**
+ * Un intervalle plus large que n'importe quelle amplitude ne laisse subsister que les deux
+ * graduations extrêmes : le lecteur garde les bornes de l'échelle, sans les paliers du milieu.
+ */
+const EXTREME_TICKS_ONLY = Number.POSITIVE_INFINITY;
+
+/**
  * Aires empilées du tableau de bord. La fenêtre temporelle est choisie côté client par le
  * `dataZoom` : rien ici ne dépend du réseau ni de la taille du conteneur.
  */
@@ -122,7 +129,7 @@ export function buildEvolutionOption({ labels, perAsset, hiddenIds, valueFormatt
         : `Évolution de la valeur du portefeuille, par titre : ${visible.map((asset) => asset.name).join(', ')}.`;
 
     return {
-        ...chartFrame(valueFormatter, ZOOM_SLIDER_HEIGHT + 44, description),
+        ...chartFrame(valueFormatter, ZOOM_SLIDER_HEIGHT + 44, description, EXTREME_TICKS_ONLY),
         color: visible.map((_asset: AssetSeries, index: number): string => palette[index % palette.length]),
         series: visible.map((asset: AssetSeries) => ({
             name: asset.name,

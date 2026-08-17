@@ -46,6 +46,20 @@ it('leads the dashboard with the chart alone, without a header row', function ()
         ->assertNoJavaScriptErrors();
 });
 
+it('labels only the extremes of the value axis', function () {
+    $this->actingAs(userWithEvolution());
+
+    visit('/')
+        ->assertScript(
+            "(() => {
+                const texts = document.querySelectorAll('[data-section=evolution] [data-chart] svg text');
+                return [...texts].filter((text) => text.textContent.includes('€')).length;
+            })()",
+            2,
+        )
+        ->assertNoJavaScriptErrors();
+});
+
 it('pads the evolution chart like the instrument valuation chart', function () {
     $this->actingAs(userWithEvolution());
 
