@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
+import AppPage from '@/components/AppPage.vue';
 import CatalogHeader from '@/components/instruments/CatalogHeader.vue';
 import CatalogList from '@/components/instruments/CatalogList.vue';
 import { filterCatalog, isRangeKey, joinTrends, type CatalogLine, type CatalogRow, type CatalogTrend, type RangeKey } from '@/lib/catalog';
@@ -50,18 +51,16 @@ const selectRange = (key: RangeKey): void => {
 <template>
     <Head title="Instruments" />
 
-    <AppBreadcrumb :items="[{ label: 'Tableau de bord', href: '/' }, { label: 'Instruments' }]" />
+    <AppBreadcrumb width="wide" :items="[{ label: 'Tableau de bord', href: '/' }, { label: 'Instruments' }]" />
 
-    <main class="min-h-screen overflow-x-hidden bg-background py-6 text-foreground">
-        <div class="mx-auto flex max-w-6xl flex-col gap-6">
-            <CatalogHeader
-                v-model:query="query"
-                :rows="rows"
-                :range="selectedRange"
-                @update:range="selectRange"
-            />
+    <AppPage width="wide">
+        <CatalogHeader
+            v-model:query="query"
+            :rows="rows"
+            :range="selectedRange"
+            @update:range="selectRange"
+        />
 
-            <CatalogList :rows="rows" :loading="loading" :empty-label="emptyLabel" />
-        </div>
-    </main>
+        <CatalogList :rows="rows" :loading="loading" :empty-label="emptyLabel" />
+    </AppPage>
 </template>

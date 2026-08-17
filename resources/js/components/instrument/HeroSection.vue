@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { eur, frDate, gainClass, pct, signedEur } from '@/lib/format';
+import GainPill from '@/components/GainPill.vue';
+import { eur, frDate, pct, signedEur } from '@/lib/format';
 import { investedOf, type Instrument } from '@/lib/instrument';
 
 const props = defineProps<{
@@ -26,29 +27,29 @@ const quantityLabel = computed<string>(() =>
 <template>
     <header data-section="hero" class="flex flex-col gap-4 px-6">
         <div class="flex flex-col gap-0.5">
-            <h1 class="text-xl font-semibold">
+            <h1 class="text-xl font-bold">
                 {{ instrument.name }}
                 <span v-if="instrument.ticker" class="text-muted-foreground">({{ instrument.ticker }})</span>
             </h1>
-            <p class="text-sm text-muted-foreground">
+            <p class="text-[13px] font-medium text-subtle-foreground">
                 {{ instrument.typeLabel }}
                 <span v-if="instrument.isin"> · {{ instrument.isin }}</span>
             </p>
         </div>
 
-        <div class="flex min-w-0 flex-col gap-1">
-            <p data-hero-value class="text-4xl font-semibold tabular-nums">{{ eur(heroValue) }}</p>
+        <div class="flex min-w-0 flex-col gap-2">
+            <div class="flex flex-wrap items-baseline gap-3">
+                <p data-hero-value class="text-4xl font-bold tracking-[-0.02em] tabular-nums">{{ eur(heroValue) }}</p>
 
-            <p
-                v-if="position && position.gain !== null"
-                data-hero-gain
-                class="text-base font-medium tabular-nums"
-                :class="gainClass(position.gain)"
-            >
-                {{ signedEur(position.gain) }} <span>({{ pct(position.gainPct) }})</span>
-            </p>
+                <GainPill
+                    v-if="position && position.gain !== null"
+                    data-hero-gain
+                    :value="position.gain"
+                    :label="`${signedEur(position.gain)} (${pct(position.gainPct)})`"
+                />
+            </div>
 
-            <p data-hero-meta class="text-sm text-muted-foreground tabular-nums">
+            <p data-hero-meta class="text-[13.5px] text-muted-foreground tabular-nums">
                 <template v-if="position">
                     {{ quantityLabel }} titres · PRU {{ eur(position.avgCost) }} · investi
                     {{ eur(invested) }} · cours {{ eur(instrument.lastPrice) }}

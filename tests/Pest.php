@@ -68,9 +68,9 @@ function drawnLines(Pest\Browser\Api\PendingAwaitablePage $page, string $section
 {
     return (string) $page->script("(() => {
         const paths = document.querySelectorAll('[data-section={$section}] [data-chart] svg path');
-        const value = [...paths].filter((path) => path.getAttribute('stroke') === '#4f46e5').length;
+        const value = [...paths].filter((path) => path.getAttribute('stroke') === '#5257d6').length;
         const invested = [...paths]
-            .filter((path) => path.getAttribute('stroke') === '#94a3b8' && path.hasAttribute('stroke-dasharray'))
+            .filter((path) => path.getAttribute('stroke') === '#b6bac4' && path.hasAttribute('stroke-dasharray'))
             .length;
 
         return [value, invested].join('|');

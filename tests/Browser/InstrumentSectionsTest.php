@@ -37,7 +37,7 @@ function instrumentSheet(bool $held): array
     return ['user' => $user, 'instrument' => $asset];
 }
 
-it('splits the held instrument sheet into cardless sections', function () {
+it('splits the held instrument sheet into sections inside a single card', function () {
     ['user' => $user, 'instrument' => $asset] = instrumentSheet(held: true);
 
     $this->actingAs($user);
@@ -46,7 +46,7 @@ it('splits the held instrument sheet into cardless sections', function () {
         ->assertSee('ACME ETF')
         ->assertSee('Transactions')
         ->assertSee('Répartition sectorielle')
-        ->assertScript("document.querySelectorAll('main [data-slot=card]').length", 0)
+        ->assertScript("document.querySelectorAll('main [data-slot=card]').length", 1)
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
             'hero|valuation|sectors|transactions',
@@ -76,7 +76,7 @@ it('swaps the valuation section for the price history when the instrument is not
     $this->actingAs($user);
 
     visit("/instruments/{$asset->id}")
-        ->assertScript("document.querySelectorAll('main [data-slot=card]').length", 0)
+        ->assertScript("document.querySelectorAll('main [data-slot=card]').length", 1)
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
             'hero|price-history|sectors|transactions',

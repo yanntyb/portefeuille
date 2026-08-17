@@ -16,7 +16,7 @@ defineEmits<{ toggle: [assetId: number] }>();
 
 <template>
     <section data-section="holdings" class="flex flex-col gap-6 px-6">
-        <h2 class="leading-none font-semibold">Positions</h2>
+        <h2 class="text-[17px] leading-none font-bold">Positions</h2>
 
         <div class="min-w-0">
             <HoldingsList
@@ -35,7 +35,7 @@ defineEmits<{ toggle: [assetId: number] }>();
         <Link
             href="/instruments"
             data-holdings-all
-            class="self-center rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            class="self-center rounded-md border border-border bg-card px-4 py-2 text-[13.5px] font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
             Voir tous les instruments
         </Link>

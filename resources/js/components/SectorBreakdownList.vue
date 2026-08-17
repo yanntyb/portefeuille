@@ -5,13 +5,12 @@ import { eur as formatEur } from '@/lib/format';
 import type { SectorBreakdownRow } from '@/lib/sector';
 
 const COLLAPSED_COUNT = 6;
-const FAINTEST_BAR_OPACITY = 0.35;
 
 const props = defineProps<{ rows: SectorBreakdownRow[] }>();
 
 const isExpanded = ref<boolean>(false);
 
-/** Sorting here keeps the bar scale and the fade meaningful whatever order the caller passes. */
+/** Sorting here keeps the bar scale meaningful whatever order the caller passes. */
 const sortedRows = computed<SectorBreakdownRow[]>(() =>
     [...props.rows].sort((left, right) => right.share - left.share),
 );
@@ -32,43 +31,35 @@ const share = (value: number): string =>
     `${value.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
 
 const amount = (value: number): string => formatEur(value, 0);
-
-/** A single monotonic fade over the whole list, so the faintest bar stays readable in both themes. */
-const opacityAt = (index: number): number =>
-    1 - (index / Math.max(1, sortedRows.value.length - 1)) * (1 - FAINTEST_BAR_OPACITY);
 </script>
 
 <template>
     <div>
         <ul class="flex flex-col gap-4">
-            <li v-for="(row, index) in visibleRows" :key="row.label" class="flex flex-col gap-1.5">
+            <li v-for="row in visibleRows" :key="row.label" class="flex flex-col gap-1.5">
                 <div class="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
-                    <span data-sector-label class="min-w-0 break-words font-medium">{{ row.label }}</span>
-                    <span class="tabular-nums text-muted-foreground">
+                    <span data-sector-label class="min-w-0 break-words font-semibold">{{ row.label }}</span>
+                    <span class="text-[13.5px] tabular-nums text-subtle-foreground">
                         <template v-if="row.amount !== null">
                             <span data-sector-amount>{{ amount(row.amount) }}</span> ·
                         </template>
                         <span data-sector-share>{{ share(row.share) }}</span>
                     </span>
                 </div>
-                <div class="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div class="h-[7px] w-full overflow-hidden rounded-full bg-separator">
                     <div
                         data-sector-bar
-                        class="h-full rounded-full bg-foreground"
-                        :style="{ width: barWidth(row.share), opacity: opacityAt(index) }"
+                        class="h-full rounded-full bg-sector-bar"
+                        :style="{ width: barWidth(row.share) }"
                     ></div>
                 </div>
             </li>
         </ul>
 
-        <Button
-            v-if="hiddenCount > 0"
-            variant="ghost"
-            size="sm"
-            class="mt-3 w-full text-muted-foreground"
-            @click="isExpanded = !isExpanded"
-        >
-            {{ isExpanded ? 'Réduire' : `Voir les ${hiddenCount} autres` }}
-        </Button>
+        <div v-if="hiddenCount > 0" class="flex justify-center pt-5">
+            <Button variant="outline" size="sm" class="text-[13.5px] text-muted-foreground" @click="isExpanded = !isExpanded">
+                {{ isExpanded ? 'Réduire' : `Voir les ${hiddenCount} autres` }}
+            </Button>
+        </div>
     </div>
 </template>

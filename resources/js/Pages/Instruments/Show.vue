@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
+import AppPage from '@/components/AppPage.vue';
 import HeroSection from '@/components/instrument/HeroSection.vue';
 import PerformanceSection from '@/components/instrument/PerformanceSection.vue';
 import PriceHistorySection from '@/components/instrument/PriceHistorySection.vue';
@@ -29,26 +30,24 @@ const props = defineProps<{
         ]"
     />
 
-    <main class="min-h-screen overflow-x-hidden bg-background py-6 text-foreground">
-        <div class="mx-auto flex max-w-6xl flex-col gap-6">
-            <HeroSection :instrument="props.instrument" />
+    <AppPage>
+        <HeroSection :instrument="props.instrument" />
 
-            <ValuationSection v-if="props.instrument.position" :valuation="props.valuation" />
+        <ValuationSection v-if="props.instrument.position" :valuation="props.valuation" />
 
-            <PriceHistorySection v-else :price-history="props.priceHistory" />
+        <PriceHistorySection v-else :price-history="props.priceHistory" />
 
-            <PerformanceSection
-                v-if="props.instrument.position && props.performances.length"
-                :performances="props.performances"
-            />
+        <PerformanceSection
+            v-if="props.instrument.position && props.performances.length"
+            :performances="props.performances"
+        />
 
-            <SectorsSection
-                v-if="props.instrument.sectors.length"
-                :sectors="props.instrument.sectors"
-                :market-value="props.instrument.position?.marketValue ?? null"
-            />
+        <SectorsSection
+            v-if="props.instrument.sectors.length"
+            :sectors="props.instrument.sectors"
+            :market-value="props.instrument.position?.marketValue ?? null"
+        />
 
-            <TransactionsSection :transactions="props.instrument.transactions" />
-        </div>
-    </main>
+        <TransactionsSection :transactions="props.instrument.transactions" />
+    </AppPage>
 </template>

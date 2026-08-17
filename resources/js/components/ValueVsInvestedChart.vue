@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 import { Deferred } from '@inertiajs/vue3';
 import BaseChart from '@/components/BaseChart.vue';
 import ChartSeriesToggle from '@/components/ChartSeriesToggle.vue';
-import { buildValueVsInvestedOption, INVESTED_LINE_COLOR, type ZoomWindow } from '@/lib/chart';
+import { buildValueVsInvestedOption, investedLineColor, type ZoomWindow } from '@/lib/chart';
 import { eur } from '@/lib/format';
 import type { ChartOption } from '@/lib/echarts';
 
@@ -35,6 +35,9 @@ const showInvested = ref<boolean>(false);
 
 const hasHistory = computed<boolean>(() => props.labels.length > 0);
 
+/** Lue dans un `computed` pour que la pastille se reteinte au changement de thème système. */
+const investedColor = computed<string>(() => investedLineColor());
+
 const option = computed<ChartOption>(() => buildValueVsInvestedOption({
     labels: props.labels,
     value: props.value,
@@ -61,7 +64,7 @@ const option = computed<ChartOption>(() => buildValueVsInvestedOption({
                         v-model="showInvested"
                         series="invested"
                         label="Investi"
-                        :color="INVESTED_LINE_COLOR"
+                        :color="investedColor"
                     />
                 </div>
 

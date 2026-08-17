@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
+import AppPage from '@/components/AppPage.vue';
 import EvolutionSection from '@/components/dashboard/EvolutionSection.vue';
 import HoldingsSection from '@/components/dashboard/HoldingsSection.vue';
 import PerformancesSection from '@/components/dashboard/PerformancesSection.vue';
@@ -36,29 +37,20 @@ const toggleAsset = (assetId: number): void => {
 <!-- CLAUDE => Le comment du breadcrum est volontaire, corriger les test -->
     <AppBreadcrumb :items="[{ label: 'Tableau de bord' }]" />
 
-    <main class="min-h-screen overflow-x-hidden bg-background py-6 text-foreground">
-        <div class="mx-auto flex max-w-6xl flex-col gap-6">
-            <ValuationSection v-if="overview.holdings.length" :overview="overview" />
+    <AppPage>
+        <ValuationSection v-if="overview.holdings.length" :overview="overview" />
 
-            <EvolutionSection :series="evolutionSeries" />
+        <EvolutionSection :series="evolutionSeries" />
 
+        <PerformancesSection v-if="overview.holdings.length" :performances="performances" />
 
-            <PerformancesSection v-if="overview.holdings.length" :performances="performances" />
+        <HoldingsSection
+            :holdings="overview.holdings"
+            :hidden-asset-ids="hiddenAssetIds"
+            :series="evolutionSeries"
+            @toggle="toggleAsset"
+        />
 
-
-
-            <HoldingsSection
-                :holdings="overview.holdings"
-                :hidden-asset-ids="hiddenAssetIds"
-                :series="evolutionSeries"
-                @toggle="toggleAsset"
-            />
-
-            <SectorsSection v-if="overview.holdings.length" :slices="sectorBreakdown" />
-
-
-
-
-        </div>
-    </main>
+        <SectorsSection v-if="overview.holdings.length" :slices="sectorBreakdown" />
+    </AppPage>
 </template>

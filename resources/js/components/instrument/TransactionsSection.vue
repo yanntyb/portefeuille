@@ -22,7 +22,7 @@ const isExpanded = ref<boolean>(false);
         <button
             type="button"
             data-transactions-toggle
-            class="flex items-center gap-1.5 self-start leading-none font-semibold"
+            class="flex items-center gap-1.5 self-start text-[17px] leading-none font-bold"
             :aria-expanded="isExpanded"
             @click="isExpanded = !isExpanded"
         >
@@ -48,7 +48,7 @@ const isExpanded = ref<boolean>(false);
                 <TableBody>
                     <TableRow v-for="(line, index) in transactions" :key="index" data-transaction-row>
                         <TableCell>{{ line.date }}</TableCell>
-                        <TableCell :class="line.isSell ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'">
+                        <TableCell :class="line.isSell ? 'text-loss' : 'text-gain'">
                             {{ line.typeLabel }}
                         </TableCell>
                         <TableCell class="text-right">{{ line.quantity }}</TableCell>

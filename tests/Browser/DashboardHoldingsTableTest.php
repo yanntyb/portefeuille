@@ -133,3 +133,34 @@ it('drops the tabular header the holdings used to render', function () {
         ->assertScript("document.querySelectorAll('[data-section=holdings] thead').length", 0)
         ->assertNoJavaScriptErrors();
 });
+
+it('spreads a holding over two visible lines so the narrow column keeps every column', function () {
+    // A legacy data migration seeds a hardcoded user; clear it so the controller resolves this user.
+    User::query()->delete();
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+
+    seedHoldingLine($user, $wallet, ['name' => 'ACME', 'ticker' => 'ACM', 'quantity' => 10, 'avgCost' => 80, 'close' => 100]);
+
+    $this->actingAs($user);
+
+    visit('/')
+        ->assertScript(
+            "(() => {
+                const row = document.querySelector('[data-holding-row]');
+                const cells = ['name', 'value', 'gain-pct', 'bar', 'weight', 'gain']
+                    .map((key) => row.querySelector('[data-holding-' + key + ']'));
+
+                if (cells.some((cell) => cell === null || cell.getBoundingClientRect().width === 0)) {
+                    return 'hidden column';
+                }
+
+                const value = row.querySelector('[data-holding-value]').getBoundingClientRect().top;
+                const weight = row.querySelector('[data-holding-weight]').getBoundingClientRect().top;
+
+                return weight > value ? 'two lines' : 'one line';
+            })()",
+            'two lines',
+        )
+        ->assertNoJavaScriptErrors();
+});

@@ -22,7 +22,7 @@ createInertiaApp({
             .mount(el);
     },
     progress: {
-        color: '#4f46e5',
+        color: '#5257d6',
     },
     defaults: {
         prefetch: {

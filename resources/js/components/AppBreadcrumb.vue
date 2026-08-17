@@ -1,18 +1,22 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import { ChevronRight } from 'lucide-vue-next';
+import { pageContainer, type PageWidth } from '@/lib/layout';
 
 interface BreadcrumbItem {
     label: string;
     href?: string;
 }
 
-defineProps<{ items: BreadcrumbItem[] }>();
+const props = withDefaults(defineProps<{ items: BreadcrumbItem[]; width?: PageWidth }>(), { width: 'narrow' });
 </script>
 
 <template>
     <header class="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-        <nav aria-label="Fil d'Ariane" class="mx-auto flex max-w-6xl items-center gap-1.5 overflow-x-auto px-6 py-3 text-sm">
+        <nav
+            aria-label="Fil d'Ariane"
+            :class="[pageContainer(props.width), 'flex items-center gap-1.5 overflow-x-auto px-6 py-3 text-sm']"
+        >
             <template v-for="(item, index) in items" :key="index">
                 <ChevronRight v-if="index > 0" class="size-4 shrink-0 text-muted-foreground" />
                 <Link

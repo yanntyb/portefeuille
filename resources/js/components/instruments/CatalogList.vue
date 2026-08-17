@@ -87,7 +87,7 @@ const moveWidth = (row: CatalogRow): string =>
     largestMove.value > 0 ? `${(Math.abs(row.changePct ?? 0) / largestMove.value) * 100}%` : '0%';
 
 const moveColour = (row: CatalogRow): string =>
-    (row.changePct ?? 0) >= 0 ? 'bg-emerald-500/70' : 'bg-red-500/70';
+    (row.changePct ?? 0) >= 0 ? 'bg-gain-bar/70' : 'bg-loss-bar/70';
 
 const sortMark = (key: SortKey): string =>
     sortKey.value !== key ? '' : descending.value ? '↓' : '↑';

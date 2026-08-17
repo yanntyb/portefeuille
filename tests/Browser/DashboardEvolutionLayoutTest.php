@@ -100,18 +100,32 @@ it('graduates the value axis in euros like the instrument chart, not on its boun
         ->assertNoJavaScriptErrors();
 });
 
-it('draws the value line without an area, like the instrument valuation chart', function () {
+it('draws the value line over a gradient area, like the instrument valuation chart', function () {
     $this->actingAs(userWithEvolution());
 
     visit('/')
         ->assertScript(
             "(() => {
                 const paths = [...document.querySelectorAll('[data-section=evolution] [data-chart] svg path')];
-                const line = paths.filter((path) => path.getAttribute('stroke') === '#4f46e5').length;
-                const area = paths.filter((path) => path.getAttribute('fill') === '#4f46e5').length;
-                return [line, area].join('|');
+                const line = paths.filter((path) => path.getAttribute('stroke') === '#5257d6').length;
+                const gradient = paths.filter((path) => (path.getAttribute('fill') ?? '').startsWith('url(')).length;
+                const flat = paths.filter((path) => path.getAttribute('fill') === '#5257d6').length;
+                return [line, gradient >= 1 ? 'gradient' : 'flat', flat].join('|');
             })()",
-            '1|0',
+            '1|gradient|1',
+        )
+        ->assertNoJavaScriptErrors();
+});
+
+it('marks the latest value with a dot', function () {
+    $this->actingAs(userWithEvolution());
+
+    visit('/')
+        ->assertScript(
+            "[...document.querySelectorAll('[data-section=evolution] [data-chart] svg path')]
+                .filter((path) => path.getAttribute('fill') === '#5257d6'
+                    && path.getAttribute('stroke') === '#ffffff').length",
+            1,
         )
         ->assertNoJavaScriptErrors();
 });

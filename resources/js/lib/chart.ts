@@ -3,22 +3,69 @@ import type { TooltipComponentOption } from 'echarts/components';
 import type { ChartOption } from './echarts';
 import { isDark } from './theme';
 
-export const VALUE_LINE_COLOR = '#4f46e5';
-export const INVESTED_LINE_COLOR = '#94a3b8';
-export const GAIN_COLOR = '#10b981';
-export const LOSS_COLOR = '#ef4444';
+type ChartPalette = {
+    value: string;
+    invested: string;
+    gain: string;
+    loss: string;
+    axisLabel: string;
+    grid: string;
+    areaTop: string;
+    areaBottom: string;
+    filler: string;
+    dataBackground: string;
+    selectedDataBackground: string;
+    tooltipBackground: string;
+    tooltipBorder: string;
+    tooltipText: string;
+    surface: string;
+};
 
-/** Les libellés d'axes sont peints en SVG : leur teinte suit le thème plutôt qu'un jeton CSS. */
-function axisLabelColor(): string {
-    return isDark.value ? 'oklch(0.708 0 0)' : 'oklch(0.556 0 0)';
+/**
+ * ECharts peint son SVG lui-même : un `var(--jeton)` n'y serait pas résolu. La palette recopie donc
+ * à la main les valeurs de `resources/css/app.css` — toute retouche là-bas se répercute ici.
+ */
+function palette(): ChartPalette {
+    return isDark.value
+        ? {
+            value: '#8f93f0',
+            invested: '#6b7280',
+            gain: '#34d399',
+            loss: '#f87171',
+            axisLabel: '#7f858f',
+            grid: '#262a33',
+            areaTop: 'rgba(143,147,240,0.22)',
+            areaBottom: 'rgba(143,147,240,0)',
+            filler: 'rgba(143,147,240,0.18)',
+            dataBackground: '#2f343e',
+            selectedDataBackground: 'rgba(143,147,240,0.5)',
+            tooltipBackground: '#1c1f26',
+            tooltipBorder: '#2f343e',
+            tooltipText: '#eceef2',
+            surface: '#1c1f26',
+        }
+        : {
+            value: '#5257d6',
+            invested: '#b6bac4',
+            gain: '#00915d',
+            loss: '#c2321f',
+            axisLabel: '#9aa0ac',
+            grid: '#eceef2',
+            areaTop: 'rgba(82,87,214,0.18)',
+            areaBottom: 'rgba(82,87,214,0)',
+            filler: 'rgba(82,87,214,0.12)',
+            dataBackground: '#e2e4ea',
+            selectedDataBackground: 'rgba(82,87,214,0.45)',
+            tooltipBackground: '#ffffff',
+            tooltipBorder: '#e2e4ea',
+            tooltipText: '#16181d',
+            surface: '#ffffff',
+        };
 }
 
-type TooltipTheme = { backgroundColor: string; borderColor: string; textColor: string };
-
-function tooltipTheme(): TooltipTheme {
-    return isDark.value
-        ? { backgroundColor: 'oklch(0.205 0 0)', borderColor: 'oklch(1 0 0 / 10%)', textColor: 'oklch(0.985 0 0)' }
-        : { backgroundColor: 'oklch(1 0 0)', borderColor: 'oklch(0.922 0 0)', textColor: 'oklch(0.145 0 0)' };
+/** Teinte de la courbe Investi, reprise par la pastille de la bascule qui la commande. */
+export function investedLineColor(): string {
+    return palette().invested;
 }
 
 function formatTooltipDate(label: string): string {
@@ -49,7 +96,7 @@ type ValueFormatter = (value: number) => string;
  * La description accessible est rédigée à la main plutôt que laissée au gabarit anglais d'ECharts.
  */
 function chartFrame(valueFormatter: ValueFormatter, bottom: number, description: string): ChartOption {
-    const theme = tooltipTheme();
+    const colors = palette();
 
     return {
         animation: false,
@@ -60,7 +107,7 @@ function chartFrame(valueFormatter: ValueFormatter, bottom: number, description:
             type: 'time',
             axisLine: { show: false },
             axisTick: { show: false },
-            axisLabel: { color: axisLabelColor(), hideOverlap: true },
+            axisLabel: { color: colors.axisLabel, hideOverlap: true },
         },
         yAxis: {
             type: 'value',
@@ -68,16 +115,24 @@ function chartFrame(valueFormatter: ValueFormatter, bottom: number, description:
             scale: true,
             axisLine: { show: false },
             axisTick: { show: false },
-            axisLabel: { color: axisLabelColor(), formatter: (value: number): string => valueFormatter(value) },
-            splitLine: { lineStyle: { color: 'rgba(128,128,128,0.15)', type: 'dashed' } },
+            axisLabel: { color: colors.axisLabel, formatter: (value: number): string => valueFormatter(value) },
+            splitLine: { lineStyle: { color: colors.grid } },
         },
-        tooltip: {
-            trigger: 'axis',
-            backgroundColor: theme.backgroundColor,
-            borderColor: theme.borderColor,
-            textStyle: { color: theme.textColor, fontFamily: 'inherit' },
-            axisPointer: { type: 'line', lineStyle: { color: 'rgba(128,128,128,0.4)' } },
-        },
+        tooltip: chartTooltip(),
+    };
+}
+
+/** Cadre d'infobulle commun : seul le contenu change d'un graphe à l'autre. */
+function chartTooltip(): TooltipComponentOption {
+    const colors = palette();
+
+    return {
+        trigger: 'axis',
+        backgroundColor: colors.tooltipBackground,
+        borderColor: colors.tooltipBorder,
+        borderRadius: 10,
+        textStyle: { color: colors.tooltipText, fontFamily: 'inherit' },
+        axisPointer: { type: 'line', lineStyle: { color: colors.invested } },
     };
 }
 
@@ -99,6 +154,9 @@ function valueVsInvestedSeries(
     invested: number[],
     showInvested: boolean,
 ): LineSeriesOption[] {
+    const colors = palette();
+    const points = datedPoints(labels, value);
+
     const series: LineSeriesOption[] = [
         {
             name: 'Valeur',
@@ -106,8 +164,22 @@ function valueVsInvestedSeries(
             smooth: true,
             symbol: 'none',
             sampling: 'lttb',
-            lineStyle: { width: 2 },
-            data: datedPoints(labels, value),
+            lineStyle: { width: 2.5 },
+            areaStyle: {
+                color: {
+                    type: 'linear',
+                    x: 0,
+                    y: 0,
+                    x2: 0,
+                    y2: 1,
+                    colorStops: [
+                        { offset: 0, color: colors.areaTop },
+                        { offset: 1, color: colors.areaBottom },
+                    ],
+                },
+            },
+            markPoint: lastPointMarker(points),
+            data: points,
         },
     ];
 
@@ -122,10 +194,30 @@ function valueVsInvestedSeries(
             type: 'line',
             step: 'end',
             symbol: 'none',
-            lineStyle: { width: 2, type: 'dashed' },
+            lineStyle: { width: 1.5, type: 'dashed' },
             data: datedPoints(labels, invested),
         },
     ];
+}
+
+/** Pastille sur la dernière valeur : elle ancre la lecture sur « où en est-on aujourd'hui ». */
+function lastPointMarker(points: [string, number][]): LineSeriesOption['markPoint'] {
+    const last = points[points.length - 1];
+
+    if (last === undefined) {
+        return undefined;
+    }
+
+    const colors = palette();
+
+    return {
+        symbol: 'circle',
+        symbolSize: 8,
+        silent: true,
+        label: { show: false },
+        itemStyle: { color: colors.value, borderColor: colors.surface, borderWidth: 2 },
+        data: [{ name: 'Dernière valeur', coord: last }],
+    };
 }
 
 /**
@@ -138,14 +230,10 @@ function valueVsInvestedTooltip(
     invested: number[],
     valueFormatter: ValueFormatter,
 ): TooltipComponentOption {
-    const theme = tooltipTheme();
+    const colors = palette();
 
     return {
-        trigger: 'axis',
-        backgroundColor: theme.backgroundColor,
-        borderColor: theme.borderColor,
-        textStyle: { color: theme.textColor, fontFamily: 'inherit' },
-        axisPointer: { type: 'line', lineStyle: { color: 'rgba(128,128,128,0.4)' } },
+        ...chartTooltip(),
         formatter: (params: unknown): string => {
             const index = pointIndex(params);
             if (index === null) {
@@ -157,10 +245,10 @@ function valueVsInvestedTooltip(
             const gain = totalValue - totalInvested;
 
             return tooltipTitle(labels[index] ?? '')
-                + tooltipRow(VALUE_LINE_COLOR, 'Valeur', valueFormatter(totalValue))
-                + tooltipRow(INVESTED_LINE_COLOR, 'Investi', valueFormatter(totalInvested))
+                + tooltipRow(colors.value, 'Valeur', valueFormatter(totalValue))
+                + tooltipRow(colors.invested, 'Investi', valueFormatter(totalInvested))
                 + tooltipRow(
-                    gain >= 0 ? GAIN_COLOR : LOSS_COLOR,
+                    gain >= 0 ? colors.gain : colors.loss,
                     gain >= 0 ? 'Gain' : 'Perte',
                     `${gain >= 0 ? '+' : '−'} ${valueFormatter(Math.abs(gain))}`,
                 );
@@ -234,10 +322,11 @@ export function buildValueVsInvestedOption(
     { labels, value, invested, valueFormatter, window, showInvested, description }: ValueVsInvestedInput,
 ): ChartOption {
     const visible = window ?? lastYearWindow(labels);
+    const colors = palette();
 
     return {
         ...chartFrame(valueFormatter, ZOOM_SLIDER_HEIGHT + 32, description),
-        color: [VALUE_LINE_COLOR, INVESTED_LINE_COLOR],
+        color: [colors.value, colors.invested],
         series: valueVsInvestedSeries(labels, value, invested, showInvested),
         tooltip: valueVsInvestedTooltip(labels, value, invested, valueFormatter),
         dataZoom: [
@@ -253,12 +342,15 @@ export function buildValueVsInvestedOption(
                 handleLabel: { show: false },
                 showDetail: false,
                 borderColor: 'transparent',
-                fillerColor: 'rgba(128,128,128,0.15)',
-                handleStyle: { color: axisLabelColor() },
-                moveHandleStyle: { color: 'rgba(128,128,128,0.3)' },
-                textStyle: { color: axisLabelColor() },
-                dataBackground: { lineStyle: { opacity: 0 }, areaStyle: { color: 'rgba(128,128,128,0.2)' } },
-                selectedDataBackground: { lineStyle: { opacity: 0 }, areaStyle: { color: 'rgba(128,128,128,0.4)' } },
+                fillerColor: colors.filler,
+                handleStyle: { color: colors.surface, borderColor: colors.invested },
+                moveHandleStyle: { color: colors.dataBackground },
+                textStyle: { color: colors.axisLabel },
+                dataBackground: { lineStyle: { opacity: 0 }, areaStyle: { color: colors.dataBackground } },
+                selectedDataBackground: {
+                    lineStyle: { opacity: 0 },
+                    areaStyle: { color: colors.selectedDataBackground },
+                },
             },
         ],
     };
@@ -272,18 +364,34 @@ type PriceHistoryInput = {
 
 /** Cours d'un instrument : une courbe unique, aire dégradée sous la ligne. */
 export function buildPriceHistoryOption({ labels, close, valueFormatter }: PriceHistoryInput): ChartOption {
+    const colors = palette();
+    const points = datedPoints(labels, close);
+
     return {
         ...chartFrame(valueFormatter, 32, "Historique du cours de l'instrument."),
-        color: [VALUE_LINE_COLOR],
+        color: [colors.value],
         series: [{
             name: 'Cours',
             type: 'line',
             smooth: true,
             symbol: 'none',
             sampling: 'lttb',
-            lineStyle: { width: 2 },
-            areaStyle: { opacity: 0.15 },
-            data: datedPoints(labels, close),
+            lineStyle: { width: 2.5 },
+            areaStyle: {
+                color: {
+                    type: 'linear',
+                    x: 0,
+                    y: 0,
+                    x2: 0,
+                    y2: 1,
+                    colorStops: [
+                        { offset: 0, color: colors.areaTop },
+                        { offset: 1, color: colors.areaBottom },
+                    ],
+                },
+            },
+            markPoint: lastPointMarker(points),
+            data: points,
         }],
     };
 }

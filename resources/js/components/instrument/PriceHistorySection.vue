@@ -21,7 +21,7 @@ const priceChartOption = computed<ChartOption>(() => buildPriceHistoryOption({
 <template>
     <section data-section="price-history" class="flex flex-col gap-6">
         <div class="flex flex-col gap-1.5 px-6">
-            <h2 class="leading-none font-semibold">Cours</h2>
+            <h2 class="text-[17px] leading-none font-bold">Cours</h2>
             <p class="text-sm text-muted-foreground">Historique sur 12 mois</p>
         </div>
 

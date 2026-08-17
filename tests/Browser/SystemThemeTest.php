@@ -48,7 +48,7 @@ it('drops the dark theme when the system prefers a light one', function () {
 
     visit('/')->inLightMode()
         ->assertScript("document.documentElement.classList.contains('dark')", false)
-        ->assertScript('getComputedStyle(document.body).backgroundColor', 'oklch(1 0 0)')
+        ->assertScript('getComputedStyle(document.body).backgroundColor', 'rgb(238, 240, 244)')
         ->assertNoJavaScriptErrors();
 });
 
@@ -58,7 +58,20 @@ it('paints the sticky breadcrumb on the theme background rather than a hardcoded
     $this->actingAs($user);
 
     visit("/instruments/{$instrument->id}")->inLightMode()
-        ->assertScript("getComputedStyle(document.querySelector('header')).backgroundColor", 'oklab(1 0 0 / 0.95)')
+        ->assertScript(
+            "(() => {
+                const probe = document.createElement('div');
+                probe.style.backgroundColor = 'color-mix(in oklab, var(--background) 95%, transparent)';
+                document.body.appendChild(probe);
+                const expected = getComputedStyle(probe).backgroundColor;
+                probe.remove();
+
+                return getComputedStyle(document.querySelector('header')).backgroundColor === expected
+                    ? 'theme background'
+                    : 'hardcoded';
+            })()",
+            'theme background',
+        )
         ->assertNoJavaScriptErrors();
 });
 
@@ -69,10 +82,10 @@ it('darkens the evolution axis labels so they stay readable on a light backgroun
         .'.map(text => text.getAttribute("fill")).join(",")';
 
     visit('/')->inLightMode()
-        ->assertScript("{$labelFills}.includes('oklch(0.556 0 0)')", true)
+        ->assertScript("{$labelFills}.includes('#9aa0ac')", true)
         ->assertNoJavaScriptErrors();
 
     visit('/')->inDarkMode()
-        ->assertScript("{$labelFills}.includes('oklch(0.708 0 0)')", true)
+        ->assertScript("{$labelFills}.includes('#7f858f')", true)
         ->assertNoJavaScriptErrors();
 });
