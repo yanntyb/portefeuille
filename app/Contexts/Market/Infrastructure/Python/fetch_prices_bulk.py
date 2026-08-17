@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import json
+import math
 import sys
 from datetime import datetime
 
@@ -56,23 +59,45 @@ def main() -> None:
                 except (KeyError, TypeError):
                     continue
 
-    print(json.dumps({"status": "ok", "data": all_data}))
+    print(json.dumps({"status": "ok", "data": all_data}, allow_nan=False))
 
 
 def _dataframe_to_list(df) -> list[dict]:
     data = []
     for date, row in df.iterrows():
+        # Yahoo publishes the running session as a bar carrying a volume but an
+        # empty OHLC, so `dropna(how="all")` keeps it. Its NaN would serialize as
+        # bare `NaN` literals, which strict JSON decoders reject: one such bar
+        # would cost the caller the whole batch.
+        prices = [_as_float(row[column]) for column in ("Open", "High", "Low", "Close")]
+        if None in prices:
+            continue
+
+        open_, high, low, close = prices
+        volume = _as_float(row["Volume"])
+
         data.append(
             {
                 "date": date.strftime("%Y-%m-%d"),
-                "open": round(float(row["Open"]), 4),
-                "high": round(float(row["High"]), 4),
-                "low": round(float(row["Low"]), 4),
-                "close": round(float(row["Close"]), 4),
-                "volume": int(row["Volume"]),
+                "open": round(open_, 4),
+                "high": round(high, 4),
+                "low": round(low, 4),
+                "close": round(close, 4),
+                # Funds often quote without ever reporting a volume.
+                "volume": int(volume) if volume is not None else 0,
             }
         )
     return data
+
+
+def _as_float(value) -> float | None:
+    """Read a cell as a float, reporting a missing or unusable one as None."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+
+    return None if math.isnan(number) else number
 
 
 if __name__ == "__main__":
