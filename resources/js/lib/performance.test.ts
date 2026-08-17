@@ -14,17 +14,18 @@ const performance = (key: string, pct: number, gain = 100): Performance => ({
 });
 
 describe('performanceBars', () => {
-    it('rend une barre par période, dans l\'ordre reçu du serveur', () => {
-        const bars = performanceBars([performance('ytd', 10), performance('1y', 25)]);
+    it('rend une barre par période, dans l\'ordre reçu du serveur et non par amplitude', () => {
+        const bars = performanceBars([performance('ytd', 10), performance('1y', 25), performance('3y', 15)]);
 
-        expect(bars.map((bar) => bar.performance.label)).toEqual(['YTD', '1Y']);
+        expect(bars.map((bar) => bar.performance.label)).toEqual(['YTD', '1Y', '3Y']);
     });
 
     it('remplit toute la piste pour le mouvement le plus fort', () => {
-        const bars = performanceBars([performance('ytd', 10), performance('1y', 25)]);
+        const bars = performanceBars([performance('ytd', 10), performance('1y', 25), performance('3y', 15)]);
 
-        expect(bars[1].barWidth).toBe('100%');
         expect(bars[0].barWidth).toBe('40%');
+        expect(bars[1].barWidth).toBe('100%');
+        expect(bars[2].barWidth).toBe('60%');
     });
 
     it('mesure une baisse sur son amplitude, pas sur son signe', () => {
@@ -32,6 +33,13 @@ describe('performanceBars', () => {
 
         expect(bars[0].barWidth).toBe('100%');
         expect(bars[1].barWidth).toBe('100%');
+    });
+
+    it('mesure une baisse dominante sur son amplitude, pas contre la hausse la plus forte', () => {
+        const bars = performanceBars([performance('ytd', -30), performance('1y', 10)]);
+
+        expect(bars[0].barWidth).toBe('100%');
+        expect(bars[1].barWidth).toBe(`${(10 / 30) * 100}%`);
     });
 
     it('teinte la barre selon le sens du mouvement', () => {
