@@ -33,6 +33,9 @@ const valueVsInvested = (months: number, window: { start: number; end: number } 
 const yAxisOf = (option: ChartOption) =>
     option.yAxis as { scale: boolean; axisLabel: { formatter: (value: number) => string } };
 
+const xAxisLabelOf = (option: ChartOption) =>
+    (option.xAxis as { axisLabel: { formatter: (value: number) => string } }).axisLabel;
+
 const seriesOf = (option: ChartOption): LineSeriesOption[] => option.series as LineSeriesOption[];
 
 describe('buildValueVsInvestedOption — axes', () => {
@@ -48,6 +51,25 @@ describe('buildValueVsInvestedOption — axes', () => {
 
     it('pose un axe temporel, pour que la graduation suive l\'amplitude visible', () => {
         expect((valueVsInvested(36).xAxis as { type: string }).type).toBe('time');
+    });
+
+    it('nomme le mois de chaque graduation, là où le gabarit d\'ECharts effacerait janvier', () => {
+        const formatter = xAxisLabelOf(valueVsInvested(36)).formatter;
+
+        expect(formatter(new Date(2026, 2, 1).getTime())).toBe('mars');
+        expect(formatter(new Date(2025, 11, 1).getTime())).toBe('déc.');
+    });
+
+    it('porte l\'année sous janvier, sur une seconde ligne pour ne pas chasser les mois voisins', () => {
+        const formatter = xAxisLabelOf(valueVsInvested(36)).formatter;
+
+        expect(formatter(new Date(2026, 0, 1).getTime())).toBe('janv.\n2026');
+    });
+
+    it('réserve sous la grille la place des deux lignes de la graduation, en plus du zoom', () => {
+        const grid = valueVsInvested(36).grid as { bottom: number };
+
+        expect(grid.bottom).toBe(80);
     });
 });
 
@@ -144,6 +166,18 @@ describe('buildPriceHistoryOption', () => {
         });
 
         expect(option.dataZoom).toBeUndefined();
+    });
+
+    it('gradue le temps comme le graphe de valorisation, année sous janvier comprise', () => {
+        const labels = monthlyLabels(24);
+        const option = buildPriceHistoryOption({
+            labels,
+            close: labels.map((): number => 100),
+            valueFormatter: (value: number): string => eur(value, 0),
+        });
+
+        expect(xAxisLabelOf(option).formatter(new Date(2026, 0, 1).getTime())).toBe('janv.\n2026');
+        expect((option.grid as { bottom: number }).bottom).toBe(40);
     });
 });
 

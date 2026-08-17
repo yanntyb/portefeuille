@@ -86,6 +86,21 @@ function tooltipRow(color: string, label: string, value: string): string {
 
 type ValueFormatter = (value: number) => string;
 
+const MONTH_LABEL = new Intl.DateTimeFormat('fr-FR', { month: 'short' });
+
+/**
+ * Graduation de l'axe temporel. Le gabarit d'ECharts effacerait janvier au profit d'un « 2026 »
+ * en gras — la suite se lirait « déc., 2026, févr. », un mois manquant en plein milieu. Chaque
+ * graduation porte donc son mois ; l'année s'ajoute sous janvier, sur une seconde ligne pour ne
+ * pas élargir l'étiquette et faire disparaître ses voisines par recouvrement.
+ */
+export function timeAxisLabel(value: number): string {
+    const date = new Date(value);
+    const month = MONTH_LABEL.format(date);
+
+    return date.getMonth() === 0 ? `${month}\n${date.getFullYear()}` : month;
+}
+
 /**
  * Ossature partagée par les trois graphes : axes, grille et cadre d'infobulle suivent le thème.
  * La description accessible est rédigée à la main plutôt que laissée au gabarit anglais d'ECharts.
@@ -102,7 +117,7 @@ function chartFrame(valueFormatter: ValueFormatter, bottom: number, description:
             type: 'time',
             axisLine: { show: false },
             axisTick: { show: false },
-            axisLabel: { color: colors.axisLabel, hideOverlap: true },
+            axisLabel: { color: colors.axisLabel, hideOverlap: true, formatter: timeAxisLabel },
         },
         yAxis: {
             type: 'value',
@@ -294,6 +309,9 @@ function lastYearWindow(labels: string[]): ZoomWindow {
 /** Hauteur réservée sous la grille à la mini-timeline du zoom, en pixels. */
 const ZOOM_SLIDER_HEIGHT = 40;
 
+/** Bande réservée à la graduation temporelle : deux lignes sous janvier, l'année comprise. */
+const TIME_AXIS_LABEL_HEIGHT = 40;
+
 /**
  * Le graphe « valeur contre investi », seul et même pour le tableau de bord et la fiche
  * instrument : mêmes courbes, même axe, même infobulle, même zoom. La fenêtre temporelle est
@@ -306,7 +324,7 @@ export function buildValueVsInvestedOption(
     const colors = palette();
 
     return {
-        ...chartFrame(valueFormatter, ZOOM_SLIDER_HEIGHT + 32, description),
+        ...chartFrame(valueFormatter, ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT, description),
         color: [colors.value, colors.invested],
         series: valueVsInvestedSeries(labels, value, invested),
         tooltip: valueVsInvestedTooltip(labels, value, invested, valueFormatter),
@@ -349,7 +367,7 @@ export function buildPriceHistoryOption({ labels, close, valueFormatter }: Price
     const points = datedPoints(labels, close);
 
     return {
-        ...chartFrame(valueFormatter, 32, "Historique du cours de l'instrument."),
+        ...chartFrame(valueFormatter, TIME_AXIS_LABEL_HEIGHT, "Historique du cours de l'instrument."),
         color: [colors.value],
         series: [{
             name: 'Cours',
