@@ -66,19 +66,44 @@ it('draws the portfolio value against the invested amount, like the instrument c
         ->assertNoJavaScriptErrors();
 });
 
-it('labels the value axis with the exact extremes, and nothing between them', function () {
+it('graduates the value axis in euros like the instrument chart, not on its bounds alone', function () {
     $this->actingAs(userWithEvolution());
 
     visit('/')
         ->assertScript(
             "(() => {
                 const texts = document.querySelectorAll('[data-section=evolution] [data-chart] svg text');
-                const values = [...texts]
-                    .filter((text) => text.textContent.includes('€'))
-                    .map((text) => Number(text.textContent.replace(/\\D/g, '')));
-                return [values.length, Math.max(...values)].join('|');
+                const euros = [...texts].filter((text) => text.textContent.includes('€')).length;
+                return euros >= 3 ? 'graduated' : 'only ' + euros;
             })()",
-            '2|1527',
+            'graduated',
+        )
+        ->assertNoJavaScriptErrors();
+});
+
+it('draws the value line without an area, like the instrument valuation chart', function () {
+    $this->actingAs(userWithEvolution());
+
+    visit('/')
+        ->assertScript(
+            "(() => {
+                const paths = [...document.querySelectorAll('[data-section=evolution] [data-chart] svg path')];
+                const line = paths.filter((path) => path.getAttribute('stroke') === '#4f46e5').length;
+                const area = paths.filter((path) => path.getAttribute('fill') === '#4f46e5').length;
+                return [line, area].join('|');
+            })()",
+            '1|0',
+        )
+        ->assertNoJavaScriptErrors();
+});
+
+it('stands as tall as the instrument valuation chart', function () {
+    $this->actingAs(userWithEvolution());
+
+    visit('/')
+        ->assertScript(
+            "getComputedStyle(document.querySelector('[data-section=evolution] [data-chart]')).height",
+            '300px',
         )
         ->assertNoJavaScriptErrors();
 });

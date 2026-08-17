@@ -67,6 +67,36 @@ it('plots the position value against what was invested, in euros', function () {
         ->assertNoJavaScriptErrors();
 });
 
+it('spells out the gain in the tooltip, like the dashboard chart', function () {
+    ['user' => $user, 'instrument' => $asset] = instrumentWithValuation();
+
+    $this->actingAs($user);
+
+    $page = visit("/instruments/{$asset->id}");
+    $page->assertScript("document.querySelector('[data-section=valuation] [data-chart] svg') !== null", true);
+
+    $page->script("(() => {
+        const chart = document.querySelector('[data-section=valuation] [data-chart]');
+        const box = chart.getBoundingClientRect();
+        chart.querySelector('svg').dispatchEvent(new MouseEvent('mousemove', {
+            clientX: box.left + box.width / 2,
+            clientY: box.top + box.height / 2,
+            bubbles: true,
+            cancelable: true,
+        }));
+    })()");
+
+    $tooltip = (string) $page->script(
+        "document.querySelector('[data-section=valuation] [data-chart]').textContent",
+    );
+
+    expect($tooltip)->toContain('Valeur')
+        ->and($tooltip)->toContain('Investi')
+        ->and($tooltip)->toMatch('/Gain|Perte/');
+
+    $page->assertNoJavaScriptErrors();
+});
+
 it('leaves the chart legend out, the lines speak for themselves', function () {
     ['user' => $user, 'instrument' => $asset] = instrumentWithValuation();
 
