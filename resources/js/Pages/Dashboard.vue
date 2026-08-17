@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
 import AppPage from '@/components/AppPage.vue';
@@ -18,18 +17,6 @@ defineProps<{
     evolutionSeries?: EvolutionSeries;
     sectorBreakdown?: SectorSlice[];
 }>();
-
-const hiddenAssetIds = ref<Set<number>>(new Set());
-
-const toggleAsset = (assetId: number): void => {
-    const next = new Set(hiddenAssetIds.value);
-    if (next.has(assetId)) {
-        next.delete(assetId);
-    } else {
-        next.add(assetId);
-    }
-    hiddenAssetIds.value = next;
-};
 </script>
 
 <template>
@@ -44,12 +31,7 @@ const toggleAsset = (assetId: number): void => {
 
         <PerformancesSection v-if="overview.holdings.length" :performances="performances" />
 
-        <HoldingsSection
-            :holdings="overview.holdings"
-            :hidden-asset-ids="hiddenAssetIds"
-            :series="evolutionSeries"
-            @toggle="toggleAsset"
-        />
+        <HoldingsSection :holdings="overview.holdings" :series="evolutionSeries" />
 
         <SectorsSection v-if="overview.holdings.length" :slices="sectorBreakdown" />
     </AppPage>

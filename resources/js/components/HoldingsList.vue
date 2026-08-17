@@ -1,21 +1,20 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
-import { Eye, EyeOff } from 'lucide-vue-next';
 import Sparkline from '@/components/Sparkline.vue';
 import { eur as formatEur, gainClass, pct, signedEur } from '@/lib/format';
 import type { EvolutionSeries, HoldingLine } from '@/lib/portfolio';
 
 const FAINTEST_BAR_OPACITY = 0.35;
 
+/** Largeur de la colonne `w-24` qui porte la tendance, pour que le tracé la remplisse exactement. */
+const SPARKLINE_WIDTH = 96;
+
 const props = defineProps<{
     holdings: HoldingLine[];
-    hiddenAssetIds: Set<number>;
     series?: EvolutionSeries;
     limit?: number;
 }>();
-
-defineEmits<{ toggle: [assetId: number] }>();
 
 /** Sorting here makes the weight bars monotonic whatever order the caller passes. */
 const sortedHoldings = computed<HoldingLine[]>(() =>
@@ -57,8 +56,6 @@ const share = (value: number): string =>
     `${value.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
 
 const value = (amount: number | null): string => formatEur(amount, 0);
-
-const isHidden = (assetId: number): boolean => props.hiddenAssetIds.has(assetId);
 </script>
 
 <template>
@@ -68,19 +65,8 @@ const isHidden = (assetId: number): boolean => props.hiddenAssetIds.has(assetId)
             :key="line.assetId"
             data-holding-row
             class="flex flex-col gap-1.5 border-b border-separator py-3 last:border-b-0"
-            :class="isHidden(line.assetId) ? 'opacity-40' : ''"
         >
             <div class="flex items-center gap-3">
-                <button
-                    type="button"
-                    class="shrink-0 text-subtle-foreground transition-colors hover:text-foreground"
-                    :aria-label="isHidden(line.assetId) ? 'Afficher' : 'Masquer'"
-                    @click="$emit('toggle', line.assetId)"
-                >
-                    <EyeOff v-if="isHidden(line.assetId)" class="size-4" />
-                    <Eye v-else class="size-4" />
-                </button>
-
                 <Link
                     :href="`/instruments/${line.assetId}`"
                     prefetch
@@ -104,7 +90,7 @@ const isHidden = (assetId: number): boolean => props.hiddenAssetIds.has(assetId)
             </div>
 
             <!-- Le détail passe sur une seconde ligne : la colonne est trop étroite pour huit colonnes. -->
-            <div class="flex items-center gap-3 pl-7 text-xs">
+            <div class="flex items-center gap-3 text-xs">
                 <span class="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-separator md:w-28">
                     <span
                         data-holding-bar
@@ -116,16 +102,17 @@ const isHidden = (assetId: number): boolean => props.hiddenAssetIds.has(assetId)
                     {{ share(shareOf(line)) }}
                 </span>
 
-                <span class="w-16 shrink-0">
-                    <Sparkline v-if="valuesFor(line.assetId).length > 1" :values="valuesFor(line.assetId)" />
+                <!-- Largeurs de queue identiques à la première ligne : tendance sous la valeur, gain sous le pourcentage. -->
+                <span data-holding-trend class="ml-auto w-24 shrink-0">
+                    <Sparkline
+                        v-if="valuesFor(line.assetId).length > 1"
+                        :values="valuesFor(line.assetId)"
+                        :width="SPARKLINE_WIDTH"
+                    />
                     <span v-else-if="!series" class="block h-5 w-full animate-pulse rounded bg-muted"></span>
                 </span>
 
-                <span
-                    data-holding-gain
-                    class="ml-auto shrink-0 text-right tabular-nums"
-                    :class="gainClass(line.gain)"
-                >
+                <span data-holding-gain class="w-20 shrink-0 text-right tabular-nums" :class="gainClass(line.gain)">
                     {{ signedEur(line.gain, 0) }}
                 </span>
             </div>

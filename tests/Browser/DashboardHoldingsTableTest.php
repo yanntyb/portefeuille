@@ -155,10 +155,21 @@ it('spreads a holding over two visible lines so the narrow column keeps every co
                     return 'hidden column';
                 }
 
-                const value = row.querySelector('[data-holding-value]').getBoundingClientRect().top;
-                const weight = row.querySelector('[data-holding-weight]').getBoundingClientRect().top;
+                const value = row.querySelector('[data-holding-value]').getBoundingClientRect();
+                const weight = row.querySelector('[data-holding-weight]').getBoundingClientRect();
+                const trend = row.querySelector('[data-holding-trend]').getBoundingClientRect();
+                const gain = row.querySelector('[data-holding-gain]').getBoundingClientRect();
+                const pct = row.querySelector('[data-holding-gain-pct]').getBoundingClientRect();
 
-                return weight > value ? 'two lines' : 'one line';
+                if (weight.top <= value.top) {
+                    return 'one line';
+                }
+
+                const aligned = Math.round(trend.left) === Math.round(value.left)
+                    && Math.round(trend.right) === Math.round(value.right)
+                    && Math.round(gain.left) === Math.round(pct.left);
+
+                return aligned ? 'two lines' : 'misaligned columns';
             })()",
             'two lines',
         )
