@@ -146,3 +146,125 @@ describe('buildPriceHistoryOption', () => {
         expect(option.dataZoom).toBeUndefined();
     });
 });
+
+type DataZoom = {
+    type: string;
+    start: number;
+    end: number;
+    minValueSpan: number;
+    showDetail?: boolean;
+    handleLabel?: { show: boolean };
+};
+
+const dataZoomOf = (option: ChartOption): DataZoom[] => option.dataZoom as DataZoom[];
+
+/** 365 jours en millisecondes : le plancher de la fenêtre visible. */
+const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+
+describe('buildValueVsInvestedOption — zoom', () => {
+    it('ouvre sur les douze derniers mois d\'un historique de trois ans', () => {
+        const [inside] = dataZoomOf(valueVsInvested(36));
+
+        expect(inside.end).toBe(100);
+        expect(inside.end - inside.start).toBeGreaterThan(32);
+        expect(inside.end - inside.start).toBeLessThan(35);
+    });
+
+    it('montre tout l\'historique quand il est plus court qu\'un an', () => {
+        const [inside] = dataZoomOf(valueVsInvested(6));
+
+        expect(inside.start).toBe(0);
+        expect(inside.end).toBe(100);
+    });
+
+    it('montre tout l\'historique quand il n\'atteint pas un an', () => {
+        // Douze étiquettes mensuelles depuis janvier 2023 s'arrêtent au 1er décembre : 334 jours.
+        const [inside] = dataZoomOf(valueVsInvested(12));
+
+        expect(inside.start).toBe(0);
+        expect(inside.end).toBe(100);
+    });
+
+    it('montre encore tout l\'historique quand il fait exactement un an', () => {
+        // Treize étiquettes vont du 1er janvier 2023 au 1er janvier 2024 : 365 jours pile,
+        // 2023 n'étant pas bissextile. Le plancher se compare avec `<=`, la fenêtre reste entière.
+        const [inside] = dataZoomOf(valueVsInvested(13));
+
+        expect(inside.start).toBe(0);
+        expect(inside.end).toBe(100);
+    });
+
+    it('rogne l\'historique dès qu\'il dépasse un an', () => {
+        // Quatorze étiquettes vont jusqu'au 1er février 2024 : 396 jours, donc start ≈ 7,83.
+        const [inside] = dataZoomOf(valueVsInvested(14));
+
+        expect(inside.start).toBeGreaterThan(0);
+        expect(inside.start).toBeLessThan(10);
+        expect(inside.end).toBe(100);
+    });
+
+    it('montre tout sur un historique vide, sans produire de fenêtre absurde', () => {
+        const option = buildValueVsInvestedOption({
+            labels: [],
+            value: [],
+            invested: [],
+            valueFormatter: (value: number): string => eur(value, 0),
+            window: null,
+            description: 'Vide.',
+        });
+
+        expect(dataZoomOf(option)[0]).toMatchObject({ start: 0, end: 100 });
+    });
+
+    it('interdit au lecteur de descendre sous un an, sur les deux commandes de zoom', () => {
+        const zooms = dataZoomOf(valueVsInvested(36));
+
+        expect(zooms).toHaveLength(2);
+        expect(zooms[0].minValueSpan).toBe(ONE_YEAR_MS);
+        expect(zooms[1].minValueSpan).toBe(ONE_YEAR_MS);
+    });
+
+    it('respecte la fenêtre déjà choisie par le lecteur plutôt que de la remettre à douze mois', () => {
+        const zooms = dataZoomOf(valueVsInvested(36, { start: 10, end: 60 }));
+
+        expect(zooms[0]).toMatchObject({ start: 10, end: 60 });
+        expect(zooms[1]).toMatchObject({ start: 10, end: 60 });
+    });
+
+    it('laisse les poignées de zoom muettes, leurs bornes se lisant déjà sur l\'axe', () => {
+        const [, slider] = dataZoomOf(valueVsInvested(36));
+
+        expect(slider.type).toBe('slider');
+        expect(slider.showDetail).toBe(false);
+        expect(slider.handleLabel?.show).toBe(false);
+    });
+
+    it('offre le zoom à la molette autant qu\'à la mini-timeline', () => {
+        expect(dataZoomOf(valueVsInvested(36)).map((zoom) => zoom.type)).toEqual(['inside', 'slider']);
+    });
+});
+
+describe('sumPerAsset', () => {
+    it('somme les titres point par point : le tableau de bord raisonne sur le portefeuille entier', () => {
+        const perAsset = [
+            { assetId: 1, name: 'ACME', value: [100, 110, 120], invested: [80, 80, 80] },
+            { assetId: 2, name: 'BETA', value: [50, 55, 60], invested: [40, 40, 40] },
+        ];
+
+        expect(sumPerAsset(perAsset, (asset) => asset.value, 3)).toEqual([150, 165, 180]);
+        expect(sumPerAsset(perAsset, (asset) => asset.invested, 3)).toEqual([120, 120, 120]);
+    });
+
+    it('traite un titre plus court que la série comme nul sur ses points manquants', () => {
+        const perAsset = [
+            { assetId: 1, name: 'ACME', value: [100, 110, 120], invested: [80, 80, 80] },
+            { assetId: 2, name: 'BETA', value: [50], invested: [40] },
+        ];
+
+        expect(sumPerAsset(perAsset, (asset) => asset.value, 3)).toEqual([150, 110, 120]);
+    });
+
+    it('rend une série de zéros sans aucun titre', () => {
+        expect(sumPerAsset([], (asset) => asset.value, 3)).toEqual([0, 0, 0]);
+    });
+});
