@@ -1,3 +1,5 @@
+import type { LineSeriesOption } from 'echarts/charts';
+import type { TooltipComponentOption } from 'echarts/components';
 import type { ChartOption } from './echarts';
 import { isDark } from './theme';
 
@@ -42,14 +44,11 @@ function tooltipRow(color: string, label: string, value: string): string {
 
 type ValueFormatter = (value: number) => string;
 
-/** Bornes et graduation imposées à l'axe des valeurs, laissées à ECharts quand rien n'est passé. */
-type ValueAxisScale = { min?: number | string; max?: number | string; interval?: number };
-
 /**
  * Ossature partagée par les trois graphes : axes, grille et cadre d'infobulle suivent le thème.
  * La description accessible est rédigée à la main plutôt que laissée au gabarit anglais d'ECharts.
  */
-function chartFrame(valueFormatter: ValueFormatter, bottom: number, description: string, valueAxis: ValueAxisScale = {}): ChartOption {
+function chartFrame(valueFormatter: ValueFormatter, bottom: number, description: string): ChartOption {
     const theme = tooltipTheme();
 
     return {
@@ -65,7 +64,6 @@ function chartFrame(valueFormatter: ValueFormatter, bottom: number, description:
         },
         yAxis: {
             type: 'value',
-            ...valueAxis,
             axisLine: { show: false },
             axisTick: { show: false },
             axisLabel: { color: axisLabelColor(), formatter: (value: number): string => valueFormatter(value) },
@@ -86,6 +84,80 @@ export type AssetSeries = { assetId: number; name: string; value: number[]; inve
 /** Un axe temporel attend des couples date/valeur, pas une suite de valeurs indexées. */
 function datedPoints(labels: string[], values: number[]): [string, number][] {
     return labels.map((label: string, index: number): [string, number] => [label, values[index] ?? 0]);
+}
+
+/**
+ * Le couple de courbes « valeur contre investi », identique sur le tableau de bord et la fiche
+ * instrument. L'investi ne bouge qu'à un achat ou une vente : l'escalier lit plus juste.
+ */
+function valueVsInvestedSeries(labels: string[], value: number[], invested: number[]): LineSeriesOption[] {
+    return [
+        {
+            name: 'Valeur',
+            type: 'line',
+            smooth: true,
+            symbol: 'none',
+            sampling: 'lttb',
+            lineStyle: { width: 2 },
+            data: datedPoints(labels, value),
+        },
+        {
+            name: 'Investi',
+            type: 'line',
+            step: 'end',
+            symbol: 'none',
+            lineStyle: { width: 2, type: 'dashed' },
+            data: datedPoints(labels, invested),
+        },
+    ];
+}
+
+/**
+ * Infobulle des deux graphes « valeur contre investi » : le gain se lit sur place plutôt que
+ * de laisser le lecteur soustraire lui-même les deux lignes.
+ */
+function valueVsInvestedTooltip(
+    labels: string[],
+    value: number[],
+    invested: number[],
+    valueFormatter: ValueFormatter,
+): TooltipComponentOption {
+    const theme = tooltipTheme();
+
+    return {
+        trigger: 'axis',
+        backgroundColor: theme.backgroundColor,
+        borderColor: theme.borderColor,
+        textStyle: { color: theme.textColor, fontFamily: 'inherit' },
+        axisPointer: { type: 'line', lineStyle: { color: 'rgba(128,128,128,0.4)' } },
+        formatter: (params: unknown): string => {
+            const index = pointIndex(params);
+            if (index === null) {
+                return '';
+            }
+
+            const totalValue = value[index] ?? 0;
+            const totalInvested = invested[index] ?? 0;
+            const gain = totalValue - totalInvested;
+
+            return tooltipTitle(labels[index] ?? '')
+                + tooltipRow(VALUE_LINE_COLOR, 'Valeur', valueFormatter(totalValue))
+                + tooltipRow(INVESTED_LINE_COLOR, 'Investi', valueFormatter(totalInvested))
+                + tooltipRow(
+                    gain >= 0 ? GAIN_COLOR : LOSS_COLOR,
+                    gain >= 0 ? 'Gain' : 'Perte',
+                    `${gain >= 0 ? '+' : '−'} ${valueFormatter(Math.abs(gain))}`,
+                );
+        },
+    };
+}
+
+/** ECharts passe un tableau de points survolés ; tous partagent le même index de catégorie. */
+function pointIndex(params: unknown): number | null {
+    const points = Array.isArray(params) ? params : [params];
+    const first = points[0] as { dataIndex?: number } | undefined;
+
+    return typeof first?.dataIndex === 'number' ? first.dataIndex : null;
 }
 
 export type ZoomWindow = { start: number; end: number };
@@ -115,44 +187,19 @@ export const INITIAL_ZOOM_WINDOW: ZoomWindow = { start: 70, end: 100 };
 const ZOOM_SLIDER_HEIGHT = 40;
 
 /**
- * L'axe colle aux valeurs réellement affichées plutôt qu'à des paliers arrondis, et l'intervalle
- * plus large que n'importe quelle amplitude ne laisse subsister que ces deux graduations. Les
- * bornes se recalculent à chaque zoom, puisque le `dataZoom` retire les points hors fenêtre.
- */
-const EXACT_EXTREMES_ONLY: ValueAxisScale = { min: 'dataMin', max: 'dataMax', interval: Number.POSITIVE_INFINITY };
-
-/**
- * Valeur du portefeuille contre montant investi, dans le style de la fiche instrument. La fenêtre
- * temporelle est choisie côté client par le `dataZoom` : rien ici ne dépend du réseau.
+ * Valeur du portefeuille contre montant investi, dans le style de la fiche instrument : mêmes
+ * courbes, même axe, même infobulle. La fenêtre temporelle est choisie côté client par le
+ * `dataZoom` : rien ici ne dépend du réseau.
  */
 export function buildEvolutionOption({ labels, perAsset, valueFormatter, window }: EvolutionInput): ChartOption {
-    const theme = tooltipTheme();
     const value = totalPerDate(perAsset, (asset: AssetSeries): number[] => asset.value, labels.length);
     const invested = totalPerDate(perAsset, (asset: AssetSeries): number[] => asset.invested, labels.length);
 
     return {
-        ...chartFrame(valueFormatter, ZOOM_SLIDER_HEIGHT + 44, 'Valeur du portefeuille comparée au montant investi.', EXACT_EXTREMES_ONLY),
+        ...chartFrame(valueFormatter, ZOOM_SLIDER_HEIGHT + 32, 'Valeur du portefeuille comparée au montant investi.'),
         color: [VALUE_LINE_COLOR, INVESTED_LINE_COLOR],
-        series: [
-            {
-                name: 'Valeur',
-                type: 'line',
-                smooth: true,
-                symbol: 'none',
-                sampling: 'lttb',
-                lineStyle: { width: 2 },
-                areaStyle: { opacity: 0.15 },
-                data: datedPoints(labels, value),
-            },
-            {
-                name: 'Investi',
-                type: 'line',
-                step: 'end',
-                symbol: 'none',
-                lineStyle: { width: 2, type: 'dashed' },
-                data: datedPoints(labels, invested),
-            },
-        ],
+        series: valueVsInvestedSeries(labels, value, invested),
+        tooltip: valueVsInvestedTooltip(labels, value, invested, valueFormatter),
         dataZoom: [
             { type: 'inside', start: window.start, end: window.end },
             {
@@ -173,41 +220,7 @@ export function buildEvolutionOption({ labels, perAsset, valueFormatter, window 
                 selectedDataBackground: { lineStyle: { opacity: 0 }, areaStyle: { color: 'rgba(128,128,128,0.4)' } },
             },
         ],
-        tooltip: {
-            trigger: 'axis',
-            backgroundColor: theme.backgroundColor,
-            borderColor: theme.borderColor,
-            textStyle: { color: theme.textColor, fontFamily: 'inherit' },
-            axisPointer: { type: 'line', lineStyle: { color: 'rgba(128,128,128,0.4)' } },
-            formatter: (params: unknown): string => {
-                const index = pointIndex(params);
-                if (index === null) {
-                    return '';
-                }
-
-                const totalValue = value[index] ?? 0;
-                const totalInvested = invested[index] ?? 0;
-                const gain = totalValue - totalInvested;
-
-                return tooltipTitle(labels[index] ?? '')
-                    + tooltipRow(VALUE_LINE_COLOR, 'Valeur', valueFormatter(totalValue))
-                    + tooltipRow(INVESTED_LINE_COLOR, 'Investi', valueFormatter(totalInvested))
-                    + tooltipRow(
-                        gain >= 0 ? GAIN_COLOR : LOSS_COLOR,
-                        gain >= 0 ? 'Gain' : 'Perte',
-                        `${gain >= 0 ? '+' : '−'} ${valueFormatter(Math.abs(gain))}`,
-                    );
-            },
-        },
     };
-}
-
-/** ECharts passe un tableau de points survolés ; tous partagent le même index de catégorie. */
-function pointIndex(params: unknown): number | null {
-    const points = Array.isArray(params) ? params : [params];
-    const first = points[0] as { dataIndex?: number } | undefined;
-
-    return typeof first?.dataIndex === 'number' ? first.dataIndex : null;
 }
 
 type PriceHistoryInput = {
@@ -241,30 +254,13 @@ type ValuationInput = {
     valueFormatter: ValueFormatter;
 };
 
-/** Valeur contre investi. L'investi ne bouge qu'à un achat ou une vente : l'escalier lit plus juste. */
+/** Valeur de la position contre investi : mêmes courbes et même infobulle que le tableau de bord. */
 export function buildValuationOption({ labels, valuations, invested, valueFormatter }: ValuationInput): ChartOption {
     return {
         ...chartFrame(valueFormatter, 32, 'Valeur de la position comparée au montant investi.'),
         color: [VALUE_LINE_COLOR, INVESTED_LINE_COLOR],
-        series: [
-            {
-                name: 'Valeur',
-                type: 'line',
-                smooth: true,
-                symbol: 'none',
-                sampling: 'lttb',
-                lineStyle: { width: 2 },
-                data: datedPoints(labels, valuations),
-            },
-            {
-                name: 'Investi',
-                type: 'line',
-                step: 'end',
-                symbol: 'none',
-                lineStyle: { width: 2, type: 'dashed' },
-                data: datedPoints(labels, invested),
-            },
-        ],
+        series: valueVsInvestedSeries(labels, valuations, invested),
+        tooltip: valueVsInvestedTooltip(labels, valuations, invested, valueFormatter),
     };
 }
 

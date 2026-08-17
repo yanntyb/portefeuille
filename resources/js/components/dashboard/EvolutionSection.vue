@@ -11,7 +11,7 @@ const props = defineProps<{
     series?: EvolutionSeries;
 }>();
 
-const CHART_HEIGHT = 340;
+const CHART_HEIGHT = 300;
 
 /**
  * Volontairement non réactive : le zoom est déjà appliqué dans l'instance quand l'événement
@@ -40,7 +40,7 @@ const option = computed<ChartOption>(() => buildEvolutionOption({
         <Deferred data="evolutionSeries">
             <template #fallback>
                 <div class="px-0 sm:px-6">
-                    <div class="h-[340px] w-full animate-pulse rounded-md bg-muted"></div>
+                    <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
                 </div>
             </template>
 
