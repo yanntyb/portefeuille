@@ -1,5 +1,15 @@
 <?php
 
+use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\Market\Enums\Sector;
+use App\Contexts\Market\Models\Instrument;
+use App\Contexts\Market\Models\Price;
+use App\Contexts\Market\Models\SectorAllocation;
+use App\Contexts\Portfolio\Models\Holding;
+use App\Contexts\Portfolio\Models\Transaction;
+use App\Contexts\Portfolio\Models\Wallet;
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -45,19 +55,129 @@ expect()->extend('toBeOne', function () {
 */
 
 /**
- * Borne basse de l'axe des valeurs d'un graphe. ECharts peint ses libellés en SVG sans les
- * nommer : les seuls alignés à droite sont ceux de l'axe des valeurs.
+ * Portefeuille minimal mais complet : un utilisateur, un portefeuille, un instrument coté deux
+ * fois, secteurisé, et une position achetée. Remplace le bloc recopié dans chaque fichier
+ * Browser.
+ *
+ * Le secteur est nécessaire à la fiche instrument : sa section de répartition sectorielle ne se
+ * rend plus du tout quand l'instrument n'a aucun `SectorAllocation`, elle ne se contente pas d'un
+ * état vide.
+ *
+ * Une migration héritée sème un utilisateur en dur ; on l'efface pour que le contrôleur résolve
+ * bien celui du test. Ce nettoyage disparaît en tâche 13, une fois la migration corrigée.
+ *
+ * @param  array{name?: string, ticker?: string, quantity?: float, avgCost?: float, close?: float}  $overrides
+ * @return array{user: User, wallet: Wallet, instrument: Instrument}
  */
-function lowestValueAxisLabel(Pest\Browser\Api\PendingAwaitablePage $page, string $section): float
+function portfolioFixture(array $overrides = []): array
 {
-    return (float) $page->script("(() => {
-        const labels = [...document.querySelectorAll('[data-section={$section}] [data-chart] svg text')]
-            .filter((text) => text.getAttribute('text-anchor') === 'end')
-            .map((text) => parseFloat(text.textContent.replace(/[^0-9,.-]/g, '').replace(',', '.')))
-            .filter((value) => !Number.isNaN(value));
+    User::query()->delete();
 
-        return labels.length === 0 ? -1 : Math.min(...labels);
-    })()");
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+
+    $instrument = Instrument::factory()
+        ->ofType(InstrumentType::Stock)
+        ->create([
+            'name' => $overrides['name'] ?? 'ACME',
+            'ticker' => $overrides['ticker'] ?? 'ACM',
+        ]);
+
+    $close = $overrides['close'] ?? 100;
+
+    Price::factory()->create(['asset_id' => $instrument->id, 'date' => now(), 'close' => $close]);
+    Price::factory()->create([
+        'asset_id' => $instrument->id,
+        'date' => now()->startOfYear(),
+        'close' => $close * 0.8,
+    ]);
+
+    SectorAllocation::factory()->create([
+        'asset_id' => $instrument->id,
+        'sector' => Sector::Technology,
+        'weight' => 1.0,
+    ]);
+
+    Holding::factory()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $instrument->id,
+        'quantity' => $overrides['quantity'] ?? 10,
+        'avg_cost' => $overrides['avgCost'] ?? 80,
+    ]);
+
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $instrument->id,
+        'quantity' => $overrides['quantity'] ?? 10,
+        'unit_price' => $overrides['avgCost'] ?? 80,
+        'date' => '2026-01-01',
+    ]);
+
+    return ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument];
+}
+
+/**
+ * Trois ans de cours quotidiens par défaut : le plancher d'un an n'est observable que sur un
+ * historique plus long que lui.
+ *
+ * @return array{user: User, wallet: Wallet, instrument: Instrument}
+ */
+function denseHistoryFixture(int $days = 1095): array
+{
+    User::query()->delete();
+
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $instrument = Instrument::factory()->create(['name' => 'ACME']);
+
+    foreach (range(0, $days) as $offset) {
+        Price::factory()->create([
+            'asset_id' => $instrument->id,
+            'date' => now()->subDays($days - $offset)->format('Y-m-d'),
+            'close' => 90 + sin($offset / 20) * 20,
+        ]);
+    }
+
+    Holding::factory()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $instrument->id,
+        'quantity' => 10, 'avg_cost' => 80,
+    ]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $instrument->id,
+        'quantity' => 10, 'unit_price' => 80, 'date' => now()->subDays($days)->format('Y-m-d'),
+    ]);
+
+    return ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument];
+}
+
+/**
+ * Une position dont les secteurs sont pondérés, pour éprouver le repli de la liste sectorielle.
+ *
+ * @param  array<string, float>  $sectors  Clé : valeur d'un cas de `Sector`. Valeur : poids entre 0 et 1.
+ */
+function holdingWithSectors(User $user, string $name, float $close, array $sectors): void
+{
+    $wallet = Wallet::factory()->for($user)->create();
+    $instrument = Instrument::factory()->ofType(InstrumentType::ETF)->create(['name' => $name]);
+
+    Price::factory()->create(['asset_id' => $instrument->id, 'date' => now(), 'close' => $close]);
+    Holding::factory()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $instrument->id,
+        'quantity' => 1,
+        'avg_cost' => $close,
+    ]);
+
+    foreach ($sectors as $sector => $weight) {
+        SectorAllocation::factory()->create([
+            'asset_id' => $instrument->id,
+            'sector' => Sector::from($sector),
+            'weight' => $weight,
+        ]);
+    }
 }
 
 /** Amplitude de la fenêtre visible, en pourcentage de l'historique, publiée par le graphe en attribut. */

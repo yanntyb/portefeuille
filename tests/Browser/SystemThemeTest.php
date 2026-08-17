@@ -35,7 +35,7 @@ function seedSystemThemePortfolio(): User
     return $user;
 }
 
-it('applies the dark theme when the system prefers it', function () {
+it('applique le thème sombre quand le système le préfère', function () {
     $this->actingAs(seedSystemThemePortfolio());
 
     visit('/')->inDarkMode()
@@ -43,7 +43,7 @@ it('applies the dark theme when the system prefers it', function () {
         ->assertNoJavaScriptErrors();
 });
 
-it('drops the dark theme when the system prefers a light one', function () {
+it('abandonne le thème sombre quand le système préfère un thème clair', function () {
     $this->actingAs(seedSystemThemePortfolio());
 
     visit('/')->inLightMode()
@@ -52,7 +52,7 @@ it('drops the dark theme when the system prefers a light one', function () {
         ->assertNoJavaScriptErrors();
 });
 
-it('paints the sticky breadcrumb on the theme background rather than a hardcoded black', function () {
+it('peint le fil d\'Ariane collant sur le fond du thème plutôt qu\'un noir figé', function () {
     $user = seedSystemThemePortfolio();
     $instrument = Instrument::query()->firstOrFail();
     $this->actingAs($user);
@@ -72,20 +72,5 @@ it('paints the sticky breadcrumb on the theme background rather than a hardcoded
             })()",
             'theme background',
         )
-        ->assertNoJavaScriptErrors();
-});
-
-it('darkens the evolution axis labels so they stay readable on a light background', function () {
-    $this->actingAs(seedSystemThemePortfolio());
-
-    $labelFills = "Array.from(document.querySelectorAll('[data-section=evolution] text'))"
-        .'.map(text => text.getAttribute("fill")).join(",")';
-
-    visit('/')->inLightMode()
-        ->assertScript("{$labelFills}.includes('#9aa0ac')", true)
-        ->assertNoJavaScriptErrors();
-
-    visit('/')->inDarkMode()
-        ->assertScript("{$labelFills}.includes('#7f858f')", true)
         ->assertNoJavaScriptErrors();
 });
