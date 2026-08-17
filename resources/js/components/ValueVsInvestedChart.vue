@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, defineAsyncComponent } from 'vue';
 import { Deferred } from '@inertiajs/vue3';
-import BaseChart from '@/components/BaseChart.vue';
+import ChartSkeleton from '@/components/ChartSkeleton.vue';
 import { buildValueVsInvestedOption, type ZoomWindow } from '@/lib/chart';
 import { eur } from '@/lib/format';
 import type { ChartOption } from '@/lib/echarts';
@@ -16,6 +16,16 @@ const props = defineProps<{
 }>();
 
 const CHART_HEIGHT = 300;
+
+/**
+ * Echarts pèse à lui seul les deux tiers du JS de l'application. Il n'est demandé qu'au
+ * moment où un graphe est réellement monté, donc jamais avant le premier rendu.
+ */
+const BaseChart = defineAsyncComponent({
+    loader: () => import('@/components/BaseChart.vue'),
+    loadingComponent: ChartSkeleton,
+    delay: 0,
+});
 
 /**
  * Volontairement non réactive : le zoom est déjà appliqué dans l'instance quand l'événement
@@ -46,7 +56,7 @@ const option = computed<ChartOption>(() => buildValueVsInvestedOption({
         <Deferred :data="deferKey">
             <template #fallback>
                 <div class="px-0 sm:px-6">
-                    <div class="h-[300px] w-full animate-pulse rounded-md bg-muted"></div>
+                    <ChartSkeleton />
                 </div>
             </template>
 
