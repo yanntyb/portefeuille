@@ -6,8 +6,8 @@ import ChartRangeToggle from '@/components/ChartRangeToggle.vue';
 import ChartSeriesToggle from '@/components/ChartSeriesToggle.vue';
 import {
     buildValuationOption,
-    granularityForRange,
     INVESTED_LINE_COLOR,
+    VALUATION_GRANULARITY,
     VALUATION_RANGES,
     type ValuationRangeKey,
 } from '@/lib/chart';
@@ -31,7 +31,7 @@ const selectRange = (key: ValuationRangeKey): void => {
 
     router.reload({
         only: ['valuation'],
-        data: { range: key, granularity: granularityForRange(key) },
+        data: { range: key, granularity: VALUATION_GRANULARITY },
         onStart: (): void => {
             reloading.value = true;
         },

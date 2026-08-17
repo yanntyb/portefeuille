@@ -38,7 +38,7 @@ class DashboardController
                 : []),
             /** Historique complet : la fenêtre visible est choisie côté client par le zoom du graphe. */
             'evolutionSeries' => Inertia::defer(fn () => $user !== null
-                ? app(BuildEvolutionSeries::class)($user->id, null, ValuationGranularity::Day)
+                ? app(BuildEvolutionSeries::class)($user->id, null, ValuationGranularity::Week)
                 : EvolutionSeriesData::empty()),
             'sectorBreakdown' => Inertia::defer(fn () => $user !== null
                 ? app(GetSectorBreakdown::class)($user)

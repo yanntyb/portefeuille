@@ -9,6 +9,8 @@ use App\Contexts\Market\Models\SectorAllocation;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Inertia\Testing\AssertableInertia as Assert;
 
 it('renders the Dashboard with an empty overview when there is no data', function () {
@@ -78,6 +80,41 @@ it('defers the evolution series and loads it on demand', function () {
                 ->where('evolutionSeries.perAsset.0.name', 'ACME')
                 ->has('evolutionSeries.perAsset.0.value')
                 ->has('evolutionSeries.perAsset.0.invested')
+            )
+        );
+});
+
+it('samples the evolution series week by week, not day by day', function () {
+    User::query()->delete();
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $asset = Instrument::factory()->create();
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'quantity' => 10, 'unit_price' => 100, 'date' => '2026-01-01',
+    ]);
+
+    foreach (range(0, 30) as $offset) {
+        Price::factory()->create([
+            'asset_id' => $asset->id,
+            'date' => Carbon::parse('2026-01-01')->addDays($offset)->format('Y-m-d'),
+            'close' => 100,
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get('/')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Dashboard')
+            ->loadDeferredProps(fn (Assert $reload) => $reload
+                ->where('evolutionSeries.labels', function (Collection $labels): bool {
+                    $dates = $labels->map(fn (string $label): Carbon => Carbon::parse($label));
+                    $gaps = $dates->slice(1)->values()
+                        ->map(fn (Carbon $date, int $index): float => $dates[$index]->diffInDays($date));
+
+                    return $gaps->isNotEmpty() && $gaps->min() >= 5;
+                })
             )
         );
 });

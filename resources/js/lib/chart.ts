@@ -313,11 +313,8 @@ export const VALUATION_RANGES: { key: ValuationRangeKey; label: string }[] = [
     { key: 'max', label: 'Max' },
 ];
 
-/** One point per day only makes sense over a short window, so the period picks the step. */
-export function granularityForRange(range: ValuationRangeKey): 'day' | 'week' | 'month' {
-    if (range === '1M') {
-        return 'day';
-    }
-
-    return range === 'max' ? 'month' : 'week';
-}
+/**
+ * Un point par semaine, quelle que soit la période affichée : le pas quotidien noyait la tendance
+ * sous le bruit et alourdissait la charge utile, le pas mensuel effaçait les creux.
+ */
+export const VALUATION_GRANULARITY = 'week';

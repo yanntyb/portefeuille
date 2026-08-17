@@ -80,6 +80,30 @@ it('scales the value axis to the visible values instead of anchoring it at zero'
     $page->assertNoJavaScriptErrors();
 });
 
+it('asks the server for weekly points whatever the period', function () {
+    ['user' => $user, 'instrument' => $asset] = instrumentWithValuation();
+
+    $this->actingAs($user);
+
+    $page = visit("/instruments/{$asset->id}");
+    $page->assertScript("document.querySelector('[data-section=valuation] [data-chart] svg') !== null", true);
+
+    $page->script('(() => {
+        window.__reloadUrls = [];
+        const open = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+            window.__reloadUrls.push(String(url));
+            return open.call(this, method, url, ...rest);
+        };
+    })()');
+
+    $page->click('[data-section=valuation] [data-chart-range] button:first-child');
+
+    expect((string) $page->script("window.__reloadUrls.join('|')"))->toContain('granularity=week');
+
+    $page->assertNoJavaScriptErrors();
+});
+
 it('draws the position value alone, the invested amount staying out of the way', function () {
     ['user' => $user, 'instrument' => $asset] = instrumentWithValuation();
 
