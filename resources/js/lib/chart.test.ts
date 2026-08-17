@@ -268,3 +268,97 @@ describe('sumPerAsset', () => {
         expect(sumPerAsset([], (asset) => asset.value, 3)).toEqual([0, 0, 0]);
     });
 });
+
+/**
+ * Le `formatter` de l'infobulle est une fonction pure de l'index survolé : ECharts lui passe un
+ * tableau de points partageant le même `dataIndex`, on l'appelle donc directement, sans navigateur.
+ */
+const tooltipHtml = (option: ChartOption, dataIndex: number): string => {
+    const formatter = (option.tooltip as { formatter: (params: unknown) => string }).formatter;
+
+    return formatter([{ dataIndex }]);
+};
+
+describe('buildValueVsInvestedOption — infobulle', () => {
+    it('énonce la valeur, l\'investi et le gain, plutôt que de laisser soustraire les deux courbes', () => {
+        const html = tooltipHtml(valueVsInvested(36), 10).replace(/[\xa0\u202f]/g, ' ');
+
+        expect(html).toContain('Valeur');
+        expect(html).toContain('1 100 €');
+        expect(html).toContain('Investi');
+        expect(html).toContain('900 €');
+        expect(html).toContain('Gain');
+        expect(html).toContain('200 €');
+    });
+
+    it('associe chaque montant à son libellé : une inversion valeur/investi romprait ce couplage', () => {
+        const html = tooltipHtml(valueVsInvested(36), 10).replace(/[\xa0\u202f]/g, ' ');
+
+        const valeurIndex = html.indexOf('Valeur');
+        const investiIndex = html.indexOf('Investi');
+        const montantValeurIndex = html.indexOf('1 100 €');
+        const montantInvestiIndex = html.indexOf('900 €');
+
+        // « Valeur » précède « Investi », et chaque montant se trouve entre son propre libellé
+        // et le suivant : un échange des deux valeurs déplacerait les montants d'un cran.
+        expect(valeurIndex).toBeGreaterThanOrEqual(0);
+        expect(investiIndex).toBeGreaterThan(valeurIndex);
+        expect(montantValeurIndex).toBeGreaterThan(valeurIndex);
+        expect(montantValeurIndex).toBeLessThan(investiIndex);
+        expect(montantInvestiIndex).toBeGreaterThan(investiIndex);
+    });
+
+    it('signe le gain positivement, pour qu\'un mutant inversant le signe se voie', () => {
+        const html = tooltipHtml(valueVsInvested(36), 10).replace(/[\xa0\u202f]/g, ' ');
+
+        expect(html).toContain('+ 200 €');
+        expect(html).not.toContain('\u2212');
+    });
+
+    it('nomme la ligne « Perte » et signe négativement quand la valeur passe sous l\'investi', () => {
+        const labels = monthlyLabels(36);
+        const option = buildValueVsInvestedOption({
+            labels,
+            value: labels.map((): number => 700),
+            invested: labels.map((): number => 900),
+            valueFormatter: (value: number): string => eur(value, 0),
+            window: null,
+            description: 'Baisse.',
+        });
+
+        const html = tooltipHtml(option, 5).replace(/[\xa0\u202f]/g, ' ');
+
+        expect(html).toContain('Perte');
+        expect(html).not.toContain('Gain');
+        expect(html).toContain('\u2212 200 €');
+        expect(html).not.toContain('+');
+    });
+
+    it('lit l\'index survolé tel quel : un décalage dataIndex + 1 ferait déborder le dernier point', () => {
+        // Historique de 36 mois (index 0 à 35) : au dernier point, dataIndex + 1 sortirait du tableau.
+        const html = tooltipHtml(valueVsInvested(36), 35).replace(/[\xa0\u202f]/g, ' ');
+
+        // value[35] = 1000 + 35 * 10 = 1350, investi = 900, gain = 450.
+        expect(html).toContain('1 350 €');
+        expect(html).toContain('450 €');
+    });
+
+    it('titre l\'infobulle sur la date survolée', () => {
+        expect(tooltipHtml(valueVsInvested(36), 0)).toContain('2023');
+    });
+
+    it('rend une infobulle vide quand ECharts ne fournit pas d\'index', () => {
+        const formatter = (valueVsInvested(36).tooltip as { formatter: (params: unknown) => string }).formatter;
+
+        expect(formatter([])).toBe('');
+        expect(formatter([{}])).toBe('');
+    });
+});
+
+describe('buildValueVsInvestedOption — palette claire', () => {
+    it('teinte les libellés d\'axe pour qu\'ils restent lisibles sur un fond clair', () => {
+        const axisLabel = (valueVsInvested(36).xAxis as { axisLabel: { color: string } }).axisLabel;
+
+        expect(axisLabel.color).toBe('#9aa0ac');
+    });
+});
