@@ -22,14 +22,6 @@ const props = defineProps<{
 <template>
     <Head :title="props.instrument.name" />
 
-    <AppBreadcrumb
-        :items="[
-            { label: 'Tableau de bord', href: '/' },
-            { label: 'Instruments', href: '/instruments' },
-            { label: props.instrument.name },
-        ]"
-    />
-
     <AppPage>
         <HeroSection :instrument="props.instrument" />
 
@@ -50,4 +42,12 @@ const props = defineProps<{
 
         <TransactionsSection :transactions="props.instrument.transactions" />
     </AppPage>
+
+    <AppBreadcrumb
+        :items="[
+            { label: 'Tableau de bord', href: '/' },
+            { label: 'Instruments', href: '/instruments' },
+            { label: props.instrument.name },
+        ]"
+    />
 </template>

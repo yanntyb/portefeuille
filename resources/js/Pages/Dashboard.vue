@@ -21,8 +21,6 @@ defineProps<{
 
 <template>
     <Head title="Tableau de bord" />
-<!-- CLAUDE => Le comment du breadcrum est volontaire, corriger les test -->
-    <AppBreadcrumb :items="[{ label: 'Tableau de bord' }]" />
 
     <AppPage>
         <ValuationSection v-if="overview.holdings.length" :overview="overview" />
@@ -35,4 +33,7 @@ defineProps<{
 
         <SectorsSection v-if="overview.holdings.length" :slices="sectorBreakdown" />
     </AppPage>
+
+<!-- CLAUDE => Le comment du breadcrum est volontaire, corriger les test -->
+    <AppBreadcrumb :items="[{ label: 'Tableau de bord' }]" />
 </template>

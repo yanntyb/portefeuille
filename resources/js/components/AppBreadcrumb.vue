@@ -12,7 +12,7 @@ const props = withDefaults(defineProps<{ items: BreadcrumbItem[]; width?: PageWi
 </script>
 
 <template>
-    <header class="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
+    <footer class="sticky bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur">
         <nav
             aria-label="Fil d'Ariane"
             :class="[pageContainer(props.width), 'flex items-center gap-1.5 overflow-x-auto px-6 py-3 text-sm']"
@@ -30,5 +30,5 @@ const props = withDefaults(defineProps<{ items: BreadcrumbItem[]; width?: PageWi
                 <span v-else class="shrink-0 font-medium text-foreground" aria-current="page">{{ item.label }}</span>
             </template>
         </nav>
-    </header>
+    </footer>
 </template>

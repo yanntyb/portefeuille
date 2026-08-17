@@ -64,7 +64,7 @@ it('peint le fil d\'Ariane collant sur le fond du thème plutôt qu\'un noir fig
                 const expected = getComputedStyle(probe).backgroundColor;
                 probe.remove();
 
-                return getComputedStyle(document.querySelector('header')).backgroundColor === expected
+                return getComputedStyle(document.querySelector('footer')).backgroundColor === expected
                     ? 'theme background'
                     : 'hardcoded';
             })()",

@@ -51,8 +51,6 @@ const selectRange = (key: RangeKey): void => {
 <template>
     <Head title="Instruments" />
 
-    <AppBreadcrumb width="wide" :items="[{ label: 'Tableau de bord', href: '/' }, { label: 'Instruments' }]" />
-
     <AppPage width="wide">
         <CatalogHeader
             v-model:query="query"
@@ -63,4 +61,6 @@ const selectRange = (key: RangeKey): void => {
 
         <CatalogList :rows="rows" :loading="loading" :empty-label="emptyLabel" />
     </AppPage>
+
+    <AppBreadcrumb width="wide" :items="[{ label: 'Tableau de bord', href: '/' }, { label: 'Instruments' }]" />
 </template>
