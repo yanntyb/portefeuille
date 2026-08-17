@@ -3,9 +3,11 @@ import { computed, ref } from 'vue';
 import { Deferred, router } from '@inertiajs/vue3';
 import BaseChart from '@/components/BaseChart.vue';
 import ChartRangeToggle from '@/components/ChartRangeToggle.vue';
+import ChartSeriesToggle from '@/components/ChartSeriesToggle.vue';
 import {
     buildValuationOption,
     granularityForRange,
+    INVESTED_LINE_COLOR,
     VALUATION_RANGES,
     type ValuationRangeKey,
 } from '@/lib/chart';
@@ -41,11 +43,15 @@ const selectRange = (key: ValuationRangeKey): void => {
 
 const hasValuation = computed<boolean>(() => (props.valuation?.labels.length ?? 0) > 0);
 
+/** L'investi encombre la lecture courante ; il se rappelle d'un clic quand la comparaison sert. */
+const showInvested = ref<boolean>(false);
+
 const positionChartOption = computed<ChartOption>(() => buildValuationOption({
     labels: props.valuation?.labels ?? [],
     valuations: props.valuation?.valuations ?? [],
     invested: props.valuation?.invested ?? [],
     valueFormatter: (value: number): string => eur(value, 0),
+    showInvested: showInvested.value,
 }));
 </script>
 
@@ -56,11 +62,20 @@ const positionChartOption = computed<ChartOption>(() => buildValuationOption({
                 <h2 class="leading-none font-semibold">Valeur vs investi</h2>
             </div>
 
-            <ChartRangeToggle
-                :options="VALUATION_RANGES"
-                :model-value="selectedRange"
-                @update:model-value="selectRange"
-            />
+            <div class="flex items-center gap-3">
+                <ChartSeriesToggle
+                    v-model="showInvested"
+                    series="invested"
+                    label="Investi"
+                    :color="INVESTED_LINE_COLOR"
+                />
+
+                <ChartRangeToggle
+                    :options="VALUATION_RANGES"
+                    :model-value="selectedRange"
+                    @update:model-value="selectRange"
+                />
+            </div>
         </div>
 
         <Deferred data="valuation">

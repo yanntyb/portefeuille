@@ -42,7 +42,7 @@ it('offers the periods alone, without a granularity switch', function () {
 
     visit("/instruments/{$asset->id}")
         ->assertScript(
-            "Array.from(document.querySelectorAll('[data-section=valuation] button')).map(el => el.textContent.trim()).join('|')",
+            "Array.from(document.querySelectorAll('[data-section=valuation] [data-chart-range] button')).map(el => el.textContent.trim()).join('|')",
             '1M|6M|1A|Max',
         )
         ->assertNoJavaScriptErrors();
@@ -80,7 +80,24 @@ it('scales the value axis to the visible values instead of anchoring it at zero'
     $page->assertNoJavaScriptErrors();
 });
 
-it('spells out the gain in the tooltip, like the dashboard chart', function () {
+it('draws the position value alone, the invested amount staying out of the way', function () {
+    ['user' => $user, 'instrument' => $asset] = instrumentWithValuation();
+
+    $this->actingAs($user);
+
+    $page = visit("/instruments/{$asset->id}");
+    $page->assertScript("document.querySelector('[data-section=valuation] [data-chart] svg') !== null", true);
+
+    expect(drawnLines($page, 'valuation'))->toBe('1|0');
+
+    $page->click('[data-section=valuation] [data-series-toggle=invested]');
+
+    expect(drawnLines($page, 'valuation'))->toBe('1|1');
+
+    $page->assertNoJavaScriptErrors();
+});
+
+it('spells out the gain in the tooltip even while the invested line is hidden', function () {
     ['user' => $user, 'instrument' => $asset] = instrumentWithValuation();
 
     $this->actingAs($user);

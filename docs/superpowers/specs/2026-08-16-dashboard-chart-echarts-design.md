@@ -232,6 +232,17 @@ qu'un an s'affiche en entier avec des poignées figées. La fenêtre d'ouverture
 n'est donc plus une constante mais une fonction de l'historique reçu ; la
 section passe `null` tant que le lecteur n'a rien déplacé.
 
+**La courbe Investi est masquée par défaut, et se rappelle d'un clic.** La
+lecture courante porte sur la valeur ; l'investi n'intéresse que le temps d'une
+comparaison. Il n'est donc plus tracé au chargement, sur les deux graphes.
+`ChartSeriesToggle` — un bouton HTML posé hors du SVG, pastille à la couleur de
+la courbe — le rappelle et le range. La décision « pas de légende dans le
+graphe » tient toujours : la légende native d'ECharts aurait rendu du texte dans
+le SVG, ce que deux tests interdisent. L'infobulle, elle, ne change pas : Valeur,
+Investi et Gain restent lisibles au survol même quand la courbe est rangée —
+c'est ce qui rend le masquage acceptable. L'état est local à chaque section, non
+persisté.
+
 **L'axe des valeurs ne contient plus zéro.** Le défaut d'ECharts pour un axe de
 valeurs, `scale: false`, force l'échelle à englober zéro : un portefeuille
 oscillant entre 700 et 1 100 € était peint dans un cadre partant de 0, donc

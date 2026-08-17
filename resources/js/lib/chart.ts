@@ -90,10 +90,16 @@ function datedPoints(labels: string[], values: number[]): [string, number][] {
 
 /**
  * Le couple de courbes « valeur contre investi », identique sur le tableau de bord et la fiche
- * instrument. L'investi ne bouge qu'à un achat ou une vente : l'escalier lit plus juste.
+ * instrument. L'investi ne bouge qu'à un achat ou une vente : l'escalier lit plus juste. Il n'est
+ * tracé que sur demande — la valeur seule est la lecture courante, l'investi la comparaison.
  */
-function valueVsInvestedSeries(labels: string[], value: number[], invested: number[]): LineSeriesOption[] {
-    return [
+function valueVsInvestedSeries(
+    labels: string[],
+    value: number[],
+    invested: number[],
+    showInvested: boolean,
+): LineSeriesOption[] {
+    const series: LineSeriesOption[] = [
         {
             name: 'Valeur',
             type: 'line',
@@ -103,6 +109,14 @@ function valueVsInvestedSeries(labels: string[], value: number[], invested: numb
             lineStyle: { width: 2 },
             data: datedPoints(labels, value),
         },
+    ];
+
+    if (!showInvested) {
+        return series;
+    }
+
+    return [
+        ...series,
         {
             name: 'Investi',
             type: 'line',
@@ -170,6 +184,7 @@ type EvolutionInput = {
     valueFormatter: ValueFormatter;
     /** `null` à la première peinture : la fenêtre d'ouverture se déduit alors de l'historique. */
     window: ZoomWindow | null;
+    showInvested: boolean;
 };
 
 /** Le tableau de bord raisonne sur le portefeuille entier : les titres ne sont qu'un détail de calcul. */
@@ -213,7 +228,7 @@ const ZOOM_SLIDER_HEIGHT = 40;
  * courbes, même axe, même infobulle. La fenêtre temporelle est choisie côté client par le
  * `dataZoom` : rien ici ne dépend du réseau.
  */
-export function buildEvolutionOption({ labels, perAsset, valueFormatter, window }: EvolutionInput): ChartOption {
+export function buildEvolutionOption({ labels, perAsset, valueFormatter, window, showInvested }: EvolutionInput): ChartOption {
     const value = totalPerDate(perAsset, (asset: AssetSeries): number[] => asset.value, labels.length);
     const invested = totalPerDate(perAsset, (asset: AssetSeries): number[] => asset.invested, labels.length);
     const visible = window ?? lastYearWindow(labels);
@@ -221,7 +236,7 @@ export function buildEvolutionOption({ labels, perAsset, valueFormatter, window 
     return {
         ...chartFrame(valueFormatter, ZOOM_SLIDER_HEIGHT + 32, 'Valeur du portefeuille comparée au montant investi.'),
         color: [VALUE_LINE_COLOR, INVESTED_LINE_COLOR],
-        series: valueVsInvestedSeries(labels, value, invested),
+        series: valueVsInvestedSeries(labels, value, invested, showInvested),
         tooltip: valueVsInvestedTooltip(labels, value, invested, valueFormatter),
         dataZoom: [
             { type: 'inside', start: visible.start, end: visible.end, minValueSpan: MIN_ZOOM_SPAN_MS },
@@ -276,14 +291,15 @@ type ValuationInput = {
     valuations: number[];
     invested: number[];
     valueFormatter: ValueFormatter;
+    showInvested: boolean;
 };
 
 /** Valeur de la position contre investi : mêmes courbes et même infobulle que le tableau de bord. */
-export function buildValuationOption({ labels, valuations, invested, valueFormatter }: ValuationInput): ChartOption {
+export function buildValuationOption({ labels, valuations, invested, valueFormatter, showInvested }: ValuationInput): ChartOption {
     return {
         ...chartFrame(valueFormatter, 32, 'Valeur de la position comparée au montant investi.'),
         color: [VALUE_LINE_COLOR, INVESTED_LINE_COLOR],
-        series: valueVsInvestedSeries(labels, valuations, invested),
+        series: valueVsInvestedSeries(labels, valuations, invested, showInvested),
         tooltip: valueVsInvestedTooltip(labels, valuations, invested, valueFormatter),
     };
 }

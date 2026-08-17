@@ -59,3 +59,20 @@ function lowestValueAxisLabel(Pest\Browser\Api\PendingAwaitablePage $page, strin
         return labels.length === 0 ? -1 : Math.min(...labels);
     })()");
 }
+
+/**
+ * Courbes Valeur et Investi tracées dans le graphe d'une section, sous la forme « 1|0 ».
+ * Les deux se distinguent par leur teinte, l'investi ajoutant des pointillés.
+ */
+function drawnLines(Pest\Browser\Api\PendingAwaitablePage $page, string $section): string
+{
+    return (string) $page->script("(() => {
+        const paths = document.querySelectorAll('[data-section={$section}] [data-chart] svg path');
+        const value = [...paths].filter((path) => path.getAttribute('stroke') === '#4f46e5').length;
+        const invested = [...paths]
+            .filter((path) => path.getAttribute('stroke') === '#94a3b8' && path.hasAttribute('stroke-dasharray'))
+            .length;
+
+        return [value, invested].join('|');
+    })()");
+}

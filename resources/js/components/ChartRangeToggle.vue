@@ -16,7 +16,7 @@ const select = (key: T): void => {
 </script>
 
 <template>
-    <div class="inline-flex rounded-md border border-border p-0.5">
+    <div data-chart-range class="inline-flex rounded-md border border-border p-0.5">
         <button
             v-for="option in options"
             :key="option.key"

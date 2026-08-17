@@ -48,22 +48,30 @@ it('leads the dashboard with the chart alone, without a header row', function ()
         ->assertNoJavaScriptErrors();
 });
 
-it('draws the portfolio value against the invested amount, like the instrument chart', function () {
+it('draws the portfolio value alone, the invested amount staying out of the way', function () {
     $this->actingAs(userWithEvolution());
 
-    visit('/')
-        ->assertScript(
-            "(() => {
-                const paths = document.querySelectorAll('[data-section=evolution] [data-chart] svg path');
-                const value = [...paths].filter((path) => path.getAttribute('stroke') === '#4f46e5').length;
-                const invested = [...paths]
-                    .filter((path) => path.getAttribute('stroke') === '#94a3b8' && path.hasAttribute('stroke-dasharray'))
-                    .length;
-                return [value, invested].join('|');
-            })()",
-            '1|1',
-        )
-        ->assertNoJavaScriptErrors();
+    $page = visit('/');
+    $page->assertScript("document.querySelector('[data-section=evolution] [data-chart] svg') !== null", true);
+
+    expect(drawnLines($page, 'evolution'))->toBe('1|0');
+
+    $page->assertNoJavaScriptErrors();
+});
+
+it('draws the invested amount on demand, and puts it away again', function () {
+    $this->actingAs(userWithEvolution());
+
+    $page = visit('/');
+    $page->click('[data-section=evolution] [data-series-toggle=invested]');
+
+    expect(drawnLines($page, 'evolution'))->toBe('1|1');
+
+    $page->click('[data-section=evolution] [data-series-toggle=invested]');
+
+    expect(drawnLines($page, 'evolution'))->toBe('1|0');
+
+    $page->assertNoJavaScriptErrors();
 });
 
 it('scales the value axis to the visible values instead of anchoring it at zero', function () {
