@@ -4,7 +4,7 @@ import { router } from '@inertiajs/vue3';
 import ChartRangeToggle from '@/components/ChartRangeToggle.vue';
 import InstrumentList from '@/components/InstrumentList.vue';
 import InstrumentSearch from '@/components/InstrumentSearch.vue';
-import { catalogCount, isRangeKey, rangeOptions, type CatalogLine, type CatalogTrend, type RangeKey } from '@/lib/catalog';
+import { isRangeKey, rangeOptions, type CatalogLine, type CatalogTrend, type RangeKey } from '@/lib/catalog';
 import { mergeInstrumentRows, visibleInstrumentRows, type InstrumentRow } from '@/lib/instrumentList';
 import type { HoldingLine } from '@/lib/portfolio';
 
@@ -28,8 +28,6 @@ const rows = computed<InstrumentRow[]>(() =>
         query.value,
     ),
 );
-
-const countLabel = computed<string>(() => catalogCount(rows.value));
 
 /** Sans recherche la liste est le portefeuille : son vide parle de positions, pas d'instruments. */
 const emptyLabel = computed<string>(() =>
@@ -56,9 +54,7 @@ const selectRange = (key: RangeKey): void => {
 
 <template>
     <section data-section="instruments" class="flex flex-col gap-5 px-6" aria-label="Instruments">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <p data-instrument-count class="text-sm text-muted-foreground">{{ countLabel }}</p>
-
+        <div class="flex justify-end">
             <ChartRangeToggle
                 :options="rangeOptions"
                 :model-value="selectedRange"
