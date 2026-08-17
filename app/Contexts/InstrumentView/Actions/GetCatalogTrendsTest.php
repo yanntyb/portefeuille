@@ -6,6 +6,7 @@ use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Valuation\Enums\ValuationRange;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /** @param list<CatalogTrendData> $trends */
 function trendFor(array $trends, int $assetId): CatalogTrendData
@@ -70,6 +71,24 @@ it('returns a trend for every instrument, even without any price', function () {
     expect($trends)->toHaveCount(2)
         ->and(trendFor($trends, $withoutPrice->id)->changePct)->toBeNull()
         ->and(trendFor($trends, $withoutPrice->id)->points)->toBe([]);
+});
+
+it('reads the prices of the whole catalogue without one query per instrument', function () {
+    foreach (range(1, 5) as $offset) {
+        $asset = Instrument::factory()->create();
+        Price::factory()->create([
+            'asset_id' => $asset->id,
+            'date' => Carbon::now()->subDays($offset)->format('Y-m-d'),
+            'close' => 100,
+        ]);
+    }
+
+    DB::enableQueryLog();
+    DB::flushQueryLog();
+
+    app(GetCatalogTrends::class)(ValuationRange::Max);
+
+    expect(count(DB::getQueryLog()))->toBeLessThanOrEqual(2);
 });
 
 it('downsamples a long history while keeping the first and the last price', function () {

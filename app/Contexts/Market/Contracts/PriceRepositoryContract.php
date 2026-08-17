@@ -29,6 +29,17 @@ interface PriceRepositoryContract
     public function filterAssetIdsHavingPriceSince(array $ids, Carbon $since): array;
 
     /**
+     * Closing prices of several assets since a date, ordered by date, keyed by asset.
+     *
+     * Reads raw rows rather than models: the callers plot the closes, and hydrating the whole
+     * history of every asset costs more than the query itself.
+     *
+     * @param  array<int>  $ids
+     * @return array<int, list<float>>
+     */
+    public function closesForAssetsSince(array $ids, Carbon $since): array;
+
+    /**
      * Insert or update the daily prices of an asset.
      *
      * Rows are matched on (asset_id, date) and existing values are overwritten:

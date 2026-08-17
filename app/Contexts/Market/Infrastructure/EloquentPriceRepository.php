@@ -55,6 +55,34 @@ class EloquentPriceRepository implements PriceRepositoryContract
     }
 
     /**
+     * @param  array<int>  $ids
+     * @return array<int, list<float>>
+     */
+    public function closesForAssetsSince(array $ids, Carbon $since): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        $series = [];
+
+        $rows = Price::query()
+            ->toBase()
+            ->select('asset_id', 'close')
+            ->whereIn('asset_id', $ids)
+            ->where('date', '>=', $since)
+            ->orderBy('asset_id')
+            ->orderBy('date')
+            ->get();
+
+        foreach ($rows as $row) {
+            $series[(int) $row->asset_id][] = (float) $row->close;
+        }
+
+        return $series;
+    }
+
+    /**
      * Insert or update the daily prices of an asset.
      *
      * The date is reformatted rather than passed through: `upsert()` writes raw values and

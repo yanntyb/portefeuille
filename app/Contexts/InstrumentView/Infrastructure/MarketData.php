@@ -72,6 +72,15 @@ class MarketData implements MarketDataPort
         );
     }
 
+    /**
+     * @param  array<int>  $assetIds
+     * @return array<int, list<float>>
+     */
+    public function closeSeriesSince(array $assetIds, Carbon $since): array
+    {
+        return $this->prices->closesForAssetsSince($assetIds, $since);
+    }
+
     /** @return list<SectorWeightData> */
     public function sectors(int $id): array
     {

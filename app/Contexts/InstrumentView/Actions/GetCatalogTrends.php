@@ -19,10 +19,19 @@ class GetCatalogTrends
     public function __invoke(ValuationRange $range = ValuationRange::Max): array
     {
         $since = $this->windowStart($range);
+        $instruments = $this->market->listInstruments();
+
+        $closes = $this->market->closeSeriesSince(
+            array_map(fn (InstrumentSummaryData $summary): int => $summary->id, $instruments),
+            $since,
+        );
 
         return array_map(
-            fn (InstrumentSummaryData $summary): CatalogTrendData => $this->toTrend($summary->id, $since),
-            $this->market->listInstruments(),
+            fn (InstrumentSummaryData $summary): CatalogTrendData => $this->toTrend(
+                $summary->id,
+                $closes[$summary->id] ?? [],
+            ),
+            $instruments,
         );
     }
 
@@ -35,10 +44,9 @@ class GetCatalogTrends
             : Carbon::now()->subMonths($months);
     }
 
-    private function toTrend(int $assetId, Carbon $since): CatalogTrendData
+    /** @param list<float> $close */
+    private function toTrend(int $assetId, array $close): CatalogTrendData
     {
-        $close = $this->market->priceHistory($assetId, $since)->close;
-
         return new CatalogTrendData(
             assetId: $assetId,
             changePct: $this->changePct($close),
