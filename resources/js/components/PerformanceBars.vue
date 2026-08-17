@@ -1,58 +1,46 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { eur, gainClass, pct, signedEur } from '@/lib/format';
-import type { Performance } from '@/lib/performance';
+import { gainClass, pct, signedEur } from '@/lib/format';
+import { performanceBars, type Performance, type PerformanceBar } from '@/lib/performance';
 
 const props = defineProps<{ performances: Performance[] }>();
 
-/** Bars are scaled against the strongest move so the smallest period stays visible. */
-const largestMove = computed<number>(() =>
-    Math.max(0, ...props.performances.map((performance) => Math.abs(performance.pct))),
-);
-
-const barWidth = (value: number): string =>
-    largestMove.value > 0 ? `${(Math.abs(value) / largestMove.value) * 100}%` : '0%';
-
-const barColor = (value: number): string => (value < 0 ? 'bg-loss-bar' : 'bg-gain-bar');
-
-/** The columns the table used to spend width on stay reachable, one hover away. */
-const rowTitle = (performance: Performance): string =>
-    `Valeur début ${eur(performance.valueStart)} · Apports ${signedEur(performance.contributions)}`;
+const bars = computed<PerformanceBar[]>(() => performanceBars(props.performances));
 </script>
 
 <template>
     <ul class="flex flex-col gap-3">
         <li
-            v-for="performance in props.performances"
-            :key="performance.key"
+            v-for="bar in bars"
+            :key="bar.performance.key"
             data-perf-row
-            :title="rowTitle(performance)"
+            :title="bar.title"
             class="flex items-center gap-3 text-sm"
         >
-            <span data-perf-label class="w-14 shrink-0 font-semibold">{{ performance.label }}</span>
+            <span data-perf-label class="w-14 shrink-0 font-semibold">{{ bar.performance.label }}</span>
 
             <span class="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-separator">
                 <span
                     data-perf-bar
                     class="block h-full rounded-full"
-                    :class="barColor(performance.pct)"
-                    :style="{ width: barWidth(performance.pct) }"
+                    :class="bar.barColor"
+                    :style="{ width: bar.barWidth }"
                 ></span>
             </span>
 
             <span
                 data-perf-gain
                 class="w-24 shrink-0 text-right font-semibold tabular-nums"
-                :class="gainClass(performance.gain)"
+                :class="gainClass(bar.performance.gain)"
             >
-                {{ signedEur(performance.gain, 0) }}
+                {{ signedEur(bar.performance.gain, 0) }}
             </span>
             <span
                 data-perf-pct
                 class="w-20 shrink-0 text-right font-semibold tabular-nums"
-                :class="gainClass(performance.pct)"
+                :class="gainClass(bar.performance.pct)"
             >
-                {{ pct(performance.pct) }}
+                {{ pct(bar.performance.pct) }}
             </span>
         </li>
     </ul>
