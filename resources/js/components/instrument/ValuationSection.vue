@@ -14,10 +14,6 @@ const invested = computed<number[]>(() => props.valuation?.invested ?? []);
 
 <template>
     <section data-section="valuation" class="flex flex-col gap-6">
-        <div class="flex flex-col gap-1.5 px-6">
-            <h2 class="text-[17px] leading-none font-bold">Valeur vs investi</h2>
-        </div>
-
         <ValueVsInvestedChart
             defer-key="valuation"
             :labels="labels"
