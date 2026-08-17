@@ -166,7 +166,8 @@ type EvolutionInput = {
     labels: string[];
     perAsset: AssetSeries[];
     valueFormatter: ValueFormatter;
-    window: ZoomWindow;
+    /** `null` à la première peinture : la fenêtre d'ouverture se déduit alors de l'historique. */
+    window: ZoomWindow | null;
 };
 
 /** Le tableau de bord raisonne sur le portefeuille entier : les titres ne sont qu'un détail de calcul. */
@@ -180,8 +181,27 @@ function totalPerDate(perAsset: AssetSeries[], pick: (asset: AssetSeries) => num
     );
 }
 
-/** Part de l'historique visible à l'ouverture : le graphe s'ouvre sur la période récente. */
-export const INITIAL_ZOOM_WINDOW: ZoomWindow = { start: 70, end: 100 };
+/** Amplitude minimale de la fenêtre : sous un an, la courbe raconte du bruit plutôt qu'une tendance. */
+const MIN_ZOOM_SPAN_MS = 365 * 24 * 60 * 60 * 1000;
+
+function labelTime(label: string | undefined): number {
+    return Date.parse(`${label ?? ''}T00:00:00`);
+}
+
+/**
+ * Fenêtre d'ouverture : les douze derniers mois, exprimés en pourcentage de l'amplitude totale
+ * — l'axe étant temporel, le `dataZoom` répartit ses pourcentages sur la durée, pas sur les points.
+ * Un historique plus court qu'un an s'affiche en entier : le plancher le fige déjà là.
+ */
+function lastYearWindow(labels: string[]): ZoomWindow {
+    const span = labelTime(labels[labels.length - 1]) - labelTime(labels[0]);
+
+    if (!Number.isFinite(span) || span <= MIN_ZOOM_SPAN_MS) {
+        return { start: 0, end: 100 };
+    }
+
+    return { start: 100 * (1 - MIN_ZOOM_SPAN_MS / span), end: 100 };
+}
 
 /** Hauteur réservée sous la grille à la mini-timeline du zoom, en pixels. */
 const ZOOM_SLIDER_HEIGHT = 40;
@@ -194,6 +214,7 @@ const ZOOM_SLIDER_HEIGHT = 40;
 export function buildEvolutionOption({ labels, perAsset, valueFormatter, window }: EvolutionInput): ChartOption {
     const value = totalPerDate(perAsset, (asset: AssetSeries): number[] => asset.value, labels.length);
     const invested = totalPerDate(perAsset, (asset: AssetSeries): number[] => asset.invested, labels.length);
+    const visible = window ?? lastYearWindow(labels);
 
     return {
         ...chartFrame(valueFormatter, ZOOM_SLIDER_HEIGHT + 32, 'Valeur du portefeuille comparée au montant investi.'),
@@ -201,11 +222,12 @@ export function buildEvolutionOption({ labels, perAsset, valueFormatter, window 
         series: valueVsInvestedSeries(labels, value, invested),
         tooltip: valueVsInvestedTooltip(labels, value, invested, valueFormatter),
         dataZoom: [
-            { type: 'inside', start: window.start, end: window.end },
+            { type: 'inside', start: visible.start, end: visible.end, minValueSpan: MIN_ZOOM_SPAN_MS },
             {
                 type: 'slider',
-                start: window.start,
-                end: window.end,
+                start: visible.start,
+                end: visible.end,
+                minValueSpan: MIN_ZOOM_SPAN_MS,
                 height: ZOOM_SLIDER_HEIGHT,
                 bottom: 0,
                 /** Les bornes de la fenêtre se lisent sur l'axe du graphe : les redire aux poignées encombre. */

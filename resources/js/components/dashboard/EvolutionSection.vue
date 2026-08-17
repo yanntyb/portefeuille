@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { Deferred } from '@inertiajs/vue3';
 import BaseChart from '@/components/BaseChart.vue';
-import { buildEvolutionOption, INITIAL_ZOOM_WINDOW, type ZoomWindow } from '@/lib/chart';
+import { buildEvolutionOption, type ZoomWindow } from '@/lib/chart';
 import { eur as formatEur } from '@/lib/format';
 import type { ChartOption } from '@/lib/echarts';
 import type { EvolutionSeries } from '@/lib/portfolio';
@@ -17,8 +17,9 @@ const CHART_HEIGHT = 300;
  * Volontairement non réactive : le zoom est déjà appliqué dans l'instance quand l'événement
  * arrive. La stocker sert seulement à survivre à une reconstruction des options — la rendre
  * réactive ferait recalculer et repeindre le graphe à chaque pixel de glissement.
+ * `null` tant que le lecteur n'a rien déplacé : le graphe choisit alors sa fenêtre d'ouverture.
  */
-let lastZoom: ZoomWindow = INITIAL_ZOOM_WINDOW;
+let lastZoom: ZoomWindow | null = null;
 
 const rememberZoom = (window: ZoomWindow): void => {
     lastZoom = window;

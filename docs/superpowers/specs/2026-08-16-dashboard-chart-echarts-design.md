@@ -216,11 +216,21 @@ française posée en `aria-label` sur le conteneur. Les tests s'y appuient, et
 un lecteur d'écran y gagne réellement.
 
 **La fenêtre de zoom est publiée en attribut.** `BaseChart` expose
-`data-zoom-window="70-100"` et émet un événement `zoom`. La section mémorise
+`data-zoom-window="67-100"` et émet un événement `zoom`. La section mémorise
 la fenêtre dans une variable délibérément non réactive : la réintroduire dans
 les options recalculerait et repeindrait le graphe à chaque pixel de
 glissement. Cette mémorisation permet à la fenêtre de survivre au masquage
 d'un titre depuis la liste des positions.
+
+**Le zoom ne descend jamais sous un an.** `minValueSpan` vaut 365 jours en
+millisecondes sur les deux composants `dataZoom` ; l'axe étant temporel,
+ECharts lit ce plancher en durée et non en nombre de points. Le graphe s'ouvre
+exactement sur cette amplitude — les douze derniers mois, convertis en
+pourcentage de l'amplitude totale — ce qui a deux conséquences assumées : la
+molette ne peut plus que dézoomer au chargement, et un historique plus court
+qu'un an s'affiche en entier avec des poignées figées. La fenêtre d'ouverture
+n'est donc plus une constante mais une fonction de l'historique reçu ; la
+section passe `null` tant que le lecteur n'a rien déplacé.
 
 **Le graphe du tableau de bord a rejoint le style de la fiche instrument.** Les
 six aires empilées par actif du bloc `series` ci-dessus ont d'abord cédé la

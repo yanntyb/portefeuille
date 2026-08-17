@@ -8,21 +8,21 @@ use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 
 /**
- * Un an de cours quotidiens : la fenêtre de zoom n'a de sens que sur un historique dense.
- * Une migration héritée sème un utilisateur en dur ; on l'efface pour que le contrôleur
- * résolve bien celui du test.
+ * Trois ans de cours quotidiens par défaut : le plancher d'un an n'est observable que sur un
+ * historique plus long que lui. Une migration héritée sème un utilisateur en dur ; on l'efface
+ * pour que le contrôleur résolve bien celui du test.
  */
-function userWithDenseEvolution(): User
+function userWithDenseEvolution(int $days = 1095): User
 {
     User::query()->delete();
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->create(['name' => 'ACME']);
 
-    foreach (range(0, 365) as $offset) {
+    foreach (range(0, $days) as $offset) {
         Price::factory()->create([
             'asset_id' => $asset->id,
-            'date' => now()->subDays(365 - $offset)->format('Y-m-d'),
+            'date' => now()->subDays($days - $offset)->format('Y-m-d'),
             'close' => 90 + sin($offset / 20) * 20,
         ]);
     }
@@ -33,18 +33,49 @@ function userWithDenseEvolution(): User
     ]);
     Transaction::factory()->buy()->create([
         'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
-        'quantity' => 10, 'unit_price' => 80, 'date' => now()->subDays(365)->format('Y-m-d'),
+        'quantity' => 10, 'unit_price' => 80, 'date' => now()->subDays($days)->format('Y-m-d'),
     ]);
 
     return $user;
 }
 
-it('opens the evolution chart on the recent end of the history', function () {
+/** La fenêtre visible est publiée en attribut sous la forme « début-fin », en pourcentage. */
+function zoomWindowSpan(Pest\Browser\Api\PendingAwaitablePage $page): float
+{
+    $window = (string) $page->script("document.querySelector('[data-section=evolution] [data-chart]').getAttribute('data-zoom-window')");
+    [$start, $end] = array_map('floatval', explode('-', $window));
+
+    return $end - $start;
+}
+
+function scrollChart(Pest\Browser\Api\PendingAwaitablePage $page, int $deltaY): void
+{
+    $page->script("(() => {
+        const chart = document.querySelector('[data-section=evolution] [data-chart]');
+        const box = chart.getBoundingClientRect();
+        chart.querySelector('svg').dispatchEvent(new WheelEvent('wheel', {
+            deltaY: {$deltaY},
+            clientX: box.left + box.width / 2,
+            clientY: box.top + box.height / 3,
+            bubbles: true,
+            cancelable: true,
+        }));
+    })()");
+}
+
+it('opens the evolution chart on the last twelve months', function () {
     $this->actingAs(userWithDenseEvolution());
 
-    visit('/')
-        ->assertScript("document.querySelector('[data-section=evolution] [data-chart]')?.getAttribute('data-zoom-window')", '70-100')
-        ->assertNoJavaScriptErrors();
+    $page = visit('/');
+    $page->assertScript("document.querySelector('[data-section=evolution] [data-chart]') !== null", true);
+
+    $window = (string) $page->script("document.querySelector('[data-section=evolution] [data-chart]').getAttribute('data-zoom-window')");
+    [$start, $end] = array_map('floatval', explode('-', $window));
+
+    expect($end)->toBe(100.0);
+    expect($end - $start)->toBeGreaterThan(32.0)->toBeLessThan(35.0);
+
+    $page->assertNoJavaScriptErrors();
 });
 
 it('keeps the zoom handles free of date labels', function () {
@@ -61,32 +92,46 @@ it('keeps the zoom handles free of date labels', function () {
         ->assertNoJavaScriptErrors();
 });
 
-it('narrows the visible window when the reader zooms in', function () {
+it('never shows less than a year when the reader zooms in', function () {
     $this->actingAs(userWithDenseEvolution());
 
     $page = visit('/');
     $page->assertScript("document.querySelector('[data-section=evolution] [data-chart]') !== null", true);
 
-    $before = $page->script("document.querySelector('[data-section=evolution] [data-chart]').getAttribute('data-zoom-window')");
+    foreach (range(1, 3) as $ignored) {
+        scrollChart($page, 400);
+    }
 
-    $page->script("(() => {
-        const chart = document.querySelector('[data-section=evolution] [data-chart]');
-        const box = chart.getBoundingClientRect();
-        chart.querySelector('svg').dispatchEvent(new WheelEvent('wheel', {
-            deltaY: 400,
-            clientX: box.left + box.width / 2,
-            clientY: box.top + box.height / 3,
-            bubbles: true,
-            cancelable: true,
-        }));
-    })()");
+    expect(zoomWindowSpan($page))->toBeGreaterThan(32.0);
 
-    $after = $page->script("document.querySelector('[data-section=evolution] [data-chart]').getAttribute('data-zoom-window')");
+    $page->assertNoJavaScriptErrors();
+});
 
-    expect($after)->not->toBe($before);
+it('widens the visible window when the reader zooms out', function () {
+    $this->actingAs(userWithDenseEvolution());
 
-    [$start, $end] = array_map('intval', explode('-', (string) $after));
-    expect($end - $start)->toBeLessThan(30);
+    $page = visit('/');
+    $page->assertScript("document.querySelector('[data-section=evolution] [data-chart]') !== null", true);
+
+    $before = zoomWindowSpan($page);
+    scrollChart($page, -400);
+
+    expect(zoomWindowSpan($page))->toBeGreaterThan($before);
+
+    $page->assertNoJavaScriptErrors();
+});
+
+it('shows the whole history when it is shorter than a year', function () {
+    $this->actingAs(userWithDenseEvolution(120));
+
+    $page = visit('/');
+    $page->assertScript("document.querySelector('[data-section=evolution] [data-chart]') !== null", true);
+
+    expect(zoomWindowSpan($page))->toBe(100.0);
+
+    scrollChart($page, 400);
+
+    expect(zoomWindowSpan($page))->toBe(100.0);
 
     $page->assertNoJavaScriptErrors();
 });
@@ -111,17 +156,7 @@ it('zooms without asking the server for more history', function () {
         };
     })()');
 
-    $page->script("(() => {
-        const chart = document.querySelector('[data-section=evolution] [data-chart]');
-        const box = chart.getBoundingClientRect();
-        chart.querySelector('svg').dispatchEvent(new WheelEvent('wheel', {
-            deltaY: -400,
-            clientX: box.left + box.width / 2,
-            clientY: box.top + box.height / 3,
-            bubbles: true,
-            cancelable: true,
-        }));
-    })()");
+    scrollChart($page, -400);
 
     expect($page->script('window.__requestsAfterLoad'))->toBe(0);
 
