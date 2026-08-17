@@ -53,6 +53,10 @@
             "Composer\\Config::disableProcessTimeout",
             "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan octane:start --watch\" \"php artisan queue:listen --tries=1 --timeout=0\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite --kill-others"
         ],
+        "dev:lan": [
+            "Composer\\Config::disableProcessTimeout",
+            "bash -lc 'IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null); if [ -z \"$IP\" ]; then echo \"Aucune adresse IP locale detectee (Wi-Fi ou Ethernet eteint ?)\"; exit 1; fi; echo \"Application accessible sur le reseau local : http://$IP:8000\"; APP_URL=\"http://$IP:8000\" VITE_LAN_HOST=\"$IP\" npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan octane:start --host=0.0.0.0 --port=8000 --watch\" \"php artisan queue:listen --tries=1 --timeout=0\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite --kill-others'"
+        ],
         "test": [
             "@php artisan config:clear --ansi",
             "vendor/bin/pest --parallel --tia"
