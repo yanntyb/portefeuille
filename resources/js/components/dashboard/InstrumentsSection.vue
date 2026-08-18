@@ -5,7 +5,7 @@ import ChartRangeToggle from '@/components/ChartRangeToggle.vue';
 import InstrumentList from '@/components/InstrumentList.vue';
 import InstrumentSearch from '@/components/InstrumentSearch.vue';
 import { isRangeKey, rangeOptions, type CatalogLine, type CatalogTrend, type RangeKey } from '@/lib/catalog';
-import { mergeInstrumentRows, visibleInstrumentRows, type InstrumentRow } from '@/lib/instrumentList';
+import { instrumentSections, mergeInstrumentRows, type InstrumentSection } from '@/lib/instrumentList';
 import type { HoldingLine } from '@/lib/portfolio';
 
 const props = defineProps<{
@@ -22,17 +22,18 @@ const reloading = ref<boolean>(false);
 /** Le catalogue et ses tendances arrivent différés ; seul le squelette des tendances est visible. */
 const loading = computed<boolean>(() => props.trends === undefined || reloading.value);
 
-const rows = computed<InstrumentRow[]>(() =>
-    visibleInstrumentRows(
+const sections = computed<InstrumentSection[]>(() =>
+    instrumentSections(
         mergeInstrumentRows(props.holdings, props.catalog?.lines, props.trends),
         query.value,
+        props.catalog === undefined,
     ),
 );
 
-/** Sans recherche la liste est le portefeuille : son vide parle de positions, pas d'instruments. */
+/** La liste montre tout le catalogue : son vide parle d'instruments, pas seulement de positions. */
 const emptyLabel = computed<string>(() =>
     query.value.trim() === ''
-        ? 'Aucune position pour le moment.'
+        ? 'Aucun instrument pour le moment.'
         : 'Aucun instrument ne correspond à cette recherche.',
 );
 
@@ -61,13 +62,8 @@ const selectRange = (key: RangeKey): void => {
     >
         <div class="flex shrink-0 gap-4">
             <InstrumentSearch v-model="query" />
-<!--            <ChartRangeToggle
-                :options="rangeOptions"
-                :model-value="selectedRange"
-                @update:model-value="selectRange"
-            />-->
         </div>
 
-        <InstrumentList :rows="rows" :loading="loading" :empty-label="emptyLabel" />
+        <InstrumentList :sections="sections" :loading="loading" :empty-label="emptyLabel" />
     </section>
 </template>

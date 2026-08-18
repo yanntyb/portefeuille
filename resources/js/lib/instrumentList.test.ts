@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CatalogLine, CatalogTrend } from '@/lib/catalog';
-import { mergeInstrumentRows, visibleInstrumentRows, type InstrumentRow } from '@/lib/instrumentList';
+import { instrumentSections, mergeInstrumentRows, type InstrumentRow, type InstrumentSection } from '@/lib/instrumentList';
 import type { HoldingLine } from '@/lib/portfolio';
 
 const holding = (assetId: number, assetName: string, marketValue: number): HoldingLine => ({
@@ -89,7 +89,10 @@ describe('mergeInstrumentRows', () => {
     });
 });
 
-describe('visibleInstrumentRows', () => {
+const sectionNames = (sections: InstrumentSection[]): string[][] =>
+    sections.map((section) => names(section.rows));
+
+describe('instrumentSections', () => {
     const merged = (): InstrumentRow[] =>
         mergeInstrumentRows(
             [holding(1, 'Alpha', 1000), holding(2, 'Beta', 3000)],
@@ -97,27 +100,78 @@ describe('visibleInstrumentRows', () => {
             undefined,
         );
 
-    it('ne montre que les positions sur une recherche vide, la plus grosse en tête', () => {
-        expect(names(visibleInstrumentRows(merged(), ''))).toEqual(['Beta', 'Alpha']);
-        expect(names(visibleInstrumentRows(merged(), '   '))).toEqual(['Beta', 'Alpha']);
+    it('groupe positions puis catalogue sans recherche, la plus grosse position en tête', () => {
+        const sections = instrumentSections(merged(), '');
+
+        expect(sections.map((section) => section.label)).toEqual(['Mes positions', 'Autres instruments']);
+        expect(sectionNames(sections)).toEqual([['Beta', 'Alpha'], ['Delta', 'Gamma']]);
     });
 
-    it('ouvre le catalogue entier dès qu\'on tape, détenus d\'abord', () => {
-        expect(names(visibleInstrumentRows(merged(), 'a'))).toEqual(['Beta', 'Alpha', 'Delta', 'Gamma']);
+    it('traite les espaces seuls comme une recherche vide', () => {
+        expect(instrumentSections(merged(), '   ').map((section) => section.label)).toEqual([
+            'Mes positions',
+            'Autres instruments',
+        ]);
     });
 
-    it('range les non détenus par nom', () => {
+    it('tait le groupe des positions quand le portefeuille est vide', () => {
         const rows = mergeInstrumentRows([], [line(3, 'Gamma'), line(4, 'Delta')], undefined);
 
-        expect(names(visibleInstrumentRows(rows, 'a'))).toEqual(['Delta', 'Gamma']);
+        expect(instrumentSections(rows, '').map((section) => section.label)).toEqual(['Autres instruments']);
+    });
+
+    it('tait le groupe du catalogue quand tout est détenu', () => {
+        const rows = mergeInstrumentRows([holding(1, 'Alpha', 1000)], [line(1, 'Alpha', true)], undefined);
+
+        expect(instrumentSections(rows, '').map((section) => section.label)).toEqual(['Mes positions']);
+    });
+
+    it('annonce le groupe du catalogue en attente tant que le catalogue est différé', () => {
+        const rows = mergeInstrumentRows([holding(1, 'Alpha', 1000)], undefined, undefined);
+        const sections = instrumentSections(rows, '', true);
+
+        expect(sections.map((section) => section.label)).toEqual(['Mes positions', 'Autres instruments']);
+        expect(sections[1].pending).toBe(true);
+        expect(sections[1].rows).toEqual([]);
+        expect(sections[0].pending).toBe(false);
+    });
+
+    it('aplatit la liste dès qu\'on tape, sans en-tête', () => {
+        const sections = instrumentSections(merged(), 'a');
+
+        expect(sections).toHaveLength(1);
+        expect(sections[0].label).toBeNull();
+        expect(sections[0].pending).toBe(false);
+    });
+
+    it('classe les résultats par pertinence, ticker tapé d\'abord puis nom, détenu ou non', () => {
+        const rows = mergeInstrumentRows(
+            [holding(2, 'Beta', 3000)],
+            [line(1, 'Deltana', true), line(2, 'Beta', true), line(3, 'Zeta Del'), line(4, 'Delta')],
+            undefined,
+        );
+
+        expect(names(instrumentSections(rows, 'del')[0].rows)).toEqual(['Delta', 'Deltana', 'Zeta Del']);
+    });
+
+    it('départage deux résultats de même rang par leur nom', () => {
+        const rows = mergeInstrumentRows([], [line(3, 'Gamma'), line(4, 'Delta')], undefined);
+
+        expect(names(instrumentSections(rows, 'a')[0].rows)).toEqual(['Delta', 'Gamma']);
     });
 
     it('cherche aussi par ticker et par ISIN', () => {
-        expect(names(visibleInstrumentRows(merged(), 'GAM'))).toEqual(['Gamma']);
-        expect(names(visibleInstrumentRows(merged(), 'FR0000000003'))).toEqual(['Gamma']);
+        expect(names(instrumentSections(merged(), 'GAM')[0].rows)).toEqual(['Gamma']);
+        expect(names(instrumentSections(merged(), 'FR0000000003')[0].rows)).toEqual(['Gamma']);
     });
 
-    it('rend une liste vide quand rien ne correspond', () => {
-        expect(visibleInstrumentRows(merged(), 'zzz')).toEqual([]);
+    it('ne rend aucune section quand rien ne correspond', () => {
+        expect(instrumentSections(merged(), 'zzz')).toEqual([]);
+    });
+
+    it('ne montre pas de squelette pendant une recherche, le catalogue différé ne se cherche pas', () => {
+        const rows = mergeInstrumentRows([holding(1, 'Alpha', 1000)], undefined, undefined);
+
+        expect(instrumentSections(rows, 'alp')[0].pending).toBe(false);
     });
 });

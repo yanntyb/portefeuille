@@ -29,7 +29,7 @@ function seedCatalogInstrument(string $name, float $open, float $close): Instrum
     return $instrument;
 }
 
-it('montre les positions sans recherche, ouvre le catalogue dès la première frappe, et revient', function () {
+it('groupe positions et catalogue sans recherche, aplatit les résultats dès la première frappe, et revient', function () {
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
 
@@ -48,14 +48,18 @@ it('montre les positions sans recherche, ouvre le catalogue dès la première fr
     $this->actingAs($user);
 
     $names = "Array.from(document.querySelectorAll('[data-instrument-name]')).map(el => el.textContent.replace(/\\s+/g, ' ').trim()).join('|')";
+    $groups = "Array.from(document.querySelectorAll('[data-instrument-group]')).map(el => el.textContent.trim()).join('|')";
 
     visit('/')
-        ->assertScript("document.querySelectorAll('[data-instrument-row]').length", 1)
-        ->assertScript($names, 'Alpha Fund (ALP)')
+        ->assertScript("document.querySelectorAll('[data-instrument-row]').length", 3)
+        ->assertScript($groups, 'Mes positions|Autres instruments')
+        ->assertScript($names, 'Alpha Fund (ALP)|Bravo Fund (BRA)|Gamma Trust (GAM)')
         ->type('[data-instrument-search]', 'fund')
         ->assertScript("document.querySelectorAll('[data-instrument-row]').length", 2)
+        ->assertScript("document.querySelectorAll('[data-instrument-group]').length", 0)
         ->assertScript($names, 'Alpha Fund (ALP)|Bravo Fund (BRA)')
         ->assertScript("document.querySelector('[data-instrument-row]').getAttribute('data-held')", 'true')
+        ->assertScript("document.querySelectorAll('[data-instrument-held-badge]').length", 1)
         ->type('[data-instrument-search]', 'zzz')
         ->assertScript("document.querySelectorAll('[data-instrument-row]').length", 0)
         ->assertScript(
@@ -63,11 +67,29 @@ it('montre les positions sans recherche, ouvre le catalogue dès la première fr
             'Aucun instrument ne correspond à cette recherche.',
         )
         ->click('[data-instrument-search-clear]')
-        ->assertScript("document.querySelectorAll('[data-instrument-row]').length", 1)
+        ->assertScript("document.querySelectorAll('[data-instrument-row]').length", 3)
+        ->assertScript($groups, 'Mes positions|Autres instruments')
         ->assertNoJavaScriptErrors();
 });
 
-it('cherche un instrument que le portefeuille ne détient pas', function () {
+it('classe les résultats par pertinence, le ticker tapé avant le nom qui commence pareil', function () {
+    ['user' => $user] = portfolioFixture();
+
+    /** « Zeta » commence son nom, « ZET » est le ticker de l'autre : le ticker doit passer devant. */
+    Instrument::factory()->ofType(InstrumentType::ETF)->create(['name' => 'Zeta Trust', 'ticker' => 'TRU']);
+    Instrument::factory()->ofType(InstrumentType::ETF)->create(['name' => 'Delta Fund', 'ticker' => 'ZET']);
+
+    $this->actingAs($user);
+
+    $names = "Array.from(document.querySelectorAll('[data-instrument-name]')).map(el => el.textContent.replace(/\\s+/g, ' ').trim()).join('|')";
+
+    visit('/')
+        ->type('[data-instrument-search]', 'zet')
+        ->assertScript($names, 'Delta Fund (ZET)|Zeta Trust (TRU)')
+        ->assertNoJavaScriptErrors();
+});
+
+it('montre un instrument non détenu sans recherche, sous le groupe du catalogue', function () {
     ['user' => $user] = portfolioFixture();
 
     seedCatalogInstrument('Zeta Trust', 100, 120);
@@ -75,10 +97,11 @@ it('cherche un instrument que le portefeuille ne détient pas', function () {
     $this->actingAs($user);
 
     visit('/')
-        ->assertDontSee('Zeta Trust')
-        ->type('[data-instrument-search]', 'zeta')
+        ->assertSee('Autres instruments')
         ->assertSee('Zeta Trust')
+        ->type('[data-instrument-search]', 'zeta')
+        ->assertScript("document.querySelectorAll('[data-instrument-row]').length", 1)
         ->assertScript("document.querySelector('[data-instrument-row]').getAttribute('data-held')", 'false')
-        ->assertSee('non détenu')
+        ->assertScript("document.querySelectorAll('[data-instrument-held-badge]').length", 0)
         ->assertNoJavaScriptErrors();
 });

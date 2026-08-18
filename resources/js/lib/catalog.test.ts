@@ -4,6 +4,7 @@ import {
     filterCatalog,
     isRangeKey,
     joinTrends,
+    relevanceRank,
     type CatalogLine,
     type CatalogRow,
 } from '@/lib/catalog';
@@ -76,6 +77,29 @@ describe('filterCatalog', () => {
 
     it('ne casse pas sur un ticker ou un ISIN absent', () => {
         expect(filterCatalog([row(1, 'Alpha', null, null)], 'alpha')).toHaveLength(1);
+    });
+});
+
+describe('relevanceRank', () => {
+    it('met le ticker tapé en tête, avant le nom qui commence pareil', () => {
+        expect(relevanceRank(row(1, 'Beta', 'ALP'), 'alp')).toBe(0);
+        expect(relevanceRank(row(2, 'Alpha', 'BET'), 'alp')).toBe(1);
+    });
+
+    it('renvoie les correspondances en milieu de mot derrière les préfixes', () => {
+        expect(relevanceRank(row(1, 'Société Générale', 'GLE'), 'gene')).toBe(2);
+    });
+
+    it('ignore les accents comme la recherche elle-même', () => {
+        expect(relevanceRank(row(1, 'Société Générale', 'GLE'), 'societe')).toBe(1);
+    });
+
+    it('ne casse pas sur un ticker absent', () => {
+        expect(relevanceRank(row(1, 'Alpha', null), 'alp')).toBe(1);
+    });
+
+    it('ne classe rien sur une recherche vide', () => {
+        expect(relevanceRank(row(1, 'Alpha', 'ALP'), '  ')).toBe(2);
     });
 });
 

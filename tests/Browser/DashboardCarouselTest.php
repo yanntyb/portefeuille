@@ -95,7 +95,7 @@ it('mène à la page correspondante quand on touche un point de pagination', fun
     visit('/')->on()->iPhone14Pro()
         ->assertSee('Performances')
         ->assertScript($scrolledPage, 0)
-        ->click('[aria-label="Aller à Performances"]')
+        ->click('[aria-label="Aller à Instruments"]')
         ->assertScript($scrolledPage, 1)
         ->assertScript($markedDot, 1)
         ->assertNoJavaScriptErrors();

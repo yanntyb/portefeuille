@@ -54,6 +54,24 @@ export const filterCatalog = <Row extends CatalogRow>(rows: Row[], query: string
     );
 };
 
+/**
+ * Rang de pertinence d'une ligne pour une recherche : le plus petit passe devant. Un ticker tapé
+ * en entier doit remonter avant un nom qui porte les mêmes lettres en son milieu.
+ */
+export const relevanceRank = (row: Pick<CatalogLine, 'name' | 'ticker'>, query: string): number => {
+    const needle = normalize(query.trim());
+
+    if (needle === '') {
+        return 2;
+    }
+
+    if (row.ticker !== null && normalize(row.ticker).startsWith(needle)) {
+        return 0;
+    }
+
+    return normalize(row.name).startsWith(needle) ? 1 : 2;
+};
+
 export const joinTrends = (lines: CatalogLine[], trends: CatalogTrend[] | undefined): CatalogRow[] => {
     const byAsset = new Map((trends ?? []).map((trend) => [trend.assetId, trend]));
 

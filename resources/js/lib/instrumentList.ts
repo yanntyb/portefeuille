@@ -1,4 +1,4 @@
-import { filterCatalog, joinTrends, type CatalogLine, type CatalogRow, type CatalogTrend } from '@/lib/catalog';
+import { filterCatalog, joinTrends, relevanceRank, type CatalogLine, type CatalogRow, type CatalogTrend } from '@/lib/catalog';
 import { holdingWeights, type HoldingLine, type HoldingWeight } from '@/lib/portfolio';
 
 /** Une ligne de la liste unique : un instrument du catalogue, enrichi de la position quand il y en a une. */
@@ -65,24 +65,48 @@ export const mergeInstrumentRows = (
     });
 };
 
-/** Les positions d'abord, par valeur décroissante ; le reste du catalogue ensuite, par nom. */
-const compareRows = (left: InstrumentRow, right: InstrumentRow): number => {
-    if (left.held !== right.held) {
-        return left.held ? -1 : 1;
+/** Un bloc de la liste : les positions, le reste du catalogue, ou les résultats d'une recherche. */
+export interface InstrumentSection {
+    /** Titre du bloc, nul sur la liste plate d'une recherche : les résultats ne se rangent plus par détention. */
+    label: string | null;
+    rows: InstrumentRow[];
+    /** Le catalogue est encore différé : le bloc s'annonce mais n'a que son squelette à montrer. */
+    pending: boolean;
+}
+
+const byMarketValue = (left: InstrumentRow, right: InstrumentRow): number =>
+    (right.marketValue ?? 0) - (left.marketValue ?? 0);
+
+const byName = (left: InstrumentRow, right: InstrumentRow): number =>
+    left.name.localeCompare(right.name, 'fr');
+
+/** Un ticker tapé remonte avant un nom qui commence pareil, et le nom tranche les égalités. */
+const byRelevance = (query: string) => (left: InstrumentRow, right: InstrumentRow): number =>
+    relevanceRank(left, query) - relevanceRank(right, query) || byName(left, right);
+
+/**
+ * Découpe la liste en blocs. Sans recherche, deux blocs titrés : le portefeuille, puis le reste du
+ * catalogue — les instruments non détenus se voient sans qu'on ait à taper. Dès la première frappe,
+ * un seul bloc sans titre : la recherche compare, la détention n'ordonne plus rien.
+ */
+export const instrumentSections = (
+    rows: InstrumentRow[],
+    query: string,
+    catalogPending = false,
+): InstrumentSection[] => {
+    if (query.trim() !== '') {
+        const found = [...filterCatalog(rows, query)].sort(byRelevance(query));
+
+        return found.length === 0 ? [] : [{ label: null, rows: found, pending: false }];
     }
 
-    if (left.held) {
-        return (right.marketValue ?? 0) - (left.marketValue ?? 0);
-    }
+    const held = rows.filter((row: InstrumentRow): boolean => row.held).sort(byMarketValue);
+    const others = rows.filter((row: InstrumentRow): boolean => !row.held).sort(byName);
 
-    return left.name.localeCompare(right.name, 'fr');
-};
-
-/** Sans recherche la liste montre le portefeuille ; dès la première frappe, tout le catalogue. */
-export const visibleInstrumentRows = (rows: InstrumentRow[], query: string): InstrumentRow[] => {
-    const visible = query.trim() === ''
-        ? rows.filter((row: InstrumentRow): boolean => row.held)
-        : filterCatalog(rows, query);
-
-    return [...visible].sort(compareRows);
+    return [
+        ...(held.length > 0 ? [{ label: 'Mes positions', rows: held, pending: false }] : []),
+        ...(others.length > 0 || catalogPending
+            ? [{ label: 'Autres instruments', rows: others, pending: catalogPending }]
+            : []),
+    ];
 };
