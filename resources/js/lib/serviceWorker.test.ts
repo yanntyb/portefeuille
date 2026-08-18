@@ -17,11 +17,61 @@ import {
 } from '@/lib/serviceWorker';
 
 /** Enregistrement minimal : seul `waiting` et l'écoute d'`updatefound` sont sollicités. */
-const registrationWithWaiting = (waiting: { postMessage: (data: unknown) => void }) => ({
+const registrationWithWaiting = (waiting: { postMessage: (data: unknown) => void }): ServiceWorkerRegistration => ({
     waiting,
     installing: null,
     addEventListener: (): void => {},
 }) as unknown as ServiceWorkerRegistration;
+
+/**
+ * Enregistrement complet : retient le listener `updatefound` du registration et le listener
+ * `statechange` du worker `installing`, pour rejouer la détection de mise à jour comme le ferait
+ * le navigateur pendant qu'un onglet reste ouvert.
+ */
+const registrationWithInstalling = (): {
+    registration: ServiceWorkerRegistration;
+    installing: { postMessage: (data: unknown) => void; state: string };
+    fireUpdateFound: () => void;
+    fireStateChange: () => void;
+} => {
+    let updateFoundListener: (() => void) | null = null;
+    let stateChangeListener: (() => void) | null = null;
+
+    const installing = {
+        postMessage: vi.fn(),
+        state: 'installing',
+        addEventListener: (type: string, listener: () => void): void => {
+            if (type === 'statechange') {
+                stateChangeListener = listener;
+            }
+        },
+    };
+
+    const registration = {
+        waiting: null,
+        installing,
+        addEventListener: (type: string, listener: () => void): void => {
+            if (type === 'updatefound') {
+                updateFoundListener = listener;
+            }
+        },
+    } as unknown as ServiceWorkerRegistration;
+
+    return {
+        registration,
+        installing,
+        fireUpdateFound: (): void => updateFoundListener?.(),
+        fireStateChange: (): void => stateChangeListener?.(),
+    };
+};
+
+/** Pose `navigator.serviceWorker.controller` : `null` signale la toute première installation. */
+const withController = (controller: object | null): void => {
+    Object.defineProperty(navigator, 'serviceWorker', {
+        configurable: true,
+        value: { controller },
+    });
+};
 
 const installPromptEvent = (outcome: 'accepted' | 'dismissed'): BeforeInstallPromptEvent => ({
     preventDefault: vi.fn(),
@@ -40,6 +90,46 @@ describe('trackRegistration', () => {
         trackRegistration(registrationWithWaiting({ postMessage: vi.fn() }));
 
         expect(updateAvailable.value).toBe(true);
+    });
+
+    it('détecte une mise à jour installée pendant que l\'onglet reste ouvert, sous contrôle', () => {
+        withController({});
+        const { registration, installing, fireUpdateFound, fireStateChange } = registrationWithInstalling();
+
+        trackRegistration(registration);
+        fireUpdateFound();
+        installing.state = 'installed';
+        fireStateChange();
+
+        expect(updateAvailable.value).toBe(true);
+
+        applyUpdate();
+
+        expect(installing.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+    });
+
+    it('ne propose rien pour la toute première installation, faute de contrôleur', () => {
+        withController(null);
+        const { registration, installing, fireUpdateFound, fireStateChange } = registrationWithInstalling();
+
+        trackRegistration(registration);
+        fireUpdateFound();
+        installing.state = 'installed';
+        fireStateChange();
+
+        expect(updateAvailable.value).toBe(false);
+    });
+
+    it('ne propose rien si le worker en installation n\'atteint pas l\'état « installed »', () => {
+        withController({});
+        const { registration, installing, fireUpdateFound, fireStateChange } = registrationWithInstalling();
+
+        trackRegistration(registration);
+        fireUpdateFound();
+        installing.state = 'activating';
+        fireStateChange();
+
+        expect(updateAvailable.value).toBe(false);
     });
 });
 
@@ -93,6 +183,13 @@ describe('handleMessage', () => {
         handleMessage({ type: 'FRESH' });
 
         expect(stale.value).toBe(false);
+    });
+
+    it('accepte une péremption sans horodatage connu', () => {
+        handleMessage({ type: 'SERVED_STALE', cachedAt: null });
+
+        expect(stale.value).toBe(true);
+        expect(lastSyncedAt.value).toBeNull();
     });
 });
 
