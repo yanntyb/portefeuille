@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { eur, frDate, gainClass, pct, signedEur, signedPct } from '@/lib/format';
+import { eur, frDate, gainClass, pct, signedEur, signedPct, syncedAtLabel } from '@/lib/format';
 
 /**
  * `Intl` en fr-FR pose des espaces fines insécables (U+202F) entre les milliers et avant l'euro,
@@ -83,5 +83,27 @@ describe('gainClass', () => {
         expect(gainClass(-10)).toBe('text-loss');
         expect(gainClass(0)).toBe('text-muted-foreground');
         expect(gainClass(null)).toBe('text-muted-foreground');
+    });
+});
+
+describe('syncedAtLabel', () => {
+    it('rend l\'absence de synchronisation en clair', () => {
+        expect(syncedAtLabel(null)).toBe('Données hors-ligne');
+    });
+
+    it('omet les minutes à l\'heure juste', () => {
+        expect(syncedAtLabel(new Date('2026-08-18T11:00:00').getTime())).toBe('Données du 18/08 à 11h');
+    });
+
+    it('garde les minutes quand elles ne sont pas nulles', () => {
+        expect(syncedAtLabel(new Date('2026-08-18T23:30:00').getTime())).toBe('Données du 18/08 à 23h30');
+    });
+
+    it('rend une heure à un chiffre sans zéro de tête', () => {
+        expect(syncedAtLabel(new Date('2026-08-18T09:00:00').getTime())).toBe('Données du 18/08 à 9h');
+    });
+
+    it('rend minuit sans lever d\'erreur', () => {
+        expect(syncedAtLabel(new Date('2026-08-18T00:00:00').getTime())).toBe('Données du 18/08 à 0h');
     });
 });

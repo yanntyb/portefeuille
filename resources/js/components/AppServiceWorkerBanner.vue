@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { syncedAtLabel } from '@/lib/format';
 import {
     applyUpdate,
     canInstall,
@@ -28,17 +29,7 @@ const state = computed<BannerState>(() => {
     return canInstall.value ? 'install' : 'none';
 });
 
-const syncedLabel = computed<string>(() => {
-    if (lastSyncedAt.value === null) {
-        return 'Données hors-ligne';
-    }
-
-    const date = new Date(lastSyncedAt.value);
-    const day = date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
-    const time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-
-    return `Données du ${day} à ${time}`;
-});
+const syncedLabel = computed<string>(() => syncedAtLabel(lastSyncedAt.value));
 
 const refresh = (): void => {
     window.location.reload();

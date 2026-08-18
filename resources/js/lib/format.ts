@@ -30,3 +30,29 @@ export const frDate = (value: string): string => {
 
 export const gainClass = (value: number | null): string =>
     value === null || value === 0 ? 'text-muted-foreground' : value > 0 ? 'text-gain' : 'text-loss';
+
+/**
+ * Heure au format français courant (« 11h », « 23h30 ») plutôt que le « 11:00 » que rendrait
+ * `toLocaleTimeString`. Les minutes ne sont montrées que si elles ne sont pas nulles — sinon les
+ * prix se synchronisant en dehors de l'heure juste (23h30) perdraient l'information, tout en
+ * restant lisible à l'heure pile.
+ *
+ * L'heure vient de `getHours()`, pas d'`Intl.DateTimeFormat` : sur cet environnement, un
+ * `hour: 'numeric', hourCycle: 'h23'` rend quand même une heure sur deux chiffres suivie d'un
+ * « h » littéral séparé par une espace (« 09 h »), pas le nombre nu attendu — un comportement
+ * dépendant de la version d'ICU, pas garanti par la spec. `getHours()` renvoie un entier 0-23
+ * sans zéro de tête, déterministe quel que soit l'environnement.
+ */
+export const syncedAtLabel = (timestamp: number | null): string => {
+    if (timestamp === null) {
+        return 'Données hors-ligne';
+    }
+
+    const date = new Date(timestamp);
+    const day = date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+    const hour = date.getHours();
+    const minutes = date.getMinutes();
+    const time = minutes === 0 ? `${hour}h` : `${hour}h${String(minutes).padStart(2, '0')}`;
+
+    return `Données du ${day} à ${time}`;
+};
