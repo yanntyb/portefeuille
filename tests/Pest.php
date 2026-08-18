@@ -10,6 +10,7 @@ use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 use Pest\Browser\Api\PendingAwaitablePage;
 use Tests\TestCase;
 
@@ -199,4 +200,64 @@ function scrollChart(PendingAwaitablePage $page, string $section, int $deltaY): 
             cancelable: true,
         }));
     })()");
+}
+
+/**
+ * `public/hot` fait basculer Vite en mode développement : `manifestHash()` devient nul et la
+ * route sert le worker inerte. Les tests PWA ont besoin des assets construits.
+ *
+ * @return string|null Contenu à rendre à `restoreViteHotFile()`.
+ */
+function hideViteHotFile(): ?string
+{
+    $path = public_path('hot');
+
+    if (! File::exists($path)) {
+        return null;
+    }
+
+    $contents = File::get($path);
+    File::delete($path);
+
+    return $contents;
+}
+
+function restoreViteHotFile(?string $contents): void
+{
+    if ($contents !== null) {
+        File::put(public_path('hot'), $contents);
+    }
+}
+
+/**
+ * Le runtime compilé est un artefact de build : un test qui le supprime doit le remettre, sinon
+ * les tests navigateur suivants n'obtiennent plus qu'un worker inerte.
+ *
+ * @return string|null Contenu à rendre à `restoreServiceWorkerRuntime()`.
+ */
+function hideServiceWorkerRuntime(): ?string
+{
+    $path = public_path('sw-runtime.js');
+
+    if (! File::exists($path)) {
+        return null;
+    }
+
+    $contents = File::get($path);
+    File::delete($path);
+
+    return $contents;
+}
+
+function restoreServiceWorkerRuntime(?string $contents): void
+{
+    $path = public_path('sw-runtime.js');
+
+    if ($contents === null) {
+        File::delete($path);
+
+        return;
+    }
+
+    File::put($path, $contents);
 }

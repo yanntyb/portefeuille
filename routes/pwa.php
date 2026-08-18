@@ -1,5 +1,6 @@
 <?php
 
+use App\Shared\Pwa\ServiceWorkerScript;
 use Illuminate\Support\Facades\Route;
 
 Route::get('manifest.json', function () {
@@ -16,9 +17,9 @@ Route::get('manifest.json', function () {
     ]);
 })->name('pwa.manifest');
 
-Route::get('sw.js', function () {
+Route::get('sw.js', function (ServiceWorkerScript $script) {
     return response()
-        ->view('pwa.sw')
+        ->view('pwa.sw', ['script' => $script->render()])
         ->header('Content-Type', 'application/javascript')
         ->header('Cache-Control', 'no-cache');
 })->name('pwa.sw');

@@ -29,3 +29,4 @@ Thumbs.db
 /.playwright-mcp/
 *.png
 
+/public/sw-runtime.js
