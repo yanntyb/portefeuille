@@ -107,6 +107,16 @@ describe('rescuedPartialPayload', () => {
         expect(payload.component).toBe('Dashboard');
         expect(payload.version).toBe('abc');
     });
+
+    it('fusionne les props rescapées existantes avec les nouvelles', () => {
+        const pageWithRescued: InertiaPage = {
+            ...page,
+            rescuedProps: ['performances'],
+        };
+        const payload = rescuedPartialPayload(pageWithRescued, ['catalog']);
+
+        expect(payload.rescuedProps).toEqual(['catalog', 'performances']);
+    });
 });
 
 describe('pagePayloadFromDocument', () => {
@@ -123,5 +133,15 @@ describe('pagePayloadFromDocument', () => {
 
     it('renvoie null quand le data-page n\'est pas du JSON valide', () => {
         expect(pagePayloadFromDocument('<div data-page="pas du json"></div>')).toBeNull();
+    });
+
+    it('déséchappe correctement un & littéral encodé en &amp;amp; dans l\'attribut HTML', () => {
+        const html = '<div id="app" data-page="{&quot;component&quot;:&quot;Test&quot;,'
+            + '&quot;props&quot;:{&quot;text&quot;:&quot;A &amp;amp; B&quot;},'
+            + '&quot;url&quot;:&quot;/&quot;,&quot;version&quot;:&quot;1&quot;}"></div>';
+
+        const page = pagePayloadFromDocument(html);
+
+        expect(page?.props?.text).toBe('A &amp; B');
     });
 });

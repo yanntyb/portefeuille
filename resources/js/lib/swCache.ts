@@ -120,7 +120,11 @@ export function pagePayloadFromDocument(html: string): InertiaPage | null {
         return null;
     }
 
-    /** `&amp;` en dernier, sinon il ré-introduit les entités qu'on vient de résoudre. */
+    /**
+     * Une seule passe de `replace` avec une alternation combinée : aucune entité produite par un
+     * remplacement n'est réexaminée. Des `.replace()` successifs par entité réintroduiraient le
+     * bug de double-déséchappement (ex. `&amp;amp;` → `&amp;` → `&`).
+     */
     const json = match[1].replace(
         /&quot;|&#0?39;|&lt;|&gt;|&amp;/g,
         (entity: string): string => HTML_ENTITIES[entity] ?? entity,
