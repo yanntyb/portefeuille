@@ -135,13 +135,11 @@ describe('pagePayloadFromDocument', () => {
         expect(pagePayloadFromDocument('<div data-page="pas du json"></div>')).toBeNull();
     });
 
-    it('déséchappe correctement un & littéral encodé en &amp;amp; dans l\'attribut HTML', () => {
-        const html = '<div id="app" data-page="{&quot;component&quot;:&quot;Test&quot;,'
-            + '&quot;props&quot;:{&quot;text&quot;:&quot;A &amp;amp; B&quot;},'
-            + '&quot;url&quot;:&quot;/&quot;,&quot;version&quot;:&quot;1&quot;}"></div>';
+    it('ne redécode pas une entité produite par un remplacement précédent', () => {
+        const html = '<div id="app" data-page="{&quot;component&quot;:&quot;Dashboard&quot;,'
+            + '&quot;props&quot;:{&quot;label&quot;:&quot;A &amp;lt; B&quot;},'
+            + '&quot;url&quot;:&quot;/&quot;,&quot;version&quot;:&quot;abc&quot;}"></div>';
 
-        const page = pagePayloadFromDocument(html);
-
-        expect(page?.props?.text).toBe('A &amp; B');
+        expect(pagePayloadFromDocument(html)?.props?.label).toBe('A &lt; B');
     });
 });

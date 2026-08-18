@@ -123,7 +123,7 @@ export function pagePayloadFromDocument(html: string): InertiaPage | null {
     /**
      * Une seule passe de `replace` avec une alternation combinée : aucune entité produite par un
      * remplacement n'est réexaminée. Des `.replace()` successifs par entité réintroduiraient le
-     * bug de double-déséchappement (ex. `&amp;amp;` → `&amp;` → `&`).
+     * bug de double-déséchappement (ex. `&amp;lt;` → `&lt;` au lieu de `&amp;lt;` → `<`).
      */
     const json = match[1].replace(
         /&quot;|&#0?39;|&lt;|&gt;|&amp;/g,
