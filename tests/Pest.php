@@ -206,7 +206,17 @@ function scrollChart(PendingAwaitablePage $page, string $section, int $deltaY): 
  * `public/hot` fait basculer Vite en mode développement : `manifestHash()` devient nul et la
  * route sert le worker inerte. Les tests PWA ont besoin des assets construits.
  *
- * @return string|null Contenu à rendre à `restoreViteHotFile()`.
+ * Réservé aux tests navigateur (`tests/Browser/PwaTest.php`) : Herd est un processus externe, le
+ * vrai fichier doit disparaître pour de vrai. Un test Feature n'a pas ce besoin — voir
+ * `Vite::useHotFile()` dans `PwaRoutesTest.php`, qui produit le même effet sans y toucher.
+ *
+ * `File::move()` (donc `rename()`) plutôt qu'un lire-supprimer-réécrire : le contenu ne quitte
+ * jamais le système de fichiers, rien à perdre si le process s'arrête entre deux étapes. La
+ * restauration est en plus enregistrée via `register_shutdown_function`, posée avant même le
+ * déplacement : un Ctrl-C, un `--bail` ou un plantage du pilote de navigateur déclenchent quand
+ * même le handler de fin de process PHP, ce qu'un simple `finally` ne couvre pas.
+ *
+ * @return string|null Chemin de la sauvegarde temporaire, à rendre à `restoreViteHotFile()`.
  */
 function hideViteHotFile(): ?string
 {
@@ -216,16 +226,23 @@ function hideViteHotFile(): ?string
         return null;
     }
 
-    $contents = File::get($path);
-    File::delete($path);
+    $stash = public_path('hot.stash');
 
-    return $contents;
+    register_shutdown_function(static function () use ($path, $stash): void {
+        if (File::exists($stash) && ! File::exists($path)) {
+            File::move($stash, $path);
+        }
+    });
+
+    File::move($path, $stash);
+
+    return $stash;
 }
 
-function restoreViteHotFile(?string $contents): void
+function restoreViteHotFile(?string $stash): void
 {
-    if ($contents !== null) {
-        File::put(public_path('hot'), $contents);
+    if ($stash !== null && File::exists($stash)) {
+        File::move($stash, public_path('hot'));
     }
 }
 

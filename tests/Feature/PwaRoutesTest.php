@@ -43,7 +43,12 @@ it('sert un worker inerte tant que le runtime n\'est pas compilé', function () 
 });
 
 it('injecte la version de cache et les URLs à précacher dans le worker', function () {
-    $hot = hideViteHotFile();
+    /**
+     * Requête en process : pas besoin de faire disparaître le vrai `public/hot` pour que
+     * `manifestHash()` se comporte comme si Vite n'était pas en mode développement. Viser un
+     * chemin qui n'existe pas produit le même effet, sans toucher à l'arbre de travail vivant.
+     */
+    Vite::useHotFile(storage_path('framework/testing/hot'));
     $runtime = hideServiceWorkerRuntime();
     File::put(public_path('sw-runtime.js'), '/* runtime compilé */');
 
@@ -58,6 +63,5 @@ it('injecte la version de cache et les URLs à précacher dans le worker', funct
             ->toContain('/* runtime compilé */');
     } finally {
         restoreServiceWorkerRuntime($runtime);
-        restoreViteHotFile($hot);
     }
 });
