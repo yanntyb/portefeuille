@@ -91,11 +91,12 @@ anciens caches sont supprimés en bloc.
 
 | Fichier | Rôle |
 | --- | --- |
-| `resources/views/pwa/sw.blade.php` | Préfixe les constantes `CACHE_VERSION` et `PRECACHE_URLS`, puis inline le runtime compilé. Aucune logique. |
+| `app/Shared/Pwa/ServiceWorkerScript.php` | Calcule `CACHE_VERSION` et `PRECACHE_URLS`, lit le runtime compilé, assemble le script — ou renvoie le worker inerte. |
+| `resources/views/pwa/sw.blade.php` | Rend le script assemblé. Aucune logique. |
 | `resources/views/pwa/meta-tags.blade.php` | `<link rel="manifest">`, `<meta name="theme-color">`. Inclus depuis le `<head>` de `app.blade.php`. |
 | `resources/views/pwa/offline.blade.php` | Page statique de repli, servie quand une URL jamais visitée est demandée hors-ligne. |
 | `routes/pwa.php` | Ajout de la route `/hors-ligne` (nom `pwa.offline`). Les routes `pwa.manifest` et `pwa.sw` ne changent pas. |
-| `config/pwa.php` | Ajout d'une clé `cache` : préfixes des noms de cache. |
+| `config/pwa.php` | Inchangé. Le nom du cache dérive entièrement de `CACHE_VERSION`, il n'a rien à configurer. |
 
 `/hors-ligne` a besoin d'une vraie route parce que le worker précache par URL : sans URL
 propre, il n'a rien à mettre en cache ni à servir en repli.
@@ -110,6 +111,7 @@ propre, il n'a rien à mettre en cache ni à servir en repli.
 | `resources/js/lib/serviceWorker.ts` | Enregistrement et état réactif : `updateAvailable`, `applyUpdate()`, `stale`, `lastSyncedAt`, `canInstall`, `promptInstall()`. Seul endroit qui touche l'API service worker. |
 | `resources/js/lib/serviceWorker.test.ts` | Tests Vitest avec un `navigator.serviceWorker` simulé. |
 | `resources/js/components/AppServiceWorkerBanner.vue` | Bandeau unique, trois états exclusifs. |
+| `resources/js/pwa/banner.ts` | Monte le bandeau sur `#pwa-banner` et démarre l'enregistrement du worker. |
 | `vite.sw.config.ts` | Second build, sortie à nom fixe. |
 
 Le découpage suit le pattern maison observé dans `resources/js/lib/` : la logique testable
