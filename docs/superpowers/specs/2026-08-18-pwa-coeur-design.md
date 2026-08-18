@@ -105,7 +105,7 @@ propre, il n'a rien à mettre en cache ni à servir en repli.
 | Fichier | Rôle |
 | --- | --- |
 | `resources/js/pwa/sw.ts` | Point d'entrée du worker : cycle de vie, gestionnaire `fetch`, diffusion des messages. |
-| `resources/js/lib/swCache.ts` | Fonctions pures : classification des requêtes, dérivation des clés de cache, synthèse de la réponse partielle hors-ligne. |
+| `resources/js/lib/swCache.ts` | Fonctions pures : classification des requêtes, dérivation des clés de cache, synthèse de la réponse partielle `rescuedProps`. |
 | `resources/js/lib/swCache.test.ts` | Tests Vitest des fonctions ci-dessus. |
 | `resources/js/lib/serviceWorker.ts` | Enregistrement et état réactif : `updateAvailable`, `applyUpdate()`, `stale`, `lastSyncedAt`, `canInstall`, `promptInstall()`. Seul endroit qui touche l'API service worker. |
 | `resources/js/lib/serviceWorker.test.ts` | Tests Vitest avec un `navigator.serviceWorker` simulé. |
@@ -177,25 +177,35 @@ Hors-ligne, un partiel peut ne pas avoir d'entrée en cache. Deux réponses naï
 laisser la requête échouer déclenche la modale d'erreur d'Inertia ; renvoyer un corps vide
 laisse les squelettes tourner indéfiniment.
 
-À la place, le worker synthétise une réponse Inertia valide à partir de la page en cache, en
-posant à `null` chaque prop demandée qu'il ne peut pas fournir. La convention côté Vue devient
-explicite :
+Inertia v3 fournit déjà le mécanisme adapté. Le composant `Deferred` accepte un slot
+`#rescue`, rendu dès qu'une de ses clés figure dans `page.rescuedProps` — un champ de premier
+niveau du payload, alimenté côté serveur par `PropsResolver` quand un
+`Inertia::defer(rescue: true)` voit son résolveur échouer. Le rendu suit cette priorité :
 
-- `undefined` → chargement en cours → squelette
-- `null` → indisponible hors-ligne → message « Données indisponibles hors-ligne »
+```
+propsAreDefined && !hasRescuedProps  → slot default
+hasRescuedProps && slots.rescue      → slot rescue
+sinon                                → slot fallback
+```
 
-Les props concernées sont aujourd'hui typées `?:` (donc `T | undefined`) et deviennent
-`T | null | undefined`. Composants à adapter :
+Le worker synthétise donc, à partir de la page en cache, une réponse Inertia valide portant
+`rescuedProps: ['catalog', 'trends']` et omettant simplement les props qu'il ne peut pas
+fournir. Aucun type de prop ne change, aucune convention maison n'est introduite.
 
-- `components/dashboard/EvolutionSection.vue` (`evolutionSeries`)
-- `components/dashboard/InstrumentsSection.vue` (`catalog`, `trends`)
-- `components/dashboard/PerformancesSection.vue` (`performances`)
-- `components/dashboard/SectorsSection.vue` (`sectorBreakdown`)
-- `components/instrument/ValuationSection.vue` (`valuation`)
-- `components/instrument/PriceHistorySection.vue` (`priceHistory`)
+Quatre `<Deferred>` existent dans le projet, à compléter d'un `#rescue` affichant « Données
+indisponibles hors-ligne » :
 
-Chacun distingue déjà « prop absente » de « prop vide » pour afficher son squelette ; il s'agit
-d'ajouter une troisième branche, pas de réécrire la logique.
+| Fichier | Clés |
+| --- | --- |
+| `components/ValueVsInvestedChart.vue` | `deferKey` — partagé par le tableau de bord (`evolutionSeries`) et la fiche instrument (`valuation`) |
+| `components/dashboard/PerformancesSection.vue` | `performances` |
+| `components/dashboard/SectorsSection.vue` | `sectorBreakdown` |
+| `components/instrument/PriceHistorySection.vue` | `priceHistory` |
+
+Un cinquième cas n'utilise pas `<Deferred>` : `components/dashboard/InstrumentsSection.vue`
+dérive son état de chargement de `props.trends === undefined`. Son squelette tournerait
+indéfiniment. Il lit donc `usePage().props.rescuedProps` pour éteindre `loading` — les
+positions, servies en prop immédiate, restent affichées ; seule l'extension catalogue manque.
 
 ## Cycle de vie et mise à jour
 
@@ -239,6 +249,11 @@ captif. La diffusion du worker fait autorité.
 contenu. Il ne décale jamais la mise en page, donc ne casse ni le carrousel ni la hauteur des
 graphes, et reste à portée de pouce sur mobile.
 
+**Montage.** L'application n'a pas de layout partagé : `Dashboard.vue` et `Show.vue` sont deux
+racines indépendantes. Le bandeau est donc monté comme une petite application Vue distincte sur
+un `<div id="pwa-banner">` ajouté au layout Blade, plutôt que dupliqué dans chaque page. Il
+survit ainsi aux navigations Inertia sans qu'on ait à introduire un layout persistant.
+
 Trois états exclusifs, par priorité décroissante :
 
 1. **Mise à jour disponible** — « Nouvelle version disponible » + bouton « Recharger ».
@@ -258,15 +273,17 @@ Tous les textes sont en français, conformément au reste de l'interface.
 
 | Niveau | Couverture |
 | --- | --- |
-| Vitest — `lib/swCache.test.ts` | Les trois formes d'une même URL ne collisionnent pas ; tri des noms de props ; classification `/build/*` / navigation / Inertia / non-GET ; synthèse de la réponse partielle avec props à `null` |
+| Vitest — `lib/swCache.test.ts` | Les trois formes d'une même URL ne collisionnent pas ; tri des noms de props ; classification `/build/*` / navigation / Inertia / non-GET ; synthèse de la réponse partielle avec `rescuedProps` |
 | Vitest — `lib/serviceWorker.test.ts` | `waiting` détecté → `updateAvailable` ; envoi de `SKIP_WAITING` ; garde anti-boucle sur `controllerchange` ; traitement de `SERVED_STALE` et `FRESH` |
 | Pest Feature — `PwaRoutesTest` | `manifest.json` conforme à la config ; `/sw.js` contient le hash Vite courant et les URLs du manifest ; `Content-Type` et `Cache-Control` corrects ; worker inerte quand `public/sw-runtime.js` est absent ; `/hors-ligne` répond ; `app.blade.php` porte `<link rel="manifest">` |
-| Pest Browser | Le worker s'enregistre et atteint l'état actif sans erreur console (`MakesConsoleAssertions`) |
-| Playwright dédié | Parcours hors-ligne réel : charger, `context.setOffline(true)`, recharger, vérifier le contenu servi depuis le cache et l'apparition du bandeau de fraîcheur |
+| Pest Browser — `PwaTest` | Le worker s'enregistre et atteint l'état actif sans erreur console ; le cache versionné existe et contient les assets précachés ; le bandeau d'installation apparaît sur `beforeinstallprompt` simulé. Assertions via `assertScript()` |
+| Playwright dédié | Parcours hors-ligne réel : charger, `context.setOffline(true)`, recharger, vérifier le contenu servi depuis le cache, le slot `#rescue` et le bandeau de fraîcheur |
 
-`pest-plugin-browser` n'expose ni mode hors-ligne ni évaluation de JavaScript arbitraire : le
-dernier scénario ne peut pas vivre dans la suite Pest. Il s'appuie sur `playwright`, déjà
-présent dans les dépendances npm, via un script lancé à la main.
+`pest-plugin-browser` évalue bien du JavaScript arbitraire (`script()`, `assertScript()`), et la
+suite Browser existante s'en sert déjà. Ce qui manque est le basculement hors-ligne :
+`Pest\Browser\Playwright\Context` n'expose pas `setOffline`, et l'atteindre passerait par des
+classes marquées `@internal`. Le dernier scénario s'appuie donc sur `playwright`, déjà présent
+dans les dépendances npm, via un script lancé à la main.
 
 ## Risques
 
@@ -277,8 +294,10 @@ présent dans les dépendances npm, via un script lancé à la main.
 **Boucle de rechargement sur `controllerchange`.** Le garde `reloading` est explicitement
 couvert par un test.
 
-**Un partiel non caché casse une section.** Le contrat `undefined` / `null` rend le cas visible
-plutôt que silencieux, et chaque composant concerné a une branche dédiée.
+**Un partiel non caché casse une section.** Le slot `#rescue` d'Inertia rend le cas visible
+plutôt que silencieux, et chaque `<Deferred>` a sa branche dédiée. Le seul point de vigilance
+est `InstrumentsSection.vue`, qui n'utilise pas `<Deferred>` et doit lire `rescuedProps`
+lui-même.
 
 **Le second build est oublié en production.** La route sert alors un worker inerte : dégradation
 propre, pas de page cassée. Le test Feature couvre ce cas.
