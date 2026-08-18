@@ -8,6 +8,8 @@ const TIMEOUT = 10_000;
 
 const browser = await chromium.launch();
 const context = await browser.newContext({ ignoreHTTPSErrors: true });
+/** Borne par défaut tout ce que Playwright sait borner (evaluate, textContent…), pas seulement les appels qui le précisent explicitement. */
+context.setDefaultTimeout(TIMEOUT);
 const page = await context.newPage();
 
 try {
@@ -66,16 +68,28 @@ try {
 
     /**
      * `InstrumentsSection.vue` n'utilise pas `<Deferred>` : elle éteint son squelette en lisant
-     * `page.rescuedProps` elle-même (voir `isCatalogLoading`). Ce chemin n'est atteignable par
-     * aucun test unitaire, qui appelle la fonction pure directement — seul un vrai navigateur,
-     * avec un vrai worker rescapant une vraie requête, le traverse.
+     * `page.rescuedProps` elle-même (voir `isCatalogLoading`/`isDeferredPending`). Ce chemin n'est
+     * atteignable par aucun test unitaire, qui appelle la fonction pure directement — seul un vrai
+     * navigateur, avec un vrai worker rescapant une vraie requête, le traverse.
+     *
+     * Précondition positive avant la négative : `.animate-pulse` est aussi introuvable si la
+     * section a disparu (renommée, attribut retiré) — sans ce garde-fou l'assertion virerait au
+     * vert pendant qu'une telle régression passerait inaperçue. `[data-instrument-row]` (déjà
+     * utilisé par `SmokeTest.php`) porte les positions de `overview.holdings`, jamais différées :
+     * au moins une ligne y est toujours rendue dès que la section existe.
      */
-    const instrumentsStillLoading = await page.evaluate(
-        () => document.querySelector('[data-section="instruments"] .animate-pulse') !== null,
-    );
-    assert.ok(
-        !instrumentsStillLoading,
-        "La liste d'instruments doit sortir de son squelette de chargement une fois ses props rescapées hors-ligne.",
+    await page.waitForSelector('[data-section="instruments"] [data-instrument-row]', { timeout: TIMEOUT });
+
+    /**
+     * Sondage borné, pas une lecture ponctuelle : les groupes différés se résolvent
+     * indépendamment les uns des autres. Un `evaluate` unique pris juste après le slot `#rescue`
+     * échouerait à tort si le groupe catalogue arrivait un tick plus tard que celui qui rend ce
+     * texte — `waitForFunction` réessaie jusqu'à la même borne, sans course.
+     */
+    await page.waitForFunction(
+        () => document.querySelector('[data-section="instruments"] .animate-pulse') === null,
+        undefined,
+        { timeout: TIMEOUT },
     );
 
     /** Une URL jamais visitée n'a rien en cache : c'est le repli qui doit apparaître. */
