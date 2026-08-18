@@ -1,3 +1,5 @@
+/// <reference lib="webworker" />
+
 import {
     cacheKeyFor,
     pagePayloadFromDocument,
@@ -195,6 +197,10 @@ export const staleWhileRevalidate = async (
     const { response } = await network;
 
     if (response !== null) {
+        if (response.ok) {
+            await broadcast({ type: 'FRESH' });
+        }
+
         return response;
     }
 

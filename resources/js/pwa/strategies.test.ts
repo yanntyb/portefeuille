@@ -90,6 +90,18 @@ describe('cacheFirst', () => {
         expect(response.status).toBe(200);
         await expect(response.text()).resolves.toBe('contenu');
     });
+
+    it('court-circuite sur une correspondance en cache : le réseau n\'est jamais sollicité', async () => {
+        const cache = useFakeCache();
+        await cache.put('https://argent.test/build/app.js', new Response('déjà en cache'));
+        const fetchSpy = vi.fn();
+        useFakeFetch(fetchSpy);
+
+        const response = await cacheFirst(new Request('https://argent.test/build/app.js'), 'argent-v1');
+
+        await expect(response.text()).resolves.toBe('déjà en cache');
+        expect(fetchSpy).not.toHaveBeenCalled();
+    });
 });
 
 describe('networkFirst', () => {
@@ -251,6 +263,30 @@ describe('staleWhileRevalidate', () => {
         const page = await response.json();
 
         expect(page.props).toEqual({ catalog: ['A'] });
+    });
+
+    it('diffuse FRESH quand rien n\'est en cache et que le fetch réussit', async () => {
+        useFakeCache();
+        useFakeFetch(async (): Promise<Response> => new Response('fraîche', { status: 200 }));
+        const { broadcast, messages } = collectingBroadcast();
+        const event = fakeEvent(new Request('https://argent.test/'));
+
+        await staleWhileRevalidate(event, shape({ inertia: true }), 'argent-v1', broadcast);
+
+        expect(messages).toEqual([{ type: 'FRESH' }]);
+    });
+
+    it('renvoie une réponse non-ok à l\'appelant sans la diffuser comme fraîche, quand rien n\'est en cache', async () => {
+        useFakeCache();
+        useFakeFetch(async (): Promise<Response> => new Response('erreur serveur', { status: 500 }));
+        const { broadcast, messages } = collectingBroadcast();
+        const event = fakeEvent(new Request('https://argent.test/'));
+
+        const response = await staleWhileRevalidate(event, shape({ inertia: true }), 'argent-v1', broadcast);
+
+        expect(response.status).toBe(500);
+        await expect(response.text()).resolves.toBe('erreur serveur');
+        expect(messages).toEqual([]);
     });
 });
 
