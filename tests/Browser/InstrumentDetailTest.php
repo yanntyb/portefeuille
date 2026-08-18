@@ -72,3 +72,23 @@ it('affiche uniquement la part sectorielle quand l\'instrument n\'est pas déten
         ->assertScript("document.querySelectorAll('[data-sector-share]').length", 2)
         ->assertNoJavaScriptErrors();
 });
+
+it('aligne le graphe de valorisation sur la marge du reste de la page, y compris sur mobile', function () {
+    // Le graphe débordait de la marge : rendu bord à bord sur mobile, il commençait avant les
+    // titres et finissait après eux. Les deux écarts sont mesurés, pas seulement celui de gauche.
+    ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
+
+    $this->actingAs($user);
+
+    $paddingGaps = "(() => {
+        const chart = document.querySelector('[data-section=\"valuation\"] [data-chart]').getBoundingClientRect();
+        const heading = document.querySelector('[data-section=\"performance\"] h2').getBoundingClientRect();
+
+        return [Math.round(chart.left - heading.left), Math.round(chart.right - heading.right)].join('|');
+    })()";
+
+    visit("/instruments/{$instrument->id}")->on()->iPhone14Pro()
+        ->assertSee('Performance par période')
+        ->assertScript($paddingGaps, '0|0')
+        ->assertNoJavaScriptErrors();
+});

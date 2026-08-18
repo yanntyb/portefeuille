@@ -55,12 +55,12 @@ const option = computed<ChartOption>(() => buildValueVsInvestedOption({
     <div class="flex flex-col gap-6">
         <Deferred :data="deferKey">
             <template #fallback>
-                <div class="px-0 sm:px-6">
+                <div class="px-6">
                     <ChartSkeleton :height="props.height" />
                 </div>
             </template>
 
-            <div v-if="hasHistory" class="px-0 sm:px-6">
+            <div v-if="hasHistory" class="px-6">
                 <BaseChart :option="option" :height="props.height" @zoom="rememberZoom" />
             </div>
             <p v-else class="py-8 text-center text-sm text-muted-foreground">

@@ -32,7 +32,7 @@ const priceChartOption = computed<ChartOption>(() => buildPriceHistoryOption({
             <p class="text-sm text-muted-foreground">Historique sur 12 mois</p>
         </div>
 
-        <div class="px-0 sm:px-6">
+        <div class="px-6">
             <Deferred data="priceHistory">
                 <template #fallback>
                     <ChartSkeleton />
