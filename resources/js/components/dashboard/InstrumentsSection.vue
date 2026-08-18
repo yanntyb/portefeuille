@@ -5,7 +5,13 @@ import ChartRangeToggle from '@/components/ChartRangeToggle.vue';
 import InstrumentList from '@/components/InstrumentList.vue';
 import InstrumentSearch from '@/components/InstrumentSearch.vue';
 import { isRangeKey, rangeOptions, type CatalogLine, type CatalogTrend, type RangeKey } from '@/lib/catalog';
-import { instrumentSections, isCatalogLoading, mergeInstrumentRows, type InstrumentSection } from '@/lib/instrumentList';
+import {
+    instrumentSections,
+    isCatalogLoading,
+    isDeferredPending,
+    mergeInstrumentRows,
+    type InstrumentSection,
+} from '@/lib/instrumentList';
 import type { HoldingLine } from '@/lib/portfolio';
 
 const props = defineProps<{
@@ -31,7 +37,7 @@ const sections = computed<InstrumentSection[]>(() =>
     instrumentSections(
         mergeInstrumentRows(props.holdings, props.catalog?.lines, props.trends),
         query.value,
-        props.catalog === undefined,
+        isDeferredPending(props.catalog, 'catalog', page.rescuedProps),
     ),
 );
 

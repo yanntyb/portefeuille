@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { CatalogLine, CatalogTrend } from '@/lib/catalog';
-import { instrumentSections, isCatalogLoading, mergeInstrumentRows, type InstrumentRow, type InstrumentSection } from '@/lib/instrumentList';
+import {
+    instrumentSections,
+    isCatalogLoading,
+    isDeferredPending,
+    mergeInstrumentRows,
+    type InstrumentRow,
+    type InstrumentSection,
+} from '@/lib/instrumentList';
 import type { HoldingLine } from '@/lib/portfolio';
 
 const holding = (assetId: number, assetName: string, marketValue: number): HoldingLine => ({
@@ -172,6 +179,25 @@ describe('instrumentSections', () => {
         const rows = mergeInstrumentRows([holding(1, 'Alpha', 1000)], undefined, undefined);
 
         expect(instrumentSections(rows, 'alp')[0].pending).toBe(false);
+    });
+});
+
+describe('isDeferredPending', () => {
+    it('est en attente quand la valeur est absente et la clé non rescapée', () => {
+        expect(isDeferredPending(undefined, 'catalog', undefined)).toBe(true);
+    });
+
+    it('n\'est plus en attente quand la valeur est absente mais la clé rescapée', () => {
+        expect(isDeferredPending(undefined, 'catalog', ['catalog'])).toBe(false);
+    });
+
+    it('n\'est jamais en attente dès que la valeur est arrivée, quelle que soit la liste rescapée', () => {
+        expect(isDeferredPending([], 'catalog', undefined)).toBe(false);
+        expect(isDeferredPending([], 'catalog', ['catalog'])).toBe(false);
+    });
+
+    it('traite une liste de rescapées absente comme vide', () => {
+        expect(isDeferredPending(undefined, 'catalog', undefined)).toBe(isDeferredPending(undefined, 'catalog', []));
     });
 });
 

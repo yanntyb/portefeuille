@@ -110,17 +110,25 @@ export const instrumentSections = (
 };
 
 /**
- * Le catalogue arrive différé, donc son squelette tient sur `trends === undefined`. Hors-ligne
- * la prop n'arrivera jamais : le worker rescape sa clé, et le squelette n'a plus à tourner.
+ * Une prop différée est en attente tant qu'elle n'est pas arrivée et que le worker ne l'a pas
+ * rescapée. Hors-ligne la clé est rescapée : elle n'arrivera jamais, l'attente n'a plus de sens.
+ */
+export function isDeferredPending(
+    value: unknown,
+    key: string,
+    rescuedProps: string[] | undefined,
+): boolean {
+    return value === undefined && !(rescuedProps ?? []).includes(key);
+}
+
+/**
+ * Le squelette des tendances tient sur `trends === undefined`. Hors-ligne la prop n'arrivera
+ * jamais : le worker rescape sa clé, et le squelette n'a plus à tourner.
  */
 export function isCatalogLoading(
     trends: CatalogTrend[] | undefined,
     rescuedProps: string[] | undefined,
     reloading: boolean,
 ): boolean {
-    if (reloading) {
-        return true;
-    }
-
-    return trends === undefined && !(rescuedProps ?? []).includes('trends');
+    return reloading || isDeferredPending(trends, 'trends', rescuedProps);
 }
