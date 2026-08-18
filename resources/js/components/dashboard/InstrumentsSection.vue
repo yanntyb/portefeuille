@@ -23,7 +23,7 @@ const page = usePage();
 /** Le catalogue et ses tendances arrivent différés ; seul le squelette des tendances est visible. */
 const loading = computed<boolean>(() => isCatalogLoading(
     props.trends,
-    page.props.rescuedProps as string[] | undefined,
+    page.rescuedProps,
     reloading.value,
 ));
 
