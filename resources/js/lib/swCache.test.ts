@@ -117,29 +117,47 @@ describe('rescuedPartialPayload', () => {
 
         expect(payload.rescuedProps).toEqual(['catalog', 'performances']);
     });
+
+    /**
+     * `deferredProps` n'appartient qu'à la toute première page : une vraie réponse partielle ne
+     * le porte jamais (vérifié sur une vraie réponse d'Inertia). Le laisser passer ferait croire
+     * au client que tous les groupes restent différés, qui les redemande en boucle — c'est
+     * exactement le bug que le parcours hors-ligne réel a révélé.
+     */
+    it('retire le deferredProps hérité de la page complète : une vraie réponse partielle ne le porte jamais', () => {
+        const pageWithDeferred: InertiaPage = {
+            ...page,
+            deferredProps: { catalogue: ['catalog', 'trends'], performances: ['performances'] },
+        };
+
+        const payload = rescuedPartialPayload(pageWithDeferred, ['catalog', 'trends']);
+
+        expect(payload.deferredProps).toBeUndefined();
+    });
 });
 
 describe('pagePayloadFromDocument', () => {
-    it('extrait et déséchappe le data-page du document', () => {
-        const html = '<div id="app" data-page="{&quot;component&quot;:&quot;Dashboard&quot;,'
-            + '&quot;props&quot;:{},&quot;url&quot;:&quot;/&quot;,&quot;version&quot;:&quot;abc&quot;}"></div>';
+    /**
+     * Balisage réel de `inertiajs/inertia-laravel` v3.3.1 (`Directive::compile()`), vérifié par
+     * `curl -sk https://argent.test/` : le JSON est le contenu texte du `<script data-page>`, pas
+     * la valeur d'un attribut — celui-ci ne porte que l'identifiant du nœud racine (`"app"`).
+     */
+    it('extrait le JSON du contenu texte de la balise <script data-page>', () => {
+        const html = '<body>'
+            + '<script data-page="app" type="application/json">'
+            + '{"component":"Dashboard","props":{},"url":"/","version":"abc"}'
+            + '</script><div id="app"></div>'
+            + '<div id="pwa-banner"></div></body>';
 
         expect(pagePayloadFromDocument(html)?.component).toBe('Dashboard');
     });
 
-    it('renvoie null quand le document ne porte pas de data-page', () => {
+    it('renvoie null quand le document ne porte pas de balise <script data-page>', () => {
         expect(pagePayloadFromDocument('<html><body></body></html>')).toBeNull();
     });
 
-    it('renvoie null quand le data-page n\'est pas du JSON valide', () => {
-        expect(pagePayloadFromDocument('<div data-page="pas du json"></div>')).toBeNull();
-    });
-
-    it('ne redécode pas une entité produite par un remplacement précédent', () => {
-        const html = '<div id="app" data-page="{&quot;component&quot;:&quot;Dashboard&quot;,'
-            + '&quot;props&quot;:{&quot;label&quot;:&quot;A &amp;lt; B&quot;},'
-            + '&quot;url&quot;:&quot;/&quot;,&quot;version&quot;:&quot;abc&quot;}"></div>';
-
-        expect(pagePayloadFromDocument(html)?.props?.label).toBe('A &lt; B');
+    it('renvoie null quand le contenu de la balise n\'est pas du JSON valide', () => {
+        expect(pagePayloadFromDocument('<script data-page="app" type="application/json">pas du json</script>'))
+            .toBeNull();
     });
 });

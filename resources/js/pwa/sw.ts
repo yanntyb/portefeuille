@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 
 import { classifyRequest, type RequestShape } from '@/lib/swCache';
-import { cacheFirst, networkFirst, staleWhileRevalidate, type Broadcast, type SwMessage } from './strategies';
+import { cacheFirst, networkFirst, readStatus, staleWhileRevalidate, type Broadcast, type SwMessage } from './strategies';
 
 /** Constantes préfixées par `ServiceWorkerScript` : elles ne viennent pas du bundle. */
 declare const self: ServiceWorkerGlobalScope & {
@@ -49,8 +49,29 @@ self.addEventListener('activate', (event: ExtendableEvent): void => {
 });
 
 self.addEventListener('message', (event: ExtendableMessageEvent): void => {
-    if ((event.data as { type?: string } | null)?.type === 'SKIP_WAITING') {
+    const data = event.data as { type?: string } | null;
+
+    if (data?.type === 'SKIP_WAITING') {
         void self.skipWaiting();
+
+        return;
+    }
+
+    /**
+     * Amorçage : le client qui vient de charger n'a pas pu recevoir la diffusion `postMessage`
+     * d'une éventuelle réponse périmée servie pour sa propre navigation — cette diffusion visait
+     * le client précédent, sur le point d'être détruit. Il redemande donc l'état déjà persisté.
+     */
+    if (data?.type === 'REQUEST_STATUS') {
+        const source = event.source;
+
+        event.waitUntil(
+            readStatus(CACHE_NAME).then((status: SwMessage | null): void => {
+                if (status !== null && source !== null) {
+                    source.postMessage(status);
+                }
+            }),
+        );
     }
 });
 

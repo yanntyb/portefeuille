@@ -8,6 +8,7 @@ import {
     handleMessage,
     lastSyncedAt,
     promptInstall,
+    requestStatus,
     resetServiceWorkerState,
     setReloader,
     stale,
@@ -190,6 +191,20 @@ describe('handleMessage', () => {
 
         expect(stale.value).toBe(true);
         expect(lastSyncedAt.value).toBeNull();
+    });
+});
+
+describe('requestStatus', () => {
+    it('interroge le worker qui contrôle déjà la page', () => {
+        const postMessage = vi.fn();
+
+        requestStatus({ postMessage } as unknown as ServiceWorker);
+
+        expect(postMessage).toHaveBeenCalledWith({ type: 'REQUEST_STATUS' });
+    });
+
+    it('ne fait rien à la toute première installation, faute de contrôleur', () => {
+        expect(() => requestStatus(null)).not.toThrow();
     });
 });
 

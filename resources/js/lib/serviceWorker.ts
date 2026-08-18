@@ -72,6 +72,22 @@ export function trackRegistration(registration: ServiceWorkerRegistration): void
     });
 }
 
+/**
+ * Interroge le worker sur son dernier état de fraîcheur connu. Une diffusion `postMessage`
+ * déclenchée pendant une navigation peut manquer sa cible — le client qui la reçoit est celui
+ * qu'on est en train de quitter, pas la page qui vient de se charger — donc le client tire l'état
+ * actuel à l'amorçage plutôt que de compter uniquement sur les diffusions à venir. `controller`
+ * est `null` à la toute première installation : personne ne contrôle encore la page, rien à
+ * demander.
+ */
+export function requestStatus(controller: ServiceWorker | null): void {
+    if (controller === null) {
+        return;
+    }
+
+    controller.postMessage({ type: 'REQUEST_STATUS' });
+}
+
 export function handleMessage(message: SwClientMessage): void {
     if (message.type === 'FRESH') {
         stale.value = false;
@@ -171,5 +187,6 @@ export function registerServiceWorker(): void {
         .then((registration: ServiceWorkerRegistration): void => {
             trackRegistration(registration);
             scheduleUpdateChecks(registration);
+            requestStatus(navigator.serviceWorker.controller);
         });
 }

@@ -49,6 +49,42 @@ const putQuietly = async (cache: Cache, key: string, response: Response): Promis
     }
 };
 
+/** Clé réservée : aucune vraie requête ne peut jamais cibler ce chemin, donc aucune collision. */
+const STATUS_KEY = '/__sw-status';
+
+/**
+ * Persiste le dernier état de fraîcheur connu dans le cache lui-même. Une diffusion `postMessage`
+ * ne suffit pas : sur une navigation, le client qui la reçoit est celui qu'on est en train de
+ * quitter, pas la page qui vient de se charger ; et une simple variable de module ne survivrait
+ * pas à la terminaison du worker entre deux requêtes. Le cache, lui, survit aux deux — le client
+ * n'a qu'à le lui redemander à l'amorçage (voir `readStatus`).
+ */
+const writeStatus = async (cache: Cache, status: SwMessage): Promise<void> => {
+    await putQuietly(cache, STATUS_KEY, new Response(JSON.stringify(status)));
+};
+
+/** Relit le dernier état persisté par `writeStatus`, ou `null` si rien n'a encore été écrit. */
+export const readStatus = async (cacheName: string): Promise<SwMessage | null> => {
+    const cache = await caches.open(cacheName);
+    const hit = await cache.match(STATUS_KEY);
+
+    if (hit === undefined) {
+        return null;
+    }
+
+    try {
+        return (await hit.json()) as SwMessage;
+    } catch {
+        return null;
+    }
+};
+
+/** Les deux mêmes voies à chaque changement d'état : la diffusion immédiate, et sa persistance. */
+const notify = async (cache: Cache, broadcast: Broadcast, message: SwMessage): Promise<void> => {
+    await writeStatus(cache, message);
+    await broadcast(message);
+};
+
 /** URLs hashées : une correspondance en cache est vraie par construction, jamais revalidée. */
 export const cacheFirst = async (request: Request, cacheName: string): Promise<Response> => {
     const cache = await caches.open(cacheName);
@@ -80,7 +116,7 @@ export const networkFirst = async (
 
         if (response.ok) {
             await putQuietly(cache, request.url, stamped(response.clone()));
-            await broadcast({ type: 'FRESH' });
+            await notify(cache, broadcast, { type: 'FRESH' });
         }
 
         return response;
@@ -88,7 +124,7 @@ export const networkFirst = async (
         const hit = await cache.match(request.url);
 
         if (hit !== undefined) {
-            await broadcast({ type: 'SERVED_STALE', cachedAt: cachedAtOf(hit) });
+            await notify(cache, broadcast, { type: 'SERVED_STALE', cachedAt: cachedAtOf(hit) });
 
             return hit;
         }
@@ -136,7 +172,7 @@ export const rescuedResponse = async (
         return Response.error();
     }
 
-    await broadcast({ type: 'SERVED_STALE', cachedAt: cached.cachedAt });
+    await notify(cache, broadcast, { type: 'SERVED_STALE', cachedAt: cached.cachedAt });
 
     return new Response(JSON.stringify(rescuedPartialPayload(cached.page, partialKeysOf(shape.partialData))), {
         headers: {
@@ -183,7 +219,9 @@ export const staleWhileRevalidate = async (
          */
         event.waitUntil(
             network.then(async ({ response }): Promise<void> => {
-                await broadcast(
+                await notify(
+                    cache,
+                    broadcast,
                     response !== null && response.ok
                         ? { type: 'FRESH' }
                         : { type: 'SERVED_STALE', cachedAt: cachedAtOf(hit) },
@@ -198,7 +236,7 @@ export const staleWhileRevalidate = async (
 
     if (response !== null) {
         if (response.ok) {
-            await broadcast({ type: 'FRESH' });
+            await notify(cache, broadcast, { type: 'FRESH' });
         }
 
         return response;

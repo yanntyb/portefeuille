@@ -24,6 +24,8 @@ export type InertiaPage = {
     url: string;
     version: string | null;
     rescuedProps?: string[];
+    /** Groupes encore différés, par nom de groupe → props restantes. Seule la page initiale en porte. */
+    deferredProps?: Record<string, string[]>;
     [key: string]: unknown;
 };
 
@@ -78,6 +80,13 @@ export function cacheKeyFor(request: RequestShape): string {
  * Réponse partielle de secours : les props demandées que la page en cache ne porte pas sont
  * listées dans `rescuedProps`, ce qui fait rendre le slot `#rescue` d'Inertia plutôt que de
  * laisser un squelette tourner indéfiniment.
+ *
+ * `page` est la page complète mise en cache à la première visite : elle porte encore son
+ * `deferredProps` d'origine, qui liste TOUS les groupes comme différés. Une vraie réponse
+ * partielle n'a jamais ce champ — seule la page initiale en porte un. Le laisser passer ferait
+ * croire à Inertia que rien n'a été traité : `page.set()` replanifie alors `loadDeferredProps`
+ * pour ces mêmes groupes dès que la réponse est posée, qui re-déclenche cette même réponse de
+ * secours, indéfiniment. On l'omet donc, exactement comme le ferait une vraie réponse partielle.
  */
 export function rescuedPartialPayload(page: InertiaPage, requestedKeys: string[]): InertiaPage {
     const props: Record<string, unknown> = {};
@@ -93,45 +102,32 @@ export function rescuedPartialPayload(page: InertiaPage, requestedKeys: string[]
         rescued.push(key);
     }
 
+    const { deferredProps: _deferredProps, ...base } = page;
+
     return {
-        ...page,
+        ...base,
         props,
         rescuedProps: [...new Set([...(page.rescuedProps ?? []), ...rescued])].sort(),
     };
 }
 
-const HTML_ENTITIES: Record<string, string> = {
-    '&quot;': '"',
-    '&#039;': "'",
-    '&#39;': "'",
-    '&lt;': '<',
-    '&gt;': '>',
-    '&amp;': '&',
-};
-
 /**
- * Dernier recours quand aucune réponse Inertia complète n'est en cache : le document HTML
- * porte la même charge utile dans son attribut `data-page`.
+ * Dernier recours quand aucune réponse Inertia complète n'est en cache : le document HTML porte
+ * la même charge utile dans le contenu texte de sa balise `<script data-page>`. C'est bien le
+ * contenu du `<script>`, pas la valeur de l'attribut `data-page` — celui-ci ne porte que
+ * l'identifiant du nœud racine (`"app"` par défaut), voir `Inertia\Directive::compile()`. Le
+ * contenu d'un `<script type="application/json">` est du texte brut : aucune entité HTML n'y est
+ * jamais échappée, donc rien à déséchapper ici.
  */
 export function pagePayloadFromDocument(html: string): InertiaPage | null {
-    const match = /data-page="([^"]*)"/.exec(html);
+    const match = /<script data-page="[^"]*" type="application\/json">([\s\S]*?)<\/script>/.exec(html);
 
     if (match === null) {
         return null;
     }
 
-    /**
-     * Une seule passe de `replace` avec une alternation combinée : aucune entité produite par un
-     * remplacement n'est réexaminée. Des `.replace()` successifs par entité réintroduiraient le
-     * bug de double-déséchappement (ex. `&amp;lt;` → `&lt;` au lieu de `&amp;lt;` → `<`).
-     */
-    const json = match[1].replace(
-        /&quot;|&#0?39;|&lt;|&gt;|&amp;/g,
-        (entity: string): string => HTML_ENTITIES[entity] ?? entity,
-    );
-
     try {
-        return JSON.parse(json) as InertiaPage;
+        return JSON.parse(match[1]) as InertiaPage;
     } catch {
         return null;
     }

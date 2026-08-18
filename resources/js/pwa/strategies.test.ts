@@ -1,6 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { RequestShape } from '@/lib/swCache';
-import { cacheFirst, networkFirst, rescuedResponse, staleWhileRevalidate, type Broadcast, type SwMessage } from '@/pwa/strategies';
+import {
+    cacheFirst,
+    networkFirst,
+    readStatus,
+    rescuedResponse,
+    staleWhileRevalidate,
+    type Broadcast,
+    type SwMessage,
+} from '@/pwa/strategies';
 
 /**
  * Cache minimal indexé par clé de chaîne. `match()` renvoie un clone à chaque appel, comme le
@@ -296,9 +304,9 @@ describe('rescuedResponse', () => {
         await cache.put(
             'https://argent.test/',
             new Response(
-                '<div id="app" data-page="{&quot;component&quot;:&quot;Dashboard&quot;,'
-                    + '&quot;props&quot;:{&quot;catalog&quot;:[]},&quot;url&quot;:&quot;/&quot;,'
-                    + '&quot;version&quot;:&quot;v1&quot;}"></div>',
+                '<script data-page="app" type="application/json">'
+                    + '{"component":"Dashboard","props":{"catalog":[]},"url":"/","version":"v1"}'
+                    + '</script><div id="app"></div>',
             ),
         );
         const { broadcast } = collectingBroadcast();
@@ -341,5 +349,63 @@ describe('rescuedResponse', () => {
         await rescuedResponse(cache as unknown as Cache, shape({ inertia: true, partialData: 'catalog' }), broadcast);
 
         expect(messages).toEqual([{ type: 'SERVED_STALE', cachedAt }]);
+    });
+});
+
+describe('marqueur d\'état persistant', () => {
+    it('renvoie null tant que rien n\'a encore été écrit', async () => {
+        useFakeCache();
+
+        await expect(readStatus('argent-v1')).resolves.toBeNull();
+    });
+
+    it('persiste un marqueur périmé quand networkFirst sert une réponse en cache hors-ligne', async () => {
+        const cache = useFakeCache();
+        await cache.put(
+            'https://argent.test/',
+            new Response('page', { headers: { 'X-Sw-Cached-At': '1700000000000' } }),
+        );
+        useFakeFetch(async (): Promise<Response> => {
+            throw new TypeError('network error');
+        });
+        const { broadcast } = collectingBroadcast();
+
+        await networkFirst(new Request('https://argent.test/'), 'argent-v1', '/hors-ligne', broadcast);
+
+        await expect(readStatus('argent-v1')).resolves.toEqual({ type: 'SERVED_STALE', cachedAt: 1_700_000_000_000 });
+    });
+
+    it('remplace un marqueur périmé par un marqueur frais dès que le réseau répond de nouveau', async () => {
+        const cache = useFakeCache();
+        await cache.put('https://argent.test/', new Response('page'));
+        useFakeFetch(async (): Promise<Response> => {
+            throw new TypeError('network error');
+        });
+        const { broadcast } = collectingBroadcast();
+        await networkFirst(new Request('https://argent.test/'), 'argent-v1', '/hors-ligne', broadcast);
+
+        await expect(readStatus('argent-v1')).resolves.toMatchObject({ type: 'SERVED_STALE' });
+
+        useFakeFetch(async (): Promise<Response> => new Response('page fraîche', { status: 200 }));
+        await networkFirst(new Request('https://argent.test/'), 'argent-v1', '/hors-ligne', broadcast);
+
+        await expect(readStatus('argent-v1')).resolves.toEqual({ type: 'FRESH' });
+    });
+
+    it('persiste aussi le marqueur périmé quand staleWhileRevalidate le diffuse via waitUntil', async () => {
+        const cache = useFakeCache();
+        await cache.put(
+            'https://argent.test/?__sw=inertia',
+            new Response(JSON.stringify({ component: 'Dashboard', props: {}, url: '/', version: 'v1' })),
+        );
+        useFakeFetch(async (): Promise<Response> => {
+            throw new TypeError('network error');
+        });
+        const event = fakeEvent(new Request('https://argent.test/'));
+
+        await staleWhileRevalidate(event, shape({ inertia: true }), 'argent-v1', collectingBroadcast().broadcast);
+        await event.waitUntil.mock.calls[0][0];
+
+        await expect(readStatus('argent-v1')).resolves.toMatchObject({ type: 'SERVED_STALE' });
     });
 });
