@@ -12,10 +12,15 @@
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
+        @include('pwa.meta-tags')
+
         @vite(['resources/css/app.css', 'resources/js/app.ts'])
         @inertiaHead
     </head>
     <body>
         @inertia
+
+        {{-- Hors de l'application Inertia : les pages sont des racines indépendantes, sans layout partagé. --}}
+        <div id="pwa-banner"></div>
     </body>
 </html>

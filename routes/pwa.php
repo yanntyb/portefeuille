@@ -22,3 +22,6 @@ Route::get('sw.js', function () {
         ->header('Content-Type', 'application/javascript')
         ->header('Cache-Control', 'no-cache');
 })->name('pwa.sw');
+
+/** Repli du service worker : une page jamais visitée n'a rien en cache à servir. */
+Route::view('hors-ligne', 'pwa.offline')->name('pwa.offline');
