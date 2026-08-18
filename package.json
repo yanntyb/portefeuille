@@ -7,7 +7,8 @@
         "dev": "vite",
         "typecheck": "vue-tsc --noEmit",
         "test:js": "vitest run",
-        "test:js:watch": "vitest"
+        "test:js:watch": "vitest",
+        "test:pwa": "node tests/pwa-offline.mjs"
     },
     "devDependencies": {
         "@inertiajs/vue3": "^3.6.1",
