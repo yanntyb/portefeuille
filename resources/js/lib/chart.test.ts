@@ -60,16 +60,39 @@ describe('buildValueVsInvestedOption — axes', () => {
         expect(formatter(new Date(2025, 11, 1).getTime())).toBe('déc.');
     });
 
-    it('porte l\'année sous janvier, sur une seconde ligne pour ne pas chasser les mois voisins', () => {
+    it('porte l\'année seule sous janvier, là où le repère change', () => {
         const formatter = xAxisLabelOf(valueVsInvested(36)).formatter;
 
-        expect(formatter(new Date(2026, 0, 1).getTime())).toBe('janv.\n2026');
+        expect(formatter(new Date(2026, 0, 1).getTime())).toBe('2026');
     });
 
-    it('réserve sous la grille la place des deux lignes de la graduation, en plus du zoom', () => {
+    it('réserve sous la grille la place de la graduation temporelle, en plus du zoom', () => {
         const grid = valueVsInvested(36).grid as { bottom: number };
 
-        expect(grid.bottom).toBe(80);
+        expect(grid.bottom).toBe(68);
+    });
+
+    it('élargit la gouttière des montants avec leur nombre de chiffres, sans les laisser couper', () => {
+        const gutterOf = (scale: number): number => {
+            const labels = monthlyLabels(36);
+
+            return (buildValueVsInvestedOption({
+                labels,
+                value: labels.map((): number => 1000 * scale),
+                invested: labels.map((): number => 900 * scale),
+                valueFormatter: (value: number): string => eur(value, 0),
+                window: null,
+                description: 'Évolution.',
+            }).grid as { left: number }).left;
+        };
+
+        expect(gutterOf(1000)).toBeGreaterThan(gutterOf(1));
+    });
+
+    it('garde la gouttière stable quand le zoom réduit la fenêtre visible', () => {
+        const leftOf = (option: ChartOption): number => (option.grid as { left: number }).left;
+
+        expect(leftOf(valueVsInvested(36, { start: 90, end: 100 }))).toBe(leftOf(valueVsInvested(36)));
     });
 });
 
@@ -176,8 +199,8 @@ describe('buildPriceHistoryOption', () => {
             valueFormatter: (value: number): string => eur(value, 0),
         });
 
-        expect(xAxisLabelOf(option).formatter(new Date(2026, 0, 1).getTime())).toBe('janv.\n2026');
-        expect((option.grid as { bottom: number }).bottom).toBe(40);
+        expect(xAxisLabelOf(option).formatter(new Date(2026, 0, 1).getTime())).toBe('2026');
+        expect((option.grid as { bottom: number }).bottom).toBe(28);
     });
 });
 

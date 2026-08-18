@@ -89,29 +89,104 @@ type ValueFormatter = (value: number) => string;
 const MONTH_LABEL = new Intl.DateTimeFormat('fr-FR', { month: 'short' });
 
 /**
- * Graduation de l'axe temporel. Le gabarit d'ECharts effacerait janvier au profit d'un « 2026 »
- * en gras — la suite se lirait « déc., 2026, févr. », un mois manquant en plein milieu. Chaque
- * graduation porte donc son mois ; l'année s'ajoute sous janvier, sur une seconde ligne pour ne
- * pas élargir l'étiquette et faire disparaître ses voisines par recouvrement.
+ * Graduation de l'axe temporel : chaque cran porte son mois, sauf janvier qui porte l'année seule
+ * — c'est là que le repère change, et le mois y est déductible de ses voisins. Tenir sur une seule
+ * ligne, plutôt que d'empiler le mois et l'année, rend au tracé la moitié de la bande du bas.
  */
 export function timeAxisLabel(value: number): string {
     const date = new Date(value);
     const month = MONTH_LABEL.format(date);
 
-    return date.getMonth() === 0 ? `${month}\n${date.getFullYear()}` : month;
+    return date.getMonth() === 0 ? String(date.getFullYear()) : month;
 }
+
+/** Police des graduations : ECharts peint son SVG sans hériter de celle de la page. */
+const AXIS_LABEL_FONT = '12px sans-serif';
+
+/** Écart entre une graduation et le cadre, tel qu'ECharts le pose par défaut. */
+const AXIS_LABEL_MARGIN = 8;
+
+/** Débord de la pastille de dernière valeur au-delà du cadre : son rayon plus sa bordure. */
+const LAST_POINT_OVERFLOW = 6;
+
+/**
+ * Bande au-dessus du cadre. Couvre la demi-hauteur de la graduation la plus haute, centrée sur
+ * sa ligne, et le débord de la pastille quand le dernier point est aussi le plus haut.
+ */
+const CHART_TOP_INSET = 8;
+
+/** Contexte de mesure, créé une seule fois : `undefined` tant que rien n'a été mesuré. */
+let labelMeasurer: CanvasRenderingContext2D | null | undefined;
+
+/**
+ * Largeur réelle d'une graduation. Mesurée sur un canevas hors écran plutôt qu'estimée au
+ * caractère : chiffres, espace des milliers et « € » n'ont pas la même avance. Hors navigateur
+ * — les tests unitaires — l'estimation grossière suffit, aucun pixel n'y est peint.
+ */
+function labelWidth(text: string): number {
+    if (labelMeasurer === undefined) {
+        const context = typeof document === 'undefined'
+            ? null
+            : document.createElement('canvas').getContext('2d');
+
+        if (context !== null) {
+            context.font = AXIS_LABEL_FONT;
+        }
+
+        labelMeasurer = context;
+    }
+
+    return labelMeasurer?.measureText(text).width ?? text.length * 7;
+}
+
+/**
+ * Largeur réservée aux montants de l'axe des ordonnées. Une valeur fixe était soit trop large
+ * pour un petit portefeuille, soit trop courte pour un gros — la graduation débordait alors du
+ * SVG et se faisait couper. Elle est calculée sur l'amplitude entière de l'historique et non sur
+ * la fenêtre visible : sinon le cadre se décalerait à chaque cran de zoom, la courbe glissant
+ * sous le doigt. Le maximum est majoré d'un dixième pour couvrir la graduation ronde qu'ECharts
+ * place au-dessus des données.
+ */
+function yAxisGutter(values: number[], valueFormatter: ValueFormatter): number {
+    const finite = values.filter((value: number): boolean => Number.isFinite(value));
+
+    if (finite.length === 0) {
+        return AXIS_LABEL_MARGIN;
+    }
+
+    const bounds = [Math.min(...finite), Math.max(...finite)];
+    const widest = Math.max(...[...bounds, bounds[1] * 1.1].map(
+        (value: number): number => labelWidth(valueFormatter(value)),
+    ));
+
+    return Math.ceil(widest) + AXIS_LABEL_MARGIN;
+}
+
+type ChartFrameInput = {
+    valueFormatter: ValueFormatter;
+    /** Toutes les valeurs tracées : elles seules disent la largeur des graduations à venir. */
+    values: number[];
+    bottom: number;
+    description: string;
+};
 
 /**
  * Ossature partagée par les trois graphes : axes, grille et cadre d'infobulle suivent le thème.
  * La description accessible est rédigée à la main plutôt que laissée au gabarit anglais d'ECharts.
  */
-function chartFrame(valueFormatter: ValueFormatter, bottom: number, description: string): ChartOption {
+function chartFrame({ valueFormatter, values, bottom, description }: ChartFrameInput): ChartOption {
     const colors = palette();
 
     return {
         animation: false,
         aria: { enabled: true, label: { description } },
-        grid: { left: 64, right: 12, top: 12, bottom, containLabel: false },
+        grid: {
+            left: yAxisGutter(values, valueFormatter),
+            right: LAST_POINT_OVERFLOW,
+            top: CHART_TOP_INSET,
+            bottom,
+            containLabel: false,
+        },
         /** Axe temporel plutôt que catégoriel : la graduation suit l'amplitude réellement visible. */
         xAxis: {
             type: 'time',
@@ -309,8 +384,8 @@ function lastYearWindow(labels: string[]): ZoomWindow {
 /** Hauteur réservée sous la grille à la mini-timeline du zoom, en pixels. */
 const ZOOM_SLIDER_HEIGHT = 40;
 
-/** Bande réservée à la graduation temporelle : deux lignes sous janvier, l'année comprise. */
-const TIME_AXIS_LABEL_HEIGHT = 40;
+/** Bande réservée à la graduation temporelle : une ligne, l'année en suffixe sous janvier. */
+const TIME_AXIS_LABEL_HEIGHT = 28;
 
 /**
  * Le graphe « valeur contre investi », seul et même pour le tableau de bord et la fiche
@@ -324,7 +399,12 @@ export function buildValueVsInvestedOption(
     const colors = palette();
 
     return {
-        ...chartFrame(valueFormatter, ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT, description),
+        ...chartFrame({
+            valueFormatter,
+            values: [...value, ...invested],
+            bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT,
+            description,
+        }),
         color: [colors.value, colors.invested],
         series: valueVsInvestedSeries(labels, value, invested),
         tooltip: valueVsInvestedTooltip(labels, value, invested, valueFormatter),
@@ -367,7 +447,12 @@ export function buildPriceHistoryOption({ labels, close, valueFormatter }: Price
     const points = datedPoints(labels, close);
 
     return {
-        ...chartFrame(valueFormatter, TIME_AXIS_LABEL_HEIGHT, "Historique du cours de l'instrument."),
+        ...chartFrame({
+            valueFormatter,
+            values: close,
+            bottom: TIME_AXIS_LABEL_HEIGHT,
+            description: "Historique du cours de l'instrument.",
+        }),
         color: [colors.value],
         series: [{
             name: 'Cours',
