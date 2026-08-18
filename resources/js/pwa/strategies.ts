@@ -85,6 +85,17 @@ const notify = async (cache: Cache, broadcast: Broadcast, message: SwMessage): P
     await broadcast(message);
 };
 
+/**
+ * Précache tolérant aux pannes : `cache.addAll` est atomique — un seul GET qui échoue (chunk du
+ * manifest non déployé, `/` qui rend un 500 pendant un hoquet de base) fait rejeter
+ * l'installation entière, et le nouveau worker n'atteint jamais `waiting` : aucune mise à jour
+ * ne se propage plus jamais, sans le moindre signal. `allSettled` isole chaque échec : un asset
+ * manquant dégrade au pire une route hors-ligne, il ne gèle plus les mises à jour futures.
+ */
+export const precache = async (cache: Cache, urls: string[]): Promise<void> => {
+    await Promise.allSettled(urls.map((url: string): Promise<void> => cache.add(url)));
+};
+
 /** URLs hashées : une correspondance en cache est vraie par construction, jamais revalidée. */
 export const cacheFirst = async (request: Request, cacheName: string): Promise<Response> => {
     const cache = await caches.open(cacheName);
@@ -116,6 +127,14 @@ export const networkFirst = async (
 
         if (response.ok) {
             await putQuietly(cache, request.url, stamped(response.clone()));
+
+            /**
+             * Cet `await` est porteur, pas un coût gratuit sur le chemin chaud : le marqueur doit
+             * être persisté AVANT que ce document ne soit renvoyé au navigateur. Sans lui, le
+             * client qui vient de démarrer sur ce document peut envoyer son `REQUEST_STATUS`
+             * avant que l'écriture n'ait eu lieu, et lire l'état précédent au lieu du sien. Ne le
+             * retire pas pour « alléger » cette fonction.
+             */
             await notify(cache, broadcast, { type: 'FRESH' });
         }
 
@@ -174,13 +193,67 @@ export const rescuedResponse = async (
 
     await notify(cache, broadcast, { type: 'SERVED_STALE', cachedAt: cached.cachedAt });
 
-    return new Response(JSON.stringify(rescuedPartialPayload(cached.page, partialKeysOf(shape.partialData))), {
+    /**
+     * Une requête sans `X-Inertia-Partial-Data` n'est pas la relance d'un groupe différé : c'est
+     * une visite SPA complète vers une page déjà consultée (ex. un clic depuis le tableau de bord
+     * hors-ligne). La page en cache est alors renvoyée intacte — `props` au complet et
+     * `deferredProps` conservés — pour qu'Inertia redemande ensuite chaque groupe différé, et que
+     * chacun soit à son tour rescapé individuellement par cette même fonction.
+     * `rescuedPartialPayload(page, [])` viderait `props` en entier et rendrait une page blanche :
+     * ce n'est pas la même situation qu'un groupe différé qui manque au cache.
+     */
+    const payload = shape.partialData === null
+        ? cached.page
+        : rescuedPartialPayload(cached.page, partialKeysOf(shape.partialData));
+
+    return new Response(JSON.stringify(payload), {
         headers: {
             'Content-Type': 'application/json',
             'X-Inertia': 'true',
             Vary: 'X-Inertia',
         },
     });
+};
+
+/**
+ * Réseau d'abord pour les requêtes Inertia. Une page ou un partiel Inertia porte des données,
+ * pas de la coquille : le stale-while-revalidate re-servirait en ligne, à chaque lancement à
+ * froid, les partiels du lancement précédent — total du portefeuille à jour affiché à côté de
+ * graphes, performances et secteurs périmés d'une journée de marché — et la revalidation
+ * réussie diffuserait `FRESH` sans que rien ne le signale, puisqu'elle réussit malgré tout.
+ * Hors-ligne, le comportement ne change pas : l'entrée en cache exacte de cette requête si elle
+ * existe, sinon la synthèse rescapée — jamais la page hors-ligne, qui n'a pas de sens pour une
+ * requête Inertia.
+ */
+export const inertiaNetworkFirst = async (
+    request: Request,
+    shape: RequestShape,
+    cacheName: string,
+    broadcast: Broadcast,
+): Promise<Response> => {
+    const cache = await caches.open(cacheName);
+    const key = cacheKeyFor(shape);
+
+    try {
+        const response = await fetch(request);
+
+        if (response.ok) {
+            await putQuietly(cache, key, stamped(response.clone()));
+            await notify(cache, broadcast, { type: 'FRESH' });
+        }
+
+        return response;
+    } catch {
+        const hit = await cache.match(key);
+
+        if (hit !== undefined) {
+            await notify(cache, broadcast, { type: 'SERVED_STALE', cachedAt: cachedAtOf(hit) });
+
+            return hit;
+        }
+
+        return rescuedResponse(cache, shape, broadcast);
+    }
 };
 
 /** Ce qu'une revalidation réseau rapporte : la réponse obtenue (`ok` ou pas), ou `null` si le réseau a échoué. */

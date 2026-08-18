@@ -29,12 +29,27 @@ export type InertiaPage = {
     [key: string]: unknown;
 };
 
-export function classifyRequest(request: RequestShape): SwRequestKind {
+/**
+ * `workerOrigin` (`self.location.origin`) sépare les requêtes du worker de celles qu'il ne fait
+ * qu'intercepter en passant. Aucun bug ne vit aujourd'hui de son absence — l'application ne
+ * récupère rien en cross-origin — mais un service worker intercepte tout GET pour toujours : le
+ * jour où un GET tiers avec CORS apparaît, une réponse `ok` s'écrirait sous son URL complète
+ * dans `argent-{version}` et y resterait tant que la version ne change pas. Les réponses
+ * `no-cors` y échappent aujourd'hui par accident, parce qu'elles sont opaques (`response.ok` y
+ * est toujours `false`), pas par une décision explicite.
+ */
+export function classifyRequest(request: RequestShape, workerOrigin: string): SwRequestKind {
     if (request.method !== 'GET') {
         return 'passthrough';
     }
 
-    if (new URL(request.url).pathname.startsWith(BUILD_PREFIX)) {
+    const url = new URL(request.url);
+
+    if (url.origin !== workerOrigin) {
+        return 'passthrough';
+    }
+
+    if (url.pathname.startsWith(BUILD_PREFIX)) {
         return 'asset';
     }
 

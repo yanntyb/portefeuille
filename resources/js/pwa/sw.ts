@@ -1,7 +1,16 @@
 /// <reference lib="webworker" />
 
 import { classifyRequest, type RequestShape } from '@/lib/swCache';
-import { cacheFirst, networkFirst, readStatus, staleWhileRevalidate, type Broadcast, type SwMessage } from './strategies';
+import {
+    cacheFirst,
+    inertiaNetworkFirst,
+    networkFirst,
+    precache,
+    readStatus,
+    staleWhileRevalidate,
+    type Broadcast,
+    type SwMessage,
+} from './strategies';
 
 /** Constantes préfixées par `ServiceWorkerScript` : elles ne viennent pas du bundle. */
 declare const self: ServiceWorkerGlobalScope & {
@@ -30,7 +39,7 @@ const broadcast: Broadcast = async (message: SwMessage): Promise<void> => {
 
 self.addEventListener('install', (event: ExtendableEvent): void => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache: Cache): Promise<void> => cache.addAll(self.PRECACHE_URLS)),
+        caches.open(CACHE_NAME).then((cache: Cache): Promise<void> => precache(cache, self.PRECACHE_URLS)),
     );
 });
 
@@ -78,7 +87,7 @@ self.addEventListener('message', (event: ExtendableMessageEvent): void => {
 self.addEventListener('fetch', (event: FetchEvent): void => {
     const shape = shapeOf(event.request);
 
-    switch (classifyRequest(shape)) {
+    switch (classifyRequest(shape, self.location.origin)) {
         case 'passthrough':
             return;
         case 'asset':
@@ -87,6 +96,10 @@ self.addEventListener('fetch', (event: FetchEvent): void => {
             return;
         case 'navigation':
             event.respondWith(networkFirst(event.request, CACHE_NAME, self.OFFLINE_URL, broadcast));
+
+            return;
+        case 'inertia':
+            event.respondWith(inertiaNetworkFirst(event.request, shape, CACHE_NAME, broadcast));
 
             return;
         default:

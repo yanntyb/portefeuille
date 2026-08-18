@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { RequestShape } from '@/lib/swCache';
 import {
     cacheFirst,
+    inertiaNetworkFirst,
     networkFirst,
+    precache,
     readStatus,
     rescuedResponse,
     staleWhileRevalidate,
@@ -35,6 +37,17 @@ class FakeCache {
 
         this.puts.push(key);
         this.store.set(key, response);
+    }
+
+    /** Reproduit la vraie `Cache.add()` : récupère puis stocke, en rejetant sur une réponse non-ok. */
+    async add(url: string): Promise<void> {
+        const response = await fetch(new Request(url));
+
+        if (!response.ok) {
+            throw new Error(`add() a échoué pour ${url}`);
+        }
+
+        await this.put(url, response);
     }
 }
 
@@ -112,6 +125,39 @@ describe('cacheFirst', () => {
     });
 });
 
+describe('precache', () => {
+    it('isole les échecs individuels : un asset manquant ne bloque pas les autres ni l\'installation', async () => {
+        const cache = new FakeCache();
+        useFakeFetch(async (request: Request): Promise<Response> =>
+            request.url.includes('manquant')
+                ? new Response('introuvable', { status: 404 })
+                : new Response('contenu'),
+        );
+
+        await expect(
+            precache(cache as unknown as Cache, [
+                'https://argent.test/build/app.js',
+                'https://argent.test/build/manquant.js',
+                'https://argent.test/hors-ligne',
+            ]),
+        ).resolves.toBeUndefined();
+
+        expect(cache.puts).toEqual([
+            'https://argent.test/build/app.js',
+            'https://argent.test/hors-ligne',
+        ]);
+    });
+
+    it('précache normalement quand tout répond avec succès', async () => {
+        const cache = new FakeCache();
+        useFakeFetch(async (): Promise<Response> => new Response('contenu'));
+
+        await precache(cache as unknown as Cache, ['https://argent.test/', 'https://argent.test/hors-ligne']);
+
+        expect(cache.puts).toEqual(['https://argent.test/', 'https://argent.test/hors-ligne']);
+    });
+});
+
 describe('networkFirst', () => {
     it('diffuse FRESH et sert quand même la réponse fraîche si l\'écriture en cache échoue', async () => {
         const cache = useFakeCache();
@@ -146,6 +192,105 @@ describe('networkFirst', () => {
         );
 
         await expect(response.text()).resolves.toBe('hors-ligne');
+    });
+});
+
+describe('inertiaNetworkFirst', () => {
+    /**
+     * La preuve du correctif : avant, une requête Inertia passait par `staleWhileRevalidate` et
+     * renvoyait l'entrée en cache même quand le réseau répondait avec succès. Ici, le réseau
+     * répond ET une entrée périmée existe déjà en cache — si la réponse contient la valeur
+     * fraîche, ce n'est plus du stale-while-revalidate.
+     */
+    it('sert la réponse réseau plutôt que l\'entrée en cache quand le réseau répond, en ligne', async () => {
+        const cache = useFakeCache();
+        await cache.put(
+            'https://argent.test/?__sw=inertia',
+            new Response(JSON.stringify({ component: 'Dashboard', props: { total: 'périmé' }, url: '/', version: 'v1' })),
+        );
+        useFakeFetch(async (): Promise<Response> =>
+            new Response(
+                JSON.stringify({ component: 'Dashboard', props: { total: 'frais' }, url: '/', version: 'v1' }),
+                { status: 200 },
+            ),
+        );
+        const { broadcast, messages } = collectingBroadcast();
+
+        const response = await inertiaNetworkFirst(
+            new Request('https://argent.test/'),
+            shape({ inertia: true }),
+            'argent-v1',
+            broadcast,
+        );
+        const page = await response.json();
+
+        expect(page.props.total).toBe('frais');
+        expect(messages).toEqual([{ type: 'FRESH' }]);
+    });
+
+    it('met en cache la réponse fraîche sous la clé Inertia pour la prochaine coupure réseau', async () => {
+        const cache = useFakeCache();
+        useFakeFetch(async (): Promise<Response> => new Response('fraîche', { status: 200 }));
+        const { broadcast } = collectingBroadcast();
+
+        await inertiaNetworkFirst(new Request('https://argent.test/'), shape({ inertia: true }), 'argent-v1', broadcast);
+
+        expect(cache.puts).toContain('https://argent.test/?__sw=inertia');
+    });
+
+    /** Hors-ligne, le comportement ne doit pas changer : l'entrée en cache exacte si elle existe. */
+    it('sert l\'entrée en cache exacte quand le réseau échoue : le comportement hors-ligne ne change pas', async () => {
+        const cache = useFakeCache();
+        const cachedAt = 1_700_000_000_000;
+        await cache.put(
+            'https://argent.test/?__sw=inertia',
+            new Response(
+                JSON.stringify({ component: 'Dashboard', props: { total: 'périmé' }, url: '/', version: 'v1' }),
+                { headers: { 'X-Sw-Cached-At': String(cachedAt) } },
+            ),
+        );
+        useFakeFetch(async (): Promise<Response> => {
+            throw new TypeError('network error');
+        });
+        const { broadcast, messages } = collectingBroadcast();
+
+        const response = await inertiaNetworkFirst(
+            new Request('https://argent.test/'),
+            shape({ inertia: true }),
+            'argent-v1',
+            broadcast,
+        );
+        const page = await response.json();
+
+        expect(page.props.total).toBe('périmé');
+        expect(messages).toEqual([{ type: 'SERVED_STALE', cachedAt }]);
+    });
+
+    /** Toujours hors-ligne : rien pour cette clé exacte, le repli reste la synthèse rescapée. */
+    it('synthétise une réponse rescapée quand le réseau échoue et que rien n\'est en cache pour cette clé', async () => {
+        const cache = useFakeCache();
+        await cache.put(
+            'https://argent.test/',
+            new Response(
+                '<script data-page="app" type="application/json">'
+                    + '{"component":"Dashboard","props":{"catalog":[]},"url":"/","version":"v1"}'
+                    + '</script><div id="app"></div>',
+            ),
+        );
+        useFakeFetch(async (): Promise<Response> => {
+            throw new TypeError('network error');
+        });
+        const { broadcast } = collectingBroadcast();
+
+        const response = await inertiaNetworkFirst(
+            new Request('https://argent.test/'),
+            shape({ inertia: true, partialData: 'catalog' }),
+            'argent-v1',
+            broadcast,
+        );
+        const page = await response.json();
+
+        expect(page.props).toEqual({ catalog: [] });
     });
 });
 
@@ -349,6 +494,39 @@ describe('rescuedResponse', () => {
         await rescuedResponse(cache as unknown as Cache, shape({ inertia: true, partialData: 'catalog' }), broadcast);
 
         expect(messages).toEqual([{ type: 'SERVED_STALE', cachedAt }]);
+    });
+
+    /**
+     * Une visite SPA vers une page déjà visitée hors-ligne (ex. un clic depuis le tableau de
+     * bord) porte une requête Inertia complète, sans `X-Inertia-Partial-Data`. `props` et
+     * `deferredProps` doivent rester intacts, pas passer par `rescuedPartialPayload` : c'est ce
+     * qui permet à Inertia de redemander chaque groupe différé ensuite, et à chacun d'être à son
+     * tour rescapé individuellement.
+     */
+    it('renvoie la page en cache intacte pour une requête complète : props et deferredProps conservés', async () => {
+        const cache = new FakeCache();
+        await cache.put(
+            'https://argent.test/instruments/5',
+            new Response(
+                '<script data-page="app" type="application/json">'
+                    + '{"component":"Instruments/Show","props":{"instrument":{"id":5}},'
+                    + '"url":"/instruments/5","version":"v1",'
+                    + '"deferredProps":{"defaut":["priceHistory","valuation"]}}'
+                    + '</script><div id="app"></div>',
+            ),
+        );
+        const { broadcast } = collectingBroadcast();
+
+        const response = await rescuedResponse(
+            cache as unknown as Cache,
+            shape({ url: 'https://argent.test/instruments/5', inertia: true, partialData: null }),
+            broadcast,
+        );
+        const page = await response.json();
+
+        expect(page.component).toBe('Instruments/Show');
+        expect(page.props).toEqual({ instrument: { id: 5 } });
+        expect(page.deferredProps).toEqual({ defaut: ['priceHistory', 'valuation'] });
     });
 });
 

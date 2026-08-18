@@ -51,7 +51,7 @@ portant l'en-tête `X-Inertia-Partial-Data`. Toute la conception du cache décou
 | --- | --- |
 | Objectifs | Installable + démarrage instantané + hors-ligne. Push reporté. |
 | Cible | Android / Chrome. |
-| Hors-ligne | Stale-while-revalidate sur les pages déjà visitées, bandeau de fraîcheur. Pas de miroir IndexedDB. |
+| Hors-ligne | Network-first sur les requêtes Inertia et les navigations, repli sur le cache puis sur une synthèse rescapée ; bandeau de fraîcheur. Pas de stale-while-revalidate sur les données Inertia — revu après coup : le SWR y resservirait en ligne, à chaque lancement à froid, les partiels du lancement précédent tout en diffusant `FRESH`, puisque la revalidation réussit malgré tout. Pas de miroir IndexedDB. |
 | Mise à jour | Bandeau « nouvelle version » + bouton recharger. Pas de `skipWaiting` automatique. |
 | Implémentation | Service worker maison, servi depuis la racine par la route Blade existante. Pas de `vite-plugin-pwa`. |
 | Pipeline | Le worker est compilé par un second config Vite vers un nom de fichier fixe ; la route y préfixe les constantes. |
@@ -77,13 +77,17 @@ visite hors-ligne échoue. Le précache est donc nécessaire, pas confortable.
 
 ### Invariant central
 
-`HandleInertiaRequests::version()` délègue à `parent::version()`, qui renvoie le hash du
-manifest Vite — la valeur que `Vite::manifestHash()` injecte dans `CACHE_VERSION`. La version
-d'assets Inertia et la version du cache du worker sont donc le même nombre.
+`HandleInertiaRequests::version()` délègue à `parent::version()`, qui hache
+`public/build/manifest.json` en `xxh128` (`Inertia\Middleware::version()`). `CACHE_VERSION`
+vient du même fichier, mais via `Vite::manifestHash()`, qui le hache en `md5`. Ce ne sont donc
+**pas le même nombre** — deux algorithmes différents produisent deux chaînes différentes. La
+propriété qui compte n'est pas leur égalité mais leur dépendance commune : les deux sont des
+fonctions pures du même `manifest.json`, donc les deux changent de concert à chaque build, et
+aucun des deux ne peut changer sans que l'autre ne change aussi.
 
 Conséquence : une réponse Inertia en cache ne peut jamais être servie à côté d'une génération
-d'assets différente. Au déploiement, `CACHE_VERSION` change, le worker se réinstalle, et les
-anciens caches sont supprimés en bloc.
+d'assets différente. Au déploiement, le manifest change, donc les deux versions changent,
+`CACHE_VERSION` change, le worker se réinstalle, et les anciens caches sont supprimés en bloc.
 
 ### Fichiers
 
@@ -145,7 +149,15 @@ Le gestionnaire `fetch` classe chaque requête dans cet ordre :
 2. **`/build/*`** → cache-first pur, aucune revalidation. URLs hashées donc immuables : une
    correspondance en cache est vraie par construction. C'est ce qui donne le démarrage
    instantané.
-3. **Requêtes Inertia** (en-tête `X-Inertia`) → stale-while-revalidate.
+3. **Requêtes Inertia** (en-tête `X-Inertia`) → network-first : réseau d'abord, repli sur
+   l'entrée en cache exacte de cette requête si le réseau échoue, puis sur une synthèse
+   rescapée. **Pas de stale-while-revalidate ici**, à la différence des assets — corrigé après
+   une revue de fin de branche : une page ou un partiel Inertia porte des données, pas de la
+   coquille. Le SWR
+   aurait re-servi en ligne, à chaque lancement à froid, les partiels du lancement précédent
+   (catalogue, performances, évolution, secteurs) pendant que la revalidation, elle, réussit et
+   diffuse `FRESH` — l'écart entre un total de portefeuille à jour et des graphes vieux d'une
+   journée de marché serait resté invisible, le bandeau affirmant que tout est frais.
 4. **Navigations** (`request.mode === 'navigate'`) → network-first, repli sur le document en
    cache, puis sur `/hors-ligne`.
 5. **Reste** (manifest, icônes) → stale-while-revalidate.

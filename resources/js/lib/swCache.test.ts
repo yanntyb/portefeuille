@@ -18,26 +18,33 @@ const shape = (overrides: Partial<RequestShape> = {}): RequestShape => ({
     ...overrides,
 });
 
+const WORKER_ORIGIN = 'https://argent.test';
+
 describe('classifyRequest', () => {
     it('laisse passer tout ce qui n\'est pas un GET', () => {
-        expect(classifyRequest(shape({ method: 'POST' }))).toBe('passthrough');
+        expect(classifyRequest(shape({ method: 'POST' }), WORKER_ORIGIN)).toBe('passthrough');
+    });
+
+    it('laisse passer une requête dont l\'origine diffère de celle du worker', () => {
+        expect(classifyRequest(shape({ url: 'https://cdn.tiers.test/police.woff2' }), WORKER_ORIGIN))
+            .toBe('passthrough');
     });
 
     it('reconnaît un asset de build à son préfixe', () => {
-        expect(classifyRequest(shape({ url: 'https://argent.test/build/assets/app-BR1IIldu.css' })))
+        expect(classifyRequest(shape({ url: 'https://argent.test/build/assets/app-BR1IIldu.css' }), WORKER_ORIGIN))
             .toBe('asset');
     });
 
     it('reconnaît une requête Inertia avant la navigation', () => {
-        expect(classifyRequest(shape({ inertia: true, mode: 'navigate' }))).toBe('inertia');
+        expect(classifyRequest(shape({ inertia: true, mode: 'navigate' }), WORKER_ORIGIN)).toBe('inertia');
     });
 
     it('reconnaît une navigation de document', () => {
-        expect(classifyRequest(shape({ mode: 'navigate' }))).toBe('navigation');
+        expect(classifyRequest(shape({ mode: 'navigate' }), WORKER_ORIGIN)).toBe('navigation');
     });
 
     it('range le reste à part', () => {
-        expect(classifyRequest(shape({ url: 'https://argent.test/icons/icon-192x192.png', mode: 'no-cors' })))
+        expect(classifyRequest(shape({ url: 'https://argent.test/icons/icon-192x192.png', mode: 'no-cors' }), WORKER_ORIGIN))
             .toBe('other');
     });
 });
