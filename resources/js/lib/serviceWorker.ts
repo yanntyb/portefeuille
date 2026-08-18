@@ -188,5 +188,9 @@ export function registerServiceWorker(): void {
             trackRegistration(registration);
             scheduleUpdateChecks(registration);
             requestStatus(navigator.serviceWorker.controller);
+        })
+        /** Sans ce `catch`, un échec d'enregistrement ne remonte qu'en rejet non géré. */
+        .catch((error: unknown): void => {
+            console.error('Échec de l\'enregistrement du service worker.', error);
         });
 }
