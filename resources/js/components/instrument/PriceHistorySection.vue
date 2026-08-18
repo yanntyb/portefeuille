@@ -38,6 +38,12 @@ const priceChartOption = computed<ChartOption>(() => buildPriceHistoryOption({
                     <ChartSkeleton />
                 </template>
 
+                <template #rescue>
+                    <p class="py-8 text-center text-sm text-muted-foreground">
+                        Données indisponibles hors-ligne.
+                    </p>
+                </template>
+
                 <BaseChart v-if="hasPriceHistory" :option="priceChartOption" />
                 <p v-else class="py-8 text-center text-sm text-muted-foreground">
                     Pas d'historique de prix disponible.

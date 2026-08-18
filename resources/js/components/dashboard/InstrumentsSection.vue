@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import ChartRangeToggle from '@/components/ChartRangeToggle.vue';
 import InstrumentList from '@/components/InstrumentList.vue';
 import InstrumentSearch from '@/components/InstrumentSearch.vue';
 import { isRangeKey, rangeOptions, type CatalogLine, type CatalogTrend, type RangeKey } from '@/lib/catalog';
-import { instrumentSections, mergeInstrumentRows, type InstrumentSection } from '@/lib/instrumentList';
+import { instrumentSections, isCatalogLoading, mergeInstrumentRows, type InstrumentSection } from '@/lib/instrumentList';
 import type { HoldingLine } from '@/lib/portfolio';
 
 const props = defineProps<{
@@ -18,9 +18,14 @@ const props = defineProps<{
 const query = ref<string>('');
 const selectedRange = ref<RangeKey>(isRangeKey(props.catalogRange) ? props.catalogRange : 'max');
 const reloading = ref<boolean>(false);
+const page = usePage();
 
 /** Le catalogue et ses tendances arrivent différés ; seul le squelette des tendances est visible. */
-const loading = computed<boolean>(() => props.trends === undefined || reloading.value);
+const loading = computed<boolean>(() => isCatalogLoading(
+    props.trends,
+    page.props.rescuedProps as string[] | undefined,
+    reloading.value,
+));
 
 const sections = computed<InstrumentSection[]>(() =>
     instrumentSections(

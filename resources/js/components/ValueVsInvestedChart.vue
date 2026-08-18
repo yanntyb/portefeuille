@@ -60,6 +60,12 @@ const option = computed<ChartOption>(() => buildValueVsInvestedOption({
                 </div>
             </template>
 
+            <template #rescue>
+                <p class="py-8 text-center text-sm text-muted-foreground">
+                    Données indisponibles hors-ligne.
+                </p>
+            </template>
+
             <div v-if="hasHistory" class="px-6">
                 <BaseChart :option="option" :height="props.height" @zoom="rememberZoom" />
             </div>

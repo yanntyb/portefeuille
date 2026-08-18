@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CatalogLine, CatalogTrend } from '@/lib/catalog';
-import { instrumentSections, mergeInstrumentRows, type InstrumentRow, type InstrumentSection } from '@/lib/instrumentList';
+import { instrumentSections, isCatalogLoading, mergeInstrumentRows, type InstrumentRow, type InstrumentSection } from '@/lib/instrumentList';
 import type { HoldingLine } from '@/lib/portfolio';
 
 const holding = (assetId: number, assetName: string, marketValue: number): HoldingLine => ({
@@ -172,5 +172,27 @@ describe('instrumentSections', () => {
         const rows = mergeInstrumentRows([holding(1, 'Alpha', 1000)], undefined, undefined);
 
         expect(instrumentSections(rows, 'alp')[0].pending).toBe(false);
+    });
+});
+
+describe('isCatalogLoading', () => {
+    it('charge tant que les tendances ne sont pas arrivées', () => {
+        expect(isCatalogLoading(undefined, undefined, false)).toBe(true);
+    });
+
+    it('arrête de charger dès que les tendances sont là', () => {
+        expect(isCatalogLoading([], undefined, false)).toBe(false);
+    });
+
+    it('arrête de charger quand le worker a rescapé les tendances', () => {
+        expect(isCatalogLoading(undefined, ['trends'], false)).toBe(false);
+    });
+
+    it('ignore une clé rescapée qui ne la concerne pas', () => {
+        expect(isCatalogLoading(undefined, ['sectorBreakdown'], false)).toBe(true);
+    });
+
+    it('recharge en priorité sur tout le reste', () => {
+        expect(isCatalogLoading([], ['trends'], true)).toBe(true);
     });
 });

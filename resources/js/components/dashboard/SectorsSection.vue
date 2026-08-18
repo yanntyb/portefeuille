@@ -21,6 +21,12 @@ const hasSectors = computed<boolean>(() => rows.value.length > 0);
                 <div class="min-h-0 w-full flex-1 animate-pulse rounded-md bg-muted md:h-[280px] md:flex-none"></div>
             </template>
 
+            <template #rescue>
+                <p class="py-8 text-center text-sm text-muted-foreground">
+                    Données indisponibles hors-ligne.
+                </p>
+            </template>
+
             <SectorBreakdownList v-if="hasSectors" :rows="rows" class="min-h-0 flex-1 md:flex-none" />
             <p v-else class="py-8 text-center text-sm text-muted-foreground">
                 Pas encore de données sectorielles.

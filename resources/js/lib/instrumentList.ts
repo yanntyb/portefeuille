@@ -108,3 +108,19 @@ export const instrumentSections = (
             : []),
     ];
 };
+
+/**
+ * Le catalogue arrive différé, donc son squelette tient sur `trends === undefined`. Hors-ligne
+ * la prop n'arrivera jamais : le worker rescape sa clé, et le squelette n'a plus à tourner.
+ */
+export function isCatalogLoading(
+    trends: CatalogTrend[] | undefined,
+    rescuedProps: string[] | undefined,
+    reloading: boolean,
+): boolean {
+    if (reloading) {
+        return true;
+    }
+
+    return trends === undefined && !(rescuedProps ?? []).includes('trends');
+}

@@ -20,6 +20,12 @@ defineProps<{ performances?: Performance[] }>();
                 </div>
             </template>
 
+            <template #rescue>
+                <p class="py-8 text-center text-sm text-muted-foreground">
+                    Données indisponibles hors-ligne.
+                </p>
+            </template>
+
             <PerformanceBars
                 v-if="performances && performances.length"
                 :performances="performances"
