@@ -51,18 +51,6 @@ describe('holdingWeights', () => {
         expect(holdingWeights(twelve)).toHaveLength(12);
     });
 
-    it('fait pâlir les barres de la plus lourde à la plus légère, sans jamais les effacer', () => {
-        const weights = holdingWeights([line('ACME', 1000), line('BETA', 500), line('GAMMA', 250)]);
-
-        expect(weights[0].opacity).toBe(1);
-        expect(weights[2].opacity).toBeCloseTo(0.35, 5);
-        expect(weights[1].opacity).toBeGreaterThan(weights[2].opacity);
-    });
-
-    it('garde une opacité pleine sur une position unique, sans division par zéro', () => {
-        expect(holdingWeights([line('ACME', 1000)])[0].opacity).toBe(1);
-    });
-
     it('traite une valeur de marché absente comme nulle plutôt que de casser le total', () => {
         const weights = holdingWeights([line('ACME', 1000), line('BETA', null)]);
 

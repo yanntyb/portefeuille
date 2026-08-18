@@ -27,16 +27,12 @@ export interface EvolutionSeries {
     perAsset: { assetId: number; name: string; value: number[]; invested: number[] }[];
 }
 
-/** Opacité de la barre la plus pâle : en dessous, elle disparaît du fond dans les deux thèmes. */
-const FAINTEST_BAR_OPACITY = 0.35;
-
 export interface HoldingWeight {
     line: HoldingLine;
     /** Part du portefeuille, en pourcentage. */
     share: number;
     /** Largeur de la barre en pourcentage CSS, mesurée contre la position la plus lourde. */
     barWidth: string;
-    opacity: number;
 }
 
 /**
@@ -55,11 +51,9 @@ export const holdingWeights = (holdings: HoldingLine[], limit?: number): Holding
 
     const visible = limit === undefined ? sorted : sorted.slice(0, limit);
 
-    return visible.map((line: HoldingLine, index: number): HoldingWeight => ({
+    return visible.map((line: HoldingLine): HoldingWeight => ({
         line,
         share: shareOf(line),
         barWidth: relativeBarWidth(shareOf(line), largest),
-        /** Un seul dégradé monotone sur les lignes rendues, pas sur l'ensemble. */
-        opacity: 1 - (index / Math.max(1, visible.length - 1)) * (1 - FAINTEST_BAR_OPACITY),
     }));
 };

@@ -10,7 +10,6 @@ export interface InstrumentRow extends CatalogRow {
     share: number | null;
     /** Largeur CSS de la barre de poids, nulle sur un instrument non détenu. */
     barWidth: string | null;
-    opacity: number | null;
 }
 
 /** Une position que le catalogue ne connaît pas encore, ramenée à la forme d'une ligne de catalogue. */
@@ -60,7 +59,6 @@ export const mergeInstrumentRows = (
             gainPct: weight?.line.gainPct ?? null,
             share: weight?.share ?? null,
             barWidth: weight?.barWidth ?? null,
-            opacity: weight?.opacity ?? null,
         };
     });
 };

@@ -50,7 +50,6 @@ describe('mergeInstrumentRows', () => {
         expect(rows[0].gain).toBeNull();
         expect(rows[0].share).toBeNull();
         expect(rows[0].barWidth).toBeNull();
-        expect(rows[0].opacity).toBeNull();
     });
 
     it('calcule les parts sur les seules positions, jamais sur le catalogue entier', () => {

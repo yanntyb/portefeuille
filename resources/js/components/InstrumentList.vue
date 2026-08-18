@@ -89,7 +89,7 @@ const share = (value: number): string =>
                             <span
                                 data-instrument-bar
                                 class="block h-full rounded-full bg-sector-bar"
-                                :style="{ width: row.barWidth ?? '0%', opacity: row.opacity ?? 1 }"
+                                :style="{ width: row.barWidth ?? '0%' }"
                             ></span>
                         </span>
                         <span
