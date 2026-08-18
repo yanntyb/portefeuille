@@ -4,10 +4,12 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h, type DefineComponent } from 'vue';
 import { useSystemTheme } from '@/lib/theme';
+import { mountServiceWorkerBanner } from '@/pwa/banner';
 
 const appName = import.meta.env.VITE_APP_NAME ?? 'Laravel';
 
 useSystemTheme();
+mountServiceWorkerBanner();
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
