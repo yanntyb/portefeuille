@@ -14,7 +14,7 @@ use App\Contexts\Portfolio\Models\Wallet;
 function yAxisLabels(string $section): string
 {
     return '(() => {
-        const svg = document.querySelector("[data-section=' . $section . '] [data-chart] svg");
+        const svg = document.querySelector("[data-section='.$section.'] [data-chart] svg");
 
         return Array.from(svg.querySelectorAll("text"))
             .filter(label => label.getAttribute("text-anchor") === "end")
@@ -51,19 +51,22 @@ it('ne chiffre que le minimum et le maximum sur le cours d\'un instrument', func
         ->assertNoJavaScriptErrors();
 });
 
-it('rechiffre les deux extrêmes quand la fenêtre de zoom change', function () {
-    // Cours à 1 000 € sur la première moitié de l'historique, oscillant entre 100 et 200 € sur la
-    // seconde : la fenêtre d'ouverture, qui ne montre que la dernière année, ignore le palier haut.
+/**
+ * Historique en deux paliers : cours à 1 000 € sur la première moitié, oscillant entre 100 et 200 €
+ * sur la seconde. Sur plus d'un an la fenêtre d'ouverture ne montre que la seconde moitié, en
+ * dessous elle montre tout : les deux cas donnent des extrêmes différents sur les mêmes données.
+ */
+function steppedHistoryFixture(int $days): array
+{
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $instrument = Instrument::factory()->create(['name' => 'ACME']);
-    $days = 800;
 
     foreach (range(0, $days) as $offset) {
         Price::factory()->create([
             'asset_id' => $instrument->id,
             'date' => now()->subDays($days - $offset)->format('Y-m-d'),
-            'close' => $offset < 400 ? 1000 : ($offset % 2 === 0 ? 100 : 200),
+            'close' => $offset < $days / 2 ? 1000 : ($offset % 2 === 0 ? 100 : 200),
         ]);
     }
 
@@ -83,16 +86,30 @@ it('rechiffre les deux extrêmes quand la fenêtre de zoom change', function () 
         'date' => now()->subDays($days)->format('Y-m-d'),
     ]);
 
+    return ['user' => $user, 'instrument' => $instrument];
+}
+
+it('chiffre les extrêmes de la fenêtre montrée, non ceux de tout l\'historique', function () {
+    // Plus de deux ans : la fenêtre d'ouverture s'arrête à la dernière année, sous le palier haut.
+    ['user' => $user] = steppedHistoryFixture(800);
+
     $this->actingAs($user);
 
-    $page = visit('/');
-    $page->assertSee('Évolution')->assertScript(yAxisLabels('evolution'), '100 €|200 €');
+    visit('/')
+        ->assertSee('Évolution')
+        ->assertScript(yAxisLabels('evolution'), '100 €|200 €')
+        ->assertNoJavaScriptErrors();
+});
 
-    foreach (range(1, 10) as $ignored) {
-        scrollChart($page, 'evolution', -400);
-    }
+it('remonte au palier haut dès que la fenêtre couvre tout l\'historique', function () {
+    // Moins d'un an : le plancher de zoom montre l'historique entier, palier haut compris.
+    ['user' => $user] = steppedHistoryFixture(300);
 
-    $page->assertScript(yAxisLabels('evolution'), '100 €|1 000 €')
+    $this->actingAs($user);
+
+    visit('/')
+        ->assertSee('Évolution')
+        ->assertScript(yAxisLabels('evolution'), '100 €|1 000 €')
         ->assertNoJavaScriptErrors();
 });
 

@@ -301,44 +301,44 @@ const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 
 describe('buildValueVsInvestedOption — zoom', () => {
     it('ouvre sur les douze derniers mois d\'un historique de trois ans', () => {
-        const [inside] = dataZoomOf(valueVsInvested(36));
+        const [slider] = dataZoomOf(valueVsInvested(36));
 
-        expect(inside.end).toBe(100);
-        expect(inside.end - inside.start).toBeGreaterThan(32);
-        expect(inside.end - inside.start).toBeLessThan(35);
+        expect(slider.end).toBe(100);
+        expect(slider.end - slider.start).toBeGreaterThan(32);
+        expect(slider.end - slider.start).toBeLessThan(35);
     });
 
     it('montre tout l\'historique quand il est plus court qu\'un an', () => {
-        const [inside] = dataZoomOf(valueVsInvested(6));
+        const [slider] = dataZoomOf(valueVsInvested(6));
 
-        expect(inside.start).toBe(0);
-        expect(inside.end).toBe(100);
+        expect(slider.start).toBe(0);
+        expect(slider.end).toBe(100);
     });
 
     it('montre tout l\'historique quand il n\'atteint pas un an', () => {
         // Douze étiquettes mensuelles depuis janvier 2023 s'arrêtent au 1er décembre : 334 jours.
-        const [inside] = dataZoomOf(valueVsInvested(12));
+        const [slider] = dataZoomOf(valueVsInvested(12));
 
-        expect(inside.start).toBe(0);
-        expect(inside.end).toBe(100);
+        expect(slider.start).toBe(0);
+        expect(slider.end).toBe(100);
     });
 
     it('montre encore tout l\'historique quand il fait exactement un an', () => {
         // Treize étiquettes vont du 1er janvier 2023 au 1er janvier 2024 : 365 jours pile,
         // 2023 n'étant pas bissextile. Le plancher se compare avec `<=`, la fenêtre reste entière.
-        const [inside] = dataZoomOf(valueVsInvested(13));
+        const [slider] = dataZoomOf(valueVsInvested(13));
 
-        expect(inside.start).toBe(0);
-        expect(inside.end).toBe(100);
+        expect(slider.start).toBe(0);
+        expect(slider.end).toBe(100);
     });
 
     it('rogne l\'historique dès qu\'il dépasse un an', () => {
         // Quatorze étiquettes vont jusqu'au 1er février 2024 : 396 jours, donc start ≈ 7,83.
-        const [inside] = dataZoomOf(valueVsInvested(14));
+        const [slider] = dataZoomOf(valueVsInvested(14));
 
-        expect(inside.start).toBeGreaterThan(0);
-        expect(inside.start).toBeLessThan(10);
-        expect(inside.end).toBe(100);
+        expect(slider.start).toBeGreaterThan(0);
+        expect(slider.start).toBeLessThan(10);
+        expect(slider.end).toBe(100);
     });
 
     it('montre tout sur un historique vide, sans produire de fenêtre absurde', () => {
@@ -354,31 +354,29 @@ describe('buildValueVsInvestedOption — zoom', () => {
         expect(dataZoomOf(option)[0]).toMatchObject({ start: 0, end: 100 });
     });
 
-    it('interdit au lecteur de descendre sous un an, sur les deux commandes de zoom', () => {
+    it('interdit au lecteur de descendre sous un an', () => {
         const zooms = dataZoomOf(valueVsInvested(36));
 
-        expect(zooms).toHaveLength(2);
+        expect(zooms).toHaveLength(1);
         expect(zooms[0].minValueSpan).toBe(ONE_YEAR_MS);
-        expect(zooms[1].minValueSpan).toBe(ONE_YEAR_MS);
     });
 
     it('respecte la fenêtre déjà choisie par le lecteur plutôt que de la remettre à douze mois', () => {
-        const zooms = dataZoomOf(valueVsInvested(36, { start: 10, end: 60 }));
+        const [slider] = dataZoomOf(valueVsInvested(36, { start: 10, end: 60 }));
 
-        expect(zooms[0]).toMatchObject({ start: 10, end: 60 });
-        expect(zooms[1]).toMatchObject({ start: 10, end: 60 });
+        expect(slider).toMatchObject({ start: 10, end: 60 });
     });
 
     it('laisse les poignées de zoom muettes, leurs bornes se lisant déjà sur l\'axe', () => {
-        const [, slider] = dataZoomOf(valueVsInvested(36));
+        const [slider] = dataZoomOf(valueVsInvested(36));
 
         expect(slider.type).toBe('slider');
         expect(slider.showDetail).toBe(false);
         expect(slider.handleLabel?.show).toBe(false);
     });
 
-    it('offre le zoom à la molette autant qu\'à la mini-timeline', () => {
-        expect(dataZoomOf(valueVsInvested(36)).map((zoom) => zoom.type)).toEqual(['inside', 'slider']);
+    it('ne zoome que par la mini-timeline : la molette et le pincement restent à la page', () => {
+        expect(dataZoomOf(valueVsInvested(36)).map((zoom) => zoom.type)).toEqual(['slider']);
     });
 });
 

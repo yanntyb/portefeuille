@@ -450,7 +450,11 @@ export function buildValueVsInvestedOption(
         series: valueSeries(labels, value),
         tooltip: valueVsInvestedTooltip(labels, value, invested, valueFormatter),
         dataZoom: [
-            { type: 'inside', start: visible.start, end: visible.end, minValueSpan: MIN_ZOOM_SPAN_MS },
+            /**
+             * La mini-timeline est la seule commande de zoom : un `dataZoom` de type `inside`
+             * capturait la molette et le pincement, donc volait le défilement de la page dès que le
+             * doigt ou le curseur passait sur le tracé.
+             */
             {
                 type: 'slider',
                 start: visible.start,
