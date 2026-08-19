@@ -3,6 +3,7 @@
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
+use App\Contexts\Market\Models\Dividend;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Market\Models\SectorAllocation;
@@ -115,6 +116,33 @@ function portfolioFixture(array $overrides = []): array
     ]);
 
     return ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument];
+}
+
+/**
+ * Un utilisateur détenant 10 titres depuis 2024, deux détachements : un dans les douze derniers
+ * mois, un plus ancien.
+ *
+ * Partagée entre `GetIncomeSummaryTest` et `GetAnnualIncomeTest` : c'est la seule aide de
+ * `app/Contexts/**Test.php` consommée depuis un autre fichier, ce qui la place ici plutôt qu'à
+ * côté de l'un des deux.
+ *
+ * @return array{user: User, instrument: Instrument}
+ */
+function dividendFixture(): array
+{
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $instrument = Instrument::factory()->create(['name' => 'Amundi MSCI World']);
+
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $instrument->id,
+        'date' => '2024-01-10', 'quantity' => 10, 'unit_price' => 80,
+    ]);
+
+    Dividend::factory()->create(['asset_id' => $instrument->id, 'ex_date' => '2025-03-05', 'amount_per_share' => 0.5]);
+    Dividend::factory()->create(['asset_id' => $instrument->id, 'ex_date' => '2026-03-05', 'amount_per_share' => 0.8]);
+
+    return ['user' => $user, 'instrument' => $instrument];
 }
 
 /**
