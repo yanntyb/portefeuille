@@ -89,6 +89,23 @@ it('ignore les détachements des autres actifs', function () {
     expect(app(GetAssetDividendHistory::class)($user->id, $other->id)->receipts)->toBe([]);
 });
 
+it('compte un détachement tombant exactement un an avant aujourd\'hui, quelle que soit l\'heure', function () {
+    // L'heure d'exécution (22h ici) ne doit rien changer : la borne des douze mois est fixée à
+    // minuit, pas à l'instant présent.
+    $this->travelTo('2026-08-19 22:00:00');
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $instrument = Instrument::factory()->create();
+
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $instrument->id,
+        'date' => '2024-01-10', 'quantity' => 10, 'unit_price' => 80,
+    ]);
+    Dividend::factory()->create(['asset_id' => $instrument->id, 'ex_date' => '2025-08-19', 'amount_per_share' => 0.5]);
+
+    expect(app(GetAssetDividendHistory::class)($user->id, $instrument->id)->last12Months)->toBe(5.0);
+});
+
 it('se sérialise pour la page', function () {
     $this->travelTo('2026-08-19 10:00:00');
     ['user' => $user, 'instrument' => $instrument] = heldWithDividends();

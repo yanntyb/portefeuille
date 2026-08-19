@@ -24,7 +24,7 @@ class GetIncomeSummary
             return IncomeSummaryData::empty();
         }
 
-        $since = Carbon::now()->subYear();
+        $since = Carbon::now()->subYear()->startOfDay();
         $total = 0.0;
         $last12Months = 0.0;
         $bySource = [];
