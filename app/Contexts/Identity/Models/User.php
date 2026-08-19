@@ -3,8 +3,12 @@
 namespace App\Contexts\Identity\Models;
 
 use App\Contexts\Identity\Enums\Role;
+use App\Contexts\Portfolio\Models\Holding;
+use App\Contexts\Portfolio\Models\Transaction;
+use App\Contexts\Portfolio\Models\Wallet;
 use Database\Factories\Contexts\Identity\Models\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -59,5 +63,20 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => Role::class,
         ];
+    }
+
+    public function wallets(): HasMany
+    {
+        return $this->hasMany(Wallet::class);
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    public function holdings(): HasMany
+    {
+        return $this->hasMany(Holding::class);
     }
 }

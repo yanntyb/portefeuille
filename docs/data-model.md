@@ -350,7 +350,7 @@ Le vocabulaire hérité de l'époque `securities` a disparu du schéma : plus au
 | `assets` | `PersonalAsset` | `app/Contexts/Portfolio/Models/PersonalAsset.php` | Global scope `personal` : `whereIn('type', PersonalAssetType::values())` |
 | `asset_prices` | `Price` | `app/Contexts/Market/Models/Price.php` | `protected $table = 'asset_prices'` |
 | `asset_sectors` | `SectorAllocation` | `app/Contexts/Market/Models/SectorAllocation.php` | `protected $table = 'asset_sectors'` |
-| `users` | `User` | `app/Contexts/Identity/Models/User.php` | Aucune relation Eloquent déclarée vers wallets/transactions/holdings |
+| `users` | `User` | `app/Contexts/Identity/Models/User.php` | `hasMany` vers `Wallet`, `Transaction` et `Holding` |
 | `wallets` | `Wallet` | `app/Contexts/Portfolio/Models/Wallet.php` | `belongsTo(User::class)` |
 | `transactions` | `Transaction` | `app/Contexts/Portfolio/Models/Transaction.php` | Observé par `TransactionObserver`, `belongsTo` wallet et user |
 | `holdings_projection` | `Holding` | `app/Contexts/Portfolio/Models/Holding.php` | PK composite `(asset_id, wallet_id)`, `$incrementing = false` |
@@ -369,6 +369,6 @@ Chaque modèle Portfolio et Market déclare sa factory par attribut `#[UseFactor
 
 ### Dette résiduelle
 
-- Aucune relation Eloquent n'est déclarée depuis `User` vers `wallets`, `transactions` ou `holdings_projection`, alors que les FK existent en base : toute lecture passe par une requête explicite sur `Wallet`, `Transaction` ou `Holding` filtrée sur `user_id`.
+- `User` (contexte Identity) déclare des relations vers les modèles du contexte Portfolio, alors que Portfolio dépend déjà d'Identity via `belongsTo(User::class)` : la dépendance entre les deux contextes est donc bidirectionnelle.
 
 > Tables d'infrastructure (`sessions`, `password_reset_tokens`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations`) : non concernées par la modélisation de domaine (gérées par le framework).
