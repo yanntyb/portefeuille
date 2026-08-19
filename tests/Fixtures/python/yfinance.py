@@ -31,6 +31,15 @@ class Ticker:
     def history(self, **kwargs) -> pd.DataFrame:
         return _frame()
 
+    @property
+    def dividends(self) -> pd.Series:
+        """Trois détachements dont un montant absent, comme Yahoo en publie sur une opération
+        sur titre incomplète : le script doit l'écarter sans perdre les deux autres."""
+        return pd.Series(
+            [0.51, np.nan, 0.62],
+            index=pd.to_datetime(["2026-03-05", "2026-06-04", "2026-09-03"]),
+        )
+
 
 def download(tickers, **kwargs) -> pd.DataFrame:
     symbols = [tickers] if isinstance(tickers, str) else list(tickers)

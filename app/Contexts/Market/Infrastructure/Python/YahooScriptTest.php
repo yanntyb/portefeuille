@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Process;
  *
  * @param  array<string, mixed>  $input
  */
-function runPriceScript(YahooScript $script, array $input): string
+function runYahooScript(YahooScript $script, array $input): string
 {
     $result = Process::env([
         'PYTHONPATH' => base_path('tests/Fixtures/python'),
@@ -23,7 +23,7 @@ function runPriceScript(YahooScript $script, array $input): string
 }
 
 it('émet du JSON décodable quand la dernière barre est incomplète', function () {
-    $output = runPriceScript(YahooScript::Prices, [
+    $output = runYahooScript(YahooScript::Prices, [
         'ticker' => 'CW8.PA',
         'start_date' => '2026-08-14',
         'end_date' => '2026-08-18',
@@ -33,7 +33,7 @@ it('émet du JSON décodable quand la dernière barre est incomplète', function
 });
 
 it('écarte la barre incomplète du flux unitaire', function () {
-    $output = runPriceScript(YahooScript::Prices, [
+    $output = runYahooScript(YahooScript::Prices, [
         'ticker' => 'CW8.PA',
         'start_date' => '2026-08-14',
         'end_date' => '2026-08-18',
@@ -48,7 +48,7 @@ it('écarte la barre incomplète du flux unitaire', function () {
 });
 
 it('émet du JSON décodable en lot mono-ticker malgré une barre incomplète', function () {
-    $output = runPriceScript(YahooScript::PricesBulk, [
+    $output = runYahooScript(YahooScript::PricesBulk, [
         'tickers' => [
             ['ticker' => 'CW8.PA', 'start_date' => '2026-08-14', 'end_date' => '2026-08-18'],
         ],
@@ -62,7 +62,7 @@ it('émet du JSON décodable en lot mono-ticker malgré une barre incomplète', 
 });
 
 it('émet du JSON décodable en lot multi-tickers malgré une barre incomplète', function () {
-    $output = runPriceScript(YahooScript::PricesBulk, [
+    $output = runYahooScript(YahooScript::PricesBulk, [
         'tickers' => [
             ['ticker' => 'CW8.PA', 'start_date' => '2026-08-14', 'end_date' => '2026-08-18'],
             ['ticker' => 'MEUD.PA', 'start_date' => '2026-08-14', 'end_date' => '2026-08-18'],
@@ -75,4 +75,46 @@ it('émet du JSON décodable en lot multi-tickers malgré une barre incomplète'
         ->and($payload['data'])->toHaveKeys(['CW8.PA', 'MEUD.PA'])
         ->and($payload['data']['CW8.PA'])->toHaveCount(1)
         ->and($payload['data']['MEUD.PA'])->toHaveCount(1);
+});
+
+it('rend les détachements d\'un ticker sur la fenêtre demandée', function () {
+    $output = runYahooScript(YahooScript::DividendsBulk, [
+        'tickers' => [
+            ['ticker' => 'CW8.PA', 'start_date' => '2026-01-01', 'end_date' => '2026-07-01'],
+        ],
+    ]);
+
+    $payload = json_decode($output, true);
+
+    expect($payload)->not->toBeNull(json_last_error_msg())
+        ->and($payload['status'])->toBe('ok')
+        ->and($payload['data']['CW8.PA'])->toBe([
+            ['ex_date' => '2026-03-05', 'amount_per_share' => 0.51],
+        ]);
+});
+
+it('écarte un montant non fini plutôt que de perdre le lot', function () {
+    // Le stub place un NaN au 2026-06-04 : sérialisé tel quel, il rendrait tout le lot
+    // indécodable pour un décodeur JSON strict.
+    $output = runYahooScript(YahooScript::DividendsBulk, [
+        'tickers' => [
+            ['ticker' => 'CW8.PA', 'start_date' => '2026-01-01', 'end_date' => '2027-01-01'],
+        ],
+    ]);
+
+    $payload = json_decode($output, true);
+
+    expect($payload)->not->toBeNull(json_last_error_msg())
+        ->and(collect($payload['data']['CW8.PA'])->pluck('ex_date')->all())
+        ->toBe(['2026-03-05', '2026-09-03']);
+});
+
+it('omet un ticker sans détachement sur la fenêtre', function () {
+    $output = runYahooScript(YahooScript::DividendsBulk, [
+        'tickers' => [
+            ['ticker' => 'CW8.PA', 'start_date' => '2020-01-01', 'end_date' => '2020-12-31'],
+        ],
+    ]);
+
+    expect(json_decode($output, true)['data'])->toBe([]);
 });
