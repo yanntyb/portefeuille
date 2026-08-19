@@ -3123,10 +3123,13 @@ it('se sérialise pour la page', function () {
 
     $payload = json_decode(json_encode(app(GetAssetDividendHistory::class)($user->id, $instrument->id)), true);
 
+    // `toEqual` et non `toBe` sur les montants : `json_encode()` sérialise un flottant à fraction
+    // nulle sans son « .0 », que `json_decode` redonne en entier. La valeur est ce qui compte —
+    // JavaScript n'a de toute façon qu'un seul type numérique.
     expect($payload['receipts'][0]['exDate'])->toBe('2026-03-05')
-        ->and($payload['receipts'][0]['amount'])->toBe(8.0)
-        ->and($payload['totalReceived'])->toBe(13.0)
-        ->and($payload['yieldOnCost'])->toBe(1.0);
+        ->and($payload['receipts'][0]['amount'])->toEqual(8.0)
+        ->and($payload['totalReceived'])->toEqual(13.0)
+        ->and($payload['yieldOnCost'])->toEqual(1.0);
 });
 ```
 
@@ -3311,9 +3314,14 @@ it('expose les dividendes perçus sur la fiche', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->has('dividends.receipts', 1)
             ->where('dividends.receipts.0.exDate', '2026-03-05')
-            ->where('dividends.receipts.0.amount', 5.0)
-            ->where('dividends.totalReceived', 5.0)
-            ->where('dividends.yieldOnCost', 0.63)
+            /**
+             * Clôture et cast, comme `instrument.position.marketValue` ailleurs dans ce fichier :
+             * les props traversent `json_encode()`, qui sérialise un flottant à fraction nulle sans
+             * son « .0 », et `where()` compare strictement.
+             */
+            ->where('dividends.receipts.0.amount', fn ($v) => (float) $v === 5.0)
+            ->where('dividends.totalReceived', fn ($v) => (float) $v === 5.0)
+            ->where('dividends.yieldOnCost', fn ($v) => (float) $v === 0.63)
         );
 });
 
@@ -3612,12 +3620,13 @@ it('diffère le revenu perçu et son historique annuel dans le groupe revenus', 
         ->assertInertia(fn (Assert $page) => $page
             ->missing('income')
             ->loadDeferredProps(fn (Assert $reload) => $reload
-                ->where('income.totalReceived', 13.0)
-                ->where('income.last12Months', 8.0)
-                ->where('income.bySource.dividend', 13.0)
+                /** Clôture et cast : voir la note de `InstrumentDetailPageTest` sur `json_encode()`. */
+                ->where('income.totalReceived', fn ($v) => (float) $v === 13.0)
+                ->where('income.last12Months', fn ($v) => (float) $v === 8.0)
+                ->where('income.bySource.dividend', fn ($v) => (float) $v === 13.0)
                 ->has('annualIncome', 2)
                 ->where('annualIncome.0.year', 2025)
-                ->where('annualIncome.1.total', 8.0)
+                ->where('annualIncome.1.total', fn ($v) => (float) $v === 8.0)
             )
         );
 });
