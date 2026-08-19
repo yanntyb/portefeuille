@@ -160,15 +160,8 @@ describe('buildValueVsInvestedOption — axes', () => {
 });
 
 describe('buildValueVsInvestedOption — séries', () => {
-    it('trace toujours les deux courbes, la comparaison étant la lecture et non une option', () => {
-        expect(seriesOf(valueVsInvested(36)).map((serie) => serie.name)).toEqual(['Valeur', 'Investi']);
-    });
-
-    it('trace l\'investi en escalier : il ne bouge qu\'à un achat ou une vente', () => {
-        const [, invested] = seriesOf(valueVsInvested(36));
-
-        expect(invested.step).toBe('end');
-        expect(invested.lineStyle?.type).toBe('dashed');
+    it('ne trace que la valeur : l\'investi se lit dans l\'infobulle, pas en courbe', () => {
+        expect(seriesOf(valueVsInvested(36)).map((serie) => serie.name)).toEqual(['Valeur']);
     });
 
     it('trace la valeur sur une aire dégradée', () => {

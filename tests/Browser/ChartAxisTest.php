@@ -52,8 +52,8 @@ it('ne chiffre que le minimum et le maximum sur le cours d\'un instrument', func
 });
 
 it('rechiffre les deux extrêmes quand la fenêtre de zoom change', function () {
-    // Cours à 1 000 € sur la première moitié de l'historique, à 100 € sur la seconde : la fenêtre
-    // d'ouverture, qui ne montre que la dernière année, ne voit pas le palier haut.
+    // Cours à 1 000 € sur la première moitié de l'historique, oscillant entre 100 et 200 € sur la
+    // seconde : la fenêtre d'ouverture, qui ne montre que la dernière année, ignore le palier haut.
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $instrument = Instrument::factory()->create(['name' => 'ACME']);
@@ -63,7 +63,7 @@ it('rechiffre les deux extrêmes quand la fenêtre de zoom change', function () 
         Price::factory()->create([
             'asset_id' => $instrument->id,
             'date' => now()->subDays($days - $offset)->format('Y-m-d'),
-            'close' => $offset < 400 ? 1000 : 100,
+            'close' => $offset < 400 ? 1000 : ($offset % 2 === 0 ? 100 : 200),
         ]);
     }
 
@@ -86,12 +86,28 @@ it('rechiffre les deux extrêmes quand la fenêtre de zoom change', function () 
     $this->actingAs($user);
 
     $page = visit('/');
-    $page->assertSee('Évolution')->assertScript(yAxisLabels('evolution'), '10 €|100 €');
+    $page->assertSee('Évolution')->assertScript(yAxisLabels('evolution'), '100 €|200 €');
 
     foreach (range(1, 10) as $ignored) {
         scrollChart($page, 'evolution', -400);
     }
 
-    $page->assertScript(yAxisLabels('evolution'), '10 €|1 000 €')
+    $page->assertScript(yAxisLabels('evolution'), '100 €|1 000 €')
+        ->assertNoJavaScriptErrors();
+});
+
+it('ne chiffre qu\'une fois un cours qui ne bouge pas', function () {
+    // Minimum et maximum confondus : les écrire deux fois au même endroit les superposerait.
+    $user = User::factory()->create();
+    $instrument = Instrument::factory()->create(['name' => 'ACME ETF']);
+
+    Price::factory()->create(['asset_id' => $instrument->id, 'date' => '2026-05-01', 'close' => 100]);
+    Price::factory()->create(['asset_id' => $instrument->id, 'date' => '2026-07-01', 'close' => 100]);
+
+    $this->actingAs($user);
+
+    visit("/instruments/{$instrument->id}")
+        ->assertSee('Cours')
+        ->assertScript(yAxisLabels('price-history'), '100,00 €')
         ->assertNoJavaScriptErrors();
 });

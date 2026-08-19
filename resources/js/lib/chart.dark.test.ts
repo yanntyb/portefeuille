@@ -30,7 +30,7 @@ describe('palette sombre', () => {
         expect(axisLabel.color).not.toBe('#9aa0ac');
     });
 
-    it('garde les deux courbes et leur nom, le thème ne changeant que les teintes', () => {
-        expect((option().series as { name?: string }[]).map((serie) => serie.name)).toEqual(['Valeur', 'Investi']);
+    it('garde la courbe et son nom, le thème ne changeant que les teintes', () => {
+        expect((option().series as { name?: string }[]).map((serie) => serie.name)).toEqual(['Valeur']);
     });
 });

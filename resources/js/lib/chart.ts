@@ -278,11 +278,11 @@ function datedPoints(labels: string[], values: number[]): [string, number][] {
 }
 
 /**
- * Le couple de courbes « valeur contre investi », identique sur le tableau de bord et la fiche
- * instrument. L'investi ne bouge qu'à un achat ou une vente : l'escalier lit plus juste. Les deux
- * courbes sont toujours tracées — la comparaison est la lecture, pas une option.
+ * Courbe de valeur, identique sur le tableau de bord et la fiche instrument. Le montant investi ne
+ * porte plus sa propre courbe : il variait trop peu pour mériter un tracé, et l'infobulle le donne
+ * chiffré à côté du gain.
  */
-function valueVsInvestedSeries(labels: string[], value: number[], invested: number[]): LineSeriesOption[] {
+function valueSeries(labels: string[], value: number[]): LineSeriesOption[] {
     const colors = palette();
     const points = datedPoints(labels, value);
 
@@ -310,14 +310,6 @@ function valueVsInvestedSeries(labels: string[], value: number[], invested: numb
             markPoint: lastPointMarker(points),
             data: points,
         },
-        {
-            name: 'Investi',
-            type: 'line',
-            step: 'end',
-            symbol: 'none',
-            lineStyle: { width: 1.5, type: 'dashed' },
-            data: datedPoints(labels, invested),
-        },
     ];
 }
 
@@ -342,8 +334,8 @@ function lastPointMarker(points: [string, number][]): LineSeriesOption['markPoin
 }
 
 /**
- * Infobulle des deux graphes « valeur contre investi » : le gain se lit sur place plutôt que
- * de laisser le lecteur soustraire lui-même les deux lignes.
+ * Infobulle du graphe de valeur : elle porte à elle seule la comparaison avec l'investi, et le gain
+ * plutôt que de laisser le lecteur soustraire.
  */
 function valueVsInvestedTooltip(
     labels: string[],
@@ -450,12 +442,12 @@ export function buildValueVsInvestedOption(
     return {
         ...chartFrame({
             valueFormatter,
-            values: [...value, ...invested],
+            values: value,
             bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT,
             description,
         }),
-        color: [colors.value, colors.invested],
-        series: valueVsInvestedSeries(labels, value, invested),
+        color: [colors.value],
+        series: valueSeries(labels, value),
         tooltip: valueVsInvestedTooltip(labels, value, invested, valueFormatter),
         dataZoom: [
             { type: 'inside', start: visible.start, end: visible.end, minValueSpan: MIN_ZOOM_SPAN_MS },
