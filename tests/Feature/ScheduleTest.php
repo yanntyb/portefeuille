@@ -47,3 +47,18 @@ it('appends the price sync output to its own log file', function () {
 
     expect($outputs)->toBe([[storage_path('logs/market-sync-prices.log'), true]]);
 });
+
+it('schedules the dividend sync every saturday at 23:45', function () {
+    expect(scheduledEventsFor('market:sync-dividends')->pluck('expression')->unique()->values()->all())
+        ->toBe(['45 23 * * 6']);
+});
+
+it('appends the dividend sync output to its own log file', function () {
+    $outputs = scheduledEventsFor('market:sync-dividends')
+        ->map(fn (Event $event): array => [$event->output, $event->shouldAppendOutput])
+        ->unique()
+        ->values()
+        ->all();
+
+    expect($outputs)->toBe([[storage_path('logs/market-sync-dividends.log'), true]]);
+});

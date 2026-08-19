@@ -1,5 +1,6 @@
 <?php
 
+use App\Contexts\Market\Console\SyncDividendsCommand;
 use App\Contexts\Market\Console\SyncPricesCommand;
 use App\Contexts\Market\Console\SyncSectorsCommand;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withCommands([
+        SyncDividendsCommand::class,
         SyncPricesCommand::class,
         SyncSectorsCommand::class,
     ])
@@ -26,6 +28,15 @@ return Application::configure(basePath: dirname(__DIR__))
             ->dailyAt('23:30')
             ->appendOutputTo(storage_path('logs/market-sync-prices.log'));
         $schedule->command('market:sync-sectors')->weekly();
+
+        /**
+         * Hebdomadaire et non quotidien : un détachement est un évènement rare, et le
+         * rattrapage repart toujours du dernier `ex_date` connu. L'horaire suit celui des
+         * cours pour ne pas croiser deux process Python.
+         */
+        $schedule->command('market:sync-dividends')
+            ->weeklyOn(6, '23:45')
+            ->appendOutputTo(storage_path('logs/market-sync-dividends.log'));
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
