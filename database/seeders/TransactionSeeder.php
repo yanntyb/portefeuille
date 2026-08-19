@@ -64,16 +64,16 @@ class TransactionSeeder extends Seeder
         $startDate = CarbonImmutable::now()->subYears(5)->startOfMonth();
         $endDate = CarbonImmutable::now();
 
-        $sp500Securities = $this->createSecurities(['sp500' => self::SP500_ETF]);
-        $totalenergiesSecurities = $this->createSecurities(['totalenergies' => self::TOTALENERGIES_STOCK]);
+        $sp500Instruments = $this->createInstruments(['sp500' => self::SP500_ETF]);
+        $totalenergiesInstruments = $this->createInstruments(['totalenergies' => self::TOTALENERGIES_STOCK]);
 
         $wallet = Wallet::create([
             'user_id' => $user->id,
             'name' => 'PEA',
         ]);
 
-        $this->seedDcaTransactions($user, $wallet, $sp500Securities, $startDate, $endDate, 500.0);
-        $this->seedOneTimeBuy($user, $wallet, $totalenergiesSecurities['totalenergies'], CarbonImmutable::parse('2025-01-15'), 2000.0);
+        $this->seedDcaTransactions($user, $wallet, $sp500Instruments, $startDate, $endDate, 500.0);
+        $this->seedOneTimeBuy($user, $wallet, $totalenergiesInstruments['totalenergies'], CarbonImmutable::parse('2025-01-15'), 2000.0);
 
         $wallet->fees()->createMany([
             [
@@ -89,12 +89,12 @@ class TransactionSeeder extends Seeder
      * @param  array<string, array{isin: string, ticker: string, name: string}>  $stocks
      * @return array<string, Instrument>
      */
-    private function createSecurities(array $stocks): array
+    private function createInstruments(array $stocks): array
     {
-        $securities = [];
+        $instruments = [];
 
         foreach ($stocks as $key => $stock) {
-            $security = Instrument::firstOrCreate(
+            $instrument = Instrument::firstOrCreate(
                 ['isin' => $stock['isin']],
                 [
                     'name' => $stock['name'],
@@ -102,20 +102,20 @@ class TransactionSeeder extends Seeder
                 ],
             );
 
-            $securities[$key] = $security;
+            $instruments[$key] = $instrument;
 
-            if ($security->wasRecentlyCreated) {
-                $this->loadPricesFromFile($security);
-                $this->generateSectorAllocations($security, $key);
+            if ($instrument->wasRecentlyCreated) {
+                $this->loadPricesFromFile($instrument);
+                $this->generateSectorAllocations($instrument, $key);
             }
         }
 
-        return $securities;
+        return $instruments;
     }
 
-    private function loadPricesFromFile(Instrument $security): void
+    private function loadPricesFromFile(Instrument $instrument): void
     {
-        $filename = database_path('seeders/data/'.str_replace('.', '_', $security->ticker).'_prices.json');
+        $filename = database_path('seeders/data/'.str_replace('.', '_', $instrument->ticker).'_prices.json');
 
         if (! file_exists($filename)) {
             return;
@@ -125,7 +125,7 @@ class TransactionSeeder extends Seeder
         $prices = json_decode(file_get_contents($filename), true);
 
         $rows = array_map(fn (array $p) => [
-            'asset_id' => $security->id,
+            'asset_id' => $instrument->id,
             'date' => $p['date'],
             'open' => $p['open'],
             'high' => $p['high'],
@@ -141,14 +141,14 @@ class TransactionSeeder extends Seeder
         }
     }
 
-    private function generateSectorAllocations(Instrument $security, string $etfKey): void
+    private function generateSectorAllocations(Instrument $instrument, string $etfKey): void
     {
         $allocations = self::sectorAllocations()[$etfKey];
         $rows = [];
 
         foreach ($allocations as $sector => $weight) {
             $rows[] = [
-                'asset_id' => $security->id,
+                'asset_id' => $instrument->id,
                 'sector' => $sector,
                 'weight' => $weight,
                 'created_at' => now(),
@@ -159,13 +159,13 @@ class TransactionSeeder extends Seeder
         SectorAllocation::insert($rows);
     }
 
-    private function seedOneTimeBuy(User $user, Wallet $wallet, Instrument $security, CarbonImmutable $date, float $budget, ?string $broker = null): void
+    private function seedOneTimeBuy(User $user, Wallet $wallet, Instrument $instrument, CarbonImmutable $date, float $budget, ?string $broker = null): void
     {
         if ($date->isWeekend()) {
             $date = $date->next(CarbonImmutable::MONDAY);
         }
 
-        $price = $this->getPriceAt($security, $date);
+        $price = $this->getPriceAt($instrument, $date);
 
         if ($price === null) {
             return;
@@ -184,7 +184,7 @@ class TransactionSeeder extends Seeder
             'wallet_id' => $wallet->id,
             'date' => $date->toDateString(),
             'type' => 'buy',
-            'asset_id' => $security->id,
+            'asset_id' => $instrument->id,
             'broker' => $broker,
             'quantity' => $quantity,
             'unit_price' => round($price, 4),
@@ -196,10 +196,10 @@ class TransactionSeeder extends Seeder
         ]]);
     }
 
-    private function getPriceAt(Instrument $security, CarbonImmutable $date): ?float
+    private function getPriceAt(Instrument $instrument, CarbonImmutable $date): ?float
     {
         $price = Price::query()
-            ->where('asset_id', $security->id)
+            ->where('asset_id', $instrument->id)
             ->where('date', '<=', $date->toDateString())
             ->orderByDesc('date')
             ->value('close');
@@ -208,10 +208,10 @@ class TransactionSeeder extends Seeder
     }
 
     /**
-     * @param  array<string, Security>  $securities
+     * @param  array<string, Instrument>  $instruments
      * @param  array<string, float>|null  $allocations
      */
-    private function seedDcaTransactions(User $user, Wallet $wallet, array $securities, CarbonImmutable $startDate, CarbonImmutable $endDate, float $monthlyBudget, ?string $broker = null, int $dayOfMonth = 15, ?array $allocations = null): void
+    private function seedDcaTransactions(User $user, Wallet $wallet, array $instruments, CarbonImmutable $startDate, CarbonImmutable $endDate, float $monthlyBudget, ?string $broker = null, int $dayOfMonth = 15, ?array $allocations = null): void
     {
         $date = $startDate;
         $transactions = [];
@@ -227,13 +227,13 @@ class TransactionSeeder extends Seeder
                 break;
             }
 
-            foreach ($securities as $key => $security) {
+            foreach ($instruments as $key => $instrument) {
                 $budget = $allocations !== null
                     ? $monthlyBudget * ($allocations[$key] ?? 0)
-                    : $monthlyBudget / count($securities);
+                    : $monthlyBudget / count($instruments);
 
                 $price = Price::query()
-                    ->where('asset_id', $security->id)
+                    ->where('asset_id', $instrument->id)
                     ->where('date', '<=', $investDate->toDateString())
                     ->orderByDesc('date')
                     ->value('close');
@@ -256,7 +256,7 @@ class TransactionSeeder extends Seeder
                     'wallet_id' => $wallet->id,
                     'date' => $investDate->toDateString(),
                     'type' => 'buy',
-                    'asset_id' => $security->id,
+                    'asset_id' => $instrument->id,
                     'broker' => $broker,
                     'quantity' => $quantity,
                     'unit_price' => round($price, 4),

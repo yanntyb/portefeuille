@@ -9,7 +9,7 @@ Elle couvre quatre grands domaines fonctionnels :
 | Domaine | Tables | Rôle |
 | --- | --- | --- |
 | **Identity** | `users`, `sessions`, `password_reset_tokens` | Authentification et rôles |
-| **Market** | `assets`, `asset_prices`, `security_sectors` | Instruments financiers et données de marché |
+| **Market** | `assets`, `asset_prices`, `asset_sectors` | Instruments financiers et données de marché |
 | **Portfolio / Finance** | `wallets`, `wallet_fees`, `transactions`, `holdings_projection` | Comptes, mouvements, projection des positions |
 | **Divers (infra Laravel)** | `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations` | Plomberie framework |
 
@@ -66,7 +66,7 @@ erDiagram
         int volume
     }
 
-    security_sectors {
+    asset_sectors {
         int id PK
         int asset_id FK "cascade"
         string sector "unique(asset_id, sector)"
@@ -105,7 +105,7 @@ erDiagram
     assets ||--o{ transactions : "reference (aucun user_id)"
     assets ||--o{ holdings_projection : reference
     assets ||--o{ asset_prices : cote
-    assets ||--o{ security_sectors : repartit
+    assets ||--o{ asset_sectors : repartit
 ```
 
 ### 2.1 Table `assets` partagée entre deux modèles
@@ -118,7 +118,7 @@ flowchart LR
     A -->|"global scope market : stock, etf, crypto, bond, commodity"| I["Market\Models\Instrument"]
     A -->|"global scope personal : real_estate, savings"| P["Portfolio\Models\PersonalAsset"]
     I --> PR["Price — asset_prices"]
-    I --> SA["SectorAllocation — security_sectors"]
+    I --> SA["SectorAllocation — asset_sectors"]
 ```
 
 À la création, `Instrument` retombe sur `InstrumentType::Stock` et `PersonalAsset` sur `PersonalAssetType::Savings` si `type` est absent.
@@ -220,9 +220,9 @@ Table centrale des actifs. Partagée par les contextes Market (`Instrument`, `ty
 | `created_at` | datetime | nullable |
 | `updated_at` | datetime | nullable |
 
-Données de prix OHLCV. Index unique `(asset_id, date)`. Renommée depuis `security_prices` ; les index portent encore des noms hérités (`security_prices_date_index`, `security_prices_security_id_date_index`, `security_prices_security_id_date_unique`) en plus de `asset_prices_asset_id_date_index` (redondant avec l'ancien index sur `(asset_id, date)`).
+Données de prix OHLCV. Renommée depuis `security_prices`. Index : unique `(asset_id, date)`, `asset_prices_date_index` sur `date`, plus `asset_prices_asset_id_date_index` — redondant avec l'index unique sur les mêmes colonnes.
 
-#### `security_sectors`
+#### `asset_sectors`
 
 | Colonne | Type | Contraintes |
 | --- | --- | --- |
@@ -233,7 +233,7 @@ Données de prix OHLCV. Index unique `(asset_id, date)`. Renommée depuis `secur
 | `created_at` | datetime | nullable |
 | `updated_at` | datetime | nullable |
 
-Pondération sectorielle d'un actif (`Sector` enum). Index unique `(asset_id, sector)`. Le nom de table conserve le préfixe `security_` malgré le renommage `securities → assets`.
+Pondération sectorielle d'un actif (`Sector` enum). Index unique `(asset_id, sector)`. Renommée depuis `security_sectors`.
 
 ### Domaine Portfolio / Finance
 
@@ -317,7 +317,7 @@ Positions calculées (quantité, coût moyen) par actif/wallet. Dénormalisé po
 | `job_batches` | `id` (PK varchar), `name`, `total_jobs`, `pending_jobs`, `failed_jobs`, `failed_job_ids`, `options`, `cancelled_at`, `created_at`, `finished_at` | Lots de jobs. |
 | `failed_jobs` | `id` (PK), `uuid` (UNIQUE), `connection`, `queue`, `payload`, `exception`, `failed_at` | Jobs en échec. |
 
-> `migrations` (suivi des migrations Laravel) complète le décompte des 21 tables.
+> `migrations` (suivi des migrations Laravel) complète le décompte des 16 tables.
 
 ## 4. Historique des renommages
 
@@ -327,7 +327,8 @@ Positions calculées (quantité, coût moyen) par actif/wallet. Dénormalisé po
 | table `security_prices` | table `asset_prices` | `2026_05_08_012537_rename_security_prices_to_asset_prices_table` |
 | `transactions.security_id` | `transactions.asset_id` | `2026_05_08_020000_rename_security_id_to_asset_id_in_transactions_table` |
 | `asset_prices.security_id` | `asset_prices.asset_id` | `2026_05_09_150000_rename_security_id_to_asset_id_in_asset_prices_table` |
-| `security_sectors.security_id` | `security_sectors.asset_id` | `2026_05_09_153040_rename_security_id_to_asset_id_in_security_sectors_table` |
+| `security_sectors.security_id` | `asset_sectors.asset_id` | `2026_05_09_153040_rename_security_id_to_asset_id_in_security_sectors_table` |
+| table `security_sectors` | table `asset_sectors` | `2026_08_19_125953_rename_security_sectors_to_asset_sectors` |
 
 Autres migrations structurelles notables :
 
@@ -335,10 +336,9 @@ Autres migrations structurelles notables :
 | --- | --- |
 | `transactions.account_type` (string) → `wallet_id` (FK) | `2026_03_16_011334_migrate_transactions_account_type_to_wallet_id` |
 
-**Empreintes résiduelles** des renommages encore présentes en base :
-- La table `security_sectors` n'a pas été renommée.
-- Index hérités sur `asset_prices` : `security_prices_date_index`, `security_prices_security_id_date_index`, `security_prices_security_id_date_unique`.
-- Index hérité sur `security_sectors` : `security_sectors_security_id_sector_unique`.
+Le vocabulaire `security_` a été entièrement soldé par `2026_08_19_125953_rename_security_sectors_to_asset_sectors` : table renommée, index hérités (`security_prices_date_index`, `security_prices_security_id_date_unique`, `security_sectors_security_id_sector_unique`) recréés sous les noms `asset_*`, et doublon `security_prices_security_id_date_index` supprimé.
+
+Reste hors périmètre du schéma : le dump MySQL de production (`storage/database/backup.sql`, rejoué par `BackupSeeder`) précède ces renommages et expose encore les tables `securities`, `security_prices` et `security_sectors`. Le lecteur de dump les cible donc sous leurs anciens noms — c'est volontaire.
 
 ## 5. Mapping tables ↔ modèles Contexts et dette de migration
 
@@ -349,7 +349,7 @@ Autres migrations structurelles notables :
 | `assets` | `Instrument` | `app/Contexts/Market/Models/Instrument.php` | Global scope `market` : `whereIn('type', InstrumentType::values())` |
 | `assets` | `PersonalAsset` | `app/Contexts/Portfolio/Models/PersonalAsset.php` | Global scope `personal` : `whereIn('type', PersonalAssetType::values())` |
 | `asset_prices` | `Price` | `app/Contexts/Market/Models/Price.php` | `protected $table = 'asset_prices'` |
-| `security_sectors` | `SectorAllocation` | `app/Contexts/Market/Models/SectorAllocation.php` | `protected $table = 'security_sectors'` |
+| `asset_sectors` | `SectorAllocation` | `app/Contexts/Market/Models/SectorAllocation.php` | `protected $table = 'asset_sectors'` |
 | `users` | `User` | `app/Contexts/Identity/Models/User.php` | Aucune relation Eloquent déclarée vers wallets/transactions/holdings |
 | `wallets` | `Wallet` | `app/Contexts/Portfolio/Models/Wallet.php` | `belongsTo(User::class)` |
 | `transactions` | `Transaction` | `app/Contexts/Portfolio/Models/Transaction.php` | Observé par `TransactionObserver`, `belongsTo` wallet et user |

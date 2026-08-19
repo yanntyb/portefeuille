@@ -21,7 +21,7 @@ L'architecture sépare strictement les **Models** Eloquent (persistance) des **D
 |---|---|---|---|
 | `Instrument` | Aggregate root. Instrument financier coté. Applique un global scope filtrant sur `InstrumentType::values()`. Type par défaut : `Stock`. | `assets` | `id`, `name`, `?isin`, `?ticker`, `type: InstrumentType`, `prices(): HasMany`, `sectors(): HasMany` |
 | `Price` | Donnée OHLCV pour une date et un instrument. Précision 4 décimales sur les prix, volume entier. | `asset_prices` | `id`, `asset_id`, `date: Carbon`, `open/high/low/close: decimal(4)`, `volume: int`, `instrument(): BelongsTo` |
-| `SectorAllocation` | Pondération d'un instrument dans un secteur. Précision 6 décimales sur le poids (ex. `0.125000` = 12,5 %). | `security_sectors` | `id`, `asset_id`, `sector: Sector`, `weight: decimal(6)`, `instrument(): BelongsTo` |
+| `SectorAllocation` | Pondération d'un instrument dans un secteur. Précision 6 décimales sur le poids (ex. `0.125000` = 12,5 %). | `asset_sectors` | `id`, `asset_id`, `sector: Sector`, `weight: decimal(6)`, `instrument(): BelongsTo` |
 
 Fichiers : `app/Contexts/Market/Models/Instrument.php`, `app/Contexts/Market/Models/Price.php`, `app/Contexts/Market/Models/SectorAllocation.php`.
 

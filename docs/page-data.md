@@ -12,7 +12,7 @@ flowchart LR
     subgraph DB["Base — 25 actifs, 18 173 prix, 113 transactions, 3 utilisateurs"]
         A[("assets")]
         AP[("asset_prices<br/>3 index sur asset_id+date, 2 redondants")]
-        SEC[("security_sectors")]
+        SEC[("asset_sectors")]
         TX[("transactions")]
         HP[("holdings_projection<br/>derivee, jamais saisie")]
     end

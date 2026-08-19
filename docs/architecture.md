@@ -213,7 +213,7 @@ classDiagram
 | --- | --- | --- |
 | `Instrument` | `assets` | Aggregate root. Global scope `market` filtrant sur `InstrumentType::values()`. Défaut `type = Stock`. |
 | `Price` | `asset_prices` | OHLCV, décimales `decimal(4)`, volume entier. FK `asset_id`. |
-| `SectorAllocation` | `security_sectors` | Poids `decimal(6)`. FK `asset_id`. |
+| `SectorAllocation` | `asset_sectors` | Poids `decimal(6)`. FK `asset_id`. |
 
 ### Casts Eloquent
 

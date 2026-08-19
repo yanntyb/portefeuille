@@ -21,7 +21,7 @@ class SectorAllocation extends Model
     /** @use HasFactory<SectorAllocationFactory> */
     use HasFactory;
 
-    protected $table = 'security_sectors';
+    protected $table = 'asset_sectors';
 
     /** @var list<string> */
     protected $fillable = ['asset_id', 'sector', 'weight'];
