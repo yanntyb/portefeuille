@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { heroMeta, heroValueOf, investedOf, type Instrument, type InstrumentPosition } from '@/lib/instrument';
+import {
+    heroMeta,
+    heroValueOf,
+    investedOf,
+    transactionYears,
+    type Instrument,
+    type InstrumentPosition,
+    type TransactionLine,
+} from '@/lib/instrument';
 
 /** `Intl` en fr-FR pose U+202F comme séparateur de milliers et U+00A0 avant l'euro : normalise les deux. */
 const normalizeSpaces = (value: string): string => value.replace(/[\xa0\u202f]/g, ' ');
@@ -89,5 +97,53 @@ describe('heroMeta', () => {
 
         expect(entries[0]).toEqual({ label: 'Investi', value: '—' });
         expect(entries[3]).toEqual({ label: 'PRU', value: '—' });
+    });
+});
+
+const line = (overrides: Partial<TransactionLine> = {}): TransactionLine => ({
+    date: '2026-03-12',
+    isSell: false,
+    typeLabel: 'Achat',
+    quantity: 3,
+    unitPrice: 82.5,
+    fees: 2.5,
+    total: 247.5,
+    ...overrides,
+});
+
+describe('transactionYears', () => {
+    it('regroupe les transactions par année, la plus récente en tête', () => {
+        const years = transactionYears([
+            line({ date: '2024-11-28' }),
+            line({ date: '2026-03-12' }),
+            line({ date: '2025-06-04' }),
+        ]);
+
+        expect(years.map((group) => group.year)).toEqual(['2026', '2025', '2024']);
+    });
+
+    it('garde dans chaque année ses seules transactions', () => {
+        const years = transactionYears([
+            line({ date: '2026-03-12' }),
+            line({ date: '2026-02-03' }),
+            line({ date: '2025-06-04' }),
+        ]);
+
+        expect(years[0].count).toBe(2);
+        expect(years[0].lines.map((entry) => entry.date)).toEqual(['2026-03-12', '2026-02-03']);
+        expect(years[1].lines.map((entry) => entry.date)).toEqual(['2025-06-04']);
+    });
+
+    it('compte une vente en négatif dans le flux investi de l\'année', () => {
+        const years = transactionYears([
+            line({ date: '2026-03-12', total: 250 }),
+            line({ date: '2026-02-03', total: 180, isSell: true, typeLabel: 'Vente' }),
+        ]);
+
+        expect(years[0].net).toBe(70);
+    });
+
+    it('ne rend aucun groupe sans transaction', () => {
+        expect(transactionYears([])).toEqual([]);
     });
 });

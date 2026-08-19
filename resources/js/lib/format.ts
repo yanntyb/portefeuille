@@ -28,6 +28,15 @@ export const frDate = (value: string): string => {
         : date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
+/** Jour et mois seuls : dans un groupe déjà titré par son année, la répéter sur chaque ligne est du bruit. */
+export const frDayMonth = (value: string): string => {
+    const date = new Date(`${value}T00:00:00`);
+
+    return Number.isNaN(date.getTime())
+        ? value
+        : date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+};
+
 export const gainClass = (value: number | null): string =>
     value === null || value === 0 ? 'text-muted-foreground' : value > 0 ? 'text-gain' : 'text-loss';
 

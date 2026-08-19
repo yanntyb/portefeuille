@@ -22,6 +22,33 @@ export interface TransactionLine {
     total: number;
 }
 
+export interface TransactionYear {
+    year: string;
+    count: number;
+    /** Flux investi de l'année : les achats en positif, les ventes en négatif. */
+    net: number;
+    lines: TransactionLine[];
+}
+
+/** Regroupe les transactions par année, la plus récente en tête, l'ordre reçu conservé dans chaque groupe. */
+export const transactionYears = (lines: TransactionLine[]): TransactionYear[] => {
+    const groups = new Map<string, TransactionLine[]>();
+
+    for (const line of lines) {
+        const year = line.date.slice(0, 4);
+        groups.set(year, [...(groups.get(year) ?? []), line]);
+    }
+
+    return [...groups.entries()]
+        .sort(([left], [right]) => right.localeCompare(left))
+        .map(([year, yearLines]) => ({
+            year,
+            count: yearLines.length,
+            net: yearLines.reduce((net, line) => net + (line.isSell ? -line.total : line.total), 0),
+            lines: yearLines,
+        }));
+};
+
 export interface SectorWeight {
     label: string;
     /** Share of the instrument, between 0 and 1. */

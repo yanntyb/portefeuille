@@ -10,22 +10,52 @@ use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 
-it('déplie les transactions derrière leur compte, sans déranger l\'ordre des sections', function () {
+it('ouvre la dernière année de transactions et laisse les précédentes repliées', function () {
+    ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
+
+    /** Une seconde année d'historique : sans elle, rien ne distingue un groupe ouvert d'une liste plate. */
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $instrument->id,
+        'quantity' => 5,
+        'unit_price' => 60,
+        'date' => '2025-06-04',
+    ]);
+
+    $this->actingAs($user);
+
+    visit("/instruments/{$instrument->id}")
+        ->assertSee('Transactions (2)')
+        ->assertScript(
+            "Array.from(document.querySelectorAll('[data-transaction-year]')).map(el => el.dataset.transactionYear).join('|')",
+            '2026|2025',
+        )
+        ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 1)
+        ->click('[data-transaction-year="2025"]')
+        ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 2)
+        ->click('[data-transaction-year="2026"]')
+        ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 1)
+        ->assertScript(
+            "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
+            'hero|valuation|performance|sectors|transactions',
+        )
+        ->assertNoJavaScriptErrors();
+});
+
+it('cache le détail d\'une transaction derrière un clic sur sa ligne', function () {
     ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
 
     $this->actingAs($user);
 
     visit("/instruments/{$instrument->id}")
-        ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 0)
-        ->assertSee('Transactions (1)')
-        ->click('[data-transactions-toggle]')
-        ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 1)
-        ->click('[data-transactions-toggle]')
-        ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 0)
-        ->assertScript(
-            "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'hero|valuation|performance|sectors|transactions',
-        )
+        ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 0)
+        ->click('[data-transaction-row]')
+        ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 1)
+        ->assertScript("document.querySelector('[data-transaction-detail]').textContent.includes('10 × 80,00')", true)
+        ->assertScript("document.querySelector('[data-transaction-detail]').textContent.includes('frais')", true)
+        ->click('[data-transaction-row]')
+        ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 0)
         ->assertNoJavaScriptErrors();
 });
 

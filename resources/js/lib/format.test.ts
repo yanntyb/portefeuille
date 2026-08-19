@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { eur, frDate, gainClass, pct, signedEur, signedPct, syncedAtLabel } from '@/lib/format';
+import { eur, frDate, frDayMonth, gainClass, pct, signedEur, signedPct, syncedAtLabel } from '@/lib/format';
 
 /**
  * `Intl` en fr-FR pose des espaces fines insécables (U+202F) entre les milliers et avant l'euro,
@@ -105,5 +105,15 @@ describe('syncedAtLabel', () => {
 
     it('rend minuit sans lever d\'erreur', () => {
         expect(syncedAtLabel(new Date('2026-08-18T00:00:00').getTime())).toBe('Données du 18/08 à 0h');
+    });
+});
+
+describe('frDayMonth', () => {
+    it('rend une date ISO en jour et mois, sans année', () => {
+        expect(frDayMonth('2026-07-01')).toBe('01 juil.');
+    });
+
+    it('rend la valeur telle quelle quand elle n\'est pas une date', () => {
+        expect(frDayMonth('pas une date')).toBe('pas une date');
     });
 });
