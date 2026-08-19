@@ -370,6 +370,5 @@ Chaque modèle Portfolio et Market déclare sa factory par attribut `#[UseFactor
 ### Dette résiduelle
 
 - Aucune relation Eloquent n'est déclarée depuis `User` vers `wallets`, `transactions` ou `holdings_projection`, alors que les FK existent en base : toute lecture passe par une requête explicite sur `Wallet`, `Transaction` ou `Holding` filtrée sur `user_id`.
-- `database/seeders/PriceSyncSeeder.php` n'est appelé par aucun seeder.
 
 > Tables d'infrastructure (`sessions`, `password_reset_tokens`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations`) : non concernées par la modélisation de domaine (gérées par le framework).
