@@ -8,8 +8,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * La suite tourne sur une base fraîchement migrée : ces assertions vérifient l'état final du
- * schéma, donc que le renommage s'applique aussi bien depuis zéro que sur une base existante.
+ * La suite tourne sur une base fraîchement migrée : ces assertions verrouillent le schéma issu
+ * des migrations de création, aucune table ni index ne devant reprendre le vocabulaire hérité
+ * de l'époque `securities`.
  */
 it('expose les secteurs sous le nom asset_sectors', function () {
     expect(Schema::hasTable('asset_sectors'))->toBeTrue()
@@ -28,7 +29,7 @@ it('écrit les pondérations sectorielles dans la table renommée', function () 
     expect(DB::table('asset_sectors')->where('asset_id', $instrument->id)->count())->toBe(1);
 });
 
-it('ne conserve aucun index nommé security_', function () {
+it('ne déclare aucun index nommé security_', function () {
     $legacy = collect(indexNames('asset_sectors'))
         ->merge(indexNames('asset_prices'))
         ->filter(fn (string $name): bool => str_starts_with($name, 'security_'));

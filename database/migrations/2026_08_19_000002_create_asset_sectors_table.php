@@ -6,27 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('security_sectors', function (Blueprint $table) {
+        Schema::create('asset_sectors', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('security_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('asset_id')->constrained()->cascadeOnDelete();
             $table->string('sector');
             $table->decimal('weight', 8, 6);
             $table->timestamps();
 
-            $table->unique(['security_id', 'sector']);
+            $table->unique(['asset_id', 'sector']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('security_sectors');
+        Schema::dropIfExists('asset_sectors');
     }
 };

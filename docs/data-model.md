@@ -220,7 +220,7 @@ Table centrale des actifs. Partagée par les contextes Market (`Instrument`, `ty
 | `created_at` | datetime | nullable |
 | `updated_at` | datetime | nullable |
 
-Données de prix OHLCV. Renommée depuis `security_prices`. Index : unique `(asset_id, date)`, `asset_prices_date_index` sur `date`, plus `asset_prices_asset_id_date_index` — redondant avec l'index unique sur les mêmes colonnes.
+Données de prix OHLCV. Index : unique `(asset_id, date)` et `asset_prices_date_index` sur `date`.
 
 #### `asset_sectors`
 
@@ -233,7 +233,7 @@ Données de prix OHLCV. Renommée depuis `security_prices`. Index : unique `(ass
 | `created_at` | datetime | nullable |
 | `updated_at` | datetime | nullable |
 
-Pondération sectorielle d'un actif (`Sector` enum). Index unique `(asset_id, sector)`. Renommée depuis `security_sectors`.
+Pondération sectorielle d'un actif (`Sector` enum). Index unique `(asset_id, sector)`.
 
 ### Domaine Portfolio / Finance
 
@@ -319,26 +319,26 @@ Positions calculées (quantité, coût moyen) par actif/wallet. Dénormalisé po
 
 > `migrations` (suivi des migrations Laravel) complète le décompte des 16 tables.
 
-## 4. Historique des renommages
+## 4. Migrations
 
-| Avant | Après | Migration |
-| --- | --- | --- |
-| table `securities` | table `assets` | `2026_05_18_170716_rename_securities_table_to_assets` |
-| table `security_prices` | table `asset_prices` | `2026_05_08_012537_rename_security_prices_to_asset_prices_table` |
-| `transactions.security_id` | `transactions.asset_id` | `2026_05_08_020000_rename_security_id_to_asset_id_in_transactions_table` |
-| `asset_prices.security_id` | `asset_prices.asset_id` | `2026_05_09_150000_rename_security_id_to_asset_id_in_asset_prices_table` |
-| `security_sectors.security_id` | `asset_sectors.asset_id` | `2026_05_09_153040_rename_security_id_to_asset_id_in_security_sectors_table` |
-| table `security_sectors` | table `asset_sectors` | `2026_08_19_125953_rename_security_sectors_to_asset_sectors` |
+L'historique des migrations a été aplati : le dossier `database/migrations/` ne contient plus que des créations de tables, une par table, dans l'ordre imposé par les clés étrangères.
 
-Autres migrations structurelles notables :
-
-| Changement | Migration |
+| Migration | Tables |
 | --- | --- |
-| `transactions.account_type` (string) → `wallet_id` (FK) | `2026_03_16_011334_migrate_transactions_account_type_to_wallet_id` |
+| `0001_01_01_000000_create_users_table` | `users`, `password_reset_tokens`, `sessions` |
+| `0001_01_01_000001_create_cache_table` | `cache`, `cache_locks` |
+| `0001_01_01_000002_create_jobs_table` | `jobs`, `job_batches`, `failed_jobs` |
+| `2026_08_19_000000_create_assets_table` | `assets` |
+| `2026_08_19_000001_create_asset_prices_table` | `asset_prices` |
+| `2026_08_19_000002_create_asset_sectors_table` | `asset_sectors` |
+| `2026_08_19_000003_create_wallets_table` | `wallets` |
+| `2026_08_19_000004_create_wallet_fees_table` | `wallet_fees` |
+| `2026_08_19_000005_create_transactions_table` | `transactions` |
+| `2026_08_19_000006_create_holdings_projection_table` | `holdings_projection` |
 
-Le vocabulaire `security_` a été entièrement soldé par `2026_08_19_125953_rename_security_sectors_to_asset_sectors` : table renommée, index hérités (`security_prices_date_index`, `security_prices_security_id_date_unique`, `security_sectors_security_id_sector_unique`) recréés sous les noms `asset_*`, et doublon `security_prices_security_id_date_index` supprimé.
+Aucune migration d'altération, de renommage ni de correction de données ne subsiste : ce qui n'est pas dans une création n'existe pas dans le schéma. Toute base existante doit donc être reconstruite (`migrate:fresh` puis `db:seed`), les anciennes lignes de la table `migrations` ne correspondant plus à aucun fichier.
 
-Reste hors périmètre du schéma : le dump MySQL de production (`storage/database/backup.sql`, rejoué par `BackupSeeder`) précède ces renommages et expose encore les tables `securities`, `security_prices` et `security_sectors`. Le lecteur de dump les cible donc sous leurs anciens noms — c'est volontaire.
+Le vocabulaire hérité de l'époque `securities` a disparu du schéma : plus aucune table ni aucun index ne porte le préfixe `security_`. Seul le dump MySQL de production (`storage/database/backup.sql`, rejoué par `BackupSeeder`) précède ces renommages et expose encore les tables `securities`, `security_prices` et `security_sectors` — le lecteur de dump les cible donc sous leurs anciens noms, c'est volontaire.
 
 ## 5. Mapping tables ↔ modèles Contexts et dette de migration
 

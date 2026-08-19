@@ -6,14 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('security_prices', function (Blueprint $table) {
+        Schema::create('asset_prices', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('security_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('asset_id')->constrained()->cascadeOnDelete();
             $table->date('date');
             $table->decimal('open', 12, 4)->nullable();
             $table->decimal('high', 12, 4)->nullable();
@@ -21,16 +18,14 @@ return new class extends Migration
             $table->decimal('close', 12, 4);
             $table->unsignedBigInteger('volume')->nullable();
             $table->timestamps();
-            $table->unique(['security_id', 'date']);
+
+            $table->unique(['asset_id', 'date']);
             $table->index('date');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('security_prices');
+        Schema::dropIfExists('asset_prices');
     }
 };
