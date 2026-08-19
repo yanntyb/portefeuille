@@ -3047,13 +3047,15 @@ function heldWithDividends(): array
     $wallet = Wallet::factory()->for($user)->create();
     $instrument = Instrument::factory()->create(['name' => 'Amundi MSCI World']);
 
+    /**
+     * La position n'est pas insérée à la main : `TransactionObserver` la projette depuis cet achat
+     * via `ProjectHolding`, qui fait un `updateOrCreate` sur `(asset_id, wallet_id)`. Insérer un
+     * `Holding` après la transaction violerait cette clé primaire composite — 10 titres à 80 €
+     * projettent exactement `quantity = 10, avg_cost = 80`.
+     */
     Transaction::factory()->buy()->create([
         'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $instrument->id,
         'date' => '2024-01-10', 'quantity' => 10, 'unit_price' => 80,
-    ]);
-    Holding::factory()->create([
-        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $instrument->id,
-        'quantity' => 10, 'avg_cost' => 80,
     ]);
 
     Dividend::factory()->create(['asset_id' => $instrument->id, 'ex_date' => '2025-03-05', 'amount_per_share' => 0.5]);
