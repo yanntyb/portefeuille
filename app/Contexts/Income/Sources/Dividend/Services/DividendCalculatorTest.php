@@ -114,10 +114,13 @@ it('trie les reçus du plus récent au plus ancien', function () {
 });
 
 it('arrondit le montant perçu au centime', function () {
+    // 3 × 0.125 = 0.375 : round() rend 0,38, une troncature rendrait 0,37. Un montant qui
+    // s'arrête avant la troisième décimale (comme 0.123456, dont round() et une troncature
+    // rendent tous deux 0,37) ne distinguerait pas les deux.
     $receipts = (new DividendCalculator)->receipts(
         [boughtOn('2026-01-10', 3.0)],
-        [detachment('2026-03-05', 0.123456)],
+        [detachment('2026-03-05', 0.125)],
     );
 
-    expect($receipts[0]->amount)->toBe(0.37);
+    expect($receipts[0]->amount)->toBe(0.38);
 });
