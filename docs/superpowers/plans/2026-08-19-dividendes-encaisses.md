@@ -1971,12 +1971,12 @@ use App\Contexts\Income\Sources\Dividend\Datas\PositionRecordData;
 use App\Contexts\Income\Sources\Dividend\Services\DividendCalculator;
 use Illuminate\Support\Carbon;
 
-function buy(string $date, float $quantity, int $assetId = 1): PositionRecordData
+function boughtOn(string $date, float $quantity, int $assetId = 1): PositionRecordData
 {
     return new PositionRecordData($assetId, Carbon::parse($date), false, $quantity);
 }
 
-function sell(string $date, float $quantity, int $assetId = 1): PositionRecordData
+function soldOn(string $date, float $quantity, int $assetId = 1): PositionRecordData
 {
     return new PositionRecordData($assetId, Carbon::parse($date), true, $quantity);
 }
@@ -1988,7 +1988,7 @@ function detachment(string $date, float $amountPerShare, int $assetId = 1): Divi
 
 it('multiplie le détachement par la quantité détenue à l\'ex-date', function () {
     $receipts = (new DividendCalculator)->receipts(
-        [buy('2026-01-10', 10.0)],
+        [boughtOn('2026-01-10', 10.0)],
         [detachment('2026-03-05', 0.5)],
     );
 
@@ -2003,7 +2003,7 @@ it('exclut un achat passé le jour même du détachement', function () {
     // Détenir le titre le jour de l'ex-date ne donne pas droit au dividende : il faut le
     // détenir la veille.
     $receipts = (new DividendCalculator)->receipts(
-        [buy('2026-03-05', 10.0)],
+        [boughtOn('2026-03-05', 10.0)],
         [detachment('2026-03-05', 0.5)],
     );
 
@@ -2012,7 +2012,7 @@ it('exclut un achat passé le jour même du détachement', function () {
 
 it('retient la quantité restante après une vente partielle', function () {
     $receipts = (new DividendCalculator)->receipts(
-        [buy('2026-01-10', 10.0), sell('2026-02-01', 4.0)],
+        [boughtOn('2026-01-10', 10.0), soldOn('2026-02-01', 4.0)],
         [detachment('2026-03-05', 0.5)],
     );
 
@@ -2022,7 +2022,7 @@ it('retient la quantité restante après une vente partielle', function () {
 
 it('ignore un détachement sur une position soldée', function () {
     $receipts = (new DividendCalculator)->receipts(
-        [buy('2026-01-10', 10.0), sell('2026-02-01', 10.0)],
+        [boughtOn('2026-01-10', 10.0), soldOn('2026-02-01', 10.0)],
         [detachment('2026-03-05', 0.5)],
     );
 
@@ -2031,7 +2031,7 @@ it('ignore un détachement sur une position soldée', function () {
 
 it('reprend le versement après un rachat', function () {
     $receipts = (new DividendCalculator)->receipts(
-        [buy('2026-01-10', 10.0), sell('2026-02-01', 10.0), buy('2026-04-01', 3.0)],
+        [boughtOn('2026-01-10', 10.0), soldOn('2026-02-01', 10.0), boughtOn('2026-04-01', 3.0)],
         [detachment('2026-03-05', 0.5), detachment('2026-06-04', 1.0)],
     );
 
@@ -2042,7 +2042,7 @@ it('reprend le versement après un rachat', function () {
 
 it('agrège les enveloppes : la source ne voit qu\'une quantité par actif', function () {
     $receipts = (new DividendCalculator)->receipts(
-        [buy('2026-01-10', 10.0), buy('2026-01-15', 5.0)],
+        [boughtOn('2026-01-10', 10.0), boughtOn('2026-01-15', 5.0)],
         [detachment('2026-03-05', 0.5)],
     );
 
@@ -2052,7 +2052,7 @@ it('agrège les enveloppes : la source ne voit qu\'une quantité par actif', fun
 
 it('ne mélange pas les actifs', function () {
     $receipts = (new DividendCalculator)->receipts(
-        [buy('2026-01-10', 10.0, assetId: 1), buy('2026-01-10', 100.0, assetId: 2)],
+        [boughtOn('2026-01-10', 10.0, assetId: 1), boughtOn('2026-01-10', 100.0, assetId: 2)],
         [detachment('2026-03-05', 0.5, assetId: 2)],
     );
 
@@ -2066,12 +2066,12 @@ it('ignore un détachement sur un actif jamais acheté', function () {
 });
 
 it('rend un tableau vide sans détachement', function () {
-    expect((new DividendCalculator)->receipts([buy('2026-01-10', 10.0)], []))->toBe([]);
+    expect((new DividendCalculator)->receipts([boughtOn('2026-01-10', 10.0)], []))->toBe([]);
 });
 
 it('trie les reçus du plus récent au plus ancien', function () {
     $receipts = (new DividendCalculator)->receipts(
-        [buy('2026-01-01', 10.0)],
+        [boughtOn('2026-01-01', 10.0)],
         [detachment('2026-03-05', 0.5), detachment('2026-09-03', 0.6), detachment('2026-06-04', 0.4)],
     );
 
@@ -2081,7 +2081,7 @@ it('trie les reçus du plus récent au plus ancien', function () {
 
 it('arrondit le montant perçu au centime', function () {
     $receipts = (new DividendCalculator)->receipts(
-        [buy('2026-01-10', 3.0)],
+        [boughtOn('2026-01-10', 3.0)],
         [detachment('2026-03-05', 0.123456)],
     );
 
