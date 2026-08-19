@@ -1,8 +1,5 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-// import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
-import AppCarousel from '@/components/AppCarousel.vue';
-import AppCarouselPage from '@/components/AppCarouselPage.vue';
 import AppPage from '@/components/AppPage.vue';
 import EvolutionSection from '@/components/dashboard/EvolutionSection.vue';
 import InstrumentsSection from '@/components/dashboard/InstrumentsSection.vue';
@@ -26,34 +23,16 @@ defineProps<{
 <template>
     <Head title="Tableau de bord" />
 
-    <!--
-        Boîte d'exactement un écran : le carrousel a besoin d'une hauteur définie pour paginer, et
-        `AppPage fill` la prend de son parent. `dvh` et non `vh` : sous iOS `100vh` passe derrière
-        la barre d'adresse, la dernière ligne serait coupée.
-    -->
-    <div class="flex h-dvh flex-col overflow-hidden md:block md:h-auto md:overflow-visible">
-        <AppPage fill>
-            <AppCarousel>
-                <AppCarouselPage label="Valeur">
-                    <ValuationSection v-if="overview.holdings.length" :overview="overview" />
+    <!-- Pas de fil d'Ariane : le tableau de bord est la racine, son fil n'aurait qu'un seul cran. -->
+    <AppPage>
+        <ValuationSection v-if="overview.holdings.length" :overview="overview" />
 
-                    <EvolutionSection :series="evolutionSeries" />
+        <EvolutionSection :series="evolutionSeries" />
 
-                    <InstrumentsSection :holdings="overview.holdings" :trends="trends" />
-                </AppCarouselPage>
+        <InstrumentsSection :holdings="overview.holdings" :trends="trends" />
 
-                <AppCarouselPage v-if="overview.holdings.length" label="Performances">
+        <PerformancesSection v-if="overview.holdings.length" :performances="performances" />
 
-                    <PerformancesSection :performances="performances" />
-                </AppCarouselPage>
-
-                <AppCarouselPage v-if="overview.holdings.length" label="Secteurs">
-                    <SectorsSection :slices="sectorBreakdown" />
-                </AppCarouselPage>
-            </AppCarousel>
-        </AppPage>
-
-        <!-- Le tableau de bord est la racine : son fil d'Ariane n'aurait qu'un seul cran, et il coûte un écran de haut. -->
-        <!-- <AppBreadcrumb :items="[{ label: 'Tableau de bord' }]" /> -->
-    </div>
+        <SectorsSection v-if="overview.holdings.length" :slices="sectorBreakdown" />
+    </AppPage>
 </template>
