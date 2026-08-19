@@ -12,6 +12,7 @@ use App\Contexts\Market\Models\Price;
 use App\Contexts\Market\Models\SectorAllocation;
 use App\Contexts\Market\Ports\PriceFeedPort;
 use App\Contexts\Market\Ports\SectorProviderPort;
+use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
@@ -66,9 +67,10 @@ it('rebuilds the wallets of each user', function () {
 
     $admin = User::query()->where('email', 'admin@example.test')->sole();
 
-    expect(Wallet::query()->count())->toBe(3)
+    // Le portefeuille crypto ne vient pas du dump, il est ouvert par le seeder.
+    expect(Wallet::query()->count())->toBe(4)
         ->and(Wallet::query()->where('user_id', $admin->id)->pluck('name')->sort()->values()->all())
-        ->toBe(['CTO', 'PEA']);
+        ->toBe(['CTO', 'PEA', 'Portefeuille Crypto']);
 });
 
 it('infers the instrument type absent from the dump', function () {
@@ -76,8 +78,9 @@ it('infers the instrument type absent from the dump', function () {
 
     $types = Instrument::query()->pluck('type', 'ticker');
 
-    expect(Instrument::query()->count())->toBe(3)
+    expect(Instrument::query()->count())->toBe(4)
         ->and($types['PUST.PA'])->toBe(InstrumentType::ETF)
+        ->and($types['BTC-EUR'])->toBe(InstrumentType::Crypto)
         ->and($types['CVX'])->toBe(InstrumentType::Stock)
         ->and($types['NVDA'])->toBe(InstrumentType::Stock)
         ->and(Instrument::query()->where('ticker', 'CVX')->value('isin'))->toBe('US1667641005');
@@ -149,11 +152,31 @@ it('replays the transactions and lets the observer project the holdings', functi
 
     $holding = Holding::query()->where('wallet_id', $pea->id)->where('asset_id', $amundi->id)->sole();
 
-    expect(Transaction::query()->count())->toBe(4)
-        ->and(Holding::query()->count())->toBe(3)
+    expect(Transaction::query()->count())->toBe(8)
+        ->and(Holding::query()->count())->toBe(4)
         ->and((float) $holding->quantity)->toBe(5.0)
         // (2 × 100 + 3 × 110) / 5, hors frais.
         ->and((float) $holding->avg_cost)->toBe(106.0);
+});
+
+it('replays the Bitcoin orders of the default account, without the cancelled one', function () {
+    $this->seed(SampleBackupSeeder::class);
+
+    $admin = User::query()->where('email', 'admin@example.test')->sole();
+    $crypto = Wallet::query()->where('user_id', $admin->id)->where('name', 'Portefeuille Crypto')->sole();
+    $bitcoin = Instrument::query()->where('ticker', 'BTC-EUR')->sole();
+
+    $orders = Transaction::query()->where('wallet_id', $crypto->id)->orderBy('date')->get();
+    $holding = Holding::query()->where('wallet_id', $crypto->id)->where('asset_id', $bitcoin->id)->sole();
+
+    // L'ordre annulé du 18 mai n'est pas rejoué : 4 achats, pas 5.
+    expect($orders)->toHaveCount(4)
+        ->and($orders->pluck('type')->unique()->all())->toBe([TransactionType::Buy])
+        ->and($orders->pluck('broker')->unique()->all())->toBe(['Kraken'])
+        ->and($orders->map(fn (Transaction $order): string => $order->date->toDateString())->all())
+        ->toBe(['2026-05-18', '2026-06-01', '2026-07-01', '2026-07-31'])
+        ->and((float) $orders->first()->unit_price)->toBe(66020.6)
+        ->and((float) $holding->quantity)->toBe(0.003449);
 });
 
 it('keeps the details of the transactions', function () {
@@ -188,12 +211,12 @@ it('can be seeded twice without duplicating anything', function () {
     $this->seed(SampleBackupSeeder::class);
 
     expect(User::query()->count())->toBe($usersBefore + 2)
-        ->and(Wallet::query()->count())->toBe(3)
-        ->and(Instrument::query()->count())->toBe(3)
-        ->and(SectorAllocation::query()->count())->toBe(3)
+        ->and(Wallet::query()->count())->toBe(4)
+        ->and(Instrument::query()->count())->toBe(4)
+        ->and(SectorAllocation::query()->count())->toBe(4)
         ->and(Price::query()->count())->toBe(2)
-        ->and(Transaction::query()->count())->toBe(4)
-        ->and(Holding::query()->count())->toBe(3)
+        ->and(Transaction::query()->count())->toBe(8)
+        ->and(Holding::query()->count())->toBe(4)
         ->and(DB::table('wallet_fees')->count())->toBe(1)
         ->and(DB::table('allocation_profiles')->count())->toBe(1)
         ->and(DB::table('allocation_profile_items')->count())->toBe(2)

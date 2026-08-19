@@ -6,6 +6,7 @@ use App\Contexts\Identity\Enums\Role;
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
+use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
@@ -43,6 +44,33 @@ class BackupSeeder extends Seeder
      * @var list<string>
      */
     private const STOCK_TICKERS = ['CVX', 'AI.PA', 'TTE.PA', 'HAG.DE', 'NVDA', 'MSFT', 'AMZN', 'TSLA'];
+
+    /**
+     * Compte administrateur du dump, celui avec lequel on se connecte par défaut.
+     */
+    private const ADMIN_EMAIL = 'admin@example.test';
+
+    /**
+     * Achats Bitcoin du compte par défaut, relevés sur l'historique d'ordres Kraken.
+     *
+     * Ils ne sont pas dans le dump, qui précède l'ouverture du portefeuille crypto. L'ordre
+     * annulé du 18 mai 2026 n'est pas repris : `transactions` n'a pas de colonne de statut, un
+     * ordre annulé y deviendrait un achat réel et gonflerait la position.
+     *
+     * @var list<array{date: string, quantity: string, unit_price: string}>
+     */
+    private const CRYPTO_ORDERS = [
+        ['date' => '2026-05-18', 'quantity' => '0.00075430', 'unit_price' => '66020.6000'],
+        ['date' => '2026-06-01', 'quantity' => '0.00081870', 'unit_price' => '61070.1000'],
+        ['date' => '2026-07-01', 'quantity' => '0.00097200', 'unit_price' => '51439.4000'],
+        ['date' => '2026-07-31', 'quantity' => '0.00090400', 'unit_price' => '55312.0000'],
+    ];
+
+    private const CRYPTO_TICKER = 'BTC-EUR';
+
+    private const CRYPTO_WALLET = 'Portefeuille Crypto';
+
+    private const CRYPTO_BROKER = 'Kraken';
 
     private const ROW_CHUNK = 100;
 
@@ -83,6 +111,7 @@ class BackupSeeder extends Seeder
 
         $this->seedInstruments($reader);
         $this->seedTransactions($reader);
+        $this->seedCryptoOrders();
         $this->seedWalletFees($reader);
         $this->seedAllocationProfiles($reader);
         $this->seedInvitations($reader);
@@ -109,7 +138,7 @@ class BackupSeeder extends Seeder
     {
         foreach ($reader->rows('users') as [$dumpId, , , $role, $verifiedAt, , , $createdAt, $updatedAt]) {
             $isAdmin = $role === Role::Admin->value;
-            $email = $isAdmin ? 'admin@example.test' : "utilisateur-{$dumpId}@example.test";
+            $email = $isAdmin ? self::ADMIN_EMAIL : "utilisateur-{$dumpId}@example.test";
 
             $user = User::query()->firstOrNew(['email' => $email]);
 
@@ -209,6 +238,51 @@ class BackupSeeder extends Seeder
                 'notes' => $notes,
                 'created_at' => $createdAt,
                 'updated_at' => $updatedAt,
+            ]);
+        }
+    }
+
+    /**
+     * Rejoue les achats Bitcoin du compte par défaut dans un portefeuille crypto dédié.
+     *
+     * Instrument et portefeuille sont créés au besoin : ni `BTC-EUR` ni ce portefeuille ne
+     * figurent dans le dump. Une création Eloquent par ordre, comme pour les transactions du
+     * dump, sinon `TransactionObserver` n'alimenterait pas `holdings_projection`.
+     */
+    private function seedCryptoOrders(): void
+    {
+        $user = User::query()->where('email', self::ADMIN_EMAIL)->first();
+
+        if ($user === null) {
+            return;
+        }
+
+        $wallet = Wallet::query()->firstOrCreate(['user_id' => $user->id, 'name' => self::CRYPTO_WALLET]);
+
+        // Idempotence : purge (mass delete ne déclenche pas l'observer), puis reconstruit.
+        Transaction::query()->where('wallet_id', $wallet->id)->delete();
+        Holding::query()->where('wallet_id', $wallet->id)->delete();
+
+        $instrument = Instrument::query()->firstOrCreate(
+            ['ticker' => self::CRYPTO_TICKER],
+            ['isin' => null, 'name' => 'Bitcoin', 'type' => InstrumentType::Crypto],
+        );
+
+        foreach (self::CRYPTO_ORDERS as $order) {
+            if ($this->earliestTransactionDate === null || $order['date'] < $this->earliestTransactionDate) {
+                $this->earliestTransactionDate = $order['date'];
+            }
+
+            Transaction::query()->create([
+                'user_id' => $user->id,
+                'wallet_id' => $wallet->id,
+                'asset_id' => $instrument->id,
+                'date' => $order['date'],
+                'type' => TransactionType::Buy,
+                'broker' => self::CRYPTO_BROKER,
+                'quantity' => $order['quantity'],
+                'unit_price' => $order['unit_price'],
+                'fees' => 0,
             ]);
         }
     }
