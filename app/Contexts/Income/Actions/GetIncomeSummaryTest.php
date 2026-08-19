@@ -52,3 +52,47 @@ it('compte un détachement tombant exactement un an avant aujourd\'hui, quelle q
 
     expect(app(GetIncomeSummary::class)($user->id)->last12Months)->toBe(5.0);
 });
+
+it('estime le revenu des douze prochains mois', function () {
+    // 10 titres détenus, 0,80 € détaché depuis un an : 8 € attendus. Le total perçu, lui, porte
+    // aussi le détachement de 2025.
+    $this->travelTo('2026-08-19 10:00:00');
+    ['user' => $user] = dividendFixture();
+
+    $summary = app(GetIncomeSummary::class)($user->id);
+
+    expect($summary->estimatedAnnual)->toBe(8.0)
+        ->and($summary->totalReceived)->toBe(13.0);
+});
+
+it('n\'estime rien sans aucun revenu', function () {
+    $user = User::factory()->create();
+
+    expect(app(GetIncomeSummary::class)($user->id)->estimatedAnnual)->toBe(0.0);
+});
+
+it('sérialise l\'estimation pour le tableau de bord', function () {
+    $this->travelTo('2026-08-19 10:00:00');
+    ['user' => $user] = dividendFixture();
+
+    $payload = json_decode(json_encode(app(GetIncomeSummary::class)($user->id)), true);
+
+    expect($payload['estimatedAnnual'])->toEqual(8.0);
+});
+
+it('estime le revenu d\'un titre acheté après son dernier détachement', function () {
+    $this->travelTo('2026-08-19 10:00:00');
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $instrument = Instrument::factory()->create();
+    Dividend::factory()->create(['asset_id' => $instrument->id, 'ex_date' => '2026-03-05', 'amount_per_share' => 0.8]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $instrument->id,
+        'date' => '2026-06-01', 'quantity' => 10, 'unit_price' => 80,
+    ]);
+
+    $summary = app(GetIncomeSummary::class)($user->id);
+
+    expect($summary->totalReceived)->toBe(0.0)
+        ->and($summary->estimatedAnnual)->toBe(8.0);
+});

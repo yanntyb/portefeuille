@@ -40,6 +40,9 @@ const hasIncome = computed<boolean>(() => (props.income?.totalReceived ?? 0) > 0
                     perçus, dont
                     <span data-income-last12>{{ eur(props.income?.last12Months ?? 0) }}</span>
                     sur douze mois
+                    <template v-if="props.income && props.income.estimatedAnnual > 0">
+                        · <span data-income-estimate>~{{ eur(props.income.estimatedAnnual) }}</span> estimés sur les douze prochains
+                    </template>
                 </p>
 
                 <ul class="flex min-h-0 grow flex-col gap-3">

@@ -29,6 +29,9 @@ const perShare = (value: number): string => eur(value, 3);
                 <template v-if="props.dividends.yieldOnCost !== null">
                     · <span data-dividend-yield>{{ pct(props.dividends.yieldOnCost) }}</span> du prix de revient
                 </template>
+                <template v-if="props.dividends.estimatedAnnual > 0">
+                    · <span data-dividend-estimate>~{{ eur(props.dividends.estimatedAnnual) }}</span> estimés sur douze mois
+                </template>
             </p>
         </div>
 

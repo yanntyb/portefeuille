@@ -29,4 +29,16 @@ class IncomeSourceRegistry
 
         return $receipts;
     }
+
+    /** Revenu attendu sur les douze prochains mois, toutes origines confondues. */
+    public function projectedAnnualFor(int $userId): float
+    {
+        $projected = 0.0;
+
+        foreach ($this->sources as $source) {
+            $projected += $source->projectedAnnualFor($userId);
+        }
+
+        return round($projected, 2);
+    }
 }

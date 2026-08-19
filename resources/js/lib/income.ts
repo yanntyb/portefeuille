@@ -12,6 +12,8 @@ export interface AssetDividendHistory {
     receipts: DividendReceipt[];
     totalReceived: number;
     last12Months: number;
+    /** Attendu sur les douze prochains mois, extrapolé des détachements récents. */
+    estimatedAnnual: number;
     /** Perçu sur douze mois rapporté au coût de la position, en pourcentage. */
     yieldOnCost: number | null;
 }
@@ -22,6 +24,8 @@ export type IncomeBySource = Record<string, number>;
 export interface IncomeSummary {
     totalReceived: number;
     last12Months: number;
+    /** Attendu sur les douze prochains mois, toutes origines confondues. */
+    estimatedAnnual: number;
     bySource: IncomeBySource;
 }
 

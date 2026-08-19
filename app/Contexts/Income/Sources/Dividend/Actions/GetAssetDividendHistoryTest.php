@@ -120,3 +120,69 @@ it('se sérialise pour la page', function () {
         ->and($payload['totalReceived'])->toEqual(13.0)
         ->and($payload['yieldOnCost'])->toEqual(1.0);
 });
+
+it('estime le revenu des douze prochains mois sur la quantité détenue aujourd\'hui', function () {
+    // Le renfort est postérieur au détachement : 8 € ont été perçus sur 10 titres, mais les 20
+    // titres détenus aujourd'hui en attendent 16 au prochain.
+    $this->travelTo('2026-08-19 10:00:00');
+    ['user' => $user, 'instrument' => $instrument] = heldWithDividends();
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id,
+        'wallet_id' => Wallet::query()->where('user_id', $user->id)->value('id'),
+        'asset_id' => $instrument->id,
+        'date' => '2026-04-01', 'quantity' => 10, 'unit_price' => 90,
+    ]);
+
+    $history = app(GetAssetDividendHistory::class)($user->id, $instrument->id);
+
+    expect($history->last12Months)->toBe(8.0)
+        ->and($history->estimatedAnnual)->toBe(16.0);
+});
+
+it('n\'estime rien quand la position est soldée', function () {
+    $this->travelTo('2026-08-19 10:00:00');
+    ['user' => $user, 'instrument' => $instrument] = heldWithDividends();
+    Holding::query()->where('asset_id', $instrument->id)->delete();
+
+    expect(app(GetAssetDividendHistory::class)($user->id, $instrument->id)->estimatedAnnual)->toBe(0.0);
+});
+
+it('n\'estime rien quand le dernier détachement date de plus de douze mois', function () {
+    // Un émetteur qui a coupé son dividende : l'historique reste, la projection non.
+    $this->travelTo('2027-08-19 10:00:00');
+    ['user' => $user, 'instrument' => $instrument] = heldWithDividends();
+
+    $history = app(GetAssetDividendHistory::class)($user->id, $instrument->id);
+
+    expect($history->totalReceived)->toBe(13.0)
+        ->and($history->estimatedAnnual)->toBe(0.0);
+});
+
+it('sérialise l\'estimation pour la page', function () {
+    $this->travelTo('2026-08-19 10:00:00');
+    ['user' => $user, 'instrument' => $instrument] = heldWithDividends();
+
+    $payload = json_decode(json_encode(app(GetAssetDividendHistory::class)($user->id, $instrument->id)), true);
+
+    expect($payload['estimatedAnnual'])->toEqual(8.0);
+});
+
+it('estime le revenu d\'un titre acheté après son dernier détachement', function () {
+    // Rien n'a encore été perçu — l'achat est postérieur à l'ex-date — mais le versement de
+    // l'an prochain est bien attendu.
+    $this->travelTo('2026-08-19 10:00:00');
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $instrument = Instrument::factory()->create();
+    Dividend::factory()->create(['asset_id' => $instrument->id, 'ex_date' => '2026-03-05', 'amount_per_share' => 0.8]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $instrument->id,
+        'date' => '2026-06-01', 'quantity' => 10, 'unit_price' => 80,
+    ]);
+
+    $history = app(GetAssetDividendHistory::class)($user->id, $instrument->id);
+
+    expect($history->receipts)->toBe([])
+        ->and($history->totalReceived)->toBe(0.0)
+        ->and($history->estimatedAnnual)->toBe(8.0);
+});

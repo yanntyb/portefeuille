@@ -48,3 +48,19 @@ it('est enregistrée dans le registre des sources de revenu', function () {
 
     expect(app(IncomeSourceRegistry::class)->receiptsFor($user->id))->toHaveCount(1);
 });
+
+it('projette le revenu annuel des positions détenues', function () {
+    // 10 titres, 0,80 € détaché dans les douze derniers mois : 8 € attendus sur les douze
+    // prochains. Le détachement de 2025 est hors fenêtre.
+    $this->travelTo('2026-08-19 10:00:00');
+    ['user' => $user] = dividendFixture();
+
+    expect(app(DividendIncomeSource::class)->projectedAnnualFor($user->id))->toBe(8.0);
+});
+
+it('ne projette rien sans position détenue', function () {
+    $user = User::factory()->create();
+    Dividend::factory()->create(['ex_date' => '2026-03-05', 'amount_per_share' => 0.5]);
+
+    expect(app(DividendIncomeSource::class)->projectedAnnualFor($user->id))->toBe(0.0);
+});

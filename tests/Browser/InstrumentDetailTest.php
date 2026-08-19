@@ -159,3 +159,52 @@ it('n\'affiche aucune section dividendes sur un instrument capitalisant', functi
         ->assertScript("document.querySelectorAll('[data-section=\"dividends\"]').length", 0)
         ->assertNoJavaScriptErrors();
 });
+
+it('annonce le revenu attendu sur les douze prochains mois', function () {
+    ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
+
+    Transaction::query()->where('asset_id', $instrument->id)->update(['date' => now()->subYears(2)->format('Y-m-d')]);
+
+    Dividend::factory()->create([
+        'asset_id' => $instrument->id,
+        'ex_date' => now()->subMonths(2)->format('Y-m-d'),
+        'amount_per_share' => 0.5,
+    ]);
+
+    /**
+     * Renfort postérieur au détachement : la position passe à 20 titres sans rien percevoir de
+     * plus. Le perçu reste sur 10 titres (5,00 €), l'estimation porte sur 20 (10,00 €) — deux
+     * valeurs distinctes, donc un gabarit qui les intervertirait tomberait.
+     */
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id,
+        'wallet_id' => Wallet::query()->where('user_id', $user->id)->value('id'),
+        'asset_id' => $instrument->id,
+        'quantity' => 10,
+        'unit_price' => 90,
+        'date' => now()->subMonth()->format('Y-m-d'),
+    ]);
+
+    $this->actingAs($user);
+
+    visit("/instruments/{$instrument->id}")
+        ->assertScript("document.querySelector('[data-dividend-last12]').textContent.includes('5,00')", true)
+        ->assertScript("document.querySelector('[data-dividend-estimate]').textContent.includes('10,00')", true)
+        ->assertNoJavaScriptErrors();
+});
+
+it('n\'annonce aucun revenu attendu quand le dernier détachement date de plus de douze mois', function () {
+    ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
+
+    Dividend::factory()->create([
+        'asset_id' => $instrument->id,
+        'ex_date' => now()->subMonths(15)->format('Y-m-d'),
+        'amount_per_share' => 0.3,
+    ]);
+
+    $this->actingAs($user);
+
+    visit("/instruments/{$instrument->id}")
+        ->assertScript("document.querySelectorAll('[data-dividend-estimate]').length", 0)
+        ->assertNoJavaScriptErrors();
+});

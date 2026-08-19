@@ -8,6 +8,7 @@ use App\Contexts\Income\Sources\Dividend\Ports\PositionHistoryPort;
 use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
+use Illuminate\Support\Collection;
 
 class PortfolioPositionHistory implements PositionHistoryPort
 {
@@ -53,9 +54,33 @@ class PortfolioPositionHistory implements PositionHistoryPort
             return null;
         }
 
+        return $this->aggregate($rows);
+    }
+
+    /** @return array<int, PositionSnapshotData> */
+    public function positionsFor(int $userId): array
+    {
+        return Holding::query()
+            ->where('user_id', $userId)
+            ->get()
+            ->groupBy('asset_id')
+            ->mapWithKeys(fn (Collection $rows, int|string $assetId): array => [
+                (int) $assetId => $this->aggregate($rows),
+            ])
+            ->all();
+    }
+
+    /**
+     * Les enveloppes d'un même actif ramenées à une position unique.
+     *
+     * Le prix de revient d'un actif tenu dans deux enveloppes est la moyenne pondérée des leurs.
+     *
+     * @param  Collection<int, Holding>  $rows
+     */
+    private function aggregate(Collection $rows): PositionSnapshotData
+    {
         $quantity = (float) $rows->sum(fn (Holding $holding): float => (float) $holding->quantity);
 
-        /** Le prix de revient d'un actif tenu dans deux enveloppes est la moyenne pondérée des leurs. */
         $withCost = $rows->filter(fn (Holding $holding): bool => $holding->avg_cost !== null);
         $qtyWithCost = (float) $withCost->sum(fn (Holding $holding): float => (float) $holding->quantity);
 

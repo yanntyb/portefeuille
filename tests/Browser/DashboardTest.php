@@ -145,3 +145,32 @@ it('annonce l\'absence de revenu quand aucun instrument n\'en verse', function (
         ->assertSee('Aucun revenu perçu pour l\'instant.')
         ->assertNoJavaScriptErrors();
 });
+
+it('annonce le revenu attendu sur les douze prochains mois', function () {
+    ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
+
+    Transaction::query()->where('asset_id', $instrument->id)->update(['date' => now()->subYears(2)->format('Y-m-d')]);
+
+    Dividend::factory()->create([
+        'asset_id' => $instrument->id,
+        'ex_date' => now()->subMonths(2)->format('Y-m-d'),
+        'amount_per_share' => 0.5,
+    ]);
+
+    /** Renfort postérieur au détachement : 5,00 € perçus sur 10 titres, 10,00 € attendus sur 20. */
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id,
+        'wallet_id' => Wallet::query()->where('user_id', $user->id)->value('id'),
+        'asset_id' => $instrument->id,
+        'quantity' => 10,
+        'unit_price' => 90,
+        'date' => now()->subMonth()->format('Y-m-d'),
+    ]);
+
+    $this->actingAs($user);
+
+    visit('/')
+        ->assertScript("document.querySelector('[data-income-last12]').textContent.includes('5,00')", true)
+        ->assertScript("document.querySelector('[data-income-estimate]').textContent.includes('10,00')", true)
+        ->assertNoJavaScriptErrors();
+});

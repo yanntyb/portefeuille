@@ -3,10 +3,13 @@
 namespace App\Contexts\Income\Sources\Dividend\Actions;
 
 use App\Contexts\Income\Sources\Dividend\Datas\AssetDividendHistoryData;
+use App\Contexts\Income\Sources\Dividend\Datas\DividendRecordData;
 use App\Contexts\Income\Sources\Dividend\Datas\PositionRecordData;
+use App\Contexts\Income\Sources\Dividend\Datas\PositionSnapshotData;
 use App\Contexts\Income\Sources\Dividend\Ports\DividendHistoryPort;
 use App\Contexts\Income\Sources\Dividend\Ports\PositionHistoryPort;
 use App\Contexts\Income\Sources\Dividend\Services\DividendCalculator;
+use App\Contexts\Income\Sources\Dividend\Services\DividendProjector;
 use Illuminate\Support\Carbon;
 
 class GetAssetDividendHistory
@@ -15,6 +18,7 @@ class GetAssetDividendHistory
         private DividendHistoryPort $dividends,
         private PositionHistoryPort $positions,
         private DividendCalculator $calculator,
+        private DividendProjector $projector,
     ) {}
 
     /**
@@ -30,13 +34,17 @@ class GetAssetDividendHistory
             fn (PositionRecordData $movement): bool => $movement->assetId === $assetId,
         ));
 
-        $receipts = $this->calculator->receipts($movements, $this->dividends->forAssets([$assetId]));
+        $dividends = $this->dividends->forAssets([$assetId]);
+        $receipts = $this->calculator->receipts($movements, $dividends);
 
-        if ($receipts === []) {
+        $since = Carbon::now()->subYear()->startOfDay();
+        $position = $this->positions->positionFor($userId, $assetId);
+        $estimatedAnnual = $this->estimatedAnnual($position, $dividends, $assetId, $since);
+
+        if ($receipts === [] && $estimatedAnnual <= 0.0) {
             return AssetDividendHistoryData::empty();
         }
 
-        $since = Carbon::now()->subYear()->startOfDay();
         $total = 0.0;
         $last12Months = 0.0;
 
@@ -52,15 +60,28 @@ class GetAssetDividendHistory
             receipts: $receipts,
             totalReceived: round($total, 2),
             last12Months: round($last12Months, 2),
-            yieldOnCost: $this->yieldOnCost($userId, $assetId, $last12Months),
+            estimatedAnnual: $estimatedAnnual,
+            yieldOnCost: $this->yieldOnCost($position, $last12Months),
         );
     }
 
-    /** Perçu sur douze mois rapporté au coût de la position courante, en pourcentage. */
-    private function yieldOnCost(int $userId, int $assetId, float $last12Months): ?float
+    /**
+     * Revenu attendu sur les douze prochains mois pour la position courante.
+     *
+     * @param  list<DividendRecordData>  $dividends
+     */
+    private function estimatedAnnual(?PositionSnapshotData $position, array $dividends, int $assetId, Carbon $since): float
     {
-        $position = $this->positions->positionFor($userId, $assetId);
+        if ($position === null) {
+            return 0.0;
+        }
 
+        return $this->projector->annualEstimates($dividends, [$assetId => $position->quantity], $since)[$assetId] ?? 0.0;
+    }
+
+    /** Perçu sur douze mois rapporté au coût de la position courante, en pourcentage. */
+    private function yieldOnCost(?PositionSnapshotData $position, float $last12Months): ?float
+    {
         if ($position === null || $position->avgCost === null) {
             return null;
         }

@@ -15,4 +15,12 @@ interface IncomeSourcePort
 
     /** @return list<IncomeReceiptData> */
     public function receiptsFor(int $userId): array;
+
+    /**
+     * Revenu que cette origine devrait produire sur les douze prochains mois.
+     *
+     * Extrapolation, jamais une promesse : chaque source décide de la sienne, un dividende depuis
+     * ses détachements récents, un loyer depuis son bail.
+     */
+    public function projectedAnnualFor(int $userId): float;
 }

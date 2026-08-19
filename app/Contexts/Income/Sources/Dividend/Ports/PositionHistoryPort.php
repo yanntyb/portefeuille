@@ -24,4 +24,14 @@ interface PositionHistoryPort
 
     /** Position courante, toutes enveloppes confondues. */
     public function positionFor(int $userId, int $assetId): ?PositionSnapshotData;
+
+    /**
+     * Positions courantes de l'utilisateur, indexées par actif.
+     *
+     * Le pendant de `positionFor()` à l'échelle du portefeuille : une projection de revenu porte
+     * sur tout ce qui est détenu aujourd'hui, pas sur un actif choisi.
+     *
+     * @return array<int, PositionSnapshotData>
+     */
+    public function positionsFor(int $userId): array;
 }

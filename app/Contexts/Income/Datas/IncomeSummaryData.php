@@ -7,17 +7,20 @@ use JsonSerializable;
 readonly class IncomeSummaryData implements JsonSerializable
 {
     /**
+     * @param  float  $estimatedAnnual  revenu attendu sur les douze prochains mois, extrapolé du
+     *                                  passé récent de chaque origine
      * @param  array<string, float>  $bySource  montant perçu, indexé par valeur de `IncomeSource`
      */
     public function __construct(
         public float $totalReceived,
         public float $last12Months,
+        public float $estimatedAnnual,
         public array $bySource,
     ) {}
 
     public static function empty(): self
     {
-        return new self(0.0, 0.0, []);
+        return new self(0.0, 0.0, 0.0, []);
     }
 
     /** @return array<string, mixed> */
@@ -26,6 +29,7 @@ readonly class IncomeSummaryData implements JsonSerializable
         return [
             'totalReceived' => $this->totalReceived,
             'last12Months' => $this->last12Months,
+            'estimatedAnnual' => $this->estimatedAnnual,
             'bySource' => $this->bySource,
         ];
     }

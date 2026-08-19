@@ -74,3 +74,39 @@ it('rend null sans position sur l\'actif', function () {
 
     expect(app(PositionHistoryPort::class)->positionFor($user->id, 404))->toBeNull();
 });
+
+it('rend la position courante de chaque actif détenu, enveloppes agrégées', function () {
+    $user = User::factory()->create();
+    $held = Instrument::factory()->create();
+    $other = Instrument::factory()->create();
+    Holding::factory()->create([
+        'user_id' => $user->id, 'wallet_id' => Wallet::factory()->for($user), 'asset_id' => $held->id,
+        'quantity' => 10, 'avg_cost' => 80,
+    ]);
+    Holding::factory()->create([
+        'user_id' => $user->id, 'wallet_id' => Wallet::factory()->for($user), 'asset_id' => $held->id,
+        'quantity' => 10, 'avg_cost' => 100,
+    ]);
+    Holding::factory()->create([
+        'user_id' => $user->id, 'wallet_id' => Wallet::factory()->for($user), 'asset_id' => $other->id,
+        'quantity' => 3, 'avg_cost' => 50,
+    ]);
+
+    $positions = app(PositionHistoryPort::class)->positionsFor($user->id);
+
+    expect($positions)->toHaveCount(2)
+        ->and($positions[$held->id]->quantity)->toBe(20.0)
+        ->and($positions[$held->id]->avgCost)->toBe(90.0)
+        ->and($positions[$other->id]->quantity)->toBe(3.0);
+});
+
+it('ne rend que les positions de l\'utilisateur demandé', function () {
+    $user = User::factory()->create();
+    $other = User::factory()->create();
+    Holding::factory()->create([
+        'user_id' => $other->id, 'wallet_id' => Wallet::factory()->for($other), 'asset_id' => Instrument::factory(),
+        'quantity' => 10, 'avg_cost' => 80,
+    ]);
+
+    expect(app(PositionHistoryPort::class)->positionsFor($user->id))->toBe([]);
+});

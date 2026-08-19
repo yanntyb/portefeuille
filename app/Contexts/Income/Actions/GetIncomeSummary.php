@@ -19,8 +19,9 @@ class GetIncomeSummary
     public function __invoke(int $userId): IncomeSummaryData
     {
         $receipts = $this->sources->receiptsFor($userId);
+        $estimatedAnnual = $this->sources->projectedAnnualFor($userId);
 
-        if ($receipts === []) {
+        if ($receipts === [] && $estimatedAnnual <= 0.0) {
             return IncomeSummaryData::empty();
         }
 
@@ -42,6 +43,7 @@ class GetIncomeSummary
         return new IncomeSummaryData(
             totalReceived: round($total, 2),
             last12Months: round($last12Months, 2),
+            estimatedAnnual: $estimatedAnnual,
             bySource: array_map(fn (float $amount): float => round($amount, 2), $bySource),
         );
     }
