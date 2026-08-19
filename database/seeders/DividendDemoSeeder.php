@@ -51,7 +51,13 @@ class DividendDemoSeeder extends Seeder
 
         $since = today()->subYears(self::YEARS_OF_HISTORY);
 
-        /** Achetée un mois avant le début de la fenêtre synchronisée, pour qu'aucun détachement récupéré ne tombe le jour même de l'achat. */
+        /**
+         * Achetée un mois avant le début de la fenêtre de cours synchronisée. La synchronisation
+         * des dividendes ci-dessous reprend cette même date d'achat comme borne basse : un
+         * détachement tombant exactement ce jour-là serait donc bien récupéré, mais
+         * `DividendCalculator` l'exclurait des reçus — un achat ne donne droit au dividende qu'à
+         * partir du lendemain.
+         */
         $boughtAt = $since->copy()->subMonth();
 
         foreach (self::STOCKS as $stock) {
