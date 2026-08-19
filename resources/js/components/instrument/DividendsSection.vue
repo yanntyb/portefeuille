@@ -49,9 +49,9 @@ const perShare = (value: number): string => eur(value, 3);
                         data-dividend-row
                     >
                         <TableCell>{{ frDate(receipt.exDate) }}</TableCell>
-                        <TableCell class="text-right">{{ perShare(receipt.amountPerShare) }}</TableCell>
-                        <TableCell class="text-right">{{ receipt.quantity }}</TableCell>
-                        <TableCell class="text-right font-semibold">{{ eur(receipt.amount) }}</TableCell>
+                        <TableCell class="text-right" data-dividend-per-share>{{ perShare(receipt.amountPerShare) }}</TableCell>
+                        <TableCell class="text-right" data-dividend-quantity>{{ receipt.quantity }}</TableCell>
+                        <TableCell class="text-right font-semibold" data-dividend-amount>{{ eur(receipt.amount) }}</TableCell>
                     </TableRow>
                 </TableBody>
             </Table>

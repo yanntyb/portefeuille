@@ -110,6 +110,15 @@ it('affiche les dividendes perçus quand l\'instrument en verse', function () {
         // `includes` et non une égalité : `Intl` sépare le montant du symbole par une espace
         // insécable étroite, invisible dans le source du test mais fatale à une comparaison stricte.
         ->assertScript("document.querySelector('[data-dividend-total]').textContent.includes('5,00')", true)
+        ->assertScript("document.querySelector('[data-dividend-last12]').textContent.includes('5,00')", true)
+        // Le dividende tombe dans les douze derniers mois : la clause de rendement se rend, avec
+        // son signe et sa décimale telle que `pct()` la formate.
+        ->assertScript("document.querySelector('[data-dividend-yield]').textContent.includes('0,6')", true)
+        // Trois cellules distinctes l'une de l'autre, pour qu'une interversion de colonnes tombe :
+        // le montant par action, la quantité détenue et le montant perçu ne se ressemblent pas.
+        ->assertScript("document.querySelector('[data-dividend-per-share]').textContent.includes('0,50')", true)
+        ->assertScript("document.querySelector('[data-dividend-quantity]').textContent.trim()", '10')
+        ->assertScript("document.querySelector('[data-dividend-amount]').textContent.includes('5,00')", true)
         ->assertNoJavaScriptErrors();
 });
 
