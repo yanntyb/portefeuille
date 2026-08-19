@@ -16,9 +16,9 @@ def main() -> None:
     for info in tickers_info:
         ticker = info["ticker"]
 
-        # `Ticker.dividends` n'a pas d'équivalent groupé chez yfinance : la boucle reste dans
-        # un seul process, ce qui est le but du lot — un boot d'interpréteur et un import
-        # yfinance pour tout le catalogue au lieu de N.
+        # `Ticker.dividends` has no batched equivalent in yfinance: the loop stays within a
+        # single process, which is the point of the batch — one interpreter boot and one
+        # yfinance import for the whole catalogue instead of N.
         rows = _series_to_list(yf.Ticker(ticker).dividends, info["start_date"], info["end_date"])
 
         if rows:
@@ -28,7 +28,7 @@ def main() -> None:
 
 
 def _series_to_list(series, start: str, end: str) -> list[dict]:
-    """Détachements de la fenêtre [start, end), bornes alignées sur la convention yfinance."""
+    """Ex-dividend dates within [start, end), bounds aligned with yfinance's convention."""
     data = []
 
     for date, value in series.items():
@@ -37,8 +37,9 @@ def _series_to_list(series, start: str, end: str) -> list[dict]:
         if day < start or day >= end:
             continue
 
-        # Yahoo publie parfois une opération sur titre sans montant. Ce NaN se sérialiserait en
-        # littéral `NaN` : du JSON invalide qui coûterait le lot entier pour une ligne.
+        # Yahoo sometimes publishes a corporate action with no amount. This NaN would
+        # serialize as a bare `NaN` literal: invalid JSON that would cost the whole batch
+        # for one line.
         amount = _as_float(value)
 
         if amount is None or amount <= 0:
@@ -50,7 +51,7 @@ def _series_to_list(series, start: str, end: str) -> list[dict]:
 
 
 def _as_float(value) -> float | None:
-    """Lit une cellule en flottant, en signalant None si elle est absente ou inutilisable."""
+    """Read a cell as a float, reporting a missing or unusable one as None."""
     try:
         number = float(value)
     except (TypeError, ValueError):
