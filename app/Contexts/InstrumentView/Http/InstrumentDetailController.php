@@ -3,6 +3,7 @@
 namespace App\Contexts\InstrumentView\Http;
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Income\Sources\Dividend\Actions\GetAssetDividendHistory;
 use App\Contexts\InstrumentView\Actions\GetInstrumentDetail;
 use App\Contexts\InstrumentView\Ports\MarketDataPort;
 use App\Contexts\Valuation\Actions\BuildAssetPerformances;
@@ -46,6 +47,12 @@ class InstrumentDetailController
                     ValuationGranularity::Week,
                 )
             ),
+            /**
+             * Non différée : la visibilité de la section dépend de la donnée elle-même, et un
+             * squelette qui disparaît sur chaque instrument capitalisant coûterait plus qu'il ne
+             * rapporte. Deux petites requêtes, sur une page qui en fait déjà autant.
+             */
+            'dividends' => app(GetAssetDividendHistory::class)($userId, $id),
         ]);
     }
 }

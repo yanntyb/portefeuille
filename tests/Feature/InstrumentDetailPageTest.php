@@ -1,6 +1,7 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Models\Dividend;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Portfolio\Models\Holding;
@@ -118,4 +119,40 @@ it('sends the whole valuation history, sampled week by week', function () {
                 })
             )
         );
+});
+
+it('expose les dividendes perçus sur la fiche', function () {
+    $this->travelTo('2026-08-19 10:00:00');
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $asset = Instrument::factory()->create(['name' => 'ACME']);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-07-01', 'close' => 100]);
+    Holding::factory()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id, 'quantity' => 10, 'avg_cost' => 80]);
+    Transaction::factory()->buy()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id, 'date' => '2026-01-01', 'quantity' => 10, 'unit_price' => 80]);
+    Dividend::factory()->create(['asset_id' => $asset->id, 'ex_date' => '2026-03-05', 'amount_per_share' => 0.5]);
+
+    $this->actingAs($user)
+        ->get("/instruments/{$asset->id}")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('dividends.receipts', 1)
+            ->where('dividends.receipts.0.exDate', '2026-03-05')
+            /**
+             * Clôture et cast, comme `instrument.position.marketValue` ailleurs dans ce fichier :
+             * les props traversent `json_encode()`, qui sérialise un flottant à fraction nulle sans
+             * son « .0 », et `where()` compare strictement.
+             */
+            ->where('dividends.receipts.0.amount', fn ($v) => (float) $v === 5.0)
+            ->where('dividends.totalReceived', fn ($v) => (float) $v === 5.0)
+            ->where('dividends.yieldOnCost', fn ($v) => (float) $v === 0.63)
+        );
+});
+
+it('rend un historique de dividendes vide sur un capitalisant', function () {
+    $asset = Instrument::factory()->create(['name' => 'ACC']);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-07-01', 'close' => 100]);
+
+    $this->get("/instruments/{$asset->id}")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->has('dividends.receipts', 0));
 });

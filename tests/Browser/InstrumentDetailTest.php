@@ -2,6 +2,7 @@
 
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\Sector;
+use App\Contexts\Market\Models\Dividend;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Market\Models\SectorAllocation;
@@ -90,5 +91,35 @@ it('aligne le graphe de valorisation sur la marge du reste de la page, y compris
     visit("/instruments/{$instrument->id}")->on()->iPhone14Pro()
         ->assertSee('Performance par période')
         ->assertScript($paddingGaps, '0|0')
+        ->assertNoJavaScriptErrors();
+});
+
+it('affiche les dividendes perçus quand l\'instrument en verse', function () {
+    ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
+    Dividend::factory()->create([
+        'asset_id' => $instrument->id,
+        'ex_date' => '2026-03-05',
+        'amount_per_share' => 0.5,
+    ]);
+
+    $this->actingAs($user);
+
+    visit("/instruments/{$instrument->id}")
+        ->assertSee('Dividendes (1)')
+        ->assertScript("document.querySelectorAll('[data-dividend-row]').length", 1)
+        // `includes` et non une égalité : `Intl` sépare le montant du symbole par une espace
+        // insécable étroite, invisible dans le source du test mais fatale à une comparaison stricte.
+        ->assertScript("document.querySelector('[data-dividend-total]').textContent.includes('5,00')", true)
+        ->assertNoJavaScriptErrors();
+});
+
+it('n\'affiche aucune section dividendes sur un instrument capitalisant', function () {
+    ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
+
+    $this->actingAs($user);
+
+    visit("/instruments/{$instrument->id}")
+        ->assertDontSee('Dividendes')
+        ->assertScript("document.querySelectorAll('[data-section=\"dividends\"]').length", 0)
         ->assertNoJavaScriptErrors();
 });
