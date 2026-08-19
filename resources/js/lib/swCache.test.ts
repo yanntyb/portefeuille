@@ -134,10 +134,10 @@ describe('rescuedPartialPayload', () => {
     it('retire le deferredProps hérité de la page complète : une vraie réponse partielle ne le porte jamais', () => {
         const pageWithDeferred: InertiaPage = {
             ...page,
-            deferredProps: { catalogue: ['catalog', 'trends'], performances: ['performances'] },
+            deferredProps: { tendances: ['trends'], performances: ['performances'] },
         };
 
-        const payload = rescuedPartialPayload(pageWithDeferred, ['catalog', 'trends']);
+        const payload = rescuedPartialPayload(pageWithDeferred, ['trends']);
 
         expect(payload.deferredProps).toBeUndefined();
     });

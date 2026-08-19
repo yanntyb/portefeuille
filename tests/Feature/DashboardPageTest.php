@@ -243,11 +243,21 @@ it('ignores a months query parameter, the window no longer being server-driven',
         );
 });
 
-it('defers the catalogue trends and loads them on demand', function () {
-    User::factory()->create();
+it('defers the trends of the held instruments and loads them on demand', function () {
+    $user = User::factory()->create();
     $asset = Instrument::factory()->create(['name' => 'Trending Co']);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => now()->subDays(10), 'close' => 100]);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => now(), 'close' => 150]);
+    Holding::factory()->create([
+        'user_id' => $user->id,
+        'wallet_id' => Wallet::factory()->for($user)->create()->id,
+        'asset_id' => $asset->id,
+        'quantity' => 10,
+        'avg_cost' => 80,
+    ]);
+
+    // Un instrument que personne ne détient n'a pas d'étincelle à porter : il reste hors des tendances.
+    Instrument::factory()->create(['name' => 'Ignored Co']);
 
     $this->get('/')
         ->assertOk()
@@ -263,12 +273,19 @@ it('defers the catalogue trends and loads them on demand', function () {
         );
 });
 
-it('accepts the range query param for the catalogue trends', function () {
-    User::factory()->create();
+it('accepts the range query param for the trends', function () {
+    $user = User::factory()->create();
     $asset = Instrument::factory()->create();
     Price::factory()->create(['asset_id' => $asset->id, 'date' => now()->subMonths(6), 'close' => 10]);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => now()->subDays(10), 'close' => 100]);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => now(), 'close' => 150]);
+    Holding::factory()->create([
+        'user_id' => $user->id,
+        'wallet_id' => Wallet::factory()->for($user)->create()->id,
+        'asset_id' => $asset->id,
+        'quantity' => 10,
+        'avg_cost' => 80,
+    ]);
 
     $this->get('/?range=1M')
         ->assertOk()

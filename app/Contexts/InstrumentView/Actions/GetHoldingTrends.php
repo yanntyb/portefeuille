@@ -2,36 +2,42 @@
 
 namespace App\Contexts\InstrumentView\Actions;
 
-use App\Contexts\InstrumentView\Datas\CatalogTrendData;
-use App\Contexts\InstrumentView\Datas\InstrumentSummaryData;
+use App\Contexts\InstrumentView\Datas\HoldingSnapshotData;
+use App\Contexts\InstrumentView\Datas\HoldingTrendData;
+use App\Contexts\InstrumentView\Ports\HoldingsPort;
 use App\Contexts\InstrumentView\Ports\MarketDataPort;
 use App\Contexts\Valuation\Enums\ValuationRange;
 use Illuminate\Support\Carbon;
 
-class GetCatalogTrends
+class GetHoldingTrends
 {
     /** Enough points for a readable sparkline, few enough to keep the payload small. */
     private const MAX_POINTS = 24;
 
-    public function __construct(private MarketDataPort $market) {}
+    public function __construct(
+        private MarketDataPort $market,
+        private HoldingsPort $holdings,
+    ) {}
 
-    /** @return list<CatalogTrendData> */
-    public function __invoke(ValuationRange $range = ValuationRange::Max): array
+    /**
+     * Trends of the instruments the user holds. Only those carry a sparkline, so the catalogue
+     * at large is never read: an untouched instrument would cost a price window for nothing.
+     *
+     * @return list<HoldingTrendData>
+     */
+    public function __invoke(int $userId, ValuationRange $range = ValuationRange::Max): array
     {
         $since = $this->windowStart($range);
-        $instruments = $this->market->listInstruments();
-
-        $closes = $this->market->closeSeriesSince(
-            array_map(fn (InstrumentSummaryData $summary): int => $summary->id, $instruments),
-            $since,
+        $assetIds = array_map(
+            fn (HoldingSnapshotData $snapshot): int => $snapshot->assetId,
+            $this->holdings->holdingsFor($userId),
         );
 
+        $closes = $this->market->closeSeriesSince($assetIds, $since);
+
         return array_map(
-            fn (InstrumentSummaryData $summary): CatalogTrendData => $this->toTrend(
-                $summary->id,
-                $closes[$summary->id] ?? [],
-            ),
-            $instruments,
+            fn (int $assetId): HoldingTrendData => $this->toTrend($assetId, $closes[$assetId] ?? []),
+            $assetIds,
         );
     }
 
@@ -45,9 +51,9 @@ class GetCatalogTrends
     }
 
     /** @param list<float> $close */
-    private function toTrend(int $assetId, array $close): CatalogTrendData
+    private function toTrend(int $assetId, array $close): HoldingTrendData
     {
-        return new CatalogTrendData(
+        return new HoldingTrendData(
             assetId: $assetId,
             changePct: $this->changePct($close),
             points: $this->downsample($close),

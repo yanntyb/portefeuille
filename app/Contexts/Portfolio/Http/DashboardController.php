@@ -3,7 +3,7 @@
 namespace App\Contexts\Portfolio\Http;
 
 use App\Contexts\Identity\Models\User;
-use App\Contexts\InstrumentView\Actions\GetCatalogTrends;
+use App\Contexts\InstrumentView\Actions\GetHoldingTrends;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Actions\GetSectorBreakdown;
 use App\Contexts\Portfolio\Datas\PortfolioOverviewData;
@@ -19,7 +19,7 @@ class DashboardController
 {
     public function __construct(
         private GetPortfolioOverview $getPortfolioOverview,
-        private GetCatalogTrends $getTrends,
+        private GetHoldingTrends $getTrends,
     ) {}
 
     public function __invoke(): Response
@@ -37,7 +37,7 @@ class DashboardController
              * Un groupe par section : Inertia résout un groupe par requête, donc chaque squelette
              * se remplit à son rythme au lieu d'attendre le plus lent de la page.
              */
-            'trends' => Inertia::defer(fn () => ($this->getTrends)($range), 'catalogue'),
+            'trends' => Inertia::defer(fn () => ($this->getTrends)($user?->id ?? 0, $range), 'tendances'),
             'performances' => Inertia::defer(fn () => $user !== null
                 ? app(BuildPortfolioPerformances::class)($user->id)
                 : [], 'performances'),

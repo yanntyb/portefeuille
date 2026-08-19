@@ -2,7 +2,7 @@
 
 namespace App\Contexts\InstrumentView\Datas;
 
-readonly class CatalogTrendData
+readonly class HoldingTrendData
 {
     /** @param list<float> $points */
     public function __construct(
