@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Contexts\Income\IncomeProvider;
 use App\Contexts\InstrumentView\Infrastructure\MarketData;
 use App\Contexts\InstrumentView\Infrastructure\PortfolioHoldings;
 use App\Contexts\InstrumentView\Infrastructure\PortfolioTransactions;
@@ -57,6 +58,11 @@ class AppServiceProvider extends ServiceProvider
             marketData: MarketData::class,
             holdings: PortfolioHoldings::class,
             transactions: PortfolioTransactions::class,
+        );
+
+        IncomeProvider::registers(
+            app: $this->app,
+            sources: [],
         );
     }
 
