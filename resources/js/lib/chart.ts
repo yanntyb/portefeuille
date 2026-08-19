@@ -174,6 +174,18 @@ function yAxisGutter(values: number[], valueFormatter: ValueFormatter): number {
     return Math.ceil(widest) + AXIS_LABEL_MARGIN;
 }
 
+type AxisExtent = { min: number; max: number };
+
+/**
+ * Vrai pour la graduation qui tombe sur un extrême de l'axe. La comparaison est tolérante : ECharts
+ * arrondit ses graduations, une égalité stricte laisserait l'axe sans aucune étiquette.
+ */
+function isAxisExtreme(value: number, { min, max }: AxisExtent): boolean {
+    const tolerance = Math.abs(max - min) / 1000;
+
+    return Math.abs(value - min) <= tolerance || Math.abs(value - max) <= tolerance;
+}
+
 type ChartFrameInput = {
     valueFormatter: ValueFormatter;
     /** Toutes les valeurs tracées : elles seules disent la largeur des graduations à venir. */
@@ -188,6 +200,19 @@ type ChartFrameInput = {
  */
 function chartFrame({ valueFormatter, values, bottom, description }: ChartFrameInput): ChartOption {
     const colors = palette();
+
+    /**
+     * Extrêmes de la fenêtre réellement affichée, publiés par ECharts aux bornes de l'axe avant
+     * d'en étiqueter les graduations. Mémorisés ici parce que le formateur d'étiquette, lui, ne
+     * reçoit que la valeur d'une graduation : sans eux il ne saurait pas laquelle est un extrême.
+     */
+    let extent: AxisExtent = { min: Number.NaN, max: Number.NaN };
+
+    const rememberExtent = (bounds: AxisExtent): AxisExtent => {
+        extent = bounds;
+
+        return bounds;
+    };
 
     return {
         animation: false,
@@ -210,9 +235,23 @@ function chartFrame({ valueFormatter, values, bottom, description }: ChartFrameI
             type: 'value',
             /** Sans `scale`, ECharts englobe zéro : la variation s'écrase alors dans le haut du cadre. */
             scale: true,
+            /**
+             * Bornes collées aux extrêmes réellement visibles : l'axe ne porte plus que le minimum
+             * et le maximum du tracé. Des fonctions plutôt que des nombres, pour que la fenêtre de
+             * zoom recalcule ses propres extrêmes.
+             */
+            min: (bounds: AxisExtent): number => rememberExtent(bounds).min,
+            max: (bounds: AxisExtent): number => rememberExtent(bounds).max,
+            /** Deux étiquettes valent deux graduations : le reste de l'échelle n'est pas chiffré. */
+            splitNumber: 1,
             axisLine: { show: false },
             axisTick: { show: false },
-            axisLabel: { color: colors.axisLabel, formatter: (value: number): string => valueFormatter(value) },
+            axisLabel: {
+                color: colors.axisLabel,
+                formatter: (value: number): string => (
+                    isAxisExtreme(value, extent) ? valueFormatter(value) : ''
+                ),
+            },
             splitLine: { lineStyle: { color: colors.grid } },
         },
         tooltip: chartTooltip(),

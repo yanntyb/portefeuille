@@ -30,8 +30,28 @@ const valueVsInvested = (months: number, window: { start: number; end: number } 
     });
 };
 
+type AxisExtent = { min: number; max: number };
+
 const yAxisOf = (option: ChartOption) =>
-    option.yAxis as { scale: boolean; axisLabel: { formatter: (value: number) => string } };
+    option.yAxis as {
+        scale: boolean;
+        min: (extent: AxisExtent) => number;
+        max: (extent: AxisExtent) => number;
+        axisLabel: { formatter: (value: number) => string };
+    };
+
+/**
+ * Étiquette d'une graduation dans l'ordre où ECharts la demande : il borne l'axe sur les extrêmes
+ * de la fenêtre visible, puis étiquette chaque graduation.
+ */
+const yAxisLabel = (option: ChartOption, value: number, extent: AxisExtent): string => {
+    const yAxis = yAxisOf(option);
+
+    yAxis.min(extent);
+    yAxis.max(extent);
+
+    return yAxis.axisLabel.formatter(value);
+};
 
 const xAxisLabelOf = (option: ChartOption) =>
     (option.xAxis as { axisLabel: { formatter: (value: number) => string } }).axisLabel;
@@ -44,9 +64,34 @@ describe('buildValueVsInvestedOption — axes', () => {
     });
 
     it('gradue l\'axe des valeurs en euros', () => {
-        const formatter = yAxisOf(valueVsInvested(36)).axisLabel.formatter;
+        const label = yAxisLabel(valueVsInvested(36), 1000, { min: 1000, max: 1350 });
 
-        expect(formatter(1000).replace(/[\xa0\u202f]/g, ' ')).toBe('1 000 €');
+        expect(label.replace(/[\xa0\u202f]/g, ' ')).toBe('1 000 €');
+    });
+
+    it('borne l\'axe des valeurs sur les extrêmes de la fenêtre visible', () => {
+        const yAxis = yAxisOf(valueVsInvested(36));
+
+        expect(yAxis.min({ min: 900, max: 1350 })).toBe(900);
+        expect(yAxis.max({ min: 900, max: 1350 })).toBe(1350);
+    });
+
+    it('n\'étiquette que le minimum et le maximum, pas les graduations intermédiaires', () => {
+        const option = valueVsInvested(36);
+        const extent = { min: 900, max: 1350 };
+
+        expect(yAxisLabel(option, 900, extent)).not.toBe('');
+        expect(yAxisLabel(option, 1350, extent)).not.toBe('');
+        expect(yAxisLabel(option, 1100, extent)).toBe('');
+        expect(yAxisLabel(option, 1200, extent)).toBe('');
+    });
+
+    it('étiquette la graduation qu\'ECharts arrondit à un cheveu de l\'extrême', () => {
+        // ECharts pose sa graduation extrême sur une valeur arrondie : au pixel près de la borne,
+        // mais pas égale à elle. Une comparaison stricte laisserait l'axe sans aucune étiquette.
+        const label = yAxisLabel(valueVsInvested(36), 900.2, { min: 900, max: 1350 });
+
+        expect(label).not.toBe('');
     });
 
     it('pose un axe temporel, pour que la graduation suive l\'amplitude visible', () => {
@@ -191,6 +236,20 @@ describe('buildPriceHistoryOption', () => {
         });
 
         expect(yAxisOf(option).scale).toBe(true);
+    });
+
+    it('n\'étiquette que les extrêmes de l\'axe des valeurs, comme le graphe de valorisation', () => {
+        const labels = monthlyLabels(24);
+        const option = buildPriceHistoryOption({
+            labels,
+            close: labels.map((_unused: string, index: number): number => 100 + index),
+            valueFormatter: (value: number): string => eur(value, 0),
+        });
+        const extent = { min: 100, max: 123 };
+
+        expect(yAxisLabel(option, 100, extent)).not.toBe('');
+        expect(yAxisLabel(option, 123, extent)).not.toBe('');
+        expect(yAxisLabel(option, 110, extent)).toBe('');
     });
 
     it('n\'offre pas de zoom : la fiche instrument le porte sur le graphe de valorisation', () => {
