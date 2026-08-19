@@ -7,6 +7,7 @@ use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Market\Models\SectorAllocation;
 use App\Contexts\Portfolio\Models\Holding;
+use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 
 it('déplie les transactions derrière leur compte, sans déranger l\'ordre des sections', function () {
@@ -96,6 +97,26 @@ it('aligne le graphe de valorisation sur la marge du reste de la page, y compris
 
 it('affiche les dividendes perçus quand l\'instrument en verse', function () {
     ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
+
+    /**
+     * Recule la transaction par le constructeur de requêtes : il ne déclenche pas
+     * `TransactionObserver`, donc `holdings_projection` garde la position déjà projetée par la
+     * fixture (10 titres à 80 €) — seule la date d'ancienneté de la position change, pas sa
+     * quantité.
+     */
+    Transaction::query()->where('asset_id', $instrument->id)->update(['date' => '2024-01-10']);
+
+    /**
+     * Deux détachements de part et d'autre de la borne des douze mois (on est le 2026-08-19),
+     * avec des montants par action distincts : le total cumule les deux, le perçu à douze mois
+     * n'en garde qu'un, ce qui rend `data-dividend-total` et `data-dividend-last12` discriminants
+     * l'un de l'autre.
+     */
+    Dividend::factory()->create([
+        'asset_id' => $instrument->id,
+        'ex_date' => '2025-03-05',
+        'amount_per_share' => 0.3,
+    ]);
     Dividend::factory()->create([
         'asset_id' => $instrument->id,
         'ex_date' => '2026-03-05',
@@ -105,17 +126,22 @@ it('affiche les dividendes perçus quand l\'instrument en verse', function () {
     $this->actingAs($user);
 
     visit("/instruments/{$instrument->id}")
-        ->assertSee('Dividendes (1)')
-        ->assertScript("document.querySelectorAll('[data-dividend-row]').length", 1)
+        ->assertSee('Dividendes (2)')
+        ->assertScript("document.querySelectorAll('[data-dividend-row]').length", 2)
         // `includes` et non une égalité : `Intl` sépare le montant du symbole par une espace
         // insécable étroite, invisible dans le source du test mais fatale à une comparaison stricte.
-        ->assertScript("document.querySelector('[data-dividend-total]').textContent.includes('5,00')", true)
+        // Le total (8,00 €) cumule les deux détachements ; le perçu à douze mois (5,00 €) ne garde
+        // que celui du 2026-03-05 — les deux valeurs diffèrent, donc un gabarit qui les
+        // intervertirait serait pris en défaut.
+        ->assertScript("document.querySelector('[data-dividend-total]').textContent.includes('8,00')", true)
         ->assertScript("document.querySelector('[data-dividend-last12]').textContent.includes('5,00')", true)
-        // Le dividende tombe dans les douze derniers mois : la clause de rendement se rend, avec
-        // son signe et sa décimale telle que `pct()` la formate.
+        // Rendement calculé sur le seul détachement de la fenêtre des douze mois (5,00 € rapportés
+        // à un coût de 800 €), pas sur le total des deux.
         ->assertScript("document.querySelector('[data-dividend-yield]').textContent.includes('0,6')", true)
-        // Trois cellules distinctes l'une de l'autre, pour qu'une interversion de colonnes tombe :
-        // le montant par action, la quantité détenue et le montant perçu ne se ressemblent pas.
+        // Les reçus se rendent du plus récent au plus ancien : la première ligne du tableau est
+        // celle du 2026-03-05. Trois cellules distinctes l'une de l'autre, pour qu'une
+        // interversion de colonnes tombe : le montant par action, la quantité détenue et le
+        // montant perçu ne se ressemblent pas.
         ->assertScript("document.querySelector('[data-dividend-per-share]').textContent.includes('0,50')", true)
         ->assertScript("document.querySelector('[data-dividend-quantity]').textContent.trim()", '10')
         ->assertScript("document.querySelector('[data-dividend-amount]').textContent.includes('5,00')", true)
