@@ -4,11 +4,8 @@ namespace Database\Seeders;
 
 use App\Contexts\Identity\Enums\Role;
 use App\Contexts\Identity\Models\User;
-use App\Contexts\Market\Contracts\PriceRepositoryContract;
-use App\Contexts\Market\Datas\PriceData;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
-use App\Contexts\Market\Models\SectorAllocation;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
@@ -19,10 +16,14 @@ use Illuminate\Support\Facades\DB;
 /**
  * Rejoue le snapshot de production `storage/database/backup.sql` sur le schéma actuel.
  *
- * Alternative hors-ligne aux seeders de démonstration, qui reconstruisent des données
- * synthétiques en interrogeant Yahoo : ici tout vient du dump, donc pas de réseau et un
- * historique de transactions crédible. À lancer explicitement, il n'est pas branché sur
- * `DatabaseSeeder` : `php artisan db:seed --class=BackupSeeder`.
+ * Alternative aux seeders de démonstration, qui reconstruisent des données synthétiques : ici
+ * les identités, portefeuilles et transactions viennent du dump, donc un historique crédible.
+ * À lancer explicitement, il n'est pas branché sur `DatabaseSeeder` :
+ * `php artisan db:seed --class=BackupSeeder`.
+ *
+ * Prix et secteurs, en revanche, ne sont pas rejoués : les cotations du dump sont figées à la
+ * date du snapshot. Ils sont resynchronisés en fin de course par `market:sync-prices` et
+ * `market:sync-sectors`, seule source à jour.
  *
  * Les identités du dump sont réelles ; noms, emails et mots de passe sont donc régénérés.
  * Les identifiants non plus ne sont pas repris : `InstrumentCatalogSeeder` peuple déjà la table
@@ -32,6 +33,8 @@ use Illuminate\Support\Facades\DB;
  */
 class BackupSeeder extends Seeder
 {
+    use SyncsMarketData;
+
     /**
      * Tickers du dump correspondant à des actions ; tout le reste est un ETF ou un fonds.
      *
@@ -40,8 +43,6 @@ class BackupSeeder extends Seeder
      * @var list<string>
      */
     private const STOCK_TICKERS = ['CVX', 'AI.PA', 'TTE.PA', 'HAG.DE', 'NVDA', 'MSFT', 'AMZN', 'TSLA'];
-
-    private const PRICE_CHUNK = 500;
 
     private const ROW_CHUNK = 100;
 
@@ -57,6 +58,11 @@ class BackupSeeder extends Seeder
 
     /** @var array<int, int> */
     private array $instruments = [];
+
+    /**
+     * Jour de la transaction la plus ancienne rejouée, point de départ de l'historique de prix.
+     */
+    private ?string $earliestTransactionDate = null;
 
     public function run(): void
     {
@@ -76,13 +82,12 @@ class BackupSeeder extends Seeder
         Holding::query()->whereIn('wallet_id', $this->wallets)->delete();
 
         $this->seedInstruments($reader);
-        $this->seedSectorAllocations($reader);
-        $this->seedPrices($reader);
         $this->seedTransactions($reader);
         $this->seedWalletFees($reader);
         $this->seedAllocationProfiles($reader);
         $this->seedInvitations($reader);
         $this->seedFeedback($reader);
+        $this->syncPricesAndSectors();
     }
 
     /**
@@ -167,92 +172,6 @@ class BackupSeeder extends Seeder
     }
 
     /**
-     * Colonnes du dump : id, security_id, sector, weight, created_at, updated_at.
-     */
-    private function seedSectorAllocations(MysqlDumpReader $reader): void
-    {
-        foreach ($reader->rows('security_sectors') as [, $dumpAssetId, $sector, $weight]) {
-            $assetId = $this->instruments[(int) $dumpAssetId] ?? null;
-
-            if ($assetId === null) {
-                continue;
-            }
-
-            SectorAllocation::query()->updateOrCreate(
-                ['asset_id' => $assetId, 'sector' => $sector],
-                ['weight' => $weight],
-            );
-        }
-    }
-
-    /**
-     * Colonnes du dump : id, security_id, date, open, high, low, close, volume, created_at,
-     * updated_at.
-     *
-     * Seuls les instruments effectivement détenus sont valorisés : le dump porte cinq ans de
-     * cotations pour vingt-cinq instruments, dont la moitié n'apparaît dans aucune transaction.
-     *
-     * L'écriture passe par le repository, qui normalise la date en 'Y-m-d H:i:s' — un `insert()`
-     * direct laisserait la forme brute, que l'unique (asset_id, date) ne voit pas sous SQLite.
-     */
-    private function seedPrices(MysqlDumpReader $reader): void
-    {
-        $repository = app(PriceRepositoryContract::class);
-        $heldAssets = $this->heldDumpAssetIds($reader);
-
-        /** @var array<int, list<PriceData>> $batches */
-        $batches = [];
-
-        foreach ($reader->rows('security_prices') as [, $dumpAssetId, $date, $open, $high, $low, $close, $volume]) {
-            if (! in_array((int) $dumpAssetId, $heldAssets, true)) {
-                continue;
-            }
-
-            $assetId = $this->instruments[(int) $dumpAssetId] ?? null;
-
-            if ($assetId === null) {
-                continue;
-            }
-
-            $batches[$assetId][] = new PriceData(
-                date: (string) $date,
-                close: (float) $close,
-                open: $open === null ? null : (float) $open,
-                high: $high === null ? null : (float) $high,
-                low: $low === null ? null : (float) $low,
-                volume: $volume === null ? null : (int) $volume,
-            );
-
-            if (count($batches[$assetId]) === self::PRICE_CHUNK) {
-                $repository->upsertForAsset($assetId, $batches[$assetId]);
-                $batches[$assetId] = [];
-            }
-        }
-
-        foreach ($batches as $assetId => $prices) {
-            $repository->upsertForAsset($assetId, $prices);
-        }
-    }
-
-    /**
-     * Identifiants d'instruments (au sens du dump) apparaissant dans au moins une transaction.
-     *
-     * @return list<int>
-     */
-    private function heldDumpAssetIds(MysqlDumpReader $reader): array
-    {
-        $held = [];
-
-        foreach ($reader->rows('transactions') as [, , , , , $dumpAssetId]) {
-            if ($dumpAssetId !== null) {
-                $held[(int) $dumpAssetId] = true;
-            }
-        }
-
-        return array_keys($held);
-    }
-
-    /**
      * Colonnes du dump : id, user_id, wallet_id, date, type, security_id, broker, quantity,
      * unit_price, fees, realized_gain, notes, created_at, updated_at.
      *
@@ -271,6 +190,12 @@ class BackupSeeder extends Seeder
                 continue;
             }
 
+            $day = substr((string) $date, 0, 10);
+
+            if ($this->earliestTransactionDate === null || $day < $this->earliestTransactionDate) {
+                $this->earliestTransactionDate = $day;
+            }
+
             Transaction::query()->create([
                 'user_id' => $dumpUserId === null ? null : ($this->users[(int) $dumpUserId] ?? null),
                 'wallet_id' => $walletId,
@@ -286,6 +211,23 @@ class BackupSeeder extends Seeder
                 'updated_at' => $updatedAt,
             ]);
         }
+    }
+
+    /**
+     * Récupère prix et secteurs auprès du fournisseur de marché, plutôt que de rejouer ceux du
+     * dump, qui sont figés à la date du snapshot.
+     *
+     * L'historique démarre à la transaction la plus ancienne : avant elle, aucune valorisation
+     * à afficher. Sans transaction rejouée, il n'y a rien à valoriser, la synchronisation est
+     * inutile.
+     */
+    private function syncPricesAndSectors(): void
+    {
+        if ($this->earliestTransactionDate === null) {
+            return;
+        }
+
+        $this->syncAllMarketData($this->earliestTransactionDate);
     }
 
     /**

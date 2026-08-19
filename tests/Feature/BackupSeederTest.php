@@ -2,17 +2,44 @@
 
 use App\Contexts\Identity\Enums\Role;
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Datas\PriceData;
+use App\Contexts\Market\Datas\PriceRequestData;
+use App\Contexts\Market\Datas\SectorAllocationData;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Market\Models\SectorAllocation;
+use App\Contexts\Market\Ports\PriceFeedPort;
+use App\Contexts\Market\Ports\SectorProviderPort;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 use Illuminate\Support\Facades\DB;
 use Tests\Fixtures\MissingBackupSeeder;
 use Tests\Fixtures\SampleBackupSeeder;
+
+/**
+ * Le seeder ne rejoue plus les prix ni les secteurs du dump : il appelle `market:sync-prices` et
+ * `market:sync-sectors`. Le fournisseur est donc doublé dans chaque test, sinon la suite
+ * interrogerait Yahoo.
+ */
+beforeEach(function () {
+    $this->mock(PriceFeedPort::class, function ($mock) {
+        $mock->shouldReceive('supportsPriceFeed')->andReturn(true);
+        $mock->shouldReceive('fetchPrices')->andReturn(['PUST.PA' => [
+            new PriceData(date: '2026-01-02', close: 100.5),
+            new PriceData(date: '2026-01-05', close: 110.5),
+        ]]);
+    });
+
+    $this->mock(SectorProviderPort::class, function ($mock) {
+        $mock->shouldReceive('supportsSectors')->andReturn(true);
+        $mock->shouldReceive('getSectorAllocations')->andReturn([
+            new SectorAllocationData(sector: Sector::Technology, weight: 1.0),
+        ]);
+    });
+});
 
 it('replaces the identities of the dump', function () {
     $this->seed(SampleBackupSeeder::class);
@@ -56,26 +83,49 @@ it('infers the instrument type absent from the dump', function () {
         ->and(Instrument::query()->where('ticker', 'CVX')->value('isin'))->toBe('US1667641005');
 });
 
-it('restores the sector weights', function () {
+it('takes the sectors from the provider and ignores those of the dump', function () {
+    $this->mock(SectorProviderPort::class, function ($mock) {
+        $mock->shouldReceive('supportsSectors')->andReturn(true);
+        $mock->shouldReceive('getSectorAllocations')->andReturnUsing(
+            fn (string $symbol): array => $symbol === 'CVX'
+                ? [new SectorAllocationData(sector: Sector::Utilities, weight: 1.0)]
+                : [],
+        );
+    });
+
     $this->seed(SampleBackupSeeder::class);
 
     $chevron = Instrument::query()->where('ticker', 'CVX')->sole();
 
-    expect(SectorAllocation::query()->count())->toBe(3)
+    // Le dump classe CVX dans l'énergie : c'est bien le fournisseur qui tranche.
+    expect(SectorAllocation::query()->count())->toBe(1)
         ->and(SectorAllocation::query()->where('asset_id', $chevron->id)->sole())
-        ->sector->toBe(Sector::Energy)
+        ->sector->toBe(Sector::Utilities)
         ->weight->toBe('1.000000');
 });
 
-it('only prices the instruments actually held', function () {
+it('takes the prices from the provider, from the oldest transaction onwards', function () {
+    $requests = [];
+
+    $this->mock(PriceFeedPort::class, function ($mock) use (&$requests) {
+        $mock->shouldReceive('supportsPriceFeed')->andReturn(true);
+        $mock->shouldReceive('fetchPrices')->andReturnUsing(function (array $received) use (&$requests): array {
+            $requests = $received;
+
+            return ['PUST.PA' => [new PriceData(date: '2026-01-02', close: 100.5)]];
+        });
+    });
+
     $this->seed(SampleBackupSeeder::class);
 
-    $nvidia = Instrument::query()->where('ticker', 'NVDA')->sole();
     $amundi = Instrument::query()->where('ticker', 'PUST.PA')->sole();
+    $startDates = array_map(fn (PriceRequestData $request): string => $request->startDate, $requests);
 
-    expect(Price::query()->count())->toBe(3)
-        ->and(Price::query()->where('asset_id', $nvidia->id)->exists())->toBeFalse()
-        ->and(Price::query()->where('asset_id', $amundi->id)->count())->toBe(2);
+    // La transaction la plus ancienne du dump est datée du 2026-01-02.
+    expect($startDates)->not->toBeEmpty()
+        ->and(array_unique($startDates))->toBe(['2026-01-02'])
+        ->and(Price::query()->count())->toBe(1)
+        ->and((float) Price::query()->where('asset_id', $amundi->id)->sole()->close)->toBe(100.5);
 });
 
 it('stores prices with the canonical date format, one row per day', function () {
@@ -141,7 +191,7 @@ it('can be seeded twice without duplicating anything', function () {
         ->and(Wallet::query()->count())->toBe(3)
         ->and(Instrument::query()->count())->toBe(3)
         ->and(SectorAllocation::query()->count())->toBe(3)
-        ->and(Price::query()->count())->toBe(3)
+        ->and(Price::query()->count())->toBe(2)
         ->and(Transaction::query()->count())->toBe(4)
         ->and(Holding::query()->count())->toBe(3)
         ->and(DB::table('wallet_fees')->count())->toBe(1)
@@ -154,9 +204,14 @@ it('can be seeded twice without duplicating anything', function () {
 it('degrades gracefully when the dump is missing', function () {
     $usersBefore = User::query()->count();
 
+    $this->mock(PriceFeedPort::class, function ($mock) {
+        $mock->shouldReceive('fetchPrices')->never();
+    });
+
     $this->seed(MissingBackupSeeder::class);
 
     expect(User::query()->count())->toBe($usersBefore)
         ->and(Instrument::query()->count())->toBe(0)
-        ->and(Transaction::query()->count())->toBe(0);
+        ->and(Transaction::query()->count())->toBe(0)
+        ->and(Price::query()->count())->toBe(0);
 });
