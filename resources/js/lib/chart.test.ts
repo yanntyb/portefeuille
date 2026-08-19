@@ -66,6 +66,19 @@ describe('buildValueVsInvestedOption — axes', () => {
         expect(formatter(new Date(2026, 0, 1).getTime())).toBe('2026');
     });
 
+    it('date les graduations intra-mois au jour, plutôt que de répéter le mois', () => {
+        const formatter = xAxisLabelOf(valueVsInvested(36)).formatter;
+
+        expect(formatter(new Date(2026, 5, 11).getTime())).toBe('11 juin');
+        expect(formatter(new Date(2026, 0, 21).getTime())).toBe('21 janv.');
+    });
+
+    it('descend à l\'heure quand la fenêtre est trop courte pour départager les jours', () => {
+        const formatter = xAxisLabelOf(valueVsInvested(36)).formatter;
+
+        expect(formatter(new Date(2026, 5, 11, 14, 30).getTime())).toBe('14:30');
+    });
+
     it('réserve sous la grille la place de la graduation temporelle, en plus du zoom', () => {
         const grid = valueVsInvested(36).grid as { bottom: number };
 

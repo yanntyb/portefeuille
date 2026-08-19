@@ -87,17 +87,29 @@ function tooltipRow(color: string, label: string, value: string): string {
 type ValueFormatter = (value: number) => string;
 
 const MONTH_LABEL = new Intl.DateTimeFormat('fr-FR', { month: 'short' });
+const DAY_MONTH_LABEL = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
+const HOUR_LABEL = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
 /**
- * Graduation de l'axe temporel : chaque cran porte son mois, sauf janvier qui porte l'année seule
- * — c'est là que le repère change, et le mois y est déductible de ses voisins. Tenir sur une seule
- * ligne, plutôt que d'empiler le mois et l'année, rend au tracé la moitié de la bande du bas.
+ * Graduation de l'axe temporel. Chaque cran se décrit seul, à la précision que sa date porte :
+ * ECharts ne cale ses crans sur le premier du mois que sur les longues fenêtres, et sur une
+ * fenêtre courte il gradue au jour ou à l'heure — un libellé réduit au mois répéterait alors
+ * « juin » trois crans de suite sans rien situer. Janvier porte l'année seule : c'est là que le
+ * repère change, et le mois y est déductible de ses voisins. Tenir sur une seule ligne, plutôt
+ * que d'empiler le mois et l'année, rend au tracé la moitié de la bande du bas.
  */
 export function timeAxisLabel(value: number): string {
     const date = new Date(value);
-    const month = MONTH_LABEL.format(date);
 
-    return date.getMonth() === 0 ? String(date.getFullYear()) : month;
+    if (date.getHours() !== 0 || date.getMinutes() !== 0) {
+        return HOUR_LABEL.format(date);
+    }
+
+    if (date.getDate() !== 1) {
+        return DAY_MONTH_LABEL.format(date);
+    }
+
+    return date.getMonth() === 0 ? String(date.getFullYear()) : MONTH_LABEL.format(date);
 }
 
 /** Police des graduations : ECharts peint son SVG sans hériter de celle de la page. */
