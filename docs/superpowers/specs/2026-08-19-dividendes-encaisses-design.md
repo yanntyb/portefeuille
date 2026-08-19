@@ -361,7 +361,12 @@ Un seul groupe différé supplémentaire, `revenus` :
 ```
 
 `resources/js/components/dashboard/IncomeSection.vue` : les chiffres (total perçu, 12 mois
-glissants, ventilation par source) et une barre par année.
+glissants) et une barre par année.
+
+La **ventilation par source** est calculée, sérialisée et typée côté client, mais pas affichée tant
+qu'une seule origine existe : la ligne se lirait « Dividendes 13,00 € » à côté de « 13,00 € perçus »,
+soit le même nombre deux fois. Elle attend la deuxième source, et le jour où celle-ci arrive, le
+rendu est le seul endroit à toucher — la charge utile la porte déjà.
 
 Les barres sont du CSS, pas un graphe ECharts : `bars.ts` (`largestOf`, `relativeBarWidth`) et le
 patron de `PerformanceBars.vue` couvrent le besoin sans ajouter une branche « axe catégoriel » à
