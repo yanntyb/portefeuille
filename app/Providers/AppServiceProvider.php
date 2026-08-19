@@ -41,6 +41,7 @@ class AppServiceProvider extends ServiceProvider
             priceFeed: YahooFinanceAdapter::class,
             sectorProvider: YahooFinanceAdapter::class,
             dividendRepository: EloquentDividendRepository::class,
+            dividendFeed: YahooFinanceAdapter::class,
         );
 
         ValuationProvider::registers(

@@ -1,13 +1,16 @@
 <?php
 
+use App\Contexts\Market\Contracts\DividendRepositoryContract;
 use App\Contexts\Market\Contracts\InstrumentRepositoryContract;
 use App\Contexts\Market\Contracts\PriceRepositoryContract;
 use App\Contexts\Market\Contracts\SectorRepositoryContract;
 use App\Contexts\Market\Infrastructure\DatabaseAssetPriceAdapter;
+use App\Contexts\Market\Infrastructure\EloquentDividendRepository;
 use App\Contexts\Market\Infrastructure\EloquentInstrumentRepository;
 use App\Contexts\Market\Infrastructure\EloquentPriceRepository;
 use App\Contexts\Market\Infrastructure\EloquentSectorRepository;
 use App\Contexts\Market\Infrastructure\YahooFinanceAdapter;
+use App\Contexts\Market\Ports\DividendFeedPort;
 use App\Contexts\Market\Ports\PriceFeedPort;
 use App\Contexts\Market\Ports\PriceProviderPort;
 use App\Contexts\Market\Ports\SectorProviderPort;
@@ -18,5 +21,7 @@ it('binds each Market contract and port to its adapter', function () {
         ->and(app(SectorRepositoryContract::class))->toBeInstanceOf(EloquentSectorRepository::class)
         ->and(app(PriceProviderPort::class))->toBeInstanceOf(DatabaseAssetPriceAdapter::class)
         ->and(app(SectorProviderPort::class))->toBeInstanceOf(YahooFinanceAdapter::class)
-        ->and(app(PriceFeedPort::class))->toBeInstanceOf(YahooFinanceAdapter::class);
+        ->and(app(PriceFeedPort::class))->toBeInstanceOf(YahooFinanceAdapter::class)
+        ->and(app(DividendRepositoryContract::class))->toBeInstanceOf(EloquentDividendRepository::class)
+        ->and(app(DividendFeedPort::class))->toBeInstanceOf(YahooFinanceAdapter::class);
 });

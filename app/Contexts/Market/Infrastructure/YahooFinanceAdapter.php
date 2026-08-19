@@ -2,6 +2,8 @@
 
 namespace App\Contexts\Market\Infrastructure;
 
+use App\Contexts\Market\Datas\DividendData;
+use App\Contexts\Market\Datas\DividendRequestData;
 use App\Contexts\Market\Datas\InstrumentData;
 use App\Contexts\Market\Datas\PriceData;
 use App\Contexts\Market\Datas\PriceRequestData;
@@ -10,6 +12,8 @@ use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
 use App\Contexts\Market\Infrastructure\Python\YahooScript;
 use App\Contexts\Market\Models\Instrument;
+use App\Contexts\Market\Ports\DividendFeedException;
+use App\Contexts\Market\Ports\DividendFeedPort;
 use App\Contexts\Market\Ports\InstrumentProviderPort;
 use App\Contexts\Market\Ports\PriceFeedException;
 use App\Contexts\Market\Ports\PriceFeedPort;
@@ -19,7 +23,7 @@ use App\Shared\Python\PythonRunner;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
-class YahooFinanceAdapter implements InstrumentProviderPort, PriceFeedPort, PriceProviderPort, SectorProviderPort
+class YahooFinanceAdapter implements DividendFeedPort, InstrumentProviderPort, PriceFeedPort, PriceProviderPort, SectorProviderPort
 {
     /**
      * The bulk fetch funnels the whole catalogue through a single Python process: one yfinance
@@ -208,6 +212,57 @@ class YahooFinanceAdapter implements InstrumentProviderPort, PriceFeedPort, Pric
             throw $exception;
         } catch (\Throwable $exception) {
             throw PriceFeedException::fetchFailed($exception->getMessage(), $exception);
+        }
+    }
+
+    /**
+     * Yahoo ne publie de détachement que pour une entreprise ou un fonds qui en détient.
+     */
+    public function supportsDividendFeed(InstrumentType $type): bool
+    {
+        return in_array($type, [InstrumentType::Stock, InstrumentType::ETF]);
+    }
+
+    public function fetchDividends(array $requests): array
+    {
+        if ($requests === []) {
+            return [];
+        }
+
+        try {
+            $result = $this->python->run(
+                YahooScript::DividendsBulk->path(),
+                [
+                    'tickers' => array_map(
+                        fn (DividendRequestData $request): array => $this->window(
+                            $request->ticker,
+                            $request->startDate,
+                            $request->endDate,
+                        ),
+                        $requests,
+                    ),
+                ],
+                self::BULK_TIMEOUT_SECONDS,
+            );
+
+            if (! $result->ok()) {
+                throw DividendFeedException::fetchFailed($result->error ?? 'unknown error');
+            }
+
+            $dividends = [];
+
+            foreach ($result->data ?? [] as $ticker => $rows) {
+                $dividends[(string) $ticker] = array_map(
+                    fn (array $row): DividendData => DividendData::fromArray($row),
+                    $rows,
+                );
+            }
+
+            return $dividends;
+        } catch (DividendFeedException $exception) {
+            throw $exception;
+        } catch (\Throwable $exception) {
+            throw DividendFeedException::fetchFailed($exception->getMessage(), $exception);
         }
     }
 

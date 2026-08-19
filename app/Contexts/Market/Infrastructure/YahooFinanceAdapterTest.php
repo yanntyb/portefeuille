@@ -1,5 +1,7 @@
 <?php
 
+use App\Contexts\Market\Datas\DividendData;
+use App\Contexts\Market\Datas\DividendRequestData;
 use App\Contexts\Market\Datas\InstrumentData;
 use App\Contexts\Market\Datas\PriceData;
 use App\Contexts\Market\Datas\PriceRequestData;
@@ -8,6 +10,7 @@ use App\Contexts\Market\Enums\Sector;
 use App\Contexts\Market\Infrastructure\Python\YahooScript;
 use App\Contexts\Market\Infrastructure\YahooFinanceAdapter;
 use App\Contexts\Market\Models\Instrument;
+use App\Contexts\Market\Ports\DividendFeedException;
 use App\Contexts\Market\Ports\PriceFeedException;
 use App\Shared\Python\FakePythonRunner;
 use App\Shared\Python\PythonProcessException;
@@ -307,3 +310,49 @@ it('throws a PriceFeedException on a malformed row inside a successful envelope'
 
     $this->adapter->fetchPrices([new PriceRequestData('AAPL', '2026-08-11', '2026-08-13')]);
 })->throws(PriceFeedException::class);
+
+it('ne couvre les dividendes que pour les actions et les ETF', function () {
+    $adapter = app(YahooFinanceAdapter::class);
+
+    expect($adapter->supportsDividendFeed(InstrumentType::Stock))->toBeTrue()
+        ->and($adapter->supportsDividendFeed(InstrumentType::ETF))->toBeTrue()
+        ->and($adapter->supportsDividendFeed(InstrumentType::Crypto))->toBeFalse()
+        ->and($adapter->supportsDividendFeed(InstrumentType::Commodity))->toBeFalse()
+        ->and($adapter->supportsDividendFeed(InstrumentType::Bond))->toBeFalse();
+});
+
+it('décode les détachements du script et décale la borne haute d\'un jour', function () {
+    $runner = (new FakePythonRunner)->withResult(
+        YahooScript::DividendsBulk->path(),
+        new PythonResult(status: 'ok', data: ['CW8.PA' => [
+            ['ex_date' => '2026-03-05', 'amount_per_share' => 0.51],
+        ]]),
+    );
+
+    $dividends = (new YahooFinanceAdapter($runner))->fetchDividends([
+        new DividendRequestData('CW8.PA', '2026-01-01', '2026-06-30'),
+    ]);
+
+    expect($dividends['CW8.PA'][0])->toBeInstanceOf(DividendData::class)
+        ->and($dividends['CW8.PA'][0]->exDate)->toBe('2026-03-05')
+        ->and($dividends['CW8.PA'][0]->amountPerShare)->toBe(0.51)
+        ->and($runner->calls[0]['input']['tickers'][0]['end_date'])->toBe('2026-07-01');
+});
+
+it('n\'appelle pas le script sans demande', function () {
+    $runner = new FakePythonRunner;
+
+    expect((new YahooFinanceAdapter($runner))->fetchDividends([]))->toBe([])
+        ->and($runner->calls)->toBe([]);
+});
+
+it('lève une exception de feed quand le script échoue', function () {
+    $runner = (new FakePythonRunner)->withResult(
+        YahooScript::DividendsBulk->path(),
+        new PythonResult(status: 'error', error: 'yfinance rate limited'),
+    );
+
+    expect(fn () => (new YahooFinanceAdapter($runner))->fetchDividends([
+        new DividendRequestData('CW8.PA', '2026-01-01', '2026-06-30'),
+    ]))->toThrow(DividendFeedException::class, 'yfinance rate limited');
+});
