@@ -3,7 +3,7 @@
 namespace App\Contexts\Identity\Models;
 
 use App\Contexts\Identity\Enums\Role;
-use Database\Factories\Domains\User\Models\UserFactory;
+use Database\Factories\Contexts\Identity\Models\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;

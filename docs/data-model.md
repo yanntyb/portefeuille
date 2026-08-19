@@ -350,22 +350,23 @@ Autres migrations structurelles notables :
 | `assets` | `PersonalAsset` | `app/Contexts/Portfolio/Models/PersonalAsset.php` | Global scope `personal` : `whereIn('type', PersonalAssetType::values())` |
 | `asset_prices` | `Price` | `app/Contexts/Market/Models/Price.php` | `protected $table = 'asset_prices'` |
 | `security_sectors` | `SectorAllocation` | `app/Contexts/Market/Models/SectorAllocation.php` | `protected $table = 'security_sectors'` |
-| `users` | `User` | `app/Contexts/Identity/Models/User.php` | Aucune relation Eloquent définie vers wallets/transactions/etc. |
+| `users` | `User` | `app/Contexts/Identity/Models/User.php` | Aucune relation Eloquent déclarée vers wallets/transactions/holdings |
+| `wallets` | `Wallet` | `app/Contexts/Portfolio/Models/Wallet.php` | `belongsTo(User::class)` |
+| `transactions` | `Transaction` | `app/Contexts/Portfolio/Models/Transaction.php` | Observé par `TransactionObserver`, `belongsTo` wallet et user |
+| `holdings_projection` | `Holding` | `app/Contexts/Portfolio/Models/Holding.php` | PK composite `(asset_id, wallet_id)`, `$incrementing = false` |
 
-### Tables ORPHELINES (dette de migration)
+Chaque modèle Portfolio et Market déclare sa factory par attribut `#[UseFactory(...)]`, résolue dans `app/Contexts/{Context}/Factories/`.
 
-Tables existant en base sans aucune classe modèle correspondante dans `app/Contexts/` :
+### Table sans modèle
 
-| Table | Statut modèle | Factory existante |
+| Table | Statut | Accès applicatif |
 | --- | --- | --- |
-| `wallets` | Aucun modèle Contexts | `database/factories/Domains/Portfolio/Models/WalletFactory.php` |
-| `wallet_fees` | Aucun modèle Contexts | `database/factories/Domains/Portfolio/Models/WalletFeeFactory.php` |
-| `transactions` | Aucun modèle Contexts | `database/factories/Domains/Portfolio/Models/TransactionFactory.php` |
-| `holdings_projection` | Aucun modèle Contexts | — |
+| `wallet_fees` | Aucun modèle Eloquent | Query builder dans `database/seeders/BackupSeeder.php` (`seedWalletFees()`) ; aucune lecture côté application |
 
-**Observations sur la dette :**
-- Les factories de ces tables vivent encore sous `database/factories/Domains/...` (ancienne arborescence `Domains`), alors que les modèles migrés sont sous `app/Contexts/...`. Aucun modèle `app/Domains/` ni `app/Contexts/` ne leur correspond.
-- Le modèle `User` (Identity) ne déclare aucune relation Eloquent (`hasMany`/`belongsTo`) vers `wallets`, `transactions`, `holdings_projection`, bien que les FK existent en base.
-- La migration vers l'architecture `Contexts` est donc **partielle** : seul le cœur Market (`Instrument`/`Price`/`SectorAllocation`), l'Identity (`User`) et un fragment Portfolio (`PersonalAsset`) sont modélisés ; toute la couche transactionnelle/wallet reste non modélisée.
+### Dette résiduelle
+
+- Trois factories legacy subsistent sous `database/factories/Domains/Portfolio/Models/` (`TransactionFactory`, `WalletFactory`, `WalletFeeFactory`). Elles ciblent le namespace `App\Domains\Portfolio\...`, **qui n'existe plus** : ce sont des classes mortes, doublons des factories vivantes de `app/Contexts/Portfolio/Factories/`.
+- `database/factories/Contexts/Identity/Models/UserFactory.php` est la seule factory de `database/factories/` réellement utilisée : `User` ne porte pas d'attribut `#[UseFactory]` et s'appuie sur la résolution par convention de nom.
+- Aucune relation Eloquent n'est déclarée depuis `User` vers `wallets`, `transactions` ou `holdings_projection`, alors que les FK existent en base et que `DemoSeeder` appelle `$user->transactions()` et `$user->wallets()` — ces appels reposent sur des relations absentes du modèle.
 
 > Tables d'infrastructure (`sessions`, `password_reset_tokens`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations`) : non concernées par la modélisation de domaine (gérées par le framework).
