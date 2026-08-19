@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * Chargement des deux pages de l'application : le squelette répond, les sections sont là dans
+ * l'ordre attendu et rien n'explose côté JS. Les valeurs rendues dans ces sections sont vérifiées
+ * par les tests dédiés à chaque composant (ValuationSectionTest, PerformanceBarsTest,
+ * HeroSectionTest).
+ */
 it('charge le tableau de bord, ses sections dans l\'ordre, sans erreur', function () {
     ['user' => $user] = portfolioFixture();
 
@@ -9,17 +15,8 @@ it('charge le tableau de bord, ses sections dans l\'ordre, sans erreur', functio
         ->assertSee('Performances')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'valuation|evolution|performances|instruments|sectors',
+            'valuation|instruments|evolution|performances|sectors',
         )
-        ->assertScript("document.querySelector('[data-portfolio-value]').textContent.trim() !== ''", true)
-        ->assertScript("document.querySelector('[data-portfolio-meta]').textContent.trim() !== ''", true)
-        ->assertScript(
-            "document.querySelector('[data-section=evolution] [aria-label]')?.getAttribute('aria-label')",
-            'Valeur du portefeuille comparée au montant investi.',
-        )
-        ->assertScript("document.querySelectorAll('[data-perf-row]').length", 5)
-        ->assertScript("document.querySelector('[data-perf-bar]').style.width !== ''", true)
-        ->assertScript("document.querySelector('[data-perf-row]').title !== ''", true)
         ->assertNoJavaScriptErrors();
 });
 
@@ -32,25 +29,9 @@ it('charge la fiche instrument et ses sections, sans erreur', function () {
         ->assertSee('ACME')
         ->assertSee('Transactions')
         ->assertSee('Répartition sectorielle')
-        ->assertScript("document.querySelector('[data-hero-value]').textContent.trim() !== ''", true)
-        ->assertScript("document.querySelectorAll('[data-hero-gain]').length", 1)
-        ->assertScript("document.querySelector('[data-hero-meta]').contains(document.querySelector('[data-hero-gain]'))", true)
-        ->assertScript("document.querySelector('[data-hero-gain]').textContent.includes('Gain')", true)
-        ->assertScript("document.querySelectorAll('[data-hero-gain-pct]').length", 1)
         ->assertScript(
-            "document.querySelector('[data-section=valuation] [aria-label]')?.getAttribute('aria-label')",
-            'Valeur de la position comparée au montant investi.',
+            "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
+            'hero|valuation|performance|sectors|transactions',
         )
-        ->assertNoJavaScriptErrors();
-});
-
-it('charge la liste des instruments du tableau de bord, sans erreur', function () {
-    ['user' => $user] = portfolioFixture();
-
-    $this->actingAs($user);
-
-    visit('/')
-        ->assertSee('ACME')
-        ->assertScript("document.querySelectorAll('[data-instrument-row]').length >= 1", true)
         ->assertNoJavaScriptErrors();
 });

@@ -16,7 +16,7 @@ const signedRoundedEur = (value: number | null): string => signedEur(value, 0);
             <p data-portfolio-value class="text-4xl font-bold tracking-[-0.02em] tabular-nums">
                 {{ eur(overview.totalValue) }}
             </p>
-            <GainPill :value="overview.totalGain" :label="pct(overview.totalGainPct)" />
+            <GainPill data-portfolio-gain-pct :value="overview.totalGain" :label="pct(overview.totalGainPct)" />
         </div>
 
         <p data-portfolio-meta class="flex flex-wrap gap-x-5 gap-y-1 text-[13.5px] text-muted-foreground">

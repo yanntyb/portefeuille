@@ -80,7 +80,7 @@ it('étire le contenu de chaque page jusqu\'au bas de l\'écran sur mobile', fun
 
     visit('/')->on()->iPhone14Pro()
         ->assertSee('Performances')
-        ->assertScript($reachesPageBottom('instruments'), true)
+        ->assertScript($reachesPageBottom('evolution'), true)
         ->assertScript($reachesPageBottom('performances'), true)
         ->assertScript($reachesPageBottom('sectors'), true)
         ->assertScript($chartFillsItsShare, true)
@@ -95,7 +95,7 @@ it('mène à la page correspondante quand on touche un point de pagination', fun
     visit('/')->on()->iPhone14Pro()
         ->assertSee('Performances')
         ->assertScript($scrolledPage, 0)
-        ->click('[aria-label="Aller à Instruments"]')
+        ->click('[aria-label="Aller à Performances"]')
         ->assertScript($scrolledPage, 1)
         ->assertScript($markedDot, 1)
         ->assertNoJavaScriptErrors();
