@@ -7,6 +7,7 @@ use App\Contexts\InstrumentView\Infrastructure\PortfolioHoldings;
 use App\Contexts\InstrumentView\Infrastructure\PortfolioTransactions;
 use App\Contexts\InstrumentView\InstrumentViewProvider;
 use App\Contexts\Market\Infrastructure\DatabaseAssetPriceAdapter;
+use App\Contexts\Market\Infrastructure\EloquentDividendRepository;
 use App\Contexts\Market\Infrastructure\EloquentInstrumentRepository;
 use App\Contexts\Market\Infrastructure\EloquentPriceRepository;
 use App\Contexts\Market\Infrastructure\EloquentSectorRepository;
@@ -39,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
             priceProvider: DatabaseAssetPriceAdapter::class,
             priceFeed: YahooFinanceAdapter::class,
             sectorProvider: YahooFinanceAdapter::class,
+            dividendRepository: EloquentDividendRepository::class,
         );
 
         ValuationProvider::registers(
