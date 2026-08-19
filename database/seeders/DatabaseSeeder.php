@@ -27,5 +27,6 @@ class DatabaseSeeder extends Seeder
         $this->call(EtfHistorySeeder::class);
         $this->call(BtcDcaSeeder::class);
         $this->call(GoldDcaSeeder::class);
+        $this->call(DividendDemoSeeder::class);
     }
 }
