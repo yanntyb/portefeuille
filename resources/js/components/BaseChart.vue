@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
+import { chartHeight } from '@/lib/layout';
 import { CHART_LOCALE, echarts, type ChartOption } from '@/lib/echarts';
 
-const props = withDefaults(defineProps<{ option: ChartOption; height?: number }>(), { height: 300 });
+const props = defineProps<{ option: ChartOption }>();
 
 /** La fenêtre de zoom est rendue au parent plutôt que lue sur l'instance : elle reste privée. */
 const emit = defineEmits<{ zoom: [window: { start: number; end: number }] }>();
@@ -65,5 +66,5 @@ onBeforeUnmount((): void => {
 </script>
 
 <template>
-    <div ref="container" data-chart :data-zoom-window="zoomWindow" class="w-full" :style="{ height: `${props.height}px` }"></div>
+    <div ref="container" data-chart :data-zoom-window="zoomWindow" class="w-full" :style="{ height: `${chartHeight}px` }"></div>
 </template>
