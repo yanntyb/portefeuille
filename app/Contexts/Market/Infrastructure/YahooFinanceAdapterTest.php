@@ -339,6 +339,16 @@ it('décode les détachements du script et décale la borne haute d\'un jour', f
         ->and($runner->calls[0]['input']['tickers'][0]['end_date'])->toBe('2026-07-01');
 });
 
+it('donne au lot de dividendes un timeout dimensionné pour tout le catalogue', function () {
+    $runner = new FakePythonRunner;
+
+    (new YahooFinanceAdapter($runner))->fetchDividends([
+        new DividendRequestData('CW8.PA', '2026-01-01', '2026-06-30'),
+    ]);
+
+    expect($runner->calls[0]['timeout'])->toBeGreaterThan((int) config('python.timeout'));
+});
+
 it('n\'appelle pas le script sans demande', function () {
     $runner = new FakePythonRunner;
 
