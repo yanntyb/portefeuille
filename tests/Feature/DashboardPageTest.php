@@ -3,6 +3,7 @@
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
+use App\Contexts\Market\Models\Dividend;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Market\Models\SectorAllocation;
@@ -294,6 +295,34 @@ it('accepts the range query param for the trends', function () {
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->where('trends.0.changePct', fn ($value) => (float) $value === 50.0)
                 ->has('trends.0.points', 2)
+            )
+        );
+});
+
+it('diffère le revenu perçu et son historique annuel dans le groupe revenus', function () {
+    $this->travelTo('2026-08-19 10:00:00');
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $asset = Instrument::factory()->create(['name' => 'ACME']);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-07-01', 'close' => 100]);
+    Holding::factory()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id, 'quantity' => 10, 'avg_cost' => 80]);
+    Transaction::factory()->buy()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id, 'date' => '2025-01-01', 'quantity' => 10, 'unit_price' => 80]);
+    Dividend::factory()->create(['asset_id' => $asset->id, 'ex_date' => '2025-03-05', 'amount_per_share' => 0.5]);
+    Dividend::factory()->create(['asset_id' => $asset->id, 'ex_date' => '2026-03-05', 'amount_per_share' => 0.8]);
+
+    $this->actingAs($user)
+        ->get('/')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->missing('income')
+            ->loadDeferredProps(fn (Assert $reload) => $reload
+                /** Clôture et cast : voir la note de `InstrumentDetailPageTest` sur `json_encode()`. */
+                ->where('income.totalReceived', fn ($v) => (float) $v === 13.0)
+                ->where('income.last12Months', fn ($v) => (float) $v === 8.0)
+                ->where('income.bySource.dividend', fn ($v) => (float) $v === 13.0)
+                ->has('annualIncome', 2)
+                ->where('annualIncome.0.year', 2025)
+                ->where('annualIncome.1.total', fn ($v) => (float) $v === 8.0)
             )
         );
 });

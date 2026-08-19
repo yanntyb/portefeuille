@@ -3,8 +3,10 @@
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
+use App\Contexts\Market\Models\Dividend;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Portfolio\Models\Holding;
+use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 
 it('explique les performances par période à travers un dialogue', function () {
@@ -85,5 +87,61 @@ it('nomme la section des instruments pour les technologies d\'assistance', funct
     visit('/')
         ->assertScript("document.querySelector('[data-section=instruments]').getAttribute('aria-label')", 'Instruments')
         ->assertScript("document.querySelectorAll('[data-instrument-row]').length >= 1", true)
+        ->assertNoJavaScriptErrors();
+});
+
+it('affiche le revenu perçu et son historique annuel', function () {
+    // La transaction est datée d'il y a deux ans, pour laisser aux deux détachements ci-dessous
+    // la place de tomber de part et d'autre de la borne des douze mois. Avec `portfolioFixture()`
+    // (position ouverte début d'année), il n'y a jamais assez de recul pour cela : le total perçu
+    // et le perçu à douze mois y coïncideraient toujours, rendant leur interversion indétectable.
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $instrument = Instrument::factory()->create(['name' => 'ACME']);
+
+    Holding::factory()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $instrument->id,
+        'quantity' => 10,
+        'avg_cost' => 80,
+    ]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $instrument->id,
+        'quantity' => 10,
+        'unit_price' => 80,
+        'date' => now()->subYears(2),
+    ]);
+
+    Dividend::factory()->create([
+        'asset_id' => $instrument->id,
+        'ex_date' => now()->subMonths(15)->format('Y-m-d'),
+        'amount_per_share' => 0.3,
+    ]);
+    Dividend::factory()->create([
+        'asset_id' => $instrument->id,
+        'ex_date' => now()->subMonths(2)->format('Y-m-d'),
+        'amount_per_share' => 0.5,
+    ]);
+
+    $this->actingAs($user);
+
+    visit('/')
+        ->assertSee('Revenus')
+        ->assertScript("document.querySelectorAll('[data-income-year]').length", 2)
+        ->assertScript("document.querySelector('[data-income-total]').textContent.includes('8,00')", true)
+        ->assertScript("document.querySelector('[data-income-last12]').textContent.includes('5,00')", true)
+        ->assertNoJavaScriptErrors();
+});
+
+it('annonce l\'absence de revenu quand aucun instrument n\'en verse', function () {
+    ['user' => $user] = portfolioFixture();
+
+    $this->actingAs($user);
+
+    visit('/')
+        ->assertSee('Aucun revenu perçu pour l\'instant.')
         ->assertNoJavaScriptErrors();
 });

@@ -3,6 +3,9 @@
 namespace App\Contexts\Portfolio\Http;
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Income\Actions\GetAnnualIncome;
+use App\Contexts\Income\Actions\GetIncomeSummary;
+use App\Contexts\Income\Datas\IncomeSummaryData;
 use App\Contexts\InstrumentView\Actions\GetHoldingTrends;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Actions\GetSectorBreakdown;
@@ -48,6 +51,13 @@ class DashboardController
             'sectorBreakdown' => Inertia::defer(fn () => $user !== null
                 ? app(GetSectorBreakdown::class)($user)
                 : [], 'secteurs'),
+            /** Un seul groupe pour les deux : la section les affiche ensemble. */
+            'income' => Inertia::defer(fn () => $user !== null
+                ? app(GetIncomeSummary::class)($user->id)
+                : IncomeSummaryData::empty(), 'revenus'),
+            'annualIncome' => Inertia::defer(fn () => $user !== null
+                ? app(GetAnnualIncome::class)($user->id)
+                : [], 'revenus'),
         ]);
     }
 }
