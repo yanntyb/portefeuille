@@ -9,7 +9,6 @@ type ChartPalette = {
     gain: string;
     loss: string;
     axisLabel: string;
-    grid: string;
     areaTop: string;
     areaBottom: string;
     filler: string;
@@ -33,7 +32,6 @@ function palette(): ChartPalette {
             gain: '#34d399',
             loss: '#f87171',
             axisLabel: '#7f858f',
-            grid: '#262a33',
             areaTop: 'rgba(143,147,240,0.22)',
             areaBottom: 'rgba(143,147,240,0)',
             filler: 'rgba(143,147,240,0.18)',
@@ -50,7 +48,6 @@ function palette(): ChartPalette {
             gain: '#00915d',
             loss: '#c2321f',
             axisLabel: '#9aa0ac',
-            grid: '#eceef2',
             areaTop: 'rgba(82,87,214,0.18)',
             areaBottom: 'rgba(82,87,214,0)',
             filler: 'rgba(82,87,214,0.12)',
@@ -252,7 +249,8 @@ function chartFrame({ valueFormatter, values, bottom, description }: ChartFrameI
                     isAxisExtreme(value, extent) ? valueFormatter(value) : ''
                 ),
             },
-            splitLine: { lineStyle: { color: colors.grid } },
+            /** Deux étiquettes chiffrées suffisent à donner l'échelle : les lignes de fond en plus font cage. */
+            splitLine: { show: false },
         },
         tooltip: chartTooltip(),
     };

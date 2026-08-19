@@ -38,6 +38,7 @@ const yAxisOf = (option: ChartOption) =>
         min: (extent: AxisExtent) => number;
         max: (extent: AxisExtent) => number;
         axisLabel: { formatter: (value: number) => string };
+        splitLine: { show: boolean };
     };
 
 /**
@@ -67,6 +68,10 @@ describe('buildValueVsInvestedOption — axes', () => {
         const label = yAxisLabel(valueVsInvested(36), 1000, { min: 1000, max: 1350 });
 
         expect(label.replace(/[\xa0\u202f]/g, ' ')).toBe('1 000 €');
+    });
+
+    it('se passe de lignes de fond horizontales, les deux extrêmes chiffrés donnant l\'échelle', () => {
+        expect(yAxisOf(valueVsInvested(36)).splitLine.show).toBe(false);
     });
 
     it('borne l\'axe des valeurs sur les extrêmes de la fenêtre visible', () => {
@@ -236,6 +241,17 @@ describe('buildPriceHistoryOption', () => {
         });
 
         expect(yAxisOf(option).scale).toBe(true);
+    });
+
+    it('se passe aussi de lignes de fond horizontales', () => {
+        const labels = monthlyLabels(24);
+        const option = buildPriceHistoryOption({
+            labels,
+            close: labels.map((): number => 100),
+            valueFormatter: (value: number): string => eur(value, 0),
+        });
+
+        expect(yAxisOf(option).splitLine.show).toBe(false);
     });
 
     it('n\'étiquette que les extrêmes de l\'axe des valeurs, comme le graphe de valorisation', () => {
