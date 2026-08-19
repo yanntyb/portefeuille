@@ -15,7 +15,7 @@ it('charge le tableau de bord, ses sections dans l\'ordre, sans erreur', functio
         ->assertSee('Performances')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'valuation|instruments|evolution|performances|sectors',
+            'valuation|evolution|instruments|performances|sectors',
         )
         ->assertNoJavaScriptErrors();
 });

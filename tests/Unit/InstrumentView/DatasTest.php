@@ -1,32 +1,11 @@
 <?php
 
-use App\Contexts\InstrumentView\Datas\CatalogLineData;
-use App\Contexts\InstrumentView\Datas\InstrumentCatalogData;
 use App\Contexts\InstrumentView\Datas\InstrumentDetailData;
 use App\Contexts\InstrumentView\Datas\PositionData;
 use App\Contexts\InstrumentView\Datas\PriceHistoryData;
 use App\Contexts\InstrumentView\Datas\SectorWeightData;
 use App\Contexts\InstrumentView\Datas\TransactionLineData;
 use App\Contexts\Market\Enums\InstrumentType;
-
-it('serializes a catalog line with a type label', function () {
-    $line = new CatalogLineData(
-        id: 7, name: 'ACME', ticker: 'ACM', isin: 'US0000000001', type: InstrumentType::Stock,
-        lastPrice: 100.0, held: true, quantity: 10.0, marketValue: 1000.0,
-    );
-
-    expect($line->jsonSerialize())->toMatchArray([
-        'id' => 7, 'name' => 'ACME', 'ticker' => 'ACM', 'isin' => 'US0000000001',
-        'type' => 'stock', 'typeLabel' => 'Action',
-        'lastPrice' => 100.0, 'held' => true, 'quantity' => 10.0, 'marketValue' => 1000.0,
-    ]);
-});
-
-it('wraps catalog lines', function () {
-    $catalog = new InstrumentCatalogData(lines: []);
-
-    expect($catalog->jsonSerialize())->toBe(['lines' => []]);
-});
 
 it('serializes an instrument detail with nested position', function () {
     $detail = new InstrumentDetailData(

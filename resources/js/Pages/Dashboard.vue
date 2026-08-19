@@ -9,15 +9,13 @@ import InstrumentsSection from '@/components/dashboard/InstrumentsSection.vue';
 import PerformancesSection from '@/components/dashboard/PerformancesSection.vue';
 import SectorsSection from '@/components/dashboard/SectorsSection.vue';
 import ValuationSection from '@/components/dashboard/ValuationSection.vue';
-import type { CatalogLine, CatalogTrend } from '@/lib/catalog';
+import type { CatalogTrend } from '@/lib/catalog';
 import type { Performance } from '@/lib/performance';
 import type { EvolutionSeries, PortfolioOverview } from '@/lib/portfolio';
 import type { SectorSlice } from '@/lib/sector';
 
 defineProps<{
     overview: PortfolioOverview;
-    catalog?: { lines: CatalogLine[] };
-    catalogRange?: string;
     trends?: CatalogTrend[];
     performances?: Performance[];
     evolutionSeries?: EvolutionSeries;
@@ -39,14 +37,9 @@ defineProps<{
                 <AppCarouselPage label="Valeur">
                     <ValuationSection v-if="overview.holdings.length" :overview="overview" />
 
-                    <InstrumentsSection
-                        :holdings="overview.holdings"
-                        :catalog="catalog"
-                        :catalog-range="catalogRange"
-                        :trends="trends"
-                    />
-
                     <EvolutionSection :series="evolutionSeries" />
+
+                    <InstrumentsSection :holdings="overview.holdings" :trends="trends" />
                 </AppCarouselPage>
 
                 <AppCarouselPage v-if="overview.holdings.length" label="Performances">

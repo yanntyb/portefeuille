@@ -66,12 +66,11 @@ it('sépare les propriétés différées par section, chaque groupe se chargeant
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
-            // Le graphe n'attend plus les secteurs ni le catalogue : son groupe arrive seul.
+            // Le graphe n'attend plus les secteurs ni les tendances : son groupe arrive seul.
             ->loadDeferredProps('evolution', fn (Assert $reload) => $reload
                 ->has('evolutionSeries')
                 ->missing('sectorBreakdown')
                 ->missing('performances')
-                ->missing('catalog')
                 ->missing('trends')
             )
             ->loadDeferredProps('secteurs', fn (Assert $reload) => $reload
@@ -244,34 +243,6 @@ it('ignores a months query parameter, the window no longer being server-driven',
         );
 });
 
-it('defers the instrument catalogue with a held flag', function () {
-    $user = User::factory()->create();
-    $wallet = Wallet::factory()->for($user)->create();
-    $held = Instrument::factory()->create(['name' => 'Held Co', 'ticker' => 'HLD', 'isin' => 'FR0000000001']);
-    Instrument::factory()->create(['name' => 'Absent Co']);
-    Price::factory()->create(['asset_id' => $held->id, 'date' => now(), 'close' => 100]);
-    Holding::factory()->create([
-        'user_id' => $user->id,
-        'wallet_id' => $wallet->id,
-        'asset_id' => $held->id,
-        'quantity' => 10,
-        'avg_cost' => 80,
-    ]);
-
-    $this->get('/')
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('Dashboard')
-            ->missing('catalog')
-            ->loadDeferredProps(fn (Assert $reload) => $reload
-                ->has('catalog.lines', 2)
-                ->where('catalog.lines.1.held', true)
-                ->where('catalog.lines.1.ticker', 'HLD')
-                ->where('catalog.lines.1.isin', 'FR0000000001')
-            )
-        );
-});
-
 it('defers the catalogue trends and loads them on demand', function () {
     User::factory()->create();
     $asset = Instrument::factory()->create(['name' => 'Trending Co']);
@@ -282,7 +253,6 @@ it('defers the catalogue trends and loads them on demand', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
-            ->where('catalogRange', 'max')
             ->missing('trends')
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->has('trends', 1)
@@ -304,7 +274,6 @@ it('accepts the range query param for the catalogue trends', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
-            ->where('catalogRange', '1M')
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->where('trends.0.changePct', fn ($value) => (float) $value === 50.0)
                 ->has('trends.0.points', 2)

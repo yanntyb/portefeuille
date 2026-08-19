@@ -74,16 +74,16 @@ it('étire le contenu de chaque page jusqu\'au bas de l\'écran sur mobile', fun
 
     $this->actingAs($user);
 
-    // La hauteur du graphe est mesurée sur la place laissée par la page : à hauteur fixe elle
-    // valait 300 px quel que soit l'écran, et le reste tombait en vide sous les performances.
-    $chartFillsItsShare = "document.querySelector('[data-section=\"evolution\"]').getBoundingClientRect().height > 320";
+    // Le graphe coiffe la page dans une bande fixe : c'est la liste des positions, sous lui, qui
+    // absorbe la place restante.
+    $chartKeepsItsBand = "document.querySelector('[data-section=\"evolution\"]').getBoundingClientRect().height < 260";
 
     visit('/')->on()->iPhone14Pro()
         ->assertSee('Performances')
-        ->assertScript($reachesPageBottom('evolution'), true)
+        ->assertScript($reachesPageBottom('instruments'), true)
         ->assertScript($reachesPageBottom('performances'), true)
         ->assertScript($reachesPageBottom('sectors'), true)
-        ->assertScript($chartFillsItsShare, true)
+        ->assertScript($chartKeepsItsBand, true)
         ->assertNoJavaScriptErrors();
 });
 

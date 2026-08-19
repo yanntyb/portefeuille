@@ -77,18 +77,13 @@ it('affiche un état vide quand aucune position n\'a de valeur de marché', func
         ->assertNoJavaScriptErrors();
 });
 
-it('nomme la section des instruments pour les technologies d\'assistance et offre la recherche', function () {
+it('nomme la section des instruments pour les technologies d\'assistance', function () {
     ['user' => $user] = portfolioFixture();
 
     $this->actingAs($user);
 
     visit('/')
         ->assertScript("document.querySelector('[data-section=instruments]').getAttribute('aria-label')", 'Instruments')
-        ->assertScript("document.querySelectorAll('[data-instrument-search]').length", 1)
-        ->assertScript(
-            "document.querySelector('[data-instrument-search]').getAttribute('aria-label')",
-            'Rechercher un instrument',
-        )
         ->assertScript("document.querySelectorAll('[data-instrument-row]').length >= 1", true)
         ->assertNoJavaScriptErrors();
 });
