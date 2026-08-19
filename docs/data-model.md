@@ -2,16 +2,16 @@
 
 ## 1. Vue d'ensemble
 
-La base de données contient **21 tables** (la persistance par défaut est **SQLite**, fichier `database/database.sqlite`).
+La base de données contient **16 tables** (la persistance par défaut est **SQLite**, fichier `database/database.sqlite`).
 
 Elle couvre quatre grands domaines fonctionnels :
 
 | Domaine | Tables | Rôle |
 | --- | --- | --- |
-| **Identity** | `users`, `invitations`, `sessions`, `password_reset_tokens` | Authentification, rôles, invitations |
+| **Identity** | `users`, `sessions`, `password_reset_tokens` | Authentification et rôles |
 | **Market** | `assets`, `asset_prices`, `security_sectors` | Instruments financiers et données de marché |
-| **Portfolio / Finance** | `wallets`, `wallet_fees`, `transactions`, `allocation_profiles`, `allocation_profile_items`, `holdings_projection` | Comptes, mouvements, allocations cibles, projection des positions |
-| **Divers (infra Laravel)** | `feedback`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations` | Retours utilisateurs et plomberie framework |
+| **Portfolio / Finance** | `wallets`, `wallet_fees`, `transactions`, `holdings_projection` | Comptes, mouvements, projection des positions |
+| **Divers (infra Laravel)** | `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations` | Plomberie framework |
 
 Point d'architecture central : la table `assets` est **partagée** entre deux contextes via une discrimination par colonne `type` et des global scopes Eloquent. Le modèle `Instrument` (`app/Contexts/Market/Models/Instrument.php`) y lit les instruments négociables, le modèle `PersonalAsset` (`app/Contexts/Portfolio/Models/PersonalAsset.php`) les actifs personnels.
 
@@ -19,7 +19,7 @@ Une partie significative des tables n'a **pas encore de modèle dans le nouveau 
 
 ## 2. Diagramme entité-relation
 
-Les instruments (`assets`) sont **globaux** : aucune colonne `user_id`. Le lien entre un utilisateur et un instrument passe toujours par une table porteuse du triplet `user_id` / `wallet_id` / `asset_id` — `transactions`, `holdings_projection` — ou par le couple `allocation_profiles` / `allocation_profile_items`.
+Les instruments (`assets`) sont **globaux** : aucune colonne `user_id`. Le lien entre un utilisateur et un instrument passe toujours par une table porteuse du triplet `user_id` / `wallet_id` / `asset_id` : `transactions` ou `holdings_projection`.
 
 ```mermaid
 erDiagram
@@ -94,49 +94,18 @@ erDiagram
         numeric avg_cost "nullable"
     }
 
-    allocation_profiles {
-        int id PK
-        string name
-        int user_id FK "cascade"
-        int wallet_id FK "cascade, nullable"
-    }
-
-    allocation_profile_items {
-        int id PK
-        int allocation_profile_id FK "cascade"
-        int asset_id FK "cascade"
-        numeric target_percentage
-    }
-
-    invitations {
-        int id PK
-        int created_by FK
-    }
-
-    feedback {
-        int id PK
-        int user_id FK
-    }
-
     users ||--o{ wallets : possede
     users ||--o{ transactions : saisit
     users ||--o{ holdings_projection : detient
-    users ||--o{ allocation_profiles : definit
-    users ||--o{ invitations : "created_by"
-    users ||--o{ feedback : redige
 
     wallets ||--o{ wallet_fees : facture
     wallets ||--o{ transactions : contient
     wallets ||--o{ holdings_projection : agrege
-    wallets ||--o{ allocation_profiles : cible
 
     assets ||--o{ transactions : "reference (aucun user_id)"
     assets ||--o{ holdings_projection : reference
     assets ||--o{ asset_prices : cote
     assets ||--o{ security_sectors : repartit
-    assets ||--o{ allocation_profile_items : pondere
-
-    allocation_profiles ||--o{ allocation_profile_items : compose
 ```
 
 ### 2.1 Table `assets` partagée entre deux modèles
@@ -196,20 +165,6 @@ Le contexte `InstrumentView` n'accède jamais aux modèles des autres contextes 
 | `updated_at` | datetime | nullable |
 
 Utilisateurs du système avec contrôle d'accès par rôle (`Role` enum : `admin` / `user`).
-
-#### `invitations`
-
-| Colonne | Type | Contraintes |
-| --- | --- | --- |
-| `id` | integer | PK, autoincrement |
-| `token` | varchar | NOT NULL, UNIQUE |
-| `created_by` | integer | NOT NULL, FK → `users.id` (CASCADE) |
-| `expires_at` | datetime | NOT NULL |
-| `used_at` | datetime | nullable |
-| `created_at` | datetime | nullable |
-| `updated_at` | datetime | nullable |
-
-Jetons d'invitation à l'inscription, avec expiration et trace d'utilisation.
 
 #### `sessions`
 
@@ -331,32 +286,6 @@ Frais associés à un wallet (courtage, gestion…).
 
 Mouvements (achat/vente/dépôt) rattachés à un wallet. Les FK `asset_id` et `user_id` utilisent SET NULL, autorisant des transactions orphelines.
 
-#### `allocation_profiles`
-
-| Colonne | Type | Contraintes |
-| --- | --- | --- |
-| `id` | integer | PK, autoincrement |
-| `name` | varchar | NOT NULL |
-| `user_id` | integer | NOT NULL, FK → `users.id` (CASCADE) |
-| `wallet_id` | integer | nullable, FK → `wallets.id` (CASCADE) |
-| `created_at` | datetime | nullable |
-| `updated_at` | datetime | nullable |
-
-Allocations cibles d'un portefeuille (globales si `wallet_id` nul, sinon spécifiques à un wallet).
-
-#### `allocation_profile_items`
-
-| Colonne | Type | Contraintes |
-| --- | --- | --- |
-| `id` | integer | PK, autoincrement |
-| `allocation_profile_id` | integer | NOT NULL, FK → `allocation_profiles.id` (CASCADE) |
-| `asset_id` | integer | NOT NULL, FK → `assets.id` (CASCADE) |
-| `target_percentage` | numeric | NOT NULL |
-| `created_at` | datetime | nullable |
-| `updated_at` | datetime | nullable |
-
-Pourcentage cible par actif au sein d'une allocation.
-
 #### `holdings_projection`
 
 | Colonne | Type | Contraintes |
@@ -372,19 +301,6 @@ Pourcentage cible par actif au sein d'une allocation.
 Positions calculées (quantité, coût moyen) par actif/wallet. Dénormalisé pour la performance. PK composite `(asset_id, wallet_id)`, index sur `user_id` et `(user_id, wallet_id)`.
 
 ### Domaine Divers (infrastructure)
-
-#### `feedback`
-
-| Colonne | Type | Contraintes |
-| --- | --- | --- |
-| `id` | integer | PK, autoincrement |
-| `user_id` | integer | NOT NULL, FK → `users.id` (CASCADE) |
-| `subject` | varchar | NOT NULL |
-| `body` | text | NOT NULL |
-| `created_at` | datetime | nullable |
-| `updated_at` | datetime | nullable |
-
-Retours / tickets de support utilisateur.
 
 #### `cache` / `cache_locks`
 
@@ -411,7 +327,6 @@ Retours / tickets de support utilisateur.
 | table `security_prices` | table `asset_prices` | `2026_05_08_012537_rename_security_prices_to_asset_prices_table` |
 | `transactions.security_id` | `transactions.asset_id` | `2026_05_08_020000_rename_security_id_to_asset_id_in_transactions_table` |
 | `asset_prices.security_id` | `asset_prices.asset_id` | `2026_05_09_150000_rename_security_id_to_asset_id_in_asset_prices_table` |
-| `allocation_profile_items.security_id` | `allocation_profile_items.asset_id` | `2026_05_09_142207_rename_security_id_to_asset_id_in_allocation_profile_items_table` |
 | `security_sectors.security_id` | `security_sectors.asset_id` | `2026_05_09_153040_rename_security_id_to_asset_id_in_security_sectors_table` |
 
 Autres migrations structurelles notables :
@@ -419,7 +334,6 @@ Autres migrations structurelles notables :
 | Changement | Migration |
 | --- | --- |
 | `transactions.account_type` (string) → `wallet_id` (FK) | `2026_03_16_011334_migrate_transactions_account_type_to_wallet_id` |
-| `allocation_profiles.account_type` (string) → `wallet_id` (FK) | `2026_03_16_124844_migrate_allocation_profiles_account_type_to_wallet_id` |
 
 **Empreintes résiduelles** des renommages encore présentes en base :
 - La table `security_sectors` n'a pas été renommée.
@@ -447,15 +361,11 @@ Tables existant en base sans aucune classe modèle correspondante dans `app/Cont
 | `wallets` | Aucun modèle Contexts | `database/factories/Domains/Portfolio/Models/WalletFactory.php` |
 | `wallet_fees` | Aucun modèle Contexts | `database/factories/Domains/Portfolio/Models/WalletFeeFactory.php` |
 | `transactions` | Aucun modèle Contexts | `database/factories/Domains/Portfolio/Models/TransactionFactory.php` |
-| `allocation_profiles` | Aucun modèle Contexts | `database/factories/Domains/Portfolio/Models/AllocationProfileFactory.php` |
-| `allocation_profile_items` | Aucun modèle Contexts | `database/factories/Domains/Portfolio/Models/AllocationProfileItemFactory.php` |
 | `holdings_projection` | Aucun modèle Contexts | — |
-| `invitations` | Aucun modèle Contexts | `database/factories/Domains/User/Models/InvitationFactory.php` |
-| `feedback` | Aucun modèle Contexts | `database/factories/Domains/User/Models/FeedbackFactory.php` |
 
 **Observations sur la dette :**
 - Les factories de ces tables vivent encore sous `database/factories/Domains/...` (ancienne arborescence `Domains`), alors que les modèles migrés sont sous `app/Contexts/...`. Aucun modèle `app/Domains/` ni `app/Contexts/` ne leur correspond.
-- Le modèle `User` (Identity) ne déclare aucune relation Eloquent (`hasMany`/`belongsTo`) vers `wallets`, `transactions`, `allocation_profiles`, `feedback`, `invitations`, `holdings_projection`, bien que les FK existent en base.
+- Le modèle `User` (Identity) ne déclare aucune relation Eloquent (`hasMany`/`belongsTo`) vers `wallets`, `transactions`, `holdings_projection`, bien que les FK existent en base.
 - La migration vers l'architecture `Contexts` est donc **partielle** : seul le cœur Market (`Instrument`/`Price`/`SectorAllocation`), l'Identity (`User`) et un fragment Portfolio (`PersonalAsset`) sont modélisés ; toute la couche transactionnelle/wallet reste non modélisée.
 
 > Tables d'infrastructure (`sessions`, `password_reset_tokens`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations`) : non concernées par la modélisation de domaine (gérées par le framework).

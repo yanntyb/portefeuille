@@ -37,21 +37,21 @@ it('turns NULL into null and keeps numbers as strings', function () {
 
 it('unescapes quotes, backslashes and control sequences inside strings', function () {
     $path = writeDump(
-        'INSERT INTO `feedback` VALUES '
+        'INSERT INTO `notes` VALUES '
         ."(1,4,'Export CSV','J\\'aimerais un \\\\ et un saut\\nde ligne',NULL,NULL);\n"
     );
 
-    $rows = iterator_to_array((new MysqlDumpReader($path))->rows('feedback'));
+    $rows = iterator_to_array((new MysqlDumpReader($path))->rows('notes'));
 
     expect($rows[0][3])->toBe("J'aimerais un \\ et un saut\nde ligne");
 });
 
 it('handles a doubled quote as an escaped quote', function () {
     $path = writeDump(
-        "INSERT INTO `feedback` VALUES (1,4,'L''export','ok',NULL,NULL);\n"
+        "INSERT INTO `notes` VALUES (1,4,'L''export','ok',NULL,NULL);\n"
     );
 
-    $rows = iterator_to_array((new MysqlDumpReader($path))->rows('feedback'));
+    $rows = iterator_to_array((new MysqlDumpReader($path))->rows('notes'));
 
     expect($rows[0][2])->toBe("L'export");
 });

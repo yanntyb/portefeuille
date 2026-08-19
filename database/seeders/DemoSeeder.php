@@ -24,7 +24,6 @@ class DemoSeeder extends Seeder
         $user->wallets()->delete();
 
         $this->call(TransactionSeeder::class, parameters: ['user' => $user]);
-        $this->call(FeedbackSeeder::class, parameters: ['user' => $user]);
         $this->call(PriceSyncSeeder::class);
 
         return $user;

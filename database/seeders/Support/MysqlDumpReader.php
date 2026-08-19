@@ -114,7 +114,7 @@ final class MysqlDumpReader
      * Lit une chaîne à partir du caractère suivant son apostrophe ouvrante.
      *
      * Une apostrophe se code `\'` chez mysqldump et `''` en SQL standard : les deux formes sont
-     * acceptées, faute de quoi le corps d'un feedback couperait le tuple en deux.
+     * acceptées, faute de quoi une note libre couperait le tuple en deux.
      *
      * @return array{0: string, 1: int} la chaîne décodée et la position juste après son
      *                                  apostrophe fermante

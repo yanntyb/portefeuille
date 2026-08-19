@@ -19,7 +19,6 @@ class DatabaseSeeder extends Seeder
 
         // TODO: Create Wallet/Portfolio models
         // $this->call(TransactionSeeder::class, parameters: ['user' => $user]);
-        // $this->call(FeedbackSeeder::class, parameters: ['user' => $user]);
 
         // $this->call(DashboardDemoSeeder::class);
         $this->call(InstrumentCatalogSeeder::class);

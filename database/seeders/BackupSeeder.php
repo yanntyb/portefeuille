@@ -113,9 +113,6 @@ class BackupSeeder extends Seeder
         $this->seedTransactions($reader);
         $this->seedCryptoOrders();
         $this->seedWalletFees($reader);
-        $this->seedAllocationProfiles($reader);
-        $this->seedInvitations($reader);
-        $this->seedFeedback($reader);
         $this->syncPricesAndSectors();
     }
 
@@ -308,8 +305,7 @@ class BackupSeeder extends Seeder
      * Colonnes du dump : id, wallet_id, name, value, unit, scope, frequency, created_at,
      * updated_at.
      *
-     * Passage par le query builder faute de modèle Eloquent, comme pour les profils
-     * d'allocation, les invitations et les feedback.
+     * Passage par le query builder faute de modèle Eloquent.
      */
     private function seedWalletFees(MysqlDumpReader $reader): void
     {
@@ -338,121 +334,6 @@ class BackupSeeder extends Seeder
 
         if ($rows !== []) {
             DB::table('wallet_fees')->insert($rows);
-        }
-    }
-
-    /**
-     * Colonnes du dump : profils — id, name, user_id, wallet_id, created_at, updated_at ;
-     * lignes — id, allocation_profile_id, security_id, target_percentage, created_at, updated_at.
-     */
-    private function seedAllocationProfiles(MysqlDumpReader $reader): void
-    {
-        $obsoleteIds = DB::table('allocation_profiles')->whereIn('user_id', $this->users)->pluck('id');
-
-        DB::table('allocation_profile_items')->whereIn('allocation_profile_id', $obsoleteIds)->delete();
-        DB::table('allocation_profiles')->whereIn('id', $obsoleteIds)->delete();
-
-        /** @var array<int, int> $profiles */
-        $profiles = [];
-
-        foreach ($reader->rows('allocation_profiles') as [$dumpId, $name, $dumpUserId, $dumpWalletId, $createdAt, $updatedAt]) {
-            $userId = $this->users[(int) $dumpUserId] ?? null;
-
-            if ($userId === null) {
-                continue;
-            }
-
-            $profiles[(int) $dumpId] = DB::table('allocation_profiles')->insertGetId([
-                'name' => $name,
-                'user_id' => $userId,
-                'wallet_id' => $dumpWalletId === null ? null : ($this->wallets[(int) $dumpWalletId] ?? null),
-                'created_at' => $createdAt,
-                'updated_at' => $updatedAt,
-            ]);
-        }
-
-        $rows = [];
-
-        foreach ($reader->rows('allocation_profile_items') as [, $dumpProfileId, $dumpAssetId, $percentage, $createdAt, $updatedAt]) {
-            $profileId = $profiles[(int) $dumpProfileId] ?? null;
-            $assetId = $this->instruments[(int) $dumpAssetId] ?? null;
-
-            if ($profileId === null || $assetId === null) {
-                continue;
-            }
-
-            $rows[] = [
-                'allocation_profile_id' => $profileId,
-                'asset_id' => $assetId,
-                'target_percentage' => $percentage,
-                'created_at' => $createdAt,
-                'updated_at' => $updatedAt,
-            ];
-        }
-
-        if ($rows !== []) {
-            DB::table('allocation_profile_items')->insert($rows);
-        }
-    }
-
-    /**
-     * Colonnes du dump : id, token, created_by, expires_at, used_at, created_at, updated_at.
-     */
-    private function seedInvitations(MysqlDumpReader $reader): void
-    {
-        DB::table('invitations')->whereIn('created_by', $this->users)->delete();
-
-        $rows = [];
-
-        foreach ($reader->rows('invitations') as [, $token, $dumpCreatedBy, $expiresAt, $usedAt, $createdAt, $updatedAt]) {
-            $createdBy = $this->users[(int) $dumpCreatedBy] ?? null;
-
-            if ($createdBy === null) {
-                continue;
-            }
-
-            $rows[] = [
-                'token' => $token,
-                'created_by' => $createdBy,
-                'expires_at' => $expiresAt,
-                'used_at' => $usedAt,
-                'created_at' => $createdAt,
-                'updated_at' => $updatedAt,
-            ];
-        }
-
-        if ($rows !== []) {
-            DB::table('invitations')->insert($rows);
-        }
-    }
-
-    /**
-     * Colonnes du dump : id, user_id, subject, body, created_at, updated_at.
-     */
-    private function seedFeedback(MysqlDumpReader $reader): void
-    {
-        DB::table('feedback')->whereIn('user_id', $this->users)->delete();
-
-        $rows = [];
-
-        foreach ($reader->rows('feedback') as [, $dumpUserId, $subject, $body, $createdAt, $updatedAt]) {
-            $userId = $this->users[(int) $dumpUserId] ?? null;
-
-            if ($userId === null) {
-                continue;
-            }
-
-            $rows[] = [
-                'user_id' => $userId,
-                'subject' => $subject,
-                'body' => $body,
-                'created_at' => $createdAt,
-                'updated_at' => $updatedAt,
-            ];
-        }
-
-        foreach (array_chunk($rows, self::ROW_CHUNK) as $chunk) {
-            DB::table('feedback')->insert($chunk);
         }
     }
 }

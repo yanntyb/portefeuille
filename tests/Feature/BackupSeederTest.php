@@ -195,13 +195,7 @@ it('restores the tables that have no Eloquent model', function () {
     $admin = User::query()->where('email', 'admin@example.test')->sole();
     $cto = Wallet::query()->where('user_id', $admin->id)->where('name', 'CTO')->sole();
 
-    expect(DB::table('wallet_fees')->where('wallet_id', $cto->id)->value('name'))->toBe('Flat tax')
-        ->and(DB::table('allocation_profiles')->count())->toBe(1)
-        ->and(DB::table('allocation_profile_items')->count())->toBe(2)
-        ->and(DB::table('invitations')->where('created_by', $admin->id)->count())->toBe(1)
-        ->and(DB::table('feedback')->count())->toBe(2)
-        ->and(DB::table('feedback')->orderBy('id')->value('body'))
-        ->toBe("Ce serait pratique d'avoir un camembert.");
+    expect(DB::table('wallet_fees')->where('wallet_id', $cto->id)->value('name'))->toBe('Flat tax');
 });
 
 it('can be seeded twice without duplicating anything', function () {
@@ -217,11 +211,7 @@ it('can be seeded twice without duplicating anything', function () {
         ->and(Price::query()->count())->toBe(2)
         ->and(Transaction::query()->count())->toBe(8)
         ->and(Holding::query()->count())->toBe(4)
-        ->and(DB::table('wallet_fees')->count())->toBe(1)
-        ->and(DB::table('allocation_profiles')->count())->toBe(1)
-        ->and(DB::table('allocation_profile_items')->count())->toBe(2)
-        ->and(DB::table('invitations')->count())->toBe(1)
-        ->and(DB::table('feedback')->count())->toBe(2);
+        ->and(DB::table('wallet_fees')->count())->toBe(1);
 });
 
 it('degrades gracefully when the dump is missing', function () {

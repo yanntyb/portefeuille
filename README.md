@@ -25,12 +25,9 @@ Application web de gestion de portefeuilles financiers personnels. Elle permet d
 - **Portefeuilles (Wallets)** — Création et configuration de portefeuilles avec gestion des frais récurrents
 - **Titres (Securities)** — Suivi des titres financiers avec prix, secteurs et historique
 - **Transactions** — Enregistrement des achats/ventes avec calcul automatique des performances
-- **Profils d'allocation** — Définition de profils cibles pour le rééquilibrage de portefeuille
-- **Calculateur de rééquilibrage** — Outil de calcul des ajustements nécessaires pour atteindre l'allocation cible
 - **Simulateur** — Tableau de simulation de scénarios d'investissement
 - **Dashboard** — Vue d'ensemble avec widgets de statistiques et graphiques
-- **Gestion des utilisateurs** — Rôles (admin/utilisateur), impersonation, système d'invitation par lien
-- **Feedback** — Collecte de retours utilisateurs
+- **Gestion des utilisateurs** — Rôles (admin/utilisateur), impersonation
 
 ## Accès
 
