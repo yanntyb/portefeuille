@@ -19,29 +19,163 @@ Une partie significative des tables n'a **pas encore de modèle dans le nouveau 
 
 ## 2. Diagramme entité-relation
 
+Les instruments (`assets`) sont **globaux** : aucune colonne `user_id`. Le lien entre un utilisateur et un instrument passe toujours par une table porteuse du triplet `user_id` / `wallet_id` / `asset_id` — `transactions`, `holdings_projection` — ou par le couple `allocation_profiles` / `allocation_profile_items`.
+
 ```mermaid
 erDiagram
+    users {
+        int id PK
+        string name
+        string email
+        string password
+        enum role "admin|user"
+    }
+
+    wallets {
+        int id PK
+        int user_id FK "cascade"
+        string name "unique(user_id, name)"
+    }
+
+    wallet_fees {
+        int id PK
+        int wallet_id FK "cascade"
+        string name
+        numeric value
+        string unit
+        string frequency
+        string scope
+    }
+
+    assets {
+        int id PK
+        string isin "nullable"
+        string ticker
+        string name
+        enum type "stock|etf|crypto|bond|commodity | real_estate|savings"
+    }
+
+    asset_prices {
+        int id PK
+        int asset_id FK "cascade"
+        date date "unique(asset_id, date)"
+        numeric open
+        numeric high
+        numeric low
+        numeric close "not null"
+        int volume
+    }
+
+    security_sectors {
+        int id PK
+        int asset_id FK "cascade"
+        string sector "unique(asset_id, sector)"
+        numeric weight
+    }
+
+    transactions {
+        int id PK
+        date date
+        int asset_id FK "set null"
+        int wallet_id FK "cascade"
+        int user_id FK "set null"
+        enum type "buy|sell"
+        numeric quantity
+        numeric unit_price
+        numeric fees
+        numeric realized_gain "calcule par observer"
+    }
+
+    holdings_projection {
+        int asset_id PK,FK "cascade"
+        int wallet_id PK,FK "cascade"
+        int user_id FK "cascade"
+        numeric quantity
+        numeric avg_cost "nullable"
+    }
+
+    allocation_profiles {
+        int id PK
+        string name
+        int user_id FK "cascade"
+        int wallet_id FK "cascade, nullable"
+    }
+
+    allocation_profile_items {
+        int id PK
+        int allocation_profile_id FK "cascade"
+        int asset_id FK "cascade"
+        numeric target_percentage
+    }
+
+    invitations {
+        int id PK
+        int created_by FK
+    }
+
+    feedback {
+        int id PK
+        int user_id FK
+    }
+
+    users ||--o{ wallets : possede
+    users ||--o{ transactions : saisit
+    users ||--o{ holdings_projection : detient
+    users ||--o{ allocation_profiles : definit
     users ||--o{ invitations : "created_by"
-    users ||--o{ sessions : "user_id"
-    users ||--o{ wallets : "user_id"
-    users ||--o{ transactions : "user_id"
-    users ||--o{ allocation_profiles : "user_id"
-    users ||--o{ holdings_projection : "user_id"
-    users ||--o{ feedback : "user_id"
+    users ||--o{ feedback : redige
 
-    wallets ||--o{ transactions : "wallet_id"
-    wallets ||--o{ allocation_profiles : "wallet_id"
-    wallets ||--o{ wallet_fees : "wallet_id"
-    wallets ||--o{ holdings_projection : "wallet_id"
+    wallets ||--o{ wallet_fees : facture
+    wallets ||--o{ transactions : contient
+    wallets ||--o{ holdings_projection : agrege
+    wallets ||--o{ allocation_profiles : cible
 
-    assets ||--o{ asset_prices : "asset_id"
-    assets ||--o{ security_sectors : "asset_id"
-    assets ||--o{ transactions : "asset_id"
-    assets ||--o{ allocation_profile_items : "asset_id"
-    assets ||--o{ holdings_projection : "asset_id"
+    assets ||--o{ transactions : "reference (aucun user_id)"
+    assets ||--o{ holdings_projection : reference
+    assets ||--o{ asset_prices : cote
+    assets ||--o{ security_sectors : repartit
+    assets ||--o{ allocation_profile_items : pondere
 
-    allocation_profiles ||--o{ allocation_profile_items : "allocation_profile_id"
+    allocation_profiles ||--o{ allocation_profile_items : compose
 ```
+
+### 2.1 Table `assets` partagée entre deux modèles
+
+Une seule table, deux modèles Eloquent séparés par un global scope sur `type` :
+
+```mermaid
+flowchart LR
+    A[("table assets")]
+    A -->|"global scope market : stock, etf, crypto, bond, commodity"| I["Market\Models\Instrument"]
+    A -->|"global scope personal : real_estate, savings"| P["Portfolio\Models\PersonalAsset"]
+    I --> PR["Price — asset_prices"]
+    I --> SA["SectorAllocation — security_sectors"]
+```
+
+À la création, `Instrument` retombe sur `InstrumentType::Stock` et `PersonalAsset` sur `PersonalAssetType::Savings` si `type` est absent.
+
+### 2.2 Flux d'écriture : la projection des positions
+
+`holdings_projection` est une **projection dérivée**, jamais une source de vérité. Elle est reconstruite par `TransactionObserver` (`app/Contexts/Portfolio/Observers/TransactionObserver.php`) :
+
+```mermaid
+flowchart TD
+    T["Transaction created / updated / deleted"] --> O["TransactionObserver"]
+    O -->|"creating, updating"| G["CalculateRealizedGain — ecrit realized_gain"]
+    O -->|"created, updated, deleted"| PJ["ProjectHolding(user_id, asset_id, wallet_id)"]
+    PJ --> H[("holdings_projection")]
+    O -->|"asset_id ou wallet_id modifie"| PJO["ProjectHolding sur les valeurs originales"]
+    PJO --> H
+    H --> HP["HoldingsPort::holdingsFor(userId)"]
+    HP --> AGG["agregation multi-wallets — avg_cost pondere par quantite"]
+    AGG --> V["InstrumentView — Datas + Inertia"]
+```
+
+La clé primaire composite `(asset_id, wallet_id)` impose les surcharges `setKeysForSaveQuery()` / `setKeysForSelectQuery()` dans `Holding`.
+
+### 2.3 Lecture côté InstrumentView
+
+Le contexte `InstrumentView` n'accède jamais aux modèles des autres contextes en direct : il passe par `HoldingsPort`, `TransactionsPort` et `MarketDataPort`, implémentés respectivement par `PortfolioHoldings`, `PortfolioTransactions` et `MarketData`. `PortfolioHoldings::holdingsFor()` agrège les lignes de tous les wallets d'un utilisateur en un `HoldingSnapshotData` par `asset_id`, avec un `avg_cost` pondéré par les quantités (les lignes sans `avg_cost` sont exclues du calcul).
 
 ## 3. Tables par domaine
 
