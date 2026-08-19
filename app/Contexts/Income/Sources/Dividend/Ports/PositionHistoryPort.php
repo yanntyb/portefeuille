@@ -1,0 +1,27 @@
+<?php
+
+namespace App\Contexts\Income\Sources\Dividend\Ports;
+
+use App\Contexts\Income\Sources\Dividend\Datas\PositionRecordData;
+use App\Contexts\Income\Sources\Dividend\Datas\PositionSnapshotData;
+
+interface PositionHistoryPort
+{
+    /**
+     * Tous les mouvements de position de l'utilisateur, ordre chronologique.
+     *
+     * @return list<PositionRecordData>
+     */
+    public function transactionsFor(int $userId): array;
+
+    /**
+     * Actifs que l'utilisateur a mouvementés au moins une fois : le périmètre à interroger côté
+     * marché, une position soldée ayant pu percevoir un dividende avant sa vente.
+     *
+     * @return list<int>
+     */
+    public function assetIdsFor(int $userId): array;
+
+    /** Position courante, toutes enveloppes confondues. */
+    public function positionFor(int $userId, int $assetId): ?PositionSnapshotData;
+}
