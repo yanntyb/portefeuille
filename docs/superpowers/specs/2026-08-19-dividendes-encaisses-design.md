@@ -329,21 +329,23 @@ tableau.
 
 ### Page instrument — `InstrumentDetailController`
 
-Nouvelle prop différée, à côté de `priceHistory` et `valuation` :
+Nouvelle prop, à côté de `priceHistory` et `valuation` :
 
 ```php
-'dividends' => Inertia::defer(
-    fn () => app(GetAssetDividendHistory::class)($userId, $id)
-),
+'dividends' => app(GetAssetDividendHistory::class)($userId, $id),
 ```
+
+**Non différée**, contrairement à ses voisines : la visibilité de la section dépend de la donnée
+elle-même, et une prop différée ferait clignoter un squelette avant de faire disparaître la section
+sur chaque instrument capitalisant. Le coût est de deux petites requêtes, sur une page qui en fait
+déjà autant pour ses performances.
 
 `resources/js/components/instrument/DividendsSection.vue`, montée depuis `Pages/Instruments/Show.vue` :
 
 - ne se rend **pas du tout** si `receipts` est vide — un capitalisant ou une crypto n'affiche
   aucune section vide ;
 - en-tête : total perçu, perçu sur 12 mois, rendement sur coût ;
-- tableau : date de détachement, montant par action, quantité détenue, montant perçu ;
-- `ChartSkeleton` pendant le chargement différé, comme les autres sections.
+- tableau : date de détachement, montant par action, quantité détenue, montant perçu.
 
 ### Tableau de bord — `DashboardController`
 
@@ -359,7 +361,11 @@ Un seul groupe différé supplémentaire, `revenus` :
 ```
 
 `resources/js/components/dashboard/IncomeSection.vue` : les chiffres (total perçu, 12 mois
-glissants, ventilation par source) et un histogramme du revenu par année via `BaseChart`.
+glissants, ventilation par source) et une barre par année.
+
+Les barres sont du CSS, pas un graphe ECharts : `bars.ts` (`largestOf`, `relativeBarWidth`) et le
+patron de `PerformanceBars.vue` couvrent le besoin sans ajouter une branche « axe catégoriel » à
+`chartFrame()`, qui ne gradue aujourd'hui qu'un axe temporel.
 
 Le titre de la section est **« Revenus »**, pas « Dividendes » : c'est elle qui accueillera le
 locatif, et la renommer plus tard changerait un repère visuel déjà acquis. Tous les libellés sont
@@ -394,5 +400,7 @@ Les tests vivent à côté des classes dans `app/Contexts` (`pest()` les charge 
   seconde source suffit à le prouver.
 - **Navigateur** — fiche instrument avec et sans dividendes (section présente / absente), section
   Revenus du tableau de bord après résolution du groupe différé.
-- **`portfolioFixture()`** gagne un paramètre `dividends` optionnel, plutôt qu'un fixture parallèle
-  à maintenir.
+- **`portfolioFixture()` reste inchangée** : les deux tests de navigateur qui ont besoin d'un
+  détachement en créent un sur place. Toucher une fabrique partagée par toute la suite coûterait
+  plus que ces deux lignes, et les tests d'ordre des sections dépendent du fait que la fixture
+  reste sans dividende.
