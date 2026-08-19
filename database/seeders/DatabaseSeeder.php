@@ -12,15 +12,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $user = User::factory()->admin()->create([
+        User::factory()->admin()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
 
-        // TODO: Create Wallet/Portfolio models
-        // $this->call(TransactionSeeder::class, parameters: ['user' => $user]);
-
-        // $this->call(DashboardDemoSeeder::class);
         $this->call(InstrumentCatalogSeeder::class);
         $this->call(EtfHistorySeeder::class);
         $this->call(BtcDcaSeeder::class);

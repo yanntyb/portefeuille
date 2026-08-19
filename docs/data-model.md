@@ -363,11 +363,13 @@ Chaque modèle Portfolio et Market déclare sa factory par attribut `#[UseFactor
 | --- | --- | --- |
 | `wallet_fees` | Aucun modèle Eloquent | Query builder dans `database/seeders/BackupSeeder.php` (`seedWalletFees()`) ; aucune lecture côté application |
 
+### Factories
+
+`database/factories/` ne contient plus que `Contexts/Identity/Models/UserFactory.php` : `User` ne porte pas d'attribut `#[UseFactory]` et s'appuie sur la résolution par convention de nom. Toutes les autres factories vivent avec leur modèle, sous `app/Contexts/{Context}/Factories/`. `wallet_fees` n'a plus de factory du tout.
+
 ### Dette résiduelle
 
-- Trois factories legacy subsistent sous `database/factories/Domains/Portfolio/Models/` (`TransactionFactory`, `WalletFactory`, `WalletFeeFactory`). Elles ciblent le namespace `App\Domains\Portfolio\...`, **qui n'existe plus** : ce sont des classes mortes, doublons des factories vivantes de `app/Contexts/Portfolio/Factories/`.
-- `database/factories/Contexts/Identity/Models/UserFactory.php` est la seule factory de `database/factories/` réellement utilisée : `User` ne porte pas d'attribut `#[UseFactory]` et s'appuie sur la résolution par convention de nom.
 - Aucune relation Eloquent n'est déclarée depuis `User` vers `wallets`, `transactions` ou `holdings_projection`, alors que les FK existent en base : toute lecture passe par une requête explicite sur `Wallet`, `Transaction` ou `Holding` filtrée sur `user_id`.
-- `database/seeders/PriceSyncSeeder.php` n'est plus appelé par aucun seeder depuis la suppression de `DemoSeeder`.
+- `database/seeders/PriceSyncSeeder.php` n'est appelé par aucun seeder.
 
 > Tables d'infrastructure (`sessions`, `password_reset_tokens`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations`) : non concernées par la modélisation de domaine (gérées par le framework).
