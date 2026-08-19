@@ -102,24 +102,25 @@ it('affiche les dividendes perçus quand l\'instrument en verse', function () {
      * Recule la transaction par le constructeur de requêtes : il ne déclenche pas
      * `TransactionObserver`, donc `holdings_projection` garde la position déjà projetée par la
      * fixture (10 titres à 80 €) — seule la date d'ancienneté de la position change, pas sa
-     * quantité.
+     * quantité. Une date relative, comme dans `DashboardTest`, pour que le test ne dépende pas de
+     * la date d'exécution.
      */
-    Transaction::query()->where('asset_id', $instrument->id)->update(['date' => '2024-01-10']);
+    Transaction::query()->where('asset_id', $instrument->id)->update(['date' => now()->subYears(2)->format('Y-m-d')]);
 
     /**
-     * Deux détachements de part et d'autre de la borne des douze mois (on est le 2026-08-19),
-     * avec des montants par action distincts : le total cumule les deux, le perçu à douze mois
-     * n'en garde qu'un, ce qui rend `data-dividend-total` et `data-dividend-last12` discriminants
-     * l'un de l'autre.
+     * Deux détachements de part et d'autre de la borne des douze mois, avec des montants par
+     * action distincts : le total cumule les deux, le perçu à douze mois n'en garde qu'un, ce qui
+     * rend `data-dividend-total` et `data-dividend-last12` discriminants l'un de l'autre. Des
+     * dates relatives, comme dans `DashboardTest`, pour que le test reste vrai au-delà de 2027.
      */
     Dividend::factory()->create([
         'asset_id' => $instrument->id,
-        'ex_date' => '2025-03-05',
+        'ex_date' => now()->subMonths(15)->format('Y-m-d'),
         'amount_per_share' => 0.3,
     ]);
     Dividend::factory()->create([
         'asset_id' => $instrument->id,
-        'ex_date' => '2026-03-05',
+        'ex_date' => now()->subMonths(2)->format('Y-m-d'),
         'amount_per_share' => 0.5,
     ]);
 
@@ -131,7 +132,7 @@ it('affiche les dividendes perçus quand l\'instrument en verse', function () {
         // `includes` et non une égalité : `Intl` sépare le montant du symbole par une espace
         // insécable étroite, invisible dans le source du test mais fatale à une comparaison stricte.
         // Le total (8,00 €) cumule les deux détachements ; le perçu à douze mois (5,00 €) ne garde
-        // que celui du 2026-03-05 — les deux valeurs diffèrent, donc un gabarit qui les
+        // que celui d'il y a deux mois — les deux valeurs diffèrent, donc un gabarit qui les
         // intervertirait serait pris en défaut.
         ->assertScript("document.querySelector('[data-dividend-total]').textContent.includes('8,00')", true)
         ->assertScript("document.querySelector('[data-dividend-last12]').textContent.includes('5,00')", true)
@@ -139,8 +140,8 @@ it('affiche les dividendes perçus quand l\'instrument en verse', function () {
         // à un coût de 800 €), pas sur le total des deux.
         ->assertScript("document.querySelector('[data-dividend-yield]').textContent.includes('0,6')", true)
         // Les reçus se rendent du plus récent au plus ancien : la première ligne du tableau est
-        // celle du 2026-03-05. Trois cellules distinctes l'une de l'autre, pour qu'une
-        // interversion de colonnes tombe : le montant par action, la quantité détenue et le
+        // celle du détachement le plus récent. Trois cellules distinctes l'une de l'autre, pour
+        // qu'une interversion de colonnes tombe : le montant par action, la quantité détenue et le
         // montant perçu ne se ressemblent pas.
         ->assertScript("document.querySelector('[data-dividend-per-share]').textContent.includes('0,50')", true)
         ->assertScript("document.querySelector('[data-dividend-quantity]').textContent.trim()", '10')
