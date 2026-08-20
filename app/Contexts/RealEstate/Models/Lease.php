@@ -41,6 +41,7 @@ class Lease extends Model
         return $this->belongsTo(Property::class);
     }
 
+    /** @return HasMany<RentException, $this> */
     public function exceptions(): HasMany
     {
         return $this->hasMany(RentException::class)->orderBy('month');

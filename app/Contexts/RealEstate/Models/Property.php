@@ -39,21 +39,25 @@ class Property extends Model
         ];
     }
 
+    /** @return HasMany<PropertyValuation, $this> */
     public function valuations(): HasMany
     {
         return $this->hasMany(PropertyValuation::class)->orderBy('date');
     }
 
+    /** @return HasMany<Lease, $this> */
     public function leases(): HasMany
     {
         return $this->hasMany(Lease::class)->orderBy('start_date');
     }
 
+    /** @return HasMany<Loan, $this> */
     public function loans(): HasMany
     {
         return $this->hasMany(Loan::class)->orderBy('start_date');
     }
 
+    /** @return HasMany<PropertyExpense, $this> */
     public function expenses(): HasMany
     {
         return $this->hasMany(PropertyExpense::class)->orderBy('date');
