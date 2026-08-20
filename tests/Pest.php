@@ -11,6 +11,7 @@ use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
 use Pest\Browser\Api\PendingAwaitablePage;
 use Tests\TestCase;
@@ -32,6 +33,10 @@ pest()->extend(TestCase::class)
 
 pest()->extend(TestCase::class)
     ->in('../app/Shared');
+
+afterEach(function (): void {
+    Carbon::setTestNow();
+})->in('Feature', 'Unit', 'Browser', '../app/Contexts', '../app/Shared');
 
 /*
 |--------------------------------------------------------------------------
