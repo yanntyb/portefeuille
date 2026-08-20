@@ -6,6 +6,8 @@ use App\Contexts\Market\Models\Dividend;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
+use App\Contexts\RealEstate\Models\Lease;
+use App\Contexts\RealEstate\Models\Property;
 
 it('totalise le perçu, les douze derniers mois et la ventilation par source', function () {
     $this->travelTo('2026-08-19 10:00:00');
@@ -95,4 +97,23 @@ it('estime le revenu d\'un titre acheté après son dernier détachement', funct
 
     expect($summary->totalReceived)->toBe(0.0)
         ->and($summary->estimatedAnnual)->toBe(8.0);
+});
+
+it('somme dividendes et loyers dans le même résumé', function () {
+    $this->travelTo('2026-08-19 10:00:00');
+    ['user' => $user] = dividendFixture();
+    $property = Property::factory()->create(['user_id' => $user->id]);
+    Lease::factory()->create([
+        'property_id' => $property->id,
+        'monthly_rent' => 400,
+        'start_date' => '2026-06-01',
+        'end_date' => null,
+    ]);
+
+    $summary = app(GetIncomeSummary::class)($user->id);
+
+    // Dividendes : 13 € perçus, 8 € projetés. Loyers : juin, juillet, août 2026 = 1200 €, 4800 € projetés.
+    expect($summary->bySource)->toBe(['dividend' => 13.0, 'rent' => 1200.0])
+        ->and($summary->totalReceived)->toBe(1213.0)
+        ->and($summary->estimatedAnnual)->toBe(4808.0);
 });
