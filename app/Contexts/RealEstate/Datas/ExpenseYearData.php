@@ -7,7 +7,7 @@ use JsonSerializable;
 /** Charges d'un bien sur une année, ventilées par catégorie. */
 readonly class ExpenseYearData implements JsonSerializable
 {
-    /** @param array<string, float> $byCategory Clé = valeur d'`ExpenseCategory`. */
+    /** @param list<array{category: string, label: string, amount: float}> $byCategory Triée par montant décroissant. */
     public function __construct(
         public int $year,
         public array $byCategory,

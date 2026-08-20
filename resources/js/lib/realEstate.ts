@@ -44,7 +44,7 @@ export interface RentMonth {
 
 export interface ExpenseYear {
     year: number;
-    byCategory: Record<string, number>;
+    byCategory: { category: string; label: string; amount: number }[];
     total: number;
 }
 

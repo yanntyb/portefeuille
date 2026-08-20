@@ -35,7 +35,9 @@ it('assembles the whole property sheet', function () {
         ->and($detail->rentHistory[0]->month)->toBe('2026-08-01')
         ->and($detail->loan->monthlyPayment)->toBe(300.0)
         ->and($detail->expenseYears[0]->year)->toBe(2026)
-        ->and($detail->expenseYears[0]->byCategory['property_tax'])->toBe(900.0)
+        ->and($detail->expenseYears[0]->byCategory[0]['category'])->toBe('property_tax')
+        ->and($detail->expenseYears[0]->byCategory[0]['label'])->toBe('Taxe foncière')
+        ->and($detail->expenseYears[0]->byCategory[0]['amount'])->toBe(900.0)
         ->and($detail->metrics->grossYield)->toBe(0.0655);
 
     Carbon::setTestNow();

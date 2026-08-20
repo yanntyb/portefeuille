@@ -8,7 +8,10 @@ it('exposes its values as strings', function () {
 });
 
 it('labels every case in French', function () {
-    foreach (ExpenseCategory::cases() as $case) {
-        expect($case->getLabel())->toBeString()->not->toBeEmpty();
-    }
+    expect(ExpenseCategory::PropertyTax->getLabel())->toBe('Taxe foncière')
+        ->and(ExpenseCategory::CoOwnership->getLabel())->toBe('Copropriété')
+        ->and(ExpenseCategory::Insurance->getLabel())->toBe('Assurance')
+        ->and(ExpenseCategory::Management->getLabel())->toBe('Gestion')
+        ->and(ExpenseCategory::Works->getLabel())->toBe('Travaux')
+        ->and(ExpenseCategory::Other->getLabel())->toBe('Autre');
 });

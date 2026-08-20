@@ -115,7 +115,8 @@ class GetPropertyDetail
         foreach ($property->expenses as $expense) {
             $year = $expense->date->year;
             $category = $expense->category->value;
-            $years[$year][$category] = ($years[$year][$category] ?? 0.0) + (float) $expense->amount;
+            $years[$year][$category] ??= ['label' => $expense->category->getLabel(), 'amount' => 0.0];
+            $years[$year][$category]['amount'] += (float) $expense->amount;
         }
 
         krsort($years);
@@ -123,11 +124,35 @@ class GetPropertyDetail
         return array_map(
             fn (int $year): ExpenseYearData => new ExpenseYearData(
                 year: $year,
-                byCategory: array_map(fn (float $amount): float => round($amount, 2), $years[$year]),
-                total: round(array_sum($years[$year]), 2),
+                byCategory: $this->byCategory($years[$year]),
+                total: round(array_sum(array_column($years[$year], 'amount')), 2),
             ),
             array_keys($years),
         );
+    }
+
+    /**
+     * Ventilation d'une année triée par montant décroissant : la plus grosse charge en tête, à
+     * égalité l'ordre suit la première dépense rencontrée (tri stable).
+     *
+     * @param  array<string, array{label: string, amount: float}>  $amounts  Clé : valeur d'`ExpenseCategory`.
+     * @return list<array{category: string, label: string, amount: float}>
+     */
+    private function byCategory(array $amounts): array
+    {
+        $entries = [];
+
+        foreach ($amounts as $category => $entry) {
+            $entries[] = [
+                'category' => $category,
+                'label' => $entry['label'],
+                'amount' => round($entry['amount'], 2),
+            ];
+        }
+
+        usort($entries, fn (array $a, array $b): int => $b['amount'] <=> $a['amount']);
+
+        return $entries;
     }
 
     private function loanSummary(Property $property, Carbon $today, float $remaining): ?LoanSummaryData

@@ -3,16 +3,6 @@ import { eur } from '@/lib/format';
 import type { ExpenseYear } from '@/lib/realEstate';
 
 const props = defineProps<{ years: ExpenseYear[] }>();
-
-/** Doit rester aligné sur `ExpenseCategory::getLabel()` côté serveur. */
-const categoryLabels: Record<string, string> = {
-    property_tax: 'Taxe foncière',
-    co_ownership: 'Copropriété',
-    insurance: 'Assurance',
-    management: 'Gestion',
-    works: 'Travaux',
-    other: 'Autre',
-};
 </script>
 
 <template>
@@ -28,12 +18,12 @@ const categoryLabels: Record<string, string> = {
             </div>
             <ul class="flex flex-col">
                 <li
-                    v-for="(amount, category) in year.byCategory"
-                    :key="category"
+                    v-for="entry in year.byCategory"
+                    :key="entry.category"
                     class="flex items-center justify-between py-1 text-sm text-muted-foreground"
                 >
-                    <span>{{ categoryLabels[category] ?? category }}</span>
-                    <span class="tabular-nums">{{ eur(amount) }}</span>
+                    <span>{{ entry.label }}</span>
+                    <span class="tabular-nums">{{ eur(entry.amount) }}</span>
                 </li>
             </ul>
         </div>
