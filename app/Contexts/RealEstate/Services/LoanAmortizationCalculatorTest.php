@@ -65,3 +65,7 @@ it('reads the remaining principal at any date', function () {
 it('remaining before any line needs the borrowed principal, so an empty schedule yields zero', function () {
     expect($this->calculator->remainingAt([], Carbon::parse('2026-01-01')))->toBe(0.0);
 });
+
+it('yields an empty schedule for a loan without any term, instead of dividing by zero', function () {
+    expect($this->calculator->schedule(1000.0, 0.12, 0, Carbon::parse('2026-01-15')))->toBe([]);
+});

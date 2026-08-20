@@ -20,6 +20,11 @@ class LoanAmortizationCalculator
         Carbon $startDate,
         float $monthlyInsurance = 0.0,
     ): array {
+        // Sans mensualité possible, pas d'échéancier : évite une division par zéro plus bas.
+        if ($termMonths < 1) {
+            return [];
+        }
+
         $monthlyInsurance = round($monthlyInsurance, 2);
         $monthlyRate = $annualRate / 12;
 
