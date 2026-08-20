@@ -24,7 +24,6 @@ export interface TransactionLine {
 
 export interface TransactionYear {
     year: string;
-    count: number;
     /** Flux investi de l'année : les achats en positif, les ventes en négatif. */
     net: number;
     lines: TransactionLine[];
@@ -43,7 +42,6 @@ export const transactionYears = (lines: TransactionLine[]): TransactionYear[] =>
         .sort(([left], [right]) => right.localeCompare(left))
         .map(([year, yearLines]) => ({
             year,
-            count: yearLines.length,
             net: yearLines.reduce((net, line) => net + (line.isSell ? -line.total : line.total), 0),
             lines: yearLines,
         }));

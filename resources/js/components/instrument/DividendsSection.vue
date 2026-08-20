@@ -34,9 +34,6 @@ const toggleLine = (key: string): void => {
 
 /** Un montant par action se lit au millième : 0,51 € et 0,515 € ne sont pas le même dividende. */
 const perShare = (value: number): string => eur(value, 3);
-
-const detachmentsLabel = (group: DividendYear): string =>
-    `${group.count} détachement${group.count > 1 ? 's' : ''}`;
 </script>
 
 <template>
@@ -73,7 +70,6 @@ const detachmentsLabel = (group: DividendYear): string =>
                         :class="isYearOpen(group.year) ? 'rotate-90' : ''"
                     />
                     <span class="font-semibold">{{ group.year }}</span>
-                    <span class="text-muted-foreground">{{ detachmentsLabel(group) }}</span>
                     <span class="ml-auto font-semibold">{{ eur(group.total) }}</span>
                 </button>
 

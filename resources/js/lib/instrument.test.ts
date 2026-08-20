@@ -129,7 +129,7 @@ describe('transactionYears', () => {
             line({ date: '2025-06-04' }),
         ]);
 
-        expect(years[0].count).toBe(2);
+        expect(years[0].lines).toHaveLength(2);
         expect(years[0].lines.map((entry) => entry.date)).toEqual(['2026-03-12', '2026-02-03']);
         expect(years[1].lines.map((entry) => entry.date)).toEqual(['2025-06-04']);
     });

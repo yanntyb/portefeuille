@@ -46,7 +46,7 @@ describe('dividendYears', () => {
             receipt({ exDate: '2025-06-04' }),
         ]);
 
-        expect(years[0].count).toBe(2);
+        expect(years[0].receipts).toHaveLength(2);
         expect(years[0].receipts.map((entry) => entry.exDate)).toEqual(['2026-03-05', '2026-09-11']);
         expect(years[1].receipts.map((entry) => entry.exDate)).toEqual(['2025-06-04']);
     });

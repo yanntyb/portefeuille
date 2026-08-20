@@ -34,9 +34,6 @@ const toggleLine = (key: string): void => {
 
 /** Le flux investi de la ligne : un achat entre en positif, une vente en sort. */
 const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total : line.total);
-
-const operationsLabel = (group: TransactionYear): string =>
-    `${group.count} opération${group.count > 1 ? 's' : ''}`;
 </script>
 
 <template>
@@ -61,7 +58,6 @@ const operationsLabel = (group: TransactionYear): string =>
                         :class="isYearOpen(group.year) ? 'rotate-90' : ''"
                     />
                     <span class="font-semibold">{{ group.year }}</span>
-                    <span class="text-muted-foreground">{{ operationsLabel(group) }}</span>
                     <span class="ml-auto font-semibold" :class="gainClass(group.net)">
                         {{ signedEur(group.net) }}
                     </span>

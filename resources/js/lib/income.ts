@@ -54,7 +54,6 @@ export const annualIncomeBars = (rows: AnnualIncome[]): AnnualIncomeBar[] => {
 
 export interface DividendYear {
     year: string;
-    count: number;
     /** Perçu sur l'année, détachements cumulés. */
     total: number;
     receipts: DividendReceipt[];
@@ -73,7 +72,6 @@ export const dividendYears = (receipts: DividendReceipt[]): DividendYear[] => {
         .sort(([left], [right]) => right.localeCompare(left))
         .map(([year, yearReceipts]) => ({
             year,
-            count: yearReceipts.length,
             total: yearReceipts.reduce((total, receipt) => total + receipt.amount, 0),
             receipts: yearReceipts,
         }));
