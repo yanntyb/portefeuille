@@ -37,15 +37,15 @@ const props = defineProps<{
             :performances="props.performances"
         />
 
+        <DividendsSection
+            v-if="props.dividends.receipts.length"
+            :dividends="props.dividends"
+        />
+
         <SectorsSection
             v-if="props.instrument.sectors.length"
             :sectors="props.instrument.sectors"
             :market-value="props.instrument.position?.marketValue ?? null"
-        />
-
-        <DividendsSection
-            v-if="props.dividends.receipts.length"
-            :dividends="props.dividends"
         />
 
         <TransactionsSection :transactions="props.instrument.transactions" />

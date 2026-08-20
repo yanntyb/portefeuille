@@ -166,6 +166,13 @@ it('affiche les dividendes perçus quand l\'instrument en verse', function () {
 
     visit("/instruments/{$instrument->id}")
         ->assertSee('Dividendes (2)')
+        // Les dividendes se lisent avant la répartition sectorielle : ce que l'actif rapporte
+        // passe devant sa composition. Ordre relatif seul, les autres sections du gabarit
+        // dépendant de la fixture.
+        ->assertScript(
+            "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).filter(section => ['dividends', 'sectors'].includes(section)).join('|')",
+            'dividends|sectors',
+        )
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-dividend-year]')).map(el => el.dataset.dividendYear).join('|')",
             "{$recentYear}|{$olderYear}",
