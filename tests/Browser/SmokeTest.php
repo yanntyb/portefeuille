@@ -1,7 +1,15 @@
 <?php
 
+use App\Contexts\Identity\Models\User;
+use App\Contexts\RealEstate\Enums\ExpenseCategory;
+use App\Contexts\RealEstate\Models\Lease;
+use App\Contexts\RealEstate\Models\Loan;
+use App\Contexts\RealEstate\Models\Property;
+use App\Contexts\RealEstate\Models\PropertyExpense;
+use App\Contexts\RealEstate\Models\PropertyValuation;
+
 /**
- * Chargement des deux pages de l'application : le squelette répond, les sections sont là dans
+ * Chargement des trois pages de l'application : le squelette répond, les sections sont là dans
  * l'ordre attendu et rien n'explose côté JS. Les valeurs rendues dans ces sections sont vérifiées
  * par les tests dédiés à chaque composant (ValuationSectionTest, PerformanceBarsTest,
  * HeroSectionTest).
@@ -32,6 +40,44 @@ it('charge la fiche instrument et ses sections, sans erreur', function () {
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
             'hero|valuation|performance|sectors|transactions',
+        )
+        ->assertNoJavaScriptErrors();
+});
+
+it('charge la fiche du bien et ses sections, sans erreur', function () {
+    $user = User::factory()->create();
+    $property = Property::factory()->create(['user_id' => $user->id, 'name' => 'T2 Lyon 7e']);
+
+    Lease::factory()->ongoing()->create(['property_id' => $property->id, 'monthly_rent' => 600]);
+    Loan::factory()->create([
+        'property_id' => $property->id,
+        'principal' => 90000,
+        'annual_rate' => 0.02,
+        'term_months' => 240,
+        'start_date' => now()->subYear()->toDateString(),
+        'monthly_insurance' => 10,
+    ]);
+    PropertyExpense::factory()->create([
+        'property_id' => $property->id,
+        'date' => now()->subMonth()->toDateString(),
+        'amount' => 150,
+        'category' => ExpenseCategory::PropertyTax,
+    ]);
+    PropertyExpense::factory()->create([
+        'property_id' => $property->id,
+        'date' => now()->subMonths(3)->toDateString(),
+        'amount' => 80,
+        'category' => ExpenseCategory::Insurance,
+    ]);
+    PropertyValuation::factory()->create(['property_id' => $property->id, 'date' => now()->toDateString(), 'value' => 150000]);
+
+    $this->actingAs($user);
+
+    visit("/properties/{$property->id}")
+        ->assertSee('T2 Lyon 7e')
+        ->assertScript(
+            "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
+            'hero|metrics|cash-flow|rents|expenses|amortization',
         )
         ->assertNoJavaScriptErrors();
 });
