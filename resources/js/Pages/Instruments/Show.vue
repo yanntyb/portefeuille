@@ -28,7 +28,11 @@ const props = defineProps<{
     <AppPage>
         <HeroSection :instrument="props.instrument" />
 
-        <ValuationSection v-if="props.instrument.position" :valuation="props.valuation" />
+        <ValuationSection
+            v-if="props.instrument.position"
+            :valuation="props.valuation"
+            :dividends="props.dividends.receipts"
+        />
 
         <PriceHistorySection v-else :price-history="props.priceHistory" />
 

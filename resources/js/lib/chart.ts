@@ -1,6 +1,7 @@
 import type { LineSeriesOption } from 'echarts/charts';
 import type { TooltipComponentOption } from 'echarts/components';
 import type { ChartOption } from './echarts';
+import type { DividendMark } from './income';
 import { isDark } from './theme';
 
 type ChartPalette = {
@@ -282,7 +283,7 @@ function datedPoints(labels: string[], values: number[]): [string, number][] {
  * porte plus sa propre courbe : il variait trop peu pour mériter un tracé, et l'infobulle le donne
  * chiffré à côté du gain.
  */
-function valueSeries(labels: string[], value: number[]): LineSeriesOption[] {
+function valueSeries(labels: string[], value: number[], dividends: DividendMark[]): LineSeriesOption[] {
     const colors = palette();
     const points = datedPoints(labels, value);
 
@@ -307,30 +308,85 @@ function valueSeries(labels: string[], value: number[]): LineSeriesOption[] {
                     ],
                 },
             },
-            markPoint: lastPointMarker(points),
+            markPoint: markPoints(points, dividends),
             data: points,
         },
     ];
 }
 
+/** Diamètre de la pastille de dernière valeur, la plus grosse du tracé. */
+const LAST_POINT_SIZE = 8;
+
+/** Pastille de détachement, plus petite : elle annote la courbe sans disputer la dernière valeur. */
+const DIVIDEND_POINT_SIZE = 6;
+
+type MarkPointItem = {
+    name: string;
+    coord: [string, number];
+    symbolSize: number;
+    itemStyle: { color: string; borderColor: string; borderWidth: number };
+};
+
+/**
+ * Pastilles posées sur la courbe : les détachements dans l'ordre de l'axe, la dernière valeur en
+ * dernier. Un seul `markPoint` par série chez ECharts, d'où leur cohabitation ici — chaque point
+ * porte donc sa taille et sa couleur, aucune ne pouvant être commune.
+ */
+function markPoints(points: [string, number][], dividends: DividendMark[]): LineSeriesOption['markPoint'] {
+    const data = [...dividendPoints(points, dividends), ...lastValuePoint(points)];
+
+    if (data.length === 0) {
+        return undefined;
+    }
+
+    return {
+        symbol: 'circle',
+        silent: true,
+        label: { show: false },
+        data,
+    };
+}
+
 /** Pastille sur la dernière valeur : elle ancre la lecture sur « où en est-on aujourd'hui ». */
-function lastPointMarker(points: [string, number][]): LineSeriesOption['markPoint'] {
+function lastValuePoint(points: [string, number][]): MarkPointItem[] {
     const last = points[points.length - 1];
 
     if (last === undefined) {
-        return undefined;
+        return [];
     }
 
     const colors = palette();
 
-    return {
-        symbol: 'circle',
-        symbolSize: 8,
-        silent: true,
-        label: { show: false },
+    return [{
+        name: 'Dernière valeur',
+        coord: last,
+        symbolSize: LAST_POINT_SIZE,
         itemStyle: { color: colors.value, borderColor: colors.surface, borderWidth: 2 },
-        data: [{ name: 'Dernière valeur', coord: last }],
-    };
+    }];
+}
+
+/**
+ * Une pastille par point porteur d'un détachement, et non par détachement : deux détachements
+ * calés sur la même semaine se superposeraient au pixel près. L'infobulle, elle, les énonce tous.
+ */
+function dividendPoints(points: [string, number][], dividends: DividendMark[]): MarkPointItem[] {
+    const colors = palette();
+    const indexes = [...new Set(dividends.map((mark: DividendMark): number => mark.index))];
+
+    return indexes
+        .map((index: number): [string, number] | undefined => points[index])
+        .filter((point): point is [string, number] => point !== undefined)
+        .map((point: [string, number]): MarkPointItem => ({
+            name: 'Détachement',
+            coord: point,
+            symbolSize: DIVIDEND_POINT_SIZE,
+            itemStyle: { color: colors.gain, borderColor: colors.surface, borderWidth: 2 },
+        }));
+}
+
+/** Détachements calés sur un point donné, dans l'ordre où `dividendMarks` les a rendus. */
+function dividendsAt(dividends: DividendMark[], index: number): DividendMark[] {
+    return dividends.filter((mark: DividendMark): boolean => mark.index === index);
 }
 
 /**
@@ -342,6 +398,7 @@ function valueVsInvestedTooltip(
     value: number[],
     invested: number[],
     valueFormatter: ValueFormatter,
+    dividends: DividendMark[],
 ): TooltipComponentOption {
     const colors = palette();
 
@@ -357,6 +414,14 @@ function valueVsInvestedTooltip(
             const totalInvested = invested[index] ?? 0;
             const gain = totalValue - totalInvested;
 
+            const dividendRows = dividendsAt(dividends, index)
+                .map((mark: DividendMark): string => tooltipRow(
+                    colors.gain,
+                    `Dividende · ${mark.dateLabel}`,
+                    mark.amountLabel,
+                ))
+                .join('');
+
             return tooltipTitle(labels[index] ?? '')
                 + tooltipRow(colors.value, 'Valeur', valueFormatter(totalValue))
                 + tooltipRow(colors.invested, 'Investi', valueFormatter(totalInvested))
@@ -364,7 +429,8 @@ function valueVsInvestedTooltip(
                     gain >= 0 ? colors.gain : colors.loss,
                     gain >= 0 ? 'Gain' : 'Perte',
                     `${gain >= 0 ? '+' : '−'} ${valueFormatter(Math.abs(gain))}`,
-                );
+                )
+                + dividendRows;
         },
     };
 }
@@ -387,6 +453,8 @@ type ValueVsInvestedInput = {
     /** `null` à la première peinture : la fenêtre d'ouverture se déduit alors de l'historique. */
     window: ZoomWindow | null;
     description: string;
+    /** Absent sur le tableau de bord : seule la fiche instrument annote ses détachements. */
+    dividends?: DividendMark[];
 };
 
 /** Le tableau de bord raisonne sur le portefeuille entier : les titres ne sont qu'un détail de calcul. */
@@ -434,7 +502,7 @@ const TIME_AXIS_LABEL_HEIGHT = 28;
  * choisie côté client par le `dataZoom` : rien ici ne dépend du réseau.
  */
 export function buildValueVsInvestedOption(
-    { labels, value, invested, valueFormatter, window, description }: ValueVsInvestedInput,
+    { labels, value, invested, valueFormatter, window, description, dividends = [] }: ValueVsInvestedInput,
 ): ChartOption {
     const visible = window ?? lastYearWindow(labels);
     const colors = palette();
@@ -447,8 +515,8 @@ export function buildValueVsInvestedOption(
             description,
         }),
         color: [colors.value],
-        series: valueSeries(labels, value),
-        tooltip: valueVsInvestedTooltip(labels, value, invested, valueFormatter),
+        series: valueSeries(labels, value, dividends),
+        tooltip: valueVsInvestedTooltip(labels, value, invested, valueFormatter, dividends),
         dataZoom: [
             /**
              * La mini-timeline est la seule commande de zoom : un `dataZoom` de type `inside`
@@ -519,7 +587,7 @@ export function buildPriceHistoryOption({ labels, close, valueFormatter }: Price
                     ],
                 },
             },
-            markPoint: lastPointMarker(points),
+            markPoint: markPoints(points, []),
             data: points,
         }],
     };

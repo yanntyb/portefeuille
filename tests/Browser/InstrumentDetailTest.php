@@ -261,3 +261,42 @@ it('n\'annonce aucun revenu attendu quand le dernier détachement date de plus d
         ->assertScript("document.querySelectorAll('[data-dividend-estimate]').length", 0)
         ->assertNoJavaScriptErrors();
 });
+
+/**
+ * Nombre de pastilles teintées de la couleur du gain dans le graphe de valorisation : les repères
+ * de détachement. Les deux teintes sont acceptées, le thème du navigateur de test décidant laquelle
+ * la palette rend.
+ */
+function dividendMarkers(): string
+{
+    return '(() => {
+        const gains = ["#00915d", "#34d399"];
+        const svg = document.querySelector("[data-section=\'valuation\'] [data-chart] svg");
+
+        return Array.from(svg.querySelectorAll("path")).filter(
+            (node) => gains.includes((node.getAttribute("fill") || "").toLowerCase()),
+        ).length;
+    })()';
+}
+
+it('pointe d\'une pastille chaque détachement sur le graphe de valorisation', function () {
+    ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
+
+    /** Position vieille de deux ans : la série de valorisation couvre alors le détachement. */
+    Transaction::query()
+        ->where('asset_id', $instrument->id)
+        ->update(['date' => now()->subYears(2)->format('Y-m-d')]);
+
+    Dividend::factory()->create([
+        'asset_id' => $instrument->id,
+        'ex_date' => now()->subMonths(3)->format('Y-m-d'),
+        'amount_per_share' => 0.5,
+    ]);
+
+    $this->actingAs($user);
+
+    visit("/instruments/{$instrument->id}")
+        ->assertVisible('[data-section="valuation"] [data-chart] svg')
+        ->assertScript(dividendMarkers(), 1)
+        ->assertNoJavaScriptErrors();
+});

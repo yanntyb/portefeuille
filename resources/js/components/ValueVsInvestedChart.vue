@@ -4,6 +4,7 @@ import { Deferred } from '@inertiajs/vue3';
 import ChartSkeleton from '@/components/ChartSkeleton.vue';
 import { buildValueVsInvestedOption, type ZoomWindow } from '@/lib/chart';
 import { eur } from '@/lib/format';
+import { dividendMarks, type DividendMark, type DividendReceipt } from '@/lib/income';
 import type { ChartOption } from '@/lib/echarts';
 
 const props = defineProps<{
@@ -13,6 +14,8 @@ const props = defineProps<{
     value: number[];
     invested: number[];
     description: string;
+    /** Absents sur le tableau de bord : seule la fiche instrument annote ses détachements. */
+    dividends?: DividendReceipt[];
 }>();
 
 /**
@@ -39,6 +42,9 @@ const rememberZoom = (window: ZoomWindow): void => {
 
 const hasHistory = computed<boolean>(() => props.labels.length > 0);
 
+/** Les repères se calent sur les points de la série : ils attendent donc que celle-ci arrive. */
+const marks = computed<DividendMark[]>(() => dividendMarks(props.labels, props.dividends ?? []));
+
 const option = computed<ChartOption>(() => buildValueVsInvestedOption({
     labels: props.labels,
     value: props.value,
@@ -46,6 +52,7 @@ const option = computed<ChartOption>(() => buildValueVsInvestedOption({
     valueFormatter: (amount: number): string => eur(amount, 0),
     window: lastZoom,
     description: props.description,
+    dividends: marks.value,
 }));
 </script>
 

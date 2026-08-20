@@ -1,4 +1,5 @@
 import { largestOf, relativeBarWidth } from '@/lib/bars';
+import { frDayMonth, signedEur } from '@/lib/format';
 
 export interface DividendReceipt {
     assetId: number;
@@ -76,3 +77,37 @@ export const dividendYears = (receipts: DividendReceipt[]): DividendYear[] => {
             receipts: yearReceipts,
         }));
 };
+
+export interface DividendMark {
+    /** Point de la série de valorisation sur lequel la pastille se pose. */
+    index: number;
+    /** Date réelle du détachement, et non celle du point : la pastille n'est qu'une approximation. */
+    dateLabel: string;
+    amountLabel: string;
+}
+
+/** Dernier point qui précède la date, ou `-1` quand la série commence après elle. */
+const pointIndexFor = (labels: string[], exDate: string): number =>
+    labels.reduce(
+        (found: number, label: string, index: number): number => (label <= exDate ? index : found),
+        -1,
+    );
+
+/**
+ * Pastilles de détachement à poser sur la courbe de valorisation. La série est hebdomadaire : un
+ * détachement tombe presque toujours entre deux points, et se cale donc sur le dernier qui le
+ * précède — le caler en avant le montrerait avant qu'il ait eu lieu. Un détachement antérieur au
+ * premier point n'a aucun point d'accroche : la position n'y était pas encore valorisée, il est
+ * écarté. Deux détachements calés sur le même point gardent chacun leur repère, l'infobulle les
+ * énonçant l'un sous l'autre plutôt qu'en un cumul qui perdrait leurs dates.
+ */
+export const dividendMarks = (labels: string[], receipts: DividendReceipt[]): DividendMark[] =>
+    receipts
+        .map((receipt: DividendReceipt) => ({ receipt, index: pointIndexFor(labels, receipt.exDate) }))
+        .filter(({ index }: { index: number }): boolean => index >= 0)
+        .sort((left, right) => left.index - right.index)
+        .map(({ receipt, index }): DividendMark => ({
+            index,
+            dateLabel: frDayMonth(receipt.exDate),
+            amountLabel: signedEur(receipt.amount),
+        }));

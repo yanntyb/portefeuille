@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { LineSeriesOption } from 'echarts/charts';
 import type { ChartOption } from '@/lib/echarts';
 import { eur } from '@/lib/format';
+import type { DividendMark } from '@/lib/income';
 
 /**
  * `lib/theme` crée son `ref` via `usePreferredDark()` au chargement du module, ce qui rendrait la
@@ -496,5 +497,96 @@ describe('buildValueVsInvestedOption — palette claire', () => {
         const axisLabel = (valueVsInvested(36).xAxis as { axisLabel: { color: string } }).axisLabel;
 
         expect(axisLabel.color).toBe('#9aa0ac');
+    });
+});
+
+/** Repères de détachement calés sur les points d'une série mensuelle, tels que `dividendMarks` les rend. */
+const marks = (entries: [number, string, string][]): DividendMark[] =>
+    entries.map(([index, dateLabel, amountLabel]) => ({ index, dateLabel, amountLabel }));
+
+const withDividends = (dividends: DividendMark[]): ChartOption => {
+    const labels = monthlyLabels(36);
+
+    return buildValueVsInvestedOption({
+        labels,
+        value: labels.map((_unused: string, index: number): number => 1000 + index * 10),
+        invested: labels.map((): number => 900),
+        valueFormatter: (value: number): string => eur(value, 0),
+        window: null,
+        description: 'Évolution avec détachements.',
+        dividends,
+    });
+};
+
+const markPointOf = (option: ChartOption) =>
+    seriesOf(option)[0].markPoint as unknown as {
+        data: { name: string; coord: [string, number]; itemStyle?: { color: string } }[];
+    };
+
+describe('buildValueVsInvestedOption — pastilles de détachement', () => {
+    it('pose une pastille sur le point de chaque détachement, en plus de celle de la dernière valeur', () => {
+        const data = markPointOf(withDividends(marks([
+            [3, '15 avr.', '+12,40 €'],
+            [10, '12 nov.', '+13,10 €'],
+        ]))).data;
+
+        expect(data.map((point) => point.coord[0])).toEqual([
+            '2023-04-01',
+            '2023-11-01',
+            '2025-12-01',
+        ]);
+    });
+
+    it('pose la pastille à la hauteur de la courbe, pour qu\'elle ne flotte pas hors du tracé', () => {
+        const [dividend] = markPointOf(withDividends(marks([[3, '15 avr.', '+12,40 €']]))).data;
+
+        expect(dividend.coord[1]).toBe(1030);
+    });
+
+    it('ne pose qu\'une pastille quand deux détachements se calent sur le même point', () => {
+        const data = markPointOf(withDividends(marks([
+            [3, '05 avr.', '+5,00 €'],
+            [3, '20 avr.', '+3,00 €'],
+        ]))).data;
+
+        expect(data.filter((point) => point.coord[0] === '2023-04-01')).toHaveLength(1);
+    });
+
+    it('teinte les pastilles de détachement de la couleur du gain, la valeur gardant la sienne', () => {
+        const data = markPointOf(withDividends(marks([[3, '15 avr.', '+12,40 €']]))).data;
+
+        expect(data[0].itemStyle?.color).toBe('#00915d');
+        expect(data[1].itemStyle?.color).toBe('#5257d6');
+    });
+
+    it('ne pose que la dernière valeur quand aucun détachement n\'est fourni', () => {
+        expect(markPointOf(withDividends([])).data).toHaveLength(1);
+    });
+
+    it('énonce dans l\'infobulle la date réelle du détachement et son montant', () => {
+        const html = tooltipHtml(withDividends(marks([[3, '15 avr.', '+12,40 €']])), 3)
+            .replace(/[\xa0 ]/g, ' ');
+
+        expect(html).toContain('Dividende');
+        expect(html).toContain('15 avr.');
+        expect(html).toContain('+12,40 €');
+    });
+
+    it('n\'énonce aucun dividende sur un point qui n\'en porte pas', () => {
+        const html = tooltipHtml(withDividends(marks([[3, '15 avr.', '+12,40 €']])), 4);
+
+        expect(html).not.toContain('Dividende');
+    });
+
+    it('énonce les deux détachements calés sur le même point, plutôt qu\'un cumul sans date', () => {
+        const html = tooltipHtml(withDividends(marks([
+            [3, '05 avr.', '+5,00 €'],
+            [3, '20 avr.', '+3,00 €'],
+        ])), 3).replace(/[\xa0 ]/g, ' ');
+
+        expect(html).toContain('05 avr.');
+        expect(html).toContain('20 avr.');
+        expect(html).toContain('+5,00 €');
+        expect(html).toContain('+3,00 €');
     });
 });
