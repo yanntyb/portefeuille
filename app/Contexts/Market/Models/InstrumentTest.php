@@ -4,7 +4,7 @@ use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Market\Models\SectorAllocation;
-use App\Contexts\Portfolio\Models\PersonalAsset;
+use Illuminate\Support\Facades\DB;
 
 it('applies the Stock type by default on creation', function () {
     $instrument = Instrument::create(['name' => 'Sans type']);
@@ -20,7 +20,12 @@ it('casts the type to an enum', function () {
 
 it('filters out non-market assets via the global scope', function () {
     Instrument::factory()->create();
-    PersonalAsset::factory()->create();
+    DB::table('assets')->insert([
+        'name' => 'Appartement témoin',
+        'type' => 'real_estate',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
 
     expect(Instrument::query()->count())->toBe(1)
         ->and(Instrument::query()->get()->pluck('type'))

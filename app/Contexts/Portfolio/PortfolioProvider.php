@@ -8,6 +8,6 @@ class PortfolioProvider extends ServiceProvider
 {
     public static function registers(): void
     {
-        // Pas de binding pour l'instant (PersonalAsset sans contrat ce coup-ci).
+        // Pas de binding pour l'instant.
     }
 }

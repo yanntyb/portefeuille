@@ -7,8 +7,8 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Table partagée par les instruments négociables (`Market\Models\Instrument`) et les actifs
-     * personnels (`Portfolio\Models\PersonalAsset`), discriminés par la colonne `type`.
+     * Table partagée par les instruments négociables (`Market\Models\Instrument`) et d'éventuels
+     * types hors marché, discriminés par la colonne `type`.
      */
     public function up(): void
     {
