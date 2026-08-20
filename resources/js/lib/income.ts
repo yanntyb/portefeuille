@@ -51,3 +51,30 @@ export const annualIncomeBars = (rows: AnnualIncome[]): AnnualIncomeBar[] => {
         barWidth: relativeBarWidth(row.total, largest),
     }));
 };
+
+export interface DividendYear {
+    year: string;
+    count: number;
+    /** Perçu sur l'année, détachements cumulés. */
+    total: number;
+    receipts: DividendReceipt[];
+}
+
+/** Regroupe les détachements par année, la plus récente en tête, l'ordre reçu conservé dans chaque groupe. */
+export const dividendYears = (receipts: DividendReceipt[]): DividendYear[] => {
+    const groups = new Map<string, DividendReceipt[]>();
+
+    for (const receipt of receipts) {
+        const year = receipt.exDate.slice(0, 4);
+        groups.set(year, [...(groups.get(year) ?? []), receipt]);
+    }
+
+    return [...groups.entries()]
+        .sort(([left], [right]) => right.localeCompare(left))
+        .map(([year, yearReceipts]) => ({
+            year,
+            count: yearReceipts.length,
+            total: yearReceipts.reduce((total, receipt) => total + receipt.amount, 0),
+            receipts: yearReceipts,
+        }));
+};

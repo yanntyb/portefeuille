@@ -1,26 +1,46 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-import { eur, frDate, pct } from '@/lib/format';
-import type { AssetDividendHistory } from '@/lib/income';
+import { computed, ref } from 'vue';
+import { ChevronRight } from 'lucide-vue-next';
+import { eur, frDayMonth, pct } from '@/lib/format';
+import { dividendYears, type AssetDividendHistory, type DividendYear } from '@/lib/income';
 
 const props = defineProps<{ dividends: AssetDividendHistory }>();
 
+const years = computed<DividendYear[]>(() => dividendYears(props.dividends.receipts));
+
 const heading = computed<string>(() => `Dividendes (${props.dividends.receipts.length})`);
+
+/**
+ * Seule l'année la plus récente s'ouvre : les précédentes relèvent de l'archive. « La plus
+ * récente » et non l'année civile courante — sans détachement cette année, un groupe ouvert vaut
+ * mieux qu'une section entièrement repliée.
+ */
+const openYears = ref<string[]>(years.value.slice(0, 1).map((group) => group.year));
+
+const isYearOpen = (year: string): boolean => openYears.value.includes(year);
+
+const toggleYear = (year: string): void => {
+    openYears.value = isYearOpen(year)
+        ? openYears.value.filter((open) => open !== year)
+        : [...openYears.value, year];
+};
+
+/** Une seule ligne détaillée à la fois : le détail se lit en regard de la ligne, pas en liste. */
+const openLine = ref<string | null>(null);
+
+const toggleLine = (key: string): void => {
+    openLine.value = openLine.value === key ? null : key;
+};
 
 /** Un montant par action se lit au millième : 0,51 € et 0,515 € ne sont pas le même dividende. */
 const perShare = (value: number): string => eur(value, 3);
+
+const detachmentsLabel = (group: DividendYear): string =>
+    `${group.count} détachement${group.count > 1 ? 's' : ''}`;
 </script>
 
 <template>
-    <section data-section="dividends" class="flex flex-col gap-6 px-6">
+    <section data-section="dividends" class="flex flex-col gap-4 px-6">
         <div class="flex flex-col gap-1.5">
             <h2 class="text-[17px] leading-none font-bold">{{ heading }}</h2>
             <p class="text-sm text-muted-foreground">
@@ -35,29 +55,52 @@ const perShare = (value: number): string => eur(value, 3);
             </p>
         </div>
 
-        <div class="min-w-0">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Détachement</TableHead>
-                        <TableHead class="text-right">Par action</TableHead>
-                        <TableHead class="text-right">Quantité</TableHead>
-                        <TableHead class="text-right">Perçu</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    <TableRow
-                        v-for="receipt in props.dividends.receipts"
-                        :key="receipt.exDate"
-                        data-dividend-row
-                    >
-                        <TableCell>{{ frDate(receipt.exDate) }}</TableCell>
-                        <TableCell class="text-right" data-dividend-per-share>{{ perShare(receipt.amountPerShare) }}</TableCell>
-                        <TableCell class="text-right" data-dividend-quantity>{{ receipt.quantity }}</TableCell>
-                        <TableCell class="text-right font-semibold" data-dividend-amount>{{ eur(receipt.amount) }}</TableCell>
-                    </TableRow>
-                </TableBody>
-            </Table>
+        <div class="flex min-w-0 flex-col">
+            <div
+                v-for="group in years"
+                :key="group.year"
+                class="flex flex-col border-b border-border last:border-b-0"
+            >
+                <button
+                    type="button"
+                    :data-dividend-year="group.year"
+                    class="flex items-center gap-1.5 py-3 text-sm"
+                    :aria-expanded="isYearOpen(group.year)"
+                    @click="toggleYear(group.year)"
+                >
+                    <ChevronRight
+                        class="size-4 shrink-0 text-muted-foreground transition-transform"
+                        :class="isYearOpen(group.year) ? 'rotate-90' : ''"
+                    />
+                    <span class="font-semibold">{{ group.year }}</span>
+                    <span class="text-muted-foreground">{{ detachmentsLabel(group) }}</span>
+                    <span class="ml-auto font-semibold">{{ eur(group.total) }}</span>
+                </button>
+
+                <div v-if="isYearOpen(group.year)" class="flex flex-col pb-2">
+                    <template v-for="(receipt, index) in group.receipts" :key="`${group.year}-${index}`">
+                        <button
+                            type="button"
+                            data-dividend-row
+                            class="flex items-center gap-3 py-2 pl-[22px] text-sm"
+                            :aria-expanded="openLine === `${group.year}-${index}`"
+                            @click="toggleLine(`${group.year}-${index}`)"
+                        >
+                            <span class="text-muted-foreground">{{ frDayMonth(receipt.exDate) }}</span>
+                            <span class="ml-auto font-medium" data-dividend-amount>{{ eur(receipt.amount) }}</span>
+                        </button>
+
+                        <p
+                            v-if="openLine === `${group.year}-${index}`"
+                            data-dividend-detail
+                            class="pb-2 pl-[22px] text-xs text-muted-foreground"
+                        >
+                            <span data-dividend-quantity>{{ receipt.quantity }}</span> ×
+                            <span data-dividend-per-share>{{ perShare(receipt.amountPerShare) }}</span> par action
+                        </p>
+                    </template>
+                </div>
+            </div>
         </div>
     </section>
 </template>

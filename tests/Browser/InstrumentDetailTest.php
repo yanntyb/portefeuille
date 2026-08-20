@@ -156,9 +156,20 @@ it('affiche les dividendes perçus quand l\'instrument en verse', function () {
 
     $this->actingAs($user);
 
+    /**
+     * Treize mois séparent les deux détachements : ils tombent toujours sur deux années civiles
+     * distinctes, quelle que soit la date d'exécution — donc sur deux groupes dont seul le plus
+     * récent s'ouvre.
+     */
+    $recentYear = now()->subMonths(2)->format('Y');
+    $olderYear = now()->subMonths(15)->format('Y');
+
     visit("/instruments/{$instrument->id}")
         ->assertSee('Dividendes (2)')
-        ->assertScript("document.querySelectorAll('[data-dividend-row]').length", 2)
+        ->assertScript(
+            "Array.from(document.querySelectorAll('[data-dividend-year]')).map(el => el.dataset.dividendYear).join('|')",
+            "{$recentYear}|{$olderYear}",
+        )
         // `includes` et non une égalité : `Intl` sépare le montant du symbole par une espace
         // insécable étroite, invisible dans le source du test mais fatale à une comparaison stricte.
         // Le total (8,00 €) cumule les deux détachements ; le perçu à douze mois (5,00 €) ne garde
@@ -169,13 +180,18 @@ it('affiche les dividendes perçus quand l\'instrument en verse', function () {
         // Rendement calculé sur le seul détachement de la fenêtre des douze mois (5,00 € rapportés
         // à un coût de 800 €), pas sur le total des deux.
         ->assertScript("document.querySelector('[data-dividend-yield]').textContent.includes('0,6')", true)
-        // Les reçus se rendent du plus récent au plus ancien : la première ligne du tableau est
-        // celle du détachement le plus récent. Trois cellules distinctes l'une de l'autre, pour
-        // qu'une interversion de colonnes tombe : le montant par action, la quantité détenue et le
-        // montant perçu ne se ressemblent pas.
-        ->assertScript("document.querySelector('[data-dividend-per-share]').textContent.includes('0,50')", true)
-        ->assertScript("document.querySelector('[data-dividend-quantity]').textContent.trim()", '10')
+        // Seule l'année la plus récente est dépliée : sa ligne est celle du détachement d'il y a
+        // deux mois, et le détail par action reste caché jusqu'au clic sur la ligne.
+        ->assertScript("document.querySelectorAll('[data-dividend-row]').length", 1)
         ->assertScript("document.querySelector('[data-dividend-amount]').textContent.includes('5,00')", true)
+        ->assertScript("document.querySelectorAll('[data-dividend-detail]').length", 0)
+        ->click('[data-dividend-row]')
+        // Deux valeurs distinctes l'une de l'autre dans le détail, pour qu'une interversion tombe :
+        // la quantité détenue et le montant par action ne se ressemblent pas.
+        ->assertScript("document.querySelector('[data-dividend-quantity]').textContent.trim()", '10')
+        ->assertScript("document.querySelector('[data-dividend-per-share]').textContent.includes('0,50')", true)
+        ->click('[data-dividend-year="'.$olderYear.'"]')
+        ->assertScript("document.querySelectorAll('[data-dividend-row]').length", 2)
         ->assertNoJavaScriptErrors();
 });
 
