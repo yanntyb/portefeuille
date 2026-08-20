@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Deferred } from '@inertiajs/vue3';
-import { eur } from '@/lib/format';
+import { eur, fractionPct as pct } from '@/lib/format';
 import type { AmortizationLine, LoanSummary } from '@/lib/realEstate';
 
 const props = defineProps<{ loan: LoanSummary; lines?: AmortizationLine[] }>();
@@ -13,8 +13,6 @@ const frMonth = (value: string): string => {
         ? value
         : date.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
 };
-
-const pct = (ratio: number): string => `${(ratio * 100).toFixed(2).replace('.', ',')} %`;
 </script>
 
 <template>

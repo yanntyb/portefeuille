@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import { eur } from '@/lib/format';
+import { eur, fractionPct as pct } from '@/lib/format';
 import type { LoanSummary, PropertyMetrics } from '@/lib/realEstate';
 
 const props = defineProps<{ metrics: PropertyMetrics; loan: LoanSummary | null }>();
-
-/** `metrics.*` sont des fractions (0,0655 = 6,55 %) : les mettre à l'échelle avant affichage. */
-const pct = (ratio: number): string => `${(ratio * 100).toFixed(2).replace('.', ',')} %`;
 </script>
 
 <template>

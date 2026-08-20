@@ -20,6 +20,13 @@ export const signedPct = (value: number): string => {
     return `${delta >= 0 ? '+' : ''}${oneDecimal(delta)} %`;
 };
 
+/**
+ * Formate une fraction (0,0655 = 6,55 %), à la différence de `pct()` qui reçoit des points de
+ * pourcentage déjà à l'échelle et signés. Deux décimales, jamais de signe : les ratios qu'elle
+ * sert (rendement, LTV…) se lisent en valeur absolue.
+ */
+export const fractionPct = (ratio: number): string => `${(ratio * 100).toFixed(2).replace('.', ',')} %`;
+
 export const frDate = (value: string): string => {
     const date = new Date(`${value}T00:00:00`);
 
