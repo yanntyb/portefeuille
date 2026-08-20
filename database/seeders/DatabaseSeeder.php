@@ -28,5 +28,6 @@ class DatabaseSeeder extends Seeder
         $this->call(BtcDcaSeeder::class);
         $this->call(GoldDcaSeeder::class);
         $this->call(DividendDemoSeeder::class);
+        $this->call(RealEstateDemoSeeder::class);
     }
 }
