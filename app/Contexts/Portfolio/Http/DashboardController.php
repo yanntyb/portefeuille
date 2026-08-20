@@ -10,6 +10,8 @@ use App\Contexts\InstrumentView\Actions\GetHoldingTrends;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Actions\GetSectorBreakdown;
 use App\Contexts\Portfolio\Datas\PortfolioOverviewData;
+use App\Contexts\RealEstate\Actions\GetRealEstateOverview;
+use App\Contexts\RealEstate\Datas\RealEstateOverviewData;
 use App\Contexts\Valuation\Actions\BuildEvolutionSeries;
 use App\Contexts\Valuation\Actions\BuildPortfolioPerformances;
 use App\Contexts\Valuation\Datas\EvolutionSeriesData;
@@ -58,6 +60,9 @@ class DashboardController
             'annualIncome' => Inertia::defer(fn () => $user !== null
                 ? app(GetAnnualIncome::class)($user->id)
                 : [], 'revenus'),
+            'realEstate' => Inertia::defer(fn () => $user !== null
+                ? app(GetRealEstateOverview::class)($user->id)
+                : RealEstateOverviewData::empty(), 'immobilier'),
         ]);
     }
 }

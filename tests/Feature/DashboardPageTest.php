@@ -10,6 +10,8 @@ use App\Contexts\Market\Models\SectorAllocation;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
+use App\Contexts\RealEstate\Models\Property;
+use App\Contexts\RealEstate\Models\PropertyValuation;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -323,6 +325,25 @@ it('diffère le revenu perçu et son historique annuel dans le groupe revenus', 
                 ->has('annualIncome', 2)
                 ->where('annualIncome.0.year', 2025)
                 ->where('annualIncome.1.total', fn ($v) => (float) $v === 8.0)
+            )
+        );
+});
+
+it('defers the real estate overview and loads it in its own group', function () {
+    $user = User::factory()->create();
+    $property = Property::factory()->create(['user_id' => $user->id, 'name' => 'T2 Lyon 7e']);
+    PropertyValuation::factory()->create(['property_id' => $property->id, 'value' => 120000]);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Dashboard')
+            ->missing('realEstate')
+            ->loadDeferredProps('immobilier', fn (Assert $reload) => $reload
+                ->has('realEstate.properties', 1)
+                ->where('realEstate.properties.0.name', 'T2 Lyon 7e')
+                ->where('realEstate.totalValue', fn ($v) => (float) $v === 120000.0)
+                ->where('realEstate.totalNetWorth', fn ($v) => (float) $v === 120000.0)
             )
         );
 });
