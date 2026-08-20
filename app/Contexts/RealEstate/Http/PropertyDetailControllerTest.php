@@ -15,8 +15,7 @@ it('renders the property page with its deferred amortization', function () {
     $this->get(route('properties.show', $property->id))
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page
-            /** La page Vue arrive en tâche 11 : on ignore la vérification d'existence sur disque. */
-            ->component('Properties/Detail', false)
+            ->component('Properties/Detail')
             ->where('property.name', 'T2 Lyon 7e')
             ->has('property.metrics'));
 });
