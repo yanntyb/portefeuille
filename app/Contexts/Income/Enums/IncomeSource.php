@@ -9,6 +9,7 @@ namespace App\Contexts\Income\Enums;
 enum IncomeSource: string
 {
     case Dividend = 'dividend';
+    case Rent = 'rent';
 
     /** @return list<string> */
     public static function values(): array
@@ -20,6 +21,7 @@ enum IncomeSource: string
     {
         return match ($this) {
             self::Dividend => 'Dividendes',
+            self::Rent => 'Loyers',
         };
     }
 }

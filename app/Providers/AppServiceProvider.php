@@ -6,6 +6,8 @@ use App\Contexts\Income\IncomeProvider;
 use App\Contexts\Income\Sources\Dividend\DividendIncomeSource;
 use App\Contexts\Income\Sources\Dividend\Infrastructure\MarketDividendHistory;
 use App\Contexts\Income\Sources\Dividend\Infrastructure\PortfolioPositionHistory;
+use App\Contexts\Income\Sources\Rent\Infrastructure\RealEstateRentSchedule;
+use App\Contexts\Income\Sources\Rent\RentIncomeSource;
 use App\Contexts\InstrumentView\Infrastructure\MarketData;
 use App\Contexts\InstrumentView\Infrastructure\PortfolioHoldings;
 use App\Contexts\InstrumentView\Infrastructure\PortfolioTransactions;
@@ -65,9 +67,10 @@ class AppServiceProvider extends ServiceProvider
 
         IncomeProvider::registers(
             app: $this->app,
-            sources: [DividendIncomeSource::class],
+            sources: [DividendIncomeSource::class, RentIncomeSource::class],
             dividendHistory: MarketDividendHistory::class,
             positionHistory: PortfolioPositionHistory::class,
+            rentSchedule: RealEstateRentSchedule::class,
         );
     }
 
