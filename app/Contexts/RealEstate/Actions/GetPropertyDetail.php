@@ -54,7 +54,7 @@ class GetPropertyDetail
             monthlyCashFlows: $this->monthlyCashFlows($property, $months, $today),
             rentHistory: array_reverse($months),
             expenseYears: $this->expenseYears($property),
-            loan: $this->loanSummary($property, $today, $financials->remainingPrincipal),
+            loan: $this->loanSummary($property, $today),
         );
     }
 
@@ -155,7 +155,7 @@ class GetPropertyDetail
         return $entries;
     }
 
-    private function loanSummary(Property $property, Carbon $today, float $remaining): ?LoanSummaryData
+    private function loanSummary(Property $property, Carbon $today): ?LoanSummaryData
     {
         $loan = $property->loans->first();
 
@@ -173,7 +173,7 @@ class GetPropertyDetail
             startDate: $loan->start_date->toDateString(),
             monthlyInsurance: (float) $loan->monthly_insurance,
             monthlyPayment: $schedule[0]->payment,
-            remainingPrincipal: $remaining,
+            remainingPrincipal: $this->assembler->remainingFor($loan, $today),
             totalCost: round($totalPaid - (float) $loan->principal, 2),
         );
     }

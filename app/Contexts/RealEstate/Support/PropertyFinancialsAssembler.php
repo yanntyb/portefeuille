@@ -89,6 +89,12 @@ class PropertyFinancialsAssembler
         );
     }
 
+    /** Capital restant dû sur un seul prêt, à une date — par opposition au total tous prêts confondus. */
+    public function remainingFor(Loan $loan, Carbon $date): float
+    {
+        return $this->amortization->remainingAt($this->scheduleFor($loan), $date);
+    }
+
     /** @return list<LeaseTermData> */
     public function leaseTerms(Property $property): array
     {
