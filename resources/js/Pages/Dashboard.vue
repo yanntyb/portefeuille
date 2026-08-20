@@ -5,12 +5,14 @@ import EvolutionSection from '@/components/dashboard/EvolutionSection.vue';
 import IncomeSection from '@/components/dashboard/IncomeSection.vue';
 import InstrumentsSection from '@/components/dashboard/InstrumentsSection.vue';
 import PerformancesSection from '@/components/dashboard/PerformancesSection.vue';
+import RealEstateSection from '@/components/dashboard/RealEstateSection.vue';
 import SectorsSection from '@/components/dashboard/SectorsSection.vue';
 import ValuationSection from '@/components/dashboard/ValuationSection.vue';
 import type { CatalogTrend } from '@/lib/catalog';
 import type { AnnualIncome, IncomeSummary } from '@/lib/income';
 import type { Performance } from '@/lib/performance';
 import type { EvolutionSeries, PortfolioOverview } from '@/lib/portfolio';
+import type { RealEstateOverview } from '@/lib/realEstate';
 import type { SectorSlice } from '@/lib/sector';
 
 defineProps<{
@@ -21,6 +23,7 @@ defineProps<{
     sectorBreakdown?: SectorSlice[];
     income?: IncomeSummary;
     annualIncome?: AnnualIncome[];
+    realEstate?: RealEstateOverview;
 }>();
 </script>
 
@@ -38,6 +41,8 @@ defineProps<{
         <PerformancesSection v-if="overview.holdings.length" :performances="performances" />
 
         <IncomeSection v-if="overview.holdings.length" :income="income" :annual-income="annualIncome" />
+
+        <RealEstateSection :real-estate="realEstate" />
 
         <SectorsSection v-if="overview.holdings.length" :slices="sectorBreakdown" />
     </AppPage>
