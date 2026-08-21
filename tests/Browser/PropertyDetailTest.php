@@ -54,8 +54,55 @@ it('ordonne les sections comme la fiche d\'un instrument, le graphe sous l\'en-t
     visit("/properties/{$property->id}")
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'hero|metrics|cash-flow|rents|expenses|amortization',
+            'hero|loan|metrics|cash-flow|rents|expenses',
         )
+        ->assertNoJavaScriptErrors();
+});
+
+it('situe le prêt : échéances réglées, capital remboursé, intérêts', function () {
+    /** Prêt de la fixture : 80 000 € sur 240 mois à 0 %, démarré il y a vingt mois. */
+    ['user' => $user, 'property' => $property] = propertyFixture(['loan' => true]);
+
+    $this->actingAs($user);
+
+    $summary = "Array.from(document.querySelectorAll('[data-loan-summary] > span'))
+        .map(el => el.textContent.replace(/\\s+/g, ' ').trim()).join('|')";
+
+    visit("/properties/{$property->id}")
+        ->assertSee('Crédit')
+        ->assertScript("({$summary}).includes('Payé 20/240 mois')", true)
+        ->assertScript("({$summary}).includes('Mensualité 333,33 €')", true)
+        ->assertScript("({$summary}).includes('Intérêts à venir 0,00 €')", true)
+        ->assertNoJavaScriptErrors();
+});
+
+it('replie l\'échéancier par année et ouvre celle en cours', function () {
+    ['user' => $user, 'property' => $property] = propertyFixture(['loan' => true]);
+
+    $this->actingAs($user);
+
+    $currentYear = now()->year;
+    $thisMonth = now()->startOfMonth()->toDateString();
+
+    visit("/properties/{$property->id}")
+        ->assertScript("document.querySelectorAll('[data-loan-year]').length >= 2", true)
+        ->assertScript("document.querySelectorAll('[data-loan-month]').length > 0", true)
+        ->assertScript("document.querySelectorAll('[data-loan-month=\"{$thisMonth}\"]').length", 1)
+        ->click("[data-loan-year=\"{$currentYear}\"]")
+        ->assertScript("document.querySelectorAll('[data-loan-month]').length", 0)
+        ->assertNoJavaScriptErrors();
+});
+
+it('cumule les années à venir en une ligne, dépliable année par année', function () {
+    ['user' => $user, 'property' => $property] = propertyFixture(['loan' => true]);
+
+    $this->actingAs($user);
+
+    visit("/properties/{$property->id}")
+        ->assertSee('À venir')
+        ->assertScript("document.querySelectorAll('[data-loan-future-year]').length", 0)
+        ->click('[data-loan-future]')
+        ->assertScript("document.querySelectorAll('[data-loan-future-year]').length >= 18", true)
         ->assertNoJavaScriptErrors();
 });
 
