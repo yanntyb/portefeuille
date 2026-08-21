@@ -29,8 +29,10 @@ class WealthProvider extends ServiceProvider
         $app->bind(IncomePort::class, $income);
 
         /**
-         * Le résumé, la série et les revenus interrogent tous les trois le parc immobilier dans la
-         * même requête : `scoped()` évite de refaire trois fois les mêmes lectures.
+         * Les trois actions du contexte (résumé, série, revenus) partagent une même instance de
+         * l'adaptateur pour la durée de la requête : `scoped()` donne au port un unique cycle de
+         * vie par requête plutôt que trois. Les lectures sous-jacentes ne sont pas mémoïsées pour
+         * autant — chaque appel rejoue ses propres requêtes sur le parc immobilier.
          */
         $app->scoped(RealEstatePort::class, $realEstate);
     }

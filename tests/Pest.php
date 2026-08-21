@@ -16,6 +16,9 @@ use App\Contexts\RealEstate\Models\Loan;
 use App\Contexts\RealEstate\Models\Property;
 use App\Contexts\RealEstate\Models\PropertyExpense;
 use App\Contexts\RealEstate\Models\PropertyValuation;
+use App\Contexts\Wealth\Datas\ClassSeriesData;
+use App\Contexts\Wealth\Datas\ClassSnapshotData;
+use App\Contexts\Wealth\Ports\RealEstatePort;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
@@ -222,6 +225,41 @@ function dividendFixture(): array
     Dividend::factory()->create(['asset_id' => $instrument->id, 'ex_date' => '2026-03-05', 'amount_per_share' => 0.8]);
 
     return ['user' => $user, 'instrument' => $instrument];
+}
+
+/**
+ * Fausse implémentation de `Wealth\Ports\RealEstatePort` : une valeur et un investi choisis,
+ * un historique vide, et par défaut un cash-flow locatif net nul.
+ *
+ * Partagée entre `GetWealthOverviewTest` et `GetWealthIncomeTest` : comme `dividendFixture()`,
+ * c'est la seule aide de `app/Contexts/Wealth/**Test.php` consommée depuis plus d'un fichier, ce
+ * qui la place ici plutôt qu'à côté de l'un des deux.
+ */
+function fakeRealEstate(float $value, float $invested, float $monthlyNet = 0.0): void
+{
+    app()->bind(RealEstatePort::class, fn (): RealEstatePort => new class($value, $invested, $monthlyNet) implements RealEstatePort
+    {
+        public function __construct(
+            private float $value,
+            private float $invested,
+            private float $monthlyNet,
+        ) {}
+
+        public function snapshotFor(int $userId): ClassSnapshotData
+        {
+            return new ClassSnapshotData($this->value, $this->invested);
+        }
+
+        public function seriesFor(int $userId): ClassSeriesData
+        {
+            return ClassSeriesData::empty();
+        }
+
+        public function monthlyNetFor(int $userId): float
+        {
+            return $this->monthlyNet;
+        }
+    });
 }
 
 /**
