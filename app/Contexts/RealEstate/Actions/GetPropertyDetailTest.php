@@ -31,7 +31,7 @@ it('assembles the whole property sheet', function () {
 
     expect($detail->name)->toBe('T2 Lyon 7e')
         ->and($detail->currentValue)->toBe(120000.0)
-        ->and($detail->monthlyCashFlows)->toHaveCount(12)
+        ->and($detail->monthlyCashFlows)->toHaveCount(20)
         ->and($detail->rentHistory[0]->month)->toBe('2026-08-01')
         ->and($detail->loan->monthlyPayment)->toBe(300.0)
         ->and($detail->expenseYears[0]->year)->toBe(2026)
@@ -120,4 +120,41 @@ it('yields null for a property of another user', function () {
     $property = Property::factory()->create();
 
     expect(app(GetPropertyDetail::class)($user->id, $property->id))->toBeNull();
+});
+
+it('étend la fenêtre du cash-flow à tout l\'historique des loyers', function () {
+    Carbon::setTestNow('2026-08-20');
+
+    $user = User::factory()->create();
+    $property = Property::factory()->create(['user_id' => $user->id]);
+    Lease::factory()->create([
+        'property_id' => $property->id,
+        'monthly_rent' => 600,
+        'start_date' => '2025-01-01',
+        'end_date' => null,
+    ]);
+
+    $flows = app(GetPropertyDetail::class)($user->id, $property->id)->monthlyCashFlows;
+
+    // Vingt mois de bail : le cash-flow se lit sur la même profondeur que les loyers, sinon la
+    // liste fusionnée afficherait des loyers sans net en regard.
+    expect($flows)->toHaveCount(20)
+        ->and($flows[0]->month)->toBe('2025-01-01')
+        ->and($flows[19]->month)->toBe('2026-08-01');
+
+    Carbon::setTestNow();
+});
+
+it('garde douze mois de cash-flow sur un bien sans bail', function () {
+    Carbon::setTestNow('2026-08-20');
+
+    $user = User::factory()->create();
+    $property = Property::factory()->create(['user_id' => $user->id]);
+
+    $flows = app(GetPropertyDetail::class)($user->id, $property->id)->monthlyCashFlows;
+
+    expect($flows)->toHaveCount(12)
+        ->and($flows[0]->month)->toBe('2025-09-01');
+
+    Carbon::setTestNow();
 });

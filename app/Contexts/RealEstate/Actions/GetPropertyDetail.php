@@ -65,7 +65,7 @@ class GetPropertyDetail
      */
     private function monthlyCashFlows(Property $property, array $months, Carbon $today): array
     {
-        $windowStart = $today->copy()->startOfMonth()->subMonthsNoOverflow(11)->toDateString();
+        $windowStart = $this->cashFlowWindowStart($months, $today);
 
         $rentsByMonth = [];
         foreach ($months as $month) {
@@ -86,9 +86,10 @@ class GetPropertyDetail
         }
 
         $flows = [];
-        $cursor = Carbon::parse($windowStart);
+        $cursor = $windowStart->copy();
+        $lastMonth = $today->copy()->startOfMonth();
 
-        for ($index = 0; $index < 12; $index++) {
+        while ($cursor <= $lastMonth) {
             $key = $cursor->toDateString();
             $rents = $rentsByMonth[$key] ?? 0.0;
             $expenses = $expensesByMonth[$key] ?? 0.0;
@@ -106,6 +107,25 @@ class GetPropertyDetail
         }
 
         return $flows;
+    }
+
+    /**
+     * Premier mois du cash-flow : douze mois glissants au moins, et tout l'historique des loyers
+     * quand le bail est plus ancien — chaque loyer se lit avec son net en regard.
+     *
+     * @param  list<RentMonthData>  $months  Ordre chronologique.
+     */
+    private function cashFlowWindowStart(array $months, Carbon $today): Carbon
+    {
+        $slidingStart = $today->copy()->startOfMonth()->subMonthsNoOverflow(11);
+
+        if ($months === []) {
+            return $slidingStart;
+        }
+
+        $firstRentMonth = Carbon::parse($months[0]->month);
+
+        return $firstRentMonth < $slidingStart ? $firstRentMonth : $slidingStart;
     }
 
     /** @return list<ExpenseYearData> */
