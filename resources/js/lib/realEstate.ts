@@ -1,4 +1,4 @@
-import { eur, signedEur } from '@/lib/format';
+import { eur, fractionPct, frMonthYear, signedEur } from '@/lib/format';
 import type { HeroMetaEntry } from '@/lib/instrument';
 import type { SectorBreakdownRow } from '@/lib/sector';
 
@@ -61,6 +61,12 @@ export interface LoanSummary {
     monthlyPayment: number;
     remainingPrincipal: number;
     totalCost: number;
+    /** Mois de la dernière échéance. */
+    endDate: string;
+    monthsPaid: number;
+    principalRepaid: number;
+    interestPaid: number;
+    interestRemaining: number;
 }
 
 export interface AmortizationLine {
@@ -199,3 +205,95 @@ export const expenseRows = (year: ExpenseYear): SectorBreakdownRow[] =>
         share: year.total === 0 ? 0 : (entry.amount / year.total) * 100,
         amount: entry.amount,
     }));
+
+/**
+ * Repères d'un prêt en cours : d'abord ses conditions, puis où il en est. Mêmes paires
+ * libellé/valeur que l'en-tête d'un bien, donc la même grille à deux colonnes les affiche.
+ */
+export const loanProgress = (loan: LoanSummary): HeroMetaEntry[] => {
+    /** Part du capital, et non des échéances : les premières mensualités remboursent peu. */
+    const repaidShare = loan.principal <= 0 ? 0 : (loan.principalRepaid / loan.principal) * 100;
+
+    return [
+        { label: 'Emprunté', value: eur(loan.principal) },
+        { label: 'Taux', value: fractionPct(loan.annualRate) },
+        { label: 'Mensualité', value: eur(loan.monthlyPayment) },
+        { label: 'Fin', value: frMonthYear(loan.endDate) },
+        { label: 'Payé', value: `${loan.monthsPaid}/${loan.termMonths} mois` },
+        { label: 'Capital remboursé', value: `${eur(loan.principalRepaid, 0)} · ${Math.round(repaidShare)} %` },
+        { label: 'Restant dû', value: eur(loan.remainingPrincipal) },
+        { label: 'Coût total', value: eur(loan.totalCost) },
+        { label: 'Intérêts payés', value: eur(loan.interestPaid) },
+        { label: 'Intérêts à venir', value: eur(loan.interestRemaining) },
+    ];
+};
+
+export interface LoanYear {
+    year: string;
+    payments: number;
+    interest: number;
+    principal: number;
+    /** Capital restant dû après la dernière échéance de l'année. */
+    remaining: number;
+    isCurrent: boolean;
+    months: AmortizationLine[];
+}
+
+export interface LoanFuture {
+    payments: number;
+    interest: number;
+    principal: number;
+    /** Détail année par année, du plus proche au plus lointain. */
+    years: LoanYear[];
+}
+
+export interface LoanSchedule {
+    /** Années échues et année en cours, la plus récente en tête. */
+    past: LoanYear[];
+    /** Cumul des années suivantes, ou `null` quand la dernière échéance est passée. */
+    future: LoanFuture | null;
+}
+
+/** Une année de l'échéancier : les lignes arrivent dans l'ordre chronologique, il est conservé. */
+const loanYearOf = (year: string, months: AmortizationLine[], currentYear: number): LoanYear => ({
+    year,
+    payments: months.reduce((total, month) => total + month.payment, 0),
+    interest: months.reduce((total, month) => total + month.interest, 0),
+    principal: months.reduce((total, month) => total + month.principal, 0),
+    remaining: months[months.length - 1].remaining,
+    isCurrent: year === String(currentYear),
+    months,
+});
+
+/**
+ * L'échéancier replié par année : ce qui a été payé se lit ligne par ligne, ce qui reste dû tient
+ * en une seule ligne cumulée — sur vingt ans, les années à venir écraseraient sinon le passé.
+ */
+export const loanYears = (lines: AmortizationLine[], currentYear: number): LoanSchedule => {
+    const groups = new Map<string, AmortizationLine[]>();
+
+    for (const line of lines) {
+        const year = line.month.slice(0, 4);
+        groups.set(year, [...(groups.get(year) ?? []), line]);
+    }
+
+    const years = [...groups.entries()].map(([year, months]) => loanYearOf(year, months, currentYear));
+
+    const past = years
+        .filter((year) => Number(year.year) <= currentYear)
+        .sort((left, right) => right.year.localeCompare(left.year));
+
+    const future = years
+        .filter((year) => Number(year.year) > currentYear)
+        .sort((left, right) => left.year.localeCompare(right.year));
+
+    return {
+        past,
+        future: future.length === 0 ? null : {
+            payments: future.reduce((total, year) => total + year.payments, 0),
+            interest: future.reduce((total, year) => total + year.interest, 0),
+            principal: future.reduce((total, year) => total + year.principal, 0),
+            years: future,
+        },
+    };
+};

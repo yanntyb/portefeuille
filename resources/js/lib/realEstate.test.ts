@@ -5,9 +5,12 @@ import {
     capitalGainPctOf,
     cashFlowYears,
     expenseRows,
+    loanProgress,
+    loanYears,
     propertyHeroMeta,
     rentMonthStatus,
     rentYears,
+    type AmortizationLine,
     type ExpenseYear,
     type LoanSummary,
     type MonthlyCashFlow,
@@ -60,6 +63,11 @@ const loan = (overrides: Partial<LoanSummary> = {}): LoanSummary => ({
     monthlyPayment: 420,
     remainingPrincipal: 50000,
     totalCost: 20800,
+    endDate: '2040-01-01',
+    monthsPaid: 24,
+    principalRepaid: 30000,
+    interestPaid: 2000,
+    interestRemaining: 18800,
     ...overrides,
 });
 
@@ -175,5 +183,103 @@ describe('expenseRows', () => {
 
     it('rend une part nulle plutôt qu\'une division par zéro sur une année vide', () => {
         expect(expenseRows({ year: 2025, byCategory: [{ category: 'tax', label: 'Taxe foncière', amount: 0 }], total: 0 })[0].share).toBe(0);
+    });
+});
+
+describe('loanProgress', () => {
+    const summary = loan({
+        principal: 80000,
+        annualRate: 0.02,
+        termMonths: 240,
+        monthlyPayment: 405,
+        remainingPrincipal: 74210,
+        totalCost: 17200,
+        endDate: '2044-03-01',
+        monthsPaid: 28,
+        principalRepaid: 5790,
+        interestPaid: 3100,
+        interestRemaining: 14100,
+    });
+
+    it('énonce les conditions du prêt puis la situation, dix repères en tout', () => {
+        expect(loanProgress(summary).map((entry) => entry.label)).toEqual([
+            'Emprunté',
+            'Taux',
+            'Mensualité',
+            'Fin',
+            'Payé',
+            'Capital remboursé',
+            'Restant dû',
+            'Coût total',
+            'Intérêts payés',
+            'Intérêts à venir',
+        ]);
+    });
+
+    it('compte les échéances réglées sur la durée totale', () => {
+        expect(loanProgress(summary)[4].value).toBe('28/240 mois');
+    });
+
+    it('rapporte le capital remboursé au capital emprunté, pas aux échéances', () => {
+        // 5 790 € sur 80 000 € : 7 %, quand 28 échéances sur 240 en feraient 12.
+        expect(loanProgress(summary)[5].value).toContain('7 %');
+    });
+
+    it('rend une part nulle plutôt qu\'une division par zéro sur un capital nul', () => {
+        expect(loanProgress(loan({ principal: 0, principalRepaid: 0 }))[5].value).toContain('0 %');
+    });
+});
+
+describe('loanYears', () => {
+    const line = (month: string, remaining: number): AmortizationLine => ({
+        month,
+        payment: 100,
+        interest: 10,
+        principal: 90,
+        insurance: 0,
+        remaining,
+    });
+
+    const lines: AmortizationLine[] = [
+        line('2025-11-01', 400),
+        line('2025-12-01', 310),
+        line('2026-01-01', 220),
+        line('2026-02-01', 130),
+        line('2027-01-01', 0),
+    ];
+
+    it('groupe les années échues et en cours, la plus récente en tête', () => {
+        expect(loanYears(lines, 2026).past.map((year) => year.year)).toEqual(['2026', '2025']);
+    });
+
+    it('somme mensualités, intérêts et capital de l\'année, et retient son dernier restant dû', () => {
+        const [, previous] = loanYears(lines, 2026).past;
+
+        expect(previous.payments).toBe(200);
+        expect(previous.interest).toBe(20);
+        expect(previous.principal).toBe(180);
+        expect(previous.remaining).toBe(310);
+        expect(previous.months).toHaveLength(2);
+    });
+
+    it('marque la seule année en cours', () => {
+        expect(loanYears(lines, 2026).past.map((year) => year.isCurrent)).toEqual([true, false]);
+    });
+
+    it('replie les années suivantes en un seul cumul, détaillé du plus ancien au plus récent', () => {
+        const future = loanYears(lines, 2026).future;
+
+        expect(future?.payments).toBe(100);
+        expect(future?.interest).toBe(10);
+        expect(future?.principal).toBe(90);
+        expect(future?.years.map((year) => year.year)).toEqual(['2027']);
+    });
+
+    it('rend un futur nul quand la dernière échéance est passée', () => {
+        expect(loanYears(lines, 2027).future).toBeNull();
+    });
+
+    it('rend un échéancier vide sans lignes', () => {
+        expect(loanYears([], 2026)).toEqual({ past: [], future: null });
     });
 });
