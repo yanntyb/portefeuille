@@ -5,10 +5,10 @@ namespace App\Contexts\RealEstate\Actions;
 use App\Contexts\RealEstate\Datas\AmortizationLineData;
 use App\Contexts\RealEstate\Datas\ExpenseYearData;
 use App\Contexts\RealEstate\Datas\LoanSummaryData;
-use App\Contexts\RealEstate\Datas\MonthlyCashFlowData;
 use App\Contexts\RealEstate\Datas\PropertyDetailData;
 use App\Contexts\RealEstate\Datas\RentMonthData;
 use App\Contexts\RealEstate\Models\Property;
+use App\Contexts\RealEstate\Services\CashFlowCalculator;
 use App\Contexts\RealEstate\Services\PropertyMetricsCalculator;
 use App\Contexts\RealEstate\Services\RentScheduleCalculator;
 use App\Contexts\RealEstate\Support\PropertyFinancialsAssembler;
@@ -21,6 +21,7 @@ class GetPropertyDetail
         private PropertyFinancialsAssembler $assembler,
         private RentScheduleCalculator $rents,
         private PropertyMetricsCalculator $metrics,
+        private CashFlowCalculator $cashFlows,
     ) {}
 
     public function __invoke(int $userId, int $propertyId): ?PropertyDetailData
@@ -52,61 +53,15 @@ class GetPropertyDetail
             currentValue: $financials->currentValue,
             netWorth: round($financials->currentValue - $financials->remainingPrincipal, 2),
             metrics: $this->metrics->metrics($financials),
-            monthlyCashFlows: $this->monthlyCashFlows($property, $months, $today),
+            monthlyCashFlows: $this->cashFlows->months(
+                $property,
+                $this->cashFlowWindowStart($months, $today),
+                $today,
+            ),
             rentHistory: array_reverse($months),
             expenseYears: $this->expenseYears($property),
             loan: $this->loanSummary($property, $today),
         );
-    }
-
-    /**
-     * @param  list<RentMonthData>  $months
-     * @return list<MonthlyCashFlowData>
-     */
-    private function monthlyCashFlows(Property $property, array $months, Carbon $today): array
-    {
-        $windowStart = $this->cashFlowWindowStart($months, $today);
-
-        $rentsByMonth = [];
-        foreach ($months as $month) {
-            $rentsByMonth[$month->month] = $month->effective;
-        }
-
-        $expensesByMonth = [];
-        foreach ($property->expenses as $expense) {
-            $key = $expense->date->copy()->startOfMonth()->toDateString();
-            $expensesByMonth[$key] = ($expensesByMonth[$key] ?? 0.0) + (float) $expense->amount;
-        }
-
-        $paymentsByMonth = [];
-        foreach ($property->loans as $loan) {
-            foreach ($this->assembler->scheduleFor($loan) as $line) {
-                $paymentsByMonth[$line->month] = ($paymentsByMonth[$line->month] ?? 0.0) + $line->payment;
-            }
-        }
-
-        $flows = [];
-        $cursor = $windowStart->copy();
-        $lastMonth = $today->copy()->startOfMonth();
-
-        while ($cursor <= $lastMonth) {
-            $key = $cursor->toDateString();
-            $rents = $rentsByMonth[$key] ?? 0.0;
-            $expenses = $expensesByMonth[$key] ?? 0.0;
-            $payment = $paymentsByMonth[$key] ?? 0.0;
-
-            $flows[] = new MonthlyCashFlowData(
-                month: $key,
-                rents: round($rents, 2),
-                expenses: round($expenses, 2),
-                loanPayment: round($payment, 2),
-                net: round($rents - $expenses - $payment, 2),
-            );
-
-            $cursor = $cursor->addMonthNoOverflow();
-        }
-
-        return $flows;
     }
 
     /**
