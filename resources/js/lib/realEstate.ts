@@ -88,16 +88,6 @@ export interface PropertyDetail {
     loan: LoanSummary | null;
 }
 
-/**
- * Historique mensuel d'un bien : sa valeur estimée face au capital restant dû, l'écart entre les
- * deux étant son patrimoine net. Les trois tableaux partagent le même index.
- */
-export interface PropertyValueSeries {
-    labels: string[];
-    values: number[];
-    remaining: number[];
-}
-
 /** Étiquette d'un mois de loyer : plein, partiel, impayé ou vacance. */
 export type RentMonthStatus = 'plein' | 'partiel' | 'impayé' | 'vacance';
 

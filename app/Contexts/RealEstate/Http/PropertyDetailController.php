@@ -3,7 +3,6 @@
 namespace App\Contexts\RealEstate\Http;
 
 use App\Contexts\Identity\Models\User;
-use App\Contexts\RealEstate\Actions\BuildPropertyValueSeries;
 use App\Contexts\RealEstate\Actions\GetLoanSchedule;
 use App\Contexts\RealEstate\Actions\GetPropertyDetail;
 use Inertia\Inertia;
@@ -28,8 +27,6 @@ class PropertyDetailController
             'property' => $detail,
             /** Long et rarement lu en premier : le tableau d'amortissement arrive après la page. */
             'amortization' => Inertia::defer(fn () => app(GetLoanSchedule::class)($userId, $id)),
-            /** Un point par mois depuis l'acquisition : le graphe attend, la fiche s'affiche. */
-            'valueSeries' => Inertia::defer(fn () => app(BuildPropertyValueSeries::class)($userId, $id)),
         ]);
     }
 }

@@ -8,12 +8,10 @@ import PropertyExpenseYears from '@/components/property/PropertyExpenseYears.vue
 import PropertyHeroSection from '@/components/property/PropertyHeroSection.vue';
 import PropertyMetricsGrid from '@/components/property/PropertyMetricsGrid.vue';
 import PropertyRentHistory from '@/components/property/PropertyRentHistory.vue';
-import PropertyValueSection from '@/components/property/PropertyValueSection.vue';
-import type { AmortizationLine, PropertyDetail, PropertyValueSeries } from '@/lib/realEstate';
+import type { AmortizationLine, PropertyDetail } from '@/lib/realEstate';
 
 const props = defineProps<{
     property: PropertyDetail;
-    valueSeries?: PropertyValueSeries;
     amortization?: AmortizationLine[];
 }>();
 </script>
@@ -23,8 +21,6 @@ const props = defineProps<{
 
     <AppPage>
         <PropertyHeroSection :property="props.property" />
-
-        <PropertyValueSection :series="props.valueSeries" />
 
         <PropertyMetricsGrid :metrics="props.property.metrics" :loan="props.property.loan" />
 

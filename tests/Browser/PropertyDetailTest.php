@@ -46,17 +46,6 @@ it('retranche le capital restant dû du patrimoine net quand le bien est financ�
         ->assertNoJavaScriptErrors();
 });
 
-it('trace la valeur du bien face à son restant dû, et nomme l\'écart « Net »', function () {
-    ['user' => $user, 'property' => $property] = propertyFixture(['loan' => true]);
-
-    $this->actingAs($user);
-
-    visit("/properties/{$property->id}")
-        ->assertSee('Valeur du bien')
-        ->assertScript("document.querySelectorAll('[data-section=\"value\"] [data-chart]').length", 1)
-        ->assertNoJavaScriptErrors();
-});
-
 it('ordonne les sections comme la fiche d\'un instrument, le graphe sous l\'en-tête', function () {
     ['user' => $user, 'property' => $property] = propertyFixture(['loan' => true]);
 
@@ -65,7 +54,7 @@ it('ordonne les sections comme la fiche d\'un instrument, le graphe sous l\'en-t
     visit("/properties/{$property->id}")
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'hero|value|metrics|cash-flow|rents|expenses|amortization',
+            'hero|metrics|cash-flow|rents|expenses|amortization',
         )
         ->assertNoJavaScriptErrors();
 });

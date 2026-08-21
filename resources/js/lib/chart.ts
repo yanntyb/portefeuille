@@ -399,8 +399,6 @@ function valueVsInvestedTooltip(
     invested: number[],
     valueFormatter: ValueFormatter,
     dividends: DividendMark[],
-    comparisonLabel: string,
-    deltaLabel: string | null,
 ): TooltipComponentOption {
     const colors = palette();
 
@@ -426,10 +424,10 @@ function valueVsInvestedTooltip(
 
             return tooltipTitle(labels[index] ?? '')
                 + tooltipRow(colors.value, 'Valeur', valueFormatter(totalValue))
-                + tooltipRow(colors.invested, comparisonLabel, valueFormatter(totalInvested))
+                + tooltipRow(colors.invested, 'Investi', valueFormatter(totalInvested))
                 + tooltipRow(
                     gain >= 0 ? colors.gain : colors.loss,
-                    deltaLabel ?? (gain >= 0 ? 'Gain' : 'Perte'),
+                    gain >= 0 ? 'Gain' : 'Perte',
                     `${gain >= 0 ? '+' : '−'} ${valueFormatter(Math.abs(gain))}`,
                 )
                 + dividendRows;
@@ -457,13 +455,6 @@ type ValueVsInvestedInput = {
     description: string;
     /** Absent sur le tableau de bord : seule la fiche instrument annote ses détachements. */
     dividends?: DividendMark[];
-    /** Nom de la seconde ligne de l'infobulle : « Restant dû » sur un bien, « Investi » ailleurs. */
-    comparisonLabel?: string;
-    /**
-     * Nom de l'écart entre les deux, quel que soit son signe. Absent, l'écart se nomme « Gain »
-     * ou « Perte » — ce que la lecture d'un patrimoine net, positif ou non, ne veut pas dire.
-     */
-    deltaLabel?: string;
 };
 
 /** Le tableau de bord raisonne sur le portefeuille entier : les titres ne sont qu'un détail de calcul. */
@@ -511,17 +502,7 @@ const TIME_AXIS_LABEL_HEIGHT = 28;
  * choisie côté client par le `dataZoom` : rien ici ne dépend du réseau.
  */
 export function buildValueVsInvestedOption(
-    {
-        labels,
-        value,
-        invested,
-        valueFormatter,
-        window,
-        description,
-        dividends = [],
-        comparisonLabel = 'Investi',
-        deltaLabel,
-    }: ValueVsInvestedInput,
+    { labels, value, invested, valueFormatter, window, description, dividends = [] }: ValueVsInvestedInput,
 ): ChartOption {
     const visible = window ?? lastYearWindow(labels);
     const colors = palette();
@@ -535,15 +516,7 @@ export function buildValueVsInvestedOption(
         }),
         color: [colors.value],
         series: valueSeries(labels, value, dividends),
-        tooltip: valueVsInvestedTooltip(
-            labels,
-            value,
-            invested,
-            valueFormatter,
-            dividends,
-            comparisonLabel,
-            deltaLabel ?? null,
-        ),
+        tooltip: valueVsInvestedTooltip(labels, value, invested, valueFormatter, dividends),
         dataZoom: [
             /**
              * La mini-timeline est la seule commande de zoom : un `dataZoom` de type `inside`
