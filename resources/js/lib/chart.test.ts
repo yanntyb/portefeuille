@@ -484,6 +484,47 @@ describe('buildValueVsInvestedOption — infobulle', () => {
         expect(tooltipHtml(valueVsInvested(36), 0)).toContain('2023');
     });
 
+    it('renomme la ligne de comparaison quand le graphe ne compare pas à un investi', () => {
+        const labels = monthlyLabels(36);
+        const option = buildValueVsInvestedOption({
+            labels,
+            value: labels.map((): number => 150000),
+            invested: labels.map((): number => 50000),
+            valueFormatter: (value: number): string => eur(value, 0),
+            window: null,
+            description: 'Bien locatif.',
+            comparisonLabel: 'Restant dû',
+            deltaLabel: 'Net',
+        });
+
+        const html = tooltipHtml(option, 5).replace(/[\xa0\u202f]/g, ' ');
+
+        expect(html).toContain('Restant dû');
+        expect(html).not.toContain('Investi');
+        expect(html).toContain('Net');
+        expect(html).not.toContain('Gain');
+    });
+
+    it('garde le libellé d\'écart choisi quand celui-ci devient négatif', () => {
+        const labels = monthlyLabels(36);
+        const option = buildValueVsInvestedOption({
+            labels,
+            value: labels.map((): number => 40000),
+            invested: labels.map((): number => 50000),
+            valueFormatter: (value: number): string => eur(value, 0),
+            window: null,
+            description: 'Bien sous l\'eau.',
+            comparisonLabel: 'Restant dû',
+            deltaLabel: 'Net',
+        });
+
+        const html = tooltipHtml(option, 5).replace(/[\xa0\u202f]/g, ' ');
+
+        expect(html).toContain('Net');
+        expect(html).not.toContain('Perte');
+        expect(html).toContain('\u2212 10 000 €');
+    });
+
     it('rend une infobulle vide quand ECharts ne fournit pas d\'index', () => {
         const formatter = (valueVsInvested(36).tooltip as { formatter: (params: unknown) => string }).formatter;
 
