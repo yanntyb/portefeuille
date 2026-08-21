@@ -49,6 +49,7 @@
     --color-loss-bar: var(--loss-bar);
     --color-loss-soft: var(--loss-soft);
     --color-sector-bar: var(--sector-bar);
+    --color-chart-real-estate: var(--chart-real-estate);
     --color-grid-line: var(--grid-line);
     --radius-sm: calc(var(--radius) - 4px);
     --radius-md: calc(var(--radius) - 2px);
@@ -87,6 +88,7 @@
     --loss-bar: #e04a34;
     --loss-soft: #fdeceb;
     --sector-bar: #2b2e38;
+    --chart-real-estate: #b3701a;
     --grid-line: #eceef2;
     --chart-1: oklch(0.646 0.222 41.116);
     --chart-2: oklch(0.6 0.118 184.704);
@@ -124,6 +126,7 @@
     --loss-bar: #f87171;
     --loss-soft: #3a1a1a;
     --sector-bar: #cbd0da;
+    --chart-real-estate: #e0a75f;
     --grid-line: #262a33;
     --chart-1: oklch(0.488 0.243 264.376);
     --chart-2: oklch(0.696 0.17 162.48);

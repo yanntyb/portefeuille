@@ -5,7 +5,7 @@ import { eur } from '@/lib/format';
 /** Fichier séparé : `vi.mock` porte sur tout le module, un seul thème par fichier. */
 vi.mock('@/lib/theme', () => ({ isDark: { value: true } }));
 
-const { buildValueVsInvestedOption } = await import('@/lib/chart');
+const { buildValueVsInvestedOption, buildWealthStackOption } = await import('@/lib/chart');
 
 const option = (): ChartOption =>
     buildValueVsInvestedOption({
@@ -32,5 +32,22 @@ describe('palette sombre', () => {
 
     it('garde la courbe et son nom, le thème ne changeant que les teintes', () => {
         expect((option().series as { name?: string }[]).map((serie) => serie.name)).toEqual(['Valeur']);
+    });
+
+    it('donne aux deux bandes du patrimoine des couleurs distinctes en thème sombre', () => {
+        const option = buildWealthStackOption({
+            labels: ['2026-01-05', '2026-01-12'],
+            securities: [1000, 1100],
+            realEstate: [500, 520],
+            invested: [1400, 1400],
+            valueFormatter: (amount: number): string => `${amount} €`,
+            window: null,
+            description: 'Patrimoine total.',
+        });
+
+        const series = option.series as { areaStyle: { color: string } }[];
+
+        expect(series[0].areaStyle.color).not.toBe(series[1].areaStyle.color);
+        expect(series[1].areaStyle.color).toBe('#e0a75f');
     });
 });

@@ -9,6 +9,7 @@ type ChartPalette = {
     invested: string;
     gain: string;
     loss: string;
+    realEstate: string;
     axisLabel: string;
     areaTop: string;
     areaBottom: string;
@@ -32,6 +33,7 @@ function palette(): ChartPalette {
             invested: '#6b7280',
             gain: '#34d399',
             loss: '#f87171',
+            realEstate: '#e0a75f',
             axisLabel: '#7f858f',
             areaTop: 'rgba(143,147,240,0.22)',
             areaBottom: 'rgba(143,147,240,0)',
@@ -48,6 +50,7 @@ function palette(): ChartPalette {
             invested: '#b6bac4',
             gain: '#00915d',
             loss: '#c2321f',
+            realEstate: '#b3701a',
             axisLabel: '#9aa0ac',
             areaTop: 'rgba(82,87,214,0.18)',
             areaBottom: 'rgba(82,87,214,0)',
@@ -496,10 +499,43 @@ const ZOOM_SLIDER_HEIGHT = 40;
 /** Bande réservée à la graduation temporelle : une ligne, l'année en suffixe sous janvier. */
 const TIME_AXIS_LABEL_HEIGHT = 28;
 
+/** La mini-timeline est la seule commande de zoom, partagée par les deux formes de graphe. */
+function wealthZoomSlider(visible: ZoomWindow): Extract<NonNullable<ChartOption['dataZoom']>, unknown[]>[number] {
+    const colors = palette();
+
+    /**
+     * La mini-timeline est la seule commande de zoom : un `dataZoom` de type `inside`
+     * capturait la molette et le pincement, donc volait le défilement de la page dès que le
+     * doigt ou le curseur passait sur le tracé.
+     */
+    return {
+        type: 'slider',
+        start: visible.start,
+        end: visible.end,
+        minValueSpan: MIN_ZOOM_SPAN_MS,
+        height: ZOOM_SLIDER_HEIGHT,
+        bottom: 0,
+        /** Les bornes de la fenêtre se lisent sur l'axe du graphe : les redire aux poignées encombre. */
+        handleLabel: { show: false },
+        showDetail: false,
+        borderColor: 'transparent',
+        fillerColor: colors.filler,
+        handleStyle: { color: colors.surface, borderColor: colors.invested },
+        moveHandleStyle: { color: colors.dataBackground },
+        textStyle: { color: colors.axisLabel },
+        dataBackground: { lineStyle: { opacity: 0 }, areaStyle: { color: colors.dataBackground } },
+        selectedDataBackground: {
+            lineStyle: { opacity: 0 },
+            areaStyle: { color: colors.selectedDataBackground },
+        },
+    };
+}
+
 /**
- * Le graphe « valeur contre investi », seul et même pour le tableau de bord et la fiche
- * instrument : mêmes courbes, même axe, même infobulle, même zoom. La fenêtre temporelle est
- * choisie côté client par le `dataZoom` : rien ici ne dépend du réseau.
+ * Le graphe « valeur contre investi » : mêmes courbes, même axe, même infobulle, même zoom pour
+ * `/instruments` et les fiches instrument. Le tableau de bord, lui, empile titres et immobilier
+ * via `buildWealthStackOption`. La fenêtre temporelle est choisie côté client par le `dataZoom` :
+ * rien ici ne dépend du réseau.
  */
 export function buildValueVsInvestedOption(
     { labels, value, invested, valueFormatter, window, description, dividends = [] }: ValueVsInvestedInput,
@@ -517,34 +553,95 @@ export function buildValueVsInvestedOption(
         color: [colors.value],
         series: valueSeries(labels, value, dividends),
         tooltip: valueVsInvestedTooltip(labels, value, invested, valueFormatter, dividends),
-        dataZoom: [
-            /**
-             * La mini-timeline est la seule commande de zoom : un `dataZoom` de type `inside`
-             * capturait la molette et le pincement, donc volait le défilement de la page dès que le
-             * doigt ou le curseur passait sur le tracé.
-             */
-            {
-                type: 'slider',
-                start: visible.start,
-                end: visible.end,
-                minValueSpan: MIN_ZOOM_SPAN_MS,
-                height: ZOOM_SLIDER_HEIGHT,
-                bottom: 0,
-                /** Les bornes de la fenêtre se lisent sur l'axe du graphe : les redire aux poignées encombre. */
-                handleLabel: { show: false },
-                showDetail: false,
-                borderColor: 'transparent',
-                fillerColor: colors.filler,
-                handleStyle: { color: colors.surface, borderColor: colors.invested },
-                moveHandleStyle: { color: colors.dataBackground },
-                textStyle: { color: colors.axisLabel },
-                dataBackground: { lineStyle: { opacity: 0 }, areaStyle: { color: colors.dataBackground } },
-                selectedDataBackground: {
-                    lineStyle: { opacity: 0 },
-                    areaStyle: { color: colors.selectedDataBackground },
-                },
-            },
-        ],
+        dataZoom: [wealthZoomSlider(visible)],
+    };
+}
+
+export type WealthStackInput = {
+    labels: string[];
+    securities: number[];
+    realEstate: number[];
+    invested: number[];
+    valueFormatter: ValueFormatter;
+    window: ZoomWindow | null;
+    description: string;
+};
+
+/** Une bande par classe d'actif, empilées : le sommet de la pile est le patrimoine total. */
+function wealthStackSeries(labels: string[], securities: number[], realEstate: number[]): LineSeriesOption[] {
+    const colors = palette();
+
+    const band = (name: string, values: number[], color: string): LineSeriesOption => ({
+        name,
+        type: 'line',
+        stack: 'patrimoine',
+        smooth: true,
+        symbol: 'none',
+        sampling: 'lttb',
+        lineStyle: { width: 1.5, color },
+        areaStyle: { color, opacity: 0.35 },
+        data: datedPoints(labels, values),
+    });
+
+    return [
+        band('Titres', securities, colors.value),
+        band('Immobilier', realEstate, colors.realEstate),
+    ];
+}
+
+function wealthStackTooltip(
+    labels: string[],
+    securities: number[],
+    realEstate: number[],
+    invested: number[],
+    valueFormatter: ValueFormatter,
+): TooltipComponentOption {
+    const colors = palette();
+
+    return {
+        ...chartTooltip(),
+        formatter: (params: unknown): string => {
+            const index = pointIndex(params);
+            if (index === null) {
+                return '';
+            }
+
+            const securitiesValue = securities[index] ?? 0;
+            const realEstateValue = realEstate[index] ?? 0;
+            const totalValue = securitiesValue + realEstateValue;
+            const totalInvested = invested[index] ?? 0;
+            const gain = totalValue - totalInvested;
+
+            return tooltipTitle(labels[index] ?? '')
+                + tooltipRow(colors.value, 'Patrimoine', valueFormatter(totalValue))
+                + tooltipRow(colors.value, 'Titres', valueFormatter(securitiesValue))
+                + tooltipRow(colors.realEstate, 'Immobilier', valueFormatter(realEstateValue))
+                + tooltipRow(colors.invested, 'Investi', valueFormatter(totalInvested))
+                + tooltipRow(
+                    gain >= 0 ? colors.gain : colors.loss,
+                    gain >= 0 ? 'Gain' : 'Perte',
+                    `${gain >= 0 ? '+' : '−'} ${valueFormatter(Math.abs(gain))}`,
+                );
+        },
+    };
+}
+
+/**
+ * Le graphe du tableau de bord : deux aires empilées, une par classe d'actif. Forme distincte de
+ * `buildValueVsInvestedOption`, qui ne trace qu'une courbe — le patrimoine se lit par sa
+ * composition, un instrument par sa trajectoire.
+ */
+export function buildWealthStackOption(
+    { labels, securities, realEstate, invested, valueFormatter, window, description }: WealthStackInput,
+): ChartOption {
+    const visible = window ?? lastYearWindow(labels);
+    const totals = labels.map((_, index: number): number => (securities[index] ?? 0) + (realEstate[index] ?? 0));
+
+    return {
+        ...chartFrame({ valueFormatter, values: totals, bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT, description }),
+        series: wealthStackSeries(labels, securities, realEstate),
+        tooltip: wealthStackTooltip(labels, securities, realEstate, invested, valueFormatter),
+        dataZoom: [wealthZoomSlider(visible)],
     };
 }
 

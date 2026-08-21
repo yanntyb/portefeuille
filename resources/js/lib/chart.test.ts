@@ -10,7 +10,7 @@ import type { DividendMark } from '@/lib/income';
  */
 vi.mock('@/lib/theme', () => ({ isDark: { value: false } }));
 
-const { buildPriceHistoryOption, buildValueVsInvestedOption, sumPerAsset } = await import('@/lib/chart');
+const { buildPriceHistoryOption, buildValueVsInvestedOption, buildWealthStackOption, sumPerAsset } = await import('@/lib/chart');
 
 /** Étiquettes ISO au premier de chaque mois, à partir de janvier 2023. */
 const monthlyLabels = (months: number): string[] =>
@@ -588,5 +588,41 @@ describe('buildValueVsInvestedOption — pastilles de détachement', () => {
         expect(html).toContain('20 avr.');
         expect(html).toContain('+5,00 €');
         expect(html).toContain('+3,00 €');
+    });
+});
+
+describe('buildWealthStackOption', () => {
+    const input = {
+        labels: ['2026-01-05', '2026-01-12'],
+        securities: [1000, 1100],
+        realEstate: [500, 520],
+        invested: [1400, 1400],
+        valueFormatter: (amount: number): string => `${amount} €`,
+        window: null,
+        description: 'Patrimoine total.',
+    };
+
+    it('empile les deux classes sur la même clé', () => {
+        const option = buildWealthStackOption(input);
+        const series = option.series as { name: string; stack?: string }[];
+
+        expect(series).toHaveLength(2);
+        expect(series[0].stack).toBe(series[1].stack);
+        expect(series.map((serie) => serie.name)).toEqual(['Titres', 'Immobilier']);
+    });
+
+    it('donne au sommet de la pile le patrimoine total', () => {
+        const option = buildWealthStackOption(input);
+        const series = option.series as { data: [string, number][] }[];
+
+        const top = series[0].data[1][1] + series[1].data[1][1];
+
+        expect(top).toBe(1620);
+    });
+
+    it('garde la mini-timeline de zoom', () => {
+        const option = buildWealthStackOption(input);
+
+        expect(option.dataZoom).toHaveLength(1);
     });
 });
