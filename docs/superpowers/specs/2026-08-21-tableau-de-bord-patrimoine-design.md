@@ -160,15 +160,31 @@ empilée. L'interpolation linéaire lisserait le tracé mais inventerait des val
 
 `WealthSeriesData` porte `labels`, `securities[]`, `realEstate[]`, `invested[]`.
 
-### `GetWealthIncome`
+### `GetWealthIncome`, et le filtre par source qu'il impose
+
+`Income` agrège déjà **deux** origines : `IncomeSource::Dividend` et `IncomeSource::Rent`, montées
+dans `AppServiceProvider` via `IncomeProvider::registers(sources: [...])`. Donc
+`IncomeSummaryData::$last12Months` contient déjà les loyers, **bruts**. La formule intuitive
+`income.last12Months / 12 + locatif net` compterait les loyers deux fois.
 
 ```
-dividendes/mois  = income.last12Months / 12
+dividendes/mois  = GetIncomeSummary($userId, IncomeSource::Dividend)->last12Months / 12
 locatif net/mois = Σ (rents12m − expenses12m − loanPayments12m) / 12
+total            = dividendes/mois + locatif net/mois
 ```
 
-Le second existe déjà tel quel dans `GetRealEstateOverview::monthlyCashFlow`. `WealthIncomeData`
-porte `monthlyTotal`, `monthlyDividends`, `monthlyRentalNet`.
+Le second existe déjà tel quel dans `GetRealEstateOverview::monthlyCashFlow`.
+
+Le premier impose un **filtre par source** dans `Income`, qui n'existe pas aujourd'hui :
+`IncomeSourceRegistry::receiptsFor()` et `::projectedAnnualFor()`, puis `GetIncomeSummary` et
+`GetAnnualIncome`, prennent un `?IncomeSource $only = null`. Ajout purement additif, le défaut ne
+change aucun appelant.
+
+Ce filtre est de toute façon nécessaire ailleurs : `components/instruments/IncomeSection.vue` vit
+désormais sur une page intitulée **Titres**, et y afficher des loyers serait faux. Cette page
+demande donc elle aussi le résumé et les barres annuelles filtrés sur `IncomeSource::Dividend`.
+
+`WealthIncomeData` porte `monthlyTotal`, `monthlyDividends`, `monthlyRentalNet`.
 
 ### Cache immobilier : empreinte, pas observer
 
@@ -395,15 +411,18 @@ Backend d'abord, page allégée en dernier : l'application ne passe par aucun é
 
 | # | Message | Contenu |
 | --- | --- | --- |
-| 1 | `feat: projette la valeur nette immobilière semaine par semaine` | `BuildRealEstateSeries`, `RealEstateCachePort` + adaptateur, tests |
-| 2 | `feat: chiffre le cash sorti d'un bien acheté à crédit` | `GetRealEstateCashInvested`, tests |
-| 3 | `feat: réunit titres et immobilier en un patrimoine` | contexte `Wealth` entier — ports, adaptateurs, `SeriesAligner`, trois actions, `Datas`, tests |
-| 4 | `refactor: sort la page des titres du contexte Portfolio` | contrôleur déplacé vers `InstrumentView`, `Pages/Instruments/Index.vue`, `components/dashboard/` → `components/instruments/`, tests de page scindés |
-| 5 | `feat: ouvre une page par classe d'actif` | routes `/instruments` et `/properties`, `Pages/Properties/Index.vue`, `components/properties/`, fils d'Ariane à trois crans |
-| 6 | `feat: empile titres et immobilier sur le graphe du patrimoine` | `buildWealthStackOption`, `--chart-real-estate` dans `app.css`, `palette()`, tests des deux thèmes |
-| 7 | `feat: pose le résumé du patrimoine en tête du tableau de bord` | `Dashboard.vue` réécrit, les trois sections `components/dashboard/`, `DashboardController` de `Wealth` |
-| 8 | `feat: réunit dividendes et loyers nets en un revenu mensuel` | `WealthIncomeSection.vue` câblée sur `GetWealthIncome` |
-| 9 | `docs: décrit le contexte patrimoine et ses pages` | `docs/architecture.md`, `docs/page-data.md` |
+| 1 | `feat: filtre les revenus par origine` | `?IncomeSource $only` dans `IncomeSourceRegistry`, `GetIncomeSummary`, `GetAnnualIncome`, tests |
+| 2 | `refactor: extrait le cash-flow mensuel d'un bien en service` | `RealEstate\Services\CashFlowCalculator`, `GetPropertyDetail` refactoré dessus, tests inchangés |
+| 3 | `feat: chiffre le cash sorti d'un bien acheté à crédit` | `GetRealEstateCashInvested`, `Support\UserProperties`, tests |
+| 4 | `feat: projette la valeur nette immobilière semaine par semaine` | `BuildRealEstateSeries`, `RealEstateSeriesData`, tests |
+| 5 | `feat: retient les séries immobilières par empreinte` | `RealEstateCachePort` + `LaravelRealEstateCache`, `RealEstateProvider`, tests |
+| 6 | `feat: réunit titres et immobilier en un patrimoine` | contexte `Wealth` entier — ports, adaptateurs, `SeriesAligner`, trois actions, `Datas`, tests |
+| 7 | `refactor: sort la page des titres du contexte Portfolio` | contrôleur déplacé vers `InstrumentView`, `Pages/Instruments/Index.vue`, `components/dashboard/` → `components/instruments/`, revenus filtrés sur les dividendes, tests de page scindés |
+| 8 | `feat: ouvre une page par classe d'actif` | routes `/instruments` et `/properties`, `Pages/Properties/Index.vue`, `components/properties/`, fils d'Ariane à trois crans |
+| 9 | `feat: empile titres et immobilier sur le graphe du patrimoine` | `buildWealthStackOption`, `--chart-real-estate` dans `app.css`, `palette()`, tests des deux thèmes |
+| 10 | `feat: pose le résumé du patrimoine en tête du tableau de bord` | `Dashboard.vue` réécrit, `WealthSummarySection`, `WealthEvolutionSection`, `DashboardController` de `Wealth` |
+| 11 | `feat: réunit dividendes et loyers nets en un revenu mensuel` | `GetWealthIncome`, `WealthIncomeSection.vue` |
+| 12 | `docs: décrit le contexte patrimoine et ses pages` | `docs/architecture.md`, `docs/page-data.md` |
 
 Au commit 4, `Dashboard.vue` pointe déjà sur `components/instruments/` tout en rendant les mêmes
 sections ; le commit 7 remplace son corps. Chaque commit reste vert.
