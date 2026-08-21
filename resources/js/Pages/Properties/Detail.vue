@@ -2,12 +2,10 @@
 import { Head } from '@inertiajs/vue3';
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
 import AppPage from '@/components/AppPage.vue';
-import PropertyCashFlowSection from '@/components/property/PropertyCashFlowSection.vue';
-import PropertyExpenseYears from '@/components/property/PropertyExpenseYears.vue';
 import PropertyHeroSection from '@/components/property/PropertyHeroSection.vue';
+import PropertyIncomeSection from '@/components/property/PropertyIncomeSection.vue';
 import PropertyLoanSection from '@/components/property/PropertyLoanSection.vue';
 import PropertyMetricsGrid from '@/components/property/PropertyMetricsGrid.vue';
-import PropertyRentHistory from '@/components/property/PropertyRentHistory.vue';
 import type { AmortizationLine, PropertyDetail } from '@/lib/realEstate';
 
 const props = defineProps<{
@@ -26,11 +24,11 @@ const props = defineProps<{
 
         <PropertyLoanSection v-if="props.property.loan" :loan="props.property.loan" :lines="amortization" />
 
-        <PropertyCashFlowSection :flows="props.property.monthlyCashFlows" />
-
-        <PropertyRentHistory :months="props.property.rentHistory" />
-
-        <PropertyExpenseYears :years="props.property.expenseYears" />
+        <PropertyIncomeSection
+            :flows="props.property.monthlyCashFlows"
+            :rents="props.property.rentHistory"
+            :expense-years="props.property.expenseYears"
+        />
     </AppPage>
 
     <AppBreadcrumb

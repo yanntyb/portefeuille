@@ -170,58 +170,88 @@ export const propertyHeroMeta = (property: PropertyDetail): HeroMetaEntry[] => {
     ];
 };
 
-export interface CashFlowYear {
+/** Un mois de la liste « Revenus & charges » : ce qui est entré, ce qui est sorti, ce qui reste. */
+export interface IncomeMonth {
+    month: string;
+    rents: number;
+    /** Loyer attendu du mois, nul quand aucun bail ne le couvre. */
+    expected: number;
+    expenses: number;
+    loanPayment: number;
+    net: number;
+    /** Nul quand le mois précède l'historique des loyers : rien à dire de ce qui n'est pas connu. */
+    status: RentMonthStatus | null;
+}
+
+export interface IncomeYear {
     year: string;
     /** Net cumulé de l'année : ce que le bien a laissé en poche, ou coûté. */
     net: number;
-    months: MonthlyCashFlow[];
+    months: IncomeMonth[];
+    /** Ventilation des charges de l'année, en lignes à barres. */
+    expenseRows: SectorBreakdownRow[];
+    expenseTotal: number;
 }
 
 /**
- * Groupe le cash-flow par année, la plus récente en tête et, dans chaque groupe, le mois le plus
- * récent d'abord : la fenêtre glissante arrive dans l'ordre chronologique, l'inverse de la lecture.
+ * Une seule liste pour les loyers, les charges et l'échéance : trois découpages du même mois se
+ * lisaient en trois accordéons jumeaux. Les années descendent de la plus récente, les mois aussi —
+ * la fenêtre glissante arrive dans l'ordre chronologique, l'inverse de la lecture.
+ *
+ * Une année qui n'a que des charges garde sa ligne : des travaux avant le premier bail sortent de
+ * la fenêtre du cash-flow, et son net vaut alors leur total en négatif. La ventilation reste celle
+ * de l'année entière, même quand la fenêtre n'en couvre qu'une partie : c'est le même total que la
+ * déclaration de revenus, pas la somme des mois affichés.
  */
-export const cashFlowYears = (flows: MonthlyCashFlow[]): CashFlowYear[] => {
-    const groups = new Map<string, MonthlyCashFlow[]>();
+export const incomeYears = (
+    flows: MonthlyCashFlow[],
+    rents: RentMonth[],
+    expenseYears: ExpenseYear[],
+): IncomeYear[] => {
+    const expectedByMonth = new Map<string, number>(rents.map((month) => [month.month, month.expected]));
+    const expensesByYear = new Map<string, ExpenseYear>(
+        expenseYears.map((year) => [String(year.year), year]),
+    );
+
+    const monthsByYear = new Map<string, IncomeMonth[]>();
 
     for (const flow of flows) {
         const year = flow.month.slice(0, 4);
-        groups.set(year, [flow, ...(groups.get(year) ?? [])]);
+        const expected = expectedByMonth.get(flow.month) ?? 0;
+        const month: IncomeMonth = {
+            month: flow.month,
+            rents: flow.rents,
+            expected,
+            expenses: flow.expenses,
+            loanPayment: flow.loanPayment,
+            net: flow.net,
+            status: expectedByMonth.has(flow.month)
+                ? rentMonthStatus({ month: flow.month, expected, effective: flow.rents })
+                : null,
+        };
+
+        monthsByYear.set(year, [month, ...(monthsByYear.get(year) ?? [])]);
     }
 
-    return [...groups.entries()]
-        .sort(([left], [right]) => right.localeCompare(left))
-        .map(([year, months]) => ({
+    const years = [...new Set([...monthsByYear.keys(), ...expensesByYear.keys()])].sort((left, right) =>
+        right.localeCompare(left),
+    );
+
+    return years.map((year) => {
+        const months = monthsByYear.get(year) ?? [];
+        const expenses = expensesByYear.get(year);
+
+        return {
             year,
-            net: months.reduce((net, month) => net + month.net, 0),
+            net:
+                months.length > 0
+                    ? months.reduce((net, month) => net + month.net, 0)
+                    : -(expenses?.total ?? 0),
             months,
-        }));
-};
-
-export interface RentYear {
-    year: string;
-    received: number;
-    expected: number;
-    months: RentMonth[];
-}
-
-/** Groupe les loyers par année, l'ordre reçu — le plus récent d'abord — conservé dans chaque groupe. */
-export const rentYears = (months: RentMonth[]): RentYear[] => {
-    const groups = new Map<string, RentMonth[]>();
-
-    for (const month of months) {
-        const year = month.month.slice(0, 4);
-        groups.set(year, [...(groups.get(year) ?? []), month]);
-    }
-
-    return [...groups.entries()]
-        .sort(([left], [right]) => right.localeCompare(left))
-        .map(([year, yearMonths]) => ({
-            year,
-            received: yearMonths.reduce((total, month) => total + month.effective, 0),
-            expected: yearMonths.reduce((total, month) => total + month.expected, 0),
-            months: yearMonths,
-        }));
+            expenseRows: expenses === undefined ? [] : expenseRows(expenses),
+            expenseTotal: expenses?.total ?? 0,
+        };
+    });
 };
 
 /**

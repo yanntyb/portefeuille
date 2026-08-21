@@ -3,14 +3,13 @@ import {
     acquisitionCostOf,
     capitalGainOf,
     capitalGainPctOf,
-    cashFlowYears,
     equitySplitOf,
     expenseRows,
+    incomeYears,
     loanProgress,
     loanYears,
     propertyHeroMeta,
     rentMonthStatus,
-    rentYears,
     type AmortizationLine,
     type ExpenseYear,
     type LoanSummary,
@@ -145,46 +144,73 @@ describe('propertyHeroMeta', () => {
     });
 });
 
-describe('cashFlowYears', () => {
+describe('incomeYears', () => {
     const flows: MonthlyCashFlow[] = [
         { month: '2025-11-01', rents: 600, expenses: 100, loanPayment: 400, net: 100 },
         { month: '2025-12-01', rents: 600, expenses: 0, loanPayment: 400, net: 200 },
-        { month: '2026-01-01', rents: 600, expenses: 700, loanPayment: 400, net: -500 },
+        { month: '2026-01-01', rents: 300, expenses: 700, loanPayment: 400, net: -800 },
     ];
 
-    it('groupe par année, la plus récente en tête', () => {
-        expect(cashFlowYears(flows).map((group) => group.year)).toEqual(['2026', '2025']);
-    });
-
-    it('somme le net de l\'année', () => {
-        expect(cashFlowYears(flows)[1].net).toBe(300);
-    });
-
-    it('range les mois du plus récent au plus ancien dans chaque groupe', () => {
-        expect(cashFlowYears(flows)[1].months.map((month) => month.month)).toEqual(['2025-12-01', '2025-11-01']);
-    });
-});
-
-describe('rentYears', () => {
-    const months: RentMonth[] = [
-        { month: '2026-01-01', expected: 600, effective: 0 },
-        { month: '2025-12-01', expected: 600, effective: 300 },
+    const rents: RentMonth[] = [
+        { month: '2026-01-01', expected: 600, effective: 300 },
+        { month: '2025-12-01', expected: 600, effective: 600 },
         { month: '2025-11-01', expected: 600, effective: 600 },
     ];
 
+    const expenses: ExpenseYear[] = [
+        { year: 2026, byCategory: [{ category: 'works', label: 'Travaux', amount: 700 }], total: 700 },
+        { year: 2025, byCategory: [{ category: 'tax', label: 'Taxe foncière', amount: 100 }], total: 100 },
+    ];
+
     it('groupe par année, la plus récente en tête', () => {
-        expect(rentYears(months).map((group) => group.year)).toEqual(['2026', '2025']);
+        expect(incomeYears(flows, rents, expenses).map((group) => group.year)).toEqual(['2026', '2025']);
     });
 
-    it('somme le perçu et l\'attendu de l\'année', () => {
-        const [, previous] = rentYears(months);
-
-        expect(previous.received).toBe(900);
-        expect(previous.expected).toBe(1200);
+    it('somme le net de l\'année', () => {
+        expect(incomeYears(flows, rents, expenses)[1].net).toBe(300);
     });
 
-    it('conserve l\'ordre reçu dans chaque groupe, le plus récent d\'abord', () => {
-        expect(rentYears(months)[1].months.map((month) => month.month)).toEqual(['2025-12-01', '2025-11-01']);
+    it('range les mois du plus récent au plus ancien dans chaque groupe', () => {
+        expect(incomeYears(flows, rents, expenses)[1].months.map((month) => month.month)).toEqual([
+            '2025-12-01',
+            '2025-11-01',
+        ]);
+    });
+
+    it('étiquette chaque mois d\'après le loyer attendu', () => {
+        const [current, previous] = incomeYears(flows, rents, expenses);
+
+        expect(current.months[0].status).toBe('partiel');
+        expect(current.months[0].expected).toBe(600);
+        expect(previous.months[0].status).toBe('plein');
+    });
+
+    it('laisse un mois sans loyer connu sans étiquette', () => {
+        const [year] = incomeYears(flows, [], expenses);
+
+        expect(year.months[0].status).toBeNull();
+        expect(year.months[0].expected).toBe(0);
+    });
+
+    it('porte la ventilation des charges de l\'année', () => {
+        const [year] = incomeYears(flows, rents, expenses);
+
+        expect(year.expenseTotal).toBe(700);
+        expect(year.expenseRows).toEqual([{ label: 'Travaux', share: 100, amount: 700 }]);
+    });
+
+    it('garde une année qui n\'a que des charges, son net étant leur total en négatif', () => {
+        const older: ExpenseYear = {
+            year: 2024,
+            byCategory: [{ category: 'works', label: 'Travaux', amount: 5000 }],
+            total: 5000,
+        };
+
+        const years = incomeYears(flows, rents, [...expenses, older]);
+
+        expect(years.map((group) => group.year)).toEqual(['2026', '2025', '2024']);
+        expect(years[2].months).toEqual([]);
+        expect(years[2].net).toBe(-5000);
     });
 });
 

@@ -1,5 +1,7 @@
 <?php
 
+use App\Contexts\RealEstate\Models\RentException;
+
 /**
  * Fiche d'un bien : `propertyFixture()` l'acquiert 108 000 € frais compris, l'estime 150 000 € et
  * le loue 600 €/mois. Sans prêt, le patrimoine net vaut donc la valeur estimée, et la plus-value
@@ -76,7 +78,7 @@ it('ordonne les sections : les indicateurs sous l\'en-tête, le crédit ensuite'
     visit("/properties/{$property->id}")
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'hero|metrics|loan|cash-flow|rents|expenses',
+            'hero|metrics|loan|income',
         )
         ->assertNoJavaScriptErrors();
 });
@@ -143,7 +145,7 @@ it('cumule les années à venir en une ligne, dépliable année par année', fun
         ->assertNoJavaScriptErrors();
 });
 
-it('replie le cash-flow par année et ouvre la plus récente', function () {
+it('réunit loyers, charges et crédit en une liste, l\'année la plus récente ouverte', function () {
     ['user' => $user, 'property' => $property] = propertyFixture();
 
     $this->actingAs($user);
@@ -151,19 +153,19 @@ it('replie le cash-flow par année et ouvre la plus récente', function () {
     $currentYear = now()->year;
 
     visit("/properties/{$property->id}")
-        ->assertSee('Cash-flow mensuel')
+        ->assertSee('Revenus & charges')
         ->assertScript(
-            "Array.from(document.querySelectorAll('[data-cash-flow-year]')).map(el => el.dataset.cashFlowYear).join('|')
-                === Array.from(document.querySelectorAll('[data-cash-flow-year]')).map(el => el.dataset.cashFlowYear).sort().reverse().join('|')",
+            "Array.from(document.querySelectorAll('[data-income-year]')).map(el => el.dataset.incomeYear).join('|')
+                === Array.from(document.querySelectorAll('[data-income-year]')).map(el => el.dataset.incomeYear).sort().reverse().join('|')",
             true,
         )
-        ->assertScript("document.querySelectorAll('[data-cash-flow-month]').length > 0", true)
-        ->click("[data-cash-flow-year=\"{$currentYear}\"]")
-        ->assertScript("document.querySelectorAll('[data-cash-flow-month]').length", 0)
+        ->assertScript("document.querySelectorAll('[data-income-month]').length > 0", true)
+        ->click("[data-income-year=\"{$currentYear}\"]")
+        ->assertScript("document.querySelectorAll('[data-income-month]').length", 0)
         ->assertNoJavaScriptErrors();
 });
 
-it('détaille loyers, charges et crédit derrière un clic sur un mois de cash-flow', function () {
+it('détaille loyer, charges et crédit derrière un clic sur un mois', function () {
     ['user' => $user, 'property' => $property] = propertyFixture();
 
     $this->actingAs($user);
@@ -171,14 +173,14 @@ it('détaille loyers, charges et crédit derrière un clic sur un mois de cash-f
     $thisMonth = now()->startOfMonth()->toDateString();
 
     visit("/properties/{$property->id}")
-        ->assertScript("document.querySelectorAll('[data-cash-flow-detail]').length", 0)
-        ->click("[data-cash-flow-month=\"{$thisMonth}\"]")
-        ->assertScript("document.querySelectorAll('[data-cash-flow-detail]').length", 1)
-        ->assertScript("document.querySelector('[data-cash-flow-detail]').textContent.includes('600,00')", true)
+        ->assertScript("document.querySelectorAll('[data-income-detail]').length", 0)
+        ->click("[data-income-month=\"{$thisMonth}\"]")
+        ->assertScript("document.querySelectorAll('[data-income-detail]').length", 1)
+        ->assertScript("document.querySelector('[data-income-detail]').textContent.includes('600,00')", true)
         ->assertNoJavaScriptErrors();
 });
 
-it('groupe les loyers par année, la précédente repliée', function () {
+it('garde l\'année précédente repliée dans la liste', function () {
     ['user' => $user, 'property' => $property] = propertyFixture();
 
     $this->actingAs($user);
@@ -187,17 +189,39 @@ it('groupe les loyers par année, la précédente repliée', function () {
     $previousYear = now()->subYear()->year;
 
     visit("/properties/{$property->id}")
-        ->assertScript("document.querySelectorAll('[data-rent-year]').length >= 2", true)
+        ->assertScript("document.querySelectorAll('[data-income-year]').length >= 2", true)
         ->assertScript(
-            "document.querySelectorAll('[data-rent-month]').length < document.querySelectorAll('[data-rent-year]').length * 12",
+            "document.querySelectorAll('[data-income-month]').length < document.querySelectorAll('[data-income-year]').length * 12",
             true,
         )
-        ->click("[data-rent-year=\"{$previousYear}\"]")
-        ->assertScript("document.querySelectorAll('[data-rent-month]').length >= 12", true)
+        ->click("[data-income-year=\"{$previousYear}\"]")
+        ->assertScript("document.querySelectorAll('[data-income-month]').length >= 12", true)
         ->assertNoJavaScriptErrors();
 });
 
-it('ventile les charges de l\'année en barres, la plus grosse en tête', function () {
+it('signale un loyer impayé sur la ligne de son mois', function () use ($normalise) {
+    ['user' => $user, 'property' => $property] = propertyFixture();
+
+    $month = now()->startOfMonth()->toDateString();
+
+    RentException::factory()->create([
+        'lease_id' => $property->leases()->first()->id,
+        'month' => $month,
+        'amount_override' => 0,
+        'note' => 'Impayé',
+    ]);
+
+    $this->actingAs($user);
+
+    visit("/properties/{$property->id}")
+        ->assertScript(
+            "({$normalise})(document.querySelector('[data-income-month=\"{$month}\"] [data-income-status]'))",
+            'impayé',
+        )
+        ->assertNoJavaScriptErrors();
+});
+
+it('ventile les charges de l\'année en pied de groupe, la plus grosse en tête', function () {
     ['user' => $user, 'property' => $property] = propertyFixture();
 
     $this->actingAs($user);
@@ -205,9 +229,9 @@ it('ventile les charges de l\'année en barres, la plus grosse en tête', functi
     visit("/properties/{$property->id}")
         ->assertSee('Charges')
         ->assertScript(
-            "Array.from(document.querySelectorAll('[data-section=\"expenses\"] [data-sector-label]')).map(el => el.textContent.trim()).join('|')",
+            "Array.from(document.querySelectorAll('[data-section=\"income\"] [data-sector-label]')).map(el => el.textContent.trim()).join('|')",
             'Travaux|Taxe foncière',
         )
-        ->assertScript("document.querySelectorAll('[data-section=\"expenses\"] [data-sector-bar]').length", 2)
+        ->assertScript("document.querySelectorAll('[data-section=\"income\"] [data-sector-bar]').length", 2)
         ->assertNoJavaScriptErrors();
 });
