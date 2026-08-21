@@ -2,6 +2,7 @@
 
 namespace App\Contexts\RealEstate\Actions;
 
+use App\Contexts\RealEstate\Datas\AmortizationLineData;
 use App\Contexts\RealEstate\Datas\ExpenseYearData;
 use App\Contexts\RealEstate\Datas\LoanSummaryData;
 use App\Contexts\RealEstate\Datas\MonthlyCashFlowData;
@@ -164,7 +165,16 @@ class GetPropertyDetail
         }
 
         $schedule = $this->assembler->scheduleFor($loan);
-        $totalPaid = array_sum(array_map(fn ($line): float => $line->payment, $schedule));
+        $totalPaid = array_sum(array_map(fn (AmortizationLineData $line): float => $line->payment, $schedule));
+
+        /** Une échéance est réglée dès que son mois est entamé : celle du mois en cours compte. */
+        $paid = array_filter(
+            $schedule,
+            fn (AmortizationLineData $line): bool => $line->month <= $today->toDateString(),
+        );
+
+        $interestPaid = array_sum(array_map(fn (AmortizationLineData $line): float => $line->interest, $paid));
+        $interestTotal = array_sum(array_map(fn (AmortizationLineData $line): float => $line->interest, $schedule));
 
         return new LoanSummaryData(
             principal: (float) $loan->principal,
@@ -175,6 +185,11 @@ class GetPropertyDetail
             monthlyPayment: $schedule[0]->payment,
             remainingPrincipal: $this->assembler->remainingFor($loan, $today),
             totalCost: round($totalPaid - (float) $loan->principal, 2),
+            endDate: $schedule[count($schedule) - 1]->month,
+            monthsPaid: count($paid),
+            principalRepaid: round(array_sum(array_map(fn (AmortizationLineData $line): float => $line->principal, $paid)), 2),
+            interestPaid: round($interestPaid, 2),
+            interestRemaining: round($interestTotal - $interestPaid, 2),
         );
     }
 }

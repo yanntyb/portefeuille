@@ -67,6 +67,54 @@ it('expose le capital restant du premier prêt, pas la somme de tous les prêts'
     Carbon::setTestNow();
 });
 
+it('situates the loan: months paid, end date, interest already paid and still to come', function () {
+    Carbon::setTestNow('2026-08-20');
+
+    $user = User::factory()->create();
+    $property = Property::factory()->create(['user_id' => $user->id]);
+    // 1 200 € sur 12 mois à 0 % = 100 €/mois, première échéance en février 2026, dernière en janvier 2027.
+    Loan::factory()->create([
+        'property_id' => $property->id,
+        'principal' => 1200,
+        'annual_rate' => 0.0,
+        'term_months' => 12,
+        'start_date' => '2026-01-01',
+        'monthly_insurance' => 0,
+    ]);
+
+    $loan = app(GetPropertyDetail::class)($user->id, $property->id)->loan;
+
+    expect($loan->monthsPaid)->toBe(7)
+        ->and($loan->endDate)->toBe('2027-01-01')
+        ->and($loan->principalRepaid)->toBe(700.0)
+        ->and($loan->interestPaid)->toBe(0.0)
+        ->and($loan->interestRemaining)->toBe(0.0);
+});
+
+it('splits the interest already paid from the interest still to come', function () {
+    Carbon::setTestNow('2026-08-20');
+
+    $user = User::factory()->create();
+    $property = Property::factory()->create(['user_id' => $user->id]);
+    Loan::factory()->create([
+        'property_id' => $property->id,
+        'principal' => 12000,
+        'annual_rate' => 0.06,
+        'term_months' => 24,
+        'start_date' => '2026-01-01',
+        'monthly_insurance' => 0,
+    ]);
+
+    $loan = app(GetPropertyDetail::class)($user->id, $property->id)->loan;
+
+    // Sept échéances payées sur vingt-quatre : les intérêts déjà réglés et ceux à venir se
+    // recomposent en coût total, et la part payée est la plus faible des deux.
+    expect($loan->monthsPaid)->toBe(7)
+        ->and(round($loan->interestPaid + $loan->interestRemaining, 2))->toBe($loan->totalCost)
+        ->and($loan->interestPaid)->toBeLessThan($loan->interestRemaining)
+        ->and($loan->interestPaid)->toBeGreaterThan(0.0);
+});
+
 it('yields null for a property of another user', function () {
     $user = User::factory()->create();
     $property = Property::factory()->create();
