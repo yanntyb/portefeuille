@@ -48,14 +48,11 @@ const amount = (value: number): string => eur(value, 0);
     <section data-section="loan" class="flex flex-col gap-4 px-6">
         <h2 class="text-[17px] leading-none font-bold">Crédit</h2>
 
-        <p data-loan-summary class="grid grid-cols-2 gap-x-8 gap-y-1.5 text-[13.5px] text-muted-foreground">
-            <span
-                v-for="entry in summary"
-                :key="entry.label"
-                class="flex items-baseline justify-between gap-3 whitespace-nowrap"
-            >
-                {{ entry.label }}
-                <strong class="font-semibold tabular-nums text-foreground">{{ entry.value }}</strong>
+        <!-- Valeur sous son libellé, calée à droite : « Capital remboursé · 24 % » débordait sur une seule ligne. -->
+        <p data-loan-summary class="grid grid-cols-2 gap-x-8 gap-y-3 text-[13.5px] text-muted-foreground">
+            <span v-for="entry in summary" :key="entry.label" class="flex flex-col gap-0.5">
+                <span>{{ entry.label }}</span>
+                <strong class="text-right font-semibold whitespace-nowrap tabular-nums text-foreground">{{ entry.value }}</strong>
             </span>
         </p>
 

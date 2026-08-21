@@ -104,14 +104,46 @@ it('situe le prêt : échéances réglées, capital remboursé, intérêts', fun
 
     $this->actingAs($user);
 
+    /** Libellé et valeur sont sur deux lignes : les recoller pour lire chaque repère d'un bloc. */
     $summary = "Array.from(document.querySelectorAll('[data-loan-summary] > span'))
-        .map(el => el.textContent.replace(/\\s+/g, ' ').trim()).join('|')";
+        .map(el => Array.from(el.children).map(child => child.textContent.replace(/\\s+/g, ' ').trim()).join(' '))
+        .join('|')";
 
     visit("/properties/{$property->id}")
         ->assertSee('Crédit')
         ->assertScript("({$summary}).includes('Payé 20/240 mois')", true)
         ->assertScript("({$summary}).includes('Mensualité 333,33 €')", true)
         ->assertScript("({$summary}).includes('Intérêts à venir 0,00 €')", true)
+        ->assertNoJavaScriptErrors();
+});
+
+it('pose chaque montant du prêt sous son libellé sans déborder de l\'écran', function () {
+    ['user' => $user, 'property' => $property] = propertyFixture(['loan' => true]);
+
+    $this->actingAs($user);
+
+    /** Le montant commence sous son libellé et finit au bord droit du repère. */
+    $stacked = "Array.from(document.querySelectorAll('[data-loan-summary] > span')).every(entry => {
+        if (entry.children.length !== 2) {
+            return false;
+        }
+
+        const label = entry.children[0].getBoundingClientRect();
+        const value = entry.children[1].getBoundingClientRect();
+
+        return value.top >= label.bottom && Math.abs(value.right - entry.getBoundingClientRect().right) <= 1;
+    })";
+
+    /** Le débordement se joue dans la grille du résumé, pas au niveau du document : il y est masqué. */
+    $fits = "(() => {
+        const summary = document.querySelector('[data-loan-summary]');
+
+        return summary.scrollWidth <= summary.clientWidth;
+    })()";
+
+    visit("/properties/{$property->id}")->on()->iPhone14Pro()
+        ->assertScript($fits, true)
+        ->assertScript($stacked, true)
         ->assertNoJavaScriptErrors();
 });
 
