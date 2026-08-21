@@ -27,22 +27,28 @@ export const signedPct = (value: number): string => {
  */
 export const fractionPct = (ratio: number): string => `${(ratio * 100).toFixed(2).replace('.', ',')} %`;
 
-export const frDate = (value: string): string => {
+/**
+ * Rend une date ISO dans le format demandé, ou la valeur telle quelle si elle n'en est pas une.
+ * Le `T00:00:00` évite le décalage d'un jour qu'un parsing UTC infligerait à une date sans heure.
+ */
+const frDateFormat = (value: string, options: Intl.DateTimeFormatOptions): string => {
     const date = new Date(`${value}T00:00:00`);
 
-    return Number.isNaN(date.getTime())
-        ? value
-        : date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('fr-FR', options);
 };
+
+export const frDate = (value: string): string =>
+    frDateFormat(value, { day: '2-digit', month: '2-digit', year: 'numeric' });
 
 /** Jour et mois seuls : dans un groupe déjà titré par son année, la répéter sur chaque ligne est du bruit. */
-export const frDayMonth = (value: string): string => {
-    const date = new Date(`${value}T00:00:00`);
+export const frDayMonth = (value: string): string => frDateFormat(value, { day: '2-digit', month: 'short' });
 
-    return Number.isNaN(date.getTime())
-        ? value
-        : date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
-};
+/** Mois d'un historique : « juil. 2026 », assez court pour tenir en tête de ligne. */
+export const frMonthYear = (value: string): string => frDateFormat(value, { month: 'short', year: 'numeric' });
+
+/** Date mise en avant — acquisition d'un bien : ni `frDate` ni `frDayMonth` ne s'y prêtent. */
+export const frLongDate = (value: string): string =>
+    frDateFormat(value, { day: 'numeric', month: 'long', year: 'numeric' });
 
 export const gainClass = (value: number | null): string =>
     value === null || value === 0 ? 'text-muted-foreground' : value > 0 ? 'text-gain' : 'text-loss';

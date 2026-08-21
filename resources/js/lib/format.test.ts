@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { eur, fractionPct, frDate, frDayMonth, gainClass, pct, signedEur, signedPct, syncedAtLabel } from '@/lib/format';
+import { eur, fractionPct, frDate, frDayMonth, frLongDate, frMonthYear, gainClass, pct, signedEur, signedPct, syncedAtLabel } from '@/lib/format';
 
 /**
  * `Intl` en fr-FR pose des espaces fines insécables (U+202F) entre les milliers et avant l'euro,
@@ -129,5 +129,25 @@ describe('frDayMonth', () => {
 
     it('rend la valeur telle quelle quand elle n\'est pas une date', () => {
         expect(frDayMonth('pas une date')).toBe('pas une date');
+    });
+});
+
+describe('frMonthYear', () => {
+    it('rend un mois ISO en mois court et année', () => {
+        expect(frMonthYear('2026-07-01')).toBe('juil. 2026');
+    });
+
+    it('rend la valeur telle quelle quand elle n\'est pas une date', () => {
+        expect(frMonthYear('pas une date')).toBe('pas une date');
+    });
+});
+
+describe('frLongDate', () => {
+    it('rend une date ISO en jour, mois en entier et année', () => {
+        expect(frLongDate('2026-08-20')).toBe('20 août 2026');
+    });
+
+    it('rend la valeur telle quelle quand elle n\'est pas une date', () => {
+        expect(frLongDate('pas une date')).toBe('pas une date');
     });
 });
