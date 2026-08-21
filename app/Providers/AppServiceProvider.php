@@ -26,6 +26,11 @@ use App\Contexts\Valuation\Infrastructure\MarketInstrumentDirectory;
 use App\Contexts\Valuation\Infrastructure\MarketPriceHistory;
 use App\Contexts\Valuation\Infrastructure\PortfolioTransactionHistory;
 use App\Contexts\Valuation\ValuationProvider;
+use App\Contexts\Wealth\Infrastructure\DividendIncome;
+use App\Contexts\Wealth\Infrastructure\PortfolioHoldings as WealthPortfolioHoldings;
+use App\Contexts\Wealth\Infrastructure\RealEstateFinancials;
+use App\Contexts\Wealth\Infrastructure\ValuationSeries;
+use App\Contexts\Wealth\WealthProvider;
 use App\Shared\Python\ProcessPythonRunner;
 use App\Shared\Python\PythonProvider;
 use Carbon\Carbon;
@@ -78,6 +83,14 @@ class AppServiceProvider extends ServiceProvider
             dividendHistory: MarketDividendHistory::class,
             positionHistory: PortfolioPositionHistory::class,
             rentSchedule: RealEstateRentSchedule::class,
+        );
+
+        WealthProvider::registers(
+            app: $this->app,
+            holdings: WealthPortfolioHoldings::class,
+            securitiesSeries: ValuationSeries::class,
+            realEstate: RealEstateFinancials::class,
+            income: DividendIncome::class,
         );
     }
 
