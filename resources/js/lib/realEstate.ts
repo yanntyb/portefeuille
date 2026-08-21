@@ -125,17 +125,46 @@ export const capitalGainPctOf = (property: PropertyDetail): number | null => {
     return cost <= 0 ? null : (capitalGainOf(property) / cost) * 100;
 };
 
+/** Découpage de la valeur estimée : ce qui est déjà à soi, et ce qui reste à la banque. */
+export interface EquitySplit {
+    equity: number;
+    debt: number;
+    /** Part du propriétaire en pourcentage de la valeur estimée, plancher à zéro. */
+    equityShare: number;
+    /** Vrai quand le restant dû dépasse la valeur estimée : le bien ne couvre plus son prêt. */
+    isUnderwater: boolean;
+}
+
+/**
+ * Découpe la valeur estimée en « à moi » / « à la banque ». Nul sans prêt — un bien détenu en
+ * propre n'a rien à partager, une barre pleine ne dirait rien — et nul sans valeur estimée : il n'y
+ * a alors pas de total à découper.
+ */
+export const equitySplitOf = (property: PropertyDetail): EquitySplit | null => {
+    if (property.loan === null || property.currentValue <= 0) {
+        return null;
+    }
+
+    const isUnderwater = property.netWorth < 0;
+
+    return {
+        equity: isUnderwater ? 0 : property.netWorth,
+        debt: property.loan.remainingPrincipal,
+        equityShare: isUnderwater ? 0 : (property.netWorth / property.currentValue) * 100,
+        isUnderwater,
+    };
+};
+
 /**
  * Pied de l'en-tête, calqué sur celui d'un instrument : le patrimoine net porte le grand chiffre,
- * ces quatre repères disent d'où il vient. Le cash-flow est mensualisé pour se lire à l'échelle
- * d'une quittance, et coloré comme un gain — un bien qui coûte chaque mois doit le montrer.
+ * la barre patrimoine dit déjà la valeur estimée et le restant dû, ces deux repères disent ce
+ * qu'elle ne montre pas. Le cash-flow est mensualisé pour se lire à l'échelle d'une quittance, et
+ * coloré comme un gain — un bien qui coûte chaque mois doit le montrer.
  */
 export const propertyHeroMeta = (property: PropertyDetail): HeroMetaEntry[] => {
     const monthlyCashFlow = property.metrics.annualCashFlow / 12;
 
     return [
-        { label: 'Valeur estimée', value: eur(property.currentValue) },
-        { label: 'Restant dû', value: eur(property.loan?.remainingPrincipal ?? 0) },
         { label: 'Investi', value: eur(acquisitionCostOf(property)) },
         { label: 'Cash-flow/mois', value: signedEur(monthlyCashFlow), gain: monthlyCashFlow },
     ];

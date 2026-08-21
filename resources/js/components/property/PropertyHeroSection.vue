@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import HeroFigures from '@/components/HeroFigures.vue';
+import PropertyEquityBar from '@/components/property/PropertyEquityBar.vue';
 import { frLongDate, pct } from '@/lib/format';
 import type { HeroMetaEntry } from '@/lib/instrument';
 import { capitalGainOf, capitalGainPctOf, propertyHeroMeta, type PropertyDetail } from '@/lib/realEstate';
@@ -32,6 +33,10 @@ const gainLabel = computed<string | null>(() => (gainPct.value === null ? null :
             :gain="gain"
             :gain-label="gainLabel"
             :entries="metaEntries"
-        />
+        >
+            <template #beneath-value>
+                <PropertyEquityBar :property="props.property" />
+            </template>
+        </HeroFigures>
     </header>
 </template>

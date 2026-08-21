@@ -21,28 +21,50 @@ it('porte le patrimoine net en grand chiffre et la plus-value en pastille', func
         ->assertNoJavaScriptErrors();
 });
 
-it('détaille valeur estimée, restant dû, investi et cash-flow mensuel', function () use ($metaEntries) {
+it('détaille investi et cash-flow mensuel, ce que la barre patrimoine ne dit pas', function () use ($metaEntries) {
     ['user' => $user, 'property' => $property] = propertyFixture();
 
     $this->actingAs($user);
 
     visit("/properties/{$property->id}")
-        ->assertScript(
-            "({$metaEntries}).startsWith('Valeur estimée 150 000,00 €|Restant dû 0,00 €|Investi 108 000,00 €|Cash-flow/mois ')",
-            true,
-        )
+        ->assertScript("({$metaEntries}).startsWith('Investi 108 000,00 €|Cash-flow/mois ')", true)
         ->assertScript("document.querySelectorAll('[data-hero-gain]').length", 1)
         ->assertNoJavaScriptErrors();
 });
 
-it('retranche le capital restant dû du patrimoine net quand le bien est financé', function () use ($normalise, $metaEntries) {
+it('retranche le capital restant dû du patrimoine net quand le bien est financé', function () use ($normalise) {
     ['user' => $user, 'property' => $property] = propertyFixture(['loan' => true]);
 
     $this->actingAs($user);
 
     visit("/properties/{$property->id}")
         ->assertScript("({$normalise})(document.querySelector('[data-hero-value]')) !== '150 000,00 €'", true)
-        ->assertScript("({$metaEntries}).includes('Restant dû 0,00 €')", false)
+        ->assertNoJavaScriptErrors();
+});
+
+it('découpe la valeur estimée entre le propriétaire et la banque', function () use ($normalise) {
+    ['user' => $user, 'property' => $property] = propertyFixture(['loan' => true]);
+
+    $this->actingAs($user);
+
+    // 150 000 € de valeur pour 73 333 € restant dû après vingt échéances : la moitié du bien est
+    // déjà à soi, et la barre le montre avant tout chiffre.
+    visit("/properties/{$property->id}")
+        ->assertScript("Math.round(parseFloat(document.querySelector('[data-equity-share]').style.width))", 51)
+        ->assertScript(
+            "({$normalise})(document.querySelector('[data-equity-legend]'))",
+            'à moi 76 667 € banque 73 333 €',
+        )
+        ->assertNoJavaScriptErrors();
+});
+
+it('n\'affiche aucune barre patrimoine sur un bien sans prêt : rien à partager', function () {
+    ['user' => $user, 'property' => $property] = propertyFixture();
+
+    $this->actingAs($user);
+
+    visit("/properties/{$property->id}")
+        ->assertScript("document.querySelectorAll('[data-equity-bar]').length", 0)
         ->assertNoJavaScriptErrors();
 });
 

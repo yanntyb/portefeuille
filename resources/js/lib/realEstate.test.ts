@@ -4,6 +4,7 @@ import {
     capitalGainOf,
     capitalGainPctOf,
     cashFlowYears,
+    equitySplitOf,
     expenseRows,
     loanProgress,
     loanYears,
@@ -97,27 +98,50 @@ describe('capitalGainPctOf', () => {
     });
 });
 
-describe('propertyHeroMeta', () => {
-    it('donne les quatre repères du bien, le cash-flow mensuel coloré comme un gain', () => {
-        const entries = propertyHeroMeta(detail({ loan: loan() }));
+describe('equitySplitOf', () => {
+    it('découpe la valeur estimée entre le propriétaire et la banque', () => {
+        const split = equitySplitOf(
+            detail({ currentValue: 150000, netWorth: 100000, loan: loan({ remainingPrincipal: 50000 }) }),
+        );
 
-        expect(entries.map((entry) => entry.label)).toEqual([
-            'Valeur estimée',
-            'Restant dû',
-            'Investi',
-            'Cash-flow/mois',
-        ]);
-        expect(entries[3].gain).toBe(100);
+        expect(split?.equity).toBe(100000);
+        expect(split?.debt).toBe(50000);
+        expect(split?.equityShare).toBeCloseTo(66.7, 1);
+        expect(split?.isUnderwater).toBe(false);
     });
 
-    it('rend un restant dû nul quand le bien n\'a pas de prêt', () => {
-        expect(propertyHeroMeta(detail())[1].value).toContain('0');
+    it('ne découpe rien sans prêt : le bien est entier, la barre ne dirait rien', () => {
+        expect(equitySplitOf(detail())).toBeNull();
+    });
+
+    it('ne découpe rien sans valeur estimée : aucun total à partager', () => {
+        expect(equitySplitOf(detail({ currentValue: 0, loan: loan() }))).toBeNull();
+    });
+
+    it('ne laisse aucune part au propriétaire quand le restant dû dépasse la valeur', () => {
+        const split = equitySplitOf(
+            detail({ currentValue: 100000, netWorth: -20000, loan: loan({ remainingPrincipal: 120000 }) }),
+        );
+
+        expect(split?.equityShare).toBe(0);
+        expect(split?.equity).toBe(0);
+        expect(split?.debt).toBe(120000);
+        expect(split?.isUnderwater).toBe(true);
+    });
+});
+
+describe('propertyHeroMeta', () => {
+    it('donne les deux repères que la barre patrimoine ne porte pas', () => {
+        const entries = propertyHeroMeta(detail({ loan: loan() }));
+
+        expect(entries.map((entry) => entry.label)).toEqual(['Investi', 'Cash-flow/mois']);
+        expect(entries[1].gain).toBe(100);
     });
 
     it('colore un cash-flow négatif comme une perte', () => {
         const entries = propertyHeroMeta(detail({ metrics: { ...detail().metrics, annualCashFlow: -2400 } }));
 
-        expect(entries[3].gain).toBe(-200);
+        expect(entries[1].gain).toBe(-200);
     });
 });
 

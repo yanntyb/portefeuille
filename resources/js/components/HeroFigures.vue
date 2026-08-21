@@ -21,6 +21,9 @@ const props = defineProps<{
             <GainPill v-if="props.gainLabel !== null" data-hero-gain-pct :value="props.gain" :label="props.gainLabel" />
         </div>
 
+        <!-- Ce qu'un appelant veut lire entre le grand chiffre et ses repères : rien par défaut. -->
+        <slot name="beneath-value" />
+
         <!-- Grille plutôt que flux : les libellés s'alignent en colonne, les valeurs sur leur bord droit. -->
         <p data-hero-meta class="grid grid-cols-2 gap-x-8 gap-y-1.5 pt-1.5 text-[13.5px] text-muted-foreground">
             <span
