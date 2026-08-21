@@ -19,6 +19,8 @@ use App\Contexts\Market\Infrastructure\EloquentPriceRepository;
 use App\Contexts\Market\Infrastructure\EloquentSectorRepository;
 use App\Contexts\Market\Infrastructure\YahooFinanceAdapter;
 use App\Contexts\Market\MarketProvider;
+use App\Contexts\RealEstate\Infrastructure\LaravelRealEstateCache;
+use App\Contexts\RealEstate\RealEstateProvider;
 use App\Contexts\Valuation\Infrastructure\LaravelSeriesCache;
 use App\Contexts\Valuation\Infrastructure\MarketInstrumentDirectory;
 use App\Contexts\Valuation\Infrastructure\MarketPriceHistory;
@@ -56,6 +58,11 @@ class AppServiceProvider extends ServiceProvider
             priceHistory: MarketPriceHistory::class,
             instrumentDirectory: MarketInstrumentDirectory::class,
             seriesCache: LaravelSeriesCache::class,
+        );
+
+        RealEstateProvider::registers(
+            app: $this->app,
+            cache: LaravelRealEstateCache::class,
         );
 
         InstrumentViewProvider::registers(

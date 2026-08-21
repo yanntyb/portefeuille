@@ -7,6 +7,7 @@ use App\Contexts\RealEstate\Datas\RealEstateSeriesData;
 use App\Contexts\RealEstate\Models\Loan;
 use App\Contexts\RealEstate\Models\Property;
 use App\Contexts\RealEstate\Models\PropertyValuation;
+use App\Contexts\RealEstate\Ports\RealEstateCachePort;
 use App\Contexts\RealEstate\Services\CashFlowCalculator;
 use App\Contexts\RealEstate\Services\LoanAmortizationCalculator;
 use App\Contexts\RealEstate\Support\PropertyFinancialsAssembler;
@@ -28,9 +29,15 @@ class BuildRealEstateSeries
         private PropertyFinancialsAssembler $assembler,
         private LoanAmortizationCalculator $amortization,
         private GetRealEstateCashInvested $cashInvested,
+        private RealEstateCachePort $cache,
     ) {}
 
     public function __invoke(int $userId): RealEstateSeriesData
+    {
+        return $this->cache->remember('serie', $userId, fn (): RealEstateSeriesData => $this->build($userId));
+    }
+
+    private function build(int $userId): RealEstateSeriesData
     {
         $properties = $this->properties->forUser($userId);
 
