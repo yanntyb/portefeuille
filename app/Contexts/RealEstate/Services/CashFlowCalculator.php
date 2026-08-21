@@ -79,4 +79,34 @@ class CashFlowCalculator
             $until,
         );
     }
+
+    /**
+     * Cash injecté mois par mois depuis l'acquisition, indexé par premier jour du mois. Seuls les
+     * mois déficitaires y figurent : un mois excédentaire rend du cash, il n'en prend pas.
+     *
+     * Cette règle vit ici et nulle part ailleurs — le cash sorti d'un bien et la série de son
+     * patrimoine net la lisaient tous les deux, chacun avec sa copie.
+     *
+     * @return array<string, float>
+     */
+    public function injectionsSince(Property $property, Carbon $until): array
+    {
+        $from = $property->acquisition_date->copy()->startOfMonth();
+
+        if ($from > $until) {
+            return [];
+        }
+
+        $injections = [];
+
+        foreach ($this->months($property, $from, $until) as $flow) {
+            $injected = max(0.0, -$flow->net);
+
+            if ($injected > 0.0) {
+                $injections[$flow->month] = $injected;
+            }
+        }
+
+        return $injections;
+    }
 }

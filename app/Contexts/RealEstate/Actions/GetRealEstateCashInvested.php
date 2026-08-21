@@ -58,18 +58,6 @@ class GetRealEstateCashInvested
     /** Seuls les mois déficitaires injectent : un mois excédentaire rend du cash, il ne le prend pas. */
     private function injected(Property $property, Carbon $today): float
     {
-        $from = $property->acquisition_date->copy()->startOfMonth();
-
-        if ($from > $today) {
-            return 0.0;
-        }
-
-        $injected = 0.0;
-
-        foreach ($this->cashFlows->months($property, $from, $today) as $flow) {
-            $injected += max(0.0, -$flow->net);
-        }
-
-        return $injected;
+        return array_sum($this->cashFlows->injectionsSince($property, $today));
     }
 }

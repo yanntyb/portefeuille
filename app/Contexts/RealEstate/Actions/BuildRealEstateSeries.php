@@ -48,7 +48,7 @@ class BuildRealEstateSeries
             $acquisition = $property->acquisition_date->toDateString();
             $valuations = $this->valuationPoints($property);
             $schedules = $this->schedulesFor($property);
-            $injections = $this->injectionsByMonth($property, $today);
+            $injections = $this->cashFlows->injectionsSince($property, $today);
             $downPayment = $this->cashInvested->downPaymentFor($property);
 
             foreach ($labels as $index => $label) {
@@ -77,14 +77,17 @@ class BuildRealEstateSeries
     private function weeklyLabels(Carbon $firstAcquisition, Carbon $today): array
     {
         $cursor = $firstAcquisition->copy()->startOfWeek();
+        $todayLabel = $today->toDateString();
         $labels = [];
 
-        while ($cursor < $today) {
+        // Comparaison en jour, pas en horodatage : `$today` porte l'heure courante, et un lundi
+        // à 00:00:00 lui serait sinon antérieur, dupliquant le dernier label.
+        while ($cursor->toDateString() < $todayLabel) {
             $labels[] = $cursor->toDateString();
             $cursor = $cursor->addWeek();
         }
 
-        $labels[] = $today->toDateString();
+        $labels[] = $todayLabel;
 
         return $labels;
     }
@@ -146,33 +149,6 @@ class BuildRealEstateSeries
         }
 
         return $remaining;
-    }
-
-    /**
-     * Cash injecté par mois, indexé par premier jour du mois. Seuls les mois déficitaires y
-     * figurent.
-     *
-     * @return array<string, float>
-     */
-    private function injectionsByMonth(Property $property, Carbon $today): array
-    {
-        $from = $property->acquisition_date->copy()->startOfMonth();
-
-        if ($from > $today) {
-            return [];
-        }
-
-        $injections = [];
-
-        foreach ($this->cashFlows->months($property, $from, $today) as $flow) {
-            $injected = max(0.0, -$flow->net);
-
-            if ($injected > 0.0) {
-                $injections[$flow->month] = $injected;
-            }
-        }
-
-        return $injections;
     }
 
     /** @param  array<string, float>  $injections */
