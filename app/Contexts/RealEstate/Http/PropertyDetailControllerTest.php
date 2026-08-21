@@ -20,6 +20,26 @@ it('renders the property page with its deferred amortization', function () {
             ->has('property.metrics'));
 });
 
+it('defers the monthly value series, so the chart never blocks the first paint', function () {
+    $user = User::factory()->create();
+    $property = Property::factory()->create([
+        'user_id' => $user->id,
+        'acquisition_date' => now()->startOfMonth()->subMonthsNoOverflow(3)->toDateString(),
+    ]);
+    PropertyValuation::factory()->create(['property_id' => $property->id, 'value' => 120000]);
+
+    $this->get(route('properties.show', $property->id))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->missing('valueSeries')
+            ->loadDeferredProps(fn (AssertableInertia $reload) => $reload
+                ->has('valueSeries.labels', 4)
+                ->has('valueSeries.values', 4)
+                ->has('valueSeries.remaining', 4)
+            )
+        );
+});
+
 it('renders 404 for an unknown property', function () {
     User::factory()->create();
 
