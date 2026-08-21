@@ -24,8 +24,9 @@ const props = defineProps<{
         <!-- Ce qu'un appelant veut lire entre le grand chiffre et ses repères : rien par défaut. -->
         <slot name="beneath-value" />
 
-        <!-- Grille plutôt que flux : les libellés s'alignent en colonne, les valeurs sur leur bord droit. -->
-        <p data-hero-meta class="grid grid-cols-2 gap-x-8 gap-y-1.5 pt-1.5 text-[13.5px] text-muted-foreground">
+        <!-- Un repère par ligne : le libellé à gauche, la valeur sur le bord droit. Sur deux colonnes,
+             les libellés longs et leur valeur se chevauchaient. -->
+        <p data-hero-meta class="flex flex-col gap-1.5 pt-1.5 text-[13.5px] text-muted-foreground">
             <span
                 v-for="entry in props.entries"
                 :key="entry.label || entry.value"

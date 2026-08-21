@@ -125,6 +125,27 @@ it('aligne le graphe de valorisation sur la marge du reste de la page, y compris
         ->assertNoJavaScriptErrors();
 });
 
+it('donne une ligne à chaque repère de l\'en-tête, montant sur le bord droit', function () {
+    ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
+
+    $this->actingAs($user);
+
+    /** Chaque repère commence sous le précédent et pousse son montant contre le bord droit. */
+    $stacked = "Array.from(document.querySelectorAll('[data-hero-meta] > span')).every((entry, index, entries) => {
+        const row = entry.getBoundingClientRect();
+        const value = entry.querySelector('strong')?.getBoundingClientRect() ?? null;
+        const previous = index === 0 ? null : entries[index - 1].getBoundingClientRect();
+
+        return (value === null || Math.abs(value.right - row.right) <= 1)
+            && (previous === null || row.top >= previous.bottom);
+    })";
+
+    visit("/instruments/{$instrument->id}")->on()->iPhone14Pro()
+        ->assertScript("document.querySelectorAll('[data-hero-meta] > span').length", 4)
+        ->assertScript($stacked, true)
+        ->assertNoJavaScriptErrors();
+});
+
 it('affiche les dividendes perçus quand l\'instrument en verse', function () {
     ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
 

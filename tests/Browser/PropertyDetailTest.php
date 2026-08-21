@@ -104,10 +104,8 @@ it('situe le prêt : échéances réglées, capital remboursé, intérêts', fun
 
     $this->actingAs($user);
 
-    /** Libellé et valeur sont sur deux lignes : les recoller pour lire chaque repère d'un bloc. */
     $summary = "Array.from(document.querySelectorAll('[data-loan-summary] > span'))
-        .map(el => Array.from(el.children).map(child => child.textContent.replace(/\\s+/g, ' ').trim()).join(' '))
-        .join('|')";
+        .map(el => el.textContent.replace(/\\s+/g, ' ').trim()).join('|')";
 
     visit("/properties/{$property->id}")
         ->assertSee('Crédit')
@@ -117,24 +115,21 @@ it('situe le prêt : échéances réglées, capital remboursé, intérêts', fun
         ->assertNoJavaScriptErrors();
 });
 
-it('pose chaque montant du prêt sous son libellé sans déborder de l\'écran', function () {
+it('donne une ligne à chaque repère du prêt, montant sur le bord droit', function () {
     ['user' => $user, 'property' => $property] = propertyFixture(['loan' => true]);
 
     $this->actingAs($user);
 
-    /** Le montant commence sous son libellé et finit au bord droit du repère. */
-    $stacked = "Array.from(document.querySelectorAll('[data-loan-summary] > span')).every(entry => {
-        if (entry.children.length !== 2) {
-            return false;
-        }
+    /** Chaque repère commence sous le précédent et pousse son montant contre le bord droit. */
+    $stacked = "Array.from(document.querySelectorAll('[data-loan-summary] > span')).every((entry, index, entries) => {
+        const row = entry.getBoundingClientRect();
+        const value = entry.querySelector('strong').getBoundingClientRect();
+        const previous = index === 0 ? null : entries[index - 1].getBoundingClientRect();
 
-        const label = entry.children[0].getBoundingClientRect();
-        const value = entry.children[1].getBoundingClientRect();
-
-        return value.top >= label.bottom && Math.abs(value.right - entry.getBoundingClientRect().right) <= 1;
+        return Math.abs(value.right - row.right) <= 1 && (previous === null || row.top >= previous.bottom);
     })";
 
-    /** Le débordement se joue dans la grille du résumé, pas au niveau du document : il y est masqué. */
+    /** Le débordement se joue dans le résumé, pas au niveau du document : il y est écrêté. */
     $fits = "(() => {
         const summary = document.querySelector('[data-loan-summary]');
 
