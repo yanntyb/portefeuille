@@ -68,7 +68,7 @@ it('n\'affiche aucune barre patrimoine sur un bien sans prêt : rien à partager
         ->assertNoJavaScriptErrors();
 });
 
-it('ordonne les sections comme la fiche d\'un instrument, le graphe sous l\'en-tête', function () {
+it('ordonne les sections : les indicateurs sous l\'en-tête, le crédit ensuite', function () {
     ['user' => $user, 'property' => $property] = propertyFixture(['loan' => true]);
 
     $this->actingAs($user);
@@ -76,8 +76,23 @@ it('ordonne les sections comme la fiche d\'un instrument, le graphe sous l\'en-t
     visit("/properties/{$property->id}")
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'hero|loan|metrics|cash-flow|rents|expenses',
+            'hero|metrics|loan|cash-flow|rents|expenses',
         )
+        ->assertNoJavaScriptErrors();
+});
+
+it('présente les indicateurs en tuiles, la valeur avant son libellé', function () use ($normalise) {
+    ['user' => $user, 'property' => $property] = propertyFixture(['loan' => true]);
+
+    $this->actingAs($user);
+
+    $tiles = "Array.from(document.querySelectorAll('[data-metric]')).map(el => el.dataset.metric).join('|')";
+
+    visit("/properties/{$property->id}")
+        ->assertScript($tiles, 'grossYield|netYield|annualCashFlow|cashOnCash|ltv')
+        // La valeur porte la tuile, le libellé la nomme dessous : l'œil balaie une ligne de chiffres.
+        ->assertScript("document.querySelector('[data-metric=\"ltv\"]').firstElementChild.hasAttribute('data-metric-value')", true)
+        ->assertScript("({$normalise})(document.querySelector('[data-metric=\"annualCashFlow\"] [data-metric-label]'))", 'Cash-flow annuel')
         ->assertNoJavaScriptErrors();
 });
 

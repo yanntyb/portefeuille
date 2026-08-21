@@ -22,9 +22,9 @@ const props = defineProps<{
     <AppPage>
         <PropertyHeroSection :property="props.property" />
 
-        <PropertyLoanSection v-if="props.property.loan" :loan="props.property.loan" :lines="amortization" />
+        <PropertyMetricsGrid :metrics="props.property.metrics" />
 
-        <PropertyMetricsGrid :metrics="props.property.metrics" :loan="props.property.loan" />
+        <PropertyLoanSection v-if="props.property.loan" :loan="props.property.loan" :lines="amortization" />
 
         <PropertyCashFlowSection :flows="props.property.monthlyCashFlows" />
 
