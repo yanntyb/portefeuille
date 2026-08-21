@@ -10,6 +10,12 @@ use App\Contexts\Market\Models\SectorAllocation;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
+use App\Contexts\RealEstate\Enums\ExpenseCategory;
+use App\Contexts\RealEstate\Models\Lease;
+use App\Contexts\RealEstate\Models\Loan;
+use App\Contexts\RealEstate\Models\Property;
+use App\Contexts\RealEstate\Models\PropertyExpense;
+use App\Contexts\RealEstate\Models\PropertyValuation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
@@ -121,6 +127,74 @@ function portfolioFixture(array $overrides = []): array
     ]);
 
     return ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument];
+}
+
+/**
+ * Bien locatif minimal mais complet : acquis 108 000 € frais compris, estimé 150 000 €, loué
+ * 600 €/mois depuis vingt mois et deux charges de l'année en cours.
+ *
+ * Vingt mois, et non douze : l'historique des loyers couvre alors deux années civiles quel que
+ * soit le mois où le test tourne, ce qui donne un groupe replié à côté du groupe ouvert.
+ *
+ * Sans prêt par défaut : le patrimoine net vaut alors exactement la valeur estimée, un chiffre
+ * que le test peut affirmer sans rejouer un échéancier qui dépend du jour.
+ *
+ * @param  array{loan?: bool}  $overrides
+ * @return array{user: User, property: Property}
+ */
+function propertyFixture(array $overrides = []): array
+{
+    $start = now()->startOfMonth()->subMonthsNoOverflow(20)->toDateString();
+
+    $user = User::factory()->create();
+    $property = Property::factory()->create([
+        'user_id' => $user->id,
+        'name' => 'T2 Lyon 7e',
+        'address' => '12 rue Garibaldi, Lyon',
+        'acquisition_date' => $start,
+        'acquisition_price' => 100000,
+        'acquisition_fees' => 8000,
+    ]);
+
+    Lease::factory()->create([
+        'property_id' => $property->id,
+        'monthly_rent' => 600,
+        'start_date' => $start,
+        'end_date' => null,
+    ]);
+
+    PropertyValuation::factory()->create([
+        'property_id' => $property->id,
+        'date' => now()->toDateString(),
+        'value' => 150000,
+    ]);
+
+    PropertyExpense::factory()->create([
+        'property_id' => $property->id,
+        'date' => now()->startOfYear()->toDateString(),
+        'amount' => 750,
+        'category' => ExpenseCategory::Works,
+    ]);
+
+    PropertyExpense::factory()->create([
+        'property_id' => $property->id,
+        'date' => now()->startOfYear()->addDay()->toDateString(),
+        'amount' => 250,
+        'category' => ExpenseCategory::PropertyTax,
+    ]);
+
+    if ($overrides['loan'] ?? false) {
+        Loan::factory()->create([
+            'property_id' => $property->id,
+            'principal' => 80000,
+            'annual_rate' => 0.0,
+            'term_months' => 240,
+            'start_date' => $start,
+            'monthly_insurance' => 0,
+        ]);
+    }
+
+    return ['user' => $user, 'property' => $property];
 }
 
 /**

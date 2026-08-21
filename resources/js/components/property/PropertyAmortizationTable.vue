@@ -1,30 +1,36 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { Deferred } from '@inertiajs/vue3';
-import { eur, fractionPct as pct } from '@/lib/format';
+import { eur, fractionPct, frMonthYear } from '@/lib/format';
+import type { HeroMetaEntry } from '@/lib/instrument';
 import type { AmortizationLine, LoanSummary } from '@/lib/realEstate';
 
 const props = defineProps<{ loan: LoanSummary; lines?: AmortizationLine[] }>();
 
-/** `T00:00:00` évite le décalage d'un jour qu'un parsing UTC infligerait à une date sans heure. */
-const frMonth = (value: string): string => {
-    const date = new Date(`${value}T00:00:00`);
-
-    return Number.isNaN(date.getTime())
-        ? value
-        : date.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
-};
+/** Mêmes paires libellé/valeur que l'en-tête : le résumé du prêt se lit comme celui du bien. */
+const summary = computed<HeroMetaEntry[]>(() => [
+    { label: 'Emprunté', value: eur(props.loan.principal) },
+    { label: 'Taux', value: fractionPct(props.loan.annualRate) },
+    { label: 'Mensualité', value: eur(props.loan.monthlyPayment) },
+    { label: 'Durée', value: `${props.loan.termMonths} mois` },
+    { label: 'Restant dû', value: eur(props.loan.remainingPrincipal) },
+    { label: 'Coût total', value: eur(props.loan.totalCost) },
+]);
 </script>
 
 <template>
     <section data-section="amortization" class="flex flex-col gap-4 px-6">
         <h2 class="text-[17px] leading-none font-bold">Crédit</h2>
 
-        <p class="text-sm text-muted-foreground">
-            {{ eur(props.loan.principal) }} à {{ pct(props.loan.annualRate) }} sur
-            {{ props.loan.termMonths }} mois ·
-            {{ eur(props.loan.monthlyPayment) }}/mois ·
-            {{ eur(props.loan.remainingPrincipal) }} restant dus ·
-            coût total {{ eur(props.loan.totalCost) }}
+        <p data-loan-summary class="grid grid-cols-2 gap-x-8 gap-y-1.5 text-[13.5px] text-muted-foreground">
+            <span
+                v-for="entry in summary"
+                :key="entry.label"
+                class="flex items-baseline justify-between gap-3 whitespace-nowrap"
+            >
+                {{ entry.label }}
+                <strong class="font-semibold tabular-nums text-foreground">{{ entry.value }}</strong>
+            </span>
         </p>
 
         <Deferred data="amortization">
@@ -51,7 +57,7 @@ const frMonth = (value: string): string => {
                     </thead>
                     <tbody>
                         <tr v-for="line in props.lines ?? []" :key="line.month" class="border-t border-separator">
-                            <td class="py-1 pr-4">{{ frMonth(line.month) }}</td>
+                            <td class="py-1 pr-4">{{ frMonthYear(line.month) }}</td>
                             <td class="py-1 pr-4 text-right tabular-nums">{{ eur(line.payment) }}</td>
                             <td class="py-1 pr-4 text-right tabular-nums">{{ eur(line.interest) }}</td>
                             <td class="py-1 pr-4 text-right tabular-nums">{{ eur(line.principal) }}</td>

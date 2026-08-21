@@ -77,7 +77,7 @@ it('charge la fiche du bien et ses sections, sans erreur', function () {
         ->assertSee('T2 Lyon 7e')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'hero|metrics|cash-flow|rents|expenses|amortization',
+            'hero|value|metrics|cash-flow|rents|expenses|amortization',
         )
         ->assertNoJavaScriptErrors();
 });

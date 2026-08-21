@@ -1,16 +1,33 @@
 <script setup lang="ts">
-import { eur } from '@/lib/format';
-import type { MonthlyCashFlow } from '@/lib/realEstate';
+import { computed, ref } from 'vue';
+import { ChevronRight } from 'lucide-vue-next';
+import { eur, frMonthYear, gainClass, signedEur } from '@/lib/format';
+import { cashFlowYears, type CashFlowYear, type MonthlyCashFlow } from '@/lib/realEstate';
 
 const props = defineProps<{ flows: MonthlyCashFlow[] }>();
 
-/** `T00:00:00` évite le décalage d'un jour qu'un parsing UTC infligerait à une date sans heure. */
-const frMonth = (value: string): string => {
-    const date = new Date(`${value}T00:00:00`);
+const years = computed<CashFlowYear[]>(() => cashFlowYears(props.flows));
 
-    return Number.isNaN(date.getTime())
-        ? value
-        : date.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
+/**
+ * Seule l'année la plus récente s'ouvre : les précédentes relèvent de l'archive. « La plus
+ * récente » et non l'année civile courante — en janvier, la fenêtre glissante n'a qu'un mois de
+ * l'année en cours, et un groupe ouvert vaut mieux qu'une section entièrement repliée.
+ */
+const openYears = ref<string[]>(years.value.slice(0, 1).map((group) => group.year));
+
+const isYearOpen = (year: string): boolean => openYears.value.includes(year);
+
+const toggleYear = (year: string): void => {
+    openYears.value = isYearOpen(year)
+        ? openYears.value.filter((open) => open !== year)
+        : [...openYears.value, year];
+};
+
+/** Une seule ligne détaillée à la fois : le détail se lit en regard de la ligne, pas en liste. */
+const openMonth = ref<string | null>(null);
+
+const toggleMonth = (month: string): void => {
+    openMonth.value = openMonth.value === month ? null : month;
 };
 </script>
 
@@ -18,32 +35,57 @@ const frMonth = (value: string): string => {
     <section data-section="cash-flow" class="flex flex-col gap-4 px-6">
         <h2 class="text-[17px] leading-none font-bold">Cash-flow mensuel</h2>
 
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead>
-                    <tr class="text-left text-xs text-muted-foreground">
-                        <th class="py-1 pr-4 font-normal">Mois</th>
-                        <th class="py-1 pr-4 text-right font-normal">Loyers</th>
-                        <th class="py-1 pr-4 text-right font-normal">Charges</th>
-                        <th class="py-1 pr-4 text-right font-normal">Crédit</th>
-                        <th class="py-1 text-right font-normal">Net</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="flow in props.flows" :key="flow.month" class="border-t border-separator">
-                        <td class="py-1.5 pr-4">{{ frMonth(flow.month) }}</td>
-                        <td class="py-1.5 pr-4 text-right tabular-nums">{{ eur(flow.rents) }}</td>
-                        <td class="py-1.5 pr-4 text-right tabular-nums">{{ eur(flow.expenses) }}</td>
-                        <td class="py-1.5 pr-4 text-right tabular-nums">{{ eur(flow.loanPayment) }}</td>
-                        <td
-                            class="py-1.5 text-right font-semibold tabular-nums"
-                            :class="flow.net < 0 ? 'text-loss' : ''"
+        <div v-if="years.length" class="flex min-w-0 flex-col">
+            <div
+                v-for="group in years"
+                :key="group.year"
+                class="flex flex-col border-b border-border last:border-b-0"
+            >
+                <button
+                    type="button"
+                    :data-cash-flow-year="group.year"
+                    class="flex items-center gap-1.5 py-3 text-sm"
+                    :aria-expanded="isYearOpen(group.year)"
+                    @click="toggleYear(group.year)"
+                >
+                    <ChevronRight
+                        class="size-4 shrink-0 text-muted-foreground transition-transform"
+                        :class="isYearOpen(group.year) ? 'rotate-90' : ''"
+                    />
+                    <span class="font-semibold">{{ group.year }}</span>
+                    <span class="ml-auto font-semibold tabular-nums" :class="gainClass(group.net)">
+                        {{ signedEur(group.net) }}
+                    </span>
+                </button>
+
+                <div v-if="isYearOpen(group.year)" class="flex flex-col pb-2">
+                    <template v-for="month in group.months" :key="month.month">
+                        <button
+                            type="button"
+                            :data-cash-flow-month="month.month"
+                            class="flex items-center gap-3 py-2 pl-[22px] text-sm"
+                            :aria-expanded="openMonth === month.month"
+                            @click="toggleMonth(month.month)"
                         >
-                            {{ eur(flow.net) }}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                            <span class="text-muted-foreground">{{ frMonthYear(month.month) }}</span>
+                            <span class="ml-auto font-medium tabular-nums" :class="gainClass(month.net)">
+                                {{ signedEur(month.net) }}
+                            </span>
+                        </button>
+
+                        <p
+                            v-if="openMonth === month.month"
+                            data-cash-flow-detail
+                            class="pb-2 pl-[22px] text-xs text-muted-foreground"
+                        >
+                            loyers {{ eur(month.rents) }} · charges {{ eur(month.expenses) }} ·
+                            crédit {{ eur(month.loanPayment) }}
+                        </p>
+                    </template>
+                </div>
+            </div>
         </div>
+
+        <p v-else class="py-8 text-center text-sm text-muted-foreground">Aucun mouvement sur ce bien.</p>
     </section>
 </template>

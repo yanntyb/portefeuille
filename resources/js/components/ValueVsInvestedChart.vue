@@ -16,6 +16,10 @@ const props = defineProps<{
     description: string;
     /** Absents sur le tableau de bord : seule la fiche instrument annote ses détachements. */
     dividends?: DividendReceipt[];
+    /** « Investi » par défaut : un bien locatif y lit son capital restant dû. */
+    comparisonLabel?: string;
+    /** Nom de l'écart entre les deux courbes, « Gain »/« Perte » par défaut. */
+    deltaLabel?: string;
 }>();
 
 /**
@@ -53,6 +57,8 @@ const option = computed<ChartOption>(() => buildValueVsInvestedOption({
     window: lastZoom,
     description: props.description,
     dividends: marks.value,
+    comparisonLabel: props.comparisonLabel,
+    deltaLabel: props.deltaLabel,
 }));
 </script>
 
