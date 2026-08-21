@@ -3,6 +3,7 @@
 namespace App\Contexts\Income\Actions;
 
 use App\Contexts\Income\Datas\IncomeSummaryData;
+use App\Contexts\Income\Enums\IncomeSource;
 use App\Contexts\Income\Infrastructure\IncomeSourceRegistry;
 use Illuminate\Support\Carbon;
 
@@ -11,15 +12,15 @@ class GetIncomeSummary
     public function __construct(private IncomeSourceRegistry $sources) {}
 
     /**
-     * Revenu perçu par l'utilisateur, toutes origines confondues.
+     * Revenu perçu par l'utilisateur. Sans `$only`, toutes origines confondues.
      *
      * Le total ne se mêle jamais au gain latent : les cours stockés sont déjà ajustés des
      * dividendes, et les additionner compterait deux fois une partie du même rendement.
      */
-    public function __invoke(int $userId): IncomeSummaryData
+    public function __invoke(int $userId, ?IncomeSource $only = null): IncomeSummaryData
     {
-        $receipts = $this->sources->receiptsFor($userId);
-        $estimatedAnnual = $this->sources->projectedAnnualFor($userId);
+        $receipts = $this->sources->receiptsFor($userId, $only);
+        $estimatedAnnual = $this->sources->projectedAnnualFor($userId, $only);
 
         if ($receipts === [] && $estimatedAnnual <= 0.0) {
             return IncomeSummaryData::empty();

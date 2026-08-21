@@ -63,3 +63,71 @@ it('somme les projections annuelles de toutes les sources', function () {
 it('ne projette rien sans aucune source', function () {
     expect((new IncomeSourceRegistry([]))->projectedAnnualFor(1))->toBe(0.0);
 });
+
+/**
+ * Source factice d'une origine donnée : le registre n'a besoin que du contrat, pas d'une base.
+ *
+ * Distincte de `fakeIncomeSource()` ci-dessus, qui rend toujours du `IncomeSource::Dividend` et
+ * ne convient donc pas pour éprouver un filtre par origine.
+ */
+function fakeIncomeSourceWithOrigin(IncomeSource $source, float $amount): IncomeSourcePort
+{
+    return new class($source, $amount) implements IncomeSourcePort
+    {
+        public function __construct(private IncomeSource $source, private float $amount) {}
+
+        public function source(): IncomeSource
+        {
+            return $this->source;
+        }
+
+        /** @return list<IncomeReceiptData> */
+        public function receiptsFor(int $userId): array
+        {
+            return [new IncomeReceiptData(
+                source: $this->source,
+                date: Carbon::parse('2026-06-15'),
+                amount: $this->amount,
+                assetId: null,
+                label: $this->source->getLabel(),
+            )];
+        }
+
+        public function projectedAnnualFor(int $userId): float
+        {
+            return $this->amount * 12;
+        }
+    };
+}
+
+it('ne rend que les revenus de l\'origine demandée', function () {
+    $registry = new IncomeSourceRegistry([
+        fakeIncomeSourceWithOrigin(IncomeSource::Dividend, 100.0),
+        fakeIncomeSourceWithOrigin(IncomeSource::Rent, 600.0),
+    ]);
+
+    $receipts = $registry->receiptsFor(1, IncomeSource::Dividend);
+
+    expect($receipts)->toHaveCount(1)
+        ->and($receipts[0]->amount)->toBe(100.0)
+        ->and($receipts[0]->source)->toBe(IncomeSource::Dividend);
+});
+
+it('ne projette que l\'origine demandée', function () {
+    $registry = new IncomeSourceRegistry([
+        fakeIncomeSourceWithOrigin(IncomeSource::Dividend, 100.0),
+        fakeIncomeSourceWithOrigin(IncomeSource::Rent, 600.0),
+    ]);
+
+    expect($registry->projectedAnnualFor(1, IncomeSource::Rent))->toBe(7200.0);
+});
+
+it('rend toutes les origines sans filtre', function () {
+    $registry = new IncomeSourceRegistry([
+        fakeIncomeSourceWithOrigin(IncomeSource::Dividend, 100.0),
+        fakeIncomeSourceWithOrigin(IncomeSource::Rent, 600.0),
+    ]);
+
+    expect($registry->receiptsFor(1))->toHaveCount(2)
+        ->and($registry->projectedAnnualFor(1))->toBe(8400.0);
+});

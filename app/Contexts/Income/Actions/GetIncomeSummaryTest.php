@@ -2,6 +2,7 @@
 
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Income\Actions\GetIncomeSummary;
+use App\Contexts\Income\Enums\IncomeSource;
 use App\Contexts\Market\Models\Dividend;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Portfolio\Models\Transaction;
@@ -116,4 +117,16 @@ it('somme dividendes et loyers dans le même résumé', function () {
     expect($summary->bySource)->toBe(['dividend' => 13.0, 'rent' => 1200.0])
         ->and($summary->totalReceived)->toBe(1213.0)
         ->and($summary->estimatedAnnual)->toBe(4808.0);
+});
+
+it('ne résume que les dividendes quand on filtre sur cette origine', function () {
+    ['user' => $user] = dividendFixture();
+    $property = propertyFixture()['property'];
+    $property->update(['user_id' => $user->id]);
+
+    $all = app(GetIncomeSummary::class)($user->id);
+    $dividendsOnly = app(GetIncomeSummary::class)($user->id, IncomeSource::Dividend);
+
+    expect($dividendsOnly->totalReceived)->toBeLessThan($all->totalReceived)
+        ->and(array_keys($dividendsOnly->bySource))->toBe(['dividend']);
 });
