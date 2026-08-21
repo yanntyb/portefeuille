@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import GainPill from '@/components/GainPill.vue';
-import { eur, gainClass, pct } from '@/lib/format';
+import HeroFigures from '@/components/HeroFigures.vue';
+import { pct } from '@/lib/format';
 import { heroMeta, heroValueOf, type HeroMetaEntry, type Instrument } from '@/lib/instrument';
 
 const props = defineProps<{
@@ -13,6 +13,11 @@ const position = computed(() => props.instrument.position);
 const heroValue = computed<number | null>(() => heroValueOf(props.instrument));
 
 const metaEntries = computed<HeroMetaEntry[]>(() => heroMeta(props.instrument));
+
+/** Pas de position, pas de gain : un titre seulement suivi n'a rien à comparer. */
+const gainLabel = computed<string | null>(() =>
+    position.value === null || position.value.gainPct === null ? null : pct(position.value.gainPct),
+);
 </script>
 
 <template>
@@ -28,38 +33,11 @@ const metaEntries = computed<HeroMetaEntry[]>(() => heroMeta(props.instrument));
             </p>
         </div>
 
-        <div class="flex min-w-0 flex-col gap-1.5">
-            <div class="flex flex-wrap items-baseline gap-3">
-                <p data-hero-value class="text-4xl font-bold tracking-[-0.02em] tabular-nums">{{ eur(heroValue) }}</p>
-
-                <GainPill
-                    v-if="position && position.gainPct !== null"
-                    data-hero-gain-pct
-                    :value="position.gain"
-                    :label="pct(position.gainPct)"
-                />
-            </div>
-
-            <!-- Grille plutôt que flux : les libellés s'alignent en colonne, les valeurs sur leur bord droit. -->
-            <p data-hero-meta class="grid grid-cols-2 gap-x-8 gap-y-1.5 pt-1.5 text-[13.5px] text-muted-foreground">
-                <span
-                    v-for="entry in metaEntries"
-                    :key="entry.label || entry.value"
-                    :data-hero-gain="entry.gain === undefined ? undefined : ''"
-                    class="flex items-baseline justify-between gap-3 whitespace-nowrap"
-                >
-                    <template v-if="entry.label">
-                        {{ entry.label }}
-                        <strong
-                            class="font-semibold tabular-nums"
-                            :class="entry.gain === undefined ? 'text-foreground' : gainClass(entry.gain)"
-                        >
-                            {{ entry.value }}
-                        </strong>
-                    </template>
-                    <template v-else>{{ entry.value }}</template>
-                </span>
-            </p>
-        </div>
+        <HeroFigures
+            :value="heroValue"
+            :gain="position?.gain ?? null"
+            :gain-label="gainLabel"
+            :entries="metaEntries"
+        />
     </header>
 </template>
