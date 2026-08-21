@@ -1,7 +1,11 @@
 <?php
 
 use App\Contexts\RealEstate\Infrastructure\LaravelRealEstateCache;
+use App\Contexts\RealEstate\Models\Lease;
+use App\Contexts\RealEstate\Models\Loan;
+use App\Contexts\RealEstate\Models\PropertyExpense;
 use App\Contexts\RealEstate\Models\PropertyValuation;
+use App\Contexts\RealEstate\Models\RentException;
 use Illuminate\Support\Carbon;
 
 /**
@@ -58,6 +62,67 @@ it('recalcule dès qu\'une valeur estimée change', function () {
         'date' => '2026-08-01',
         'value' => 175000,
     ]);
+
+    rememberRealEstate($this->user->id, $calls);
+
+    expect($calls)->toBe(2);
+});
+
+it('recalcule dès qu\'un bien change de prix d\'acquisition', function () {
+    $calls = 0;
+    rememberRealEstate($this->user->id, $calls);
+
+    $this->property->update(['acquisition_price' => 120000]);
+
+    rememberRealEstate($this->user->id, $calls);
+
+    expect($calls)->toBe(2);
+});
+
+it('recalcule dès qu\'un second prêt est ajouté', function () {
+    $calls = 0;
+    rememberRealEstate($this->user->id, $calls);
+
+    Loan::factory()->create(['property_id' => $this->property->id]);
+
+    rememberRealEstate($this->user->id, $calls);
+
+    expect($calls)->toBe(2);
+});
+
+it('recalcule dès qu\'un loyer change', function () {
+    $calls = 0;
+    rememberRealEstate($this->user->id, $calls);
+
+    Lease::query()->where('property_id', $this->property->id)->first()->update(['monthly_rent' => 650]);
+
+    rememberRealEstate($this->user->id, $calls);
+
+    expect($calls)->toBe(2);
+});
+
+it('recalcule dès qu\'une charge est ajoutée', function () {
+    $calls = 0;
+    rememberRealEstate($this->user->id, $calls);
+
+    PropertyExpense::factory()->create(['property_id' => $this->property->id]);
+
+    rememberRealEstate($this->user->id, $calls);
+
+    expect($calls)->toBe(2);
+});
+
+/**
+ * Seul chemin de l'empreinte qui ne peut pas filtrer par `property_id` directement : les
+ * exceptions se rattachent à un bail, pas à un bien, d'où la double jointure `lease_id IN
+ * (baux IN (biens de l'utilisateur))`.
+ */
+it('recalcule dès qu\'une exception de loyer est ajoutée', function () {
+    $calls = 0;
+    rememberRealEstate($this->user->id, $calls);
+
+    $lease = Lease::query()->where('property_id', $this->property->id)->first();
+    RentException::factory()->create(['lease_id' => $lease->id]);
 
     rememberRealEstate($this->user->id, $calls);
 
