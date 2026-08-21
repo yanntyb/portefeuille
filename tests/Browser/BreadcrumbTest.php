@@ -62,7 +62,20 @@ it('affiche le fil d\'Ariane complet sur une fiche instrument', function () {
     visit("/instruments/{$instrument->id}")
         ->assertVisible('nav[aria-label="Fil d\'Ariane"]')
         ->assertSeeIn('nav[aria-label="Fil d\'Ariane"]', 'Tableau de bord')
+        ->assertSeeIn('nav[aria-label="Fil d\'Ariane"]', 'Titres')
         ->assertSeeIn('nav[aria-label="Fil d\'Ariane"]', 'ACME')
-        ->assertDontSeeIn('nav[aria-label="Fil d\'Ariane"]', 'Instruments')
+        ->assertNoJavaScriptErrors();
+});
+
+it('affiche le fil d\'Ariane complet sur une fiche de bien', function () {
+    ['user' => $user, 'property' => $property] = propertyFixture(['loan' => true]);
+
+    $this->actingAs($user);
+
+    visit("/properties/{$property->id}")
+        ->assertVisible('nav[aria-label="Fil d\'Ariane"]')
+        ->assertSeeIn('nav[aria-label="Fil d\'Ariane"]', 'Tableau de bord')
+        ->assertSeeIn('nav[aria-label="Fil d\'Ariane"]', 'Immobilier')
+        ->assertSeeIn('nav[aria-label="Fil d\'Ariane"]', 'T2 Lyon 7e')
         ->assertNoJavaScriptErrors();
 });

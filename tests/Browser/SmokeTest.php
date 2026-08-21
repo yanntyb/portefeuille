@@ -81,3 +81,31 @@ it('charge la fiche du bien et ses sections, sans erreur', function () {
         )
         ->assertNoJavaScriptErrors();
 });
+
+it('charge la page Titres, ses sections dans l\'ordre, sans erreur', function () {
+    ['user' => $user] = portfolioFixture();
+
+    $this->actingAs($user);
+
+    visit('/instruments')
+        ->assertSee('Performances')
+        ->assertScript(
+            "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
+            'valuation|evolution|instruments|performances|income|sectors',
+        )
+        ->assertNoJavaScriptErrors();
+});
+
+it('charge la page Immobilier et ses sections, sans erreur', function () {
+    ['user' => $user] = propertyFixture(['loan' => true]);
+
+    $this->actingAs($user);
+
+    visit('/properties')
+        ->assertSee('Biens')
+        ->assertScript(
+            "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
+            'real-estate-summary|real-estate',
+        )
+        ->assertNoJavaScriptErrors();
+});
