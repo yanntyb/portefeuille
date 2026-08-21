@@ -4,22 +4,21 @@ namespace App\Contexts\RealEstate\Actions;
 
 use App\Contexts\RealEstate\Datas\PropertyOverviewData;
 use App\Contexts\RealEstate\Datas\RealEstateOverviewData;
-use App\Contexts\RealEstate\Models\Property;
 use App\Contexts\RealEstate\Support\PropertyFinancialsAssembler;
+use App\Contexts\RealEstate\Support\UserProperties;
 use Illuminate\Support\Carbon;
 
 /** Carte immobilière du tableau de bord : patrimoine net par bien et totaux. */
 class GetRealEstateOverview
 {
-    public function __construct(private PropertyFinancialsAssembler $assembler) {}
+    public function __construct(
+        private PropertyFinancialsAssembler $assembler,
+        private UserProperties $properties,
+    ) {}
 
     public function __invoke(int $userId): RealEstateOverviewData
     {
-        $properties = Property::query()
-            ->where('user_id', $userId)
-            ->with(['leases.exceptions', 'loans', 'expenses', 'valuations'])
-            ->orderBy('name')
-            ->get();
+        $properties = $this->properties->forUser($userId);
 
         $today = Carbon::now();
         $lines = [];
