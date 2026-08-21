@@ -18,7 +18,13 @@ function rememberRealEstate(int $userId, int &$calls): string
 }
 
 beforeEach(function (): void {
-    Carbon::setTestNow('2026-08-21');
+    /**
+     * Midi, et non minuit : le test du lendemain ne franchit le jour qu'après douze heures, bien
+     * en deçà des vingt-quatre heures de `LaravelRealEstateCache::TTL_SECONDS`. À minuit pile, le
+     * saut d'un jour coïnciderait avec l'expiration du TTL et masquerait une empreinte qui aurait
+     * oublié la date du jour.
+     */
+    Carbon::setTestNow('2026-08-21 12:00:00');
     ['user' => $this->user, 'property' => $this->property] = propertyFixture(['loan' => true]);
 });
 
