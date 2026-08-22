@@ -4,7 +4,9 @@ namespace App\Contexts\Wealth\Http;
 
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Wealth\Actions\BuildWealthSeries;
+use App\Contexts\Wealth\Actions\GetWealthIncome;
 use App\Contexts\Wealth\Actions\GetWealthOverview;
+use App\Contexts\Wealth\Datas\WealthIncomeData;
 use App\Contexts\Wealth\Datas\WealthOverviewData;
 use App\Contexts\Wealth\Datas\WealthSeriesData;
 use Inertia\Inertia;
@@ -30,6 +32,9 @@ class DashboardController
             'series' => Inertia::defer(fn () => $user !== null
                 ? app(BuildWealthSeries::class)($user->id)
                 : WealthSeriesData::empty(), 'evolution'),
+            'income' => Inertia::defer(fn () => $user !== null
+                ? app(GetWealthIncome::class)($user->id)
+                : WealthIncomeData::empty(), 'revenus'),
         ]);
     }
 }
