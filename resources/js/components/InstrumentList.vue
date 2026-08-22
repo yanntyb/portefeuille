@@ -7,11 +7,13 @@ import type { InstrumentRow } from '@/lib/instrumentList';
 /** Largeur de la colonne `w-24` qui porte la tendance, pour que le tracé la remplisse exactement. */
 const SPARKLINE_WIDTH = 96;
 
-defineProps<{
+const props = withDefaults(defineProps<{
     rows: InstrumentRow[];
     loading: boolean;
     emptyLabel: string;
-}>();
+    /** Racine des liens : la page crypto renvoie vers ses fiches, pas vers celles des titres. */
+    basePath?: string;
+}>(), { basePath: '/instruments' });
 
 const share = (value: number): string =>
     `${value.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
@@ -32,7 +34,7 @@ const share = (value: number): string =>
         >
             <div class="flex items-center gap-3">
                 <Link
-                    :href="`/instruments/${row.id}`"
+                    :href="`${props.basePath}/${row.id}`"
                     prefetch
                     data-instrument-name
                     class="block min-w-0 flex-1 truncate font-semibold hover:underline"

@@ -3,7 +3,6 @@
 namespace App\Contexts\MarketView\Http;
 
 use App\Contexts\Identity\Models\User;
-use App\Contexts\Income\Sources\Dividend\Actions\GetAssetDividendHistory;
 use App\Contexts\MarketView\Actions\GetInstrumentDetail;
 use App\Contexts\MarketView\Ports\MarketDataPort;
 use App\Contexts\Valuation\Actions\BuildAssetPerformances;
@@ -14,7 +13,12 @@ use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class InstrumentDetailController
+/**
+ * La fiche d'une crypto. Même lecture que celle d'un titre, sans les détachements : une crypto
+ * n'en verse pas. Un actif qui n'est pas une crypto n'y répond pas — sinon deux adresses
+ * mèneraient au même actif, et le fil d'Ariane mentirait sur l'une des deux.
+ */
+class CryptoDetailController
 {
     public function __construct(
         private GetInstrumentDetail $getDetail,
@@ -28,12 +32,11 @@ class InstrumentDetailController
 
         $detail = ($this->getDetail)($userId, $id);
 
-        /** La crypto a sa propre fiche : la laisser répondre ici en donnerait deux au même actif. */
-        if ($detail === null || $detail->type->isCrypto()) {
+        if ($detail === null || ! $detail->type->isCrypto()) {
             abort(404);
         }
 
-        return Inertia::render('Instruments/Show', [
+        return Inertia::render('Crypto/Show', [
             'instrument' => $detail,
             'performances' => app(BuildAssetPerformances::class)($userId, $id),
             'priceHistory' => Inertia::defer(
@@ -48,12 +51,6 @@ class InstrumentDetailController
                     ValuationGranularity::Week,
                 )
             ),
-            /**
-             * Non différée : la visibilité de la section dépend de la donnée elle-même, et un
-             * squelette qui disparaît sur chaque instrument capitalisant coûterait plus qu'il ne
-             * rapporte. Deux petites requêtes, sur une page qui en fait déjà autant.
-             */
-            'dividends' => app(GetAssetDividendHistory::class)($userId, $id),
         ]);
     }
 }

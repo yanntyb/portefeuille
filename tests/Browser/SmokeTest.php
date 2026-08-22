@@ -96,6 +96,20 @@ it('charge la page Actions, ses sections dans l\'ordre, sans erreur', function (
         ->assertNoJavaScriptErrors();
 });
 
+it('charge la page Crypto, ses sections dans l\'ordre, sans erreur', function () {
+    ['user' => $user] = cryptoFixture();
+
+    $this->actingAs($user);
+
+    visit('/crypto')
+        ->assertSee('Performances')
+        ->assertScript(
+            "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
+            'valuation|evolution|instruments|performances',
+        )
+        ->assertNoJavaScriptErrors();
+});
+
 it('charge la page Immobilier et ses sections, sans erreur', function () {
     ['user' => $user] = propertyFixture(['loan' => true]);
 

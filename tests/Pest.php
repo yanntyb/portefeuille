@@ -229,6 +229,33 @@ function dividendFixture(): array
 }
 
 /**
+ * Un bitcoin détenu en plus du portefeuille de titres de `portfolioFixture()` : 1 unité à 400 €,
+ * payée 300 €. De quoi vérifier qu'une page ne montre que sa classe et pas celle de la voisine.
+ *
+ * @return array{user: User, crypto: Instrument}
+ */
+function cryptoFixture(): array
+{
+    ['user' => $user] = portfolioFixture();
+
+    $wallet = Wallet::factory()->for($user)->create();
+    $bitcoin = Instrument::factory()
+        ->ofType(InstrumentType::Crypto)
+        ->create(['name' => 'Bitcoin', 'ticker' => 'BTC-EUR']);
+
+    Price::factory()->create(['asset_id' => $bitcoin->id, 'date' => now(), 'close' => 400]);
+    Holding::factory()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $bitcoin->id,
+        'quantity' => 1,
+        'avg_cost' => 300,
+    ]);
+
+    return ['user' => $user, 'crypto' => $bitcoin];
+}
+
+/**
  * Déclare les classes d'actif que le tableau de bord agrège, dans l'ordre donné — celui qui fixe
  * l'ordre des lignes et l'empilement du graphe.
  */

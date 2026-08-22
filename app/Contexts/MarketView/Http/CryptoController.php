@@ -3,14 +3,9 @@
 namespace App\Contexts\MarketView\Http;
 
 use App\Contexts\Identity\Models\User;
-use App\Contexts\Income\Actions\GetAnnualIncome;
-use App\Contexts\Income\Actions\GetIncomeSummary;
-use App\Contexts\Income\Datas\IncomeSummaryData;
-use App\Contexts\Income\Enums\IncomeSource;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\MarketView\Actions\GetHoldingTrends;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
-use App\Contexts\Portfolio\Actions\GetSectorBreakdown;
 use App\Contexts\Portfolio\Datas\PortfolioOverviewData;
 use App\Contexts\Valuation\Actions\BuildEvolutionSeries;
 use App\Contexts\Valuation\Actions\BuildPortfolioPerformances;
@@ -20,7 +15,11 @@ use App\Contexts\Valuation\Enums\ValuationRange;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class InstrumentsController
+/**
+ * La page crypto, calquée sur celle des titres. Deux sections en moins : la crypto ne verse pas de
+ * dividende et n'a pas de secteur d'activité — leurs sections n'auraient rien à montrer.
+ */
+class CryptoController
 {
     public function __construct(
         private GetPortfolioOverview $getPortfolioOverview,
@@ -31,19 +30,17 @@ class InstrumentsController
     {
         $user = auth()->user() ?? User::query()->first();
         $range = ValuationRange::fromRequest(request()->query('range'));
-
-        /** La crypto a sa propre page : ni ses positions, ni sa valeur, ni ses performances ici. */
-        $types = InstrumentType::securities();
+        $types = [InstrumentType::Crypto];
 
         $overview = $user !== null
             ? ($this->getPortfolioOverview)($user, $types)
             : PortfolioOverviewData::empty();
 
-        return Inertia::render('Instruments/Index', [
+        return Inertia::render('Crypto/Index', [
             'overview' => $overview,
             /**
-             * Un groupe par section : Inertia résout un groupe par requête, donc chaque squelette
-             * se remplit à son rythme au lieu d'attendre le plus lent de la page.
+             * Un groupe par section, comme sur la page Actions : chaque squelette se remplit à son
+             * rythme au lieu d'attendre le plus lent de la page.
              */
             'trends' => Inertia::defer(fn () => ($this->getTrends)($user?->id ?? 0, $range), 'tendances'),
             'performances' => Inertia::defer(fn () => $user !== null
@@ -53,16 +50,6 @@ class InstrumentsController
             'evolutionSeries' => Inertia::defer(fn () => $user !== null
                 ? app(BuildEvolutionSeries::class)($user->id, null, ValuationGranularity::Week, $types)
                 : EvolutionSeriesData::empty(), 'evolution'),
-            'sectorBreakdown' => Inertia::defer(fn () => $user !== null
-                ? app(GetSectorBreakdown::class)($user)
-                : [], 'secteurs'),
-            /** Un seul groupe pour les deux : la section les affiche ensemble. */
-            'income' => Inertia::defer(fn () => $user !== null
-                ? app(GetIncomeSummary::class)($user->id, IncomeSource::Dividend)
-                : IncomeSummaryData::empty(), 'revenus'),
-            'annualIncome' => Inertia::defer(fn () => $user !== null
-                ? app(GetAnnualIncome::class)($user->id, IncomeSource::Dividend)
-                : [], 'revenus'),
         ]);
     }
 }
