@@ -3,12 +3,12 @@ import '../css/app.css';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h, type DefineComponent } from 'vue';
-import { useSystemTheme } from '@/lib/theme';
+import { useStoredTheme } from '@/lib/theme';
 import { mountServiceWorkerBanner } from '@/pwa/banner';
 
 const appName = import.meta.env.VITE_APP_NAME ?? 'Laravel';
 
-useSystemTheme();
+useStoredTheme();
 mountServiceWorkerBanner();
 
 createInertiaApp({

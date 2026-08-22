@@ -5,9 +5,23 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="color-scheme" content="light dark">
 
-        {{-- Pose le thème avant le premier rendu pour éviter le flash ; app.ts prend ensuite le relais. --}}
+        {{-- Pose le thème avant le premier rendu pour éviter le flash ; app.ts prend ensuite le relais.
+             La clé et la règle de repli doivent rester celles de resources/js/lib/theme.ts. --}}
         <script>
-            document.documentElement.classList.toggle('dark', window.matchMedia('(prefers-color-scheme: dark)').matches);
+            (function () {
+                var stored = null;
+
+                try {
+                    stored = localStorage.getItem('argent-theme');
+                } catch (error) {
+                    stored = null;
+                }
+
+                var dark = stored === 'dark'
+                    || (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+                document.documentElement.classList.toggle('dark', dark);
+            })();
         </script>
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
