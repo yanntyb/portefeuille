@@ -28,7 +28,7 @@ const appearance: ComputedRef<ThemeAppearance> = computed(
         :data-theme-mode="themeMode"
         :aria-label="`Changer de thème (actuellement : ${appearance.label})`"
         :title="`Thème : ${appearance.label}`"
-        class="inline-flex items-center justify-center rounded-md border border-border p-2 text-muted-foreground transition-colors hover:text-foreground"
+        class="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
         @click="cycleTheme()"
     >
         <component :is="appearance.icon" class="size-4" />

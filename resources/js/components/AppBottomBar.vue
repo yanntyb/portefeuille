@@ -16,7 +16,7 @@ const props = withDefaults(defineProps<{ items?: BreadcrumbItem[]; width?: PageW
 </script>
 
 <template>
-    <footer data-bottom-bar class="sticky bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur">
+    <footer data-bottom-bar class="sticky bottom-0 z-40 bg-background/95 backdrop-blur">
         <!-- Hauteur imposée pour que la barre garde la même épaisseur sans fil d'Ariane, sur le tableau de bord. -->
         <div :class="[pageContainer(props.width), 'flex min-h-11 items-center gap-3 px-6']">
             <nav
