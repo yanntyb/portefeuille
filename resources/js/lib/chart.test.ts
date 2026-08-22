@@ -637,6 +637,27 @@ describe('buildWealthStackOption', () => {
         expect(html).toContain('1860 €');
     });
 
+    it('omet de l\'infobulle les classes que rien ne peuple', () => {
+        const option = buildWealthStackOption({
+            ...input,
+            classes: [
+                { label: 'Actions', values: [1000, 1100] },
+                { label: 'Immobilier', values: [0, 0] },
+                { label: 'Crypto', values: [0, 240] },
+            ],
+        });
+        const tooltip = option.tooltip as { formatter: (params: unknown) => string };
+
+        const first = tooltip.formatter([{ dataIndex: 0 }]);
+        expect(first).toContain('Actions');
+        expect(first).not.toContain('Immobilier');
+        expect(first).not.toContain('Crypto');
+
+        const second = tooltip.formatter([{ dataIndex: 1 }]);
+        expect(second).toContain('Crypto');
+        expect(second).not.toContain('Immobilier');
+    });
+
     it('donne au sommet de la pile le patrimoine total', () => {
         const option = buildWealthStackOption(input);
         const series = option.series as { data: [string, number][] }[];

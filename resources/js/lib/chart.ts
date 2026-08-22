@@ -642,12 +642,14 @@ function wealthStackTooltip(
             const totalInvested = invested[index] ?? 0;
             const gain = totalValue - totalInvested;
 
+            /**
+             * Une classe que rien ne peuple à cet instant est taise : lire « Immobilier 0 € »
+             * quand on n'en possède pas encore renseigne moins que l'absence de la ligne.
+             */
             const rows = classes
-                .map((one: WealthStackClass, at: number): string => tooltipRow(
-                    classColorAt(at),
-                    one.label,
-                    valueFormatter(one.values[index] ?? 0),
-                ))
+                .map((one: WealthStackClass, at: number): string => ((one.values[index] ?? 0) === 0
+                    ? ''
+                    : tooltipRow(classColorAt(at), one.label, valueFormatter(one.values[index] ?? 0))))
                 .join('');
 
             return tooltipTitle(labels[index] ?? '')
