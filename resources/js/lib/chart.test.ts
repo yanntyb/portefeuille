@@ -31,6 +31,12 @@ const valueVsInvested = (months: number, window: { start: number; end: number } 
     });
 };
 
+type AreaGradient = { type: string; colorStops: { offset: number; color: string }[] };
+
+const topStop = (gradient: AreaGradient): string => gradient.colorStops[0].color;
+
+const bottomStop = (gradient: AreaGradient): string => gradient.colorStops[1].color;
+
 type AxisExtent = { min: number; max: number };
 
 const yAxisOf = (option: ChartOption) =>
@@ -618,10 +624,30 @@ describe('buildWealthStackOption', () => {
             ...input,
             classes: [...input.classes, { label: 'Crypto', values: [200, 240] }],
         });
-        const series = option.series as { name: string; areaStyle: { color: string } }[];
+        const series = option.series as { name: string; areaStyle: { color: AreaGradient } }[];
 
         expect(series.map((serie) => serie.name)).toEqual(['Actions', 'Immobilier', 'Crypto']);
-        expect(new Set(series.map((serie) => serie.areaStyle.color)).size).toBe(3);
+        expect(new Set(series.map((serie) => topStop(serie.areaStyle.color))).size).toBe(3);
+    });
+
+    it('fond chaque bande comme les aires des fiches, teintée par sa classe', () => {
+        const option = buildWealthStackOption({
+            ...input,
+            classes: [...input.classes, { label: 'Crypto', values: [200, 240] }],
+        });
+        const series = option.series as { areaStyle: { color: AreaGradient } }[];
+
+        expect(series.map((serie) => serie.areaStyle.color.type)).toEqual(['linear', 'linear', 'linear']);
+        expect(series.map((serie) => topStop(serie.areaStyle.color))).toEqual([
+            'rgba(82,87,214,0.18)',
+            'rgba(179,112,26,0.18)',
+            'rgba(162,28,175,0.18)',
+        ]);
+        expect(series.map((serie) => bottomStop(serie.areaStyle.color))).toEqual([
+            'rgba(82,87,214,0)',
+            'rgba(179,112,26,0)',
+            'rgba(162,28,175,0)',
+        ]);
     });
 
     it('nomme chaque classe dans l\'infobulle, la crypto comprise', () => {

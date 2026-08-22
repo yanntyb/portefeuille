@@ -12,8 +12,6 @@ type ChartPalette = {
     realEstate: string;
     crypto: string;
     axisLabel: string;
-    areaTop: string;
-    areaBottom: string;
     filler: string;
     dataBackground: string;
     selectedDataBackground: string;
@@ -37,8 +35,6 @@ function palette(): ChartPalette {
             realEstate: '#e0a75f',
             crypto: '#e879f9',
             axisLabel: '#7f858f',
-            areaTop: 'rgba(143,147,240,0.22)',
-            areaBottom: 'rgba(143,147,240,0)',
             filler: 'rgba(143,147,240,0.18)',
             dataBackground: '#2f343e',
             selectedDataBackground: 'rgba(143,147,240,0.5)',
@@ -55,8 +51,6 @@ function palette(): ChartPalette {
             realEstate: '#b3701a',
             crypto: '#a21caf',
             axisLabel: '#9aa0ac',
-            areaTop: 'rgba(82,87,214,0.18)',
-            areaBottom: 'rgba(82,87,214,0)',
             filler: 'rgba(82,87,214,0.12)',
             dataBackground: '#e2e4ea',
             selectedDataBackground: 'rgba(82,87,214,0.45)',
@@ -65,6 +59,31 @@ function palette(): ChartPalette {
             tooltipText: '#16181d',
             surface: '#ffffff',
         };
+}
+
+/**
+ * L'aire fondue des tracés : la teinte au sommet, transparente en bas. Un peu plus soutenue en
+ * thème sombre, où le fond mange les faibles opacités.
+ */
+function fadedArea(color: string): NonNullable<LineSeriesOption['areaStyle']>['color'] {
+    return {
+        type: 'linear',
+        x: 0,
+        y: 0,
+        x2: 0,
+        y2: 1,
+        colorStops: [
+            { offset: 0, color: rgba(color, isDark.value ? 0.22 : 0.18) },
+            { offset: 1, color: rgba(color, 0) },
+        ],
+    };
+}
+
+/** Teinte hexadécimale de la palette, ramenée en `rgba()` pour porter une opacité. */
+function rgba(color: string, alpha: number): string {
+    const [red, green, blue] = [1, 3, 5].map((at: number): number => parseInt(color.slice(at, at + 2), 16));
+
+    return `rgba(${red},${green},${blue},${alpha})`;
 }
 
 function formatTooltipDate(label: string): string {
@@ -301,19 +320,7 @@ function valueSeries(labels: string[], value: number[], dividends: DividendMark[
             symbol: 'none',
             sampling: 'lttb',
             lineStyle: { width: 2.5 },
-            areaStyle: {
-                color: {
-                    type: 'linear',
-                    x: 0,
-                    y: 0,
-                    x2: 0,
-                    y2: 1,
-                    colorStops: [
-                        { offset: 0, color: colors.areaTop },
-                        { offset: 1, color: colors.areaBottom },
-                    ],
-                },
-            },
+            areaStyle: { color: fadedArea(colors.value) },
             markPoint: markPoints(points, dividends),
             data: points,
         },
@@ -613,7 +620,7 @@ function wealthStackSeries(labels: string[], classes: WealthStackClass[]): LineS
             symbol: 'none',
             sampling: 'lttb',
             lineStyle: { width: 1.5, color },
-            areaStyle: { color, opacity: 0.35 },
+            areaStyle: { color: fadedArea(color) },
             data: datedPoints(labels, one.values),
         };
     });
@@ -714,19 +721,7 @@ export function buildPriceHistoryOption({ labels, close, valueFormatter }: Price
             symbol: 'none',
             sampling: 'lttb',
             lineStyle: { width: 2.5 },
-            areaStyle: {
-                color: {
-                    type: 'linear',
-                    x: 0,
-                    y: 0,
-                    x2: 0,
-                    y2: 1,
-                    colorStops: [
-                        { offset: 0, color: colors.areaTop },
-                        { offset: 1, color: colors.areaBottom },
-                    ],
-                },
-            },
+            areaStyle: { color: fadedArea(colors.value) },
             markPoint: markPoints(points, []),
             data: points,
         }],

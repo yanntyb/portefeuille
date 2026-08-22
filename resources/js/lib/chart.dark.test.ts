@@ -48,10 +48,13 @@ describe('palette sombre', () => {
             description: 'Patrimoine total.',
         });
 
-        const series = option.series as { areaStyle: { color: string } }[];
+        const series = option.series as {
+            areaStyle: { color: { colorStops: { color: string }[] } };
+        }[];
+        const tops = series.map((serie) => serie.areaStyle.color.colorStops[0].color);
 
-        expect(new Set(series.map((serie) => serie.areaStyle.color)).size).toBe(3);
-        expect(series[1].areaStyle.color).toBe('#e0a75f');
-        expect(series[2].areaStyle.color).toBe('#e879f9');
+        expect(new Set(tops).size).toBe(3);
+        expect(tops[1]).toBe('rgba(224,167,95,0.22)');
+        expect(tops[2]).toBe('rgba(232,121,249,0.22)');
     });
 });
