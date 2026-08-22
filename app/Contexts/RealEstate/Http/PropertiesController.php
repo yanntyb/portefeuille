@@ -30,7 +30,7 @@ class PropertiesController
                 ? ($this->overview)($user->id)
                 : RealEstateOverviewData::empty(),
             /**
-             * Un groupe par section, comme sur la page Titres : chaque squelette se remplit à son
+             * Un groupe par section, comme sur la page Actions : chaque squelette se remplit à son
              * rythme au lieu d'attendre le plus lent de la page.
              *
              * Historique complet : la fenêtre visible est choisie côté client par le zoom du graphe.

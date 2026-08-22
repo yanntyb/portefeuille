@@ -58,7 +58,7 @@ const props = defineProps<{
     <AppBreadcrumb
         :items="[
             { label: 'Tableau de bord', href: '/' },
-            { label: 'Titres', href: '/instruments' },
+            { label: 'Actions', href: '/instruments' },
             { label: props.instrument.name },
         ]"
     />

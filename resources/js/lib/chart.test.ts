@@ -608,7 +608,7 @@ describe('buildWealthStackOption', () => {
 
         expect(series).toHaveLength(2);
         expect(series[0].stack).toBe(series[1].stack);
-        expect(series.map((serie) => serie.name)).toEqual(['Titres', 'Immobilier']);
+        expect(series.map((serie) => serie.name)).toEqual(['Actions', 'Immobilier']);
     });
 
     it('donne au sommet de la pile le patrimoine total', () => {

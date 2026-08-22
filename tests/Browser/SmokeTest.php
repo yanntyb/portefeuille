@@ -82,7 +82,7 @@ it('charge la fiche du bien et ses sections, sans erreur', function () {
         ->assertNoJavaScriptErrors();
 });
 
-it('charge la page Titres, ses sections dans l\'ordre, sans erreur', function () {
+it('charge la page Actions, ses sections dans l\'ordre, sans erreur', function () {
     ['user' => $user] = portfolioFixture();
 
     $this->actingAs($user);

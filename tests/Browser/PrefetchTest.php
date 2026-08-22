@@ -8,7 +8,7 @@ function hasRequestedPath(string $path): string
     return "performance.getEntriesByType('resource').some(entry => new URL(entry.name).pathname === '{$path}')";
 }
 
-it('précharge la fiche instrument au survol d\'une ligne de la page Titres', function () {
+it('précharge la fiche instrument au survol d\'une ligne de la page Actions', function () {
     ['user' => $user, 'instrument' => $instrument] = portfolioFixture(['name' => 'Alpha', 'ticker' => 'ALP']);
 
     $this->actingAs($user);

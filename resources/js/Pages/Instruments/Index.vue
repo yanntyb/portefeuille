@@ -26,7 +26,7 @@ defineProps<{
 </script>
 
 <template>
-    <Head title="Titres" />
+    <Head title="Actions" />
 
     <AppPage>
         <ValuationSection v-if="overview.holdings.length" :overview="overview" />
@@ -42,5 +42,5 @@ defineProps<{
         <SectorsSection v-if="overview.holdings.length" :slices="sectorBreakdown" />
     </AppPage>
 
-    <AppBreadcrumb :items="[{ label: 'Tableau de bord', href: '/' }, { label: 'Titres' }]" />
+    <AppBreadcrumb :items="[{ label: 'Tableau de bord', href: '/' }, { label: 'Actions' }]" />
 </template>

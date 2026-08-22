@@ -584,7 +584,7 @@ function wealthStackSeries(labels: string[], securities: number[], realEstate: n
     });
 
     return [
-        band('Titres', securities, colors.value),
+        band('Actions', securities, colors.value),
         band('Immobilier', realEstate, colors.realEstate),
     ];
 }
@@ -614,7 +614,7 @@ function wealthStackTooltip(
 
             return tooltipTitle(labels[index] ?? '')
                 + tooltipRow(colors.value, 'Patrimoine', valueFormatter(totalValue))
-                + tooltipRow(colors.value, 'Titres', valueFormatter(securitiesValue))
+                + tooltipRow(colors.value, 'Actions', valueFormatter(securitiesValue))
                 + tooltipRow(colors.realEstate, 'Immobilier', valueFormatter(realEstateValue))
                 + tooltipRow(colors.invested, 'Investi', valueFormatter(totalInvested))
                 + tooltipRow(

@@ -23,7 +23,7 @@ function yAxisLabels(string $section): string
     })()';
 }
 
-it('ne chiffre que le minimum et le maximum sur le graphe de la page Titres', function () {
+it('ne chiffre que le minimum et le maximum sur le graphe de la page Actions', function () {
     // Position de 10 titres : valeur 1 000 €, investi 800 €. L'axe couvre donc 800 à 1 000 €.
     ['user' => $user] = portfolioFixture();
 
