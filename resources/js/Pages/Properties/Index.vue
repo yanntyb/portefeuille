@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
+import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
 import ProfitabilitySection from '@/components/properties/ProfitabilitySection.vue';
 import PropertyList from '@/components/properties/PropertyList.vue';
@@ -37,5 +37,5 @@ const props = defineProps<{
         <RentalIncomeSection v-if="props.realEstate.properties.length" :income="props.income" />
     </AppPage>
 
-    <AppBreadcrumb :items="[{ label: 'Tableau de bord', href: '/' }, { label: 'Immobilier' }]" />
+    <AppBottomBar :items="[{ label: 'Tableau de bord', href: '/' }, { label: 'Immobilier' }]" />
 </template>

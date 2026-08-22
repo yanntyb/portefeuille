@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
+import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
 import HeroSection from '@/components/instrument/HeroSection.vue';
 import PerformanceSection from '@/components/instrument/PerformanceSection.vue';
@@ -37,7 +37,7 @@ const props = defineProps<{
         <TransactionsSection :transactions="props.instrument.transactions" />
     </AppPage>
 
-    <AppBreadcrumb
+    <AppBottomBar
         :items="[
             { label: 'Tableau de bord', href: '/' },
             { label: 'Crypto', href: '/crypto' },

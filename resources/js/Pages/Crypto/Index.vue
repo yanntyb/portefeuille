@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
+import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
 import EvolutionSection from '@/components/instruments/EvolutionSection.vue';
 import InstrumentsSection from '@/components/instruments/InstrumentsSection.vue';
@@ -35,5 +35,5 @@ defineProps<{
         <PerformancesSection v-if="overview.holdings.length" :performances="performances" />
     </AppPage>
 
-    <AppBreadcrumb :items="[{ label: 'Tableau de bord', href: '/' }, { label: 'Crypto' }]" />
+    <AppBottomBar :items="[{ label: 'Tableau de bord', href: '/' }, { label: 'Crypto' }]" />
 </template>

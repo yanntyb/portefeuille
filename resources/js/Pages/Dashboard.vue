@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
+import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
 import WealthEvolutionSection from '@/components/dashboard/WealthEvolutionSection.vue';
 import WealthIncomeSection from '@/components/dashboard/WealthIncomeSection.vue';
@@ -16,7 +17,6 @@ const props = defineProps<{
 <template>
     <Head title="Tableau de bord" />
 
-    <!-- Pas de fil d'Ariane : le tableau de bord est la racine, son fil n'aurait qu'un seul cran. -->
     <AppPage>
         <WealthSummarySection :overview="props.overview" />
 
@@ -24,4 +24,7 @@ const props = defineProps<{
 
         <WealthIncomeSection :income="props.income" />
     </AppPage>
+
+    <!-- Barre sans fil d'Ariane : le tableau de bord est la racine, son fil n'aurait qu'un seul cran. -->
+    <AppBottomBar />
 </template>

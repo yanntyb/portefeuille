@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
+import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
 import EvolutionSection from '@/components/instruments/EvolutionSection.vue';
 import IncomeSection from '@/components/instruments/IncomeSection.vue';
@@ -42,5 +42,5 @@ defineProps<{
         <SectorsSection v-if="overview.holdings.length" :slices="sectorBreakdown" />
     </AppPage>
 
-    <AppBreadcrumb :items="[{ label: 'Tableau de bord', href: '/' }, { label: 'Actions' }]" />
+    <AppBottomBar :items="[{ label: 'Tableau de bord', href: '/' }, { label: 'Actions' }]" />
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
+import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
 import PropertyHeroSection from '@/components/property/PropertyHeroSection.vue';
 import PropertyIncomeSection from '@/components/property/PropertyIncomeSection.vue';
@@ -31,7 +31,7 @@ const props = defineProps<{
         />
     </AppPage>
 
-    <AppBreadcrumb
+    <AppBottomBar
         :items="[
             { label: 'Tableau de bord', href: '/' },
             { label: 'Immobilier', href: '/properties' },
