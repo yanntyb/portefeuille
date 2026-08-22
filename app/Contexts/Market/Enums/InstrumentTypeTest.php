@@ -17,3 +17,16 @@ it('provides a non-empty color for each case', function (InstrumentType $type) {
 it('provides a heroicon icon for each case', function (InstrumentType $type) {
     expect($type->getIcon())->toStartWith('heroicon-');
 })->with(InstrumentType::cases());
+
+it('keeps every type but the crypto on the securities side', function () {
+    expect(InstrumentType::securities())->toBe([
+        InstrumentType::Stock,
+        InstrumentType::ETF,
+        InstrumentType::Bond,
+        InstrumentType::Commodity,
+    ]);
+});
+
+it('tells the crypto apart from the rest', function (InstrumentType $type) {
+    expect($type->isCrypto())->toBe($type === InstrumentType::Crypto);
+})->with(InstrumentType::cases());
