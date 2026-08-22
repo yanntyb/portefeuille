@@ -1,3 +1,37 @@
+# Données par page
+
+Props envoyées par chaque contrôleur Inertia. Une prop **différée** part dans une seconde requête ;
+les props qui partagent un nom de groupe partent ensemble, un groupe par requête.
+
+| Page | Composant | Contrôleur | Synchrone | Différé (groupe) |
+| --- | --- | --- | --- | --- |
+| `/` | `Dashboard` | `Wealth\Http\DashboardController` | `overview` | `series` (`evolution`), `income` (`revenus`) |
+| `/instruments` | `Instruments/Index` | `InstrumentView\Http\InstrumentsController` | `overview` | `trends` (`tendances`), `performances` (`performances`), `evolutionSeries` (`evolution`), `sectorBreakdown` (`secteurs`), `income` + `annualIncome` (`revenus`) |
+| `/instruments/{id}` | `Instruments/Show` | `InstrumentView\Http\InstrumentDetailController` | `instrument`, `performances`, `dividends` | `priceHistory`, `valuation` |
+| `/properties` | `Properties/Index` | `RealEstate\Http\PropertiesController` | `realEstate` | — |
+| `/properties/{id}` | `Properties/Detail` | `RealEstate\Http\PropertyDetailController` | `property` | `amortization` |
+
+**Ce qui reste synchrone.** Le grand chiffre d'une page ne se diffère pas : il sauterait à
+l'arrivée. C'est le cas de `overview` sur `/` et `/instruments`, et de `realEstate` sur
+`/properties`. Le rendre synchrone le place aussi dans le document initial, donc dans le cache du
+service worker, donc lisible hors-ligne.
+
+**Le double comptage des loyers.** `Income` agrège toutes les origines, loyers compris, et les
+compte **bruts**. Deux lecteurs le filtrent donc sur `IncomeSource::Dividend` :
+
+- `/instruments` (`income`, `annualIncome`) parce que la page ne parle que de titres ;
+- `Wealth\Infrastructure\DividendIncome`, derrière `income` sur `/`, parce que le locatif y arrive
+  déjà **net** de charges et d'échéances par `RealEstatePort`. Sans ce filtre, le loyer serait
+  compté une fois brut et une fois net.
+
+---
+
+## Instantané de mesure — `/` avant son éclatement
+
+Les deux diagrammes ci-dessous datent de l'époque où `/` portait seule le catalogue, les
+performances et la répartition sectorielle. Ce contenu vit désormais sur `/instruments` ; les
+mesures et les points chauds restent valables pour ces sections, à leur nouvelle adresse.
+
 ```mermaid
 flowchart LR
     subgraph EXT["Sources externes"]

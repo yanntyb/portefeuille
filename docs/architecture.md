@@ -9,8 +9,16 @@ L'application est structurée en **contextes délimités** (bounded contexts) so
 | Contexte | Chemin | Statut |
 | --- | --- | --- |
 | Market | `app/Contexts/Market/` | Actif (instruments, prix, secteurs) |
+| Portfolio | `app/Contexts/Portfolio/` | Actif (transactions, projection des positions) |
+| Valuation | `app/Contexts/Valuation/` | Actif (séries de valorisation, performances) |
+| Income | `app/Contexts/Income/` | Actif (revenus par origine : dividendes, loyers) |
+| RealEstate | `app/Contexts/RealEstate/` | Actif (biens, baux, prêts, charges) |
+| InstrumentView | `app/Contexts/InstrumentView/` | Actif (lecture : catalogue et fiche d'un titre) |
+| Wealth | `app/Contexts/Wealth/` | Actif (lecture : patrimoine toutes classes confondues) |
 | Identity | `app/Contexts/Identity/` | Stub (User/Role, sans contrats) |
-| Portfolio | `app/Contexts/Portfolio/` | Stub (PersonalAsset, sans contrats) |
+
+Les quatre premiers portent des `Models/` ; `InstrumentView` et `Wealth` n'en ont pas — ce sont des
+contextes de **lecture**, qui n'agrègent que ce que leurs ports leur rendent.
 
 ### Concepts directeurs
 
@@ -70,6 +78,44 @@ app/Contexts/Market/
 └── MarketProvider.php
 ```
 
+### Exemple : contexte Wealth
+
+Contexte de lecture pure : ni `Models/`, ni `Contracts/`, ni migration. Il ne sait rien des
+transactions ni des baux — il additionne ce que quatre ports lui rendent, chacun implémenté par un
+adaptateur qui appelle l'action du contexte propriétaire de la donnée.
+
+```
+app/Contexts/Wealth/
+├── Ports/
+│   ├── HoldingsPort.php            → valeur et prix de revient des titres
+│   ├── SecuritiesSeriesPort.php    → série des titres dans le temps
+│   ├── RealEstatePort.php          → patrimoine net, cash sorti et série de l'immobilier
+│   └── IncomePort.php              → dividendes des douze derniers mois, mensualisés
+├── Infrastructure/
+│   ├── PortfolioHoldings.php       → Portfolio\Actions\GetPortfolioOverview
+│   ├── ValuationSeries.php         → Valuation\Actions\BuildEvolutionSeries
+│   ├── RealEstateFinancials.php    → RealEstate\Actions (résumé, cash sorti, série nette)
+│   └── DividendIncome.php          → Income\Actions\GetIncomeSummary, filtré Dividend
+├── Actions/
+│   ├── GetWealthOverview.php       → le grand chiffre et ses classes d'actif
+│   ├── BuildWealthSeries.php       → titres et immobilier empilés sur une grille commune
+│   └── GetWealthIncome.php         → dividendes + locatif net, en un revenu mensuel
+├── Services/
+│   └── SeriesAligner.php           → recale deux séries de granularités différentes
+├── Datas/
+│   ├── WealthOverviewData.php  AssetClassData.php  ClassSnapshotData.php
+│   ├── WealthSeriesData.php    ClassSeriesData.php
+│   └── WealthIncomeData.php
+├── Http/
+│   └── DashboardController.php     → route `/`
+└── WealthProvider.php
+```
+
+**Pourquoi `Wealth` et non `WealthView`.** `Valuation` et `Income` sont déjà des contextes dérivés
+sans suffixe. `InstrumentView` porte le sien uniquement parce que `Market\Models\Instrument`
+occupait déjà le nom ; aucun modèle ne s'appelle `Wealth`, donc le suffixe n'aurait rien à
+désambiguïser.
+
 ## 3. Distinction clé : Contracts vs Ports vs Adapters vs Datas vs Models
 
 C'est la distinction structurante de l'architecture. Deux familles d'interfaces coexistent :
@@ -104,6 +150,7 @@ Chaque contexte expose un provider avec une méthode **statique** `registers(App
 | --- | --- |
 | `PythonProvider` | `PythonRunner` → `ProcessPythonRunner` (singleton) |
 | `MarketProvider` | `InstrumentRepositoryContract` → `EloquentInstrumentRepository`<br>`PriceRepositoryContract` → `EloquentPriceRepository`<br>`PriceProviderPort` → `DatabaseAssetPriceAdapter` |
+| `WealthProvider` | `HoldingsPort` → `PortfolioHoldings`<br>`SecuritiesSeriesPort` → `ValuationSeries`<br>`IncomePort` → `DividendIncome`<br>`RealEstatePort` → `RealEstateFinancials` (**scoped** : une instance par requête, partagée par les trois actions) |
 | `IdentityProvider` | Stub (aucun binding) |
 | `PortfolioProvider` | Stub (aucun binding) |
 
