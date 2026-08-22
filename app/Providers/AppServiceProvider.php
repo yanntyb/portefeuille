@@ -26,6 +26,7 @@ use App\Contexts\Valuation\Infrastructure\MarketInstrumentDirectory;
 use App\Contexts\Valuation\Infrastructure\MarketPriceHistory;
 use App\Contexts\Valuation\Infrastructure\PortfolioTransactionHistory;
 use App\Contexts\Valuation\ValuationProvider;
+use App\Contexts\Wealth\Infrastructure\CryptoClass;
 use App\Contexts\Wealth\Infrastructure\RealEstateClass;
 use App\Contexts\Wealth\Infrastructure\SecuritiesClass;
 use App\Contexts\Wealth\WealthProvider;
@@ -86,7 +87,7 @@ class AppServiceProvider extends ServiceProvider
         /** L'ordre décide de celui des lignes du tableau de bord et des bandes de son graphe. */
         WealthProvider::registers(
             app: $this->app,
-            classes: [SecuritiesClass::class, RealEstateClass::class],
+            classes: [SecuritiesClass::class, RealEstateClass::class, CryptoClass::class],
         );
     }
 

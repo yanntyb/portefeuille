@@ -31,7 +31,7 @@ class SecuritiesClass extends PortfolioAssetClass
     /** @return ?list<InstrumentType> */
     protected function types(): ?array
     {
-        return null;
+        return InstrumentType::securities();
     }
 
     protected function incomeSource(): ?IncomeSource

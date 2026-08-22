@@ -1,6 +1,11 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\Market\Models\Instrument;
+use App\Contexts\Market\Models\Price;
+use App\Contexts\Portfolio\Models\Holding;
+use App\Contexts\Portfolio\Models\Wallet;
 use App\Contexts\Wealth\Actions\GetWealthIncome;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
@@ -26,9 +31,10 @@ it('additionne les titres et l\'immobilier dans le grand chiffre', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
-            ->has('overview.classes', 2)
+            ->has('overview.classes', 3)
             ->where('overview.classes.0.key', 'securities')
             ->where('overview.classes.1.key', 'realEstate')
+            ->where('overview.classes.2.key', 'crypto')
             ->where('overview.totalValue', fn (float $total): bool => $total > 0.0)
         );
 });
@@ -72,4 +78,30 @@ it('diffère le revenu mensuel et n\'y compte les loyers qu\'une fois', function
      */
     expect($income->monthlyTotal)->toBe(round(collect($income->origins)->sum('amount'), 2))
         ->and($byLabel['Locatif net']->amount)->toBeLessThan(600.0);
+});
+
+it('compte la crypto comme sa propre classe, séparée des titres', function () {
+    ['user' => $user] = portfolioFixture();
+
+    $wallet = Wallet::factory()->for($user)->create();
+    $bitcoin = Instrument::factory()->ofType(InstrumentType::Crypto)->create(['name' => 'Bitcoin']);
+    Price::factory()->create(['asset_id' => $bitcoin->id, 'date' => now(), 'close' => 400]);
+    Holding::factory()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $bitcoin->id,
+        'quantity' => 1, 'avg_cost' => 300,
+    ]);
+
+    $this->actingAs($user)
+        ->get('/')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('overview.classes', 3)
+            ->where('overview.classes.2.key', 'crypto')
+            ->where('overview.classes.2.label', 'Crypto')
+            ->where('overview.classes.2.href', '/crypto')
+            ->where('overview.classes.2.value', fn (float|int $value): bool => (float) $value === 400.0)
+            /** La position de 10 titres à 100 € vaut 1 000 € : la crypto n'y est plus comptée. */
+            ->where('overview.classes.0.value', fn (float|int $value): bool => (float) $value === 1000.0)
+            ->where('overview.totalValue', fn (float|int $value): bool => (float) $value === 1400.0)
+        );
 });
