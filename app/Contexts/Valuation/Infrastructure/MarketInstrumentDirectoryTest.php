@@ -1,5 +1,6 @@
 <?php
 
+use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Valuation\Ports\InstrumentDirectoryPort;
 
@@ -26,4 +27,20 @@ it('omits instruments whose name is null so callers can fall back', function () 
 
     expect($names[$named->id])->toBe('ACME');
     expect($names)->not->toHaveKey($unnamed->id);
+});
+
+it('lists the asset ids of the requested types', function () {
+    $stock = Instrument::factory()->ofType(InstrumentType::Stock)->create();
+    $crypto = Instrument::factory()->ofType(InstrumentType::Crypto)->create();
+
+    $ids = app(InstrumentDirectoryPort::class)->idsOfTypes([InstrumentType::Crypto]);
+
+    expect($ids)->toBe([$crypto->id])
+        ->and($ids)->not->toContain($stock->id);
+});
+
+it('returns no id for no type', function () {
+    Instrument::factory()->create();
+
+    expect(app(InstrumentDirectoryPort::class)->idsOfTypes([]))->toBe([]);
 });

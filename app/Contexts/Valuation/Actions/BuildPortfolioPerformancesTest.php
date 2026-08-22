@@ -1,6 +1,7 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Portfolio\Models\Transaction;
@@ -45,4 +46,31 @@ it('returns no performances without any transaction', function () {
     $user = User::factory()->create();
 
     expect(app(BuildPortfolioPerformances::class)($user->id))->toBe([]);
+});
+
+it('measures each asset class on its own, without mixing their caches', function () {
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $stock = Instrument::factory()->ofType(InstrumentType::Stock)->create();
+    $bitcoin = Instrument::factory()->ofType(InstrumentType::Crypto)->create();
+
+    foreach ([$stock, $bitcoin] as $asset) {
+        Transaction::factory()->buy()->create([
+            'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+            'quantity' => 10, 'unit_price' => 100, 'date' => '2026-01-01',
+        ]);
+        Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 100]);
+    }
+
+    // Le titre double, la crypto perd un quart : deux histoires que le cache ne doit pas confondre.
+    Price::factory()->create(['asset_id' => $stock->id, 'date' => '2026-07-01', 'close' => 200]);
+    Price::factory()->create(['asset_id' => $bitcoin->id, 'date' => '2026-07-01', 'close' => 75]);
+
+    $securities = app(BuildPortfolioPerformances::class)($user->id, InstrumentType::securities());
+    $crypto = app(BuildPortfolioPerformances::class)($user->id, [InstrumentType::Crypto]);
+
+    $maxOf = fn (array $performances): float => collect($performances)->firstWhere('key', 'MAX')->pct;
+
+    expect($maxOf($securities))->toBe(100.0)
+        ->and($maxOf($crypto))->toBe(-25.0);
 });

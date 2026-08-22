@@ -2,6 +2,7 @@
 
 namespace App\Contexts\Valuation\Actions;
 
+use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Valuation\Datas\AssetSeriesData;
 use App\Contexts\Valuation\Datas\EvolutionSeriesData;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
@@ -22,17 +23,43 @@ class BuildEvolutionSeries
         private SeriesCachePort $cache,
     ) {}
 
-    /** @param  ?int  $months  Profondeur de la fenêtre depuis aujourd'hui, null pour tout l'historique. */
+    /**
+     * @param  ?int  $months  Profondeur de la fenêtre depuis aujourd'hui, null pour tout l'historique.
+     * @param  ?list<InstrumentType>  $types  Classes d'actif à garder, null pour tout le portefeuille.
+     */
     public function __invoke(
         int $userId,
         ?int $months = null,
         ValuationGranularity $granularity = ValuationGranularity::Month,
+        ?array $types = null,
     ): EvolutionSeriesData {
         /** La fenêtre et le pas font partie du résultat : ils font donc partie du nom retenu. */
-        return $this->cache->remember(
+        $series = $this->cache->remember(
             sprintf('evolution.%s.%s', $months ?? 'tout', $granularity->value),
             $userId,
             fn (): EvolutionSeriesData => $this->build($userId, $months, $granularity),
+        );
+
+        /**
+         * Le filtre s'applique après le cache, et non dans la construction : la série par actif
+         * porte déjà de quoi trier, donc une seule construction sert la page Actions et la page
+         * Crypto. La grille de labels reste celle de tout le portefeuille — deux pages qui
+         * partagent une abscisse se comparent.
+         */
+        return $types === null ? $series : $this->onlyTypes($series, $types);
+    }
+
+    /** @param  list<InstrumentType>  $types */
+    private function onlyTypes(EvolutionSeriesData $series, array $types): EvolutionSeriesData
+    {
+        $kept = array_flip($this->directory->idsOfTypes($types));
+
+        return new EvolutionSeriesData(
+            labels: $series->labels,
+            perAsset: array_values(array_filter(
+                $series->perAsset,
+                fn (AssetSeriesData $asset): bool => isset($kept[$asset->assetId]),
+            )),
         );
     }
 
