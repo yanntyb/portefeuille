@@ -92,24 +92,30 @@ app/Contexts/Wealth/
 │   ├── RealEstatePort.php          → patrimoine net, cash sorti et série de l'immobilier
 │   └── IncomePort.php              → dividendes des douze derniers mois, mensualisés
 ├── Infrastructure/
-│   ├── PortfolioHoldings.php       → Portfolio\Actions\GetPortfolioOverview
-│   ├── ValuationSeries.php         → Valuation\Actions\BuildEvolutionSeries
-│   ├── RealEstateFinancials.php    → RealEstate\Actions (résumé, cash sorti, série nette)
-│   └── DividendIncome.php          → Income\Actions\GetIncomeSummary, filtré Dividend
+│   ├── AssetClassRegistry.php      → les classes d'actif taguées `wealth.classes`, dans l'ordre
+│   ├── PortfolioAssetClass.php     → socle des classes tenues en portefeuille (filtre de type)
+│   ├── SecuritiesClass.php         → titres : GetPortfolioOverview, BuildEvolutionSeries, dividendes
+│   ├── CryptoClass.php             → crypto : mêmes lectures, filtrées, sans revenu
+│   └── RealEstateClass.php         → RealEstate\Actions (résumé, cash sorti, série nette, loyers)
 ├── Actions/
 │   ├── GetWealthOverview.php       → le grand chiffre et ses classes d'actif
-│   ├── BuildWealthSeries.php       → titres et immobilier empilés sur une grille commune
-│   └── GetWealthIncome.php         → dividendes + locatif net, en un revenu mensuel
+│   ├── BuildWealthSeries.php       → les classes empilées sur une grille commune
+│   └── GetWealthIncome.php         → une origine de revenu par classe qui en verse
 ├── Services/
-│   └── SeriesAligner.php           → recale deux séries de granularités différentes
+│   └── SeriesAligner.php           → recale N séries de granularités différentes
 ├── Datas/
-│   ├── WealthOverviewData.php  AssetClassData.php  ClassSnapshotData.php
-│   ├── WealthSeriesData.php    ClassSeriesData.php
-│   └── WealthIncomeData.php
+│   ├── WealthOverviewData.php  AssetClassData.php   ClassSnapshotData.php
+│   ├── WealthSeriesData.php    ClassValuesData.php  ClassSeriesData.php
+│   └── WealthIncomeData.php    IncomeOriginData.php
 ├── Http/
 │   └── DashboardController.php     → route `/`
 └── WealthProvider.php
 ```
+
+**L'ordre des classes d'actif est un contrat.** `WealthProvider::registers(classes: [...])` tague
+les adaptateurs, et `AssetClassRegistry` les sert dans cet ordre : il fixe l'ordre des lignes du
+résumé, l'empilement des bandes du graphe et l'affectation des couleurs. Ajouter une classe, c'est
+écrire un adaptateur et l'ajouter à ce tableau — aucune action du contexte ne change.
 
 **Pourquoi `Wealth` et non `WealthView`.** `Valuation` et `Income` sont déjà des contextes dérivés
 sans suffixe. `MarketView` porte le sien uniquement parce que `Market\Models\Instrument`

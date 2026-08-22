@@ -4,6 +4,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 
 | Applies to | Rule file |
 | --- | --- |
+| app/Contexts/** | .ai/rules/contexts.md |
 | app/Contexts/*/Infrastructure/** | .ai/rules/infrastructure.md |
 | resources/js/pwa/** | .ai/rules/pwa.md |
 | app/Contexts/Market/Infrastructure/Python/** | .ai/rules/python.md |

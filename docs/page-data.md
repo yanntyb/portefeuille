@@ -8,7 +8,9 @@ les props qui partagent un nom de groupe partent ensemble, un groupe par requêt
 | `/` | `Dashboard` | `Wealth\Http\DashboardController` | `overview` | `series` (`evolution`), `income` (`revenus`) |
 | `/instruments` | `Instruments/Index` | `MarketView\Http\InstrumentsController` | `overview` | `trends` (`tendances`), `performances` (`performances`), `evolutionSeries` (`evolution`), `sectorBreakdown` (`secteurs`), `income` + `annualIncome` (`revenus`) |
 | `/instruments/{id}` | `Instruments/Show` | `MarketView\Http\InstrumentDetailController` | `instrument`, `performances`, `dividends` | `priceHistory`, `valuation` |
-| `/properties` | `Properties/Index` | `RealEstate\Http\PropertiesController` | `realEstate` | — |
+| `/crypto` | `Crypto/Index` | `MarketView\Http\CryptoController` | `overview` | `trends` (`tendances`), `performances` (`performances`), `evolutionSeries` (`evolution`) |
+| `/crypto/{id}` | `Crypto/Show` | `MarketView\Http\CryptoDetailController` | `instrument`, `performances` | `priceHistory`, `valuation` |
+| `/properties` | `Properties/Index` | `RealEstate\Http\PropertiesController` | `realEstate` | `series` (`evolution`), `profitability` (`rentabilité`), `income` (`revenus`) |
 | `/properties/{id}` | `Properties/Detail` | `RealEstate\Http\PropertyDetailController` | `property` | `amortization` |
 
 **Ce qui reste synchrone.** Le grand chiffre d'une page ne se diffère pas : il sauterait à
