@@ -1,7 +1,6 @@
 <?php
 
 use App\Contexts\Market\Enums\InstrumentType;
-use App\Contexts\Portfolio\Datas\AllocationSliceData;
 use App\Contexts\Portfolio\Datas\HoldingLineData;
 use App\Contexts\Portfolio\Datas\PortfolioOverviewData;
 
@@ -23,7 +22,6 @@ it('serializes an overview to the expected json shape', function () {
             gain: 200.0,
             gainPct: 25.0,
         )],
-        allocation: [new AllocationSliceData(label: 'Action', value: 1000.0, pct: 100.0, color: '#4f46e5')],
     );
 
     $json = $overview->jsonSerialize();
@@ -33,7 +31,7 @@ it('serializes an overview to the expected json shape', function () {
         ->and($json['holdings'][0]['assetName'])->toBe('ACME')
         ->and($json['holdings'][0]['type'])->toBe('stock')
         ->and($json['holdings'][0]['typeLabel'])->toBe('Action')
-        ->and($json['allocation'][0]['color'])->toBe('#4f46e5');
+        ->and($json)->not->toHaveKey('allocation');
 });
 
 it('builds an empty overview', function () {
@@ -41,5 +39,5 @@ it('builds an empty overview', function () {
 
     expect($overview->totalValue)->toBe(0.0)
         ->and($overview->holdings)->toBe([])
-        ->and($overview->allocation)->toBe([]);
+        ->and($overview->holdings)->toBe([]);
 });

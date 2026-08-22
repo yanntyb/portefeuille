@@ -19,7 +19,7 @@ it('builds the demo portfolio from transactions', function () {
     expect(Transaction::query()->count())->toBeGreaterThan(0)
         ->and(Holding::query()->where('user_id', $user->id)->count())->toBeGreaterThan(0)
         ->and($overview->totalValue)->toBeGreaterThan(0.0)
-        ->and($overview->allocation)->not->toBeEmpty();
+        ->and($overview->holdings)->not->toBeEmpty();
 
     // a sell exists with a realized gain recorded
     expect(Transaction::query()->where('type', TransactionType::Sell)->whereNotNull('realized_gain')->exists())->toBeTrue();

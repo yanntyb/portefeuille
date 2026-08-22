@@ -23,7 +23,6 @@ it('renders Instruments/Index with an empty overview when there is no data', fun
             ->component('Instruments/Index')
             ->where('overview.totalValue', fn ($value) => (float) $value === 0.0)
             ->has('overview.holdings', 0)
-            ->has('overview.allocation', 0)
         );
 });
 
@@ -47,7 +46,6 @@ it('renders Instruments/Index with the user portfolio overview', function () {
             ->where('overview.totalValue', fn ($value) => (float) $value === 1000.0)
             ->where('overview.totalGain', fn ($value) => (float) $value === 200.0)
             ->has('overview.holdings', 1)
-            ->has('overview.allocation', 1)
             ->where('overview.holdings.0.assetName', 'ACME')
             ->where('overview.holdings.0.assetId', $asset->id)
         );
