@@ -11,6 +11,7 @@ import {
     profitabilityBars,
     propertyHeroMeta,
     propertyRows,
+    rentalIncomeBars,
     rentMonthStatus,
     type AmortizationLine,
     type ExpenseYear,
@@ -19,6 +20,7 @@ import {
     type PropertyDetail,
     type PropertyOverview,
     type PropertyProfitability,
+    type RealEstateIncomeYear,
     type RentMonth,
 } from '@/lib/realEstate';
 
@@ -41,6 +43,31 @@ const profitabilityLine = (
     id,
     name: `Bien ${id}`,
     metrics: { grossYield: null, netYield, annualCashFlow, cashOnCash: null, ltv: null },
+});
+
+const incomeYear = (year: number, net: number): RealEstateIncomeYear => ({
+    year,
+    rents: 7200,
+    expenses: 1000,
+    loanPayments: 7200 - 1000 - net,
+    net,
+});
+
+describe('rentalIncomeBars', () => {
+    it('measures each year against the best one, not against their sum', () => {
+        const bars = rentalIncomeBars([incomeYear(2026, 1200), incomeYear(2025, 2400)]);
+
+        expect(bars[0].barWidth).toBe('50%');
+        expect(bars[1].barWidth).toBe('100%');
+    });
+
+    it('paints a year that cost money as a loss', () => {
+        const bars = rentalIncomeBars([incomeYear(2026, -600), incomeYear(2025, 1200)]);
+
+        expect(bars[0].barColor).toBe('bg-loss-bar');
+        expect(bars[0].barWidth).toBe('50%');
+        expect(bars[1].barColor).toBe('bg-gain-bar');
+    });
 });
 
 describe('profitabilityBars', () => {

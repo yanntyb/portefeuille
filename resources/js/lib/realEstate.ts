@@ -14,6 +14,48 @@ export interface PropertyOverview {
     invested: number;
 }
 
+/** Une année de revenus locatifs du parc, tous biens confondus. */
+export interface RealEstateIncomeYear {
+    year: number;
+    rents: number;
+    expenses: number;
+    loanPayments: number;
+    /** Ce qui reste en poche une fois charges et échéances payées. */
+    net: number;
+}
+
+export interface RealEstateIncome {
+    rents12m: number;
+    expenses12m: number;
+    loanPayments12m: number;
+    net12m: number;
+    years: RealEstateIncomeYear[];
+}
+
+/** Une barre par année de revenus : sa largeur, sa teinte, et le détail au survol. */
+export interface RentalIncomeBar {
+    year: RealEstateIncomeYear;
+    barWidth: string;
+    barColor: string;
+    title: string;
+}
+
+/**
+ * Une barre par année, mesurée contre la meilleure et non contre leur somme. La largeur suit
+ * l'amplitude et non le signe — comme les performances du portefeuille — pour qu'une année qui a
+ * coûté 600 € pèse autant qu'une qui en a rapporté 600.
+ */
+export const rentalIncomeBars = (years: RealEstateIncomeYear[]): RentalIncomeBar[] => {
+    const largest = largestOf(years.map((year) => Math.abs(year.net)));
+
+    return years.map((year) => ({
+        year,
+        barWidth: relativeBarWidth(Math.abs(year.net), largest),
+        barColor: year.net < 0 ? 'bg-loss-bar' : 'bg-gain-bar',
+        title: `Loyers ${eur(year.rents)} · Charges ${eur(year.expenses)} · Échéances ${eur(year.loanPayments)}`,
+    }));
+};
+
 /** Un bien et ses indicateurs de rentabilité, tels que la section les compare. */
 export interface PropertyProfitability {
     id: number;

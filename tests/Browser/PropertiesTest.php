@@ -104,3 +104,31 @@ it('détaille rendement brut, cash-on-cash et LTV au survol de la ligne', functi
         )
         ->assertNoJavaScriptErrors();
 });
+
+it('résume les douze derniers mois de revenus locatifs', function () use ($normalise) {
+    ['user' => $user] = propertyFixture();
+
+    $this->actingAs($user);
+
+    // Douze loyers de 600 € et les 1 000 € de charges de janvier, sans prêt : 6 200 € nets.
+    visit('/properties')
+        ->assertSee('Revenus')
+        ->assertScript(
+            "({$normalise})(document.querySelector('[data-rental-income-summary]'))",
+            "6 200 € nets sur douze mois, après 1 000 € de charges et 0 € d'échéances",
+        )
+        ->assertNoJavaScriptErrors();
+});
+
+it('empile une barre par année de revenus locatifs, la plus récente en tête', function () use ($normalise) {
+    ['user' => $user] = propertyFixture();
+
+    $this->actingAs($user);
+
+    // Le bien est acquis vingt mois plus tôt : trois années civiles, dont celle en cours.
+    visit('/properties')
+        ->assertScript("document.querySelectorAll('[data-rental-income-year]').length", 3)
+        ->assertScript("({$normalise})(document.querySelector('[data-rental-income-year] [data-rental-income-label]'))", '2026')
+        ->assertScript("({$normalise})(document.querySelector('[data-rental-income-year] [data-rental-income-net]'))", '+3 800 €')
+        ->assertNoJavaScriptErrors();
+});

@@ -6,12 +6,19 @@ import ProfitabilitySection from '@/components/properties/ProfitabilitySection.v
 import PropertyList from '@/components/properties/PropertyList.vue';
 import RealEstateEvolutionSection from '@/components/properties/RealEstateEvolutionSection.vue';
 import RealEstateSummarySection from '@/components/properties/RealEstateSummarySection.vue';
-import type { PropertyProfitability, RealEstateOverview, RealEstateSeries } from '@/lib/realEstate';
+import RentalIncomeSection from '@/components/properties/RentalIncomeSection.vue';
+import type {
+    PropertyProfitability,
+    RealEstateIncome,
+    RealEstateOverview,
+    RealEstateSeries,
+} from '@/lib/realEstate';
 
 const props = defineProps<{
     realEstate: RealEstateOverview;
     series?: RealEstateSeries;
     profitability?: PropertyProfitability[];
+    income?: RealEstateIncome;
 }>();
 </script>
 
@@ -26,6 +33,8 @@ const props = defineProps<{
         <PropertyList :properties="props.realEstate.properties" />
 
         <ProfitabilitySection v-if="props.realEstate.properties.length" :profitability="props.profitability" />
+
+        <RentalIncomeSection v-if="props.realEstate.properties.length" :income="props.income" />
     </AppPage>
 
     <AppBreadcrumb :items="[{ label: 'Tableau de bord', href: '/' }, { label: 'Immobilier' }]" />
