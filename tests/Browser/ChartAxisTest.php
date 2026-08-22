@@ -23,13 +23,13 @@ function yAxisLabels(string $section): string
     })()';
 }
 
-it('ne chiffre que le minimum et le maximum sur le graphe du tableau de bord', function () {
+it('ne chiffre que le minimum et le maximum sur le graphe de la page Titres', function () {
     // Position de 10 titres : valeur 1 000 €, investi 800 €. L'axe couvre donc 800 à 1 000 €.
     ['user' => $user] = portfolioFixture();
 
     $this->actingAs($user);
 
-    visit('/')
+    visit('/instruments')
         ->assertSee('Évolution')
         ->assertScript(yAxisLabels('evolution'), '800 €|1 000 €')
         ->assertNoJavaScriptErrors();
@@ -95,7 +95,7 @@ it('chiffre les extrêmes de la fenêtre montrée, non ceux de tout l\'historiqu
 
     $this->actingAs($user);
 
-    visit('/')
+    visit('/instruments')
         ->assertSee('Évolution')
         ->assertScript(yAxisLabels('evolution'), '100 €|200 €')
         ->assertNoJavaScriptErrors();
@@ -107,7 +107,7 @@ it('remonte au palier haut dès que la fenêtre couvre tout l\'historique', func
 
     $this->actingAs($user);
 
-    visit('/')
+    visit('/instruments')
         ->assertSee('Évolution')
         ->assertScript(yAxisLabels('evolution'), '100 €|1 000 €')
         ->assertNoJavaScriptErrors();

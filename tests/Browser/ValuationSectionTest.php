@@ -14,7 +14,7 @@ it('rend la valeur du portefeuille', function () use ($normalise) {
 
     $this->actingAs($user);
 
-    visit('/')
+    visit('/instruments')
         ->assertScript("({$normalise})(document.querySelector('[data-portfolio-value]'))", '1 000 €')
         ->assertNoJavaScriptErrors();
 });
@@ -24,7 +24,7 @@ it('détaille le montant investi et le gain sous la valeur', function () use ($n
 
     $this->actingAs($user);
 
-    visit('/')
+    visit('/instruments')
         ->assertScript("({$normalise})(document.querySelector('[data-portfolio-meta]'))", 'Investi 800 € Gain +200 €')
         ->assertNoJavaScriptErrors();
 });
@@ -34,7 +34,7 @@ it('affiche le gain en pourcentage dans la pastille', function () use ($normalis
 
     $this->actingAs($user);
 
-    visit('/')
+    visit('/instruments')
         ->assertScript("({$normalise})(document.querySelector('[data-portfolio-gain-pct]'))", '+25,0 %')
         ->assertNoJavaScriptErrors();
 });
@@ -42,7 +42,7 @@ it('affiche le gain en pourcentage dans la pastille', function () use ($normalis
 it('masque la section quand le portefeuille est vide', function () {
     $this->actingAs(User::factory()->create());
 
-    visit('/')
+    visit('/instruments')
         ->assertScript("document.querySelectorAll('[data-section=valuation]').length", 0)
         ->assertNoJavaScriptErrors();
 });
