@@ -14,6 +14,32 @@ export interface PropertyOverview {
     invested: number;
 }
 
+/** Un bien et ses indicateurs de rentabilité, tels que la section les compare. */
+export interface PropertyProfitability {
+    id: number;
+    name: string;
+    metrics: PropertyMetrics;
+}
+
+/** Une ligne de la section Rentabilité : le bien, et la largeur de sa barre de rendement net. */
+export interface ProfitabilityBar {
+    line: PropertyProfitability;
+    barWidth: string;
+}
+
+/**
+ * Les biens rangés par rendement net décroissant, chaque barre mise à l'échelle du meilleur —
+ * les mêmes barres relatives que les performances du portefeuille. Un bien sans rendement net
+ * (aucun coût d'acquisition connu) tombe en fin de liste, barre vide : rien à comparer.
+ */
+export const profitabilityBars = (lines: PropertyProfitability[]): ProfitabilityBar[] => {
+    const yieldOf = (line: PropertyProfitability): number => line.metrics.netYield ?? 0;
+    const sorted = [...lines].sort((left, right) => yieldOf(right) - yieldOf(left));
+    const largest = largestOf(sorted.map(yieldOf));
+
+    return sorted.map((line) => ({ line, barWidth: relativeBarWidth(yieldOf(line), largest) }));
+};
+
 /** Une ligne de la liste des biens : le bien, son gain et son poids dans le parc. */
 export interface PropertyRow extends PropertyOverview {
     gain: number;

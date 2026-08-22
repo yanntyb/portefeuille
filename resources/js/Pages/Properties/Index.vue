@@ -2,12 +2,17 @@
 import { Head } from '@inertiajs/vue3';
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
 import AppPage from '@/components/AppPage.vue';
+import ProfitabilitySection from '@/components/properties/ProfitabilitySection.vue';
 import PropertyList from '@/components/properties/PropertyList.vue';
 import RealEstateEvolutionSection from '@/components/properties/RealEstateEvolutionSection.vue';
 import RealEstateSummarySection from '@/components/properties/RealEstateSummarySection.vue';
-import type { RealEstateOverview, RealEstateSeries } from '@/lib/realEstate';
+import type { PropertyProfitability, RealEstateOverview, RealEstateSeries } from '@/lib/realEstate';
 
-const props = defineProps<{ realEstate: RealEstateOverview; series?: RealEstateSeries }>();
+const props = defineProps<{
+    realEstate: RealEstateOverview;
+    series?: RealEstateSeries;
+    profitability?: PropertyProfitability[];
+}>();
 </script>
 
 <template>
@@ -19,6 +24,8 @@ const props = defineProps<{ realEstate: RealEstateOverview; series?: RealEstateS
         <RealEstateEvolutionSection :series="props.series" />
 
         <PropertyList :properties="props.realEstate.properties" />
+
+        <ProfitabilitySection v-if="props.realEstate.properties.length" :profitability="props.profitability" />
     </AppPage>
 
     <AppBreadcrumb :items="[{ label: 'Tableau de bord', href: '/' }, { label: 'Immobilier' }]" />

@@ -8,6 +8,7 @@ import {
     incomeYears,
     loanProgress,
     loanYears,
+    profitabilityBars,
     propertyHeroMeta,
     propertyRows,
     rentMonthStatus,
@@ -17,6 +18,7 @@ import {
     type MonthlyCashFlow,
     type PropertyDetail,
     type PropertyOverview,
+    type PropertyProfitability,
     type RentMonth,
 } from '@/lib/realEstate';
 
@@ -29,6 +31,33 @@ const overviewLine = (overrides: Partial<PropertyOverview> = {}): PropertyOvervi
     monthlyCashFlow: 500,
     invested: 100000,
     ...overrides,
+});
+
+const profitabilityLine = (
+    id: number,
+    netYield: number | null,
+    annualCashFlow = 0,
+): PropertyProfitability => ({
+    id,
+    name: `Bien ${id}`,
+    metrics: { grossYield: null, netYield, annualCashFlow, cashOnCash: null, ltv: null },
+});
+
+describe('profitabilityBars', () => {
+    it('ranks the properties by net yield and scales the bars on the best one', () => {
+        const bars = profitabilityBars([profitabilityLine(1, 0.02), profitabilityLine(2, 0.08)]);
+
+        expect(bars.map((bar) => bar.line.id)).toEqual([2, 1]);
+        expect(bars[0].barWidth).toBe('100%');
+        expect(bars[1].barWidth).toBe('25%');
+    });
+
+    it('sinks a property without a net yield to the bottom, its bar empty', () => {
+        const bars = profitabilityBars([profitabilityLine(1, null), profitabilityLine(2, 0.05)]);
+
+        expect(bars.map((bar) => bar.line.id)).toEqual([2, 1]);
+        expect(bars[1].barWidth).toBe('0%');
+    });
 });
 
 describe('propertyRows', () => {

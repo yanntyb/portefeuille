@@ -76,3 +76,31 @@ it('remplit la barre de poids à hauteur de la part du bien dans le parc', funct
         ->assertScript("document.querySelector('[data-property-bar]').style.width", '100%')
         ->assertNoJavaScriptErrors();
 });
+
+it('compare les biens sur leur rendement net, cash-flow annuel en regard', function () use ($normalise) {
+    ['user' => $user] = propertyFixture();
+
+    $this->actingAs($user);
+
+    // Coût 108 000 €, loyers 7 200 € et charges 1 000 € sur douze mois : net 5,74 %, 6 200 € de cash-flow.
+    visit('/properties')
+        ->assertSee('Rentabilité')
+        ->assertScript("({$normalise})(document.querySelector('[data-profitability-name]'))", 'T2 Lyon 7e')
+        ->assertScript("({$normalise})(document.querySelector('[data-profitability-cash-flow]'))", '+6 200 €')
+        ->assertScript("({$normalise})(document.querySelector('[data-profitability-yield]'))", '5,74 %')
+        ->assertScript("document.querySelector('[data-profitability-bar]').style.width", '100%')
+        ->assertNoJavaScriptErrors();
+});
+
+it('détaille rendement brut, cash-on-cash et LTV au survol de la ligne', function () {
+    ['user' => $user] = propertyFixture();
+
+    $this->actingAs($user);
+
+    visit('/properties')
+        ->assertScript(
+            "document.querySelector('[data-profitability-row]').title.replace(/\\s+/g, ' ')",
+            'Brut 6,67 % · Cash-on-cash 5,74 % · LTV 0,00 %',
+        )
+        ->assertNoJavaScriptErrors();
+});

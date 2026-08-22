@@ -5,6 +5,7 @@ namespace App\Contexts\RealEstate\Http;
 use App\Contexts\Identity\Models\User;
 use App\Contexts\RealEstate\Actions\BuildRealEstateSeries;
 use App\Contexts\RealEstate\Actions\GetRealEstateOverview;
+use App\Contexts\RealEstate\Actions\GetRealEstateProfitability;
 use App\Contexts\RealEstate\Datas\RealEstateOverviewData;
 use App\Contexts\RealEstate\Datas\RealEstateSeriesData;
 use Inertia\Inertia;
@@ -35,6 +36,9 @@ class PropertiesController
             'series' => Inertia::defer(fn () => $user !== null
                 ? app(BuildRealEstateSeries::class)($user->id)
                 : RealEstateSeriesData::empty(), 'evolution'),
+            'profitability' => Inertia::defer(fn () => $user !== null
+                ? app(GetRealEstateProfitability::class)($user->id)
+                : [], 'rentabilité'),
         ]);
     }
 }
