@@ -1,3 +1,4 @@
+import { largestOf, relativeBarWidth } from '@/lib/bars';
 import { eur, fractionPct, frMonthYear, signedEur } from '@/lib/format';
 import type { HeroMetaEntry } from '@/lib/instrument';
 import type { SectorBreakdownRow } from '@/lib/sector';
@@ -9,7 +10,41 @@ export interface PropertyOverview {
     remainingPrincipal: number;
     netWorth: number;
     monthlyCashFlow: number;
+    /** Cash sorti pour ce bien : apport et mois déficitaires, jamais le capital remboursé. */
+    invested: number;
 }
+
+/** Une ligne de la liste des biens : le bien, son gain et son poids dans le parc. */
+export interface PropertyRow extends PropertyOverview {
+    gain: number;
+    /** Nul quand rien n'est sorti de la poche : il n'y a alors pas de rapport à établir. */
+    gainPct: number | null;
+    /** Part du parc en pourcentage du patrimoine net. */
+    share: number;
+    /** Largeur CSS de la barre de poids, relative au bien le plus lourd. */
+    barWidth: string;
+}
+
+/**
+ * Les biens rangés par patrimoine net, chacun pesé face au parc — les mêmes barres relatives que
+ * les positions du portefeuille. Le poids se compte sur le patrimoine net et non sur la valeur
+ * estimée : c'est ce que le bien représente une fois la banque payée.
+ */
+export const propertyRows = (properties: PropertyOverview[]): PropertyRow[] => {
+    const sorted = [...properties].sort((left, right) => right.netWorth - left.netWorth);
+    const total = sorted.reduce((sum, property) => sum + property.netWorth, 0);
+    const shareOf = (property: PropertyOverview): number =>
+        total > 0 ? (property.netWorth / total) * 100 : 0;
+    const largest = largestOf(sorted.map(shareOf));
+
+    return sorted.map((property) => ({
+        ...property,
+        gain: property.netWorth - property.invested,
+        gainPct: property.invested <= 0 ? null : ((property.netWorth - property.invested) / property.invested) * 100,
+        share: shareOf(property),
+        barWidth: relativeBarWidth(shareOf(property), largest),
+    }));
+};
 
 export interface RealEstateOverview {
     properties: PropertyOverview[];

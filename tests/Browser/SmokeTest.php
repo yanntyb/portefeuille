@@ -105,7 +105,7 @@ it('charge la page Immobilier et ses sections, sans erreur', function () {
         ->assertSee('Biens')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'real-estate-summary|real-estate',
+            'real-estate-summary|real-estate-evolution|real-estate',
         )
         ->assertNoJavaScriptErrors();
 });

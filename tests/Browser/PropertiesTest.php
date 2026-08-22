@@ -52,3 +52,27 @@ it('trace le patrimoine net du parc dès que la série arrive', function () {
         ->assertScript("document.querySelectorAll('[data-section=real-estate-evolution] [data-chart] svg').length", 1)
         ->assertNoJavaScriptErrors();
 });
+
+it('donne à chaque bien sa valeur, son gain, son poids et son cash-flow', function () use ($normalise) {
+    ['user' => $user] = propertyFixture();
+
+    $this->actingAs($user);
+
+    visit('/properties')
+        ->assertScript("({$normalise})(document.querySelector('[data-property-name]'))", 'T2 Lyon 7e')
+        ->assertScript("({$normalise})(document.querySelector('[data-property-net]'))", '150 000 €')
+        ->assertScript("({$normalise})(document.querySelector('[data-property-gain-pct]'))", '+38,4 %')
+        ->assertScript("({$normalise})(document.querySelector('[data-property-weight]'))", '100,0 %')
+        ->assertScript("({$normalise})(document.querySelector('[data-property-cash-flow]'))", '+517 €/mois')
+        ->assertNoJavaScriptErrors();
+});
+
+it('remplit la barre de poids à hauteur de la part du bien dans le parc', function () {
+    ['user' => $user] = propertyFixture();
+
+    $this->actingAs($user);
+
+    visit('/properties')
+        ->assertScript("document.querySelector('[data-property-bar]').style.width", '100%')
+        ->assertNoJavaScriptErrors();
+});

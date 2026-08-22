@@ -14,6 +14,8 @@ readonly class PropertyOverviewData implements JsonSerializable
         public float $remainingPrincipal,
         public float $netWorth,
         public float $monthlyCashFlow,
+        /** Cash sorti pour ce bien : apport et mois déficitaires, jamais le capital remboursé. */
+        public float $invested,
     ) {}
 
     /** @return array<string, mixed> */
@@ -26,6 +28,7 @@ readonly class PropertyOverviewData implements JsonSerializable
             'remainingPrincipal' => $this->remainingPrincipal,
             'netWorth' => $this->netWorth,
             'monthlyCashFlow' => $this->monthlyCashFlow,
+            'invested' => $this->invested,
         ];
     }
 }

@@ -9,14 +9,54 @@ import {
     loanProgress,
     loanYears,
     propertyHeroMeta,
+    propertyRows,
     rentMonthStatus,
     type AmortizationLine,
     type ExpenseYear,
     type LoanSummary,
     type MonthlyCashFlow,
     type PropertyDetail,
+    type PropertyOverview,
     type RentMonth,
 } from '@/lib/realEstate';
+
+const overviewLine = (overrides: Partial<PropertyOverview> = {}): PropertyOverview => ({
+    id: 1,
+    name: 'T2 Lyon 7e',
+    currentValue: 150000,
+    remainingPrincipal: 0,
+    netWorth: 150000,
+    monthlyCashFlow: 500,
+    invested: 100000,
+    ...overrides,
+});
+
+describe('propertyRows', () => {
+    it('ranks the properties by net worth and weighs each one against the portfolio', () => {
+        const rows = propertyRows([
+            overviewLine({ id: 1, netWorth: 50000 }),
+            overviewLine({ id: 2, netWorth: 150000 }),
+        ]);
+
+        expect(rows.map((row) => row.id)).toEqual([2, 1]);
+        expect(rows[0].share).toBe(75);
+        expect(rows[0].barWidth).toBe('100%');
+        expect(rows[1].barWidth).toBe(`${(25 / 75) * 100}%`);
+    });
+
+    it('reports the gain against the cash paid out of pocket', () => {
+        const rows = propertyRows([overviewLine({ netWorth: 150000, invested: 100000 })]);
+
+        expect(rows[0].gain).toBe(50000);
+        expect(rows[0].gainPct).toBe(50);
+    });
+
+    it('leaves the gain share empty when nothing was paid out of pocket', () => {
+        const rows = propertyRows([overviewLine({ invested: 0 })]);
+
+        expect(rows[0].gainPct).toBeNull();
+    });
+});
 
 describe('rentMonthStatus', () => {
     it('labels a full rent', () => {

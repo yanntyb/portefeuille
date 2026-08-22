@@ -26,7 +26,8 @@ class GetRealEstateOverview
         $invested = 0.0;
 
         foreach ($properties as $property) {
-            $invested += $this->cashInvested->forProperty($property, $today);
+            $propertyInvested = $this->cashInvested->forProperty($property, $today);
+            $invested += $propertyInvested;
 
             $financials = $this->assembler->financialsFor($property, $today);
 
@@ -40,6 +41,7 @@ class GetRealEstateOverview
                     ($financials->rents12m - $financials->expenses12m - $financials->loanPayments12m) / 12,
                     2,
                 ),
+                invested: $propertyInvested,
             );
         }
 

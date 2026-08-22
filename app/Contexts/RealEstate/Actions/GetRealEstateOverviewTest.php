@@ -58,7 +58,8 @@ it('reports the cash invested and the monthly cash flow of the whole portfolio',
 
     // Apport 100000 + 8000 − 90000, et aucun mois déficitaire : le loyer couvre l'échéance.
     expect($overview->totalInvested)->toBe(18000.0)
-        ->and($overview->totalMonthlyCashFlow)->toBe(300.0);
+        ->and($overview->totalMonthlyCashFlow)->toBe(300.0)
+        ->and($overview->properties[0]->invested)->toBe(18000.0);
 
     Carbon::setTestNow();
 });
