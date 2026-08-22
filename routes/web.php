@@ -1,7 +1,7 @@
 <?php
 
-use App\Contexts\InstrumentView\Http\InstrumentDetailController;
-use App\Contexts\InstrumentView\Http\InstrumentsController;
+use App\Contexts\MarketView\Http\InstrumentDetailController;
+use App\Contexts\MarketView\Http\InstrumentsController;
 use App\Contexts\RealEstate\Http\PropertiesController;
 use App\Contexts\RealEstate\Http\PropertyDetailController;
 use App\Contexts\Wealth\Http\DashboardController;

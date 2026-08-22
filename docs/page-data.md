@@ -6,8 +6,8 @@ les props qui partagent un nom de groupe partent ensemble, un groupe par requêt
 | Page | Composant | Contrôleur | Synchrone | Différé (groupe) |
 | --- | --- | --- | --- | --- |
 | `/` | `Dashboard` | `Wealth\Http\DashboardController` | `overview` | `series` (`evolution`), `income` (`revenus`) |
-| `/instruments` | `Instruments/Index` | `InstrumentView\Http\InstrumentsController` | `overview` | `trends` (`tendances`), `performances` (`performances`), `evolutionSeries` (`evolution`), `sectorBreakdown` (`secteurs`), `income` + `annualIncome` (`revenus`) |
-| `/instruments/{id}` | `Instruments/Show` | `InstrumentView\Http\InstrumentDetailController` | `instrument`, `performances`, `dividends` | `priceHistory`, `valuation` |
+| `/instruments` | `Instruments/Index` | `MarketView\Http\InstrumentsController` | `overview` | `trends` (`tendances`), `performances` (`performances`), `evolutionSeries` (`evolution`), `sectorBreakdown` (`secteurs`), `income` + `annualIncome` (`revenus`) |
+| `/instruments/{id}` | `Instruments/Show` | `MarketView\Http\InstrumentDetailController` | `instrument`, `performances`, `dividends` | `priceHistory`, `valuation` |
 | `/properties` | `Properties/Index` | `RealEstate\Http\PropertiesController` | `realEstate` | — |
 | `/properties/{id}` | `Properties/Detail` | `RealEstate\Http\PropertyDetailController` | `property` | `amortization` |
 

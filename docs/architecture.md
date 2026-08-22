@@ -13,11 +13,11 @@ L'application est structurée en **contextes délimités** (bounded contexts) so
 | Valuation | `app/Contexts/Valuation/` | Actif (séries de valorisation, performances) |
 | Income | `app/Contexts/Income/` | Actif (revenus par origine : dividendes, loyers) |
 | RealEstate | `app/Contexts/RealEstate/` | Actif (biens, baux, prêts, charges) |
-| InstrumentView | `app/Contexts/InstrumentView/` | Actif (lecture : catalogue et fiche d'un titre) |
+| MarketView | `app/Contexts/MarketView/` | Actif (lecture : catalogue et fiche d'un titre) |
 | Wealth | `app/Contexts/Wealth/` | Actif (lecture : patrimoine toutes classes confondues) |
 | Identity | `app/Contexts/Identity/` | Stub (User/Role, sans contrats) |
 
-Les quatre premiers portent des `Models/` ; `InstrumentView` et `Wealth` n'en ont pas — ce sont des
+Les quatre premiers portent des `Models/` ; `MarketView` et `Wealth` n'en ont pas — ce sont des
 contextes de **lecture**, qui n'agrègent que ce que leurs ports leur rendent.
 
 ### Concepts directeurs
@@ -112,7 +112,7 @@ app/Contexts/Wealth/
 ```
 
 **Pourquoi `Wealth` et non `WealthView`.** `Valuation` et `Income` sont déjà des contextes dérivés
-sans suffixe. `InstrumentView` porte le sien uniquement parce que `Market\Models\Instrument`
+sans suffixe. `MarketView` porte le sien uniquement parce que `Market\Models\Instrument`
 occupait déjà le nom ; aucun modèle ne s'appelle `Wealth`, donc le suffixe n'aurait rien à
 désambiguïser.
 

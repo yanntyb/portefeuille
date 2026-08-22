@@ -8,10 +8,6 @@ use App\Contexts\Income\Sources\Dividend\Infrastructure\MarketDividendHistory;
 use App\Contexts\Income\Sources\Dividend\Infrastructure\PortfolioPositionHistory;
 use App\Contexts\Income\Sources\Rent\Infrastructure\RealEstateRentSchedule;
 use App\Contexts\Income\Sources\Rent\RentIncomeSource;
-use App\Contexts\InstrumentView\Infrastructure\MarketData;
-use App\Contexts\InstrumentView\Infrastructure\PortfolioHoldings;
-use App\Contexts\InstrumentView\Infrastructure\PortfolioTransactions;
-use App\Contexts\InstrumentView\InstrumentViewProvider;
 use App\Contexts\Market\Infrastructure\DatabaseAssetPriceAdapter;
 use App\Contexts\Market\Infrastructure\EloquentDividendRepository;
 use App\Contexts\Market\Infrastructure\EloquentInstrumentRepository;
@@ -19,6 +15,10 @@ use App\Contexts\Market\Infrastructure\EloquentPriceRepository;
 use App\Contexts\Market\Infrastructure\EloquentSectorRepository;
 use App\Contexts\Market\Infrastructure\YahooFinanceAdapter;
 use App\Contexts\Market\MarketProvider;
+use App\Contexts\MarketView\Infrastructure\MarketData;
+use App\Contexts\MarketView\Infrastructure\PortfolioHoldings;
+use App\Contexts\MarketView\Infrastructure\PortfolioTransactions;
+use App\Contexts\MarketView\MarketViewProvider;
 use App\Contexts\RealEstate\Infrastructure\LaravelRealEstateCache;
 use App\Contexts\RealEstate\RealEstateProvider;
 use App\Contexts\Valuation\Infrastructure\LaravelSeriesCache;
@@ -70,7 +70,7 @@ class AppServiceProvider extends ServiceProvider
             cache: LaravelRealEstateCache::class,
         );
 
-        InstrumentViewProvider::registers(
+        MarketViewProvider::registers(
             app: $this->app,
             marketData: MarketData::class,
             holdings: PortfolioHoldings::class,

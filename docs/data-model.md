@@ -137,14 +137,14 @@ flowchart TD
     PJO --> H
     H --> HP["HoldingsPort::holdingsFor(userId)"]
     HP --> AGG["agregation multi-wallets — avg_cost pondere par quantite"]
-    AGG --> V["InstrumentView — Datas + Inertia"]
+    AGG --> V["MarketView — Datas + Inertia"]
 ```
 
 La clé primaire composite `(asset_id, wallet_id)` impose les surcharges `setKeysForSaveQuery()` / `setKeysForSelectQuery()` dans `Holding`.
 
-### 2.3 Lecture côté InstrumentView
+### 2.3 Lecture côté MarketView
 
-Le contexte `InstrumentView` n'accède jamais aux modèles des autres contextes en direct : il passe par `HoldingsPort`, `TransactionsPort` et `MarketDataPort`, implémentés respectivement par `PortfolioHoldings`, `PortfolioTransactions` et `MarketData`. `PortfolioHoldings::holdingsFor()` agrège les lignes de tous les wallets d'un utilisateur en un `HoldingSnapshotData` par `asset_id`, avec un `avg_cost` pondéré par les quantités (les lignes sans `avg_cost` sont exclues du calcul).
+Le contexte `MarketView` n'accède jamais aux modèles des autres contextes en direct : il passe par `HoldingsPort`, `TransactionsPort` et `MarketDataPort`, implémentés respectivement par `PortfolioHoldings`, `PortfolioTransactions` et `MarketData`. `PortfolioHoldings::holdingsFor()` agrège les lignes de tous les wallets d'un utilisateur en un `HoldingSnapshotData` par `asset_id`, avec un `avg_cost` pondéré par les quantités (les lignes sans `avg_cost` sont exclues du calcul).
 
 ## 3. Tables par domaine
 
