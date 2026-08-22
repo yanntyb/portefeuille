@@ -14,6 +14,7 @@ class GetRealEstateOverview
     public function __construct(
         private PropertyFinancialsAssembler $assembler,
         private UserProperties $properties,
+        private GetRealEstateCashInvested $cashInvested,
     ) {}
 
     public function __invoke(int $userId): RealEstateOverviewData
@@ -22,8 +23,11 @@ class GetRealEstateOverview
 
         $today = Carbon::now();
         $lines = [];
+        $invested = 0.0;
 
         foreach ($properties as $property) {
+            $invested += $this->cashInvested->forProperty($property, $today);
+
             $financials = $this->assembler->financialsFor($property, $today);
 
             $lines[] = new PropertyOverviewData(
@@ -39,11 +43,15 @@ class GetRealEstateOverview
             );
         }
 
+        $monthlyCashFlow = array_sum(array_map(fn ($l): float => $l->monthlyCashFlow, $lines));
+
         return new RealEstateOverviewData(
             properties: $lines,
             totalValue: round(array_sum(array_map(fn ($l): float => $l->currentValue, $lines)), 2),
             totalRemaining: round(array_sum(array_map(fn ($l): float => $l->remainingPrincipal, $lines)), 2),
             totalNetWorth: round(array_sum(array_map(fn ($l): float => $l->netWorth, $lines)), 2),
+            totalInvested: round($invested, 2),
+            totalMonthlyCashFlow: round($monthlyCashFlow, 2),
         );
     }
 }

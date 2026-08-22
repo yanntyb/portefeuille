@@ -16,7 +16,21 @@ export interface RealEstateOverview {
     totalValue: number;
     totalRemaining: number;
     totalNetWorth: number;
+    /** Cash réellement sorti de la poche : apport et mois déficitaires, jamais le capital remboursé. */
+    totalInvested: number;
+    totalMonthlyCashFlow: number;
 }
+
+/**
+ * Ce que le parc a rapporté par rapport au cash sorti. Le capital remboursé par le locataire y
+ * figure en gain — c'est le levier, et c'est déjà la lecture de la série du patrimoine immobilier.
+ */
+export const realEstateGainOf = (overview: RealEstateOverview): number =>
+    overview.totalNetWorth - overview.totalInvested;
+
+/** Nul sans cash sorti : un parc financé à plus de 100 % n'a pas de mise à rapporter au gain. */
+export const realEstateGainPctOf = (overview: RealEstateOverview): number | null =>
+    overview.totalInvested <= 0 ? null : (realEstateGainOf(overview) / overview.totalInvested) * 100;
 
 /**
  * Indicateurs de rentabilité d'un bien locatif, tous avant impôt. `grossYield`, `netYield`,

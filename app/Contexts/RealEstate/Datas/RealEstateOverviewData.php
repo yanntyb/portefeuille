@@ -13,11 +13,13 @@ readonly class RealEstateOverviewData implements JsonSerializable
         public float $totalValue,
         public float $totalRemaining,
         public float $totalNetWorth,
+        public float $totalInvested,
+        public float $totalMonthlyCashFlow,
     ) {}
 
     public static function empty(): self
     {
-        return new self([], 0.0, 0.0, 0.0);
+        return new self([], 0.0, 0.0, 0.0, 0.0, 0.0);
     }
 
     /** @return array<string, mixed> */
@@ -28,6 +30,8 @@ readonly class RealEstateOverviewData implements JsonSerializable
             'totalValue' => $this->totalValue,
             'totalRemaining' => $this->totalRemaining,
             'totalNetWorth' => $this->totalNetWorth,
+            'totalInvested' => $this->totalInvested,
+            'totalMonthlyCashFlow' => $this->totalMonthlyCashFlow,
         ];
     }
 }

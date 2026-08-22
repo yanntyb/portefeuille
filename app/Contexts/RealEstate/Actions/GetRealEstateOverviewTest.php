@@ -39,3 +39,26 @@ it('ignores properties of other users and yields an empty overview', function ()
     expect($overview->properties)->toBe([])
         ->and($overview->totalNetWorth)->toBe(0.0);
 });
+
+it('reports the cash invested and the monthly cash flow of the whole portfolio', function () {
+    Carbon::setTestNow('2026-08-20');
+
+    $user = User::factory()->create();
+    $property = Property::factory()->create([
+        'user_id' => $user->id,
+        'acquisition_date' => '2025-01-01',
+        'acquisition_price' => 100000,
+        'acquisition_fees' => 8000,
+    ]);
+    Lease::factory()->create(['property_id' => $property->id, 'monthly_rent' => 600, 'start_date' => '2025-01-01', 'end_date' => null]);
+    Loan::factory()->create(['property_id' => $property->id, 'principal' => 90000, 'annual_rate' => 0.0, 'term_months' => 300, 'start_date' => '2025-01-01', 'monthly_insurance' => 0]);
+    PropertyValuation::factory()->create(['property_id' => $property->id, 'date' => '2026-01-01', 'value' => 120000]);
+
+    $overview = app(GetRealEstateOverview::class)($user->id);
+
+    // Apport 100000 + 8000 − 90000, et aucun mois déficitaire : le loyer couvre l'échéance.
+    expect($overview->totalInvested)->toBe(18000.0)
+        ->and($overview->totalMonthlyCashFlow)->toBe(300.0);
+
+    Carbon::setTestNow();
+});
