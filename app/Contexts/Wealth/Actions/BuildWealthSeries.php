@@ -2,45 +2,56 @@
 
 namespace App\Contexts\Wealth\Actions;
 
+use App\Contexts\Wealth\Datas\ClassSeriesData;
+use App\Contexts\Wealth\Datas\ClassValuesData;
 use App\Contexts\Wealth\Datas\WealthSeriesData;
-use App\Contexts\Wealth\Ports\RealEstatePort;
-use App\Contexts\Wealth\Ports\SecuritiesSeriesPort;
+use App\Contexts\Wealth\Infrastructure\AssetClassRegistry;
+use App\Contexts\Wealth\Ports\AssetClassPort;
 use App\Contexts\Wealth\Services\SeriesAligner;
 
-/** Le patrimoine dans le temps, les deux classes empilables sur une grille commune. */
+/** Le patrimoine dans le temps, les classes empilables sur une grille commune. */
 class BuildWealthSeries
 {
     public function __construct(
-        private SecuritiesSeriesPort $securities,
-        private RealEstatePort $realEstate,
+        private AssetClassRegistry $classes,
         private SeriesAligner $aligner,
     ) {}
 
     public function __invoke(int $userId): WealthSeriesData
     {
-        $securities = $this->securities->seriesFor($userId);
-        $realEstate = $this->realEstate->seriesFor($userId);
+        $classes = $this->classes->all();
 
-        $labels = $this->aligner->union($securities->labels, $realEstate->labels);
+        /** @var list<ClassSeriesData> $series */
+        $series = array_map(fn (AssetClassPort $class): ClassSeriesData => $class->seriesFor($userId), $classes);
+
+        $labels = $this->aligner->union(...array_map(
+            fn (ClassSeriesData $one): array => $one->labels,
+            $series,
+        ));
 
         if ($labels === []) {
             return WealthSeriesData::empty();
         }
 
-        $securitiesValue = $this->aligner->onto($labels, $securities->labels, $securities->value);
-        $realEstateValue = $this->aligner->onto($labels, $realEstate->labels, $realEstate->value);
-        $securitiesInvested = $this->aligner->onto($labels, $securities->labels, $securities->invested);
-        $realEstateInvested = $this->aligner->onto($labels, $realEstate->labels, $realEstate->invested);
+        $values = [];
+        $invested = array_fill(0, count($labels), 0.0);
+
+        foreach ($classes as $index => $class) {
+            $values[] = new ClassValuesData(
+                key: $class->key(),
+                label: $class->label(),
+                values: $this->aligner->onto($labels, $series[$index]->labels, $series[$index]->value),
+            );
+
+            foreach ($this->aligner->onto($labels, $series[$index]->labels, $series[$index]->invested) as $at => $amount) {
+                $invested[$at] += $amount;
+            }
+        }
 
         return new WealthSeriesData(
             labels: $labels,
-            securities: $securitiesValue,
-            realEstate: $realEstateValue,
-            invested: array_map(
-                fn (float $left, float $right): float => round($left + $right, 2),
-                $securitiesInvested,
-                $realEstateInvested,
-            ),
+            classes: $values,
+            invested: array_map(fn (float $amount): float => round($amount, 2), $invested),
         );
     }
 }

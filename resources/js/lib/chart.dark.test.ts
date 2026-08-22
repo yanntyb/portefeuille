@@ -34,11 +34,14 @@ describe('palette sombre', () => {
         expect((option().series as { name?: string }[]).map((serie) => serie.name)).toEqual(['Valeur']);
     });
 
-    it('donne aux deux bandes du patrimoine des couleurs distinctes en thème sombre', () => {
+    it('donne aux bandes du patrimoine des couleurs distinctes en thème sombre', () => {
         const option = buildWealthStackOption({
             labels: ['2026-01-05', '2026-01-12'],
-            securities: [1000, 1100],
-            realEstate: [500, 520],
+            classes: [
+                { label: 'Actions', values: [1000, 1100] },
+                { label: 'Immobilier', values: [500, 520] },
+                { label: 'Crypto', values: [200, 240] },
+            ],
             invested: [1400, 1400],
             valueFormatter: (amount: number): string => `${amount} €`,
             window: null,
@@ -47,7 +50,8 @@ describe('palette sombre', () => {
 
         const series = option.series as { areaStyle: { color: string } }[];
 
-        expect(series[0].areaStyle.color).not.toBe(series[1].areaStyle.color);
+        expect(new Set(series.map((serie) => serie.areaStyle.color)).size).toBe(3);
         expect(series[1].areaStyle.color).toBe('#e0a75f');
+        expect(series[2].areaStyle.color).toBe('#e879f9');
     });
 });

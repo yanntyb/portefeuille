@@ -8,10 +8,31 @@ use App\Contexts\RealEstate\Actions\GetRealEstateOverview;
 use App\Contexts\RealEstate\Datas\PropertyOverviewData;
 use App\Contexts\Wealth\Datas\ClassSeriesData;
 use App\Contexts\Wealth\Datas\ClassSnapshotData;
-use App\Contexts\Wealth\Ports\RealEstatePort;
+use App\Contexts\Wealth\Ports\AssetClassPort;
 
-class RealEstateFinancials implements RealEstatePort
+/** Le parc immobilier : son patrimoine net, le cash qu'il a coûté, et ce qu'il laisse chaque mois. */
+class RealEstateClass implements AssetClassPort
 {
+    public function key(): string
+    {
+        return 'realEstate';
+    }
+
+    public function label(): string
+    {
+        return 'Immobilier';
+    }
+
+    public function href(): string
+    {
+        return '/properties';
+    }
+
+    public function incomeLabel(): ?string
+    {
+        return 'Locatif net';
+    }
+
     public function __construct(
         private GetRealEstateOverview $overview,
         private GetRealEstateCashInvested $cashInvested,
@@ -37,7 +58,7 @@ class RealEstateFinancials implements RealEstatePort
         );
     }
 
-    public function monthlyNetFor(int $userId): float
+    public function monthlyIncomeFor(int $userId): float
     {
         $properties = ($this->overview)($userId)->properties;
 

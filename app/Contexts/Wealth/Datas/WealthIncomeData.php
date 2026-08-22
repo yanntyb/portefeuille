@@ -7,15 +7,15 @@ use JsonSerializable;
 /** Ce que le patrimoine laisse chaque mois, et d'où ça vient. */
 readonly class WealthIncomeData implements JsonSerializable
 {
+    /** @param  list<IncomeOriginData>  $origins */
     public function __construct(
         public float $monthlyTotal,
-        public float $monthlyDividends,
-        public float $monthlyRentalNet,
+        public array $origins,
     ) {}
 
     public static function empty(): self
     {
-        return new self(0.0, 0.0, 0.0);
+        return new self(0.0, []);
     }
 
     /** @return array<string, mixed> */
@@ -23,8 +23,7 @@ readonly class WealthIncomeData implements JsonSerializable
     {
         return [
             'monthlyTotal' => $this->monthlyTotal,
-            'monthlyDividends' => $this->monthlyDividends,
-            'monthlyRentalNet' => $this->monthlyRentalNet,
+            'origins' => array_map(fn (IncomeOriginData $origin): array => $origin->jsonSerialize(), $this->origins),
         ];
     }
 }

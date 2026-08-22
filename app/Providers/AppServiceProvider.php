@@ -26,10 +26,8 @@ use App\Contexts\Valuation\Infrastructure\MarketInstrumentDirectory;
 use App\Contexts\Valuation\Infrastructure\MarketPriceHistory;
 use App\Contexts\Valuation\Infrastructure\PortfolioTransactionHistory;
 use App\Contexts\Valuation\ValuationProvider;
-use App\Contexts\Wealth\Infrastructure\DividendIncome;
-use App\Contexts\Wealth\Infrastructure\PortfolioHoldings as WealthPortfolioHoldings;
-use App\Contexts\Wealth\Infrastructure\RealEstateFinancials;
-use App\Contexts\Wealth\Infrastructure\ValuationSeries;
+use App\Contexts\Wealth\Infrastructure\RealEstateClass;
+use App\Contexts\Wealth\Infrastructure\SecuritiesClass;
 use App\Contexts\Wealth\WealthProvider;
 use App\Shared\Python\ProcessPythonRunner;
 use App\Shared\Python\PythonProvider;
@@ -85,12 +83,10 @@ class AppServiceProvider extends ServiceProvider
             rentSchedule: RealEstateRentSchedule::class,
         );
 
+        /** L'ordre décide de celui des lignes du tableau de bord et des bandes de son graphe. */
         WealthProvider::registers(
             app: $this->app,
-            holdings: WealthPortfolioHoldings::class,
-            securitiesSeries: ValuationSeries::class,
-            realEstate: RealEstateFinancials::class,
-            income: DividendIncome::class,
+            classes: [SecuritiesClass::class, RealEstateClass::class],
         );
     }
 

@@ -1,37 +1,41 @@
 <?php
 
 use App\Contexts\Wealth\Actions\GetWealthIncome;
-use App\Contexts\Wealth\Ports\IncomePort;
 
-function fakeMonthlyDividends(float $amount): void
-{
-    app()->bind(IncomePort::class, fn (): IncomePort => new class($amount) implements IncomePort
-    {
-        public function __construct(private float $amount) {}
-
-        public function monthlyDividendsFor(int $userId): float
-        {
-            return $this->amount;
-        }
-    });
-}
-
-it('additionne les dividendes mensualisés et le locatif net', function () {
-    fakeMonthlyDividends(102.0);
-    fakeRealEstate(0.0, 0.0, 45.5);
+it('additionne ce que chaque classe verse chaque mois', function () {
+    fakeWealthClasses(
+        fakeWealthClass('securities', incomeLabel: 'Dividendes', monthlyIncome: 102.0),
+        fakeWealthClass('realEstate', incomeLabel: 'Locatif net', monthlyIncome: 45.5),
+    );
 
     $income = app(GetWealthIncome::class)(999);
 
-    expect($income->monthlyDividends)->toBe(102.0)
-        ->and($income->monthlyRentalNet)->toBe(45.5)
-        ->and($income->monthlyTotal)->toBe(147.5);
+    expect($income->monthlyTotal)->toBe(147.5)
+        ->and($income->origins)->toHaveCount(2)
+        ->and($income->origins[0]->label)->toBe('Dividendes')
+        ->and($income->origins[0]->amount)->toBe(102.0)
+        ->and($income->origins[1]->label)->toBe('Locatif net')
+        ->and($income->origins[1]->amount)->toBe(45.5);
 });
 
-it('vaut zéro sans dividende ni bien', function () {
-    fakeMonthlyDividends(0.0);
+it('saute la classe qui ne verse rien plutôt que de lui donner une ligne à zéro', function () {
+    fakeWealthClasses(
+        fakeWealthClass('securities', incomeLabel: 'Dividendes', monthlyIncome: 60.0),
+        fakeWealthClass('crypto'),
+    );
+
+    $income = app(GetWealthIncome::class)(999);
+
+    expect($income->origins)->toHaveCount(1)
+        ->and($income->origins[0]->label)->toBe('Dividendes')
+        ->and($income->monthlyTotal)->toBe(60.0);
+});
+
+it('vaut zéro sans aucune classe', function () {
+    fakeWealthClasses();
 
     $income = app(GetWealthIncome::class)(999);
 
     expect($income->monthlyTotal)->toBe(0.0)
-        ->and($income->monthlyRentalNet)->toBe(0.0);
+        ->and($income->origins)->toBe([]);
 });

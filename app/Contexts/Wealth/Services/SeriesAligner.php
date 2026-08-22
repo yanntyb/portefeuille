@@ -3,20 +3,21 @@
 namespace App\Contexts\Wealth\Services;
 
 /**
- * Réconcilie deux séries qui n'ont pas la même grille. Les titres se comptent depuis la première
- * transaction, l'immobilier depuis la plus ancienne acquisition : ni l'une ni l'autre ne peut
- * servir de grille commune sans tronquer l'autre.
+ * Réconcilie des séries qui n'ont pas la même grille. Les titres se comptent depuis la première
+ * transaction, l'immobilier depuis la plus ancienne acquisition, la crypto depuis son premier
+ * achat : aucune ne peut servir de grille commune sans tronquer les autres.
  */
 class SeriesAligner
 {
     /**
-     * @param  list<string>  $left
-     * @param  list<string>  $right
+     * Variadique et non binaire : le nombre de classes d'actif est celui du registre, pas deux.
+     *
+     * @param  list<string>  ...$sets
      * @return list<string>
      */
-    public function union(array $left, array $right): array
+    public function union(array ...$sets): array
     {
-        $labels = array_values(array_unique([...$left, ...$right]));
+        $labels = array_values(array_unique(array_merge(...[[], ...$sets])));
         sort($labels);
 
         return $labels;

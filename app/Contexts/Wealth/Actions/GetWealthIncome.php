@@ -2,30 +2,35 @@
 
 namespace App\Contexts\Wealth\Actions;
 
+use App\Contexts\Wealth\Datas\IncomeOriginData;
 use App\Contexts\Wealth\Datas\WealthIncomeData;
-use App\Contexts\Wealth\Ports\IncomePort;
-use App\Contexts\Wealth\Ports\RealEstatePort;
+use App\Contexts\Wealth\Infrastructure\AssetClassRegistry;
 
 /**
- * Ce que le patrimoine laisse chaque mois. Les dividendes sont mensualisés sur douze mois
- * glissants, le locatif est déjà net de charges et d'échéances.
+ * Ce que le patrimoine laisse chaque mois. Chaque classe d'actif dit ce qu'elle rapporte et sous
+ * quel nom ; celles qui ne rapportent rien — la crypto — ne prennent pas de ligne.
  */
 class GetWealthIncome
 {
-    public function __construct(
-        private IncomePort $income,
-        private RealEstatePort $realEstate,
-    ) {}
+    public function __construct(private AssetClassRegistry $classes) {}
 
     public function __invoke(int $userId): WealthIncomeData
     {
-        $dividends = $this->income->monthlyDividendsFor($userId);
-        $rentalNet = $this->realEstate->monthlyNetFor($userId);
+        $origins = [];
+        $total = 0.0;
 
-        return new WealthIncomeData(
-            monthlyTotal: round($dividends + $rentalNet, 2),
-            monthlyDividends: $dividends,
-            monthlyRentalNet: $rentalNet,
-        );
+        foreach ($this->classes->all() as $class) {
+            $label = $class->incomeLabel();
+
+            if ($label === null) {
+                continue;
+            }
+
+            $amount = $class->monthlyIncomeFor($userId);
+            $origins[] = new IncomeOriginData(label: $label, amount: round($amount, 2));
+            $total += $amount;
+        }
+
+        return new WealthIncomeData(monthlyTotal: round($total, 2), origins: $origins);
     }
 }

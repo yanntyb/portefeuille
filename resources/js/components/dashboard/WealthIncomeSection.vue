@@ -1,19 +1,21 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Deferred } from '@inertiajs/vue3';
-import { eur, gainClass, signedEur } from '@/lib/format';
-import type { WealthIncome } from '@/lib/wealth';
+import { gainClass, signedEur } from '@/lib/format';
+import type { IncomeOrigin, WealthIncome } from '@/lib/wealth';
 
 const props = defineProps<{ income?: WealthIncome }>();
 
 const hasIncome = computed<boolean>(() => (props.income?.monthlyTotal ?? 0) !== 0);
+
+/** Une origine par classe d'actif qui verse quelque chose ; celles qui ne versent rien n'en ont pas. */
+const origins = computed<IncomeOrigin[]>(() => props.income?.origins ?? []);
 </script>
 
 <template>
     <!--
         Un seul chiffre net : les dividendes des douze derniers mois mensualisés, plus le locatif
-        déjà net de charges et d'échéances. Le détail par origine se lit sur /instruments et
-        /properties.
+        déjà net de charges et d'échéances. Le détail se lit sur la page de chaque classe.
     -->
     <section data-section="wealth-income" class="flex shrink-0 flex-col gap-4 px-6">
         <h2 class="text-[17px] leading-none font-bold">Revenus</h2>
@@ -44,19 +46,15 @@ const hasIncome = computed<boolean>(() => (props.income?.monthlyTotal ?? 0) !== 
                 </p>
 
                 <ul class="flex flex-col gap-2 text-sm">
-                    <li data-income-origin class="flex items-center justify-between gap-3">
-                        <span class="text-muted-foreground">Dividendes</span>
-                        <span class="font-semibold tabular-nums">
-                            {{ eur(props.income?.monthlyDividends ?? 0) }}
-                        </span>
-                    </li>
-                    <li data-income-origin class="flex items-center justify-between gap-3">
-                        <span class="text-muted-foreground">Locatif net</span>
-                        <span
-                            class="font-semibold tabular-nums"
-                            :class="gainClass(props.income?.monthlyRentalNet ?? 0)"
-                        >
-                            {{ signedEur(props.income?.monthlyRentalNet ?? 0) }}
+                    <li
+                        v-for="origin in origins"
+                        :key="origin.label"
+                        data-income-origin
+                        class="flex items-center justify-between gap-3"
+                    >
+                        <span class="text-muted-foreground">{{ origin.label }}</span>
+                        <span class="font-semibold tabular-nums" :class="gainClass(origin.amount)">
+                            {{ signedEur(origin.amount) }}
                         </span>
                     </li>
                 </ul>

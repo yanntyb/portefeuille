@@ -2,38 +2,31 @@
 
 namespace App\Contexts\Wealth;
 
-use App\Contexts\Wealth\Ports\HoldingsPort;
-use App\Contexts\Wealth\Ports\IncomePort;
-use App\Contexts\Wealth\Ports\RealEstatePort;
-use App\Contexts\Wealth\Ports\SecuritiesSeriesPort;
+use App\Contexts\Wealth\Infrastructure\AssetClassRegistry;
+use App\Contexts\Wealth\Ports\AssetClassPort;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
 class WealthProvider extends ServiceProvider
 {
     /**
-     * @param  class-string<HoldingsPort>  $holdings
-     * @param  class-string<SecuritiesSeriesPort>  $securitiesSeries
-     * @param  class-string<RealEstatePort>  $realEstate
-     * @param  class-string<IncomePort>  $income
+     * L'ordre des classes est un contrat : il fixe l'ordre des lignes du résumé, l'empilement des
+     * bandes du graphe et l'affectation des couleurs.
+     *
+     * @param  list<class-string<AssetClassPort>>  $classes  classes d'actif à agréger, dans l'ordre
      */
-    public static function registers(
-        Application $app,
-        string $holdings,
-        string $securitiesSeries,
-        string $realEstate,
-        string $income,
-    ): void {
-        $app->bind(HoldingsPort::class, $holdings);
-        $app->bind(SecuritiesSeriesPort::class, $securitiesSeries);
-        $app->bind(IncomePort::class, $income);
+    public static function registers(Application $app, array $classes): void
+    {
+        $app->tag($classes, 'wealth.classes');
 
         /**
-         * Les trois actions du contexte (résumé, série, revenus) partagent une même instance de
-         * l'adaptateur pour la durée de la requête : `scoped()` donne au port un unique cycle de
-         * vie par requête plutôt que trois. Les lectures sous-jacentes ne sont pas mémoïsées pour
-         * autant — chaque appel rejoue ses propres requêtes sur le parc immobilier.
+         * Les trois actions du contexte (résumé, série, revenus) partagent le registre pour la
+         * durée de la requête : `scoped()` lui donne un unique cycle de vie par requête plutôt
+         * que trois. Les lectures sous-jacentes ne sont pas mémoïsées pour autant.
          */
-        $app->scoped(RealEstatePort::class, $realEstate);
+        $app->scoped(
+            AssetClassRegistry::class,
+            fn (Application $app): AssetClassRegistry => new AssetClassRegistry($app->tagged('wealth.classes')),
+        );
     }
 }

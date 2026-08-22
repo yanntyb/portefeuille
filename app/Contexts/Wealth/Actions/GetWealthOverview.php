@@ -5,36 +5,34 @@ namespace App\Contexts\Wealth\Actions;
 use App\Contexts\Wealth\Datas\AssetClassData;
 use App\Contexts\Wealth\Datas\ClassSnapshotData;
 use App\Contexts\Wealth\Datas\WealthOverviewData;
-use App\Contexts\Wealth\Ports\HoldingsPort;
-use App\Contexts\Wealth\Ports\RealEstatePort;
+use App\Contexts\Wealth\Infrastructure\AssetClassRegistry;
 
 /** Le patrimoine d'un utilisateur, toutes classes d'actif confondues. */
 class GetWealthOverview
 {
-    public function __construct(
-        private HoldingsPort $holdings,
-        private RealEstatePort $realEstate,
-    ) {}
+    public function __construct(private AssetClassRegistry $classes) {}
 
     public function __invoke(int $userId): WealthOverviewData
     {
-        $securities = $this->holdings->snapshotFor($userId);
-        $realEstate = $this->realEstate->snapshotFor($userId);
+        $lines = [];
+        $value = 0.0;
+        $invested = 0.0;
 
-        $total = new ClassSnapshotData(
-            value: $securities->value + $realEstate->value,
-            invested: $securities->invested + $realEstate->invested,
-        );
+        foreach ($this->classes->all() as $class) {
+            $snapshot = $class->snapshotFor($userId);
+            $lines[] = AssetClassData::from($class, $snapshot);
+            $value += $snapshot->value;
+            $invested += $snapshot->invested;
+        }
 
-        $totals = AssetClassData::from($total);
+        $total = new ClassSnapshotData(value: $value, invested: $invested);
 
         return new WealthOverviewData(
-            totalValue: $totals->value,
-            totalInvested: $totals->invested,
-            totalGain: $totals->gain,
-            totalGainPct: $totals->gainPct,
-            securities: AssetClassData::from($securities),
-            realEstate: AssetClassData::from($realEstate),
+            totalValue: round($value, 2),
+            totalInvested: round($invested, 2),
+            totalGain: AssetClassData::gainOf($total),
+            totalGainPct: AssetClassData::gainPctOf($total),
+            classes: $lines,
         );
     }
 }

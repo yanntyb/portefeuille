@@ -10,17 +10,13 @@ const props = defineProps<{ overview: WealthOverview }>();
 
 const eur = (value: number | null): string => formatEur(value, 0);
 
-interface ClassLine {
-    label: string;
-    href: string;
-    entry: AssetClass;
-}
-
-/** Une classe sans valeur ne montre pas sa ligne : une ligne à zéro n'apprend rien. */
-const lines = computed<ClassLine[]>(() => [
-    { label: 'Actions', href: '/instruments', entry: props.overview.securities },
-    { label: 'Immobilier', href: '/properties', entry: props.overview.realEstate },
-].filter((line: ClassLine): boolean => line.entry.value !== 0));
+/**
+ * Une classe sans valeur ne montre pas sa ligne : une ligne à zéro n'apprend rien. L'ordre est
+ * celui du registre côté serveur, jamais un tri d'ici.
+ */
+const lines = computed<AssetClass[]>(
+    () => props.overview.classes.filter((line: AssetClass): boolean => line.value !== 0),
+);
 </script>
 
 <template>
@@ -55,7 +51,7 @@ const lines = computed<ClassLine[]>(() => [
         </div>
 
         <ul v-if="lines.length" class="flex flex-col gap-1 px-3">
-            <li v-for="line in lines" :key="line.label" data-wealth-class>
+            <li v-for="line in lines" :key="line.key" data-wealth-class>
                 <Link
                     :href="line.href"
                     prefetch
@@ -63,7 +59,7 @@ const lines = computed<ClassLine[]>(() => [
                 >
                     <span class="font-medium">{{ line.label }}</span>
                     <span class="flex shrink-0 items-center gap-3 tabular-nums">
-                        <span class="font-semibold">{{ eur(line.entry.value) }}</span>
+                        <span class="font-semibold">{{ eur(line.value) }}</span>
                         <ChevronRight class="size-4 text-muted-foreground" />
                     </span>
                 </Link>

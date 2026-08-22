@@ -594,21 +594,47 @@ describe('buildValueVsInvestedOption — pastilles de détachement', () => {
 describe('buildWealthStackOption', () => {
     const input = {
         labels: ['2026-01-05', '2026-01-12'],
-        securities: [1000, 1100],
-        realEstate: [500, 520],
+        classes: [
+            { label: 'Actions', values: [1000, 1100] },
+            { label: 'Immobilier', values: [500, 520] },
+        ],
         invested: [1400, 1400],
         valueFormatter: (amount: number): string => `${amount} €`,
         window: null,
         description: 'Patrimoine total.',
     };
 
-    it('empile les deux classes sur la même clé', () => {
+    it('empile les classes sur la même clé', () => {
         const option = buildWealthStackOption(input);
         const series = option.series as { name: string; stack?: string }[];
 
         expect(series).toHaveLength(2);
         expect(series[0].stack).toBe(series[1].stack);
         expect(series.map((serie) => serie.name)).toEqual(['Actions', 'Immobilier']);
+    });
+
+    it('empile autant de bandes que le registre déclare de classes', () => {
+        const option = buildWealthStackOption({
+            ...input,
+            classes: [...input.classes, { label: 'Crypto', values: [200, 240] }],
+        });
+        const series = option.series as { name: string; areaStyle: { color: string } }[];
+
+        expect(series.map((serie) => serie.name)).toEqual(['Actions', 'Immobilier', 'Crypto']);
+        expect(new Set(series.map((serie) => serie.areaStyle.color)).size).toBe(3);
+    });
+
+    it('nomme chaque classe dans l\'infobulle, la crypto comprise', () => {
+        const option = buildWealthStackOption({
+            ...input,
+            classes: [...input.classes, { label: 'Crypto', values: [200, 240] }],
+        });
+
+        const html = (option.tooltip as { formatter: (params: unknown) => string })
+            .formatter([{ dataIndex: 1 }]);
+
+        expect(html).toContain('Crypto');
+        expect(html).toContain('1860 €');
     });
 
     it('donne au sommet de la pile le patrimoine total', () => {

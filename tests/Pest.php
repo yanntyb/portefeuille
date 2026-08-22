@@ -18,7 +18,8 @@ use App\Contexts\RealEstate\Models\PropertyExpense;
 use App\Contexts\RealEstate\Models\PropertyValuation;
 use App\Contexts\Wealth\Datas\ClassSeriesData;
 use App\Contexts\Wealth\Datas\ClassSnapshotData;
-use App\Contexts\Wealth\Ports\RealEstatePort;
+use App\Contexts\Wealth\Infrastructure\AssetClassRegistry;
+use App\Contexts\Wealth\Ports\AssetClassPort;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
@@ -228,22 +229,53 @@ function dividendFixture(): array
 }
 
 /**
- * Fausse implémentation de `Wealth\Ports\RealEstatePort` : une valeur et un investi choisis,
- * un historique vide, et par défaut un cash-flow locatif net nul.
- *
- * Partagée entre `GetWealthOverviewTest` et `GetWealthIncomeTest` : comme `dividendFixture()`,
- * c'est la seule aide de `app/Contexts/Wealth/**Test.php` consommée depuis plus d'un fichier, ce
- * qui la place ici plutôt qu'à côté de l'un des deux.
+ * Déclare les classes d'actif que le tableau de bord agrège, dans l'ordre donné — celui qui fixe
+ * l'ordre des lignes et l'empilement du graphe.
  */
-function fakeRealEstate(float $value, float $invested, float $monthlyNet = 0.0): void
+function fakeWealthClasses(AssetClassPort ...$classes): void
 {
-    app()->bind(RealEstatePort::class, fn (): RealEstatePort => new class($value, $invested, $monthlyNet) implements RealEstatePort
+    app()->bind(AssetClassRegistry::class, fn (): AssetClassRegistry => new AssetClassRegistry($classes));
+}
+
+/**
+ * Une classe d'actif de test : une valeur, une mise, une série et un revenu choisis.
+ *
+ * Partagée entre les tests des trois actions de `Wealth` et ceux du tableau de bord, ce qui la
+ * place ici plutôt qu'à côté de l'un d'eux.
+ */
+function fakeWealthClass(
+    string $key = 'securities',
+    float $value = 0.0,
+    float $invested = 0.0,
+    ?ClassSeriesData $series = null,
+    ?string $incomeLabel = null,
+    float $monthlyIncome = 0.0,
+): AssetClassPort {
+    return new class($key, $value, $invested, $series ?? ClassSeriesData::empty(), $incomeLabel, $monthlyIncome) implements AssetClassPort
     {
         public function __construct(
+            private string $key,
             private float $value,
             private float $invested,
-            private float $monthlyNet,
+            private ClassSeriesData $series,
+            private ?string $incomeLabel,
+            private float $monthlyIncome,
         ) {}
+
+        public function key(): string
+        {
+            return $this->key;
+        }
+
+        public function label(): string
+        {
+            return ucfirst($this->key);
+        }
+
+        public function href(): string
+        {
+            return '/'.$this->key;
+        }
 
         public function snapshotFor(int $userId): ClassSnapshotData
         {
@@ -252,14 +284,19 @@ function fakeRealEstate(float $value, float $invested, float $monthlyNet = 0.0):
 
         public function seriesFor(int $userId): ClassSeriesData
         {
-            return ClassSeriesData::empty();
+            return $this->series;
         }
 
-        public function monthlyNetFor(int $userId): float
+        public function incomeLabel(): ?string
         {
-            return $this->monthlyNet;
+            return $this->incomeLabel;
         }
-    });
+
+        public function monthlyIncomeFor(int $userId): float
+        {
+            return $this->monthlyIncome;
+        }
+    };
 }
 
 /**

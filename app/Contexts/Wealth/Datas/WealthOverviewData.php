@@ -4,23 +4,24 @@ namespace App\Contexts\Wealth\Datas;
 
 use JsonSerializable;
 
-/** Le patrimoine d'un utilisateur : son total, et ses deux classes d'actif. */
+/**
+ * Le patrimoine d'un utilisateur : son total, et ses classes d'actif dans l'ordre du registre.
+ * Cet ordre est celui que le tableau de bord affiche — il vient de la déclaration, pas d'un tri.
+ */
 readonly class WealthOverviewData implements JsonSerializable
 {
+    /** @param  list<AssetClassData>  $classes */
     public function __construct(
         public float $totalValue,
         public float $totalInvested,
         public float $totalGain,
         public ?float $totalGainPct,
-        public AssetClassData $securities,
-        public AssetClassData $realEstate,
+        public array $classes,
     ) {}
 
     public static function empty(): self
     {
-        $empty = AssetClassData::from(ClassSnapshotData::empty());
-
-        return new self(0.0, 0.0, 0.0, null, $empty, $empty);
+        return new self(0.0, 0.0, 0.0, null, []);
     }
 
     /** @return array<string, mixed> */
@@ -31,8 +32,7 @@ readonly class WealthOverviewData implements JsonSerializable
             'totalInvested' => $this->totalInvested,
             'totalGain' => $this->totalGain,
             'totalGainPct' => $this->totalGainPct,
-            'securities' => $this->securities->jsonSerialize(),
-            'realEstate' => $this->realEstate->jsonSerialize(),
+            'classes' => array_map(fn (AssetClassData $class): array => $class->jsonSerialize(), $this->classes),
         ];
     }
 }

@@ -1,0 +1,36 @@
+<?php
+
+namespace App\Contexts\Wealth\Ports;
+
+use App\Contexts\Wealth\Datas\ClassSeriesData;
+use App\Contexts\Wealth\Datas\ClassSnapshotData;
+
+/**
+ * Une classe d'actif du patrimoine. Elle se décrit — sa clé, son libellé, la page qui la détaille —
+ * et se mesure — ce qu'elle vaut aujourd'hui, ce qu'elle valait, ce qu'elle rapporte chaque mois.
+ *
+ * Le contexte Wealth ne connaît que cette interface : ajouter une classe, c'est écrire un
+ * adaptateur et l'ajouter au registre, jamais toucher aux actions.
+ */
+interface AssetClassPort
+{
+    /** Identifiant stable, celui que le front lit dans le JSON. */
+    public function key(): string;
+
+    public function label(): string;
+
+    /** La page qui détaille la classe, vers laquelle le tableau de bord renvoie. */
+    public function href(): string;
+
+    public function snapshotFor(int $userId): ClassSnapshotData;
+
+    public function seriesFor(int $userId): ClassSeriesData;
+
+    /**
+     * Libellé du revenu mensuel — « Dividendes », « Locatif net » —, ou `null` quand la classe
+     * n'en produit aucun. La crypto ne verse rien : une ligne à zéro n'apprendrait rien.
+     */
+    public function incomeLabel(): ?string;
+
+    public function monthlyIncomeFor(int $userId): float;
+}

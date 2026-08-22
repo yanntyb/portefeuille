@@ -10,6 +10,7 @@ type ChartPalette = {
     gain: string;
     loss: string;
     realEstate: string;
+    crypto: string;
     axisLabel: string;
     areaTop: string;
     areaBottom: string;
@@ -34,6 +35,7 @@ function palette(): ChartPalette {
             gain: '#34d399',
             loss: '#f87171',
             realEstate: '#e0a75f',
+            crypto: '#e879f9',
             axisLabel: '#7f858f',
             areaTop: 'rgba(143,147,240,0.22)',
             areaBottom: 'rgba(143,147,240,0)',
@@ -51,6 +53,7 @@ function palette(): ChartPalette {
             gain: '#00915d',
             loss: '#c2321f',
             realEstate: '#b3701a',
+            crypto: '#a21caf',
             axisLabel: '#9aa0ac',
             areaTop: 'rgba(82,87,214,0.18)',
             areaBottom: 'rgba(82,87,214,0)',
@@ -557,42 +560,68 @@ export function buildValueVsInvestedOption(
     };
 }
 
+/** Une classe d'actif à empiler : son nom de bande, et ses valeurs sur la grille commune. */
+export type WealthStackClass = {
+    label: string;
+    values: number[];
+};
+
 export type WealthStackInput = {
     labels: string[];
-    securities: number[];
-    realEstate: number[];
+    classes: WealthStackClass[];
     invested: number[];
     valueFormatter: ValueFormatter;
     window: ZoomWindow | null;
     description: string;
 };
 
-/** Une bande par classe d'actif, empilées : le sommet de la pile est le patrimoine total. */
-function wealthStackSeries(labels: string[], securities: number[], realEstate: number[]): LineSeriesOption[] {
+/**
+ * Une teinte par classe d'actif, dans l'ordre où le registre les déclare. Au-delà des teintes
+ * nommées, on retombe sur celle des titres : mieux vaut deux bandes de même couleur qu'une bande
+ * invisible, et le cas ne se produit qu'à partir d'une quatrième classe.
+ */
+function classColors(): string[] {
     const colors = palette();
 
-    const band = (name: string, values: number[], color: string): LineSeriesOption => ({
-        name,
-        type: 'line',
-        stack: 'patrimoine',
-        smooth: true,
-        symbol: 'none',
-        sampling: 'lttb',
-        lineStyle: { width: 1.5, color },
-        areaStyle: { color, opacity: 0.35 },
-        data: datedPoints(labels, values),
-    });
+    return [colors.value, colors.realEstate, colors.crypto];
+}
 
-    return [
-        band('Actions', securities, colors.value),
-        band('Immobilier', realEstate, colors.realEstate),
-    ];
+function classColorAt(index: number): string {
+    const colors = classColors();
+
+    return colors[index] ?? colors[0];
+}
+
+/** Le total empilé à un instant : la somme des classes, sommet de la pile. */
+function stackTotals(labels: string[], classes: WealthStackClass[]): number[] {
+    return labels.map((_, index: number): number => classes.reduce(
+        (total: number, one: WealthStackClass): number => total + (one.values[index] ?? 0),
+        0,
+    ));
+}
+
+/** Une bande par classe d'actif, empilées : le sommet de la pile est le patrimoine total. */
+function wealthStackSeries(labels: string[], classes: WealthStackClass[]): LineSeriesOption[] {
+    return classes.map((one: WealthStackClass, index: number): LineSeriesOption => {
+        const color = classColorAt(index);
+
+        return {
+            name: one.label,
+            type: 'line',
+            stack: 'patrimoine',
+            smooth: true,
+            symbol: 'none',
+            sampling: 'lttb',
+            lineStyle: { width: 1.5, color },
+            areaStyle: { color, opacity: 0.35 },
+            data: datedPoints(labels, one.values),
+        };
+    });
 }
 
 function wealthStackTooltip(
     labels: string[],
-    securities: number[],
-    realEstate: number[],
+    classes: WealthStackClass[],
     invested: number[],
     valueFormatter: ValueFormatter,
 ): TooltipComponentOption {
@@ -606,16 +635,24 @@ function wealthStackTooltip(
                 return '';
             }
 
-            const securitiesValue = securities[index] ?? 0;
-            const realEstateValue = realEstate[index] ?? 0;
-            const totalValue = securitiesValue + realEstateValue;
+            const totalValue = classes.reduce(
+                (total: number, one: WealthStackClass): number => total + (one.values[index] ?? 0),
+                0,
+            );
             const totalInvested = invested[index] ?? 0;
             const gain = totalValue - totalInvested;
 
+            const rows = classes
+                .map((one: WealthStackClass, at: number): string => tooltipRow(
+                    classColorAt(at),
+                    one.label,
+                    valueFormatter(one.values[index] ?? 0),
+                ))
+                .join('');
+
             return tooltipTitle(labels[index] ?? '')
                 + tooltipRow(colors.value, 'Patrimoine', valueFormatter(totalValue))
-                + tooltipRow(colors.value, 'Actions', valueFormatter(securitiesValue))
-                + tooltipRow(colors.realEstate, 'Immobilier', valueFormatter(realEstateValue))
+                + rows
                 + tooltipRow(colors.invested, 'Investi', valueFormatter(totalInvested))
                 + tooltipRow(
                     gain >= 0 ? colors.gain : colors.loss,
@@ -627,20 +664,24 @@ function wealthStackTooltip(
 }
 
 /**
- * Le graphe du tableau de bord : deux aires empilées, une par classe d'actif. Forme distincte de
+ * Le graphe du tableau de bord : une aire empilée par classe d'actif. Forme distincte de
  * `buildValueVsInvestedOption`, qui ne trace qu'une courbe — le patrimoine se lit par sa
  * composition, un instrument par sa trajectoire.
  */
 export function buildWealthStackOption(
-    { labels, securities, realEstate, invested, valueFormatter, window, description }: WealthStackInput,
+    { labels, classes, invested, valueFormatter, window, description }: WealthStackInput,
 ): ChartOption {
     const visible = window ?? lastYearWindow(labels);
-    const totals = labels.map((_, index: number): number => (securities[index] ?? 0) + (realEstate[index] ?? 0));
 
     return {
-        ...chartFrame({ valueFormatter, values: totals, bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT, description }),
-        series: wealthStackSeries(labels, securities, realEstate),
-        tooltip: wealthStackTooltip(labels, securities, realEstate, invested, valueFormatter),
+        ...chartFrame({
+            valueFormatter,
+            values: stackTotals(labels, classes),
+            bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT,
+            description,
+        }),
+        series: wealthStackSeries(labels, classes),
+        tooltip: wealthStackTooltip(labels, classes, invested, valueFormatter),
         dataZoom: [wealthZoomSlider(visible)],
     };
 }

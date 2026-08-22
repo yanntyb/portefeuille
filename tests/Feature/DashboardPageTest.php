@@ -26,8 +26,9 @@ it('additionne les titres et l\'immobilier dans le grand chiffre', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
-            ->has('overview.securities')
-            ->has('overview.realEstate')
+            ->has('overview.classes', 2)
+            ->where('overview.classes.0.key', 'securities')
+            ->where('overview.classes.1.key', 'realEstate')
             ->where('overview.totalValue', fn (float $total): bool => $total > 0.0)
         );
 });
@@ -60,14 +61,15 @@ it('diffère le revenu mensuel et n\'y compte les loyers qu\'une fois', function
         'X-Inertia-Partial-Data' => 'income',
     ])
         ->assertOk()
-        ->assertJsonStructure(['props' => ['income' => ['monthlyTotal', 'monthlyDividends', 'monthlyRentalNet']]]);
+        ->assertJsonStructure(['props' => ['income' => ['monthlyTotal', 'origins' => [['label', 'amount']]]]]);
 
     $income = app(GetWealthIncome::class)($user->id);
+    $byLabel = collect($income->origins)->keyBy('label');
 
     /**
      * `Income` agrège aussi `IncomeSource::Rent`, brut. Le total du patrimoine additionne les
      * dividendes filtrés et le locatif **net** : il ne peut donc pas atteindre le loyer brut.
      */
-    expect($income->monthlyTotal)->toBe(round($income->monthlyDividends + $income->monthlyRentalNet, 2))
-        ->and($income->monthlyRentalNet)->toBeLessThan(600.0);
+    expect($income->monthlyTotal)->toBe(round(collect($income->origins)->sum('amount'), 2))
+        ->and($byLabel['Locatif net']->amount)->toBeLessThan(600.0);
 });

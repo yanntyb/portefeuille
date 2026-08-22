@@ -29,12 +29,11 @@ const hasHistory = computed<boolean>(() => labels.value.length > 0);
 
 const option = computed<ChartOption>(() => buildWealthStackOption({
     labels: labels.value,
-    securities: props.series?.securities ?? [],
-    realEstate: props.series?.realEstate ?? [],
+    classes: props.series?.classes ?? [],
     invested: props.series?.invested ?? [],
     valueFormatter: (amount: number): string => eur(amount, 0),
     window: lastZoom,
-    description: 'Patrimoine total, titres et immobilier empilés, comparé au montant investi.',
+    description: 'Patrimoine total, ses classes d\'actif empilées, comparé au montant investi.',
 }));
 </script>
 
