@@ -3,8 +3,10 @@
 namespace App\Contexts\RealEstate\Http;
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\RealEstate\Actions\BuildRealEstateSeries;
 use App\Contexts\RealEstate\Actions\GetRealEstateOverview;
 use App\Contexts\RealEstate\Datas\RealEstateOverviewData;
+use App\Contexts\RealEstate\Datas\RealEstateSeriesData;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -24,6 +26,15 @@ class PropertiesController
             'realEstate' => $user !== null
                 ? ($this->overview)($user->id)
                 : RealEstateOverviewData::empty(),
+            /**
+             * Un groupe par section, comme sur la page Titres : chaque squelette se remplit à son
+             * rythme au lieu d'attendre le plus lent de la page.
+             *
+             * Historique complet : la fenêtre visible est choisie côté client par le zoom du graphe.
+             */
+            'series' => Inertia::defer(fn () => $user !== null
+                ? app(BuildRealEstateSeries::class)($user->id)
+                : RealEstateSeriesData::empty(), 'evolution'),
         ]);
     }
 }

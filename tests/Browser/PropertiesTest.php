@@ -41,3 +41,14 @@ it('masque la pastille de gain quand le parc est vide', function () {
         ->assertScript("document.querySelectorAll('[data-real-estate-gain-pct]').length", 0)
         ->assertNoJavaScriptErrors();
 });
+
+it('trace le patrimoine net du parc dès que la série arrive', function () {
+    ['user' => $user] = propertyFixture();
+
+    $this->actingAs($user);
+
+    visit('/properties')
+        ->assertSee('Évolution')
+        ->assertScript("document.querySelectorAll('[data-section=real-estate-evolution] [data-chart] svg').length", 1)
+        ->assertNoJavaScriptErrors();
+});

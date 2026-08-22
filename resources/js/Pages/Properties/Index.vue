@@ -3,10 +3,11 @@ import { Head } from '@inertiajs/vue3';
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue';
 import AppPage from '@/components/AppPage.vue';
 import PropertyList from '@/components/properties/PropertyList.vue';
+import RealEstateEvolutionSection from '@/components/properties/RealEstateEvolutionSection.vue';
 import RealEstateSummarySection from '@/components/properties/RealEstateSummarySection.vue';
-import type { RealEstateOverview } from '@/lib/realEstate';
+import type { RealEstateOverview, RealEstateSeries } from '@/lib/realEstate';
 
-const props = defineProps<{ realEstate: RealEstateOverview }>();
+const props = defineProps<{ realEstate: RealEstateOverview; series?: RealEstateSeries }>();
 </script>
 
 <template>
@@ -14,6 +15,8 @@ const props = defineProps<{ realEstate: RealEstateOverview }>();
 
     <AppPage>
         <RealEstateSummarySection :real-estate="props.realEstate" />
+
+        <RealEstateEvolutionSection :series="props.series" />
 
         <PropertyList :properties="props.realEstate.properties" />
     </AppPage>

@@ -128,3 +128,14 @@ it('ne chiffre qu\'une fois un cours qui ne bouge pas', function () {
         ->assertScript(yAxisLabels('price-history'), '100,00 €')
         ->assertNoJavaScriptErrors();
 });
+
+it('ne chiffre que le minimum et le maximum sur le graphe du parc immobilier', function () {
+    // Un bien estimé 150 000 € le jour même : la série vaut 0 avant cette estimation, elle seule.
+    ['user' => $user] = propertyFixture();
+
+    $this->actingAs($user);
+
+    visit('/properties')
+        ->assertScript(yAxisLabels('real-estate-evolution'), '0 €|150 000 €')
+        ->assertNoJavaScriptErrors();
+});

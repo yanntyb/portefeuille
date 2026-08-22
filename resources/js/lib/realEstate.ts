@@ -28,6 +28,13 @@ export interface RealEstateOverview {
 export const realEstateGainOf = (overview: RealEstateOverview): number =>
     overview.totalNetWorth - overview.totalInvested;
 
+/** Patrimoine net du parc et cash sorti, semaine par semaine. */
+export interface RealEstateSeries {
+    labels: string[];
+    netWorth: number[];
+    invested: number[];
+}
+
 /** Nul sans cash sorti : un parc financé à plus de 100 % n'a pas de mise à rapporter au gain. */
 export const realEstateGainPctOf = (overview: RealEstateOverview): number | null =>
     overview.totalInvested <= 0 ? null : (realEstateGainOf(overview) / overview.totalInvested) * 100;
