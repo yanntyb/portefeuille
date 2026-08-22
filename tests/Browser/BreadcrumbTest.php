@@ -16,7 +16,7 @@ it('se passe de fil d\'Ariane sur le tableau de bord, qui n\'a nulle part à rem
     $this->actingAs($user);
 
     visit('/')
-        ->assertSee('Performances')
+        ->assertSee('Investi')
         ->assertMissing('nav[aria-label="Fil d\'Ariane"]')
         ->assertNoJavaScriptErrors();
 });

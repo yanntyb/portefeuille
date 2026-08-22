@@ -1,29 +1,13 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import AppPage from '@/components/AppPage.vue';
-import EvolutionSection from '@/components/instruments/EvolutionSection.vue';
-import IncomeSection from '@/components/instruments/IncomeSection.vue';
-import InstrumentsSection from '@/components/instruments/InstrumentsSection.vue';
-import PerformancesSection from '@/components/instruments/PerformancesSection.vue';
-import RealEstateSection from '@/components/dashboard/RealEstateSection.vue';
-import SectorsSection from '@/components/instruments/SectorsSection.vue';
-import ValuationSection from '@/components/instruments/ValuationSection.vue';
-import type { CatalogTrend } from '@/lib/catalog';
-import type { AnnualIncome, IncomeSummary } from '@/lib/income';
-import type { Performance } from '@/lib/performance';
-import type { EvolutionSeries, PortfolioOverview } from '@/lib/portfolio';
-import type { RealEstateOverview } from '@/lib/realEstate';
-import type { SectorSlice } from '@/lib/sector';
+import WealthEvolutionSection from '@/components/dashboard/WealthEvolutionSection.vue';
+import WealthSummarySection from '@/components/dashboard/WealthSummarySection.vue';
+import type { WealthOverview, WealthSeries } from '@/lib/wealth';
 
-defineProps<{
-    overview: PortfolioOverview;
-    trends?: CatalogTrend[];
-    performances?: Performance[];
-    evolutionSeries?: EvolutionSeries;
-    sectorBreakdown?: SectorSlice[];
-    income?: IncomeSummary;
-    annualIncome?: AnnualIncome[];
-    realEstate?: RealEstateOverview;
+const props = defineProps<{
+    overview: WealthOverview;
+    series?: WealthSeries;
 }>();
 </script>
 
@@ -32,18 +16,8 @@ defineProps<{
 
     <!-- Pas de fil d'Ariane : le tableau de bord est la racine, son fil n'aurait qu'un seul cran. -->
     <AppPage>
-        <ValuationSection v-if="overview.holdings.length" :overview="overview" />
+        <WealthSummarySection :overview="props.overview" />
 
-        <EvolutionSection :series="evolutionSeries" />
-
-        <InstrumentsSection :holdings="overview.holdings" :trends="trends" />
-
-        <PerformancesSection v-if="overview.holdings.length" :performances="performances" />
-
-        <IncomeSection v-if="overview.holdings.length" :income="income" :annual-income="annualIncome" />
-
-        <RealEstateSection :real-estate="realEstate" />
-
-        <SectorsSection v-if="overview.holdings.length" :slices="sectorBreakdown" />
+        <WealthEvolutionSection :series="props.series" />
     </AppPage>
 </template>

@@ -2,9 +2,9 @@
 
 use App\Contexts\InstrumentView\Http\InstrumentDetailController;
 use App\Contexts\InstrumentView\Http\InstrumentsController;
-use App\Contexts\Portfolio\Http\DashboardController;
 use App\Contexts\RealEstate\Http\PropertiesController;
 use App\Contexts\RealEstate\Http\PropertyDetailController;
+use App\Contexts\Wealth\Http\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/pwa.php';

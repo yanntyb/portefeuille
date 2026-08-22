@@ -14,7 +14,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Inertia\Testing\AssertableInertia as Assert;
 
-it('renders the Dashboard with an empty overview when there is no data', function () {
+it('renders Instruments/Index with an empty overview when there is no data', function () {
     User::factory()->create();
 
     $this->get('/instruments')
@@ -27,7 +27,7 @@ it('renders the Dashboard with an empty overview when there is no data', functio
         );
 });
 
-it('renders the Dashboard with the user portfolio overview', function () {
+it('renders Instruments/Index with the user portfolio overview', function () {
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->ofType(InstrumentType::Stock)->create(['name' => 'ACME', 'ticker' => 'ACM']);

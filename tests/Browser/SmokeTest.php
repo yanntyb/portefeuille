@@ -20,10 +20,10 @@ it('charge le tableau de bord, ses sections dans l\'ordre, sans erreur', functio
     $this->actingAs($user);
 
     visit('/')
-        ->assertSee('Performances')
+        ->assertSee('Investi')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'valuation|evolution|instruments|performances|income|real-estate|sectors',
+            'wealth-summary|wealth-evolution',
         )
         ->assertNoJavaScriptErrors();
 });
