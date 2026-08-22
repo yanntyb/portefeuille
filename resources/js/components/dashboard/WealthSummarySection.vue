@@ -18,7 +18,7 @@ interface ClassLine {
 
 /** Une classe sans valeur ne montre pas sa ligne : une ligne à zéro n'apprend rien. */
 const lines = computed<ClassLine[]>(() => [
-    { label: 'Titres', href: '/instruments', entry: props.overview.securities },
+    { label: 'Actions', href: '/instruments', entry: props.overview.securities },
     { label: 'Immobilier', href: '/properties', entry: props.overview.realEstate },
 ].filter((line: ClassLine): boolean => line.entry.value !== 0));
 </script>
