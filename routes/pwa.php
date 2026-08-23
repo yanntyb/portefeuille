@@ -1,5 +1,6 @@
 <?php
 
+use App\Shared\Pwa\Http\SnapshotController;
 use App\Shared\Pwa\ServiceWorkerScript;
 use Illuminate\Support\Facades\Route;
 
@@ -26,3 +27,6 @@ Route::get('sw.js', function (ServiceWorkerScript $script) {
 
 /** Repli du service worker : une page jamais visitée n'a rien en cache à servir. */
 Route::view('hors-ligne', 'pwa.offline')->name('pwa.offline');
+
+/** Instantané hors-ligne : le worker le laisse passer, le store côté client s'en occupe seul. */
+Route::get('instantane', SnapshotController::class)->name('pwa.snapshot');
