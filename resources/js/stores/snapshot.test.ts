@@ -17,10 +17,16 @@ const { useSnapshotStore } = await import('@/stores/snapshot');
 const build = (version: string): Snapshot => ({
     version,
     generatedAt: 1_700_000_000,
-    dashboard: { overview: {}, series: {}, income: {} },
-    instruments: { list: {}, byId: { '7': { instrument: { name: 'Air Liquide' } } } },
-    crypto: { list: {}, byId: {} },
-    properties: { list: {}, byId: { '3': { property: { name: 'T2 Lyon 7e' } } } },
+    dashboard: { overview: {}, series: {}, income: {}, marker: 'dashboard' },
+    instruments: {
+        list: { marker: 'instruments-list' },
+        byId: { '7': { instrument: { name: 'Air Liquide' } } },
+    },
+    crypto: { list: { marker: 'crypto-list' }, byId: {} },
+    properties: {
+        list: { marker: 'properties-list' },
+        byId: { '3': { property: { name: 'T2 Lyon 7e' } } },
+    },
 } as unknown as Snapshot);
 
 beforeEach((): void => {
@@ -84,6 +90,29 @@ describe('resynchronisation', () => {
 
         expect(store.snapshot?.version).toBe('abc');
         expect(store.syncing).toBe(false);
+    });
+});
+
+describe('sélecteurs de section', () => {
+    it('expose le bon sous-objet pour chacune des quatre sections une fois l\'instantané chargé', async () => {
+        stored.value = build('abc');
+
+        const store = useSnapshotStore();
+        await store.hydrate();
+
+        expect(store.dashboard).toEqual({ overview: {}, series: {}, income: {}, marker: 'dashboard' });
+        expect(store.instrumentsList).toEqual({ marker: 'instruments-list' });
+        expect(store.cryptoList).toEqual({ marker: 'crypto-list' });
+        expect(store.propertiesList).toEqual({ marker: 'properties-list' });
+    });
+
+    it('renvoie null pour les quatre sections tant qu\'aucun instantané n\'est chargé', () => {
+        const store = useSnapshotStore();
+
+        expect(store.dashboard).toBeNull();
+        expect(store.instrumentsList).toBeNull();
+        expect(store.cryptoList).toBeNull();
+        expect(store.propertiesList).toBeNull();
     });
 });
 
