@@ -60,6 +60,13 @@ describe('holdingRows', () => {
     it('rend une liste vide quand le portefeuille est vide', () => {
         expect(holdingRows([], undefined)).toEqual([]);
     });
+
+    it('accepte `null`, rendu par la fusion réseau / instantané, comme une absence de tendances', () => {
+        const rows = holdingRows([holding(1, 'Alpha', 3000)], null);
+
+        expect(rows[0].changePct).toBeNull();
+        expect(rows[0].points).toEqual([]);
+    });
 });
 
 describe('isDeferredPending', () => {
@@ -79,6 +86,21 @@ describe('isDeferredPending', () => {
     it('traite une liste de rescapées absente comme vide', () => {
         expect(isDeferredPending(undefined, 'trends', undefined)).toBe(isDeferredPending(undefined, 'trends', []));
     });
+
+    it('est en attente quand la valeur est `null` et la clé non rescapée', () => {
+        // `null` est le rendu de `aheadOfNetwork` quand ni la prop réseau ni l'instantané n'ont la
+        // donnée : le squelette doit se comporter exactement comme pour `undefined`.
+        expect(isDeferredPending(null, 'trends', undefined)).toBe(true);
+    });
+
+    it('n\'est plus en attente quand la valeur est `null` mais la clé rescapée', () => {
+        expect(isDeferredPending(null, 'trends', ['trends'])).toBe(false);
+    });
+
+    it('traite `null` et `undefined` de façon identique, à clé et liste rescapées égales', () => {
+        expect(isDeferredPending(null, 'trends', undefined)).toBe(isDeferredPending(undefined, 'trends', undefined));
+        expect(isDeferredPending(null, 'trends', ['trends'])).toBe(isDeferredPending(undefined, 'trends', ['trends']));
+    });
 });
 
 describe('areTrendsPending', () => {
@@ -96,5 +118,19 @@ describe('areTrendsPending', () => {
 
     it('ignore une clé rescapée qui ne la concerne pas', () => {
         expect(areTrendsPending(undefined, ['sectorBreakdown'])).toBe(true);
+    });
+
+    it('attend aussi quand les tendances fusionnées valent `null`', () => {
+        // Cas réel : `InstrumentsSection.vue` reçoit désormais `trends` via `aheadOfNetwork`, qui
+        // rend `null` (jamais `undefined`) quand ni la prop ni l'instantané ne portent la donnée.
+        expect(areTrendsPending(null, undefined)).toBe(true);
+    });
+
+    it('n\'attend plus quand `null` est rescapée', () => {
+        expect(areTrendsPending(null, ['trends'])).toBe(false);
+    });
+
+    it('ignore, avec `null`, une clé rescapée qui ne la concerne pas', () => {
+        expect(areTrendsPending(null, ['sectorBreakdown'])).toBe(true);
     });
 });
