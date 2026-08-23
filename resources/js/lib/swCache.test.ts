@@ -47,6 +47,18 @@ describe('classifyRequest', () => {
         expect(classifyRequest(shape({ url: 'https://argent.test/icons/icon-192x192.png', mode: 'no-cors' }), WORKER_ORIGIN))
             .toBe('other');
     });
+
+    it('laisse passer l\'instantané hors-ligne, que le store gère lui-même', () => {
+        const shape = {
+            method: 'GET',
+            url: 'https://argent.test/instantane',
+            mode: 'cors',
+            inertia: false,
+            partialData: null,
+        };
+
+        expect(classifyRequest(shape, 'https://argent.test')).toBe('passthrough');
+    });
 });
 
 describe('cacheKeyFor', () => {

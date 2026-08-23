@@ -6,6 +6,14 @@
 /** Répertoire de build de `laravel-vite-plugin` : ses URLs sont hashées, donc immuables. */
 const BUILD_PREFIX = '/build/';
 
+/**
+ * L'instantané hors-ligne n'est pas une ressource de page : le store le demande en tâche de fond
+ * et absorbe lui-même ses échecs. Le laisser tomber dans `staleWhileRevalidate` ferait diffuser
+ * `FRESH` / `SERVED_STALE` depuis une requête qui ne décrit pas la page affichée — le bandeau du
+ * lecteur basculerait sur l'état d'une synchronisation de fond.
+ */
+const SNAPSHOT_PATH = '/instantane';
+
 export type SwRequestKind = 'passthrough' | 'asset' | 'inertia' | 'navigation' | 'other';
 
 /** Ce que le worker retient d'une requête pour décider quoi en faire. */
@@ -46,6 +54,10 @@ export function classifyRequest(request: RequestShape, workerOrigin: string): Sw
     const url = new URL(request.url);
 
     if (url.origin !== workerOrigin) {
+        return 'passthrough';
+    }
+
+    if (url.pathname === SNAPSHOT_PATH) {
         return 'passthrough';
     }
 
