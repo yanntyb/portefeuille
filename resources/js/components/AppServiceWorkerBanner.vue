@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { syncedAtLabel } from '@/lib/format';
+import { displayedSyncedAt } from '@/lib/syncedAt';
 import { useServiceWorkerStore } from '@/stores/serviceWorker';
+import { useSnapshotStore } from '@/stores/snapshot';
 
 type BannerState = 'update' | 'stale' | 'install' | 'none';
 
 const sw = useServiceWorkerStore();
+const snapshot = useSnapshotStore();
 
 /**
  * Priorité stricte : recharger pour une nouvelle version règle aussi la fraîcheur, donc les
@@ -23,7 +26,9 @@ const state = computed<BannerState>(() => {
     return sw.canInstall ? 'install' : 'none';
 });
 
-const syncedLabel = computed<string>(() => syncedAtLabel(sw.lastSyncedAt));
+const syncedLabel = computed<string>(() => syncedAtLabel(
+    displayedSyncedAt(sw.lastSyncedAt, snapshot.generatedAt, sw.stale),
+));
 
 const refresh = (): void => {
     window.location.reload();

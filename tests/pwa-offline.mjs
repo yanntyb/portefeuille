@@ -39,15 +39,15 @@ try {
     await page.reload({ waitUntil: 'domcontentloaded', timeout: TIMEOUT });
 
     const body = await page.textContent('body');
-    assert.ok(body.includes('Performances'), 'La page en cache doit rester lisible hors-ligne.');
+    assert.ok(body.includes('Investi'), 'La page en cache doit rester lisible hors-ligne.');
     assert.ok(!body.includes('Pas de connexion'), 'La page hors-ligne ne doit pas remplacer une page en cache.');
 
     await page.waitForSelector('[data-pwa-banner="stale"]', { timeout: TIMEOUT });
 
     /**
      * Les partiels différés ont été mis en cache pendant la visite en ligne. On les retire pour
-     * atteindre le cas que le slot `#rescue` doit couvrir : la page est là, ses groupes ne le
-     * sont pas.
+     * atteindre le cas que le slot `#rescue` couvrait avant la tâche 12 : la page est là, ses
+     * groupes ne le sont pas.
      */
     await context.setOffline(false);
     await page.evaluate(async () => {
@@ -64,33 +64,44 @@ try {
     await context.setOffline(true);
     await page.reload({ waitUntil: 'domcontentloaded', timeout: TIMEOUT });
 
-    await page.waitForSelector('text=Données indisponibles hors-ligne', { timeout: TIMEOUT });
-
     /**
-     * `InstrumentsSection.vue` n'utilise pas `<Deferred>` : elle éteint son squelette en lisant
-     * `page.rescuedProps` elle-même (voir `isCatalogLoading`/`isDeferredPending`). Ce chemin n'est
-     * atteignable par aucun test unitaire, qui appelle la fonction pure directement — seul un vrai
-     * navigateur, avec un vrai worker rescapant une vraie requête, le traverse.
+     * Avant la tâche 12, vider le cache des partiels forçait ici le slot `#rescue` d'Inertia à
+     * s'afficher : « Données indisponibles hors-ligne » était le texte attendu. Depuis la tâche 12,
+     * `WealthEvolutionSection` et `WealthIncomeSection` — les deux seules sections différées du
+     * tableau de bord — rendent d'abord la valeur fusionnée avec l'instantané (`aheadOfNetwork`),
+     * déjà en mémoire à ce stade puisque `/instantane` a réussi pendant la visite en ligne. Le slot
+     * `#rescue` n'est donc plus jamais atteint ici : cette étape vérifie maintenant que l'instantané
+     * comble bien l'absence des partiels, au lieu de vérifier que la page s'en excuse.
      *
-     * Précondition positive avant la négative : `.animate-pulse` est aussi introuvable si la
-     * section a disparu (renommée, attribut retiré) — sans ce garde-fou l'assertion virerait au
-     * vert pendant qu'une telle régression passerait inaperçue. `[data-instrument-row]` (déjà
-     * utilisé par `SmokeTest.php`) porte les positions de `overview.holdings`, jamais différées :
-     * au moins une ligne y est toujours rendue dès que la section existe.
+     * Précondition positive avant la négative : `[data-income-monthly]` ne prouve l'absence du
+     * rescapage que si la section a bien rendu de vraies données ; sans cette attente, l'assertion
+     * négative virerait au vert même si les deux sections avaient disparu.
      */
-    await page.waitForSelector('[data-section="instruments"] [data-instrument-row]', { timeout: TIMEOUT });
-
-    /**
-     * Sondage borné, pas une lecture ponctuelle : les groupes différés se résolvent
-     * indépendamment les uns des autres. Un `evaluate` unique pris juste après le slot `#rescue`
-     * échouerait à tort si le groupe catalogue arrivait un tick plus tard que celui qui rend ce
-     * texte — `waitForFunction` réessaie jusqu'à la même borne, sans course.
-     */
+    await page.waitForSelector('[data-income-monthly]', { timeout: TIMEOUT });
     await page.waitForFunction(
-        () => document.querySelector('[data-section="instruments"] .animate-pulse') === null,
+        () => document.querySelector('[data-section="wealth-evolution"] .animate-pulse') === null,
         undefined,
         { timeout: TIMEOUT },
     );
+
+    const dashboardBody = await page.textContent('body');
+    assert.ok(
+        !dashboardBody.includes('Données indisponibles hors-ligne'),
+        'L\'instantané doit combler Évolution et Revenus, pas les renvoyer au slot #rescue.',
+    );
+
+    /**
+     * Ce script visait autrefois ici `[data-section="instruments"] [data-instrument-row]`, un
+     * catalogue qui vivait sur le tableau de bord. Il a migré vers `/instruments` par un refactor
+     * antérieur à ce chantier (`Dashboard.vue` ne monte plus que `WealthSummarySection`,
+     * `WealthEvolutionSection` et `WealthIncomeSection`) : ce contrôle était mort, jamais détecté
+     * puisque ce script n'avait jamais tourné de bout en bout avant la tâche 13. Le couvrir
+     * hors-ligne supposerait de naviguer vers `/instruments` après la coupure — une page jamais
+     * visitée dans ce scénario, qui retomberait sur la même capacité manquante que la tâche 13 a
+     * identifiée et n'a pas comblée (le worker ne sait synthétiser un document que pour une page
+     * déjà mise en cache par une vraie navigation). Retiré plutôt que remplacé : le couvrir
+     * correctement n'est pas à la portée de cette tâche.
+     */
 
     /** Une URL jamais visitée n'a rien en cache : c'est le repli qui doit apparaître. */
     await page.goto(`${BASE_URL}/instruments/999999`, { waitUntil: 'domcontentloaded', timeout: TIMEOUT });
