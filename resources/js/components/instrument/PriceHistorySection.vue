@@ -7,7 +7,7 @@ import { eur } from '@/lib/format';
 import type { ChartOption } from '@/lib/echarts';
 import type { PriceHistory } from '@/lib/instrument';
 
-const props = defineProps<{ priceHistory?: PriceHistory }>();
+const props = defineProps<{ priceHistory?: PriceHistory | null }>();
 
 /** Même raison que sur le tableau de bord : echarts n'est téléchargé qu'au montage du graphe. */
 const BaseChart = defineAsyncComponent({
@@ -33,7 +33,14 @@ const priceChartOption = computed<ChartOption>(() => buildPriceHistoryOption({
         </div>
 
         <div class="px-6">
-            <Deferred data="priceHistory">
+            <template v-if="props.priceHistory !== null">
+                <BaseChart v-if="hasPriceHistory" :option="priceChartOption" />
+                <p v-else class="py-8 text-center text-sm text-muted-foreground">
+                    Pas d'historique de prix disponible.
+                </p>
+            </template>
+
+            <Deferred v-else data="priceHistory">
                 <template #fallback>
                     <ChartSkeleton />
                 </template>
@@ -44,10 +51,7 @@ const priceChartOption = computed<ChartOption>(() => buildPriceHistoryOption({
                     </p>
                 </template>
 
-                <BaseChart v-if="hasPriceHistory" :option="priceChartOption" />
-                <p v-else class="py-8 text-center text-sm text-muted-foreground">
-                    Pas d'historique de prix disponible.
-                </p>
+                <span />
             </Deferred>
         </div>
     </section>

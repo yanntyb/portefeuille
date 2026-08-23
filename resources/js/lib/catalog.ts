@@ -35,7 +35,7 @@ export const rangeOptions: { key: RangeKey; label: string }[] = [
 export const isRangeKey = (value: string | undefined): value is RangeKey =>
     rangeOptions.some((option) => option.key === value);
 
-export const joinTrends = (lines: CatalogLine[], trends: CatalogTrend[] | undefined): CatalogRow[] => {
+export const joinTrends = (lines: CatalogLine[], trends: CatalogTrend[] | null | undefined): CatalogRow[] => {
     const byAsset = new Map((trends ?? []).map((trend) => [trend.assetId, trend]));
 
     return lines.map((line) => ({

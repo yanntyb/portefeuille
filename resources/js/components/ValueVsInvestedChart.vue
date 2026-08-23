@@ -8,8 +8,13 @@ import { dividendMarks, type DividendMark, type DividendReceipt } from '@/lib/in
 import type { ChartOption } from '@/lib/echarts';
 
 const props = defineProps<{
-    /** Prop différée dont dépend le graphe : le squelette tient tant qu'elle n'est pas arrivée. */
+    /** Prop différée dont dépend le graphe : nomme la clé Inertia à surveiller tant que rien n'est arrivé. */
     deferKey: string;
+    /**
+     * Vrai dès que la fusion réseau / instantané de l'appelant a produit un objet, même sans
+     * historique. Distinct de `hasHistory` : un objet présent peut porter une série vide.
+     */
+    loaded: boolean;
     labels: string[];
     value: number[];
     invested: number[];
@@ -58,7 +63,16 @@ const option = computed<ChartOption>(() => buildValueVsInvestedOption({
 
 <template>
     <div class="flex flex-col gap-6">
-        <Deferred :data="deferKey">
+        <template v-if="loaded">
+            <div v-if="hasHistory" class="px-6">
+                <BaseChart :option="option" @zoom="rememberZoom" />
+            </div>
+            <p v-else class="py-8 text-center text-sm text-muted-foreground">
+                Pas encore d'historique de valorisation.
+            </p>
+        </template>
+
+        <Deferred v-else :data="deferKey">
             <template #fallback>
                 <div class="px-6">
                     <ChartSkeleton />
@@ -71,12 +85,7 @@ const option = computed<ChartOption>(() => buildValueVsInvestedOption({
                 </p>
             </template>
 
-            <div v-if="hasHistory" class="px-6">
-                <BaseChart :option="option" @zoom="rememberZoom" />
-            </div>
-            <p v-else class="py-8 text-center text-sm text-muted-foreground">
-                Pas encore d'historique de valorisation.
-            </p>
+            <span />
         </Deferred>
     </div>
 </template>

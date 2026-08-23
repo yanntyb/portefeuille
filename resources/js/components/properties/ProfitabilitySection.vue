@@ -4,7 +4,7 @@ import { Deferred } from '@inertiajs/vue3';
 import { fractionPct, gainClass, signedEur } from '@/lib/format';
 import { profitabilityBars, type ProfitabilityBar, type PropertyProfitability } from '@/lib/realEstate';
 
-const props = defineProps<{ profitability?: PropertyProfitability[] }>();
+const props = defineProps<{ profitability?: PropertyProfitability[] | null }>();
 
 const bars = computed<ProfitabilityBar[]>(() => profitabilityBars(props.profitability ?? []));
 
@@ -22,19 +22,7 @@ const ratio = (value: number | null): string => (value === null ? '—' : fracti
     <section data-section="profitability" class="flex min-h-0 flex-1 flex-col gap-4 px-6 md:flex-none">
         <h2 class="shrink-0 text-[17px] leading-none font-bold">Rentabilité</h2>
 
-        <Deferred data="profitability">
-            <template #fallback>
-                <div class="flex flex-col gap-2">
-                    <div v-for="n in 3" :key="n" class="h-8 w-full animate-pulse rounded-md bg-muted"></div>
-                </div>
-            </template>
-
-            <template #rescue>
-                <p class="py-8 text-center text-sm text-muted-foreground">
-                    Données indisponibles hors-ligne.
-                </p>
-            </template>
-
+        <template v-if="props.profitability !== null">
             <!-- `grow` et non `flex-1` : sans hauteur libre à distribuer, les barres gardent leur taille naturelle. -->
             <ul v-if="bars.length" class="flex min-h-0 grow flex-col gap-3">
                 <li
@@ -73,6 +61,22 @@ const ratio = (value: number | null): string => (value === null ? '—' : fracti
             <p v-else class="py-8 text-center text-sm text-muted-foreground">
                 Aucun bien à comparer pour l'instant.
             </p>
+        </template>
+
+        <Deferred v-else data="profitability">
+            <template #fallback>
+                <div class="flex flex-col gap-2">
+                    <div v-for="n in 3" :key="n" class="h-8 w-full animate-pulse rounded-md bg-muted"></div>
+                </div>
+            </template>
+
+            <template #rescue>
+                <p class="py-8 text-center text-sm text-muted-foreground">
+                    Données indisponibles hors-ligne.
+                </p>
+            </template>
+
+            <span />
         </Deferred>
     </section>
 </template>

@@ -35,7 +35,7 @@ const byMarketValue = (left: InstrumentRow, right: InstrumentRow): number =>
  */
 export const holdingRows = (
     holdings: HoldingLine[],
-    trends: CatalogTrend[] | undefined,
+    trends: CatalogTrend[] | null | undefined,
 ): InstrumentRow[] => {
     const weights = holdingWeights(holdings);
     const weightByAsset = new Map<number, HoldingWeight>(
@@ -60,21 +60,24 @@ export const holdingRows = (
 /**
  * Une prop différée est en attente tant qu'elle n'est pas arrivée et que le worker ne l'a pas
  * rescapée. Hors-ligne la clé est rescapée : elle n'arrivera jamais, l'attente n'a plus de sens.
+ *
+ * `null` compte comme absente au même titre que `undefined` : c'est la valeur que rend
+ * `aheadOfNetwork` quand ni la prop réseau ni l'instantané ne portent la donnée.
  */
 export function isDeferredPending(
     value: unknown,
     key: string,
     rescuedProps: string[] | undefined,
 ): boolean {
-    return value === undefined && !(rescuedProps ?? []).includes(key);
+    return (value === undefined || value === null) && !(rescuedProps ?? []).includes(key);
 }
 
 /**
- * Le squelette des étincelles tient sur `trends === undefined`. Hors-ligne la prop n'arrivera
+ * Le squelette des étincelles tient sur l'absence de valeur. Hors-ligne la prop n'arrivera
  * jamais : le worker rescape sa clé, et le squelette n'a plus à tourner.
  */
 export function areTrendsPending(
-    trends: CatalogTrend[] | undefined,
+    trends: CatalogTrend[] | null | undefined,
     rescuedProps: string[] | undefined,
 ): boolean {
     return isDeferredPending(trends, 'trends', rescuedProps);

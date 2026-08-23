@@ -9,9 +9,11 @@ import PriceHistorySection from '@/components/instrument/PriceHistorySection.vue
 import SectorsSection from '@/components/instrument/SectorsSection.vue';
 import TransactionsSection from '@/components/instrument/TransactionsSection.vue';
 import ValuationSection from '@/components/instrument/ValuationSection.vue';
+import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
 import type { AssetDividendHistory } from '@/lib/income';
 import type { Instrument, PriceHistory, ValuationSeries } from '@/lib/instrument';
 import type { Performance } from '@/lib/performance';
+import { useSnapshotStore } from '@/stores/snapshot';
 
 const props = defineProps<{
     instrument: Instrument;
@@ -20,6 +22,18 @@ const props = defineProps<{
     valuation?: ValuationSeries;
     dividends: AssetDividendHistory;
 }>();
+
+const snapshot = useSnapshotStore();
+
+/** `instrument`, `performances` et `dividends` sont synchrones côté serveur : rien à combler. */
+const priceHistory = aheadOfNetwork(
+    () => props.priceHistory,
+    () => snapshot.instrumentPage(String(props.instrument.id))?.priceHistory,
+);
+const valuation = aheadOfNetwork(
+    () => props.valuation,
+    () => snapshot.instrumentPage(String(props.instrument.id))?.valuation,
+);
 </script>
 
 <template>
@@ -30,11 +44,11 @@ const props = defineProps<{
 
         <ValuationSection
             v-if="props.instrument.position"
-            :valuation="props.valuation"
+            :valuation="valuation"
             :dividends="props.dividends.receipts"
         />
 
-        <PriceHistorySection v-else :price-history="props.priceHistory" />
+        <PriceHistorySection v-else :price-history="priceHistory" />
 
         <PerformanceSection
             v-if="props.instrument.position && props.performances.length"

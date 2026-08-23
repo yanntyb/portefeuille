@@ -7,12 +7,14 @@ import PropertyList from '@/components/properties/PropertyList.vue';
 import RealEstateEvolutionSection from '@/components/properties/RealEstateEvolutionSection.vue';
 import RealEstateSummarySection from '@/components/properties/RealEstateSummarySection.vue';
 import RentalIncomeSection from '@/components/properties/RentalIncomeSection.vue';
+import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
 import type {
     PropertyProfitability,
     RealEstateIncome,
     RealEstateOverview,
     RealEstateSeries,
 } from '@/lib/realEstate';
+import { useSnapshotStore } from '@/stores/snapshot';
 
 const props = defineProps<{
     realEstate: RealEstateOverview;
@@ -20,6 +22,13 @@ const props = defineProps<{
     profitability?: PropertyProfitability[];
     income?: RealEstateIncome;
 }>();
+
+const snapshot = useSnapshotStore();
+
+/** `realEstate` est synchrone côté serveur : elle est toujours là, rien à combler. */
+const series = aheadOfNetwork(() => props.series, () => snapshot.propertiesList?.series);
+const profitability = aheadOfNetwork(() => props.profitability, () => snapshot.propertiesList?.profitability);
+const income = aheadOfNetwork(() => props.income, () => snapshot.propertiesList?.income);
 </script>
 
 <template>
@@ -28,13 +37,13 @@ const props = defineProps<{
     <AppPage>
         <RealEstateSummarySection :real-estate="props.realEstate" />
 
-        <RealEstateEvolutionSection :series="props.series" />
+        <RealEstateEvolutionSection :series="series" />
 
         <PropertyList :properties="props.realEstate.properties" />
 
-        <ProfitabilitySection v-if="props.realEstate.properties.length" :profitability="props.profitability" />
+        <ProfitabilitySection v-if="props.realEstate.properties.length" :profitability="profitability" />
 
-        <RentalIncomeSection v-if="props.realEstate.properties.length" :income="props.income" />
+        <RentalIncomeSection v-if="props.realEstate.properties.length" :income="income" />
     </AppPage>
 
     <AppBottomBar :items="[{ label: 'Tableau de bord', href: '/' }, { label: 'Immobilier' }]" />

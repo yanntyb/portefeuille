@@ -5,13 +5,21 @@ import AppPage from '@/components/AppPage.vue';
 import WealthEvolutionSection from '@/components/dashboard/WealthEvolutionSection.vue';
 import WealthIncomeSection from '@/components/dashboard/WealthIncomeSection.vue';
 import WealthSummarySection from '@/components/dashboard/WealthSummarySection.vue';
+import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
 import type { WealthIncome, WealthOverview, WealthSeries } from '@/lib/wealth';
+import { useSnapshotStore } from '@/stores/snapshot';
 
 const props = defineProps<{
     overview: WealthOverview;
     series?: WealthSeries;
     income?: WealthIncome;
 }>();
+
+const snapshot = useSnapshotStore();
+
+/** `overview` est synchrone côté serveur : elle est toujours là, rien à combler. */
+const series = aheadOfNetwork(() => props.series, () => snapshot.dashboard?.series);
+const income = aheadOfNetwork(() => props.income, () => snapshot.dashboard?.income);
 </script>
 
 <template>
@@ -20,9 +28,9 @@ const props = defineProps<{
     <AppPage>
         <WealthSummarySection :overview="props.overview" />
 
-        <WealthEvolutionSection :series="props.series" />
+        <WealthEvolutionSection :series="series" />
 
-        <WealthIncomeSection :income="props.income" />
+        <WealthIncomeSection :income="income" />
     </AppPage>
 
     <!-- Barre sans fil d'Ariane : le tableau de bord est la racine, son fil n'aurait qu'un seul cran. -->

@@ -12,7 +12,7 @@ import {
     type LoanSummary,
 } from '@/lib/realEstate';
 
-const props = defineProps<{ loan: LoanSummary; lines?: AmortizationLine[] }>();
+const props = defineProps<{ loan: LoanSummary; lines?: AmortizationLine[] | null }>();
 
 const summary = computed<HeroMetaEntry[]>(() => loanProgress(props.loan));
 
@@ -60,17 +60,7 @@ const amount = (value: number): string => eur(value, 0);
             </span>
         </p>
 
-        <Deferred data="amortization">
-            <template #fallback>
-                <div class="flex flex-col gap-2">
-                    <div v-for="n in 6" :key="n" class="h-6 w-full animate-pulse rounded-md bg-muted"></div>
-                </div>
-            </template>
-
-            <template #rescue>
-                <p class="py-8 text-center text-sm text-muted-foreground">Données indisponibles hors-ligne.</p>
-            </template>
-
+        <template v-if="props.lines !== null">
             <div class="max-h-96 overflow-x-auto overflow-y-auto">
                 <table class="w-full text-sm">
                     <thead class="sticky top-0 bg-background">
@@ -167,6 +157,20 @@ const amount = (value: number): string => eur(value, 0);
                     </tbody>
                 </table>
             </div>
+        </template>
+
+        <Deferred v-else data="amortization">
+            <template #fallback>
+                <div class="flex flex-col gap-2">
+                    <div v-for="n in 6" :key="n" class="h-6 w-full animate-pulse rounded-md bg-muted"></div>
+                </div>
+            </template>
+
+            <template #rescue>
+                <p class="py-8 text-center text-sm text-muted-foreground">Données indisponibles hors-ligne.</p>
+            </template>
+
+            <span />
         </Deferred>
     </section>
 </template>

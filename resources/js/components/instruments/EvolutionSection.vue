@@ -5,7 +5,7 @@ import { sumPerAsset, type AssetSeries } from '@/lib/chart';
 import type { EvolutionSeries } from '@/lib/portfolio';
 
 const props = defineProps<{
-    series?: EvolutionSeries;
+    series?: EvolutionSeries | null;
 }>();
 
 const labels = computed<string[]>(() => props.series?.labels ?? []);
@@ -25,6 +25,7 @@ const invested = computed<number[]>(
 
         <ValueVsInvestedChart
             defer-key="evolutionSeries"
+            :loaded="props.series !== null"
             :labels="labels"
             :value="value"
             :invested="invested"

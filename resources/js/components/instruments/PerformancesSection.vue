@@ -4,7 +4,7 @@ import PerformanceBars from '@/components/PerformanceBars.vue';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
 import type { Performance } from '@/lib/performance';
 
-defineProps<{ performances?: Performance[] }>();
+const props = defineProps<{ performances?: Performance[] | null }>();
 </script>
 
 <template>
@@ -13,7 +13,14 @@ defineProps<{ performances?: Performance[] }>();
             Performances
             <PerformanceInfoDialog variant="periods" />
         </h2>
-        <Deferred data="performances">
+        <template v-if="props.performances !== null">
+            <PerformanceBars
+                v-if="props.performances && props.performances.length"
+                :performances="props.performances"
+            />
+        </template>
+
+        <Deferred v-else data="performances">
             <template #fallback>
                 <div class="flex flex-col gap-2">
                     <div v-for="n in 5" :key="n" class="h-8 w-full animate-pulse rounded-md bg-muted"></div>
@@ -26,10 +33,7 @@ defineProps<{ performances?: Performance[] }>();
                 </p>
             </template>
 
-            <PerformanceBars
-                v-if="performances && performances.length"
-                :performances="performances"
-            />
+            <span />
         </Deferred>
     </section>
 </template>

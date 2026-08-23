@@ -6,16 +6,25 @@ import EvolutionSection from '@/components/instruments/EvolutionSection.vue';
 import InstrumentsSection from '@/components/instruments/InstrumentsSection.vue';
 import PerformancesSection from '@/components/instruments/PerformancesSection.vue';
 import ValuationSection from '@/components/instruments/ValuationSection.vue';
+import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
 import type { CatalogTrend } from '@/lib/catalog';
 import type { Performance } from '@/lib/performance';
 import type { EvolutionSeries, PortfolioOverview } from '@/lib/portfolio';
+import { useSnapshotStore } from '@/stores/snapshot';
 
-defineProps<{
+const props = defineProps<{
     overview: PortfolioOverview;
     trends?: CatalogTrend[];
     performances?: Performance[];
     evolutionSeries?: EvolutionSeries;
 }>();
+
+const snapshot = useSnapshotStore();
+
+/** `overview` est synchrone côté serveur : elle est toujours là, rien à combler. */
+const trends = aheadOfNetwork(() => props.trends, () => snapshot.cryptoList?.trends);
+const performances = aheadOfNetwork(() => props.performances, () => snapshot.cryptoList?.performances);
+const evolutionSeries = aheadOfNetwork(() => props.evolutionSeries, () => snapshot.cryptoList?.evolutionSeries);
 </script>
 
 <template>

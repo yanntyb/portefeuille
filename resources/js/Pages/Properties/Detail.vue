@@ -6,12 +6,22 @@ import PropertyHeroSection from '@/components/property/PropertyHeroSection.vue';
 import PropertyIncomeSection from '@/components/property/PropertyIncomeSection.vue';
 import PropertyLoanSection from '@/components/property/PropertyLoanSection.vue';
 import PropertyMetricsGrid from '@/components/property/PropertyMetricsGrid.vue';
+import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
 import type { AmortizationLine, PropertyDetail } from '@/lib/realEstate';
+import { useSnapshotStore } from '@/stores/snapshot';
 
 const props = defineProps<{
     property: PropertyDetail;
     amortization?: AmortizationLine[];
 }>();
+
+const snapshot = useSnapshotStore();
+
+/** `property` est synchrone côté serveur : elle est toujours là, rien à combler. */
+const amortization = aheadOfNetwork(
+    () => props.amortization,
+    () => snapshot.propertyPage(String(props.property.id))?.amortization,
+);
 </script>
 
 <template>

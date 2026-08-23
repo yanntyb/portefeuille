@@ -5,7 +5,7 @@ import type { DividendReceipt } from '@/lib/income';
 import type { ValuationSeries } from '@/lib/instrument';
 
 const props = defineProps<{
-    valuation?: ValuationSeries;
+    valuation?: ValuationSeries | null;
     dividends: DividendReceipt[];
 }>();
 
@@ -18,6 +18,7 @@ const invested = computed<number[]>(() => props.valuation?.invested ?? []);
     <section data-section="valuation" class="flex flex-col gap-6">
         <ValueVsInvestedChart
             defer-key="valuation"
+            :loaded="props.valuation !== null"
             :labels="labels"
             :value="value"
             :invested="invested"

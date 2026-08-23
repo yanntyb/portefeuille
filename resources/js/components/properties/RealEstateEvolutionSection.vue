@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import ValueVsInvestedChart from '@/components/ValueVsInvestedChart.vue';
 import type { RealEstateSeries } from '@/lib/realEstate';
 
-const props = defineProps<{ series?: RealEstateSeries }>();
+const props = defineProps<{ series?: RealEstateSeries | null }>();
 
 const labels = computed<string[]>(() => props.series?.labels ?? []);
 const netWorth = computed<number[]>(() => props.series?.netWorth ?? []);
@@ -16,6 +16,7 @@ const invested = computed<number[]>(() => props.series?.invested ?? []);
 
         <ValueVsInvestedChart
             defer-key="series"
+            :loaded="props.series !== null"
             :labels="labels"
             :value="netWorth"
             :invested="invested"

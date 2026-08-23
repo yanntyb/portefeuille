@@ -7,7 +7,7 @@ import { eur } from '@/lib/format';
 import type { ChartOption } from '@/lib/echarts';
 import type { WealthSeries } from '@/lib/wealth';
 
-const props = defineProps<{ series?: WealthSeries }>();
+const props = defineProps<{ series?: WealthSeries | null }>();
 
 /** Echarts pèse les deux tiers du JS : il n'est demandé qu'au montage réel d'un graphe. */
 const BaseChart = defineAsyncComponent({
@@ -41,7 +41,16 @@ const option = computed<ChartOption>(() => buildWealthStackOption({
     <section data-section="wealth-evolution" class="flex shrink-0 flex-col gap-4">
         <h2 class="px-6 text-[17px] leading-none font-bold">Évolution</h2>
 
-        <Deferred data="series">
+        <template v-if="props.series !== null">
+            <div v-if="hasHistory" class="px-6">
+                <BaseChart :option="option" @zoom="rememberZoom" />
+            </div>
+            <p v-else class="py-8 text-center text-sm text-muted-foreground">
+                Pas encore d'historique de valorisation.
+            </p>
+        </template>
+
+        <Deferred v-else data="series">
             <template #fallback>
                 <div class="px-6">
                     <ChartSkeleton />
@@ -54,12 +63,7 @@ const option = computed<ChartOption>(() => buildWealthStackOption({
                 </p>
             </template>
 
-            <div v-if="hasHistory" class="px-6">
-                <BaseChart :option="option" @zoom="rememberZoom" />
-            </div>
-            <p v-else class="py-8 text-center text-sm text-muted-foreground">
-                Pas encore d'historique de valorisation.
-            </p>
+            <span />
         </Deferred>
     </section>
 </template>

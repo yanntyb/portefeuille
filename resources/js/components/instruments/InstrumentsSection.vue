@@ -8,7 +8,7 @@ import type { HoldingLine } from '@/lib/portfolio';
 
 const props = withDefaults(defineProps<{
     holdings: HoldingLine[];
-    trends?: CatalogTrend[];
+    trends?: CatalogTrend[] | null;
     /** Racine des liens de la liste : chaque classe d'actif a ses propres fiches. */
     basePath?: string;
 }>(), { basePath: '/instruments' });

@@ -4,7 +4,7 @@ import { Deferred } from '@inertiajs/vue3';
 import { eur, gainClass, signedEur } from '@/lib/format';
 import { rentalIncomeBars, type RealEstateIncome, type RentalIncomeBar } from '@/lib/realEstate';
 
-const props = defineProps<{ income?: RealEstateIncome }>();
+const props = defineProps<{ income?: RealEstateIncome | null }>();
 
 const bars = computed<RentalIncomeBar[]>(() => rentalIncomeBars(props.income?.years ?? []));
 
@@ -17,19 +17,7 @@ const rounded = (value: number): string => eur(value, 0);
     <section data-section="rental-income" class="flex min-h-0 flex-1 flex-col gap-4 px-6 md:flex-none">
         <h2 class="shrink-0 text-[17px] leading-none font-bold">Revenus</h2>
 
-        <Deferred data="income">
-            <template #fallback>
-                <div class="flex flex-col gap-2">
-                    <div v-for="n in 3" :key="n" class="h-8 w-full animate-pulse rounded-md bg-muted"></div>
-                </div>
-            </template>
-
-            <template #rescue>
-                <p class="py-8 text-center text-sm text-muted-foreground">
-                    Données indisponibles hors-ligne.
-                </p>
-            </template>
-
+        <template v-if="props.income !== null">
             <template v-if="bars.length">
                 <p data-rental-income-summary class="text-sm text-muted-foreground">
                     <span class="font-semibold tabular-nums" :class="gainClass(props.income?.net12m ?? 0)">
@@ -77,6 +65,22 @@ const rounded = (value: number): string => eur(value, 0);
             <p v-else class="py-8 text-center text-sm text-muted-foreground">
                 Aucun revenu locatif pour l'instant.
             </p>
+        </template>
+
+        <Deferred v-else data="income">
+            <template #fallback>
+                <div class="flex flex-col gap-2">
+                    <div v-for="n in 3" :key="n" class="h-8 w-full animate-pulse rounded-md bg-muted"></div>
+                </div>
+            </template>
+
+            <template #rescue>
+                <p class="py-8 text-center text-sm text-muted-foreground">
+                    Données indisponibles hors-ligne.
+                </p>
+            </template>
+
+            <span />
         </Deferred>
     </section>
 </template>

@@ -4,7 +4,7 @@ import { Deferred } from '@inertiajs/vue3';
 import { gainClass, signedEur } from '@/lib/format';
 import type { IncomeOrigin, WealthIncome } from '@/lib/wealth';
 
-const props = defineProps<{ income?: WealthIncome }>();
+const props = defineProps<{ income?: WealthIncome | null }>();
 
 const hasIncome = computed<boolean>(() => (props.income?.monthlyTotal ?? 0) !== 0);
 
@@ -20,19 +20,7 @@ const origins = computed<IncomeOrigin[]>(() => props.income?.origins ?? []);
     <section data-section="wealth-income" class="flex shrink-0 flex-col gap-4 px-6">
         <h2 class="text-[17px] leading-none font-bold">Revenus</h2>
 
-        <Deferred data="income">
-            <template #fallback>
-                <div class="flex flex-col gap-2">
-                    <div v-for="n in 3" :key="n" class="h-8 w-full animate-pulse rounded-md bg-muted"></div>
-                </div>
-            </template>
-
-            <template #rescue>
-                <p class="py-8 text-center text-sm text-muted-foreground">
-                    Données indisponibles hors-ligne.
-                </p>
-            </template>
-
+        <template v-if="props.income !== null">
             <template v-if="hasIncome">
                 <p class="flex flex-wrap items-baseline gap-2">
                     <span
@@ -63,6 +51,22 @@ const origins = computed<IncomeOrigin[]>(() => props.income?.origins ?? []);
             <p v-else class="py-8 text-center text-sm text-muted-foreground">
                 Aucun revenu pour l'instant.
             </p>
+        </template>
+
+        <Deferred v-else data="income">
+            <template #fallback>
+                <div class="flex flex-col gap-2">
+                    <div v-for="n in 3" :key="n" class="h-8 w-full animate-pulse rounded-md bg-muted"></div>
+                </div>
+            </template>
+
+            <template #rescue>
+                <p class="py-8 text-center text-sm text-muted-foreground">
+                    Données indisponibles hors-ligne.
+                </p>
+            </template>
+
+            <span />
         </Deferred>
     </section>
 </template>
