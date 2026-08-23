@@ -2,7 +2,10 @@
 import { Monitor, Moon, Sun } from 'lucide-vue-next';
 import { computed } from 'vue';
 import type { Component, ComputedRef } from 'vue';
-import { cycleTheme, themeMode, type ThemeMode } from '@/lib/theme';
+import { useThemeStore } from '@/stores/theme';
+import type { ThemeMode } from '@/stores/theme';
+
+const theme = useThemeStore();
 
 interface ThemeAppearance {
     icon: Component;
@@ -17,7 +20,7 @@ const APPEARANCES: Record<ThemeMode, ThemeAppearance> = {
 };
 
 const appearance: ComputedRef<ThemeAppearance> = computed(
-    (): ThemeAppearance => APPEARANCES[themeMode.value] ?? APPEARANCES.auto,
+    (): ThemeAppearance => APPEARANCES[theme.mode] ?? APPEARANCES.auto,
 );
 </script>
 
@@ -25,11 +28,11 @@ const appearance: ComputedRef<ThemeAppearance> = computed(
     <button
         type="button"
         data-theme-toggle
-        :data-theme-mode="themeMode"
+        :data-theme-mode="theme.mode"
         :aria-label="`Changer de thème (actuellement : ${appearance.label})`"
         :title="`Thème : ${appearance.label}`"
         class="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground"
-        @click="cycleTheme()"
+        @click="theme.cycle()"
     >
         <component :is="appearance.icon" class="size-4" />
     </button>

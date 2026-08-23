@@ -1,3 +1,4 @@
+import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 
@@ -12,11 +13,15 @@ vi.mock('@vueuse/core', async (importOriginal) => ({
     usePreferredDark: () => preferredDark,
 }));
 
-const { THEME_STORAGE_KEY, cycleTheme, isDark, nextThemeMode, themeMode, useStoredTheme } = await import('@/lib/theme');
+const { THEME_STORAGE_KEY, nextThemeMode, useThemeStore } = await import('@/stores/theme');
+
+let theme: ReturnType<typeof useThemeStore>;
 
 beforeEach((): void => {
+    setActivePinia(createPinia());
+    theme = useThemeStore();
     preferredDark.value = false;
-    themeMode.value = 'auto';
+    theme.mode = 'auto';
     document.documentElement.classList.remove('dark');
 });
 
@@ -28,17 +33,17 @@ describe('cycle du bouton de thème', () => {
     });
 
     it('avance le mode courant à chaque clic', () => {
-        cycleTheme();
+        theme.cycle();
 
-        expect(themeMode.value).toBe('light');
+        expect(theme.mode).toBe('light');
 
-        cycleTheme();
+        theme.cycle();
 
-        expect(themeMode.value).toBe('dark');
+        expect(theme.mode).toBe('dark');
     });
 
     it('retient le choix pour la visite suivante, que le script du layout relira', async () => {
-        cycleTheme();
+        theme.cycle();
         await nextTick();
 
         expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('light');
@@ -48,50 +53,50 @@ describe('cycle du bouton de thème', () => {
 describe('thème résolu', () => {
     it('reste clair quand le mode clair est choisi, même si le système est sombre', () => {
         preferredDark.value = true;
-        themeMode.value = 'light';
+        theme.mode = 'light';
 
-        expect(isDark.value).toBe(false);
+        expect(theme.isDark).toBe(false);
     });
 
     it('reste sombre quand le mode sombre est choisi, même si le système est clair', () => {
-        themeMode.value = 'dark';
+        theme.mode = 'dark';
 
-        expect(isDark.value).toBe(true);
+        expect(theme.isDark).toBe(true);
     });
 
     it('suit le système en mode automatique', () => {
         preferredDark.value = true;
 
-        expect(isDark.value).toBe(true);
+        expect(theme.isDark).toBe(true);
 
         preferredDark.value = false;
 
-        expect(isDark.value).toBe(false);
+        expect(theme.isDark).toBe(false);
     });
 
     it('retombe sur le système si le stockage contient autre chose qu\'un mode connu', () => {
         preferredDark.value = true;
-        themeMode.value = 'nuit-etoilee' as never;
+        theme.mode = 'nuit-etoilee' as never;
 
-        expect(isDark.value).toBe(true);
+        expect(theme.isDark).toBe(true);
     });
 });
 
 describe('application au document', () => {
     it('pose la classe `dark` sur la racine dès l\'accrochage, sans attendre un changement', () => {
-        themeMode.value = 'dark';
+        theme.mode = 'dark';
 
-        useStoredTheme();
+        theme.apply();
 
         expect(document.documentElement.classList.contains('dark')).toBe(true);
     });
 
     it('retire la classe quand on repasse au clair', async () => {
-        themeMode.value = 'dark';
+        theme.mode = 'dark';
 
-        useStoredTheme();
+        theme.apply();
 
-        themeMode.value = 'light';
+        theme.mode = 'light';
         await nextTick();
 
         expect(document.documentElement.classList.contains('dark')).toBe(false);

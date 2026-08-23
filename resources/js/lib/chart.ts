@@ -2,7 +2,7 @@ import type { LineSeriesOption } from 'echarts/charts';
 import type { TooltipComponentOption } from 'echarts/components';
 import type { ChartOption } from './echarts';
 import type { DividendMark } from './income';
-import { isDark } from './theme';
+import { useThemeStore } from '@/stores/theme';
 
 type ChartPalette = {
     value: string;
@@ -26,7 +26,7 @@ type ChartPalette = {
  * à la main les valeurs de `resources/css/app.css` — toute retouche là-bas se répercute ici.
  */
 function palette(): ChartPalette {
-    return isDark.value
+    return useThemeStore().isDark
         ? {
             value: '#8f93f0',
             invested: '#6b7280',
@@ -73,7 +73,7 @@ function fadedArea(color: string): NonNullable<LineSeriesOption['areaStyle']>['c
         x2: 0,
         y2: 1,
         colorStops: [
-            { offset: 0, color: rgba(color, isDark.value ? 0.22 : 0.18) },
+            { offset: 0, color: rgba(color, useThemeStore().isDark ? 0.22 : 0.18) },
             { offset: 1, color: rgba(color, 0) },
         ],
     };

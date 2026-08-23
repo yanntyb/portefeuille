@@ -1,11 +1,16 @@
-import { describe, expect, it, vi } from 'vitest';
+import { createPinia, setActivePinia } from 'pinia';
+import { beforeEach, describe, expect, it } from 'vitest';
 import type { ChartOption } from '@/lib/echarts';
 import { eur } from '@/lib/format';
 
-/** Fichier séparé : `vi.mock` porte sur tout le module, un seul thème par fichier. */
-vi.mock('@/lib/theme', () => ({ isDark: { value: true } }));
-
+const { useThemeStore } = await import('@/stores/theme');
 const { buildValueVsInvestedOption, buildWealthStackOption } = await import('@/lib/chart');
+
+/** Fichier séparé : le thème sombre y est réglé pour tous les tests, à l'inverse de chart.test.ts. */
+beforeEach((): void => {
+    setActivePinia(createPinia());
+    useThemeStore().mode = 'dark';
+});
 
 const option = (): ChartOption =>
     buildValueVsInvestedOption({

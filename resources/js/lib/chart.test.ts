@@ -1,16 +1,21 @@
-import { describe, expect, it, vi } from 'vitest';
+import { createPinia, setActivePinia } from 'pinia';
+import { beforeEach, describe, expect, it } from 'vitest';
 import type { LineSeriesOption } from 'echarts/charts';
 import type { ChartOption } from '@/lib/echarts';
 import { eur } from '@/lib/format';
 import type { DividendMark } from '@/lib/income';
 
-/**
- * `lib/theme` crée son `ref` via `usePreferredDark()` au chargement du module, ce qui rendrait la
- * palette dépendante de l'environnement. Un faux le fige sur le thème clair.
- */
-vi.mock('@/lib/theme', () => ({ isDark: { value: false } }));
-
+const { useThemeStore } = await import('@/stores/theme');
 const { buildPriceHistoryOption, buildValueVsInvestedOption, buildWealthStackOption, sumPerAsset } = await import('@/lib/chart');
+
+/**
+ * Le store de thème lit `usePreferredDark()`, qui rendrait la palette dépendante de
+ * l'environnement. Fixer le mode explicitement la fige sur le thème clair.
+ */
+beforeEach((): void => {
+    setActivePinia(createPinia());
+    useThemeStore().mode = 'light';
+});
 
 /** Étiquettes ISO au premier de chaque mois, à partir de janvier 2023. */
 const monthlyLabels = (months: number): string[] =>

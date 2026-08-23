@@ -6,7 +6,7 @@
         <meta name="color-scheme" content="light dark">
 
         {{-- Pose le thème avant le premier rendu pour éviter le flash ; app.ts prend ensuite le relais.
-             La clé et la règle de repli doivent rester celles de resources/js/lib/theme.ts. --}}
+             La clé et la règle de repli doivent rester celles de resources/js/stores/theme.ts. --}}
         <script>
             (function () {
                 var stored = null;
