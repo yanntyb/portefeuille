@@ -1,10 +1,12 @@
 import { createApp } from 'vue';
 import AppServiceWorkerBanner from '@/components/AppServiceWorkerBanner.vue';
 import { registerServiceWorker } from '@/lib/serviceWorker';
+import { pinia } from '@/stores/pinia';
 
 /**
  * Application Vue distincte : les pages Inertia sont des racines indépendantes, sans layout
- * partagé, donc le bandeau serait sinon à dupliquer dans chacune.
+ * partagé, donc le bandeau serait sinon à dupliquer dans chacune. Elle reçoit la même instance de
+ * Pinia que l'application Inertia — sinon les deux liraient deux états séparés.
  */
 export function mountServiceWorkerBanner(): void {
     const host = document.getElementById('pwa-banner');
@@ -14,5 +16,5 @@ export function mountServiceWorkerBanner(): void {
     }
 
     registerServiceWorker();
-    createApp(AppServiceWorkerBanner).mount(host);
+    createApp(AppServiceWorkerBanner).use(pinia).mount(host);
 }

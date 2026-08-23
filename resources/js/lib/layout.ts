@@ -1,5 +1,5 @@
 import { computed, type ComputedRef } from 'vue';
-import { isWideViewport } from './viewport';
+import { useViewportStore } from '@/stores/viewport';
 
 export type PageWidth = 'narrow' | 'wide';
 
@@ -24,7 +24,10 @@ const COMPACT_CHART_HEIGHT = 170;
  * Hauteur de tous les graphes de l'application, tableau de bord comme fiche instrument : ce sont
  * les mêmes tracés d'une page à l'autre, une hauteur propre à chaque page se lirait comme deux
  * graphes différents. Chiffrée parce qu'echarts peint dans une boîte de hauteur connue.
+ *
+ * Le store est résolu dans le getter, pas au niveau module : à l'import de ce fichier, Pinia peut
+ * ne pas encore être actif.
  */
 export const chartHeight: ComputedRef<number> = computed(
-    (): number => (isWideViewport.value ? WIDE_CHART_HEIGHT : COMPACT_CHART_HEIGHT),
+    (): number => (useViewportStore().isWide ? WIDE_CHART_HEIGHT : COMPACT_CHART_HEIGHT),
 );

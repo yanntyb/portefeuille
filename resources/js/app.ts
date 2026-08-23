@@ -5,6 +5,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h, type DefineComponent } from 'vue';
 import { useStoredTheme } from '@/lib/theme';
 import { mountServiceWorkerBanner } from '@/pwa/banner';
+import { pinia } from '@/stores/pinia';
 
 const appName = import.meta.env.VITE_APP_NAME ?? 'Laravel';
 
@@ -21,6 +22,7 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         createApp({ render: () => h(App, props) })
             .use(plugin)
+            .use(pinia)
             .mount(el);
     },
     progress: {
