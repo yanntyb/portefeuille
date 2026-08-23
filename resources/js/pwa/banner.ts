@@ -1,7 +1,7 @@
 import { createApp } from 'vue';
 import AppServiceWorkerBanner from '@/components/AppServiceWorkerBanner.vue';
-import { registerServiceWorker } from '@/lib/serviceWorker';
 import { pinia } from '@/stores/pinia';
+import { useServiceWorkerStore } from '@/stores/serviceWorker';
 
 /**
  * Application Vue distincte : les pages Inertia sont des racines indépendantes, sans layout
@@ -15,6 +15,6 @@ export function mountServiceWorkerBanner(): void {
         return;
     }
 
-    registerServiceWorker();
     createApp(AppServiceWorkerBanner).use(pinia).mount(host);
+    useServiceWorkerStore().register();
 }

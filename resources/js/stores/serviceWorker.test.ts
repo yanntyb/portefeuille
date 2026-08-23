@@ -1,21 +1,10 @@
+import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-    applyUpdate,
-    canInstall,
-    dismissInstall,
-    handleBeforeInstallPrompt,
-    handleControllerChange,
-    handleMessage,
-    lastSyncedAt,
-    promptInstall,
-    requestStatus,
-    resetServiceWorkerState,
-    setReloader,
-    stale,
-    trackRegistration,
-    updateAvailable,
-    type BeforeInstallPromptEvent,
-} from '@/lib/serviceWorker';
+import type { BeforeInstallPromptEvent } from '@/stores/serviceWorker';
+
+const { useServiceWorkerStore } = await import('@/stores/serviceWorker');
+
+let sw: ReturnType<typeof useServiceWorkerStore>;
 
 /** Enregistrement minimal : seul `waiting` et l'écoute d'`updatefound` sont sollicités. */
 const registrationWithWaiting = (waiting: { postMessage: (data: unknown) => void }): ServiceWorkerRegistration => ({
@@ -80,31 +69,36 @@ const installPromptEvent = (outcome: 'accepted' | 'dismissed'): BeforeInstallPro
     userChoice: Promise.resolve({ outcome }),
 }) as unknown as BeforeInstallPromptEvent;
 
-beforeEach(() => {
-    resetServiceWorkerState();
+/**
+ * Une instance neuve par test remplace l'ancienne remise à zéro manuelle du module : plus aucune
+ * garde ne survit d'un test au suivant, donc plus rien à remettre à zéro à la main.
+ */
+beforeEach((): void => {
+    setActivePinia(createPinia());
+    sw = useServiceWorkerStore();
     localStorage.clear();
-    setReloader(() => {});
+    sw.setReloader(() => {});
 });
 
 describe('trackRegistration', () => {
     it('signale une mise à jour quand un worker attend déjà', () => {
-        trackRegistration(registrationWithWaiting({ postMessage: vi.fn() }));
+        sw.trackRegistration(registrationWithWaiting({ postMessage: vi.fn() }));
 
-        expect(updateAvailable.value).toBe(true);
+        expect(sw.updateAvailable).toBe(true);
     });
 
     it('détecte une mise à jour installée pendant que l\'onglet reste ouvert, sous contrôle', () => {
         withController({});
         const { registration, installing, fireUpdateFound, fireStateChange } = registrationWithInstalling();
 
-        trackRegistration(registration);
+        sw.trackRegistration(registration);
         fireUpdateFound();
         installing.state = 'installed';
         fireStateChange();
 
-        expect(updateAvailable.value).toBe(true);
+        expect(sw.updateAvailable).toBe(true);
 
-        applyUpdate();
+        sw.applyUpdate();
 
         expect(installing.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
     });
@@ -113,58 +107,58 @@ describe('trackRegistration', () => {
         withController(null);
         const { registration, installing, fireUpdateFound, fireStateChange } = registrationWithInstalling();
 
-        trackRegistration(registration);
+        sw.trackRegistration(registration);
         fireUpdateFound();
         installing.state = 'installed';
         fireStateChange();
 
-        expect(updateAvailable.value).toBe(false);
+        expect(sw.updateAvailable).toBe(false);
     });
 
     it('ne propose rien si le worker en installation n\'atteint pas l\'état « installed »', () => {
         withController({});
         const { registration, installing, fireUpdateFound, fireStateChange } = registrationWithInstalling();
 
-        trackRegistration(registration);
+        sw.trackRegistration(registration);
         fireUpdateFound();
         installing.state = 'activating';
         fireStateChange();
 
-        expect(updateAvailable.value).toBe(false);
+        expect(sw.updateAvailable).toBe(false);
     });
 });
 
 describe('applyUpdate', () => {
     it('demande au worker en attente de prendre la main', () => {
         const postMessage = vi.fn();
-        trackRegistration(registrationWithWaiting({ postMessage }));
+        sw.trackRegistration(registrationWithWaiting({ postMessage }));
 
-        applyUpdate();
+        sw.applyUpdate();
 
         expect(postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
     });
 
     it('ne recharge que le changement de contrôleur qu\'il a lui-même déclenché', () => {
         const reload = vi.fn();
-        setReloader(reload);
+        sw.setReloader(reload);
 
-        expect(handleControllerChange()).toBe(false);
+        expect(sw.handleControllerChange()).toBe(false);
 
-        trackRegistration(registrationWithWaiting({ postMessage: vi.fn() }));
-        applyUpdate();
+        sw.trackRegistration(registrationWithWaiting({ postMessage: vi.fn() }));
+        sw.applyUpdate();
 
-        expect(handleControllerChange()).toBe(true);
+        expect(sw.handleControllerChange()).toBe(true);
         expect(reload).toHaveBeenCalledTimes(1);
     });
 
     it('ne recharge pas deux fois de suite', () => {
         const reload = vi.fn();
-        setReloader(reload);
-        trackRegistration(registrationWithWaiting({ postMessage: vi.fn() }));
-        applyUpdate();
+        sw.setReloader(reload);
+        sw.trackRegistration(registrationWithWaiting({ postMessage: vi.fn() }));
+        sw.applyUpdate();
 
-        handleControllerChange();
-        handleControllerChange();
+        sw.handleControllerChange();
+        sw.handleControllerChange();
 
         expect(reload).toHaveBeenCalledTimes(1);
     });
@@ -172,25 +166,25 @@ describe('applyUpdate', () => {
 
 describe('handleMessage', () => {
     it('marque les données comme périmées et retient leur horodatage', () => {
-        handleMessage({ type: 'SERVED_STALE', cachedAt: 1_760_000_000_000 });
+        sw.handleMessage({ type: 'SERVED_STALE', cachedAt: 1_760_000_000_000 });
 
-        expect(stale.value).toBe(true);
-        expect(lastSyncedAt.value).toBe(1_760_000_000_000);
+        expect(sw.stale).toBe(true);
+        expect(sw.lastSyncedAt).toBe(1_760_000_000_000);
     });
 
     it('efface la péremption dès qu\'une revalidation réussit', () => {
-        handleMessage({ type: 'SERVED_STALE', cachedAt: 1_760_000_000_000 });
+        sw.handleMessage({ type: 'SERVED_STALE', cachedAt: 1_760_000_000_000 });
 
-        handleMessage({ type: 'FRESH' });
+        sw.handleMessage({ type: 'FRESH' });
 
-        expect(stale.value).toBe(false);
+        expect(sw.stale).toBe(false);
     });
 
     it('accepte une péremption sans horodatage connu', () => {
-        handleMessage({ type: 'SERVED_STALE', cachedAt: null });
+        sw.handleMessage({ type: 'SERVED_STALE', cachedAt: null });
 
-        expect(stale.value).toBe(true);
-        expect(lastSyncedAt.value).toBeNull();
+        expect(sw.stale).toBe(true);
+        expect(sw.lastSyncedAt).toBeNull();
     });
 });
 
@@ -198,13 +192,13 @@ describe('requestStatus', () => {
     it('interroge le worker qui contrôle déjà la page', () => {
         const postMessage = vi.fn();
 
-        requestStatus({ postMessage } as unknown as ServiceWorker);
+        sw.requestStatus({ postMessage } as unknown as ServiceWorker);
 
         expect(postMessage).toHaveBeenCalledWith({ type: 'REQUEST_STATUS' });
     });
 
     it('ne fait rien à la toute première installation, faute de contrôleur', () => {
-        expect(() => requestStatus(null)).not.toThrow();
+        expect(() => sw.requestStatus(null)).not.toThrow();
     });
 });
 
@@ -212,30 +206,30 @@ describe('invite d\'installation', () => {
     it('neutralise l\'événement natif et propose l\'installation', () => {
         const event = installPromptEvent('accepted');
 
-        handleBeforeInstallPrompt(event);
+        sw.handleBeforeInstallPrompt(event);
 
         expect(event.preventDefault).toHaveBeenCalled();
-        expect(canInstall.value).toBe(true);
+        expect(sw.canInstall).toBe(true);
     });
 
     it('ne repropose rien après un refus mémorisé', () => {
-        dismissInstall();
+        sw.dismissInstall();
 
-        handleBeforeInstallPrompt(installPromptEvent('accepted'));
+        sw.handleBeforeInstallPrompt(installPromptEvent('accepted'));
 
-        expect(canInstall.value).toBe(false);
+        expect(sw.canInstall).toBe(false);
     });
 
     it('mémorise un refus exprimé dans l\'invite native', async () => {
-        handleBeforeInstallPrompt(installPromptEvent('dismissed'));
+        sw.handleBeforeInstallPrompt(installPromptEvent('dismissed'));
 
-        await promptInstall();
+        await sw.promptInstall();
 
-        expect(canInstall.value).toBe(false);
+        expect(sw.canInstall).toBe(false);
 
-        canInstall.value = false;
-        handleBeforeInstallPrompt(installPromptEvent('accepted'));
+        sw.canInstall = false;
+        sw.handleBeforeInstallPrompt(installPromptEvent('accepted'));
 
-        expect(canInstall.value).toBe(false);
+        expect(sw.canInstall).toBe(false);
     });
 });

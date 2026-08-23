@@ -1,35 +1,29 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { syncedAtLabel } from '@/lib/format';
-import {
-    applyUpdate,
-    canInstall,
-    dismissInstall,
-    lastSyncedAt,
-    promptInstall,
-    stale,
-    updateAvailable,
-} from '@/lib/serviceWorker';
+import { useServiceWorkerStore } from '@/stores/serviceWorker';
 
 type BannerState = 'update' | 'stale' | 'install' | 'none';
+
+const sw = useServiceWorkerStore();
 
 /**
  * Priorité stricte : recharger pour une nouvelle version règle aussi la fraîcheur, donc les
  * deux premiers états n'ont jamais à cohabiter.
  */
 const state = computed<BannerState>(() => {
-    if (updateAvailable.value) {
+    if (sw.updateAvailable) {
         return 'update';
     }
 
-    if (stale.value) {
+    if (sw.stale) {
         return 'stale';
     }
 
-    return canInstall.value ? 'install' : 'none';
+    return sw.canInstall ? 'install' : 'none';
 });
 
-const syncedLabel = computed<string>(() => syncedAtLabel(lastSyncedAt.value));
+const syncedLabel = computed<string>(() => syncedAtLabel(sw.lastSyncedAt));
 
 const refresh = (): void => {
     window.location.reload();
@@ -49,7 +43,7 @@ const refresh = (): void => {
                 type="button"
                 data-pwa-action="reload"
                 class="shrink-0 rounded-md bg-background px-3 py-1.5 font-medium text-foreground"
-                @click="applyUpdate"
+                @click="sw.applyUpdate"
             >
                 Recharger
             </button>
@@ -74,7 +68,7 @@ const refresh = (): void => {
                     type="button"
                     data-pwa-action="dismiss"
                     class="px-2 py-1.5 opacity-70"
-                    @click="dismissInstall"
+                    @click="sw.dismissInstall"
                 >
                     Plus tard
                 </button>
@@ -82,7 +76,7 @@ const refresh = (): void => {
                     type="button"
                     data-pwa-action="install"
                     class="rounded-md bg-background px-3 py-1.5 font-medium text-foreground"
-                    @click="promptInstall"
+                    @click="sw.promptInstall"
                 >
                     Installer
                 </button>
