@@ -8,6 +8,7 @@ use App\Contexts\Market\Models\Price;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Wallet;
+use Illuminate\Support\Facades\DB;
 
 function makeHolding(User $user, InstrumentType $type, float $close, float $qty, float $avgCost): Instrument
 {
@@ -141,4 +142,27 @@ it('keeps only the holdings of the exposures it is given', function () {
         ->and($overview->holdings[0]->assetId)->toBe($gold->id)
         ->and($overview->holdings[0]->assetClass)->toBe(AssetClass::Commodity)
         ->and($overview->totalValue)->toBe(200.0);
+});
+
+it('reads the holdings once, however many exposures ask for them', function () {
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+
+    $instrument = Instrument::factory()->create(['type' => InstrumentType::Stock]);
+    Price::factory()->create(['asset_id' => $instrument->id, 'close' => 10.0]);
+    Holding::factory()->create([
+        'asset_id' => $instrument->id, 'wallet_id' => $wallet->id,
+        'user_id' => $user->id, 'quantity' => 1, 'avg_cost' => 5.0,
+    ]);
+
+    $overview = app(GetPortfolioOverview::class);
+    $overview($user, [AssetClass::Equity]);
+
+    DB::enableQueryLog();
+
+    foreach (AssetClass::cases() as $class) {
+        $overview($user, [$class]);
+    }
+
+    expect(DB::getQueryLog())->toBeEmpty();
 });

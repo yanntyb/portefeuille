@@ -8,10 +8,18 @@ use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Portfolio\Datas\HoldingLineData;
 use App\Contexts\Portfolio\Datas\PortfolioOverviewData;
 use App\Contexts\Portfolio\Models\Holding;
-use Illuminate\Database\Eloquent\Builder;
 
 class GetPortfolioOverview
 {
+    /**
+     * Les lignes de chaque utilisateur, pour la durée de la requête. Cinq classes d'actif
+     * lisaient autrefois cinq fois les mêmes positions et les mêmes prix ; le portefeuille tient
+     * en quelques dizaines de lignes, le découpage se fait donc en mémoire.
+     *
+     * @var array<int, list<HoldingLineData>>
+     */
+    private array $linesByUser = [];
+
     public function __construct(private PriceRepositoryContract $prices) {}
 
     /**
@@ -22,16 +30,30 @@ class GetPortfolioOverview
      */
     public function __invoke(User $user, ?array $classes = null): PortfolioOverviewData
     {
+        $lines = $this->linesByUser[$user->id] ??= $this->readLines($user);
+
+        if ($classes !== null) {
+            $kept = array_flip(array_map(fn (AssetClass $class): string => $class->value, $classes));
+            $lines = array_values(array_filter(
+                $lines,
+                fn (HoldingLineData $line): bool => isset($kept[$line->assetClass->value]),
+            ));
+        }
+
+        return $this->summarize($lines);
+    }
+
+    /**
+     * Toutes les positions de l'utilisateur, valorisées, sans filtrage par exposition : celui-ci
+     * se fait en mémoire dans `__invoke()`, sur le résultat mémoïsé de cette méthode.
+     *
+     * @return list<HoldingLineData>
+     */
+    private function readLines(User $user): array
+    {
         $holdings = Holding::query()
             ->with('asset')
             ->where('user_id', $user->id)
-            ->when($classes !== null, fn (Builder $query) => $query->whereHas(
-                'asset',
-                fn (Builder $asset) => $asset->whereIn(
-                    'asset_class',
-                    array_map(fn (AssetClass $class): string => $class->value, $classes),
-                ),
-            ))
             ->get();
 
         $lastPrices = $this->prices->latestClosesForAssets(
@@ -39,9 +61,6 @@ class GetPortfolioOverview
         );
 
         $lines = [];
-        $totalValue = 0.0;
-        $totalCost = 0.0;
-        $totalGain = 0.0;
 
         foreach ($holdings as $holding) {
             $quantity = (float) $holding->quantity;
@@ -67,14 +86,31 @@ class GetPortfolioOverview
                 gain: $gain,
                 gainPct: $gainPct,
             );
+        }
 
-            if ($marketValue !== null) {
-                $totalValue += $marketValue;
+        return $lines;
+    }
+
+    /**
+     * Le seul totalisage : le total du portefeuille entier et celui d'une exposition passent
+     * tous deux par ici, sur les lignes déjà retenues par `__invoke()`.
+     *
+     * @param  list<HoldingLineData>  $lines
+     */
+    private function summarize(array $lines): PortfolioOverviewData
+    {
+        $totalValue = 0.0;
+        $totalCost = 0.0;
+        $totalGain = 0.0;
+
+        foreach ($lines as $line) {
+            if ($line->marketValue !== null) {
+                $totalValue += $line->marketValue;
             }
 
-            if ($gain !== null) {
-                $totalCost += $cost;
-                $totalGain += $gain;
+            if ($line->gain !== null) {
+                $totalCost += $line->quantity * $line->avgCost;
+                $totalGain += $line->gain;
             }
         }
 
