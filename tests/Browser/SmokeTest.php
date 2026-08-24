@@ -33,7 +33,7 @@ it('charge la fiche instrument et ses sections, sans erreur', function () {
 
     $this->actingAs($user);
 
-    visit("/instruments/{$instrument->id}")
+    visit("/asset/{$instrument->id}")
         ->assertSee('ACME')
         ->assertSee('Transactions')
         ->assertSee('Répartition sectorielle')

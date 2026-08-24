@@ -26,7 +26,7 @@ it('affiche un fil d\'Ariane collant en bas d\'une fiche instrument', function (
 
     $this->actingAs($user);
 
-    $page = visit("/instruments/{$instrument->id}");
+    $page = visit("/asset/{$instrument->id}");
 
     $page->assertSee('Tableau de bord')
         ->assertVisible('nav[aria-label="Fil d\'Ariane"]')
@@ -42,7 +42,7 @@ it('place le fil d\'Ariane après le contenu de la page', function () {
 
     $this->actingAs($user);
 
-    $page = visit("/instruments/{$instrument->id}");
+    $page = visit("/asset/{$instrument->id}");
 
     $page->assertScript('(() => {
         const main = document.querySelector("main");
@@ -59,7 +59,7 @@ it('affiche le fil d\'Ariane complet sur une fiche instrument', function () {
 
     $this->actingAs($user);
 
-    visit("/instruments/{$instrument->id}")
+    visit("/asset/{$instrument->id}")
         ->assertVisible('nav[aria-label="Fil d\'Ariane"]')
         ->assertSeeIn('nav[aria-label="Fil d\'Ariane"]', 'Tableau de bord')
         ->assertSeeIn('nav[aria-label="Fil d\'Ariane"]', 'Actions')

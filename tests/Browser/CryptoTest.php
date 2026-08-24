@@ -35,7 +35,7 @@ it('mène de la liste crypto à la fiche de la crypto', function () {
 
     visit('/crypto')
         ->click('[data-instrument-name]')
-        ->assertScript('location.pathname', "/crypto/{$bitcoin->id}")
+        ->assertScript('location.pathname', "/asset/{$bitcoin->id}")
         ->assertSee('Bitcoin')
         ->assertNoJavaScriptErrors();
 });

@@ -16,7 +16,7 @@ it('donne au graphe de la fiche instrument la hauteur de celui du tableau de bor
     $this->actingAs($user);
 
     $dashboard = visit('/')->assertSee('Évolution');
-    $detail = visit("/instruments/{$instrument->id}")->assertSee('ACME');
+    $detail = visit("/asset/{$instrument->id}")->assertSee('ACME');
 
     expect($detail->script(chartHeight()))
         ->toBe($dashboard->script(chartHeight()))
@@ -32,7 +32,7 @@ it('garde les deux graphes à la même hauteur compacte sur mobile', function ()
     $this->actingAs($user);
 
     $dashboard = visit('/')->on()->iPhone14Pro()->assertSee('Évolution');
-    $detail = visit("/instruments/{$instrument->id}")->on()->iPhone14Pro()->assertSee('ACME');
+    $detail = visit("/asset/{$instrument->id}")->on()->iPhone14Pro()->assertSee('ACME');
 
     expect($detail->script(chartHeight()))
         ->toBe($dashboard->script(chartHeight()))
@@ -49,7 +49,7 @@ it('donne la même hauteur au cours d\'un instrument non détenu', function () {
 
     $this->actingAs($user);
 
-    $detail = visit("/instruments/{$instrument->id}")->assertSee('Cours');
+    $detail = visit("/asset/{$instrument->id}")->assertSee('Cours');
 
     expect($detail->script(chartHeight()))->toBe(240);
 

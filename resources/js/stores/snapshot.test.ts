@@ -169,15 +169,3 @@ describe('sélecteurs par entité', () => {
         expect(store.assetPage('999')).toBeNull();
     });
 });
-
-describe('accès transitoires', () => {
-    it('exposent les mêmes données que les nouveaux accès', async () => {
-        stored.value = build('abc');
-
-        const store = useSnapshotStore();
-        await store.hydrate();
-
-        expect(store.instrumentPage('7')).toEqual(store.assetPage('7'));
-        expect(store.cryptoPage('7')).toEqual(store.assetPage('7'));
-    });
-});

@@ -25,7 +25,7 @@ it('ouvre la dernière année de transactions et laisse les précédentes repli�
 
     $this->actingAs($user);
 
-    visit("/instruments/{$instrument->id}")
+    visit("/asset/{$instrument->id}")
         ->assertSee('Transactions (2)')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-transaction-year]')).map(el => el.dataset.transactionYear).join('|')",
@@ -48,7 +48,7 @@ it('cache le détail d\'une transaction derrière un clic sur sa ligne', functio
 
     $this->actingAs($user);
 
-    visit("/instruments/{$instrument->id}")
+    visit("/asset/{$instrument->id}")
         ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 0)
         ->click('[data-transaction-row]')
         ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 1)
@@ -81,7 +81,7 @@ it('détaille le montant de chaque secteur quand l\'instrument est détenu', fun
 
     $this->actingAs($user);
 
-    visit("/instruments/{$instrument->id}")
+    visit("/asset/{$instrument->id}")
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-sector-amount]')).map(el => el.textContent.replace(/\\s/g, ' ')).join('|')",
             '600 €|400 €',
@@ -99,7 +99,7 @@ it('affiche uniquement la part sectorielle quand l\'instrument n\'est pas déten
 
     $this->actingAs($user);
 
-    visit("/instruments/{$instrument->id}")
+    visit("/asset/{$instrument->id}")
         ->assertScript("document.querySelectorAll('[data-sector-amount]').length", 0)
         ->assertScript("document.querySelectorAll('[data-sector-share]').length", 2)
         ->assertNoJavaScriptErrors();
@@ -119,7 +119,7 @@ it('aligne le graphe de valorisation sur la marge du reste de la page, y compris
         return [Math.round(chart.left - heading.left), Math.round(chart.right - heading.right)].join('|');
     })()";
 
-    visit("/instruments/{$instrument->id}")->on()->iPhone14Pro()
+    visit("/asset/{$instrument->id}")->on()->iPhone14Pro()
         ->assertSee('Performance par période')
         ->assertScript($paddingGaps, '0|0')
         ->assertNoJavaScriptErrors();
@@ -140,7 +140,7 @@ it('donne une ligne à chaque repère de l\'en-tête, montant sur le bord droit'
             && (previous === null || row.top >= previous.bottom);
     })";
 
-    visit("/instruments/{$instrument->id}")->on()->iPhone14Pro()
+    visit("/asset/{$instrument->id}")->on()->iPhone14Pro()
         ->assertScript("document.querySelectorAll('[data-hero-meta] > span').length", 4)
         ->assertScript($stacked, true)
         ->assertNoJavaScriptErrors();
@@ -185,7 +185,7 @@ it('affiche les dividendes perçus quand l\'instrument en verse', function () {
     $recentYear = now()->subMonths(2)->format('Y');
     $olderYear = now()->subMonths(15)->format('Y');
 
-    visit("/instruments/{$instrument->id}")
+    visit("/asset/{$instrument->id}")
         ->assertSee('Dividendes (2)')
         // Les dividendes se lisent avant la répartition sectorielle : ce que l'actif rapporte
         // passe devant sa composition. Ordre relatif seul, les autres sections du gabarit
@@ -228,7 +228,7 @@ it('n\'affiche aucune section dividendes sur un instrument capitalisant', functi
 
     $this->actingAs($user);
 
-    visit("/instruments/{$instrument->id}")
+    visit("/asset/{$instrument->id}")
         ->assertDontSee('Dividendes')
         ->assertScript("document.querySelectorAll('[data-section=\"dividends\"]').length", 0)
         ->assertNoJavaScriptErrors();
@@ -261,7 +261,7 @@ it('annonce le revenu attendu sur les douze prochains mois', function () {
 
     $this->actingAs($user);
 
-    visit("/instruments/{$instrument->id}")
+    visit("/asset/{$instrument->id}")
         ->assertScript("document.querySelector('[data-dividend-last12]').textContent.includes('5,00')", true)
         ->assertScript("document.querySelector('[data-dividend-estimate]').textContent.includes('10,00')", true)
         ->assertNoJavaScriptErrors();
@@ -278,7 +278,7 @@ it('n\'annonce aucun revenu attendu quand le dernier détachement date de plus d
 
     $this->actingAs($user);
 
-    visit("/instruments/{$instrument->id}")
+    visit("/asset/{$instrument->id}")
         ->assertScript("document.querySelectorAll('[data-dividend-estimate]').length", 0)
         ->assertNoJavaScriptErrors();
 });
@@ -316,7 +316,7 @@ it('pointe d\'une pastille chaque détachement sur le graphe de valorisation', f
 
     $this->actingAs($user);
 
-    visit("/instruments/{$instrument->id}")
+    visit("/asset/{$instrument->id}")
         ->assertVisible('[data-section="valuation"] [data-chart] svg')
         ->assertScript(dividendMarkers(), 1)
         ->assertNoJavaScriptErrors();

@@ -45,7 +45,7 @@ it('ne chiffre que le minimum et le maximum sur le cours d\'un instrument', func
 
     $this->actingAs($user);
 
-    visit("/instruments/{$instrument->id}")
+    visit("/asset/{$instrument->id}")
         ->assertSee('Cours')
         ->assertScript(yAxisLabels('price-history'), '90,00 €|110,00 €')
         ->assertNoJavaScriptErrors();
@@ -123,7 +123,7 @@ it('ne chiffre qu\'une fois un cours qui ne bouge pas', function () {
 
     $this->actingAs($user);
 
-    visit("/instruments/{$instrument->id}")
+    visit("/asset/{$instrument->id}")
         ->assertSee('Cours')
         ->assertScript(yAxisLabels('price-history'), '100,00 €')
         ->assertNoJavaScriptErrors();

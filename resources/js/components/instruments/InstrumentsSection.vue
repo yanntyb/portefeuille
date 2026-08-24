@@ -6,12 +6,10 @@ import type { CatalogTrend } from '@/lib/catalog';
 import { areTrendsPending, holdingRows, type InstrumentRow } from '@/lib/instrumentList';
 import type { HoldingLine } from '@/lib/portfolio';
 
-const props = withDefaults(defineProps<{
+const props = defineProps<{
     holdings: HoldingLine[];
     trends?: CatalogTrend[] | null;
-    /** Racine des liens de la liste : chaque classe d'actif a ses propres fiches. */
-    basePath?: string;
-}>(), { basePath: '/instruments' });
+}>();
 
 const page = usePage();
 
@@ -31,7 +29,6 @@ const rows = computed<InstrumentRow[]>(() => holdingRows(props.holdings, props.t
         <InstrumentList
             :rows="rows"
             :loading="loading"
-            :base-path="props.basePath"
             empty-label="Aucune position pour le moment."
         />
     </section>

@@ -15,9 +15,9 @@ it('précharge la fiche instrument au survol d\'une ligne de la page Actions', f
 
     $page = visit('/actions')->assertSee('Alpha');
 
-    expect($page->script(hasRequestedPath("/instruments/{$instrument->id}")))->toBeFalse();
+    expect($page->script(hasRequestedPath("/asset/{$instrument->id}")))->toBeFalse();
 
     $page->hover('[data-instrument-name]')->wait(1);
 
-    expect($page->script(hasRequestedPath("/instruments/{$instrument->id}")))->toBeTrue();
+    expect($page->script(hasRequestedPath("/asset/{$instrument->id}")))->toBeTrue();
 });

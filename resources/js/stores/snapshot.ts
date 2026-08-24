@@ -51,10 +51,6 @@ export const useSnapshotStore = defineStore('snapshot', () => {
         return snapshot.value?.properties.byId[id] ?? null;
     }
 
-    /** Transitoires : lus par `Instruments/Show.vue` et `Crypto/Show.vue`, supprimés avec elles à la Task 9. */
-    const instrumentPage = assetPage;
-    const cryptoPage = assetPage;
-
     /**
      * Lecture du blob retenu. Asynchrone, donc jamais dans le chemin du premier rendu.
      *
@@ -114,8 +110,6 @@ export const useSnapshotStore = defineStore('snapshot', () => {
         classList,
         assetPage,
         propertiesList,
-        instrumentPage,
-        cryptoPage,
         propertyPage,
         hydrate,
         sync,

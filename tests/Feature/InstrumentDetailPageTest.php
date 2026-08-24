@@ -20,10 +20,10 @@ it('renders a held instrument sheet with its position and transactions', functio
     Holding::factory()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id, 'quantity' => 10, 'avg_cost' => 80]);
     Transaction::factory()->buy()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id, 'date' => '2026-01-01', 'quantity' => 10, 'unit_price' => 80]);
 
-    $this->get("/instruments/{$asset->id}")
+    $this->get("/asset/{$asset->id}")
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Instruments/Show')
+            ->component('Asset/Show')
             ->where('instrument.name', 'ACME')
             ->where('instrument.position.marketValue', fn ($v) => (float) $v === 1000.0)
             ->has('instrument.transactions', 1)
@@ -43,10 +43,10 @@ it('hides the position when the instrument is not held', function () {
     $asset = Instrument::factory()->create();
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-07-01', 'close' => 100]);
 
-    $this->get("/instruments/{$asset->id}")
+    $this->get("/asset/{$asset->id}")
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Instruments/Show')
+            ->component('Asset/Show')
             ->where('instrument.position', null)
         );
 });
@@ -54,7 +54,7 @@ it('hides the position when the instrument is not held', function () {
 it('returns 404 for an unknown instrument', function () {
     User::factory()->create();
 
-    $this->get('/instruments/999')->assertNotFound();
+    $this->get('/asset/999')->assertNotFound();
 });
 
 it('defers the per-title valuation series and loads it on demand', function () {
@@ -67,10 +67,10 @@ it('defers the per-title valuation series and loads it on demand', function () {
     ]);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 100]);
 
-    $this->get("/instruments/{$asset->id}")
+    $this->get("/asset/{$asset->id}")
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Instruments/Show')
+            ->component('Asset/Show')
             ->missing('valuation')
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->has('valuation.labels', 1)
@@ -99,10 +99,10 @@ it('sends the whole valuation history, sampled week by week', function () {
     }
 
     $this->actingAs($user)
-        ->get("/instruments/{$asset->id}")
+        ->get("/asset/{$asset->id}")
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Instruments/Show')
+            ->component('Asset/Show')
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->where('valuation.labels', function (Collection $labels): bool {
                     $dates = $labels->map(fn (string $label): Carbon => Carbon::parse($label));
@@ -132,7 +132,7 @@ it('expose les dividendes perçus sur la fiche', function () {
     Dividend::factory()->create(['asset_id' => $asset->id, 'ex_date' => '2026-03-05', 'amount_per_share' => 0.5]);
 
     $this->actingAs($user)
-        ->get("/instruments/{$asset->id}")
+        ->get("/asset/{$asset->id}")
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->has('dividends.receipts', 1)
@@ -152,7 +152,7 @@ it('rend un historique de dividendes vide sur un capitalisant', function () {
     $asset = Instrument::factory()->create(['name' => 'ACC']);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-07-01', 'close' => 100]);
 
-    $this->get("/instruments/{$asset->id}")
+    $this->get("/asset/{$asset->id}")
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->has('dividends.receipts', 0));
 });

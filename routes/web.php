@@ -2,8 +2,7 @@
 
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\MarketView\Http\AssetClassController;
-use App\Contexts\MarketView\Http\CryptoDetailController;
-use App\Contexts\MarketView\Http\InstrumentDetailController;
+use App\Contexts\MarketView\Http\AssetController;
 use App\Contexts\RealEstate\Http\PropertiesController;
 use App\Contexts\RealEstate\Http\PropertyDetailController;
 use App\Contexts\Wealth\Http\DashboardController;
@@ -24,7 +23,6 @@ foreach (AssetClass::cases() as $assetClass) {
         ->name("classes.{$assetClass->value}");
 }
 
-Route::get('/instruments/{id}', InstrumentDetailController::class)->name('instruments.show');
-Route::get('/crypto/{id}', CryptoDetailController::class)->name('crypto.show');
+Route::get('/asset/{id}', AssetController::class)->name('assets.show');
 Route::get('/properties', PropertiesController::class)->name('properties.index');
 Route::get('/properties/{id}', PropertyDetailController::class)->name('properties.show');

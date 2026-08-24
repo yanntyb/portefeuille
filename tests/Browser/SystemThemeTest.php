@@ -55,7 +55,7 @@ it('peint le fil d\'Ariane collant sur le fond du thème plutôt qu\'un noir fig
     $instrument = Instrument::query()->firstOrFail();
     $this->actingAs($user);
 
-    visit("/instruments/{$instrument->id}")->inLightMode()
+    visit("/asset/{$instrument->id}")->inLightMode()
         ->assertScript(
             "(() => {
                 const probe = document.createElement('div');

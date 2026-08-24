@@ -16,11 +16,6 @@ enum InstrumentType: string
         return array_map(fn (self $c) => $c->value, self::cases());
     }
 
-    public function isCrypto(): bool
-    {
-        return $this === self::Crypto;
-    }
-
     public function getLabel(): string
     {
         return match ($this) {

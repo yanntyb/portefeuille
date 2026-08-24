@@ -39,13 +39,6 @@ const evolutionSeries = aheadOfNetwork(() => props.evolutionSeries, () => cached
 const sectorBreakdown = aheadOfNetwork(() => props.sectorBreakdown, () => cached()?.sectorBreakdown);
 const income = aheadOfNetwork(() => props.income, () => cached()?.income);
 const annualIncome = aheadOfNetwork(() => props.annualIncome, () => cached()?.annualIncome);
-
-/**
- * La crypto a ses propres fiches (`/crypto/{id}`), les trois autres expositions partagent celles
- * des titres (`/instruments/{id}`) : `InstrumentDetailController` et `CryptoDetailController`
- * renvoient chacun 404 sur l'actif de l'autre, donc un lien faux ne mènerait nulle part.
- */
-const basePath = props.assetClass.key === 'crypto' ? '/crypto' : '/instruments';
 </script>
 
 <template>
@@ -56,7 +49,7 @@ const basePath = props.assetClass.key === 'crypto' ? '/crypto' : '/instruments';
 
         <EvolutionSection :series="evolutionSeries" />
 
-        <InstrumentsSection :holdings="overview.holdings" :trends="trends" :base-path="basePath" />
+        <InstrumentsSection :holdings="overview.holdings" :trends="trends" />
 
         <PerformancesSection v-if="overview.holdings.length" :performances="performances" />
 

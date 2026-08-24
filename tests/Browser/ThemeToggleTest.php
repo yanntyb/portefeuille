@@ -44,7 +44,7 @@ it('loge le bouton dans la barre collante du bas, collée au bord de la fenêtre
 
     $this->actingAs($user);
 
-    $page = visit("/instruments/{$instrument->id}");
+    $page = visit("/asset/{$instrument->id}");
 
     $page->assertScript('(() => document.querySelector("[data-bottom-bar]").contains(document.querySelector("[data-theme-toggle]")))()', true);
 
@@ -99,7 +99,7 @@ it('retrouve le thème sombre après un rechargement, sans repasser par le clair
         ->click('[data-theme-toggle]')
         ->assertScript(storedThemeMode(), 'dark');
 
-    $page->navigate("/instruments/{$instrument->id}")
+    $page->navigate("/asset/{$instrument->id}")
         ->assertScript(rootIsDark(), true)
         ->assertAttribute('[data-theme-toggle]', 'data-theme-mode', 'dark')
         ->assertNoJavaScriptErrors();
