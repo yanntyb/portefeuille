@@ -1161,7 +1161,9 @@ it('serves a list page for every exposure', function (AssetClass $class) {
         ->assertInertia(fn ($page) => $page
             ->component('AssetClass/Index')
             ->where('assetClass.key', $class->value)
-            ->where('assetClass.label', $class->getLabel()));
+            ->where('assetClass.label', $class->getLabel())
+            ->where('assetClass.hasSectors', $class->hasSectors())
+            ->where('assetClass.hasIncome', $class === AssetClass::Equity));
 })->with(AssetClass::cases());
 
 it('offers sectors and income on equity alone', function () {
@@ -1232,8 +1234,20 @@ class AssetClassController
             ? ($this->getPortfolioOverview)($user, $classes)
             : PortfolioOverviewData::empty();
 
+        $source = IncomeSource::forAssetClass($exposure);
+
+        /**
+         * Les deux drapeaux voyagent avec la classe : la page ne peut pas déduire d'une valeur
+         * absente qu'une section n'existe pas. `aheadOfNetwork` rend `null`, jamais `undefined`,
+         * donc tester la valeur ferait apparaître les sections sur toutes les expositions.
+         */
         $props = [
-            'assetClass' => ['key' => $exposure->value, 'label' => $exposure->getLabel()],
+            'assetClass' => [
+                'key' => $exposure->value,
+                'label' => $exposure->getLabel(),
+                'hasSectors' => $exposure->hasSectors(),
+                'hasIncome' => $source !== null,
+            ],
             'overview' => $overview,
             /** Un groupe par section : chaque squelette se remplit à son rythme. */
             'trends' => Inertia::defer(fn () => ($this->getTrends)($userId, $range, $classes), 'tendances'),
@@ -1251,8 +1265,6 @@ class AssetClassController
                 ? app(GetSectorBreakdown::class)($user)
                 : [], 'secteurs');
         }
-
-        $source = IncomeSource::forAssetClass($exposure);
 
         if ($source !== null) {
             /** Un seul groupe pour les deux : la section les affiche ensemble. */
@@ -1314,7 +1326,7 @@ import type { SectorSlice } from '@/lib/sector';
 import { useSnapshotStore } from '@/stores/snapshot';
 
 const props = defineProps<{
-    assetClass: { key: string; label: string };
+    assetClass: { key: string; label: string; hasSectors: boolean; hasIncome: boolean };
     overview: PortfolioOverview;
     trends?: CatalogTrend[];
     performances?: Performance[];
@@ -1350,14 +1362,18 @@ const annualIncome = aheadOfNetwork(() => props.annualIncome, () => cached()?.an
 
         <PerformancesSection v-if="overview.holdings.length" :performances="performances" />
 
+        <!--
+            Les sections se décident sur la classe, jamais sur la valeur : `aheadOfNetwork` rend
+            `null` en attendant, et un `null` ne distingue pas « pas encore » de « jamais ».
+        -->
         <IncomeSection
-            v-if="overview.holdings.length && income !== undefined"
+            v-if="overview.holdings.length && props.assetClass.hasIncome"
             :income="income"
             :annual-income="annualIncome"
         />
 
         <SectorsSection
-            v-if="overview.holdings.length && sectorBreakdown !== undefined"
+            v-if="overview.holdings.length && props.assetClass.hasSectors"
             :slices="sectorBreakdown"
         />
     </AppPage>
