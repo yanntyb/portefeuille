@@ -676,7 +676,7 @@ git commit -m "feat: rattache une origine de revenu à chaque exposition"
 
 **Files:**
 - Modify: `app/Contexts/MarketView/Actions/GetHoldingTrends.php`
-- Modify: `app/Contexts/MarketView/Ports/HoldingsPort.php` (si le filtre y descend) ou filtrage en mémoire dans l'action
+- Modify: `app/Contexts/MarketView/Ports/MarketDataPort.php`, `app/Contexts/MarketView/Infrastructure/MarketData.php`, `MarketDataTest.php`
 - Test: `app/Contexts/MarketView/Actions/GetHoldingTrendsTest.php`
 
 **Interfaces:**
@@ -716,7 +716,45 @@ Expected: FAIL — `__invoke()` n'accepte que deux arguments.
 
 - [ ] **Step 3: Write the implementation**
 
-Dans `app/Contexts/MarketView/Actions/GetHoldingTrends.php`, ajouter le paramètre et le filtre. Le répertoire de `Valuation` n'est pas accessible ici ; filtrer sur l'instrument lu par `HoldingsPort` si `HoldingSnapshotData` porte l'exposition, sinon interroger `Instrument` directement :
+Le filtre descend dans le port : dans `MarketView`, seul `Infrastructure` importe les modèles de `Market` (`MarketData.php`), les actions passent toutes par un port. Ajouter donc à `app/Contexts/MarketView/Ports/MarketDataPort.php` :
+
+```php
+    /**
+     * Parmi ces actifs, ceux qui portent l'une des expositions données. Le filtre descend ici et
+     * non dans l'action : `MarketView` lit le marché par ses ports, jamais par ses modèles.
+     *
+     * @param  list<int>  $assetIds
+     * @param  list<AssetClass>  $classes
+     * @return list<int>
+     */
+    public function idsOfClasses(array $assetIds, array $classes): array;
+```
+
+et son implémentation dans `app/Contexts/MarketView/Infrastructure/MarketData.php` :
+
+```php
+    /**
+     * @param  list<int>  $assetIds
+     * @param  list<AssetClass>  $classes
+     * @return list<int>
+     */
+    public function idsOfClasses(array $assetIds, array $classes): array
+    {
+        if ($assetIds === [] || $classes === []) {
+            return [];
+        }
+
+        return Instrument::query()
+            ->whereIn('id', $assetIds)
+            ->whereIn('asset_class', array_map(fn (AssetClass $class): string => $class->value, $classes))
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->values()
+            ->all();
+    }
+```
+
+Puis dans `app/Contexts/MarketView/Actions/GetHoldingTrends.php` :
 
 ```php
     /**
@@ -739,13 +777,7 @@ Dans `app/Contexts/MarketView/Actions/GetHoldingTrends.php`, ajouter le paramèt
         );
 
         if ($classes !== null) {
-            $kept = array_flip(Instrument::query()
-                ->whereIn('id', $assetIds)
-                ->whereIn('asset_class', array_map(fn (AssetClass $class): string => $class->value, $classes))
-                ->pluck('id')
-                ->map(fn ($id): int => (int) $id)
-                ->all());
-
+            $kept = array_flip($this->market->idsOfClasses($assetIds, $classes));
             $assetIds = array_values(array_filter($assetIds, fn (int $id): bool => isset($kept[$id])));
         }
 
@@ -754,9 +786,7 @@ Dans `app/Contexts/MarketView/Actions/GetHoldingTrends.php`, ajouter le paramèt
     }
 ```
 
-Ajouter les imports `AssetClass` et `Instrument`.
-
-> Si `MarketView` a une règle interdisant l'accès direct au modèle `Instrument` (vérifier `.ai/rules/contexts.md` et `.ai/rules/infrastructure.md` avant d'écrire), passer plutôt par `MarketDataPort` en lui ajoutant une méthode `idsOfClasses(array $assetIds, array $classes): list<int>`, implémentée dans l'adaptateur de `MarketView\Infrastructure`.
+Ajouter l'import `AssetClass` là où il manque. Le reste du corps de l'action ne bouge pas.
 
 - [ ] **Step 4: Run test to verify it passes**
 
