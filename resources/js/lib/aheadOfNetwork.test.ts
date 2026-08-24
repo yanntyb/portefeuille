@@ -32,3 +32,39 @@ describe('fusion prop / instantané', () => {
         expect(merged.value).toBe('réseau');
     });
 });
+
+describe('verrou sur le premier instantané rendu', () => {
+    it('ignore un instantané resynchronisé sous les pieds du lecteur', () => {
+        const stored = ref<string | null>('blob retenu');
+        const merged = aheadOfNetwork<string>(() => undefined, () => stored.value);
+
+        expect(merged.value).toBe('blob retenu');
+
+        stored.value = 'blob resynchronisé';
+
+        expect(merged.value).toBe('blob retenu');
+    });
+
+    it('attend le premier instantané non nul plutôt que de se verrouiller sur rien', () => {
+        const stored = ref<string | null>(null);
+        const merged = aheadOfNetwork<string>(() => undefined, () => stored.value);
+
+        expect(merged.value).toBeNull();
+
+        stored.value = 'blob retenu';
+
+        expect(merged.value).toBe('blob retenu');
+    });
+
+    it('laisse la prop Inertia passer devant l\'instantané verrouillé', () => {
+        const prop = ref<string | undefined>(undefined);
+        const stored = ref<string | null>('blob retenu');
+        const merged = aheadOfNetwork<string>(() => prop.value, () => stored.value);
+
+        expect(merged.value).toBe('blob retenu');
+
+        prop.value = 'réseau';
+
+        expect(merged.value).toBe('réseau');
+    });
+});
