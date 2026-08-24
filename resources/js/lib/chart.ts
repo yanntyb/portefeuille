@@ -9,6 +9,8 @@ type ChartPalette = {
     invested: string;
     gain: string;
     loss: string;
+    bond: string;
+    commodity: string;
     realEstate: string;
     crypto: string;
     axisLabel: string;
@@ -32,6 +34,8 @@ function palette(): ChartPalette {
             invested: '#6b7280',
             gain: '#34d399',
             loss: '#f87171',
+            bond: '#2dd4bf',
+            commodity: '#d6e85e',
             realEstate: '#e0a75f',
             crypto: '#e879f9',
             axisLabel: '#7f858f',
@@ -48,6 +52,8 @@ function palette(): ChartPalette {
             invested: '#b6bac4',
             gain: '#00915d',
             loss: '#c2321f',
+            bond: '#0d9488',
+            commodity: '#535e08',
             realEstate: '#b3701a',
             crypto: '#a21caf',
             axisLabel: '#9aa0ac',
@@ -571,6 +577,8 @@ export function buildValueVsInvestedOption(
 export type WealthStackClass = {
     label: string;
     values: number[];
+    /** Jeton de teinte porté par la classe : la couleur ne se déduit plus de son rang. */
+    color: string;
 };
 
 export type WealthStackInput = {
@@ -582,21 +590,28 @@ export type WealthStackInput = {
     description: string;
 };
 
-/**
- * Une teinte par classe d'actif, dans l'ordre où le registre les déclare. Au-delà des teintes
- * nommées, on retombe sur celle des titres : mieux vaut deux bandes de même couleur qu'une bande
- * invisible, et le cas ne se produit qu'à partir d'une quatrième classe.
- */
-function classColors(): string[] {
-    const colors = palette();
+/** Jetons de teinte que le serveur peut poser sur une classe d'actif : voir `ChartPalette`. */
+type ClassColorToken = 'value' | 'bond' | 'commodity' | 'crypto' | 'realEstate';
 
-    return [colors.value, colors.realEstate, colors.crypto];
+/**
+ * Vrai pour un jeton que la palette sait résoudre. Un simple `Record<string, string>` accepterait
+ * n'importe quelle chaîne au prix d'un cast qui contournerait le typage ; cette garde, elle, borne
+ * l'accès à `ChartPalette` aux seules clés qu'elle porte réellement.
+ */
+function isClassColorToken(token: string): token is ClassColorToken {
+    return token === 'value' || token === 'bond' || token === 'commodity'
+        || token === 'crypto' || token === 'realEstate';
 }
 
-function classColorAt(index: number): string {
-    const colors = classColors();
+/**
+ * La teinte d'une classe d'actif, depuis le jeton qu'elle porte. Le rang ne décide plus : il
+ * décidait autrefois, et la quatrième classe reprenait la teinte de la première. Un jeton que le
+ * registre ne connaîtrait pas encore retombe sur celle des titres, plutôt que de rendre `undefined`.
+ */
+function classColor(token: string): string {
+    const colors = palette();
 
-    return colors[index] ?? colors[0];
+    return isClassColorToken(token) ? colors[token] : colors.value;
 }
 
 /** Le total empilé à un instant : la somme des classes, sommet de la pile. */
@@ -609,8 +624,8 @@ function stackTotals(labels: string[], classes: WealthStackClass[]): number[] {
 
 /** Une bande par classe d'actif, empilées : le sommet de la pile est le patrimoine total. */
 function wealthStackSeries(labels: string[], classes: WealthStackClass[]): LineSeriesOption[] {
-    return classes.map((one: WealthStackClass, index: number): LineSeriesOption => {
-        const color = classColorAt(index);
+    return classes.map((one: WealthStackClass): LineSeriesOption => {
+        const color = classColor(one.color);
 
         return {
             name: one.label,
@@ -654,9 +669,9 @@ function wealthStackTooltip(
              * quand on n'en possède pas encore renseigne moins que l'absence de la ligne.
              */
             const rows = classes
-                .map((one: WealthStackClass, at: number): string => ((one.values[index] ?? 0) === 0
+                .map((one: WealthStackClass): string => ((one.values[index] ?? 0) === 0
                     ? ''
-                    : tooltipRow(classColorAt(at), one.label, valueFormatter(one.values[index] ?? 0))))
+                    : tooltipRow(classColor(one.color), one.label, valueFormatter(one.values[index] ?? 0))))
                 .join('');
 
             return tooltipTitle(labels[index] ?? '')

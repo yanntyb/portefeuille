@@ -606,8 +606,8 @@ describe('buildWealthStackOption', () => {
     const input = {
         labels: ['2026-01-05', '2026-01-12'],
         classes: [
-            { label: 'Actions', values: [1000, 1100] },
-            { label: 'Immobilier', values: [500, 520] },
+            { label: 'Actions', values: [1000, 1100], color: 'value' },
+            { label: 'Immobilier', values: [500, 520], color: 'realEstate' },
         ],
         invested: [1400, 1400],
         valueFormatter: (amount: number): string => `${amount} €`,
@@ -627,7 +627,7 @@ describe('buildWealthStackOption', () => {
     it('empile autant de bandes que le registre déclare de classes', () => {
         const option = buildWealthStackOption({
             ...input,
-            classes: [...input.classes, { label: 'Crypto', values: [200, 240] }],
+            classes: [...input.classes, { label: 'Crypto', values: [200, 240], color: 'crypto' }],
         });
         const series = option.series as { name: string; areaStyle: { color: AreaGradient } }[];
 
@@ -638,7 +638,7 @@ describe('buildWealthStackOption', () => {
     it('fond chaque bande comme les aires des fiches, teintée par sa classe', () => {
         const option = buildWealthStackOption({
             ...input,
-            classes: [...input.classes, { label: 'Crypto', values: [200, 240] }],
+            classes: [...input.classes, { label: 'Crypto', values: [200, 240], color: 'crypto' }],
         });
         const series = option.series as { areaStyle: { color: AreaGradient } }[];
 
@@ -658,7 +658,7 @@ describe('buildWealthStackOption', () => {
     it('nomme chaque classe dans l\'infobulle, la crypto comprise', () => {
         const option = buildWealthStackOption({
             ...input,
-            classes: [...input.classes, { label: 'Crypto', values: [200, 240] }],
+            classes: [...input.classes, { label: 'Crypto', values: [200, 240], color: 'crypto' }],
         });
 
         const html = (option.tooltip as { formatter: (params: unknown) => string })
@@ -672,9 +672,9 @@ describe('buildWealthStackOption', () => {
         const option = buildWealthStackOption({
             ...input,
             classes: [
-                { label: 'Actions', values: [1000, 1100] },
-                { label: 'Immobilier', values: [0, 0] },
-                { label: 'Crypto', values: [0, 240] },
+                { label: 'Actions', values: [1000, 1100], color: 'value' },
+                { label: 'Immobilier', values: [0, 0], color: 'realEstate' },
+                { label: 'Crypto', values: [0, 240], color: 'crypto' },
             ],
         });
         const tooltip = option.tooltip as { formatter: (params: unknown) => string };
@@ -702,5 +702,26 @@ describe('buildWealthStackOption', () => {
         const option = buildWealthStackOption(input);
 
         expect(option.dataZoom).toHaveLength(1);
+    });
+
+    it('peint chaque bande du patrimoine de la couleur portée par sa classe, pas par son rang', () => {
+        const option = buildWealthStackOption({
+            labels: ['2026-01-01', '2026-02-01'],
+            classes: [
+                { label: 'Actions', values: [1, 2], color: 'value' },
+                { label: 'Matières premières', values: [3, 4], color: 'commodity' },
+                { label: 'Crypto', values: [5, 6], color: 'crypto' },
+                { label: 'Immobilier', values: [7, 8], color: 'realEstate' },
+            ],
+            invested: [1, 1],
+            valueFormatter: (amount: number): string => String(amount),
+            window: null,
+            description: '',
+        });
+
+        const strokes = (option.series as { lineStyle: { color: string } }[])
+            .map((one) => one.lineStyle.color);
+
+        expect(new Set(strokes).size).toBe(4);
     });
 });

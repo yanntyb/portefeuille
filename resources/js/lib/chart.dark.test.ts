@@ -43,9 +43,9 @@ describe('palette sombre', () => {
         const option = buildWealthStackOption({
             labels: ['2026-01-05', '2026-01-12'],
             classes: [
-                { label: 'Actions', values: [1000, 1100] },
-                { label: 'Immobilier', values: [500, 520] },
-                { label: 'Crypto', values: [200, 240] },
+                { label: 'Actions', values: [1000, 1100], color: 'value' },
+                { label: 'Immobilier', values: [500, 520], color: 'realEstate' },
+                { label: 'Crypto', values: [200, 240], color: 'crypto' },
             ],
             invested: [1400, 1400],
             valueFormatter: (amount: number): string => `${amount} €`,
