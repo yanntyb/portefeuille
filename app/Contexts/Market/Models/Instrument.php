@@ -2,6 +2,7 @@
 
 namespace App\Contexts\Market\Models;
 
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Factories\InstrumentFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
@@ -17,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property ?string $isin
  * @property ?string $ticker
  * @property InstrumentType $type
+ * @property AssetClass $asset_class
  * @property-read Carbon $created_at
  * @property-read Carbon $updated_at
  */
@@ -40,6 +42,14 @@ class Instrument extends Model
             if ($instrument->type === null) {
                 $instrument->type = InstrumentType::Stock;
             }
+
+            /**
+             * Défaut posé une fois puis stocké : une exposition donnée explicitement n'est jamais
+             * écrasée. C'est ce qui sépare ce défaut d'une dérivation permanente depuis le type.
+             */
+            if ($instrument->asset_class === null) {
+                $instrument->asset_class = AssetClass::defaultForType($instrument->type);
+            }
         });
     }
 
@@ -48,6 +58,7 @@ class Instrument extends Model
     {
         return [
             'type' => InstrumentType::class,
+            'asset_class' => AssetClass::class,
         ];
     }
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
@@ -46,4 +47,21 @@ it('has a sectors relation', function () {
 
     expect($instrument->sectors)->toHaveCount(1)
         ->and($instrument->sectors->first())->toBeInstanceOf(SectorAllocation::class);
+});
+
+it('fills the exposure from the wrapper when none is given', function () {
+    $etf = Instrument::factory()->create(['type' => InstrumentType::ETF]);
+    $gold = Instrument::factory()->create(['type' => InstrumentType::Commodity]);
+
+    expect($etf->asset_class)->toBe(AssetClass::Equity)
+        ->and($gold->asset_class)->toBe(AssetClass::Commodity);
+});
+
+it('never overwrites an exposure that was given explicitly', function () {
+    $bondEtf = Instrument::factory()->create([
+        'type' => InstrumentType::ETF,
+        'asset_class' => AssetClass::Bond,
+    ]);
+
+    expect($bondEtf->fresh()->asset_class)->toBe(AssetClass::Bond);
 });
