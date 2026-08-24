@@ -2,11 +2,12 @@
 import { onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { chartHeight } from '@/lib/layout';
 import { CHART_LOCALE, echarts, type ChartOption } from '@/lib/echarts';
+import type { ZoomWindow } from '@/lib/chart';
 
 const props = defineProps<{ option: ChartOption }>();
 
 /** La fenêtre de zoom est rendue au parent plutôt que lue sur l'instance : elle reste privée. */
-const emit = defineEmits<{ zoom: [window: { start: number; end: number }] }>();
+const emit = defineEmits<{ zoom: [window: ZoomWindow] }>();
 
 const container = useTemplateRef<HTMLElement>('container');
 
@@ -47,17 +48,34 @@ const resizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]): void
  */
 const zoomWindow = ref<string | null>(null);
 
-/** Les charges utiles de `datazoom` diffèrent selon la poignée : l'option courante fait foi. */
-const publishZoom = (): void => {
+/**
+ * Publie la fenêtre en attribut et la rend, ou `null` quand l'option n'en porte aucune. Les
+ * charges utiles de `datazoom` diffèrent selon la poignée : l'option courante fait foi.
+ */
+const publishZoom = (): ZoomWindow | null => {
     const zooms = chart?.getOption()?.dataZoom as { start?: number; end?: number }[] | undefined;
     const zoom = zooms?.[0];
 
     if (typeof zoom?.start !== 'number' || typeof zoom.end !== 'number') {
-        return;
+        return null;
     }
 
     zoomWindow.value = `${Math.round(zoom.start)}-${Math.round(zoom.end)}`;
-    emit('zoom', { start: zoom.start, end: zoom.end });
+
+    return { start: zoom.start, end: zoom.end };
+};
+
+/**
+ * Seul un déplacement du lecteur est rendu au parent. Rendre aussi la fenêtre d'ouverture la
+ * figerait en pourcentage : une reconstruction sur un historique plus long — l'instantané puis le
+ * réseau — la rejouerait sur une autre amplitude, et le graphe n'ouvrirait plus sur douze mois.
+ */
+const rememberReaderZoom = (): void => {
+    const zoom = publishZoom();
+
+    if (zoom !== null) {
+        emit('zoom', zoom);
+    }
 };
 
 onMounted((): void => {
@@ -67,7 +85,7 @@ onMounted((): void => {
 
     chart = echarts.init(container.value, null, { renderer: 'svg', locale: CHART_LOCALE });
     chart.setOption(props.option);
-    chart.on('datazoom', publishZoom);
+    chart.on('datazoom', rememberReaderZoom);
     publishZoom();
     resizeObserver.observe(container.value);
 });
