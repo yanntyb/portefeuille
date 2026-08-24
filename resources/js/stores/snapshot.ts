@@ -13,6 +13,15 @@ import type {
 /** Le worker laisse passer cette URL : le store absorbe lui-même ses échecs (cf. `classifyRequest`). */
 const SNAPSHOT_URL = '/instantane';
 
+/**
+ * Un blob retenu avant ce déploiement porte encore `instruments`/`crypto`, pas `classes`/`assets` :
+ * IndexedDB n'a ni clé de schéma ni version, donc `hydrate()` doit lui-même savoir reconnaître la
+ * forme qu'il vient de lire plutôt que de faire confiance à son type déclaré.
+ */
+function isCurrentShape(candidate: Snapshot | null): candidate is Snapshot {
+    return candidate !== null && typeof candidate === 'object' && 'classes' in candidate;
+}
+
 export const useSnapshotStore = defineStore('snapshot', () => {
     const snapshot: Ref<Snapshot | null> = ref(null);
     const syncing: Ref<boolean> = ref(false);
@@ -54,13 +63,21 @@ export const useSnapshotStore = defineStore('snapshot', () => {
     const instrumentPage = assetPage;
     const cryptoPage = assetPage;
 
-    /** Lecture du blob retenu. Asynchrone, donc jamais dans le chemin du premier rendu. */
+    /**
+     * Lecture du blob retenu. Asynchrone, donc jamais dans le chemin du premier rendu.
+     *
+     * Un blob d'ancienne forme (`instruments`/`crypto`, sans `classes`) est rejeté plutôt que
+     * gardé à moitié compris : le store repart de rien, et `sync()` le resynchronise à la
+     * prochaine occasion — préférable à des accès défensifs partout où `classes`/`assets` sont lus.
+     */
     async function hydrate(): Promise<void> {
         if (snapshot.value !== null) {
             return;
         }
 
-        snapshot.value = await readSnapshot();
+        const stored = await readSnapshot();
+
+        snapshot.value = isCurrentShape(stored) ? stored : null;
     }
 
     /**

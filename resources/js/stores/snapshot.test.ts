@@ -52,6 +52,24 @@ describe('hydratation', () => {
 
         expect(store.snapshot).toBeNull();
     });
+
+    it('rejette un blob d\'ancienne forme (instruments/crypto) plutôt que de le garder à moitié compris', async () => {
+        stored.value = {
+            version: 'legacy',
+            generatedAt: 1_700_000_000,
+            dashboard: { overview: {}, series: {}, income: {} },
+            instruments: { list: {}, byId: { '7': { marker: 'ancienne-fiche' } } },
+            crypto: { list: {}, byId: {} },
+            properties: { list: {}, byId: {} },
+        } as unknown as Snapshot;
+
+        const store = useSnapshotStore();
+        await store.hydrate();
+
+        expect(store.snapshot).toBeNull();
+        expect(store.classList('equity')).toBeNull();
+        expect(store.assetPage('7')).toBeNull();
+    });
 });
 
 describe('resynchronisation', () => {
