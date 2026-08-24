@@ -9,13 +9,13 @@ use Illuminate\Support\Carbon;
 function securitiesAndProperties(ClassSeriesData $securities): void
 {
     fakeWealthClasses(
-        fakeWealthClass('securities', series: $securities),
+        fakeWealthClass('equity', series: $securities),
         app(RealEstateClass::class),
     );
 }
 
 it('rend une série vide quand aucune classe n\'a d\'historique', function () {
-    fakeWealthClasses(fakeWealthClass('securities'));
+    fakeWealthClasses(fakeWealthClass('equity'));
 
     expect(app(BuildWealthSeries::class)(999)->labels)->toBe([]);
 });
@@ -75,7 +75,7 @@ it('donne à chaque classe et à l\'investi la longueur de la grille', function 
 
 it('somme les mises de toutes les classes sur la grille commune', function () {
     fakeWealthClasses(
-        fakeWealthClass('securities', series: new ClassSeriesData(
+        fakeWealthClass('equity', series: new ClassSeriesData(
             labels: ['2026-01-05'],
             value: [1000.0],
             invested: [800.0],

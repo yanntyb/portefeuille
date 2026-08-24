@@ -26,6 +26,11 @@ function fakeAssetClass(string $key, float $value = 0.0): AssetClassPort
             return '/'.$this->keyName;
         }
 
+        public function color(): string
+        {
+            return 'value';
+        }
+
         public function snapshotFor(int $userId): ClassSnapshotData
         {
             return new ClassSnapshotData(value: $this->value, invested: 0.0);
@@ -50,15 +55,24 @@ function fakeAssetClass(string $key, float $value = 0.0): AssetClassPort
 
 it('serves the asset classes in the order they were declared', function () {
     $registry = new AssetClassRegistry([
-        fakeAssetClass('securities'),
+        fakeAssetClass('equity'),
         fakeAssetClass('realEstate'),
         fakeAssetClass('crypto'),
     ]);
 
     expect(array_map(fn (AssetClassPort $class): string => $class->key(), $registry->all()))
-        ->toBe(['securities', 'realEstate', 'crypto']);
+        ->toBe(['equity', 'realEstate', 'crypto']);
 });
 
 it('serves nothing when no class is declared', function () {
     expect((new AssetClassRegistry([]))->all())->toBe([]);
+});
+
+it('derives one class per exposure, then the hand-written ones', function () {
+    $keys = array_map(
+        fn (AssetClassPort $class): string => $class->key(),
+        app(AssetClassRegistry::class)->all(),
+    );
+
+    expect($keys)->toBe(['equity', 'bond', 'commodity', 'crypto', 'realEstate']);
 });

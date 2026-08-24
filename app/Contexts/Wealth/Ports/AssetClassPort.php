@@ -22,6 +22,13 @@ interface AssetClassPort
     /** La page qui détaille la classe, vers laquelle le tableau de bord renvoie. */
     public function href(): string;
 
+    /**
+     * Jeton de teinte de la classe, résolu par thème côté front. Porté par la classe et non déduit
+     * de son rang : un rang décidait autrefois de la couleur, et la quatrième classe reprenait
+     * celle de la première.
+     */
+    public function color(): string;
+
     public function snapshotFor(int $userId): ClassSnapshotData;
 
     public function seriesFor(int $userId): ClassSeriesData;

@@ -11,6 +11,7 @@ readonly class ClassValuesData implements JsonSerializable
     public function __construct(
         public string $key,
         public string $label,
+        public string $color,
         public array $values,
     ) {}
 
@@ -20,6 +21,7 @@ readonly class ClassValuesData implements JsonSerializable
         return [
             'key' => $this->key,
             'label' => $this->label,
+            'color' => $this->color,
             'values' => $this->values,
         ];
     }

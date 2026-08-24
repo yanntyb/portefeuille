@@ -8,6 +8,7 @@ export interface AssetClass {
     key: string;
     label: string;
     href: string;
+    color: string;
     value: number;
     invested: number;
     gain: number;
@@ -64,6 +65,7 @@ export const assetClassWeights = (overview: WealthOverview): AssetClassWeight[] 
 export interface ClassValues {
     key: string;
     label: string;
+    color: string;
     values: number[];
 }
 

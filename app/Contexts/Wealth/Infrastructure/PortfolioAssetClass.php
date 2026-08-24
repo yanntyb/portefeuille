@@ -18,28 +18,42 @@ use App\Contexts\Wealth\Ports\AssetClassPort;
  * Une classe d'actif tenue dans un portefeuille : ce que le portefeuille en vaut aujourd'hui, ce
  * que sa valorisation dit du passé, et ce qu'elle verse.
  *
- * Les classes concrètes ne diffèrent que par leur identité et par les types d'instrument qu'elles
- * gardent : recopier ces trois lectures pour chacune les ferait diverger à la première correction.
+ * Elle se déduit entièrement de son exposition : clé, libellé, page, teinte et origine de revenu
+ * viennent tous de `AssetClass`. Une seule classe couvre ainsi toutes les expositions du
+ * portefeuille ; `RealEstateClass` reste écrite à la main parce qu'elle n'en est pas une.
  */
-abstract class PortfolioAssetClass implements AssetClassPort
+class PortfolioAssetClass implements AssetClassPort
 {
     public function __construct(
+        private AssetClass $exposure,
         private GetPortfolioOverview $overview,
         private BuildEvolutionSeries $evolution,
         private GetIncomeSummary $income,
     ) {}
 
-    /**
-     * Les expositions que la classe garde, ou `null` pour tout le portefeuille.
-     *
-     * @return ?list<AssetClass>
-     */
-    abstract protected function classes(): ?array;
-
-    /** L'origine de revenu à interroger, ou `null` quand la classe ne verse rien. */
-    protected function incomeSource(): ?IncomeSource
+    public function key(): string
     {
-        return null;
+        return $this->exposure->value;
+    }
+
+    public function label(): string
+    {
+        return $this->exposure->getLabel();
+    }
+
+    public function href(): string
+    {
+        return '/'.$this->exposure->slug();
+    }
+
+    public function color(): string
+    {
+        return $this->exposure->getColor();
+    }
+
+    public function incomeLabel(): ?string
+    {
+        return IncomeSource::forAssetClass($this->exposure)?->getLabel();
     }
 
     public function snapshotFor(int $userId): ClassSnapshotData
@@ -50,7 +64,7 @@ abstract class PortfolioAssetClass implements AssetClassPort
             return ClassSnapshotData::empty();
         }
 
-        $overview = ($this->overview)($user, $this->classes());
+        $overview = ($this->overview)($user, [$this->exposure]);
 
         return new ClassSnapshotData(value: $overview->totalValue, invested: $overview->totalCost);
     }
@@ -58,7 +72,7 @@ abstract class PortfolioAssetClass implements AssetClassPort
     public function seriesFor(int $userId): ClassSeriesData
     {
         /** Historique complet au pas hebdomadaire, comme le graphe du tableau de bord l'utilisait déjà. */
-        $series = ($this->evolution)($userId, null, ValuationGranularity::Week, $this->classes());
+        $series = ($this->evolution)($userId, null, ValuationGranularity::Week, [$this->exposure]);
 
         return new ClassSeriesData(
             labels: $series->labels,
@@ -69,7 +83,7 @@ abstract class PortfolioAssetClass implements AssetClassPort
 
     public function monthlyIncomeFor(int $userId): float
     {
-        $source = $this->incomeSource();
+        $source = IncomeSource::forAssetClass($this->exposure);
 
         if ($source === null) {
             return 0.0;

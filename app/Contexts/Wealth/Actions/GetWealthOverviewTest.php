@@ -4,7 +4,7 @@ use App\Contexts\Wealth\Actions\GetWealthOverview;
 
 it('additionne les classes d\'actif du registre', function () {
     fakeWealthClasses(
-        fakeWealthClass('securities', value: 184200.0, invested: 160000.0),
+        fakeWealthClass('equity', value: 184200.0, invested: 160000.0),
         fakeWealthClass('realEstate', value: 128200.0, invested: 100000.0),
     );
 
@@ -19,7 +19,7 @@ it('additionne les classes d\'actif du registre', function () {
         ->and($overview->totalInvested)->toBe(260000.0)
         ->and($overview->totalGain)->toBe(52400.0)
         ->and($overview->totalGainPct)->toBe(20.15)
-        ->and($overview->classes[0]->key)->toBe('securities')
+        ->and($overview->classes[0]->key)->toBe('equity')
         ->and($overview->classes[0]->value)->toBe(184200.0)
         ->and($overview->classes[1]->key)->toBe('realEstate')
         ->and($overview->classes[1]->value)->toBe(128200.0);
@@ -29,15 +29,15 @@ it('rend les classes dans l\'ordre où elles ont été déclarées', function ()
     fakeWealthClasses(
         fakeWealthClass('realEstate', value: 1.0),
         fakeWealthClass('crypto', value: 2.0),
-        fakeWealthClass('securities', value: 3.0),
+        fakeWealthClass('equity', value: 3.0),
     );
 
     expect(array_column(array_map(fn ($class) => $class->jsonSerialize(), app(GetWealthOverview::class)(999)->classes), 'key'))
-        ->toBe(['realEstate', 'crypto', 'securities']);
+        ->toBe(['realEstate', 'crypto', 'equity']);
 });
 
 it('rend un pourcentage de gain nul quand rien n\'a été investi', function () {
-    fakeWealthClasses(fakeWealthClass('securities'));
+    fakeWealthClasses(fakeWealthClass('equity'));
 
     $overview = app(GetWealthOverview::class)(999);
 
@@ -46,12 +46,12 @@ it('rend un pourcentage de gain nul quand rien n\'a été investi', function () 
 });
 
 it('porte le libellé et la page de chaque classe', function () {
-    fakeWealthClasses(fakeWealthClass('securities', value: 1000.0, invested: 800.0));
+    fakeWealthClasses(fakeWealthClass('equity', value: 1000.0, invested: 800.0));
 
     $line = app(GetWealthOverview::class)(999)->classes[0];
 
-    expect($line->label)->toBe('Securities')
-        ->and($line->href)->toBe('/securities')
+    expect($line->label)->toBe('Equity')
+        ->and($line->href)->toBe('/equity')
         ->and($line->gainPct)->toBe(25.0);
 });
 

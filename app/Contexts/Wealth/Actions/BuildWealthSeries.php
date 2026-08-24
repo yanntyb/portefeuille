@@ -40,6 +40,7 @@ class BuildWealthSeries
             $values[] = new ClassValuesData(
                 key: $class->key(),
                 label: $class->label(),
+                color: $class->color(),
                 values: $this->aligner->onto($labels, $series[$index]->labels, $series[$index]->value),
             );
 

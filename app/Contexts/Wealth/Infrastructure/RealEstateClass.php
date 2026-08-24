@@ -28,6 +28,11 @@ class RealEstateClass implements AssetClassPort
         return '/properties';
     }
 
+    public function color(): string
+    {
+        return 'realEstate';
+    }
+
     public function incomeLabel(): ?string
     {
         return 'Locatif net';

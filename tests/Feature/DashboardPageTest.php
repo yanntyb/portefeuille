@@ -31,10 +31,12 @@ it('additionne les titres et l\'immobilier dans le grand chiffre', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
-            ->has('overview.classes', 3)
-            ->where('overview.classes.0.key', 'securities')
-            ->where('overview.classes.1.key', 'realEstate')
-            ->where('overview.classes.2.key', 'crypto')
+            ->has('overview.classes', 5)
+            ->where('overview.classes.0.key', 'equity')
+            ->where('overview.classes.1.key', 'bond')
+            ->where('overview.classes.2.key', 'commodity')
+            ->where('overview.classes.3.key', 'crypto')
+            ->where('overview.classes.4.key', 'realEstate')
             ->where('overview.totalValue', fn (float $total): bool => $total > 0.0)
         );
 });
@@ -95,11 +97,11 @@ it('compte la crypto comme sa propre classe, séparée des titres', function () 
         ->get('/')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->has('overview.classes', 3)
-            ->where('overview.classes.2.key', 'crypto')
-            ->where('overview.classes.2.label', 'Crypto')
-            ->where('overview.classes.2.href', '/crypto')
-            ->where('overview.classes.2.value', fn (float|int $value): bool => (float) $value === 400.0)
+            ->has('overview.classes', 5)
+            ->where('overview.classes.3.key', 'crypto')
+            ->where('overview.classes.3.label', 'Crypto')
+            ->where('overview.classes.3.href', '/crypto')
+            ->where('overview.classes.3.value', fn (float|int $value): bool => (float) $value === 400.0)
             /** La position de 10 titres à 100 € vaut 1 000 € : la crypto n'y est plus comptée. */
             ->where('overview.classes.0.value', fn (float|int $value): bool => (float) $value === 1000.0)
             ->where('overview.totalValue', fn (float|int $value): bool => (float) $value === 1400.0)

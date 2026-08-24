@@ -4,7 +4,7 @@ use App\Contexts\Wealth\Actions\GetWealthIncome;
 
 it('additionne ce que chaque classe verse chaque mois', function () {
     fakeWealthClasses(
-        fakeWealthClass('securities', incomeLabel: 'Dividendes', monthlyIncome: 102.0),
+        fakeWealthClass('equity', incomeLabel: 'Dividendes', monthlyIncome: 102.0),
         fakeWealthClass('realEstate', incomeLabel: 'Locatif net', monthlyIncome: 45.5),
     );
 
@@ -20,7 +20,7 @@ it('additionne ce que chaque classe verse chaque mois', function () {
 
 it('saute la classe qui ne verse rien plutôt que de lui donner une ligne à zéro', function () {
     fakeWealthClasses(
-        fakeWealthClass('securities', incomeLabel: 'Dividendes', monthlyIncome: 60.0),
+        fakeWealthClass('equity', incomeLabel: 'Dividendes', monthlyIncome: 60.0),
         fakeWealthClass('crypto'),
     );
 

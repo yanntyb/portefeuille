@@ -271,7 +271,7 @@ function fakeWealthClasses(AssetClassPort ...$classes): void
  * place ici plutôt qu'à côté de l'un d'eux.
  */
 function fakeWealthClass(
-    string $key = 'securities',
+    string $key = 'equity',
     float $value = 0.0,
     float $invested = 0.0,
     ?ClassSeriesData $series = null,
@@ -302,6 +302,11 @@ function fakeWealthClass(
         public function href(): string
         {
             return '/'.$this->key;
+        }
+
+        public function color(): string
+        {
+            return 'value';
         }
 
         public function snapshotFor(int $userId): ClassSnapshotData

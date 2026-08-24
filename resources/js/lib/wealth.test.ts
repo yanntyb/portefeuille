@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { assetClassWeights, type AssetClass, type WealthOverview } from '@/lib/wealth';
 
 const assetClass = (overrides: Partial<AssetClass> = {}): AssetClass => ({
-    key: 'securities',
+    key: 'equity',
     label: 'Actions',
     href: '/instruments',
+    color: 'value',
     value: 1000,
     invested: 800,
     gain: 200,
