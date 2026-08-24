@@ -12,3 +12,13 @@ La crypto a sa propre page liste et sa propre classe de patrimoine ; les actions
 
 Un piège lié :
 - La série d'évolution se filtre APRÈS son cache (elle porte `assetId` par actif), les performances AVANT et sous un nom de cache distinct : une fenêtre glissante agrège les transactions, elle ne se découpe pas après coup. Un nom réutilisé ferait servir le résultat d'une classe à l'autre.
+
+## Chaque exposition a sa page et sa classe, pas seulement la crypto
+Correctif : les quatre expositions ont chacune leur page liste et leur ligne de résumé patrimonial,
+pas seulement la crypto — `/actions`, `/obligations`, `/matieres-premieres`, `/crypto`
+(`AssetClass::slug()`), une par cas de `AssetClass::cases()`.
+
+`PortfolioAssetClass` n'a plus de méthode statique `classes()` : c'est une seule classe paramétrée
+par l'exposition qu'elle porte en constructeur (`$this->exposure : AssetClass`).
+`WealthProvider::registers()` instancie une `PortfolioAssetClass` par cas de `AssetClass::cases()`,
+et seul `RealEstateClass` — qui n'est pas un portefeuille — s'écrit encore à la main.

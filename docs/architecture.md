@@ -92,10 +92,8 @@ app/Contexts/Wealth/
 │   ├── RealEstatePort.php          → patrimoine net, cash sorti et série de l'immobilier
 │   └── IncomePort.php              → dividendes des douze derniers mois, mensualisés
 ├── Infrastructure/
-│   ├── AssetClassRegistry.php      → les classes d'actif taguées `wealth.classes`, dans l'ordre
-│   ├── PortfolioAssetClass.php     → socle des classes tenues en portefeuille (filtre de type)
-│   ├── SecuritiesClass.php         → titres : GetPortfolioOverview, BuildEvolutionSeries, dividendes
-│   ├── CryptoClass.php             → crypto : mêmes lectures, filtrées, sans revenu
+│   ├── AssetClassRegistry.php      → sert les classes d'actif dans l'ordre où on les lui passe
+│   ├── PortfolioAssetClass.php     → une classe par exposition, paramétrée par `AssetClass`
 │   └── RealEstateClass.php         → RealEstate\Actions (résumé, cash sorti, série nette, loyers)
 ├── Actions/
 │   ├── GetWealthOverview.php       → le grand chiffre et ses classes d'actif
@@ -112,10 +110,13 @@ app/Contexts/Wealth/
 └── WealthProvider.php
 ```
 
-**L'ordre des classes d'actif est un contrat.** `WealthProvider::registers(classes: [...])` tague
-les adaptateurs, et `AssetClassRegistry` les sert dans cet ordre : il fixe l'ordre des lignes du
-résumé, l'empilement des bandes du graphe et l'affectation des couleurs. Ajouter une classe, c'est
-écrire un adaptateur et l'ajouter à ce tableau — aucune action du contexte ne change.
+**L'ordre des classes d'actif est un contrat.** Rien ne tague plus rien : `WealthProvider::registers(app:, extra: [...])`
+instancie une `PortfolioAssetClass` par cas de `AssetClass::cases()`, dans l'ordre de ces cas, puis
+ajoute les classes hors-portefeuille passées en `extra` (`RealEstateClass` aujourd'hui).
+`AssetClassRegistry` sert le tout dans cet ordre : il fixe l'ordre des lignes du résumé,
+l'empilement des bandes du graphe et l'affectation des couleurs. Ajouter une exposition, c'est
+ajouter un cas à `AssetClass` — aucun adaptateur ni action du contexte ne change ; ajouter une
+classe qui n'est pas un portefeuille, c'est écrire un adaptateur et l'ajouter à `extra`.
 
 **Pourquoi `Wealth` et non `WealthView`.** `Valuation` et `Income` sont déjà des contextes dérivés
 sans suffixe. `MarketView` porte le sien uniquement parce que `Market\Models\Instrument`
