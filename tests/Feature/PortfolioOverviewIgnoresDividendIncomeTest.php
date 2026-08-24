@@ -48,6 +48,11 @@ it('rend un gain et un coût de revient identiques avec ou sans détachement en 
         'amount_per_share' => 5.0,
     ]);
 
+    // GetPortfolioOverview est lié en scoped et mémoïse par utilisateur : sans ce reset, la
+    // deuxième lecture reservirait les lignes calculées avant le dividende, et le test comparerait
+    // une propriété à elle-même au lieu de vérifier que le gain ignore le dividende.
+    $this->app->forgetScopedInstances();
+
     $withDividends = app(GetPortfolioOverview::class)($user);
 
     expect($withDividends->totalCost)->toBe($withoutDividends->totalCost)

@@ -166,3 +166,7 @@ it('reads the holdings once, however many exposures ask for them', function () {
 
     expect(DB::getQueryLog())->toBeEmpty();
 });
+
+it('is bound scoped so every resolution within a request shares the same memoised instance', function () {
+    expect(app(GetPortfolioOverview::class))->toBe(app(GetPortfolioOverview::class));
+});
