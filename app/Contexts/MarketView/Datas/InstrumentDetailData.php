@@ -2,6 +2,7 @@
 
 namespace App\Contexts\MarketView\Datas;
 
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use JsonSerializable;
 
@@ -17,6 +18,7 @@ readonly class InstrumentDetailData implements JsonSerializable
         public ?string $ticker,
         public ?string $isin,
         public InstrumentType $type,
+        public AssetClass $assetClass,
         public ?float $lastPrice,
         public ?string $lastPriceDate,
         public ?PositionData $position,
@@ -34,6 +36,9 @@ readonly class InstrumentDetailData implements JsonSerializable
             'isin' => $this->isin,
             'type' => $this->type->value,
             'typeLabel' => $this->type->getLabel(),
+            'assetClass' => $this->assetClass->value,
+            'assetClassLabel' => $this->assetClass->getLabel(),
+            'assetClassHref' => '/'.$this->assetClass->slug(),
             'lastPrice' => $this->lastPrice,
             'lastPriceDate' => $this->lastPriceDate,
             'position' => $this->position,

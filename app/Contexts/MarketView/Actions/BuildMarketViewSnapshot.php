@@ -26,10 +26,10 @@ use App\Contexts\Valuation\Enums\ValuationRange;
 use Illuminate\Support\Carbon;
 
 /**
- * Parts actions et crypto de l'instantané hors-ligne : les deux pages liste, et une fiche par
- * position détenue. Les compositions reprennent celles des quatre contrôleurs, props différées
- * comprises — l'instantané les résout toutes, puisqu'il n'a pas d'affichage à ne pas faire
- * attendre.
+ * Instantané hors-ligne du volet marché : une page liste par exposition, et une fiche par
+ * position détenue. Les compositions reprennent celles d'`AssetClassController` et des deux
+ * contrôleurs de fiche, props différées comprises — l'instantané les résout toutes, puisqu'il n'a
+ * pas d'affichage à ne pas faire attendre.
  *
  * Seule la plage de valorisation par défaut est portée : les autres restent en ligne seulement.
  */
@@ -45,8 +45,8 @@ class BuildMarketViewSnapshot
 
     /**
      * @return array{
-     *     instruments: array{list: array<string, mixed>, byId: array<int, array<string, mixed>>},
-     *     crypto: array{list: array<string, mixed>, byId: array<int, array<string, mixed>>},
+     *     classes: array<string, array<string, mixed>>,
+     *     assets: array<int, array<string, mixed>>,
      * }
      */
     public function __invoke(int $userId): array
@@ -59,89 +59,63 @@ class BuildMarketViewSnapshot
          * un instantané demandé sur une base vide passerait `null` à des paramètres typés.
          */
         if ($user === null) {
-            return [
-                'instruments' => ['list' => $this->emptyList(forSecurities: true), 'byId' => []],
-                'crypto' => ['list' => $this->emptyList(forSecurities: false), 'byId' => []],
-            ];
+            return ['classes' => $this->emptyClasses(), 'assets' => []];
         }
 
-        $securities = [AssetClass::Equity, AssetClass::Bond, AssetClass::Commodity];
-        $crypto = [AssetClass::Crypto];
+        $classes = [];
 
-        $details = $this->detailsByClass($userId);
+        foreach (AssetClass::cases() as $exposure) {
+            $classes[$exposure->value] = $this->listFor($user, $userId, $exposure);
+        }
 
-        return [
-            'instruments' => [
-                'list' => [
-                    'overview' => ($this->getOverview)($user, $securities),
-                    'trends' => ($this->getTrends)($userId, ValuationRange::Max),
-                    'performances' => app(BuildPortfolioPerformances::class)($userId, $securities),
-                    'evolutionSeries' => app(BuildEvolutionSeries::class)(
-                        $userId,
-                        null,
-                        ValuationGranularity::Week,
-                        $securities,
-                    ),
-                    'sectorBreakdown' => app(GetSectorBreakdown::class)($user),
-                    'income' => app(GetIncomeSummary::class)($userId, IncomeSource::Dividend),
-                    'annualIncome' => app(GetAnnualIncome::class)($userId, IncomeSource::Dividend),
-                ],
-                'byId' => $details['securities'],
-            ],
-            'crypto' => [
-                'list' => [
-                    'overview' => ($this->getOverview)($user, $crypto),
-                    'trends' => ($this->getTrends)($userId, ValuationRange::Max),
-                    'performances' => app(BuildPortfolioPerformances::class)($userId, $crypto),
-                    'evolutionSeries' => app(BuildEvolutionSeries::class)(
-                        $userId,
-                        null,
-                        ValuationGranularity::Week,
-                        $crypto,
-                    ),
-                ],
-                'byId' => $details['crypto'],
-            ],
-        ];
+        return ['classes' => $classes, 'assets' => $this->pagesFor($userId)];
     }
 
     /**
-     * Page liste sans utilisateur : les mêmes `Data::empty()` que servent les contrôleurs dans ce
-     * cas. `$forSecurities` distingue la page Actions, qui porte trois blocs de plus.
+     * La composition d'une page liste, gates comprises. Les mêmes que celles d'`AssetClassController` :
+     * l'instantané doit porter ce que la page affiche, jamais une composition parallèle.
      *
      * @return array<string, mixed>
      */
-    private function emptyList(bool $forSecurities): array
+    private function listFor(User $user, int $userId, AssetClass $exposure): array
     {
+        $classes = [$exposure];
+
         $list = [
-            'overview' => PortfolioOverviewData::empty(),
-            'trends' => [],
-            'performances' => [],
-            'evolutionSeries' => EvolutionSeriesData::empty(),
+            'overview' => ($this->getOverview)($user, $classes),
+            'trends' => ($this->getTrends)($userId, ValuationRange::Max, $classes),
+            'performances' => app(BuildPortfolioPerformances::class)($userId, $classes),
+            'evolutionSeries' => app(BuildEvolutionSeries::class)(
+                $userId,
+                null,
+                ValuationGranularity::Week,
+                $classes,
+            ),
         ];
 
-        if (! $forSecurities) {
-            return $list;
+        if ($exposure->hasSectors()) {
+            $list['sectorBreakdown'] = app(GetSectorBreakdown::class)($user);
         }
 
-        return [
-            ...$list,
-            'sectorBreakdown' => [],
-            'income' => IncomeSummaryData::empty(),
-            'annualIncome' => [],
-        ];
+        $source = IncomeSource::forAssetClass($exposure);
+
+        if ($source !== null) {
+            $list['income'] = app(GetIncomeSummary::class)($userId, $source);
+            $list['annualIncome'] = app(GetAnnualIncome::class)($userId, $source);
+        }
+
+        return $list;
     }
 
     /**
-     * Les fiches, réparties selon la classe que porte l'actif lui-même. `InstrumentType::isCrypto()`
-     * est la seule définition de ce partage : le recopier ici ferait diverger l'instantané des deux
-     * contrôleurs de fiche, qui renvoient 404 sur l'actif de l'autre classe.
+     * Les fiches, une par position détenue. Plus de partage par classe : `/asset/{id}` sert le
+     * même contenu à tout actif, quelle que soit son exposition.
      *
-     * @return array{securities: array<int, array<string, mixed>>, crypto: array<int, array<string, mixed>>}
+     * @return array<int, array<string, mixed>>
      */
-    private function detailsByClass(int $userId): array
+    private function pagesFor(int $userId): array
     {
-        $byClass = ['securities' => [], 'crypto' => []];
+        $pages = [];
 
         foreach ($this->holdings->holdingsFor($userId) as $holding) {
             /** @var HoldingSnapshotData $holding */
@@ -151,11 +125,43 @@ class BuildMarketViewSnapshot
                 continue;
             }
 
-            $byClass[$detail->type->isCrypto() ? 'crypto' : 'securities'][$holding->assetId]
-                = $this->page($userId, $holding->assetId, $detail);
+            $pages[$holding->assetId] = $this->page($userId, $holding->assetId, $detail);
         }
 
-        return $byClass;
+        return $pages;
+    }
+
+    /**
+     * Les quatre listes d'une base sans utilisateur : les mêmes `Data::empty()` que sert le
+     * contrôleur, sous les mêmes gates.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private function emptyClasses(): array
+    {
+        $classes = [];
+
+        foreach (AssetClass::cases() as $exposure) {
+            $list = [
+                'overview' => PortfolioOverviewData::empty(),
+                'trends' => [],
+                'performances' => [],
+                'evolutionSeries' => EvolutionSeriesData::empty(),
+            ];
+
+            if ($exposure->hasSectors()) {
+                $list['sectorBreakdown'] = [];
+            }
+
+            if (IncomeSource::forAssetClass($exposure) !== null) {
+                $list['income'] = IncomeSummaryData::empty();
+                $list['annualIncome'] = [];
+            }
+
+            $classes[$exposure->value] = $list;
+        }
+
+        return $classes;
     }
 
     /** @return array<string, mixed> */
@@ -173,8 +179,8 @@ class BuildMarketViewSnapshot
             ),
         ];
 
-        /** La fiche crypto n'affiche pas de dividendes : les porter ici gonflerait le blob pour rien. */
-        if (! $detail->type->isCrypto()) {
+        /** Une exposition qui ne distribue rien n'a pas de détachements : les porter gonflerait le blob pour rien. */
+        if (IncomeSource::forAssetClass($detail->assetClass) !== null) {
             $page['dividends'] = app(GetAssetDividendHistory::class)($userId, $assetId);
         }
 

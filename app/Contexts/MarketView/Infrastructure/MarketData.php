@@ -51,6 +51,7 @@ class MarketData implements MarketDataPort
             ticker: $instrument->ticker,
             isin: $instrument->isin,
             type: $instrument->type,
+            assetClass: $instrument->asset_class,
             lastPrice: $latest !== null ? (float) $latest->close : null,
             lastPriceDate: $latest !== null ? $latest->date->format('Y-m-d') : null,
         );

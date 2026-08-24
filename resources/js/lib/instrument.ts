@@ -60,6 +60,9 @@ export interface Instrument {
     isin: string | null;
     type: string;
     typeLabel: string;
+    assetClass: string;
+    assetClassLabel: string;
+    assetClassHref: string;
     lastPrice: number | null;
     lastPriceDate: string | null;
     position: InstrumentPosition | null;

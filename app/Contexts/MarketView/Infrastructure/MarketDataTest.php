@@ -38,6 +38,14 @@ it('finds an instrument with its latest price', function () {
     expect($meta->lastPriceDate)->toBe('2026-07-01');
 });
 
+it('carries the exposure of the instrument found', function () {
+    $asset = Instrument::factory()->create(['type' => InstrumentType::Commodity, 'asset_class' => AssetClass::Commodity]);
+
+    $meta = $this->market->findInstrument($asset->id);
+
+    expect($meta->assetClass)->toBe(AssetClass::Commodity);
+});
+
 it('returns null meta for an unknown instrument', function () {
     expect($this->market->findInstrument(999))->toBeNull();
 });

@@ -2,10 +2,9 @@ import { defineStore } from 'pinia';
 import { computed, ref, type ComputedRef, type Ref } from 'vue';
 import { readSnapshot, writeSnapshot } from '@/lib/snapshotStorage';
 import type {
-    CryptoListSnapshot,
+    AssetClassListSnapshot,
+    AssetPageSnapshot,
     DashboardSnapshot,
-    InstrumentPageSnapshot,
-    InstrumentsListSnapshot,
     PropertiesListSnapshot,
     PropertyPageSnapshot,
     Snapshot,
@@ -26,33 +25,34 @@ export const useSnapshotStore = defineStore('snapshot', () => {
         (): DashboardSnapshot | null => snapshot.value?.dashboard ?? null,
     );
 
-    const instrumentsList: ComputedRef<InstrumentsListSnapshot | null> = computed(
-        (): InstrumentsListSnapshot | null => snapshot.value?.instruments.list ?? null,
-    );
-
-    const cryptoList: ComputedRef<CryptoListSnapshot | null> = computed(
-        (): CryptoListSnapshot | null => snapshot.value?.crypto.list ?? null,
-    );
-
     const propertiesList: ComputedRef<PropertiesListSnapshot | null> = computed(
         (): PropertiesListSnapshot | null => snapshot.value?.properties.list ?? null,
     );
 
-    /**
-     * L'indexation par entité se fait en mémoire : le blob entier est déjà chargé, une requête
-     * IndexedDB par page n'apporterait qu'une latence.
-     */
-    function instrumentPage(id: string): InstrumentPageSnapshot | null {
-        return snapshot.value?.instruments.byId[id] ?? null;
+    /** L'indexation se fait en mémoire : le blob entier est déjà chargé, une requête par page n'ajouterait qu'une latence. */
+    function classList(key: string): AssetClassListSnapshot | null {
+        return snapshot.value?.classes[key] ?? null;
     }
 
-    function cryptoPage(id: string): InstrumentPageSnapshot | null {
-        return snapshot.value?.crypto.byId[id] ?? null;
+    function assetPage(id: string): AssetPageSnapshot | null {
+        return snapshot.value?.assets[id] ?? null;
     }
 
     function propertyPage(id: string): PropertyPageSnapshot | null {
         return snapshot.value?.properties.byId[id] ?? null;
     }
+
+    /** Transitoires : lus par les pages que les Tasks 8 et 9 remplacent, supprimés avec elles. */
+    const instrumentsList: ComputedRef<AssetClassListSnapshot | null> = computed(
+        (): AssetClassListSnapshot | null => classList('equity'),
+    );
+
+    const cryptoList: ComputedRef<AssetClassListSnapshot | null> = computed(
+        (): AssetClassListSnapshot | null => classList('crypto'),
+    );
+
+    const instrumentPage = assetPage;
+    const cryptoPage = assetPage;
 
     /** Lecture du blob retenu. Asynchrone, donc jamais dans le chemin du premier rendu. */
     async function hydrate(): Promise<void> {
@@ -102,9 +102,11 @@ export const useSnapshotStore = defineStore('snapshot', () => {
         syncing,
         generatedAt,
         dashboard,
+        classList,
+        assetPage,
+        propertiesList,
         instrumentsList,
         cryptoList,
-        propertiesList,
         instrumentPage,
         cryptoPage,
         propertyPage,

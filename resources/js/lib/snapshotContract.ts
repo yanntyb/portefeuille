@@ -25,29 +25,23 @@ export interface DashboardSnapshot {
     income: WealthIncome;
 }
 
-export interface InstrumentsListSnapshot {
+/** Une page liste d'exposition. Le trio secteurs/revenus n'est servi que par les expositions qui en ont. */
+export interface AssetClassListSnapshot {
     overview: PortfolioOverview;
     trends: CatalogTrend[];
     performances: Performance[];
     evolutionSeries: EvolutionSeries;
-    sectorBreakdown: SectorSlice[];
-    income: IncomeSummary;
-    annualIncome: AnnualIncome[];
+    sectorBreakdown?: SectorSlice[];
+    income?: IncomeSummary;
+    annualIncome?: AnnualIncome[];
 }
 
-export interface CryptoListSnapshot {
-    overview: PortfolioOverview;
-    trends: CatalogTrend[];
-    performances: Performance[];
-    evolutionSeries: EvolutionSeries;
-}
-
-export interface InstrumentPageSnapshot {
+/** La fiche servie par `/asset/{id}`. `dividends` manque aux expositions qui ne distribuent rien. */
+export interface AssetPageSnapshot {
     instrument: Instrument;
     performances: Performance[];
     priceHistory: PriceHistory;
     valuation: ValuationSeries;
-    /** Absent des fiches crypto : leur page n'affiche pas de dividendes. */
     dividends?: AssetDividendHistory;
 }
 
@@ -69,7 +63,8 @@ export interface Snapshot {
     /** Horodatage Unix **en secondes**, produit par le serveur. */
     generatedAt: number;
     dashboard: DashboardSnapshot;
-    instruments: { list: InstrumentsListSnapshot; byId: Record<string, InstrumentPageSnapshot> };
-    crypto: { list: CryptoListSnapshot; byId: Record<string, InstrumentPageSnapshot> };
+    /** Indexé par la valeur de `AssetClass` : `equity`, `bond`, `commodity`, `crypto`. */
+    classes: Record<string, AssetClassListSnapshot>;
+    assets: Record<string, AssetPageSnapshot>;
     properties: { list: PropertiesListSnapshot; byId: Record<string, PropertyPageSnapshot> };
 }

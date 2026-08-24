@@ -1,15 +1,17 @@
 <?php
 
+use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\MarketView\Datas\InstrumentDetailData;
 use App\Contexts\MarketView\Datas\PositionData;
 use App\Contexts\MarketView\Datas\PriceHistoryData;
 use App\Contexts\MarketView\Datas\SectorWeightData;
 use App\Contexts\MarketView\Datas\TransactionLineData;
-use App\Contexts\Market\Enums\InstrumentType;
 
 it('serializes an instrument detail with nested position', function () {
     $detail = new InstrumentDetailData(
         id: 7, name: 'ACME', ticker: 'ACM', isin: 'US0000000001', type: InstrumentType::Stock,
+        assetClass: AssetClass::Equity,
         lastPrice: 100.0, lastPriceDate: '2026-07-01',
         position: new PositionData(10.0, 80.0, 1000.0, 200.0, 25.0),
         transactions: [new TransactionLineData('2026-01-01', false, 'Achat', 10.0, 80.0, 0.0, 800.0)],
@@ -19,6 +21,9 @@ it('serializes an instrument detail with nested position', function () {
     $json = $detail->jsonSerialize();
 
     expect($json['typeLabel'])->toBe('Action');
+    expect($json['assetClass'])->toBe('equity');
+    expect($json['assetClassLabel'])->toBe('Actions');
+    expect($json['assetClassHref'])->toBe('/actions');
     expect($json['position'])->toBeInstanceOf(PositionData::class);
     expect($json['transactions'])->toHaveCount(1);
     expect($json['sectors'][0])->toBeInstanceOf(SectorWeightData::class);

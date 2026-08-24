@@ -34,6 +34,7 @@ class GetInstrumentDetail
             ticker: $meta->ticker,
             isin: $meta->isin,
             type: $meta->type,
+            assetClass: $meta->assetClass,
             lastPrice: $meta->lastPrice,
             lastPriceDate: $meta->lastPriceDate,
             position: $this->buildPosition($holding, $meta),

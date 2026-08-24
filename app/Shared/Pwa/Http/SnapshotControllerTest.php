@@ -20,8 +20,8 @@ it('sert l\'instantané complet du patrimoine', function () {
             'version',
             'generatedAt',
             'dashboard' => ['overview', 'series', 'income'],
-            'instruments' => ['list', 'byId'],
-            'crypto' => ['list', 'byId'],
+            'classes' => ['equity', 'bond', 'commodity', 'crypto'],
+            'assets',
             'properties' => ['list', 'byId'],
         ]);
 });

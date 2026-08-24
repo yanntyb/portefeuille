@@ -32,8 +32,8 @@ class SnapshotController
 
         $body = [
             'dashboard' => ($this->wealth)($userId),
-            'instruments' => $market['instruments'],
-            'crypto' => $market['crypto'],
+            'classes' => $market['classes'],
+            'assets' => $market['assets'],
             'properties' => ($this->realEstate)($userId),
         ];
 
