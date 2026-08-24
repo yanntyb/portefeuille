@@ -2,15 +2,16 @@
 
 namespace App\Contexts\MarketView\Infrastructure;
 
+use App\Contexts\Market\Contracts\PriceRepositoryContract;
+use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\Market\Models\Instrument;
+use App\Contexts\Market\Models\Price;
+use App\Contexts\Market\Models\SectorAllocation;
 use App\Contexts\MarketView\Datas\InstrumentMetaData;
 use App\Contexts\MarketView\Datas\InstrumentSummaryData;
 use App\Contexts\MarketView\Datas\PriceHistoryData;
 use App\Contexts\MarketView\Datas\SectorWeightData;
 use App\Contexts\MarketView\Ports\MarketDataPort;
-use App\Contexts\Market\Contracts\PriceRepositoryContract;
-use App\Contexts\Market\Models\Instrument;
-use App\Contexts\Market\Models\Price;
-use App\Contexts\Market\Models\SectorAllocation;
 use Illuminate\Support\Carbon;
 
 class MarketData implements MarketDataPort
@@ -92,6 +93,26 @@ class MarketData implements MarketDataPort
                 label: $allocation->sector->getLabel(),
                 weight: (float) $allocation->weight,
             ))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  list<int>  $assetIds
+     * @param  list<AssetClass>  $classes
+     * @return list<int>
+     */
+    public function idsOfClasses(array $assetIds, array $classes): array
+    {
+        if ($assetIds === [] || $classes === []) {
+            return [];
+        }
+
+        return Instrument::query()
+            ->whereIn('id', $assetIds)
+            ->whereIn('asset_class', array_map(fn (AssetClass $class): string => $class->value, $classes))
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
             ->values()
             ->all();
     }

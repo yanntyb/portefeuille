@@ -1,11 +1,12 @@
 <?php
 
-use App\Contexts\MarketView\Ports\MarketDataPort;
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Market\Models\SectorAllocation;
+use App\Contexts\MarketView\Ports\MarketDataPort;
 use Illuminate\Support\Carbon;
 
 beforeEach(function () {
@@ -114,4 +115,33 @@ it('maps sector allocations to labelled weights', function () {
     expect($sectors)->toHaveCount(1);
     expect($sectors[0]->label)->toBe('Technologie');
     expect($sectors[0]->weight)->toBe(0.6);
+});
+
+it('keeps only the assets carrying one of the given exposures', function () {
+    $gold = Instrument::factory()->create(['type' => InstrumentType::Commodity]);
+    $stock = Instrument::factory()->create(['type' => InstrumentType::Stock]);
+
+    $ids = $this->market->idsOfClasses([$gold->id, $stock->id], [AssetClass::Commodity]);
+
+    expect($ids)->toBe([$gold->id]);
+});
+
+it('leaves out an asset carrying the exposure but outside the given ids', function () {
+    $gold = Instrument::factory()->create(['type' => InstrumentType::Commodity]);
+    $otherGold = Instrument::factory()->create(['type' => InstrumentType::Commodity]);
+
+    $ids = $this->market->idsOfClasses([$gold->id], [AssetClass::Commodity]);
+
+    expect($ids)->toBe([$gold->id])
+        ->and($ids)->not->toContain($otherGold->id);
+});
+
+it('returns an empty list for no asset id', function () {
+    expect($this->market->idsOfClasses([], [AssetClass::Commodity]))->toBe([]);
+});
+
+it('returns an empty list for no exposure', function () {
+    $asset = Instrument::factory()->create();
+
+    expect($this->market->idsOfClasses([$asset->id], []))->toBe([]);
 });

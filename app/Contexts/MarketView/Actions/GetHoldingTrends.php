@@ -2,6 +2,7 @@
 
 namespace App\Contexts\MarketView\Actions;
 
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\MarketView\Datas\HoldingSnapshotData;
 use App\Contexts\MarketView\Datas\HoldingTrendData;
 use App\Contexts\MarketView\Ports\HoldingsPort;
@@ -20,18 +21,28 @@ class GetHoldingTrends
     ) {}
 
     /**
-     * Trends of the instruments the user holds. Only those carry a sparkline, so the catalogue
-     * at large is never read: an untouched instrument would cost a price window for nothing.
+     * Les tendances des instruments détenus. Sans `$classes`, tout le portefeuille ; avec, une
+     * exposition — sinon l'instantané hors-ligne porterait le portefeuille entier une fois par
+     * classe, pour un rendu qui n'en montre qu'une part.
      *
+     * @param  ?list<AssetClass>  $classes
      * @return list<HoldingTrendData>
      */
-    public function __invoke(int $userId, ValuationRange $range = ValuationRange::Max): array
-    {
+    public function __invoke(
+        int $userId,
+        ValuationRange $range = ValuationRange::Max,
+        ?array $classes = null,
+    ): array {
         $since = $this->windowStart($range);
         $assetIds = array_map(
             fn (HoldingSnapshotData $snapshot): int => $snapshot->assetId,
             $this->holdings->holdingsFor($userId),
         );
+
+        if ($classes !== null) {
+            $kept = array_flip($this->market->idsOfClasses($assetIds, $classes));
+            $assetIds = array_values(array_filter($assetIds, fn (int $id): bool => isset($kept[$id])));
+        }
 
         $closes = $this->market->closeSeriesSince($assetIds, $since);
 

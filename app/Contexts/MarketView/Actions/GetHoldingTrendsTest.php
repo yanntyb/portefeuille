@@ -1,10 +1,12 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
-use App\Contexts\MarketView\Actions\GetHoldingTrends;
-use App\Contexts\MarketView\Datas\HoldingTrendData;
+use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
+use App\Contexts\MarketView\Actions\GetHoldingTrends;
+use App\Contexts\MarketView\Datas\HoldingTrendData;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Wallet;
 use App\Contexts\Valuation\Enums\ValuationRange;
@@ -149,4 +151,24 @@ it('downsamples a long history while keeping the first and the last price', func
         ->and(count($trend->points))->toBeGreaterThan(1)
         ->and($trend->points[0])->toBe(100.0)
         ->and($trend->points[count($trend->points) - 1])->toBe(300.0);
+});
+
+it('keeps only the trends of the exposures it is given', function () {
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+
+    $gold = Instrument::factory()->create(['type' => InstrumentType::Commodity]);
+    $stock = Instrument::factory()->create(['type' => InstrumentType::Stock]);
+
+    foreach ([$gold, $stock] as $instrument) {
+        Price::factory()->create(['asset_id' => $instrument->id, 'close' => 10.0]);
+        Holding::factory()->create([
+            'asset_id' => $instrument->id, 'wallet_id' => $wallet->id,
+            'user_id' => $user->id, 'quantity' => 1, 'avg_cost' => 5.0,
+        ]);
+    }
+
+    $trends = app(GetHoldingTrends::class)($user->id, ValuationRange::Max, [AssetClass::Commodity]);
+
+    expect(array_map(fn ($trend): int => $trend->assetId, $trends))->toBe([$gold->id]);
 });

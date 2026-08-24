@@ -2,6 +2,7 @@
 
 namespace App\Contexts\MarketView\Ports;
 
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\MarketView\Datas\InstrumentMetaData;
 use App\Contexts\MarketView\Datas\InstrumentSummaryData;
 use App\Contexts\MarketView\Datas\PriceHistoryData;
@@ -30,4 +31,14 @@ interface MarketDataPort
 
     /** @return list<SectorWeightData> */
     public function sectors(int $id): array;
+
+    /**
+     * Parmi ces actifs, ceux qui portent l'une des expositions données. Le filtre descend ici et
+     * non dans l'action : `MarketView` lit le marché par ses ports, jamais par ses modèles.
+     *
+     * @param  list<int>  $assetIds
+     * @param  list<AssetClass>  $classes
+     * @return list<int>
+     */
+    public function idsOfClasses(array $assetIds, array $classes): array;
 }
