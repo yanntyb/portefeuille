@@ -2,7 +2,7 @@
 
 namespace App\Contexts\Wealth\Infrastructure;
 
-use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\Market\Enums\AssetClass;
 
 /** La crypto, tenue comme un titre mais comptée à part : elle ne verse rien, elle n'a pas de ligne de revenu. */
 class CryptoClass extends PortfolioAssetClass
@@ -27,9 +27,9 @@ class CryptoClass extends PortfolioAssetClass
         return null;
     }
 
-    /** @return ?list<InstrumentType> */
-    protected function types(): ?array
+    /** @return ?list<AssetClass> */
+    protected function classes(): ?array
     {
-        return [InstrumentType::Crypto];
+        return [AssetClass::Crypto];
     }
 }

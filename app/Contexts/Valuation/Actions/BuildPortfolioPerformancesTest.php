@@ -1,6 +1,7 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
@@ -66,8 +67,8 @@ it('measures each asset class on its own, without mixing their caches', function
     Price::factory()->create(['asset_id' => $stock->id, 'date' => '2026-07-01', 'close' => 200]);
     Price::factory()->create(['asset_id' => $bitcoin->id, 'date' => '2026-07-01', 'close' => 75]);
 
-    $securities = app(BuildPortfolioPerformances::class)($user->id, InstrumentType::securities());
-    $crypto = app(BuildPortfolioPerformances::class)($user->id, [InstrumentType::Crypto]);
+    $securities = app(BuildPortfolioPerformances::class)($user->id, [AssetClass::Equity, AssetClass::Bond, AssetClass::Commodity]);
+    $crypto = app(BuildPortfolioPerformances::class)($user->id, [AssetClass::Crypto]);
 
     $maxOf = fn (array $performances): float => collect($performances)->firstWhere('key', 'MAX')->pct;
 

@@ -2,24 +2,24 @@
 
 namespace App\Contexts\Valuation\Infrastructure;
 
-use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Valuation\Ports\InstrumentDirectoryPort;
 
 class MarketInstrumentDirectory implements InstrumentDirectoryPort
 {
     /**
-     * @param  list<InstrumentType>  $types
+     * @param  list<AssetClass>  $classes
      * @return list<int>
      */
-    public function idsOfTypes(array $types): array
+    public function idsOfClasses(array $classes): array
     {
-        if ($types === []) {
+        if ($classes === []) {
             return [];
         }
 
         return Instrument::query()
-            ->whereIn('type', array_map(fn (InstrumentType $type): string => $type->value, $types))
+            ->whereIn('asset_class', array_map(fn (AssetClass $class): string => $class->value, $classes))
             ->pluck('id')
             ->map(fn ($id): int => (int) $id)
             ->values()

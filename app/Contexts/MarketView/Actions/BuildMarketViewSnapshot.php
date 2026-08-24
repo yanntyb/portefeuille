@@ -8,7 +8,7 @@ use App\Contexts\Income\Actions\GetIncomeSummary;
 use App\Contexts\Income\Datas\IncomeSummaryData;
 use App\Contexts\Income\Enums\IncomeSource;
 use App\Contexts\Income\Sources\Dividend\Actions\GetAssetDividendHistory;
-use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\MarketView\Datas\HoldingSnapshotData;
 use App\Contexts\MarketView\Datas\InstrumentDetailData;
 use App\Contexts\MarketView\Ports\HoldingsPort;
@@ -65,8 +65,8 @@ class BuildMarketViewSnapshot
             ];
         }
 
-        $securities = InstrumentType::securities();
-        $crypto = [InstrumentType::Crypto];
+        $securities = [AssetClass::Equity, AssetClass::Bond, AssetClass::Commodity];
+        $crypto = [AssetClass::Crypto];
 
         $details = $this->detailsByClass($userId);
 

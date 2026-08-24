@@ -2,6 +2,7 @@
 
 namespace App\Contexts\Portfolio\Datas;
 
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use JsonSerializable;
 
@@ -12,6 +13,7 @@ readonly class HoldingLineData implements JsonSerializable
         public string $assetName,
         public ?string $ticker,
         public InstrumentType $type,
+        public AssetClass $assetClass,
         public float $quantity,
         public ?float $avgCost,
         public ?float $lastPrice,
@@ -29,6 +31,8 @@ readonly class HoldingLineData implements JsonSerializable
             'ticker' => $this->ticker,
             'type' => $this->type->value,
             'typeLabel' => $this->type->getLabel(),
+            'assetClass' => $this->assetClass->value,
+            'assetClassLabel' => $this->assetClass->getLabel(),
             'quantity' => $this->quantity,
             'avgCost' => $this->avgCost,
             'lastPrice' => $this->lastPrice,

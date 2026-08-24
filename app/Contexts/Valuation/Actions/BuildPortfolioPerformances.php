@@ -2,7 +2,7 @@
 
 namespace App\Contexts\Valuation\Actions;
 
-use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Valuation\Datas\PerformanceData;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
 use App\Contexts\Valuation\Ports\InstrumentDirectoryPort;
@@ -22,12 +22,12 @@ class BuildPortfolioPerformances
     ) {}
 
     /**
-     * Sans `$types`, tout le portefeuille. Avec, une seule classe d'actif.
+     * Sans `$classes`, tout le portefeuille. Avec, une ou plusieurs expositions.
      *
-     * @param  ?list<InstrumentType>  $types
+     * @param  ?list<AssetClass>  $classes
      * @return list<PerformanceData>
      */
-    public function __invoke(int $userId, ?array $types = null): array
+    public function __invoke(int $userId, ?array $classes = null): array
     {
         /**
          * Le filtre entre dans le nom retenu : une performance glissante agrège les transactions
@@ -35,28 +35,28 @@ class BuildPortfolioPerformances
          * par actif. Deux classes sous un même nom se serviraient le résultat l'une de l'autre.
          */
         return $this->cache->remember(
-            $types === null ? 'performances' : 'performances.'.$this->nameOf($types),
+            $classes === null ? 'performances' : 'performances.'.$this->nameOf($classes),
             $userId,
-            fn (): array => $this->build($userId, $types),
+            fn (): array => $this->build($userId, $classes),
         );
     }
 
-    /** @param  list<InstrumentType>  $types */
-    private function nameOf(array $types): string
+    /** @param  list<AssetClass>  $classes */
+    private function nameOf(array $classes): string
     {
-        return implode('-', array_map(fn (InstrumentType $type): string => $type->value, $types));
+        return implode('-', array_map(fn (AssetClass $class): string => $class->value, $classes));
     }
 
     /**
-     * @param  ?list<InstrumentType>  $types
+     * @param  ?list<AssetClass>  $classes
      * @return list<PerformanceData>
      */
-    private function build(int $userId, ?array $types): array
+    private function build(int $userId, ?array $classes): array
     {
         $transactions = $this->transactions->forUser($userId);
 
-        if ($types !== null) {
-            $kept = array_flip($this->directory->idsOfTypes($types));
+        if ($classes !== null) {
+            $kept = array_flip($this->directory->idsOfClasses($classes));
             $transactions = array_values(array_filter(
                 $transactions,
                 fn (TransactionRecordData $transaction): bool => isset($kept[$transaction->assetId]),

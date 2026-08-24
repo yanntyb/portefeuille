@@ -16,18 +16,6 @@ enum InstrumentType: string
         return array_map(fn (self $c) => $c->value, self::cases());
     }
 
-    /**
-     * Ce que porte la page Actions : tout sauf la crypto, qui a désormais la sienne. C'est la
-     * seule définition du partage dans l'application — tout filtre par classe d'actif passe par
-     * ici, sinon deux endroits finiraient par ne plus dire la même chose.
-     *
-     * @return list<self>
-     */
-    public static function securities(): array
-    {
-        return array_values(array_filter(self::cases(), fn (self $type): bool => ! $type->isCrypto()));
-    }
-
     public function isCrypto(): bool
     {
         return $this === self::Crypto;

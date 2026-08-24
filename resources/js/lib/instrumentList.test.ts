@@ -14,6 +14,8 @@ const holding = (assetId: number, assetName: string, marketValue: number): Holdi
     ticker: assetName.slice(0, 3).toUpperCase(),
     type: 'stock',
     typeLabel: 'Action',
+    assetClass: 'equity',
+    assetClassLabel: 'Actions',
     quantity: 10,
     avgCost: 80,
     lastPrice: marketValue / 10,

@@ -4,7 +4,7 @@ namespace App\Contexts\Portfolio\Actions;
 
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Contracts\PriceRepositoryContract;
-use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Portfolio\Datas\HoldingLineData;
 use App\Contexts\Portfolio\Datas\PortfolioOverviewData;
 use App\Contexts\Portfolio\Models\Holding;
@@ -15,21 +15,21 @@ class GetPortfolioOverview
     public function __construct(private PriceRepositoryContract $prices) {}
 
     /**
-     * Sans `$types`, tout le portefeuille. Avec, une seule classe d'actif : les actions et la
-     * crypto ont chacune leur page, et le partage se lit dans `InstrumentType::securities()`.
+     * Sans `$classes`, tout le portefeuille. Avec, une ou plusieurs expositions : chacune a sa
+     * page et sa ligne au patrimoine, et le partage se lit dans `AssetClass`, nulle part ailleurs.
      *
-     * @param  ?list<InstrumentType>  $types
+     * @param  ?list<AssetClass>  $classes
      */
-    public function __invoke(User $user, ?array $types = null): PortfolioOverviewData
+    public function __invoke(User $user, ?array $classes = null): PortfolioOverviewData
     {
         $holdings = Holding::query()
             ->with('asset')
             ->where('user_id', $user->id)
-            ->when($types !== null, fn (Builder $query) => $query->whereHas(
+            ->when($classes !== null, fn (Builder $query) => $query->whereHas(
                 'asset',
                 fn (Builder $asset) => $asset->whereIn(
-                    'type',
-                    array_map(fn (InstrumentType $type): string => $type->value, $types),
+                    'asset_class',
+                    array_map(fn (AssetClass $class): string => $class->value, $classes),
                 ),
             ))
             ->get();
@@ -59,6 +59,7 @@ class GetPortfolioOverview
                 assetName: $holding->asset->name,
                 ticker: $holding->asset->ticker,
                 type: $holding->asset->type,
+                assetClass: $holding->asset->asset_class,
                 quantity: $quantity,
                 avgCost: $avgCost,
                 lastPrice: $lastPrice,

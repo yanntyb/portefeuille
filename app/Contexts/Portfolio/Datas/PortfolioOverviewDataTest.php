@@ -1,5 +1,6 @@
 <?php
 
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Portfolio\Datas\HoldingLineData;
 use App\Contexts\Portfolio\Datas\PortfolioOverviewData;
@@ -15,6 +16,7 @@ it('serializes an overview to the expected json shape', function () {
             assetName: 'ACME',
             ticker: 'ACM',
             type: InstrumentType::Stock,
+            assetClass: AssetClass::Equity,
             quantity: 10.0,
             avgCost: 80.0,
             lastPrice: 100.0,

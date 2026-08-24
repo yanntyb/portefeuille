@@ -1,6 +1,7 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
@@ -99,13 +100,13 @@ it('keeps market value but excludes gain when avg_cost is unknown', function () 
         ->and($etfLine->gainPct)->toBeNull();
 });
 
-it('keeps only the holdings of the requested types', function () {
+it('keeps only the holdings of the requested classes', function () {
     $user = User::factory()->create();
     makeHolding($user, InstrumentType::Stock, close: 100, qty: 6, avgCost: 50);   // 600
     makeHolding($user, InstrumentType::Crypto, close: 100, qty: 4, avgCost: 50);  // 400
 
-    $securities = app(GetPortfolioOverview::class)($user, InstrumentType::securities());
-    $crypto = app(GetPortfolioOverview::class)($user, [InstrumentType::Crypto]);
+    $securities = app(GetPortfolioOverview::class)($user, [AssetClass::Equity, AssetClass::Bond, AssetClass::Commodity]);
+    $crypto = app(GetPortfolioOverview::class)($user, [AssetClass::Crypto]);
 
     expect($securities->totalValue)->toBe(600.0)
         ->and($securities->holdings)->toHaveCount(1)
@@ -113,4 +114,31 @@ it('keeps only the holdings of the requested types', function () {
         ->and($crypto->totalValue)->toBe(400.0)
         ->and($crypto->holdings)->toHaveCount(1)
         ->and($crypto->holdings[0]->type)->toBe(InstrumentType::Crypto);
+});
+
+it('keeps only the holdings of the exposures it is given', function () {
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+
+    $gold = Instrument::factory()->create(['type' => InstrumentType::Commodity]);
+    $stock = Instrument::factory()->create(['type' => InstrumentType::Stock]);
+
+    Price::factory()->create(['asset_id' => $gold->id, 'close' => 100.0]);
+    Price::factory()->create(['asset_id' => $stock->id, 'close' => 50.0]);
+
+    Holding::factory()->create([
+        'asset_id' => $gold->id, 'wallet_id' => $wallet->id, 'user_id' => $user->id,
+        'quantity' => 2, 'avg_cost' => 80.0,
+    ]);
+    Holding::factory()->create([
+        'asset_id' => $stock->id, 'wallet_id' => $wallet->id, 'user_id' => $user->id,
+        'quantity' => 4, 'avg_cost' => 40.0,
+    ]);
+
+    $overview = app(GetPortfolioOverview::class)($user, [AssetClass::Commodity]);
+
+    expect($overview->holdings)->toHaveCount(1)
+        ->and($overview->holdings[0]->assetId)->toBe($gold->id)
+        ->and($overview->holdings[0]->assetClass)->toBe(AssetClass::Commodity)
+        ->and($overview->totalValue)->toBe(200.0);
 });

@@ -1,6 +1,7 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
@@ -44,7 +45,7 @@ it('returns an empty evolution series when the user has no transactions', functi
     expect(app(BuildEvolutionSeries::class)($user->id)->perAsset)->toBe([]);
 });
 
-it('keeps only the assets of the requested types, without rebuilding the series', function () {
+it('keeps only the assets of the requested classes, without rebuilding the series', function () {
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $apple = Instrument::factory()->ofType(InstrumentType::Stock)->create(['name' => 'Apple']);
@@ -58,8 +59,8 @@ it('keeps only the assets of the requested types, without rebuilding the series'
         Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 100]);
     }
 
-    $securities = app(BuildEvolutionSeries::class)($user->id, null, ValuationGranularity::Day, InstrumentType::securities());
-    $crypto = app(BuildEvolutionSeries::class)($user->id, null, ValuationGranularity::Day, [InstrumentType::Crypto]);
+    $securities = app(BuildEvolutionSeries::class)($user->id, null, ValuationGranularity::Day, [AssetClass::Equity, AssetClass::Bond, AssetClass::Commodity]);
+    $crypto = app(BuildEvolutionSeries::class)($user->id, null, ValuationGranularity::Day, [AssetClass::Crypto]);
 
     // Mêmes labels de part et d'autre : le filtre trie les actifs, il ne rejoue pas la grille.
     expect(collect($securities->perAsset)->pluck('name')->all())->toBe(['Apple'])

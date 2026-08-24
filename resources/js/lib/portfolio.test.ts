@@ -7,6 +7,8 @@ const line = (assetName: string, marketValue: number | null, assetId = 1): Holdi
     ticker: assetName.slice(0, 3).toUpperCase(),
     type: 'stock',
     typeLabel: 'Action',
+    assetClass: 'equity',
+    assetClassLabel: 'Actions',
     quantity: 10,
     avgCost: 80,
     lastPrice: 100,

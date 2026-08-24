@@ -6,6 +6,8 @@ export interface HoldingLine {
     ticker: string | null;
     type: string;
     typeLabel: string;
+    assetClass: string;
+    assetClassLabel: string;
     quantity: number;
     avgCost: number | null;
     lastPrice: number | null;

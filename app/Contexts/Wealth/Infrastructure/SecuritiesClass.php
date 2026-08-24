@@ -3,7 +3,7 @@
 namespace App\Contexts\Wealth\Infrastructure;
 
 use App\Contexts\Income\Enums\IncomeSource;
-use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\Market\Enums\AssetClass;
 
 /** Les titres : actions, ETF, obligations, matières premières — et leurs dividendes. */
 class SecuritiesClass extends PortfolioAssetClass
@@ -28,10 +28,10 @@ class SecuritiesClass extends PortfolioAssetClass
         return 'Dividendes';
     }
 
-    /** @return ?list<InstrumentType> */
-    protected function types(): ?array
+    /** @return ?list<AssetClass> */
+    protected function classes(): ?array
     {
-        return InstrumentType::securities();
+        return [AssetClass::Equity, AssetClass::Bond, AssetClass::Commodity];
     }
 
     protected function incomeSource(): ?IncomeSource

@@ -2,7 +2,7 @@
 
 namespace App\Contexts\Valuation\Actions;
 
-use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Valuation\Datas\AssetSeriesData;
 use App\Contexts\Valuation\Datas\EvolutionSeriesData;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
@@ -25,13 +25,13 @@ class BuildEvolutionSeries
 
     /**
      * @param  ?int  $months  Profondeur de la fenêtre depuis aujourd'hui, null pour tout l'historique.
-     * @param  ?list<InstrumentType>  $types  Classes d'actif à garder, null pour tout le portefeuille.
+     * @param  ?list<AssetClass>  $classes  Expositions à garder, null pour tout le portefeuille.
      */
     public function __invoke(
         int $userId,
         ?int $months = null,
         ValuationGranularity $granularity = ValuationGranularity::Month,
-        ?array $types = null,
+        ?array $classes = null,
     ): EvolutionSeriesData {
         /** La fenêtre et le pas font partie du résultat : ils font donc partie du nom retenu. */
         $series = $this->cache->remember(
@@ -46,13 +46,13 @@ class BuildEvolutionSeries
          * Crypto. La grille de labels reste celle de tout le portefeuille — deux pages qui
          * partagent une abscisse se comparent.
          */
-        return $types === null ? $series : $this->onlyTypes($series, $types);
+        return $classes === null ? $series : $this->onlyClasses($series, $classes);
     }
 
-    /** @param  list<InstrumentType>  $types */
-    private function onlyTypes(EvolutionSeriesData $series, array $types): EvolutionSeriesData
+    /** @param  list<AssetClass>  $classes */
+    private function onlyClasses(EvolutionSeriesData $series, array $classes): EvolutionSeriesData
     {
-        $kept = array_flip($this->directory->idsOfTypes($types));
+        $kept = array_flip($this->directory->idsOfClasses($classes));
 
         return new EvolutionSeriesData(
             labels: $series->labels,

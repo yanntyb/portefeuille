@@ -5,7 +5,7 @@ namespace App\Contexts\Wealth\Infrastructure;
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Income\Actions\GetIncomeSummary;
 use App\Contexts\Income\Enums\IncomeSource;
-use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Valuation\Actions\BuildEvolutionSeries;
 use App\Contexts\Valuation\Datas\AssetSeriesData;
@@ -30,11 +30,11 @@ abstract class PortfolioAssetClass implements AssetClassPort
     ) {}
 
     /**
-     * Les types d'instrument que la classe garde, ou `null` pour tout le portefeuille.
+     * Les expositions que la classe garde, ou `null` pour tout le portefeuille.
      *
-     * @return ?list<InstrumentType>
+     * @return ?list<AssetClass>
      */
-    abstract protected function types(): ?array;
+    abstract protected function classes(): ?array;
 
     /** L'origine de revenu à interroger, ou `null` quand la classe ne verse rien. */
     protected function incomeSource(): ?IncomeSource
@@ -50,7 +50,7 @@ abstract class PortfolioAssetClass implements AssetClassPort
             return ClassSnapshotData::empty();
         }
 
-        $overview = ($this->overview)($user, $this->types());
+        $overview = ($this->overview)($user, $this->classes());
 
         return new ClassSnapshotData(value: $overview->totalValue, invested: $overview->totalCost);
     }
@@ -58,7 +58,7 @@ abstract class PortfolioAssetClass implements AssetClassPort
     public function seriesFor(int $userId): ClassSeriesData
     {
         /** Historique complet au pas hebdomadaire, comme le graphe du tableau de bord l'utilisait déjà. */
-        $series = ($this->evolution)($userId, null, ValuationGranularity::Week, $this->types());
+        $series = ($this->evolution)($userId, null, ValuationGranularity::Week, $this->classes());
 
         return new ClassSeriesData(
             labels: $series->labels,

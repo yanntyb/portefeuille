@@ -1,7 +1,9 @@
 <?php
 
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
+use App\Contexts\Valuation\Infrastructure\MarketInstrumentDirectory;
 use App\Contexts\Valuation\Ports\InstrumentDirectoryPort;
 
 it('maps asset ids to instrument names', function () {
@@ -29,18 +31,19 @@ it('omits instruments whose name is null so callers can fall back', function () 
     expect($names)->not->toHaveKey($unnamed->id);
 });
 
-it('lists the asset ids of the requested types', function () {
-    $stock = Instrument::factory()->ofType(InstrumentType::Stock)->create();
-    $crypto = Instrument::factory()->ofType(InstrumentType::Crypto)->create();
+it('serves the ids of the exposures it is given', function () {
+    $stock = Instrument::factory()->create(['type' => InstrumentType::Stock]);
+    $gold = Instrument::factory()->create(['type' => InstrumentType::Commodity]);
+    $bitcoin = Instrument::factory()->create(['type' => InstrumentType::Crypto]);
 
-    $ids = app(InstrumentDirectoryPort::class)->idsOfTypes([InstrumentType::Crypto]);
+    $ids = (new MarketInstrumentDirectory)->idsOfClasses([AssetClass::Commodity, AssetClass::Crypto]);
 
-    expect($ids)->toBe([$crypto->id])
-        ->and($ids)->not->toContain($stock->id);
+    expect($ids)->toContain($gold->id, $bitcoin->id)
+        ->not->toContain($stock->id);
 });
 
-it('returns no id for no type', function () {
-    Instrument::factory()->create();
+it('serves nothing when no exposure is given', function () {
+    Instrument::factory()->create(['type' => InstrumentType::Stock]);
 
-    expect(app(InstrumentDirectoryPort::class)->idsOfTypes([]))->toBe([]);
+    expect((new MarketInstrumentDirectory)->idsOfClasses([]))->toBe([]);
 });

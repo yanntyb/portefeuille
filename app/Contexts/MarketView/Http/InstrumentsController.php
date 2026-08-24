@@ -7,7 +7,7 @@ use App\Contexts\Income\Actions\GetAnnualIncome;
 use App\Contexts\Income\Actions\GetIncomeSummary;
 use App\Contexts\Income\Datas\IncomeSummaryData;
 use App\Contexts\Income\Enums\IncomeSource;
-use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\MarketView\Actions\GetHoldingTrends;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Actions\GetSectorBreakdown;
@@ -33,10 +33,10 @@ class InstrumentsController
         $range = ValuationRange::fromRequest(request()->query('range'));
 
         /** La crypto a sa propre page : ni ses positions, ni sa valeur, ni ses performances ici. */
-        $types = InstrumentType::securities();
+        $classes = [AssetClass::Equity, AssetClass::Bond, AssetClass::Commodity];
 
         $overview = $user !== null
-            ? ($this->getPortfolioOverview)($user, $types)
+            ? ($this->getPortfolioOverview)($user, $classes)
             : PortfolioOverviewData::empty();
 
         return Inertia::render('Instruments/Index', [
@@ -47,11 +47,11 @@ class InstrumentsController
              */
             'trends' => Inertia::defer(fn () => ($this->getTrends)($user?->id ?? 0, $range), 'tendances'),
             'performances' => Inertia::defer(fn () => $user !== null
-                ? app(BuildPortfolioPerformances::class)($user->id, $types)
+                ? app(BuildPortfolioPerformances::class)($user->id, $classes)
                 : [], 'performances'),
             /** Historique complet : la fenêtre visible est choisie côté client par le zoom du graphe. */
             'evolutionSeries' => Inertia::defer(fn () => $user !== null
-                ? app(BuildEvolutionSeries::class)($user->id, null, ValuationGranularity::Week, $types)
+                ? app(BuildEvolutionSeries::class)($user->id, null, ValuationGranularity::Week, $classes)
                 : EvolutionSeriesData::empty(), 'evolution'),
             'sectorBreakdown' => Inertia::defer(fn () => $user !== null
                 ? app(GetSectorBreakdown::class)($user)

@@ -2,18 +2,18 @@
 
 namespace App\Contexts\Valuation\Ports;
 
-use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\Market\Enums\AssetClass;
 
 interface InstrumentDirectoryPort
 {
     /**
-     * Les actifs d'une ou plusieurs classes. Ce qui permet de ne garder d'une série que les titres,
-     * ou que la crypto, sans que la valorisation ait à connaître le partage.
+     * Les actifs d'une ou plusieurs expositions. Ce qui permet de ne garder d'une série que les
+     * actions, ou que les matières premières, sans que la valorisation ait à connaître le partage.
      *
-     * @param  list<InstrumentType>  $types
+     * @param  list<AssetClass>  $classes
      * @return list<int>
      */
-    public function idsOfTypes(array $types): array;
+    public function idsOfClasses(array $classes): array;
 
     /**
      * @param  list<int>  $assetIds
