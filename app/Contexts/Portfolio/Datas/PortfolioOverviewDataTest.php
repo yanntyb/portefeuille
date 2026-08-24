@@ -33,6 +33,8 @@ it('serializes an overview to the expected json shape', function () {
         ->and($json['holdings'][0]['assetName'])->toBe('ACME')
         ->and($json['holdings'][0]['type'])->toBe('stock')
         ->and($json['holdings'][0]['typeLabel'])->toBe('Action')
+        ->and($json['holdings'][0]['assetClass'])->toBe('equity')
+        ->and($json['holdings'][0]['assetClassLabel'])->toBe('Actions')
         ->and($json)->not->toHaveKey('allocation');
 });
 
