@@ -177,8 +177,6 @@ describe('accès transitoires', () => {
         const store = useSnapshotStore();
         await store.hydrate();
 
-        expect(store.instrumentsList).toEqual(store.classList('equity'));
-        expect(store.cryptoList).toEqual(store.classList('crypto'));
         expect(store.instrumentPage('7')).toEqual(store.assetPage('7'));
         expect(store.cryptoPage('7')).toEqual(store.assetPage('7'));
     });

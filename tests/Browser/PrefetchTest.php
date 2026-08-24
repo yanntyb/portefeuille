@@ -13,7 +13,7 @@ it('précharge la fiche instrument au survol d\'une ligne de la page Actions', f
 
     $this->actingAs($user);
 
-    $page = visit('/instruments')->assertSee('Alpha');
+    $page = visit('/actions')->assertSee('Alpha');
 
     expect($page->script(hasRequestedPath("/instruments/{$instrument->id}")))->toBeFalse();
 

@@ -22,7 +22,7 @@ it('laisse la crypto hors de la page Actions', function () use ($normalise) {
 
     $this->actingAs($user);
 
-    visit('/instruments')
+    visit('/actions')
         ->assertScript("({$normalise})(document.querySelector('[data-portfolio-value]'))", '1 000 €')
         ->assertScript("document.body.textContent.includes('Bitcoin')", false)
         ->assertNoJavaScriptErrors();

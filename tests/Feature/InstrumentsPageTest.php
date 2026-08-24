@@ -14,19 +14,19 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Inertia\Testing\AssertableInertia as Assert;
 
-it('renders Instruments/Index with an empty overview when there is no data', function () {
+it('renders AssetClass/Index with an empty overview when there is no data', function () {
     User::factory()->create();
 
-    $this->get('/instruments')
+    $this->get('/actions')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Instruments/Index')
+            ->component('AssetClass/Index')
             ->where('overview.totalValue', fn ($value) => (float) $value === 0.0)
             ->has('overview.holdings', 0)
         );
 });
 
-it('renders Instruments/Index with the user portfolio overview', function () {
+it('renders AssetClass/Index with the user portfolio overview', function () {
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->ofType(InstrumentType::Stock)->create(['name' => 'ACME', 'ticker' => 'ACM']);
@@ -39,10 +39,10 @@ it('renders Instruments/Index with the user portfolio overview', function () {
         'avg_cost' => 80,
     ]);
 
-    $this->get('/instruments')
+    $this->get('/actions')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Instruments/Index')
+            ->component('AssetClass/Index')
             ->where('overview.totalValue', fn ($value) => (float) $value === 1000.0)
             ->where('overview.totalGain', fn ($value) => (float) $value === 200.0)
             ->has('overview.holdings', 1)
@@ -61,10 +61,10 @@ it('sépare les propriétés différées par section, chaque groupe se chargeant
     ]);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 100]);
 
-    $this->get('/instruments')
+    $this->get('/actions')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Instruments/Index')
+            ->component('AssetClass/Index')
             // Le graphe n'attend plus les secteurs ni les tendances : son groupe arrive seul.
             ->loadDeferredProps('evolution', fn (Assert $reload) => $reload
                 ->has('evolutionSeries')
@@ -89,10 +89,10 @@ it('defers the evolution series and loads it on demand', function () {
     ]);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 100]);
 
-    $this->get('/instruments')
+    $this->get('/actions')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Instruments/Index')
+            ->component('AssetClass/Index')
             ->missing('evolutionSeries')
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->has('evolutionSeries.labels', 1)
@@ -122,10 +122,10 @@ it('samples the evolution series week by week, not day by day', function () {
     }
 
     $this->actingAs($user)
-        ->get('/instruments')
+        ->get('/actions')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Instruments/Index')
+            ->component('AssetClass/Index')
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->where('evolutionSeries.labels', function (Collection $labels): bool {
                     $dates = $labels->map(fn (string $label): Carbon => Carbon::parse($label));
@@ -156,10 +156,10 @@ it('defers the sector breakdown and loads it on demand', function () {
         'avg_cost' => 80,
     ]);
 
-    $this->get('/instruments')
+    $this->get('/actions')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Instruments/Index')
+            ->component('AssetClass/Index')
             ->missing('sectorBreakdown')
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->has('sectorBreakdown', 1)
@@ -182,10 +182,10 @@ it('defers the portfolio performances and loads them on demand', function () {
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 100]);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-07-01', 'close' => 120]);
 
-    $this->get('/instruments')
+    $this->get('/actions')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Instruments/Index')
+            ->component('AssetClass/Index')
             ->missing('performances')
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->has('performances')
@@ -209,10 +209,10 @@ it('ships the whole evolution history in one go, the zoom being client-side', fu
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2024-01-01', 'close' => 100]);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 120]);
 
-    $this->get('/instruments')
+    $this->get('/actions')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Instruments/Index')
+            ->component('AssetClass/Index')
             ->missing('valuationMonths')
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->where('evolutionSeries.labels.0', '2024-01-01')
@@ -232,10 +232,10 @@ it('ignores a months query parameter, the window no longer being server-driven',
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2024-01-01', 'close' => 100]);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 120]);
 
-    $this->get('/instruments?months=1')
+    $this->get('/actions?months=1')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Instruments/Index')
+            ->component('AssetClass/Index')
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->where('evolutionSeries.labels.0', '2024-01-01')
             )
@@ -258,10 +258,10 @@ it('defers the trends of the held instruments and loads them on demand', functio
     // Un instrument que personne ne détient n'a pas d'étincelle à porter : il reste hors des tendances.
     Instrument::factory()->create(['name' => 'Ignored Co']);
 
-    $this->get('/instruments')
+    $this->get('/actions')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Instruments/Index')
+            ->component('AssetClass/Index')
             ->missing('trends')
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->has('trends', 1)
@@ -286,10 +286,10 @@ it('accepts the range query param for the trends', function () {
         'avg_cost' => 80,
     ]);
 
-    $this->get('/instruments?range=1M')
+    $this->get('/actions?range=1M')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Instruments/Index')
+            ->component('AssetClass/Index')
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->where('trends.0.changePct', fn ($value) => (float) $value === 50.0)
                 ->has('trends.0.points', 2)
@@ -309,7 +309,7 @@ it('diffère le revenu perçu et son historique annuel dans le groupe revenus', 
     Dividend::factory()->create(['asset_id' => $asset->id, 'ex_date' => '2026-03-05', 'amount_per_share' => 0.8]);
 
     $this->actingAs($user)
-        ->get('/instruments')
+        ->get('/actions')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->missing('income')

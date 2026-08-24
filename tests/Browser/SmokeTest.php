@@ -87,7 +87,7 @@ it('charge la page Actions, ses sections dans l\'ordre, sans erreur', function (
 
     $this->actingAs($user);
 
-    visit('/instruments')
+    visit('/actions')
         ->assertSee('Performances')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",

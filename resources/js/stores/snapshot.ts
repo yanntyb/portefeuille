@@ -51,15 +51,7 @@ export const useSnapshotStore = defineStore('snapshot', () => {
         return snapshot.value?.properties.byId[id] ?? null;
     }
 
-    /** Transitoires : lus par les pages que les Tasks 8 et 9 remplacent, supprimés avec elles. */
-    const instrumentsList: ComputedRef<AssetClassListSnapshot | null> = computed(
-        (): AssetClassListSnapshot | null => classList('equity'),
-    );
-
-    const cryptoList: ComputedRef<AssetClassListSnapshot | null> = computed(
-        (): AssetClassListSnapshot | null => classList('crypto'),
-    );
-
+    /** Transitoires : lus par `Instruments/Show.vue` et `Crypto/Show.vue`, supprimés avec elles à la Task 9. */
     const instrumentPage = assetPage;
     const cryptoPage = assetPage;
 
@@ -122,8 +114,6 @@ export const useSnapshotStore = defineStore('snapshot', () => {
         classList,
         assetPage,
         propertiesList,
-        instrumentsList,
-        cryptoList,
         instrumentPage,
         cryptoPage,
         propertyPage,

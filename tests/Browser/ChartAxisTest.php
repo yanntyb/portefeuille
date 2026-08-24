@@ -29,7 +29,7 @@ it('ne chiffre que le minimum et le maximum sur le graphe de la page Actions', f
 
     $this->actingAs($user);
 
-    visit('/instruments')
+    visit('/actions')
         ->assertSee('Évolution')
         ->assertScript(yAxisLabels('evolution'), '800 €|1 000 €')
         ->assertNoJavaScriptErrors();
@@ -95,7 +95,7 @@ it('chiffre les extrêmes de la fenêtre montrée, non ceux de tout l\'historiqu
 
     $this->actingAs($user);
 
-    visit('/instruments')
+    visit('/actions')
         ->assertSee('Évolution')
         ->assertScript(yAxisLabels('evolution'), '100 €|200 €')
         ->assertNoJavaScriptErrors();
@@ -107,7 +107,7 @@ it('remonte au palier haut dès que la fenêtre couvre tout l\'historique', func
 
     $this->actingAs($user);
 
-    visit('/instruments')
+    visit('/actions')
         ->assertSee('Évolution')
         ->assertScript(yAxisLabels('evolution'), '100 €|1 000 €')
         ->assertNoJavaScriptErrors();

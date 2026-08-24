@@ -20,7 +20,7 @@ class SecuritiesClass extends PortfolioAssetClass
 
     public function href(): string
     {
-        return '/instruments';
+        return '/'.AssetClass::Equity->slug();
     }
 
     public function incomeLabel(): ?string

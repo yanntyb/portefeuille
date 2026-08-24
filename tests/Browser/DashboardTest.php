@@ -14,7 +14,7 @@ it('mène de chaque classe d\'actif à sa page', function () {
         /** `first-of-type` : chaque classe porte sa part, un sélecteur nu en verrait plusieurs. */
         ->assertVisible('[data-wealth-class]:first-of-type [data-wealth-share]')
         ->assertVisible('[data-wealth-class]:first-of-type [data-wealth-bar]')
-        ->click('a[href="/instruments"]')
+        ->click('a[href="/actions"]')
         ->assertSee('Performances')
         ->assertNoJavaScriptErrors();
 });

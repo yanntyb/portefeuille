@@ -5,7 +5,7 @@ it('laisse la molette à la page : le tracé ne se zoome plus sous le curseur', 
 
     $this->actingAs($user);
 
-    $page = visit('/instruments');
+    $page = visit('/actions');
     $page->assertScript("document.querySelector('[data-section=evolution] [data-chart]') !== null", true);
 
     $page->script('(() => {
@@ -45,7 +45,7 @@ it('ouvre malgré tout sur les douze derniers mois, la mini-timeline restant la 
 
     $this->actingAs($user);
 
-    $page = visit('/instruments');
+    $page = visit('/actions');
     $page->assertScript("document.querySelector('[data-section=evolution] [data-chart]') !== null", true);
 
     // Trois ans d'historique, un an montré : la fenêtre couvre environ un tiers de la durée.
