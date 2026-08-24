@@ -1422,7 +1422,7 @@ git commit -m "feat: une page liste par exposition, servie par un contrôleur un
 - Create: `resources/js/Pages/Asset/Show.vue`
 - Delete: `app/Contexts/MarketView/Http/InstrumentDetailController.php`, `InstrumentDetailControllerTest.php`, `CryptoDetailController.php`, `CryptoDetailControllerTest.php`
 - Delete: `resources/js/Pages/Instruments/Show.vue`, `resources/js/Pages/Crypto/Show.vue`
-- Modify: `resources/js/components/InstrumentList.vue`
+- Modify: `resources/js/components/InstrumentList.vue`, `resources/js/components/instruments/InstrumentsSection.vue`
 - Modify: `routes/web.php`
 - Modify: `app/Contexts/Market/Enums/InstrumentType.php` (suppression de `isCrypto()`), `InstrumentTypeTest.php`
 - Modify: `resources/js/stores/snapshot.ts` (suppression des accès transitoires), `resources/js/stores/snapshot.test.ts`
@@ -1554,7 +1554,13 @@ Dans `routes/web.php`, remplacer les deux routes de fiche par :
 Route::get('/asset/{id}', AssetController::class)->name('assets.show');
 ```
 
-Dans `resources/js/components/InstrumentList.vue` : supprimer la prop `basePath` et son `withDefaults`, et remplacer le `:href` par `` `/asset/${row.id}` ``. Retirer la prop `base-path` partout où elle est passée (recherche : `grep -rn "base-path" resources/js`).
+La prop traverse **deux** composants, pas un : `InstrumentsSection.vue` la reçoit et la transmet à `InstrumentList.vue`.
+
+Dans `resources/js/components/InstrumentList.vue` : supprimer la prop `basePath` et son `withDefaults` (le `defineProps` redevient un simple `defineProps<{...}>()` si `basePath` était le seul défaut), et remplacer le `:href` par `` `/asset/${row.id}` ``.
+
+Dans `resources/js/components/instruments/InstrumentsSection.vue` : supprimer la prop `basePath`, son `withDefaults` et l'attribut `:base-path` transmis à `InstrumentList`.
+
+Vérifier ensuite : `grep -rn "base-path\|basePath" resources/js` ne doit plus rien rendre.
 
 - [ ] **Step 3c: Write the Vue page**
 
