@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import Sparkline from '@/components/Sparkline.vue';
-import { eur, gainClass, pct, signedEur } from '@/lib/format';
+import { eur, gainClass, pct, sharePct as share, signedEur } from '@/lib/format';
 import type { InstrumentRow } from '@/lib/instrumentList';
 
 /** Largeur de la colonne `w-24` qui porte la tendance, pour que le tracé la remplisse exactement. */
@@ -14,9 +14,6 @@ const props = withDefaults(defineProps<{
     /** Racine des liens : la page crypto renvoie vers ses fiches, pas vers celles des titres. */
     basePath?: string;
 }>(), { basePath: '/instruments' });
-
-const share = (value: number): string =>
-    `${value.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
 </script>
 
 <template>

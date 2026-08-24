@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
-import { eur, gainClass, pct, signedEur } from '@/lib/format';
+import { eur, gainClass, pct, sharePct as share, signedEur } from '@/lib/format';
 import { propertyRows, type PropertyOverview, type PropertyRow } from '@/lib/realEstate';
 
 const props = defineProps<{ properties: PropertyOverview[] }>();
 
 const rows = computed<PropertyRow[]>(() => propertyRows(props.properties));
-
-const share = (value: number): string =>
-    `${value.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
 </script>
 
 <template>

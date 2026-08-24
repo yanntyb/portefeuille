@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { Button } from '@/components/ui/button';
-import { eur as formatEur } from '@/lib/format';
+import { eur as formatEur, sharePct as share } from '@/lib/format';
 import { collapsedSectors, type SectorBreakdownRow, type SectorView } from '@/lib/sector';
 
 const props = defineProps<{ rows: SectorBreakdownRow[] }>();
@@ -9,9 +9,6 @@ const props = defineProps<{ rows: SectorBreakdownRow[] }>();
 const isExpanded = ref<boolean>(false);
 
 const view = computed<SectorView>(() => collapsedSectors(props.rows, isExpanded.value));
-
-const share = (value: number): string =>
-    `${value.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
 
 const amount = (value: number): string => formatEur(value, 0);
 </script>

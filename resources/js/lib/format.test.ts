@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { eur, fractionPct, frDate, frDayMonth, frLongDate, frMonthYear, gainClass, pct, signedEur, signedPct, syncedAtLabel } from '@/lib/format';
+import { eur, fractionPct, frDate, frDayMonth, frLongDate, frMonthYear, gainClass, pct, sharePct, signedEur, signedPct, syncedAtLabel } from '@/lib/format';
 
 /**
  * `Intl` en fr-FR pose des espaces fines insécables (U+202F) entre les milliers et avant l'euro,
@@ -54,6 +54,20 @@ describe('pct', () => {
 
     it('rend un tiret quand la valeur est absente', () => {
         expect(pct(null)).toBe('—');
+    });
+});
+
+describe('sharePct', () => {
+    it('rend une part avec une décimale et la virgule française', () => {
+        expect(sharePct(42.13)).toBe('42,1 %');
+    });
+
+    it('ne signe pas une part positive : elle se lit en valeur absolue', () => {
+        expect(sharePct(6.6)).toBe('6,6 %');
+    });
+
+    it('laisse le signe négatif d\'une classe en négatif', () => {
+        expect(sharePct(-25)).toBe('-25,0 %');
     });
 });
 

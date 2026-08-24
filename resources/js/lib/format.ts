@@ -13,6 +13,9 @@ const oneDecimal = (value: number): string =>
 export const pct = (value: number | null): string =>
     value === null ? '—' : `${value >= 0 ? '+' : ''}${oneDecimal(value)} %`;
 
+/** Part d'un tout, une décimale, jamais de signe ajouté : « 42,1 % ». */
+export const sharePct = (value: number): string => `${oneDecimal(value)} %`;
+
 /** Formats a base 100 value as its signed delta, e.g. 112.4 becomes "+12,4 %". */
 export const signedPct = (value: number): string => {
     const delta = value - 100;
