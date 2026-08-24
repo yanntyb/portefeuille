@@ -1,8 +1,8 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
-use App\Contexts\MarketView\Infrastructure\PortfolioHoldings;
 use App\Contexts\Market\Models\Instrument;
+use App\Contexts\MarketView\Infrastructure\PortfolioHoldings;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Wallet;
 

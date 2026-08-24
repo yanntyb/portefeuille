@@ -1,11 +1,11 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
-use App\Contexts\MarketView\Actions\GetInstrumentDetail;
 use App\Contexts\Market\Enums\Sector;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Market\Models\SectorAllocation;
+use App\Contexts\MarketView\Actions\GetInstrumentDetail;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
