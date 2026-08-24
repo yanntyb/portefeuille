@@ -813,7 +813,8 @@ git commit -m "perf: borne les tendances à l'exposition demandée"
 - Modify: `app/Shared/Pwa/Http/SnapshotController.php`, `SnapshotControllerTest.php`
 - Modify: `resources/js/lib/snapshotContract.ts`
 - Modify: `resources/js/stores/snapshot.ts`, `resources/js/stores/snapshot.test.ts`
-- Modify: `app/Contexts/MarketView/Datas/InstrumentDetailData.php`, `app/Contexts/MarketView/Actions/GetInstrumentDetail.php`
+- Modify: `app/Contexts/MarketView/Datas/InstrumentDetailData.php`, `app/Contexts/MarketView/Datas/InstrumentMetaData.php`
+- Modify: `app/Contexts/MarketView/Actions/GetInstrumentDetail.php`, `app/Contexts/MarketView/Infrastructure/MarketData.php`, `MarketDataTest.php`
 - Modify: `resources/js/lib/instrument.ts`
 
 **Interfaces:**
@@ -874,7 +875,15 @@ Dans `app/Contexts/MarketView/Datas/InstrumentDetailData.php` : ajouter `public 
             'assetClassHref' => '/'.$this->assetClass->slug(),
 ```
 
-Dans `app/Contexts/MarketView/Actions/GetInstrumentDetail.php`, renseigner `assetClass:` depuis le modèle (`$instrument->asset_class`) là où `type:` est déjà renseigné.
+`GetInstrumentDetail` ne lit pas le modèle : il construit `InstrumentDetailData` depuis le DTO `InstrumentMetaData` rendu par le port (`type: $meta->type`, `GetInstrumentDetail.php:36`). L'exposition doit donc traverser ce DTO.
+
+Dans `app/Contexts/MarketView/Datas/InstrumentMetaData.php`, ajouter `public AssetClass $assetClass,` juste après `public InstrumentType $type,` et l'import.
+
+Dans `app/Contexts/MarketView/Infrastructure/MarketData.php`, méthode `findInstrument()`, renseigner `assetClass: $instrument->asset_class,` après `type: $instrument->type,`.
+
+Dans `app/Contexts/MarketView/Actions/GetInstrumentDetail.php`, passer `assetClass: $meta->assetClass,` après `type: $meta->type,`.
+
+Couvrir la nouvelle donnée dans `app/Contexts/MarketView/Infrastructure/MarketDataTest.php`, sur le modèle des cas voisins.
 
 Dans `resources/js/lib/instrument.ts`, ajouter au type `Instrument` :
 
