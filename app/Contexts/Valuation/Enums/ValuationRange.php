@@ -18,19 +18,4 @@ enum ValuationRange: string
             self::Max => null,
         };
     }
-
-    public static function fromRequest(?string $value): self
-    {
-        return ($value !== null ? self::tryFrom($value) : null) ?? self::Max;
-    }
-
-    public function getLabel(): string
-    {
-        return match ($this) {
-            self::OneMonth => '1M',
-            self::SixMonths => '6M',
-            self::OneYear => '1A',
-            self::Max => 'Max',
-        };
-    }
 }

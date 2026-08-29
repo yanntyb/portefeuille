@@ -8,9 +8,3 @@ it('maps each range to a month count', function () {
         ->and(ValuationRange::OneYear->months())->toBe(12)
         ->and(ValuationRange::Max->months())->toBeNull();
 });
-
-it('resolves from a request value with a Max default', function () {
-    expect(ValuationRange::fromRequest('6M'))->toBe(ValuationRange::SixMonths)
-        ->and(ValuationRange::fromRequest(null))->toBe(ValuationRange::Max)
-        ->and(ValuationRange::fromRequest('nope'))->toBe(ValuationRange::Max);
-});
