@@ -6,12 +6,14 @@ use App\Contexts\RealEstate\Datas\AmortizationLineData;
 use App\Contexts\RealEstate\Datas\LeaseTermData;
 use App\Contexts\RealEstate\Datas\PropertyFinancialsData;
 use App\Contexts\RealEstate\Datas\RentExceptionData;
+use App\Contexts\RealEstate\Datas\RentMonthData;
 use App\Contexts\RealEstate\Models\Lease;
 use App\Contexts\RealEstate\Models\Loan;
 use App\Contexts\RealEstate\Models\Property;
 use App\Contexts\RealEstate\Models\PropertyExpense;
 use App\Contexts\RealEstate\Models\RentException;
 use App\Contexts\RealEstate\Services\LoanAmortizationCalculator;
+use App\Contexts\RealEstate\Services\PropertyWindowTotals;
 use App\Contexts\RealEstate\Services\RentScheduleCalculator;
 use Illuminate\Support\Carbon;
 
@@ -24,6 +26,7 @@ class PropertyFinancialsAssembler
     public function __construct(
         private RentScheduleCalculator $rents,
         private LoanAmortizationCalculator $amortization,
+        private PropertyWindowTotals $totals,
     ) {}
 
     public function financialsFor(Property $property, Carbon $today): PropertyFinancialsData
@@ -34,17 +37,31 @@ class PropertyFinancialsAssembler
         $leases = $this->leaseTerms($property);
         $months = $this->rents->months($leases, $this->exceptions($property), $today);
 
-        $rents12m = 0.0;
-        foreach ($months as $month) {
-            if ($month->month >= $windowStart) {
-                $rents12m += $month->effective;
-            }
-        }
+        $rents12m = $this->totals->within(
+            array_map(fn (RentMonthData $month): array => [
+                'month' => $month->month,
+                'amount' => $month->effective,
+            ], $months),
+            $windowStart,
+            /**
+             * Sans borne haute, à la différence des charges et des échéances : l'ancien code
+             * n'en imposait aucune aux loyers (`if ($month->month >= $windowStart)`), et
+             * `RentScheduleCalculator::months()` ne produit de toute façon rien après aujourd'hui.
+             */
+            '9999-12-31',
+        );
 
-        $expenses12m = $property->expenses
-            ->filter(fn (PropertyExpense $expense): bool => $expense->date->toDateString() >= $windowStart
-                && $expense->date->toDateString() <= $todayKey)
-            ->sum(fn (PropertyExpense $expense): float => (float) $expense->amount);
+        $expenses12m = $this->totals->within(
+            $property->expenses
+                ->map(fn (PropertyExpense $expense): array => [
+                    'month' => $expense->date->toDateString(),
+                    'amount' => (float) $expense->amount,
+                ])
+                ->values()
+                ->all(),
+            $windowStart,
+            $todayKey,
+        );
 
         $loanPayments12m = 0.0;
         $remaining = 0.0;
@@ -55,11 +72,14 @@ class PropertyFinancialsAssembler
             $borrowed += (float) $loan->principal;
             $remaining += $this->amortization->remainingAt($schedule, $today);
 
-            foreach ($schedule as $line) {
-                if ($line->month >= $windowStart && $line->month <= $todayKey) {
-                    $loanPayments12m += $line->payment;
-                }
-            }
+            $loanPayments12m += $this->totals->within(
+                array_map(fn (AmortizationLineData $line): array => [
+                    'month' => $line->month,
+                    'amount' => $line->payment,
+                ], $schedule),
+                $windowStart,
+                $todayKey,
+            );
         }
 
         $currentMonthlyRent = $this->rents->projectedAnnual($leases, $today) / 12;
@@ -69,7 +89,7 @@ class PropertyFinancialsAssembler
             acquisitionFees: (float) $property->acquisition_fees,
             currentMonthlyRent: round($currentMonthlyRent, 2),
             rents12m: round($rents12m, 2),
-            expenses12m: round((float) $expenses12m, 2),
+            expenses12m: round($expenses12m, 2),
             loanPayments12m: round($loanPayments12m, 2),
             borrowedPrincipal: round($borrowed, 2),
             remainingPrincipal: round($remaining, 2),
