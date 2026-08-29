@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isRangeKey, joinTrends, type CatalogLine } from '@/lib/catalog';
+import { joinTrends, type CatalogLine } from '@/lib/catalog';
 
 const line = (id: number, name: string, ticker: string | null, isin: string | null, held = false): CatalogLine => ({
     id,
@@ -36,14 +36,5 @@ describe('joinTrends', () => {
         const rows = joinTrends([line(1, 'Alpha', 'ALP', null)], undefined);
 
         expect(rows[0].changePct).toBeNull();
-    });
-});
-
-describe('isRangeKey', () => {
-    it('reconnaît les périodes offertes et rejette le reste', () => {
-        expect(isRangeKey('1M')).toBe(true);
-        expect(isRangeKey('max')).toBe(true);
-        expect(isRangeKey('3M')).toBe(false);
-        expect(isRangeKey(undefined)).toBe(false);
     });
 });

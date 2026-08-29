@@ -16,13 +16,6 @@ export const pct = (value: number | null): string =>
 /** Part d'un tout, une décimale, jamais de signe ajouté : « 42,1 % ». */
 export const sharePct = (value: number): string => `${oneDecimal(value)} %`;
 
-/** Formats a base 100 value as its signed delta, e.g. 112.4 becomes "+12,4 %". */
-export const signedPct = (value: number): string => {
-    const delta = value - 100;
-
-    return `${delta >= 0 ? '+' : ''}${oneDecimal(delta)} %`;
-};
-
 /**
  * Formate une fraction (0,0655 = 6,55 %), à la différence de `pct()` qui reçoit des points de
  * pourcentage déjà à l'échelle et signés. Deux décimales, jamais de signe : les ratios qu'elle

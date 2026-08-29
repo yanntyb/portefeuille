@@ -23,18 +23,6 @@ export interface CatalogRow extends CatalogLine {
     points: number[];
 }
 
-export type RangeKey = '1M' | '6M' | '1Y' | 'max';
-
-export const rangeOptions: { key: RangeKey; label: string }[] = [
-    { key: '1M', label: '1M' },
-    { key: '6M', label: '6M' },
-    { key: '1Y', label: '1A' },
-    { key: 'max', label: 'Max' },
-];
-
-export const isRangeKey = (value: string | undefined): value is RangeKey =>
-    rangeOptions.some((option) => option.key === value);
-
 export const joinTrends = (lines: CatalogLine[], trends: CatalogTrend[] | null | undefined): CatalogRow[] => {
     const byAsset = new Map((trends ?? []).map((trend) => [trend.assetId, trend]));
 

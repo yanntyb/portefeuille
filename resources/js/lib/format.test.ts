@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { eur, fractionPct, frDate, frDayMonth, frLongDate, frMonthYear, gainClass, pct, sharePct, signedEur, signedPct, syncedAtLabel } from '@/lib/format';
+import { eur, fractionPct, frDate, frDayMonth, frLongDate, frMonthYear, gainClass, pct, sharePct, signedEur, syncedAtLabel } from '@/lib/format';
 
 /**
  * `Intl` en fr-FR pose des espaces fines insécables (U+202F) entre les milliers et avant l'euro,
@@ -68,16 +68,6 @@ describe('sharePct', () => {
 
     it('laisse le signe négatif d\'une classe en négatif', () => {
         expect(sharePct(-25)).toBe('-25,0 %');
-    });
-});
-
-describe('signedPct', () => {
-    it('lit une base 100 comme son écart signé', () => {
-        expect(normalizeSpaces(signedPct(112.4))).toBe('+12,4 %');
-    });
-
-    it('lit une base 100 sous le pair comme un écart négatif', () => {
-        expect(normalizeSpaces(signedPct(87.6))).toBe('-12,4 %');
     });
 });
 
