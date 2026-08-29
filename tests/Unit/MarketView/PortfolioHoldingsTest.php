@@ -7,7 +7,7 @@ use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Wallet;
 
 beforeEach(function () {
-    $this->adapter = new PortfolioHoldings;
+    $this->adapter = app(PortfolioHoldings::class);
 });
 
 it('returns holdings for a user only', function () {

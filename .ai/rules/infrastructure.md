@@ -5,7 +5,7 @@ paths:
 
 # Infrastructure
 
-## La moyenne pondérée du prix de revient est dupliquée par contexte, à dessein
-`MarketView\Infrastructure\PortfolioHoldings::aggregate()` et `Income\Sources\Dividend\Infrastructure\PortfolioPositionHistory::positionFor()` calculent la même moyenne pondérée du `avg_cost` sur les enveloppes d'un actif, garde `$qtyWithCost > 0` incluse. La duplication est voulue : chaque contexte possède ses adaptateurs et ne dépend pas de ceux d'un voisin.
+## La position par actif est calculée une seule fois, par `Portfolio`
+`MarketView\Infrastructure\PortfolioHoldings` et `Income\Sources\Dividend\Infrastructure\PortfolioPositionHistory` ne recalculent plus la moyenne pondérée du `avg_cost` sur les enveloppes d'un actif : les deux ne font plus que remapper `App\Contexts\Portfolio\Actions\GetPortfolioPositions`, qui la calcule via `Portfolio\Services\PositionAggregator` et la valorise via `Portfolio\Services\HoldingValuator`. Aucun adaptateur de ces deux contextes ne doit requêter `Holding` directement — `grep -rn "Holding::query()" app/Contexts/MarketView app/Contexts/Income` doit rester vide (hors fixtures de test).
 
-Elle est porteuse, pas seulement tolérée : c'est ce qui fait que le rendement sur coût de la fiche instrument se rapporte au même prix de revient que celui qu'elle affiche. Toute correction de cette formule doit être portée dans les deux fichiers, sous peine de faire diverger deux chiffres montrés côte à côte.
+Une seule formule : toute correction du prix de revient moyen se porte dans `PositionAggregator`, pas dans les adaptateurs qui le consomment.

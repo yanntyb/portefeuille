@@ -5,13 +5,15 @@ namespace App\Contexts\Income\Sources\Dividend\Infrastructure;
 use App\Contexts\Income\Sources\Dividend\Datas\PositionRecordData;
 use App\Contexts\Income\Sources\Dividend\Datas\PositionSnapshotData;
 use App\Contexts\Income\Sources\Dividend\Ports\PositionHistoryPort;
+use App\Contexts\Portfolio\Actions\GetPortfolioPositions;
+use App\Contexts\Portfolio\Datas\PositionLineData;
 use App\Contexts\Portfolio\Enums\TransactionType;
-use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
-use Illuminate\Support\Collection;
 
 class PortfolioPositionHistory implements PositionHistoryPort
 {
+    public function __construct(private GetPortfolioPositions $positions) {}
+
     /** @return list<PositionRecordData> */
     public function transactionsFor(int $userId): array
     {
@@ -45,49 +47,20 @@ class PortfolioPositionHistory implements PositionHistoryPort
 
     public function positionFor(int $userId, int $assetId): ?PositionSnapshotData
     {
-        $rows = Holding::query()
-            ->where('user_id', $userId)
-            ->where('asset_id', $assetId)
-            ->get();
+        $position = ($this->positions)($userId)[$assetId] ?? null;
 
-        if ($rows->isEmpty()) {
-            return null;
-        }
-
-        return $this->aggregate($rows);
+        return $position === null ? null : new PositionSnapshotData($position->quantity, $position->avgCost);
     }
 
     /** @return array<int, PositionSnapshotData> */
     public function positionsFor(int $userId): array
     {
-        return Holding::query()
-            ->where('user_id', $userId)
-            ->get()
-            ->groupBy('asset_id')
-            ->mapWithKeys(fn (Collection $rows, int|string $assetId): array => [
-                (int) $assetId => $this->aggregate($rows),
-            ])
-            ->all();
-    }
-
-    /**
-     * Les enveloppes d'un même actif ramenées à une position unique.
-     *
-     * Le prix de revient d'un actif tenu dans deux enveloppes est la moyenne pondérée des leurs.
-     *
-     * @param  Collection<int, Holding>  $rows
-     */
-    private function aggregate(Collection $rows): PositionSnapshotData
-    {
-        $quantity = (float) $rows->sum(fn (Holding $holding): float => (float) $holding->quantity);
-
-        $withCost = $rows->filter(fn (Holding $holding): bool => $holding->avg_cost !== null);
-        $qtyWithCost = (float) $withCost->sum(fn (Holding $holding): float => (float) $holding->quantity);
-
-        $avgCost = $qtyWithCost > 0.0
-            ? (float) $withCost->sum(fn (Holding $holding): float => (float) $holding->quantity * (float) $holding->avg_cost) / $qtyWithCost
-            : null;
-
-        return new PositionSnapshotData(quantity: $quantity, avgCost: $avgCost);
+        return array_map(
+            fn (PositionLineData $position): PositionSnapshotData => new PositionSnapshotData(
+                quantity: $position->quantity,
+                avgCost: $position->avgCost,
+            ),
+            ($this->positions)($userId),
+        );
     }
 }

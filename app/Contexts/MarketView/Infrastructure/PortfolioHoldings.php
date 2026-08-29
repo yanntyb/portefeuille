@@ -4,48 +4,35 @@ namespace App\Contexts\MarketView\Infrastructure;
 
 use App\Contexts\MarketView\Datas\HoldingSnapshotData;
 use App\Contexts\MarketView\Ports\HoldingsPort;
-use App\Contexts\Portfolio\Models\Holding;
-use Illuminate\Support\Collection;
+use App\Contexts\Portfolio\Actions\GetPortfolioPositions;
+use App\Contexts\Portfolio\Datas\PositionLineData;
 
+/** Pur remappage : la position par actif est calculée par `Portfolio`, qui en est propriétaire. */
 class PortfolioHoldings implements HoldingsPort
 {
+    public function __construct(private GetPortfolioPositions $positions) {}
+
     /** @return list<HoldingSnapshotData> */
     public function holdingsFor(int $userId): array
     {
-        return Holding::query()
-            ->where('user_id', $userId)
-            ->get()
-            ->groupBy('asset_id')
-            ->map(fn (Collection $rows) => $this->aggregate((int) $rows->first()->asset_id, $rows))
-            ->values()
-            ->all();
+        return array_values(array_map(
+            fn (PositionLineData $position): HoldingSnapshotData => new HoldingSnapshotData(
+                assetId: $position->assetId,
+                quantity: $position->quantity,
+                avgCost: $position->avgCost,
+            ),
+            ($this->positions)($userId),
+        ));
     }
 
     public function holdingFor(int $userId, int $assetId): ?HoldingSnapshotData
     {
-        $rows = Holding::query()
-            ->where('user_id', $userId)
-            ->where('asset_id', $assetId)
-            ->get();
+        $position = ($this->positions)($userId)[$assetId] ?? null;
 
-        return $rows->isNotEmpty() ? $this->aggregate($assetId, $rows) : null;
-    }
-
-    /** @param Collection<int, Holding> $rows */
-    private function aggregate(int $assetId, Collection $rows): HoldingSnapshotData
-    {
-        $quantity = (float) $rows->sum(fn (Holding $holding) => (float) $holding->quantity);
-
-        $costRows = $rows->filter(fn (Holding $holding) => $holding->avg_cost !== null);
-        $qtyWithCost = (float) $costRows->sum(fn (Holding $holding) => (float) $holding->quantity);
-        $avgCost = $qtyWithCost > 0.0
-            ? (float) $costRows->sum(fn (Holding $holding) => (float) $holding->quantity * (float) $holding->avg_cost) / $qtyWithCost
-            : null;
-
-        return new HoldingSnapshotData(
-            assetId: $assetId,
-            quantity: $quantity,
-            avgCost: $avgCost,
+        return $position === null ? null : new HoldingSnapshotData(
+            assetId: $position->assetId,
+            quantity: $position->quantity,
+            avgCost: $position->avgCost,
         );
     }
 }
