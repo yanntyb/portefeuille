@@ -1,8 +1,6 @@
 <?php
 
-use App\Contexts\Valuation\Datas\AssetInvestedSeriesData;
 use App\Contexts\Valuation\Datas\EvolutionSeriesData;
-use App\Contexts\Valuation\Datas\InvestedByAssetSeriesData;
 use App\Contexts\Valuation\Datas\PriceRecordData;
 use App\Contexts\Valuation\Datas\PriceRecordData as P;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
@@ -17,13 +15,13 @@ function tx(string $date, int $assetId, bool $isSell, float $qty, float $price, 
 }
 
 it('returns an empty series without transactions', function () {
-    expect((new ValuationCalculator)->calculate([], []))->toEqual(
+    expect((new ValuationCalculator)->calculateDaily([], []))->toEqual(
         ValuationSeriesData::empty()
     );
 });
 
 it('values a single buy across two price dates', function () {
-    $series = (new ValuationCalculator)->calculate(
+    $series = (new ValuationCalculator)->calculateDaily(
         [tx('2026-01-01', 1, false, 10, 100)],
         [new PriceRecordData(1, '2026-01-01', 100), new PriceRecordData(1, '2026-02-01', 120)],
     );
@@ -34,7 +32,7 @@ it('values a single buy across two price dates', function () {
 });
 
 it('reduces value and invested after a sell', function () {
-    $series = (new ValuationCalculator)->calculate(
+    $series = (new ValuationCalculator)->calculateDaily(
         [tx('2026-01-01', 1, false, 10, 100), tx('2026-02-01', 1, true, 4, 150)],
         [new PriceRecordData(1, '2026-01-01', 100), new PriceRecordData(1, '2026-02-01', 150)],
     );
@@ -46,7 +44,7 @@ it('reduces value and invested after a sell', function () {
 });
 
 it('ignores an asset that has no price', function () {
-    $series = (new ValuationCalculator)->calculate(
+    $series = (new ValuationCalculator)->calculateDaily(
         [tx('2026-01-01', 1, false, 10, 100), tx('2026-01-01', 2, false, 5, 50)],
         [new PriceRecordData(1, '2026-01-01', 100)], // only asset 1 priced
     );
@@ -56,90 +54,19 @@ it('ignores an asset that has no price', function () {
         ->and($series->invested)->toBe([1250.0]);
 });
 
-it('keeps every index when the count is within the cap', function () {
-    expect(ValuationCalculator::downsampleIndices(5, 200))->toBe([0, 1, 2, 3, 4])
-        ->and(ValuationCalculator::downsampleIndices(0, 200))->toBe([]);
-});
-
-it('caps a large index set while keeping the first and last', function () {
-    $indices = ValuationCalculator::downsampleIndices(1200, 200);
-
-    expect(count($indices))->toBeLessThanOrEqual(200)
-        ->and($indices[0])->toBe(0)
-        ->and($indices[count($indices) - 1])->toBe(1199)
-        // strictement croissant
-        ->and(collect($indices)->sliding(2)->every(fn ($pair) => $pair->last() > $pair->first()))->toBeTrue();
-});
-
-it('downsamples a long daily series to the point cap', function () {
-    $prices = [];
-    $day = Carbon::parse('2020-01-01');
-    for ($i = 0; $i < 400; $i++) {
-        $prices[] = new PriceRecordData(1, $day->copy()->addDays($i)->format('Y-m-d'), 100.0 + $i);
-    }
-
-    $series = (new ValuationCalculator)->calculate(
-        [tx('2020-01-01', 1, false, 1, 100)],
-        $prices,
-        200,
-    );
-
-    $labels = $series->labels;
-
-    expect(count($labels))->toBeLessThanOrEqual(200)
-        ->and(count($labels))->toBeGreaterThan(1)
-        ->and($labels[0])->toBe('2020-01-01')
-        ->and($labels[count($labels) - 1])->toBe('2021-02-03') // 2020-01-01 + 399 jours
-        ->and(count($series->valuations))->toBe(count($labels))
-        ->and(count($series->invested))->toBe(count($labels));
-});
-
 it('orders same-day buys before sells regardless of input order', function () {
     $prices = [new PriceRecordData(1, '2026-01-01', 150)];
     $buy = tx('2026-01-01', 1, false, 10, 100);
     $sell = tx('2026-01-01', 1, true, 4, 150);
 
-    $sellFirst = (new ValuationCalculator)->calculate([$sell, $buy], $prices);
-    $buyFirst = (new ValuationCalculator)->calculate([$buy, $sell], $prices);
+    $sellFirst = (new ValuationCalculator)->calculateDaily([$sell, $buy], $prices);
+    $buyFirst = (new ValuationCalculator)->calculateDaily([$buy, $sell], $prices);
 
     // both orderings must agree: qty 6 @150 = 900 ; invested 1000 - (4 × PRU 100) = 600
     expect($sellFirst->valuations)->toBe([900.0])
         ->and($sellFirst->invested)->toBe([600.0])
         ->and($buyFirst->valuations)->toBe([900.0])
         ->and($buyFirst->invested)->toBe([600.0]);
-});
-
-it('accumulates invested per asset on a shared date axis', function () {
-    $series = (new ValuationCalculator)->investedByAsset([
-        tx('2026-01-01', 1, false, 10, 100),          // asset 1 invests 1000
-        tx('2026-02-01', 2, false, 5, 50),            // asset 2 invests 250
-        tx('2026-03-01', 1, false, 2, 150),           // asset 1 invests +300 => 1300
-    ]);
-
-    expect($series->labels)->toBe(['2026-01-01', '2026-02-01', '2026-03-01']);
-
-    $byId = collect($series->series)->keyBy('assetId');
-    // asset 1: 1000 at d1, forward-fill 1000 at d2, 1300 at d3
-    expect($byId[1]->invested)->toBe([1000.0, 1000.0, 1300.0]);
-    expect($byId[1]->name)->toBe('#1');
-    // asset 2: 0 before its first tx, 250 from d2 onward
-    expect($byId[2]->invested)->toBe([0.0, 250.0, 250.0]);
-});
-
-it('reduces invested by cost basis on a sell (per asset)', function () {
-    $series = (new ValuationCalculator)->investedByAsset([
-        tx('2026-01-01', 1, false, 10, 100),          // invested 1000, PRU 100
-        tx('2026-02-01', 1, true, 4, 150),            // invested -= 4*100 => 600
-    ]);
-
-    $byId = collect($series->series)->keyBy('assetId');
-    expect($byId[1]->invested)->toBe([1000.0, 600.0]);
-});
-
-it('returns an empty invested-by-asset series without transactions', function () {
-    expect((new ValuationCalculator)->investedByAsset([]))->toEqual(
-        InvestedByAssetSeriesData::empty()
-    );
 });
 
 it('exposes the unit price aligned with the valuation labels', function () {
@@ -159,38 +86,15 @@ it('exposes the unit price aligned with the valuation labels', function () {
         new PriceRecordData(assetId: 1, date: '2026-01-03', close: 90.0),
     ];
 
-    $series = (new ValuationCalculator)->calculate($transactions, $prices);
+    $series = (new ValuationCalculator)->calculateDaily($transactions, $prices);
 
     expect($series->prices)->toBe([100.0, 110.0, 90.0])
         ->and($series->prices)->toHaveCount(count($series->labels))
         ->and($series->valuations)->toBe([1000.0, 1100.0, 900.0]);
 });
 
-it('downsamples prices with the same indices as the other series', function () {
-    $transactions = [
-        new TransactionRecordData(
-            date: Carbon::parse('2026-01-01'),
-            assetId: 1,
-            isSell: false,
-            quantity: 10.0,
-            unitPrice: 100.0,
-            fees: 0.0,
-        ),
-    ];
-    $prices = [
-        new PriceRecordData(assetId: 1, date: '2026-01-01', close: 100.0),
-        new PriceRecordData(assetId: 1, date: '2026-01-02', close: 110.0),
-        new PriceRecordData(assetId: 1, date: '2026-01-03', close: 90.0),
-    ];
-
-    $series = (new ValuationCalculator)->calculate($transactions, $prices, maxPoints: 2);
-
-    expect($series->labels)->toBe(['2026-01-01', '2026-01-03'])
-        ->and($series->prices)->toBe([100.0, 90.0]);
-});
-
 it('returns an empty prices array for an empty series', function () {
-    $series = (new ValuationCalculator)->calculate([], []);
+    $series = (new ValuationCalculator)->calculateDaily([], []);
 
     expect($series->prices)->toBe([]);
 });
@@ -212,12 +116,9 @@ it('calculateDaily returns one point per price day without downsampling', functi
     }
 
     $daily = (new ValuationCalculator)->calculateDaily($transactions, $prices);
-    $capped = (new ValuationCalculator)->calculate($transactions, $prices, maxPoints: 200);
 
     expect($daily->labels)->toHaveCount(250)
-        ->and($daily->prices)->toHaveCount(250)
-        ->and(count($capped->labels))->toBeLessThanOrEqual(200)
-        ->and(count($capped->labels))->toBeLessThan(250);
+        ->and($daily->prices)->toHaveCount(250);
 });
 
 it('windows the series to the requested range', function () {
@@ -421,32 +322,6 @@ it('omits the periods the series does not cover', function () {
 
 it('returns no trailing performances for an empty series', function () {
     expect((new ValuationCalculator)->trailingPerformances(ValuationSeriesData::empty()))->toBe([]);
-});
-
-it('windows and aggregates an invested-by-asset series', function () {
-    $series = new InvestedByAssetSeriesData(
-        ['2026-01-10', '2026-01-20', '2026-02-15', '2026-03-01'],
-        [new AssetInvestedSeriesData(1, 'A', [100.0, 200.0, 300.0, 400.0])],
-    );
-
-    $result = (new ValuationCalculator)->windowAndAggregateInvested($series, null, ValuationGranularity::Month);
-
-    // Buckets mensuels : 2026-01 -> dernier (2026-01-20), 2026-02, 2026-03.
-    expect($result->labels)->toBe(['2026-01-20', '2026-02-15', '2026-03-01'])
-        ->and($result->series[0]->invested)->toBe([200.0, 300.0, 400.0]);
-});
-
-it('windows an invested-by-asset series by range', function () {
-    $series = new InvestedByAssetSeriesData(
-        ['2026-01-10', '2026-02-15', '2026-03-01'],
-        [new AssetInvestedSeriesData(1, 'A', [100.0, 200.0, 300.0])],
-    );
-
-    // Dernier label 2026-03-01, range 1M => cutoff 2026-02-01 : seuls 2026-02-15 et 2026-03-01 restent.
-    $result = (new ValuationCalculator)->windowAndAggregateInvested($series, 1, ValuationGranularity::Day);
-
-    expect($result->labels)->toBe(['2026-02-15', '2026-03-01'])
-        ->and($result->series[0]->invested)->toBe([200.0, 300.0]);
 });
 
 it('exposes per-asset market value aligned on the valuation labels (evolution)', function () {

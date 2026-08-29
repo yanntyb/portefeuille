@@ -2,10 +2,8 @@
 
 namespace App\Contexts\Valuation\Services;
 
-use App\Contexts\Valuation\Datas\AssetInvestedSeriesData;
 use App\Contexts\Valuation\Datas\AssetSeriesData;
 use App\Contexts\Valuation\Datas\EvolutionSeriesData;
-use App\Contexts\Valuation\Datas\InvestedByAssetSeriesData;
 use App\Contexts\Valuation\Datas\PerformanceData;
 use App\Contexts\Valuation\Datas\PerformanceWindowData;
 use App\Contexts\Valuation\Datas\PriceRecordData;
@@ -16,28 +14,6 @@ use Illuminate\Support\Carbon;
 
 class ValuationCalculator
 {
-    /**
-     * @param  list<TransactionRecordData>  $transactions
-     * @param  list<PriceRecordData>  $prices
-     * @param  int  $maxPoints  plafond de points de la série (downsampling adaptatif)
-     */
-    public function calculate(array $transactions, array $prices, int $maxPoints = 200): ValuationSeriesData
-    {
-        $daily = $this->calculateDaily($transactions, $prices);
-        $indices = self::downsampleIndices(count($daily->labels), $maxPoints);
-
-        if (count($indices) === count($daily->labels)) {
-            return $daily;
-        }
-
-        return new ValuationSeriesData(
-            array_map(fn (int $i): string => $daily->labels[$i], $indices),
-            array_map(fn (int $i): float => $daily->valuations[$i], $indices),
-            array_map(fn (int $i): float => $daily->invested[$i], $indices),
-            array_map(fn (int $i): float => $daily->prices[$i], $indices),
-        );
-    }
-
     /**
      * Série quotidienne pleine (un point par jour de prix), sans downsampling.
      *
@@ -221,48 +197,6 @@ class ValuationCalculator
     }
 
     /**
-     * Fenêtre + agrège une série investi-par-titre : coupe les labels avant le cutoff
-     * de la fenêtre, puis garde le dernier label de chaque bucket de granularité. Les valeurs
-     * investies (cumulées) sont conservées telles quelles.
-     *
-     * @param  ?int  $months  Profondeur de la fenêtre depuis le dernier point, null pour tout l'historique.
-     */
-    public function windowAndAggregateInvested(InvestedByAssetSeriesData $series, ?int $months, ValuationGranularity $granularity): InvestedByAssetSeriesData
-    {
-        if ($series->labels === []) {
-            return $series;
-        }
-
-        $cutoff = $months === null
-            ? null
-            : Carbon::parse($series->labels[count($series->labels) - 1])->subMonthsNoOverflow($months)->format('Y-m-d');
-
-        /** @var array<string, int> $lastIndexByBucket */
-        $lastIndexByBucket = [];
-        foreach ($series->labels as $i => $label) {
-            if ($cutoff !== null && $label < $cutoff) {
-                continue;
-            }
-            $lastIndexByBucket[$granularity->bucketKey($label)] = $i;
-        }
-
-        $keep = array_values($lastIndexByBucket);
-        sort($keep);
-
-        return new InvestedByAssetSeriesData(
-            array_map(fn (int $i): string => $series->labels[$i], $keep),
-            array_map(
-                fn (AssetInvestedSeriesData $serie): AssetInvestedSeriesData => new AssetInvestedSeriesData(
-                    assetId: $serie->assetId,
-                    name: $serie->name,
-                    invested: array_map(fn (int $i): float => $serie->invested[$i], $keep),
-                ),
-                $series->series,
-            ),
-        );
-    }
-
-    /**
      * Perfs de position par période sur la série quotidienne : YTD, 1/3/6 mois, une ligne
      * par année pleine, puis Max depuis le premier jour de la série. Max remplace la
      * dernière année pleine, qui partirait presque du même jour. Les périodes que la
@@ -322,78 +256,6 @@ class ValuationCalculator
         }
 
         return $performances;
-    }
-
-    /**
-     * Indices à conserver pour plafonner une série à $maxPoints points : pas régulier
-     * adaptatif, premier et dernier points toujours inclus. Résultat trié croissant.
-     *
-     * @return list<int>
-     */
-    public static function downsampleIndices(int $count, int $maxPoints): array
-    {
-        if ($count <= 0) {
-            return [];
-        }
-
-        $maxPoints = max($maxPoints, 1);
-
-        if ($count <= $maxPoints) {
-            return range(0, $count - 1);
-        }
-
-        $step = (int) ceil($count / $maxPoints);
-        $indices = range(0, $count - 1, $step);
-        $last = count($indices) - 1;
-
-        if ($indices[$last] !== $count - 1) {
-            $indices[$last] = $count - 1;
-        }
-
-        return $indices;
-    }
-
-    /**
-     * Investi cumulé par asset dans le temps (fonction en escalier sur les dates
-     * de transaction, sans prix). `name` est laissé à `#<assetId>` — l'action
-     * qui consomme cette méthode y substitue le vrai nom.
-     *
-     * @param  list<TransactionRecordData>  $transactions
-     */
-    public function investedByAsset(array $transactions, int $maxPoints = 200): InvestedByAssetSeriesData
-    {
-        if ($transactions === []) {
-            return InvestedByAssetSeriesData::empty();
-        }
-
-        $perAsset = $this->perAssetInvestedTimelines($transactions);
-
-        /** @var array<string, true> $dates */
-        $dates = [];
-        foreach ($perAsset as $entries) {
-            foreach ($entries as $entry) {
-                $dates[$entry['date']] = true;
-            }
-        }
-
-        $labels = array_keys($dates);
-        sort($labels);
-
-        $indices = self::downsampleIndices(count($labels), $maxPoints);
-        if (count($indices) < count($labels)) {
-            $labels = array_map(fn (int $i): string => $labels[$i], $indices);
-        }
-
-        $series = [];
-        foreach ($perAsset as $assetId => $entries) {
-            $series[] = new AssetInvestedSeriesData(
-                assetId: $assetId,
-                name: '#'.$assetId,
-                invested: array_map(fn (string $day): float => round($this->valueAtDate($entries, $day), 2), $labels),
-            );
-        }
-
-        return new InvestedByAssetSeriesData($labels, $series);
     }
 
     /**

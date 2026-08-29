@@ -6,7 +6,7 @@ use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
-use App\Contexts\Valuation\Actions\BuildPortfolioValuationSeries;
+use App\Contexts\Valuation\Actions\BuildEvolutionSeries;
 use Database\Seeders\DashboardDemoSeeder;
 
 it('builds the demo portfolio from transactions', function () {
@@ -50,9 +50,10 @@ it('seeds a price history that yields a non-flat valuation curve', function () {
     // multiple distinct price dates were seeded
     expect(Price::query()->distinct()->count('date'))->toBeGreaterThan(1);
 
-    $series = app(BuildPortfolioValuationSeries::class)($user->id);
+    $series = app(BuildEvolutionSeries::class)($user->id);
+    $values = collect($series->perAsset)->flatMap(fn ($line): array => $line->value)->all();
 
     // several points, and the curve actually moves
-    expect(count($series->valuations))->toBeGreaterThan(1)
-        ->and(count(array_unique($series->valuations)))->toBeGreaterThan(1);
+    expect(count($series->labels))->toBeGreaterThan(1)
+        ->and(count(array_unique($values)))->toBeGreaterThan(1);
 });
