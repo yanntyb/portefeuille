@@ -36,6 +36,28 @@ it('ventile le revenu par année civile, la plus ancienne en tête', function ()
     expect($years[1]->total)->toBe(8.0);
 });
 
+it('rend les détachements d\'un actif, avec ce qu\'ils pèsent', function () {
+    $this->travelTo('2026-08-19 10:00:00');
+    ['user' => $user, 'instrument' => $instrument] = dividendFixture();
+
+    $history = $this->income->assetHistoryFor($user->id, $instrument->id);
+
+    expect($history->receipts)->toHaveCount(2)
+        ->and($history->totalReceived)->toBe(13.0)
+        ->and($history->last12Months)->toBe(8.0)
+        ->and($history->receipts[0]->assetId)->toBe($instrument->id);
+});
+
+it('rend un historique de détachements vide pour un actif qui ne distribue pas', function () {
+    ['user' => $user] = dividendFixture();
+
+    $history = $this->income->assetHistoryFor($user->id, 999);
+
+    expect($history->receipts)->toBe([])
+        ->and($history->totalReceived)->toBe(0.0)
+        ->and($history->yieldOnCost)->toBeNull();
+});
+
 it('rend un revenu vide sur une exposition qui n\'en rapporte aucun', function () {
     $this->travelTo('2026-08-19 10:00:00');
     ['user' => $user] = dividendFixture();

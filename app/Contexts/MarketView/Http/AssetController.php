@@ -3,14 +3,10 @@
 namespace App\Contexts\MarketView\Http;
 
 use App\Contexts\Identity\Models\User;
-use App\Contexts\Income\Enums\IncomeSource;
-use App\Contexts\Income\Sources\Dividend\Actions\GetAssetDividendHistory;
 use App\Contexts\MarketView\Actions\GetInstrumentDetail;
+use App\Contexts\MarketView\Ports\IncomePort;
 use App\Contexts\MarketView\Ports\MarketDataPort;
-use App\Contexts\Valuation\Actions\BuildAssetPerformances;
-use App\Contexts\Valuation\Actions\BuildAssetValuationSeries;
-use App\Contexts\Valuation\Enums\ValuationGranularity;
-use App\Contexts\Valuation\Enums\ValuationRange;
+use App\Contexts\MarketView\Ports\ValuationPort;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -26,6 +22,8 @@ class AssetController
     public function __construct(
         private GetInstrumentDetail $getDetail,
         private MarketDataPort $market,
+        private ValuationPort $valuation,
+        private IncomePort $income,
     ) {}
 
     public function __invoke(int $id): Response
@@ -41,27 +39,19 @@ class AssetController
 
         $props = [
             'instrument' => $detail,
-            'performances' => app(BuildAssetPerformances::class)($userId, $id),
+            'performances' => $this->valuation->assetPerformancesFor($userId, $id),
             'priceHistory' => Inertia::defer(
                 fn () => $this->market->priceHistory($id, Carbon::now()->subMonths(12))
             ),
-            /** Historique complet : la fenêtre visible est choisie côté client par le zoom du graphe. */
-            'valuation' => Inertia::defer(
-                fn () => app(BuildAssetValuationSeries::class)(
-                    $userId,
-                    $id,
-                    ValuationRange::Max,
-                    ValuationGranularity::Week,
-                )
-            ),
+            'valuation' => Inertia::defer(fn () => $this->valuation->assetSeriesFor($userId, $id)),
         ];
 
         /**
          * Non différée : la visibilité de la section dépend de la donnée elle-même, et un
          * squelette qui disparaît sur chaque actif capitalisant coûterait plus qu'il ne rapporte.
          */
-        if (IncomeSource::forAssetClass($detail->assetClass) !== null) {
-            $props['dividends'] = app(GetAssetDividendHistory::class)($userId, $id);
+        if ($this->income->supportsExposure($detail->assetClass)) {
+            $props['dividends'] = $this->income->assetHistoryFor($userId, $id);
         }
 
         return Inertia::render('Asset/Show', $props);

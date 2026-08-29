@@ -3,6 +3,7 @@
 namespace App\Contexts\MarketView\Ports;
 
 use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\MarketView\Datas\AssetValuationData;
 use App\Contexts\MarketView\Datas\EvolutionData;
 use App\Contexts\MarketView\Datas\PerformanceLineData;
 
@@ -20,4 +21,9 @@ interface ValuationPort
     public function performancesFor(int $userId, AssetClass $exposure): array;
 
     public function evolutionFor(int $userId, AssetClass $exposure): EvolutionData;
+
+    /** @return list<PerformanceLineData> */
+    public function assetPerformancesFor(int $userId, int $assetId): array;
+
+    public function assetSeriesFor(int $userId, int $assetId): AssetValuationData;
 }

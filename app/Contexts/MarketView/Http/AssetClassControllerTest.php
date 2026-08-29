@@ -3,6 +3,8 @@
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\MarketView\Datas\AssetLineData;
+use App\Contexts\MarketView\Datas\AssetValuationData;
+use App\Contexts\MarketView\Datas\DividendHistoryData;
 use App\Contexts\MarketView\Datas\EvolutionData;
 use App\Contexts\MarketView\Datas\HoldingRowData;
 use App\Contexts\MarketView\Datas\IncomeOverviewData;
@@ -79,6 +81,11 @@ it('sert les sections secteur et revenus par leurs seuls ports', function () {
         {
             return [new IncomeYearData(2026, 8.0, ['dividend' => 8.0])];
         }
+
+        public function assetHistoryFor(int $userId, int $assetId): DividendHistoryData
+        {
+            return DividendHistoryData::empty();
+        }
     });
 
     $headers = [
@@ -124,6 +131,16 @@ it('sert l\'aperçu, les performances et l\'évolution par leurs seuls ports', f
         public function evolutionFor(int $userId, AssetClass $exposure): EvolutionData
         {
             return new EvolutionData(['2026-08-01'], [new AssetLineData(1, 'ACME', [1000.0], [800.0])]);
+        }
+
+        public function assetPerformancesFor(int $userId, int $assetId): array
+        {
+            return [];
+        }
+
+        public function assetSeriesFor(int $userId, int $assetId): AssetValuationData
+        {
+            return AssetValuationData::empty();
         }
     });
 

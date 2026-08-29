@@ -3,6 +3,7 @@
 namespace App\Contexts\MarketView\Ports;
 
 use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\MarketView\Datas\DividendHistoryData;
 use App\Contexts\MarketView\Datas\IncomeOverviewData;
 use App\Contexts\MarketView\Datas\IncomeYearData;
 
@@ -20,4 +21,7 @@ interface IncomePort
 
     /** @return list<IncomeYearData> */
     public function annualFor(int $userId, AssetClass $exposure): array;
+
+    /** Les détachements d'un actif, tels que sa fiche les montre. */
+    public function assetHistoryFor(int $userId, int $assetId): DividendHistoryData;
 }

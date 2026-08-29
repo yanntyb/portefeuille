@@ -54,3 +54,32 @@ it('rend une évolution vide pour un utilisateur sans transaction', function () 
     expect($series->labels)->toBe([])
         ->and($series->perAsset)->toBe([]);
 });
+
+it('rend les performances d\'un actif seul', function () {
+    ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
+
+    $performances = $this->valuation->assetPerformancesFor($user->id, $instrument->id);
+
+    expect($performances)->not->toBeEmpty()
+        ->and($performances[0]->key)->toBeString();
+});
+
+it('rend la valorisation d\'un actif seul, cours compris', function () {
+    ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
+
+    $series = $this->valuation->assetSeriesFor($user->id, $instrument->id);
+
+    expect(array_keys($series->jsonSerialize()))
+        ->toBe(['labels', 'valuations', 'invested', 'prices']);
+    expect($series->labels)->not->toBeEmpty()
+        ->and($series->valuations)->toHaveCount(count($series->labels));
+});
+
+it('rend une valorisation vide pour un actif jamais acheté', function () {
+    ['user' => $user] = portfolioFixture();
+
+    $series = $this->valuation->assetSeriesFor($user->id, 999);
+
+    expect($series->labels)->toBe([])
+        ->and($series->prices)->toBe([]);
+});

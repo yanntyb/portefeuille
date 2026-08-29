@@ -6,7 +6,11 @@ use App\Contexts\Income\Actions\GetAnnualIncome;
 use App\Contexts\Income\Actions\GetIncomeSummary;
 use App\Contexts\Income\Datas\AnnualIncomeData;
 use App\Contexts\Income\Enums\IncomeSource;
+use App\Contexts\Income\Sources\Dividend\Actions\GetAssetDividendHistory;
+use App\Contexts\Income\Sources\Dividend\Datas\DividendReceiptData;
 use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\MarketView\Datas\DividendHistoryData;
+use App\Contexts\MarketView\Datas\DividendLineData;
 use App\Contexts\MarketView\Datas\IncomeOverviewData;
 use App\Contexts\MarketView\Datas\IncomeYearData;
 use App\Contexts\MarketView\Ports\IncomePort;
@@ -20,6 +24,7 @@ class IncomeTotals implements IncomePort
     public function __construct(
         private GetIncomeSummary $summary,
         private GetAnnualIncome $annual,
+        private GetAssetDividendHistory $assetHistory,
     ) {}
 
     public function supportsExposure(AssetClass $exposure): bool
@@ -61,6 +66,28 @@ class IncomeTotals implements IncomePort
                 bySource: $year->bySource,
             ),
             ($this->annual)($userId, $source),
+        );
+    }
+
+    public function assetHistoryFor(int $userId, int $assetId): DividendHistoryData
+    {
+        $history = ($this->assetHistory)($userId, $assetId);
+
+        return new DividendHistoryData(
+            receipts: array_map(
+                fn (DividendReceiptData $receipt): DividendLineData => new DividendLineData(
+                    assetId: $receipt->assetId,
+                    exDate: $receipt->exDate,
+                    quantity: $receipt->quantity,
+                    amountPerShare: $receipt->amountPerShare,
+                    amount: $receipt->amount,
+                ),
+                $history->receipts,
+            ),
+            totalReceived: $history->totalReceived,
+            last12Months: $history->last12Months,
+            estimatedAnnual: $history->estimatedAnnual,
+            yieldOnCost: $history->yieldOnCost,
         );
     }
 }

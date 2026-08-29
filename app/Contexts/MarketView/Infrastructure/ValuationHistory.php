@@ -4,14 +4,18 @@ namespace App\Contexts\MarketView\Infrastructure;
 
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\MarketView\Datas\AssetLineData;
+use App\Contexts\MarketView\Datas\AssetValuationData;
 use App\Contexts\MarketView\Datas\EvolutionData;
 use App\Contexts\MarketView\Datas\PerformanceLineData;
 use App\Contexts\MarketView\Ports\ValuationPort;
+use App\Contexts\Valuation\Actions\BuildAssetPerformances;
+use App\Contexts\Valuation\Actions\BuildAssetValuationSeries;
 use App\Contexts\Valuation\Actions\BuildEvolutionSeries;
 use App\Contexts\Valuation\Actions\BuildPortfolioPerformances;
 use App\Contexts\Valuation\Datas\AssetSeriesData;
 use App\Contexts\Valuation\Datas\PerformanceData;
 use App\Contexts\Valuation\Enums\ValuationGranularity;
+use App\Contexts\Valuation\Enums\ValuationRange;
 
 /**
  * Pur remappage : le partage par exposition est passé aux actions telles quelles, jamais refait
@@ -23,6 +27,8 @@ class ValuationHistory implements ValuationPort
     public function __construct(
         private BuildPortfolioPerformances $performances,
         private BuildEvolutionSeries $evolution,
+        private BuildAssetPerformances $assetPerformances,
+        private BuildAssetValuationSeries $assetSeries,
     ) {}
 
     /** @return list<PerformanceLineData> */
@@ -53,6 +59,33 @@ class ValuationHistory implements ValuationPort
                 ),
                 $series->perAsset,
             ),
+        );
+    }
+
+    /** @return list<PerformanceLineData> */
+    public function assetPerformancesFor(int $userId, int $assetId): array
+    {
+        return array_map(
+            $this->performanceLine(...),
+            ($this->assetPerformances)($userId, $assetId),
+        );
+    }
+
+    /** Même profondeur et même pas que l'évolution d'une exposition, pour la même raison. */
+    public function assetSeriesFor(int $userId, int $assetId): AssetValuationData
+    {
+        $series = ($this->assetSeries)(
+            $userId,
+            $assetId,
+            ValuationRange::Max,
+            ValuationGranularity::Week,
+        );
+
+        return new AssetValuationData(
+            labels: $series->labels,
+            valuations: $series->valuations,
+            invested: $series->invested,
+            prices: $series->prices,
         );
     }
 
