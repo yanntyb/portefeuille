@@ -36,10 +36,11 @@ it('ne montre pas les actifs des autres expositions', function () {
 it('rend un total vide pour un utilisateur inconnu', function () {
     $summary = $this->overview->overviewFor(999, AssetClass::Equity);
 
+    // gainPct est nul, et non zéro, sur un coût nul : « 0 % » mentirait sur une mise inconnue.
     expect($summary->totalValue)->toBe(0.0)
         ->and($summary->totalCost)->toBe(0.0)
         ->and($summary->totalGain)->toBe(0.0)
-        ->and($summary->totalGainPct)->toBe(0.0)
+        ->and($summary->totalGainPct)->toBeNull()
         ->and($summary->holdings)->toBe([]);
 });
 

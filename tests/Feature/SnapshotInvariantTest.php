@@ -27,7 +27,8 @@ use Illuminate\Support\Carbon;
  * fuite dans le JSON — la parade prévue par le cahier des charges s'applique : comparer un tableau
  * normalisé plutôt que le hash brut du contrôleur.
  */
-const SNAPSHOT_VERSION = 'a2e12f62919d83a3068231941c589532b8fe9664';
+/** Modifié une fois : gainPct rend null, et non 0.0, sur un total à coût nul. */
+const SNAPSHOT_VERSION = '68124720216879f898d1e396d79485f0af090c80';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

@@ -11,13 +11,13 @@ readonly class PortfolioOverviewData implements JsonSerializable
         public float $totalValue,
         public float $totalCost,
         public float $totalGain,
-        public float $totalGainPct,
+        public ?float $totalGainPct,
         public array $holdings,
     ) {}
 
     public static function empty(): self
     {
-        return new self(0.0, 0.0, 0.0, 0.0, []);
+        return new self(0.0, 0.0, 0.0, null, []);
     }
 
     /** @return array<string, mixed> */

@@ -20,7 +20,7 @@ export interface PortfolioOverview {
     totalValue: number;
     totalCost: number;
     totalGain: number;
-    totalGainPct: number;
+    totalGainPct: number | null;
     holdings: HoldingLine[];
 }
 

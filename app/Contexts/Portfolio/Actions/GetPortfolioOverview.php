@@ -8,6 +8,7 @@ use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Portfolio\Datas\HoldingLineData;
 use App\Contexts\Portfolio\Datas\PortfolioOverviewData;
 use App\Contexts\Portfolio\Models\Holding;
+use App\Contexts\Portfolio\Services\HoldingValuator;
 
 class GetPortfolioOverview
 {
@@ -20,7 +21,10 @@ class GetPortfolioOverview
      */
     private array $linesByUser = [];
 
-    public function __construct(private PriceRepositoryContract $prices) {}
+    public function __construct(
+        private PriceRepositoryContract $prices,
+        private HoldingValuator $valuator,
+    ) {}
 
     /**
      * Sans `$classes`, tout le portefeuille. Avec, une ou plusieurs expositions : chacune a sa
@@ -65,13 +69,9 @@ class GetPortfolioOverview
         foreach ($holdings as $holding) {
             $quantity = (float) $holding->quantity;
             $avgCost = $holding->avg_cost !== null ? (float) $holding->avg_cost : null;
-
             $lastPrice = $lastPrices[(int) $holding->asset_id] ?? null;
 
-            $marketValue = $lastPrice !== null ? $quantity * $lastPrice : null;
-            $cost = $avgCost !== null ? $quantity * $avgCost : null;
-            $gain = ($marketValue !== null && $cost !== null) ? $marketValue - $cost : null;
-            $gainPct = ($gain !== null && $cost !== null && $cost > 0.0) ? $gain / $cost * 100 : null;
+            $valued = $this->valuator->value($quantity, $avgCost, $lastPrice);
 
             $lines[] = new HoldingLineData(
                 assetId: (int) $holding->asset_id,
@@ -82,9 +82,9 @@ class GetPortfolioOverview
                 quantity: $quantity,
                 avgCost: $avgCost,
                 lastPrice: $lastPrice,
-                marketValue: $marketValue,
-                gain: $gain,
-                gainPct: $gainPct,
+                marketValue: $valued['marketValue'],
+                gain: $valued['gain'],
+                gainPct: $valued['gainPct'],
             );
         }
 
@@ -99,28 +99,13 @@ class GetPortfolioOverview
      */
     private function summarize(array $lines): PortfolioOverviewData
     {
-        $totalValue = 0.0;
-        $totalCost = 0.0;
-        $totalGain = 0.0;
-
-        foreach ($lines as $line) {
-            if ($line->marketValue !== null) {
-                $totalValue += $line->marketValue;
-            }
-
-            if ($line->gain !== null) {
-                $totalCost += $line->quantity * $line->avgCost;
-                $totalGain += $line->gain;
-            }
-        }
-
-        $totalGainPct = $totalCost > 0.0 ? $totalGain / $totalCost * 100 : 0.0;
+        $totals = $this->valuator->totals($lines);
 
         return new PortfolioOverviewData(
-            totalValue: $totalValue,
-            totalCost: $totalCost,
-            totalGain: $totalGain,
-            totalGainPct: $totalGainPct,
+            totalValue: $totals['totalValue'],
+            totalCost: $totals['totalCost'],
+            totalGain: $totals['totalGain'],
+            totalGainPct: $totals['totalGainPct'],
             holdings: $lines,
         );
     }
