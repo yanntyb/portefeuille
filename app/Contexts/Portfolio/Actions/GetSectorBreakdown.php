@@ -9,12 +9,15 @@ use App\Contexts\Market\Enums\Sector;
 use App\Contexts\Market\Models\SectorAllocation;
 use App\Contexts\Portfolio\Datas\AllocationSliceData;
 use App\Contexts\Portfolio\Models\Holding;
+use App\Contexts\Portfolio\Services\SectorSplitter;
+use Illuminate\Support\Collection;
 
 class GetSectorBreakdown
 {
     public function __construct(
         private PriceRepositoryContract $prices,
         private SectorRepositoryContract $sectors,
+        private SectorSplitter $splitter,
     ) {}
 
     /**
@@ -25,9 +28,7 @@ class GetSectorBreakdown
      */
     public function __invoke(User $user): array
     {
-        $holdings = Holding::query()
-            ->where('user_id', $user->id)
-            ->get();
+        $holdings = Holding::query()->where('user_id', $user->id)->get();
 
         $lastPrices = $this->prices->latestClosesForAssets(
             $holdings->pluck('asset_id')->map(fn ($assetId): int => (int) $assetId)->all(),
@@ -35,7 +36,6 @@ class GetSectorBreakdown
 
         /** @var array<int, float> $valueByAsset */
         $valueByAsset = [];
-        $totalValue = 0.0;
 
         foreach ($holdings as $holding) {
             $assetId = (int) $holding->asset_id;
@@ -45,54 +45,48 @@ class GetSectorBreakdown
                 continue;
             }
 
-            $marketValue = (float) $holding->quantity * $close;
-
-            $valueByAsset[$assetId] = ($valueByAsset[$assetId] ?? 0.0) + $marketValue;
-            $totalValue += $marketValue;
+            $valueByAsset[$assetId] = ($valueByAsset[$assetId] ?? 0.0) + (float) $holding->quantity * $close;
         }
 
         if ($valueByAsset === []) {
             return [];
         }
 
-        $weightsByAsset = $this->sectors
-            ->forAssets(array_keys($valueByAsset))
-            ->groupBy('asset_id');
+        $slices = $this->splitter->split($valueByAsset, $this->weightsFor(array_keys($valueByAsset)), Sector::Other->value);
 
-        /** @var array<string, float> $valueBySector */
-        $valueBySector = [];
+        return array_map(fn (array $slice): AllocationSliceData => new AllocationSliceData(
+            label: Sector::from($slice['sector'])->getLabel(),
+            value: $slice['value'],
+            pct: $slice['pct'],
+            color: Sector::from($slice['sector'])->getColor(),
+        ), $slices);
+    }
 
-        foreach ($valueByAsset as $assetId => $value) {
-            $weights = $weightsByAsset->get($assetId);
-            $totalWeight = $weights?->sum(fn (SectorAllocation $allocation) => (float) $allocation->weight) ?? 0.0;
+    /**
+     * @param  list<int>  $assetIds
+     * @return array<int, array<string, float>>
+     */
+    private function weightsFor(array $assetIds): array
+    {
+        return $this->sectors
+            ->forAssets($assetIds)
+            ->groupBy('asset_id')
+            ->map(function (Collection $allocations): array {
+                $weights = [];
 
-            if ($weights === null || $totalWeight <= 0.0) {
-                $key = Sector::Other->value;
-                $valueBySector[$key] = ($valueBySector[$key] ?? 0.0) + $value;
+                /**
+                 * Additionne au lieu d'écraser : deux lignes du même secteur sur un même actif
+                 * s'ajoutaient dans l'ancien code, et un `mapWithKeys` n'en garderait que la
+                 * dernière.
+                 */
+                foreach ($allocations as $allocation) {
+                    /** @var SectorAllocation $allocation */
+                    $key = $allocation->sector->value;
+                    $weights[$key] = ($weights[$key] ?? 0.0) + (float) $allocation->weight;
+                }
 
-                continue;
-            }
-
-            foreach ($weights as $allocation) {
-                $key = $allocation->sector->value;
-                $share = (float) $allocation->weight / $totalWeight;
-                $valueBySector[$key] = ($valueBySector[$key] ?? 0.0) + $value * $share;
-            }
-        }
-
-        arsort($valueBySector);
-
-        $slices = [];
-        foreach ($valueBySector as $sectorValue => $value) {
-            $sector = Sector::from($sectorValue);
-            $slices[] = new AllocationSliceData(
-                label: $sector->getLabel(),
-                value: $value,
-                pct: $totalValue > 0.0 ? $value / $totalValue * 100 : 0.0,
-                color: $sector->getColor(),
-            );
-        }
-
-        return $slices;
+                return $weights;
+            })
+            ->all();
     }
 }

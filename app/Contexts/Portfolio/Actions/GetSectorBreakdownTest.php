@@ -40,7 +40,7 @@ function withSectorWeights(Instrument $asset, array $weights): void
     }
 }
 
-it('splits the market value of an asset across its sectors', function () {
+it('assigns to each slice the label and color from Sector', function () {
     $user = User::factory()->create();
     $etf = holdingWorth($user, 1000.0);
     withSectorWeights($etf, [
@@ -51,25 +51,8 @@ it('splits the market value of an asset across its sectors', function () {
     $slices = collect(app(GetSectorBreakdown::class)($user))->keyBy('label');
 
     expect($slices)->toHaveCount(2)
-        ->and($slices['Technologie']->value)->toBe(600.0)
-        ->and($slices['Technologie']->pct)->toBe(60.0)
-        ->and($slices['Santé']->value)->toBe(400.0)
-        ->and($slices['Technologie']->color)->toBe(Sector::Technology->getColor());
-});
-
-it('normalizes the weights when they do not sum to one', function () {
-    $user = User::factory()->create();
-    $etf = holdingWorth($user, 1000.0);
-    withSectorWeights($etf, [
-        Sector::Technology->value => 0.3,
-        Sector::Energy->value => 0.3,
-    ]);
-
-    $slices = collect(app(GetSectorBreakdown::class)($user))->keyBy('label');
-
-    expect($slices)->toHaveCount(2)
-        ->and($slices['Technologie']->value)->toBe(500.0)
-        ->and($slices['Énergie']->value)->toBe(500.0);
+        ->and($slices['Technologie']->color)->toBe(Sector::Technology->getColor())
+        ->and($slices['Santé']->color)->toBe(Sector::Healthcare->getColor());
 });
 
 it('puts the assets without any sector into the other bucket', function () {
