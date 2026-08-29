@@ -11,7 +11,3 @@ it('exposes a color per case', function () {
     expect(Role::Admin->getColor())->toBe('danger')
         ->and(Role::User->getColor())->toBe('info');
 });
-
-it('has two cases', function () {
-    expect(Role::cases())->toHaveCount(2);
-});

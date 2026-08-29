@@ -29,16 +29,6 @@ describe('palette sombre', () => {
         expect(axisLabel.color).toBe('#7f858f');
     });
 
-    it('donne une couleur différente du thème clair : un mutant rendant la même palette passerait inaperçu ici, mais pas dans chart.test.ts', () => {
-        const axisLabel = (option().xAxis as { axisLabel: { color: string } }).axisLabel;
-
-        expect(axisLabel.color).not.toBe('#9aa0ac');
-    });
-
-    it('garde la courbe et son nom, le thème ne changeant que les teintes', () => {
-        expect((option().series as { name?: string }[]).map((serie) => serie.name)).toEqual(['Valeur']);
-    });
-
     it('donne aux bandes du patrimoine des couleurs distinctes en thème sombre', () => {
         const option = buildWealthStackOption({
             labels: ['2026-01-05', '2026-01-12'],

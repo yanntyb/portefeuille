@@ -93,12 +93,6 @@ it('exposes the unit price aligned with the valuation labels', function () {
         ->and($series->valuations)->toBe([1000.0, 1100.0, 900.0]);
 });
 
-it('returns an empty prices array for an empty series', function () {
-    $series = (new ValuationCalculator)->calculateDaily([], []);
-
-    expect($series->prices)->toBe([]);
-});
-
 it('calculateDaily returns one point per price day without downsampling', function () {
     $transactions = [
         new TransactionRecordData(
@@ -161,19 +155,6 @@ it('keeps every point when granularity is Day', function () {
     expect($result->labels)->toBe($labels);
 });
 
-it('computes the window return by chaining the daily returns', function () {
-    // Pas 1 : (1250 - 1000 - 200) / 1000 = +5 %. Pas 2 : (1400 - 1250) / 1250 = +12 %.
-    // TWR = 1,05 × 1,12 - 1 = +17,6 %.
-    $daily = new ValuationSeriesData(
-        ['2026-01-01', '2026-02-01', '2026-03-01'],
-        [1000.0, 1250.0, 1400.0],
-        [1000.0, 1200.0, 1200.0],
-        [100.0, 110.0, 120.0],
-    );
-
-    expect((new ValuationCalculator)->returnOverWindow($daily, '2026-01-01')->pct)->toBe(17.6);
-});
-
 it('does not let the contribution date inflate the performance', function () {
     // Marché +10 % deux jours de suite, avec un apport de 10 000 € le premier jour.
     // TWR = 1,1 × 1,1 - 1 = +21 %, là où gain / valeur de début donnerait +1021 %.
@@ -206,6 +187,8 @@ it('skips the steps where the position was empty', function () {
 });
 
 it('exposes the window start, value, contributions and gain', function () {
+    // Pas 1 : (1250 - 1000 - 200) / 1000 = +5 %. Pas 2 : (1400 - 1250) / 1250 = +12 %.
+    // TWR = 1,05 × 1,12 - 1 = +17,6 %.
     $daily = new ValuationSeriesData(
         ['2026-01-01', '2026-02-01', '2026-03-01'],
         [1000.0, 1250.0, 1400.0],

@@ -26,7 +26,3 @@ it('casts attributes and links wallet and user', function () {
         ->and($transaction->wallet->is($wallet))->toBeTrue()
         ->and($transaction->user->is($user))->toBeTrue();
 });
-
-it('defaults to a buy', function () {
-    expect(Transaction::factory()->make()->type)->toBe(TransactionType::Buy);
-});

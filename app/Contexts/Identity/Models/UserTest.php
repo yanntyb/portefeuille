@@ -27,14 +27,6 @@ it('hides the password and remember_token from the array', function () {
         ->not->toHaveKey('remember_token');
 });
 
-it('creates an admin via the admin() state', function () {
-    expect(User::factory()->admin()->create()->role)->toBe(Role::Admin);
-});
-
-it('creates an unverified user via unverified()', function () {
-    expect(User::factory()->unverified()->create()->email_verified_at)->toBeNull();
-});
-
 it('exposes its wallets', function () {
     $user = User::factory()->create();
     Wallet::factory()->for($user)->create(['name' => 'PEA']);

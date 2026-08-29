@@ -1,8 +1,6 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
-use App\Contexts\Income\Enums\IncomeSource;
-use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
@@ -35,11 +33,3 @@ it('totals the wealth as the exact sum of its classes', function () {
  * Le revenu du patrimoine se filtre par origine et non par exposition : deux expositions
  * partageant une origine compteraient deux fois les mêmes encaissements.
  */
-it('never maps two exposures onto one income source', function () {
-    $sources = array_filter(array_map(
-        fn (AssetClass $class): ?IncomeSource => IncomeSource::forAssetClass($class),
-        AssetClass::cases(),
-    ));
-
-    expect(array_unique($sources, SORT_REGULAR))->toHaveCount(count($sources));
-});

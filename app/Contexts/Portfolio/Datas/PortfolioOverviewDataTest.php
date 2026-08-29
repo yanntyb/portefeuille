@@ -42,6 +42,7 @@ it('builds an empty overview', function () {
     $overview = PortfolioOverviewData::empty();
 
     expect($overview->totalValue)->toBe(0.0)
-        ->and($overview->holdings)->toBe([])
+        ->and($overview->totalCost)->toBe(0.0)
+        ->and($overview->totalGain)->toBe(0.0)
         ->and($overview->holdings)->toBe([]);
 });

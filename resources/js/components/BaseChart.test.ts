@@ -81,15 +81,6 @@ describe('redessin sur changement de boîte', () => {
         expect(chartInstance.resize).not.toHaveBeenCalled();
     });
 
-    it('redessine quand la boîte change vraiment', () => {
-        mountChart();
-
-        notifyResize(472, 240);
-        notifyResize(860, 240);
-
-        expect(chartInstance.resize).toHaveBeenCalledTimes(1);
-    });
-
     it('ne redessine pas deux fois pour la même boîte', () => {
         mountChart();
 

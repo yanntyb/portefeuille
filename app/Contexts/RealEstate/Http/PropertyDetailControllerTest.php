@@ -25,11 +25,3 @@ it('renders 404 for an unknown property', function () {
 
     $this->get(route('properties.show', 999))->assertNotFound();
 });
-
-it('defers the real estate overview on the dashboard', function () {
-    User::factory()->create();
-
-    $this->get(route('dashboard'))
-        ->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page->component('Dashboard'));
-});

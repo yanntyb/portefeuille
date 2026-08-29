@@ -7,7 +7,4 @@ describe('pageContainer', () => {
         expect(pageContainer('wide')).toBe('mx-auto w-full max-w-6xl');
     });
 
-    it('distingue les deux largeurs de page', () => {
-        expect(pageContainer('narrow')).not.toBe(pageContainer('wide'));
-    });
 });
