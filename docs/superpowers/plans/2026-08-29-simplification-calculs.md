@@ -201,7 +201,7 @@ use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Portfolio\Datas\HoldingLineData;
 use App\Contexts\Portfolio\Services\HoldingValuator;
 
-function line(?float $marketValue, ?float $gain, float $quantity = 1.0, ?float $avgCost = null): HoldingLineData
+function valuedLine(?float $marketValue, ?float $gain, float $quantity = 1.0, ?float $avgCost = null): HoldingLineData
 {
     return new HoldingLineData(
         assetId: 1,
@@ -251,8 +251,8 @@ it('rend un pourcentage nul plutôt que zéro sur un coût nul', function () {
 
 it('totalise les lignes en ignorant celles sans valeur', function () {
     $totals = (new HoldingValuator)->totals([
-        line(marketValue: 1000.0, gain: 200.0, quantity: 10, avgCost: 80),
-        line(marketValue: null, gain: null),
+        valuedLine(marketValue: 1000.0, gain: 200.0, quantity: 10, avgCost: 80),
+        valuedLine(marketValue: null, gain: null),
     ]);
 
     expect($totals)->toBe([
@@ -264,7 +264,7 @@ it('totalise les lignes en ignorant celles sans valeur', function () {
 });
 
 it('rend un pourcentage total nul quand aucune ligne n\'a de coût connu', function () {
-    $totals = (new HoldingValuator)->totals([line(marketValue: 1000.0, gain: null)]);
+    $totals = (new HoldingValuator)->totals([valuedLine(marketValue: 1000.0, gain: null)]);
 
     expect($totals['totalGainPct'])->toBeNull()
         ->and($totals['totalValue'])->toBe(1000.0);
@@ -1118,11 +1118,22 @@ Réécrire le corps de `GetSectorBreakdown::__invoke()` :
         return $this->sectors
             ->forAssets($assetIds)
             ->groupBy('asset_id')
-            ->map(fn (Collection $allocations): array => $allocations
-                ->mapWithKeys(fn (SectorAllocation $allocation): array => [
-                    $allocation->sector->value => (float) $allocation->weight,
-                ])
-                ->all())
+            ->map(function (Collection $allocations): array {
+                $weights = [];
+
+                /**
+                 * Additionne au lieu d'écraser : deux lignes du même secteur sur un même actif
+                 * s'ajoutaient dans l'ancien code, et un `mapWithKeys` n'en garderait que la
+                 * dernière.
+                 */
+                foreach ($allocations as $allocation) {
+                    /** @var SectorAllocation $allocation */
+                    $key = $allocation->sector->value;
+                    $weights[$key] = ($weights[$key] ?? 0.0) + (float) $allocation->weight;
+                }
+
+                return $weights;
+            })
             ->all();
     }
 ```
@@ -1617,16 +1628,25 @@ class ExpenseGrouper
         $years = [];
 
         foreach ($grouped as $year => $byCategory) {
+            $entries = array_values($byCategory);
+
+            /**
+             * Le total somme les montants bruts, la ventilation arrondit les siens : c'est l'ordre
+             * de l'ancien code, et l'inverser décalerait un total d'un centime sur deux charges
+             * arrondies dans le même sens.
+             */
+            $total = round(array_sum(array_column($entries, 'amount')), 2);
+
             $entries = array_map(
                 fn (array $entry): array => [...$entry, 'amount' => round($entry['amount'], 2)],
-                array_values($byCategory),
+                $entries,
             );
 
             usort($entries, fn (array $a, array $b): int => $b['amount'] <=> $a['amount']);
 
             $years[] = [
                 'year' => $year,
-                'total' => round(array_sum(array_column($entries, 'amount')), 2),
+                'total' => $total,
                 'byCategory' => $entries,
             ];
         }
@@ -1980,15 +2000,15 @@ Créer `app/Contexts/Income/Services/ReceiptTotalsTest.php` :
 use App\Contexts\Income\Services\ReceiptTotals;
 use Illuminate\Support\Carbon;
 
-function receipt(string $date, float $amount, string $source = 'dividend'): array
+function incomeReceipt(string $date, float $amount, string $source = 'dividend'): array
 {
     return ['date' => Carbon::parse($date), 'amount' => $amount, 'source' => $source];
 }
 
 it('totalise et ventile par origine', function () {
     $summary = (new ReceiptTotals)->summarize([
-        receipt('2026-03-05', 8.0),
-        receipt('2026-04-05', 12.0, 'rent'),
+        incomeReceipt('2026-03-05', 8.0),
+        incomeReceipt('2026-04-05', 12.0, 'rent'),
     ], Carbon::parse('2025-08-29'));
 
     expect($summary)->toBe([
@@ -2000,8 +2020,8 @@ it('totalise et ventile par origine', function () {
 
 it('exclut des douze derniers mois ce qui les précède', function () {
     $summary = (new ReceiptTotals)->summarize([
-        receipt('2024-03-05', 5.0),
-        receipt('2026-03-05', 8.0),
+        incomeReceipt('2024-03-05', 5.0),
+        incomeReceipt('2026-03-05', 8.0),
     ], Carbon::parse('2025-08-29'));
 
     expect($summary['total'])->toBe(13.0)
@@ -2010,9 +2030,9 @@ it('exclut des douze derniers mois ce qui les précède', function () {
 
 it('groupe par année civile croissante', function () {
     expect((new ReceiptTotals)->byYear([
-        receipt('2026-03-05', 8.0),
-        receipt('2025-03-05', 5.0, 'rent'),
-        receipt('2025-06-05', 5.0, 'rent'),
+        incomeReceipt('2026-03-05', 8.0),
+        incomeReceipt('2025-03-05', 5.0, 'rent'),
+        incomeReceipt('2025-06-05', 5.0, 'rent'),
     ]))->toBe([
         2025 => ['rent' => 10.0],
         2026 => ['dividend' => 8.0],
