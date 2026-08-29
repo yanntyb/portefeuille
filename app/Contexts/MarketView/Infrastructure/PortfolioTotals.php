@@ -6,18 +6,23 @@ use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\MarketView\Datas\HoldingRowData;
 use App\Contexts\MarketView\Datas\PortfolioSummaryData;
+use App\Contexts\MarketView\Datas\PositionData;
 use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
+use App\Contexts\Portfolio\Actions\GetPortfolioPositions;
 use App\Contexts\Portfolio\Datas\HoldingLineData;
 
 /**
- * L'action est injectée, jamais résolue ni construite ici : elle est liée en `scoped` et mémoïse
- * ses lignes par utilisateur, si bien qu'une seule lecture du portefeuille sert les quatre
- * expositions d'une requête. La reconstruire la relirait une fois par exposition.
+ * Les deux actions sont injectées, jamais résolues ni construites ici : elles sont liées en
+ * `scoped` et mémoïsent leurs lignes par utilisateur, si bien qu'une seule lecture du portefeuille
+ * sert les quatre expositions d'une requête. Les reconstruire les relirait une fois par exposition.
  */
 class PortfolioTotals implements PortfolioOverviewPort
 {
-    public function __construct(private GetPortfolioOverview $overview) {}
+    public function __construct(
+        private GetPortfolioOverview $overview,
+        private GetPortfolioPositions $positions,
+    ) {}
 
     public function overviewFor(int $userId, AssetClass $exposure): PortfolioSummaryData
     {
@@ -50,6 +55,19 @@ class PortfolioTotals implements PortfolioOverviewPort
                 ),
                 $overview->holdings,
             ),
+        );
+    }
+
+    public function positionFor(int $userId, int $assetId): ?PositionData
+    {
+        $position = ($this->positions)($userId)[$assetId] ?? null;
+
+        return $position === null ? null : new PositionData(
+            quantity: $position->quantity,
+            avgCost: $position->avgCost,
+            marketValue: $position->marketValue,
+            gain: $position->gain,
+            gainPct: $position->gainPct,
         );
     }
 }

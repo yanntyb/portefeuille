@@ -25,7 +25,7 @@ it('porte la page liste et une fiche par position détenue', function () {
 });
 
 /**
- * `pagesFor()` appelle `GetInstrumentDetail` (donc `HoldingsPort::holdingFor()`) et
+ * `pagesFor()` appelle `GetInstrumentDetail` (donc `PortfolioOverviewPort::positionFor()`) et
  * `Income\...\PortfolioPositionHistory::positionFor()` une fois par position détenue. Sans la
  * mémoïsation de `GetPortfolioPositions` par utilisateur, chacun de ces appels relirait tout le
  * portefeuille et tous les derniers cours de l'utilisateur — un nombre de requêtes qui grossirait

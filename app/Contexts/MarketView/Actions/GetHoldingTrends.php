@@ -7,6 +7,7 @@ use App\Contexts\MarketView\Datas\HoldingSnapshotData;
 use App\Contexts\MarketView\Datas\HoldingTrendData;
 use App\Contexts\MarketView\Ports\HoldingsPort;
 use App\Contexts\MarketView\Ports\MarketDataPort;
+use App\Contexts\MarketView\Services\SparklineReducer;
 use Illuminate\Support\Carbon;
 
 class GetHoldingTrends
@@ -17,6 +18,7 @@ class GetHoldingTrends
     public function __construct(
         private MarketDataPort $market,
         private HoldingsPort $holdings,
+        private SparklineReducer $sparkline,
     ) {}
 
     /**
@@ -55,40 +57,8 @@ class GetHoldingTrends
     {
         return new HoldingTrendData(
             assetId: $assetId,
-            changePct: $this->changePct($close),
-            points: $this->downsample($close),
+            changePct: $this->sparkline->changePct($close),
+            points: $this->sparkline->downsample($close, self::MAX_POINTS),
         );
-    }
-
-    /** @param list<float> $close */
-    private function changePct(array $close): ?float
-    {
-        $count = count($close);
-
-        if ($count < 2 || $close[0] === 0.0) {
-            return null;
-        }
-
-        return ($close[$count - 1] - $close[0]) / $close[0] * 100;
-    }
-
-    /**
-     * @param  list<float>  $close
-     * @return list<float>
-     */
-    private function downsample(array $close): array
-    {
-        $count = count($close);
-
-        if ($count <= self::MAX_POINTS) {
-            return $close;
-        }
-
-        $points = [];
-        for ($step = 0; $step < self::MAX_POINTS; $step++) {
-            $points[] = $close[(int) round($step * ($count - 1) / (self::MAX_POINTS - 1))];
-        }
-
-        return $points;
     }
 }

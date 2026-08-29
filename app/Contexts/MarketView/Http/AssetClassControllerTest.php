@@ -11,6 +11,7 @@ use App\Contexts\MarketView\Datas\IncomeOverviewData;
 use App\Contexts\MarketView\Datas\IncomeYearData;
 use App\Contexts\MarketView\Datas\PerformanceLineData;
 use App\Contexts\MarketView\Datas\PortfolioSummaryData;
+use App\Contexts\MarketView\Datas\PositionData;
 use App\Contexts\MarketView\Datas\SectorSliceData;
 use App\Contexts\MarketView\Ports\IncomePort;
 use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
@@ -118,6 +119,11 @@ it('sert l\'aperçu, les performances et l\'évolution par leurs seuls ports', f
                     10.0, 80.0, 100.0, 1000.0, 200.0, 25.0,
                 ),
             ]);
+        }
+
+        public function positionFor(int $userId, int $assetId): ?PositionData
+        {
+            return null;
         }
     });
 

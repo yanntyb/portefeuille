@@ -24,15 +24,4 @@ class PortfolioHoldings implements HoldingsPort
             ($this->positions)($userId),
         ));
     }
-
-    public function holdingFor(int $userId, int $assetId): ?HoldingSnapshotData
-    {
-        $position = ($this->positions)($userId)[$assetId] ?? null;
-
-        return $position === null ? null : new HoldingSnapshotData(
-            assetId: $position->assetId,
-            quantity: $position->quantity,
-            avgCost: $position->avgCost,
-        );
-    }
 }

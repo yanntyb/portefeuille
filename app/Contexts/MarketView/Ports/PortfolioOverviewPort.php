@@ -4,6 +4,7 @@ namespace App\Contexts\MarketView\Ports;
 
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\MarketView\Datas\PortfolioSummaryData;
+use App\Contexts\MarketView\Datas\PositionData;
 
 /**
  * L'aperçu chiffré d'une exposition. Une exposition à la fois : la page liste n'en montre jamais
@@ -12,4 +13,7 @@ use App\Contexts\MarketView\Datas\PortfolioSummaryData;
 interface PortfolioOverviewPort
 {
     public function overviewFor(int $userId, AssetClass $exposure): PortfolioSummaryData;
+
+    /** La position d'un actif, enveloppes confondues et valorisée. Nulle si l'actif n'est pas détenu. */
+    public function positionFor(int $userId, int $assetId): ?PositionData;
 }
