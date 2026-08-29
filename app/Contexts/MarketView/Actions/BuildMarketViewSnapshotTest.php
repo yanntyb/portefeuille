@@ -8,6 +8,7 @@ use App\Contexts\Market\Models\Price;
 use App\Contexts\MarketView\Actions\BuildMarketViewSnapshot;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Wallet;
+use Illuminate\Support\Facades\DB;
 
 it('porte la page liste et une fiche par position détenue', function () {
     ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
@@ -21,6 +22,35 @@ it('porte la page liste et une fiche par position détenue', function () {
         ->and($snapshot['assets'][$instrument->id])->toHaveKeys([
             'instrument', 'performances', 'priceHistory', 'valuation', 'dividends',
         ]);
+});
+
+/**
+ * `pagesFor()` appelle `GetInstrumentDetail` (donc `HoldingsPort::holdingFor()`) et
+ * `Income\...\PortfolioPositionHistory::positionFor()` une fois par position détenue. Sans la
+ * mémoïsation de `GetPortfolioPositions` par utilisateur, chacun de ces appels relirait tout le
+ * portefeuille et tous les derniers cours de l'utilisateur — un nombre de requêtes qui grossirait
+ * avec le nombre de positions plutôt que de rester fixe.
+ *
+ * Avec deux positions détenues (`cryptoFixture()`), le nombre de requêtes vers `holdings_projection`
+ * doit rester à 3 : une par lecteur qui interroge ce projecteur une fois par instantané —
+ * `GetPortfolioPositions` (mémoïsée, cette task), `GetPortfolioOverview` et `GetSectorBreakdown`
+ * (déjà mémoïsées chacune de leur côté). Sans la mémoïsation de `GetPortfolioPositions`, ce même
+ * jeu de données porte ce total à 11 (vérifié en désactivant temporairement `??=` pendant
+ * l'écriture de ce test) : la régression corrigée par cette task est bien détectée.
+ */
+it('ne relit pas les positions une fois par fiche construite', function () {
+    ['user' => $user] = cryptoFixture();
+
+    DB::enableQueryLog();
+    DB::flushQueryLog();
+
+    app(BuildMarketViewSnapshot::class)($user->id);
+
+    $holdingsQueries = collect(DB::getQueryLog())
+        ->filter(fn (array $entry): bool => str_contains($entry['query'], '"holdings_projection"'))
+        ->count();
+
+    expect($holdingsQueries)->toBe(3);
 });
 
 it('range la crypto à part, sans dividendes sur ses fiches', function () {

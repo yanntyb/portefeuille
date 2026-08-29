@@ -15,6 +15,17 @@ use Illuminate\Support\Collection;
  */
 class GetPortfolioPositions
 {
+    /**
+     * Les positions de chaque utilisateur, pour la durée de la requête. `holdingFor()` et
+     * `positionFor()` appellent cette action une fois par position détenue lors de la
+     * construction de l'instantané ; sans mémoïsation, chacun de ces appels relirait tout le
+     * portefeuille et tous les derniers cours de l'utilisateur, sur le modèle de
+     * `GetPortfolioOverview`.
+     *
+     * @var array<int, array<int, PositionLineData>>
+     */
+    private array $positionsByUser = [];
+
     public function __construct(
         private PriceRepositoryContract $prices,
         private PositionAggregator $aggregate,
@@ -23,6 +34,12 @@ class GetPortfolioPositions
 
     /** @return array<int, PositionLineData> */
     public function __invoke(int $userId): array
+    {
+        return $this->positionsByUser[$userId] ??= $this->readPositions($userId);
+    }
+
+    /** @return array<int, PositionLineData> */
+    private function readPositions(int $userId): array
     {
         $holdings = Holding::query()->where('user_id', $userId)->get();
 

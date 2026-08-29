@@ -24,6 +24,7 @@ use App\Contexts\MarketView\Infrastructure\PortfolioTransactions;
 use App\Contexts\MarketView\Infrastructure\ValuationHistory;
 use App\Contexts\MarketView\MarketViewProvider;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
+use App\Contexts\Portfolio\Actions\GetPortfolioPositions;
 use App\Contexts\RealEstate\Infrastructure\LaravelRealEstateCache;
 use App\Contexts\RealEstate\RealEstateProvider;
 use App\Contexts\Valuation\Infrastructure\LaravelSeriesCache;
@@ -93,6 +94,13 @@ class AppServiceProvider extends ServiceProvider
 
         /** Une lecture du portefeuille par requête : les classes d'actif la partagent. */
         $this->app->scoped(GetPortfolioOverview::class);
+
+        /**
+         * Une lecture des positions par requête : `MarketView` et `Income` l'appellent chacun une
+         * fois par position détenue en construisant l'instantané, sur le même principe que
+         * `GetPortfolioOverview`.
+         */
+        $this->app->scoped(GetPortfolioPositions::class);
 
         /** L'ordre décide de celui des lignes du tableau de bord et des bandes de son graphe. */
         WealthProvider::registers(app: $this->app, extra: [RealEstateClass::class]);
