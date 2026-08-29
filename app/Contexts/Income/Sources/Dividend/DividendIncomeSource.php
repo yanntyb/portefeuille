@@ -5,6 +5,7 @@ namespace App\Contexts\Income\Sources\Dividend;
 use App\Contexts\Income\Datas\IncomeReceiptData;
 use App\Contexts\Income\Enums\IncomeSource;
 use App\Contexts\Income\Ports\IncomeSourcePort;
+use App\Contexts\Income\Services\RollingWindow;
 use App\Contexts\Income\Sources\Dividend\Datas\DividendReceiptData;
 use App\Contexts\Income\Sources\Dividend\Datas\PositionSnapshotData;
 use App\Contexts\Income\Sources\Dividend\Ports\DividendHistoryPort;
@@ -20,6 +21,7 @@ class DividendIncomeSource implements IncomeSourcePort
         private PositionHistoryPort $positions,
         private DividendCalculator $calculator,
         private DividendProjector $projector,
+        private RollingWindow $window,
     ) {}
 
     public function source(): IncomeSource
@@ -69,7 +71,7 @@ class DividendIncomeSource implements IncomeSourcePort
         $estimates = $this->projector->annualEstimates(
             $this->dividends->forAssets(array_keys($positions)),
             array_map(fn (PositionSnapshotData $position): float => $position->quantity, $positions),
-            Carbon::now()->subYear()->startOfDay(),
+            $this->window->slidingDays(Carbon::now()),
         );
 
         return round(array_sum($estimates), 2);

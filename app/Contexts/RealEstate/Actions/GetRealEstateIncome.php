@@ -6,6 +6,7 @@ use App\Contexts\RealEstate\Datas\MonthlyCashFlowData;
 use App\Contexts\RealEstate\Datas\RealEstateIncomeData;
 use App\Contexts\RealEstate\Datas\RealEstateIncomeYearData;
 use App\Contexts\RealEstate\Services\CashFlowCalculator;
+use App\Contexts\RealEstate\Services\RollingWindow;
 use App\Contexts\RealEstate\Support\UserProperties;
 use Illuminate\Support\Carbon;
 
@@ -21,6 +22,7 @@ class GetRealEstateIncome
     public function __construct(
         private CashFlowCalculator $cashFlows,
         private UserProperties $properties,
+        private RollingWindow $window,
     ) {}
 
     public function __invoke(int $userId): RealEstateIncomeData
@@ -32,7 +34,7 @@ class GetRealEstateIncome
         }
 
         $today = Carbon::now();
-        $windowStart = $today->copy()->startOfMonth()->subMonthsNoOverflow(11)->toDateString();
+        $windowStart = $this->window->monthsFull($today);
 
         $window = ['rents' => 0.0, 'expenses' => 0.0, 'loanPayments' => 0.0];
         $byYear = [];

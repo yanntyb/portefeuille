@@ -15,6 +15,7 @@ use App\Contexts\RealEstate\Models\RentException;
 use App\Contexts\RealEstate\Services\LoanAmortizationCalculator;
 use App\Contexts\RealEstate\Services\PropertyWindowTotals;
 use App\Contexts\RealEstate\Services\RentScheduleCalculator;
+use App\Contexts\RealEstate\Services\RollingWindow;
 use Illuminate\Support\Carbon;
 
 /**
@@ -27,11 +28,12 @@ class PropertyFinancialsAssembler
         private RentScheduleCalculator $rents,
         private LoanAmortizationCalculator $amortization,
         private PropertyWindowTotals $totals,
+        private RollingWindow $window,
     ) {}
 
     public function financialsFor(Property $property, Carbon $today): PropertyFinancialsData
     {
-        $windowStart = $today->copy()->startOfMonth()->subMonthsNoOverflow(11)->toDateString();
+        $windowStart = $this->window->monthsFull($today);
         $todayKey = $today->toDateString();
 
         $leases = $this->leaseTerms($property);

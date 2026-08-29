@@ -7,11 +7,16 @@ use App\Contexts\Income\Datas\IncomeSummaryData;
 use App\Contexts\Income\Enums\IncomeSource;
 use App\Contexts\Income\Infrastructure\IncomeSourceRegistry;
 use App\Contexts\Income\Services\ReceiptTotals;
+use App\Contexts\Income\Services\RollingWindow;
 use Illuminate\Support\Carbon;
 
 class GetIncomeSummary
 {
-    public function __construct(private IncomeSourceRegistry $sources, private ReceiptTotals $totals) {}
+    public function __construct(
+        private IncomeSourceRegistry $sources,
+        private ReceiptTotals $totals,
+        private RollingWindow $window,
+    ) {}
 
     /**
      * Revenu perçu par l'utilisateur. Sans `$only`, toutes origines confondues.
@@ -34,7 +39,7 @@ class GetIncomeSummary
                 'amount' => $receipt->amount,
                 'source' => $receipt->source->value,
             ], $receipts),
-            Carbon::now()->subYear()->startOfDay(),
+            $this->window->slidingDays(Carbon::now()),
         );
 
         return new IncomeSummaryData(

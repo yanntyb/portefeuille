@@ -13,6 +13,7 @@ use App\Contexts\RealEstate\Services\ExpenseGrouper;
 use App\Contexts\RealEstate\Services\LoanAmortizationCalculator;
 use App\Contexts\RealEstate\Services\PropertyMetricsCalculator;
 use App\Contexts\RealEstate\Services\RentScheduleCalculator;
+use App\Contexts\RealEstate\Services\RollingWindow;
 use App\Contexts\RealEstate\Support\PropertyFinancialsAssembler;
 use Illuminate\Support\Carbon;
 
@@ -26,6 +27,7 @@ class GetPropertyDetail
         private CashFlowCalculator $cashFlows,
         private ExpenseGrouper $expenseGrouper,
         private LoanAmortizationCalculator $amortization,
+        private RollingWindow $window,
     ) {}
 
     public function __invoke(int $userId, int $propertyId): ?PropertyDetailData
@@ -76,7 +78,7 @@ class GetPropertyDetail
      */
     private function cashFlowWindowStart(array $months, Carbon $today): Carbon
     {
-        $slidingStart = $today->copy()->startOfMonth()->subMonthsNoOverflow(11);
+        $slidingStart = Carbon::parse($this->window->monthsFull($today));
 
         if ($months === []) {
             return $slidingStart;

@@ -2,6 +2,7 @@
 
 namespace App\Contexts\Income\Sources\Dividend\Actions;
 
+use App\Contexts\Income\Services\RollingWindow;
 use App\Contexts\Income\Sources\Dividend\Datas\AssetDividendHistoryData;
 use App\Contexts\Income\Sources\Dividend\Datas\DividendRecordData;
 use App\Contexts\Income\Sources\Dividend\Datas\PositionRecordData;
@@ -19,6 +20,7 @@ class GetAssetDividendHistory
         private PositionHistoryPort $positions,
         private DividendCalculator $calculator,
         private DividendProjector $projector,
+        private RollingWindow $window,
     ) {}
 
     /**
@@ -37,7 +39,7 @@ class GetAssetDividendHistory
         $dividends = $this->dividends->forAssets([$assetId]);
         $receipts = $this->calculator->receipts($movements, $dividends);
 
-        $since = Carbon::now()->subYear()->startOfDay();
+        $since = $this->window->slidingDays(Carbon::now());
         $position = $this->positions->positionFor($userId, $assetId);
         $estimatedAnnual = $this->estimatedAnnual($position, $dividends, $assetId, $since);
 
