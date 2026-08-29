@@ -19,7 +19,9 @@ use App\Contexts\MarketView\Infrastructure\IncomeTotals;
 use App\Contexts\MarketView\Infrastructure\MarketData;
 use App\Contexts\MarketView\Infrastructure\PortfolioHoldings;
 use App\Contexts\MarketView\Infrastructure\PortfolioSectors;
+use App\Contexts\MarketView\Infrastructure\PortfolioTotals;
 use App\Contexts\MarketView\Infrastructure\PortfolioTransactions;
+use App\Contexts\MarketView\Infrastructure\ValuationHistory;
 use App\Contexts\MarketView\MarketViewProvider;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\RealEstate\Infrastructure\LaravelRealEstateCache;
@@ -77,6 +79,8 @@ class AppServiceProvider extends ServiceProvider
             transactions: PortfolioTransactions::class,
             sectorBreakdown: PortfolioSectors::class,
             income: IncomeTotals::class,
+            portfolioOverview: PortfolioTotals::class,
+            valuation: ValuationHistory::class,
         );
 
         IncomeProvider::registers(
