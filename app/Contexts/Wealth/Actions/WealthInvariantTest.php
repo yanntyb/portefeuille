@@ -26,7 +26,10 @@ it('totals the wealth as the exact sum of its classes', function () {
 
     $sum = array_sum(array_map(fn (AssetClassData $line): float => $line->value, $overview->classes));
 
-    expect(round($sum, 2))->toBe($overview->totalValue);
+    // Trois positions de 3 titres à 100 € : le total est connu d'avance, et le comparer à la
+    // somme des lignes ne suffirait pas si les deux dérivaient ensemble.
+    expect($overview->totalValue)->toBe(900.0)
+        ->and(round($sum, 2))->toBe($overview->totalValue);
 });
 
 /**
