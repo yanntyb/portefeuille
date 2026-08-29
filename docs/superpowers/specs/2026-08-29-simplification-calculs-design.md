@@ -170,9 +170,11 @@ emploie. Aucun appelant ne change de fenêtre ; chacun cesse simplement de la re
 ## L'invariant
 
 Ce chantier ne change **aucune sortie**. `Shared/Pwa/Http/SnapshotController.php:45` publie
-`sha1(json_encode($body))` : un hash identique avant et après prouve que les quatre pages liste et
-toutes les fiches rendent le même JSON, ordre des clés compris. C'est le filet du refactor entier,
-et il attrape aussi le piège des Datas jumelles de MarketView.
+`sha1(json_encode($body))` sur un corps qui réunit les quatre contextes — `dashboard` (Wealth),
+`classes` et `assets` (MarketView), `properties` (RealEstate, fiches et échéanciers compris). Un
+hash identique avant et après prouve que les six pages rendent le même JSON, ordre des clés
+compris. C'est le filet du refactor entier, et il attrape aussi le piège des Datas jumelles de
+MarketView.
 
 **Seule exception assumée** : `gainPct` passe de `0.0` à `null` sur un total à coût nul (lot 1).
 Le hash change une fois, sur ce cas, et c'est la correction du bug.
@@ -215,13 +217,22 @@ secteurs, somme des poids ≠ 1 — et n'en garde que pour le chemin de lecture.
 **Lot 6 — RealEstate.** `SeriesStepper`, `loanSummary()` rendu à `LoanAmortizationCalculator`,
 `ExpenseGrouper`, `PropertyWindowTotals`, `PropertyFinancialsAssembler` réduit. Le plus gros lot :
 à découper en trois commits si `BuildRealEstateSeries` et `GetPropertyDetail` résistent.
-**Commence par étoffer `tests/Feature/PropertiesPageTest.php`** (400 octets aujourd'hui) : c'est le
-seul lot dont le filet est faible, `GetPropertyDetail` alimentant `/properties/{id}`, hors blob.
+
+Le filet le couvre entièrement, contrairement à ce qu'un coup d'œil à
+`tests/Feature/PropertiesPageTest.php` (400 octets) laisse croire :
+`BuildRealEstateSnapshot` porte la fiche complète en `byId.{id}.property` via `GetPropertyDetail`,
+et son échéancier en `byId.{id}.amortization`. Le lot 0 suffit, à condition que son jeu comprenne
+un bien **avec prêt** — `propertyFixture(['loan' => true])` — sans quoi `loanSummary()` et
+l'échéancier restent hors du hash.
 
 **Lot 7 — `ReceiptTotals`.** Les trois agrégations de revenus sur un site.
 
 **Lot 8 — `RollingWindow`.** Les cinq sites nommés explicitement, aucun ne changeant de fenêtre.
-En dernier : touche Income et RealEstate, déjà stabilisés.
+Touche Income et RealEstate, donc après leur stabilisation.
+
+**Lot 9 — `SeriesAligner::accumulate()`.** `PortfolioAssetClass::sum()` et la boucle d'apports de
+`BuildWealthSeries` empilent toutes deux des séries index par index avant d'arrondir ; les deux
+vivent dans `Wealth`, dont `SeriesAligner` est déjà le calculateur de séries.
 
 ## Hors périmètre
 
@@ -229,6 +240,12 @@ En dernier : touche Income et RealEstate, déjà stabilisés.
   pur et bien testé : son problème est le découpage, pas la couture. Chantier séparé.
 - **Unifier les deux fenêtres « 12 mois »** ou **les deux notions de position**. Règle C : elles
   sont nommées, pas fusionnées.
+- **L'accumulateur de `BuildRealEstateSeries`.** Il empile scalaire par scalaire dans une boucle
+  imbriquée sur les biens, pas série sur série : sa forme diffère de celle du lot 9, et l'y faire
+  entrer imposerait une dépendance de `RealEstate` vers `Wealth`. Le troisième site reste.
+- **L'escalier de `ValuationCalculator::valueAtDate()`**, jumeau de celui du lot 6 : il vit dans le
+  calculateur laissé hors périmètre, et l'en extraire créerait une dépendance de `Valuation` vers
+  `RealEstate`. Les deux escaliers restent.
 - **Les pages d'analyse** (concentration, contribution à la performance, drawdown, par classe
   d'actif, avec lien en bas de listing et entrée `analysis` dans le blob). Elles ont motivé ce
   balayage et dépendent de ses lots 1 et 2 — notamment du choix ligne-vs-actif, qu'une
