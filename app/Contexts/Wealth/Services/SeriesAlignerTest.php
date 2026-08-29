@@ -52,3 +52,19 @@ it('garde la dernière valeur au-delà du dernier point de la source', function 
     expect($aligner->onto(['2026-01-05', '2026-01-12'], ['2026-01-05'], [80.0]))
         ->toBe([80.0, 80.0]);
 });
+
+it('empile deux séries index par index', function () {
+    expect((new SeriesAligner)->accumulate([[1.0, 2.0], [10.0, 20.0]], 2))->toBe([11.0, 22.0]);
+});
+
+it('complète une série plus courte que la grille', function () {
+    expect((new SeriesAligner)->accumulate([[1.0]], 3))->toBe([1.0, 0.0, 0.0]);
+});
+
+it('rend une grille de zéros sans aucune série', function () {
+    expect((new SeriesAligner)->accumulate([], 2))->toBe([0.0, 0.0]);
+});
+
+it('arrondit à deux décimales', function () {
+    expect((new SeriesAligner)->accumulate([[0.1], [0.2]], 1))->toBe([0.3]);
+});

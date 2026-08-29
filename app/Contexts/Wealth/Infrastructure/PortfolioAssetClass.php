@@ -13,6 +13,7 @@ use App\Contexts\Valuation\Enums\ValuationGranularity;
 use App\Contexts\Wealth\Datas\ClassSeriesData;
 use App\Contexts\Wealth\Datas\ClassSnapshotData;
 use App\Contexts\Wealth\Ports\AssetClassPort;
+use App\Contexts\Wealth\Services\SeriesAligner;
 
 /**
  * Une classe d'actif tenue dans un portefeuille : ce que le portefeuille en vaut aujourd'hui, ce
@@ -29,6 +30,7 @@ class PortfolioAssetClass implements AssetClassPort
         private GetPortfolioOverview $overview,
         private BuildEvolutionSeries $evolution,
         private GetIncomeSummary $income,
+        private SeriesAligner $aligner,
     ) {}
 
     public function key(): string
@@ -73,11 +75,18 @@ class PortfolioAssetClass implements AssetClassPort
     {
         /** Historique complet au pas hebdomadaire, comme le graphe du tableau de bord l'utilisait déjà. */
         $series = ($this->evolution)($userId, null, ValuationGranularity::Week, [$this->exposure]);
+        $length = count($series->labels);
 
         return new ClassSeriesData(
             labels: $series->labels,
-            value: $this->sum($series->perAsset, fn (AssetSeriesData $asset): array => $asset->value, count($series->labels)),
-            invested: $this->sum($series->perAsset, fn (AssetSeriesData $asset): array => $asset->invested, count($series->labels)),
+            value: $this->aligner->accumulate(
+                array_map(fn (AssetSeriesData $asset): array => $asset->value, $series->perAsset),
+                $length,
+            ),
+            invested: $this->aligner->accumulate(
+                array_map(fn (AssetSeriesData $asset): array => $asset->invested, $series->perAsset),
+                $length,
+            ),
         );
     }
 
@@ -94,23 +103,5 @@ class PortfolioAssetClass implements AssetClassPort
          * les compte déjà nets de son côté. Sans le filtre, ils seraient comptés deux fois.
          */
         return round(($this->income)($userId, $source)->last12Months / 12, 2);
-    }
-
-    /**
-     * @param  list<AssetSeriesData>  $perAsset
-     * @param  callable(AssetSeriesData): list<float>  $pick
-     * @return list<float>
-     */
-    private function sum(array $perAsset, callable $pick, int $length): array
-    {
-        $totals = array_fill(0, $length, 0.0);
-
-        foreach ($perAsset as $asset) {
-            foreach ($pick($asset) as $index => $amount) {
-                $totals[$index] = ($totals[$index] ?? 0.0) + $amount;
-            }
-        }
-
-        return array_map(fn (float $amount): float => round($amount, 2), $totals);
     }
 }

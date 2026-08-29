@@ -9,6 +9,7 @@ use App\Contexts\Valuation\Actions\BuildEvolutionSeries;
 use App\Contexts\Wealth\Infrastructure\AssetClassRegistry;
 use App\Contexts\Wealth\Infrastructure\PortfolioAssetClass;
 use App\Contexts\Wealth\Ports\AssetClassPort;
+use App\Contexts\Wealth\Services\SeriesAligner;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
@@ -35,6 +36,7 @@ class WealthProvider extends ServiceProvider
                         $app->make(GetPortfolioOverview::class),
                         $app->make(BuildEvolutionSeries::class),
                         $app->make(GetIncomeSummary::class),
+                        $app->make(SeriesAligner::class),
                     ),
                     AssetClass::cases(),
                 );

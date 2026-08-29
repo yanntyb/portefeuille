@@ -50,4 +50,26 @@ class SeriesAligner
 
         return $aligned;
     }
+
+    /**
+     * Plusieurs séries empilées sur une même grille. Une série plus courte laisse la fin à zéro :
+     * une classe apparue en cours de route n'a rien à ajouter avant son premier point.
+     *
+     * @param  list<list<float>>  $series
+     * @return list<float>
+     */
+    public function accumulate(array $series, int $length): array
+    {
+        $totals = array_fill(0, $length, 0.0);
+
+        foreach ($series as $one) {
+            foreach ($one as $index => $amount) {
+                if ($index < $length) {
+                    $totals[$index] += $amount;
+                }
+            }
+        }
+
+        return array_map(fn (float $amount): float => round($amount, 2), $totals);
+    }
 }

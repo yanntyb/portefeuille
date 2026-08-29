@@ -34,7 +34,7 @@ class BuildWealthSeries
         }
 
         $values = [];
-        $invested = array_fill(0, count($labels), 0.0);
+        $investedSeries = [];
 
         foreach ($classes as $index => $class) {
             $values[] = new ClassValuesData(
@@ -44,15 +44,13 @@ class BuildWealthSeries
                 values: $this->aligner->onto($labels, $series[$index]->labels, $series[$index]->value),
             );
 
-            foreach ($this->aligner->onto($labels, $series[$index]->labels, $series[$index]->invested) as $at => $amount) {
-                $invested[$at] += $amount;
-            }
+            $investedSeries[] = $this->aligner->onto($labels, $series[$index]->labels, $series[$index]->invested);
         }
 
         return new WealthSeriesData(
             labels: $labels,
             classes: $values,
-            invested: array_map(fn (float $amount): float => round($amount, 2), $invested),
+            invested: $this->aligner->accumulate($investedSeries, count($labels)),
         );
     }
 }
