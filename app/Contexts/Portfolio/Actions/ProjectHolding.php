@@ -5,9 +5,12 @@ namespace App\Contexts\Portfolio\Actions;
 use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
+use App\Contexts\Portfolio\Services\CostBasis;
 
 class ProjectHolding
 {
+    public function __construct(private CostBasis $costBasis) {}
+
     public function __invoke(int $userId, int $assetId, int $walletId): void
     {
         $transactions = Transaction::query()
@@ -16,14 +19,18 @@ class ProjectHolding
             ->where('wallet_id', $walletId)
             ->get();
 
-        $buys = $transactions->where('type', TransactionType::Buy);
-        $sells = $transactions->where('type', TransactionType::Sell);
+        $buys = $this->costBasis->of(
+            $transactions->where('type', TransactionType::Buy)
+                ->map(fn (Transaction $t): array => [
+                    'quantity' => (float) $t->quantity,
+                    'unitPrice' => (float) $t->unit_price,
+                ])
+                ->values()
+                ->all(),
+        );
 
-        $buyQty = (float) $buys->sum('quantity');
-        $buyCost = (float) $buys->sum(fn (Transaction $t) => (float) $t->quantity * (float) $t->unit_price);
-        $soldQty = (float) $sells->sum('quantity');
-
-        $quantity = $buyQty - $soldQty;
+        $soldQty = (float) $transactions->where('type', TransactionType::Sell)->sum('quantity');
+        $quantity = $buys['quantity'] - $soldQty;
 
         if ($quantity <= 0.0) {
             Holding::query()
@@ -39,7 +46,7 @@ class ProjectHolding
             [
                 'user_id' => $userId,
                 'quantity' => $quantity,
-                'avg_cost' => $buyQty > 0.0 ? $buyCost / $buyQty : 0.0,
+                'avg_cost' => $buys['average'],
             ],
         );
     }

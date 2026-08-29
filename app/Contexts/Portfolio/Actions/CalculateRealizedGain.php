@@ -4,9 +4,12 @@ namespace App\Contexts\Portfolio\Actions;
 
 use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Transaction;
+use App\Contexts\Portfolio\Services\CostBasis;
 
 class CalculateRealizedGain
 {
+    public function __construct(private CostBasis $costBasis) {}
+
     public function __invoke(Transaction $transaction): ?float
     {
         if ($transaction->type !== TransactionType::Sell) {
@@ -21,9 +24,12 @@ class CalculateRealizedGain
             ->where('date', '<=', $transaction->date)
             ->get();
 
-        $buyQty = (float) $buys->sum('quantity');
-        $buyCost = (float) $buys->sum(fn (Transaction $t) => (float) $t->quantity * (float) $t->unit_price);
-        $pru = $buyQty > 0.0 ? $buyCost / $buyQty : 0.0;
+        $pru = $this->costBasis->of(
+            $buys->map(fn (Transaction $t): array => [
+                'quantity' => (float) $t->quantity,
+                'unitPrice' => (float) $t->unit_price,
+            ])->values()->all(),
+        )['average'];
 
         return round(((float) $transaction->unit_price - $pru) * (float) $transaction->quantity - (float) $transaction->fees, 2);
     }
