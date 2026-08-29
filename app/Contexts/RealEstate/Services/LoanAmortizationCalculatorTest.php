@@ -69,3 +69,20 @@ it('remaining before any line needs the borrowed principal, so an empty schedule
 it('yields an empty schedule for a loan without any term, instead of dividing by zero', function () {
     expect($this->calculator->schedule(1000.0, 0.12, 0, Carbon::parse('2026-01-15')))->toBe([]);
 });
+
+it('résume un échéancier à une date donnée', function () {
+    $calculator = new LoanAmortizationCalculator;
+    // La première échéance tombe le mois suivant le départ (comportement inchangé de schedule()),
+    // donc un départ au 2025-12-01 produit un échéancier de 2026-01-01 à 2026-12-01.
+    $schedule = $calculator->schedule(1200.0, 0.0, 12, Carbon::parse('2025-12-01'), 0.0);
+
+    $summary = $calculator->summaryOf($schedule, '2026-03-15');
+
+    expect($summary['monthsPaid'])->toBe(3)
+        ->and($summary['monthlyPayment'])->toBe(100.0)
+        ->and($summary['endDate'])->toBe('2026-12-01')
+        ->and($summary['principalRepaid'])->toBe(300.0)
+        ->and($summary['interestPaid'])->toBe(0.0)
+        ->and($summary['interestRemaining'])->toBe(0.0)
+        ->and($summary['totalPaid'])->toBe(1200.0);
+});

@@ -2,13 +2,15 @@
 
 namespace App\Contexts\RealEstate\Actions;
 
-use App\Contexts\RealEstate\Datas\AmortizationLineData;
 use App\Contexts\RealEstate\Datas\ExpenseYearData;
 use App\Contexts\RealEstate\Datas\LoanSummaryData;
 use App\Contexts\RealEstate\Datas\PropertyDetailData;
 use App\Contexts\RealEstate\Datas\RentMonthData;
 use App\Contexts\RealEstate\Models\Property;
+use App\Contexts\RealEstate\Models\PropertyExpense;
 use App\Contexts\RealEstate\Services\CashFlowCalculator;
+use App\Contexts\RealEstate\Services\ExpenseGrouper;
+use App\Contexts\RealEstate\Services\LoanAmortizationCalculator;
 use App\Contexts\RealEstate\Services\PropertyMetricsCalculator;
 use App\Contexts\RealEstate\Services\RentScheduleCalculator;
 use App\Contexts\RealEstate\Support\PropertyFinancialsAssembler;
@@ -22,6 +24,8 @@ class GetPropertyDetail
         private RentScheduleCalculator $rents,
         private PropertyMetricsCalculator $metrics,
         private CashFlowCalculator $cashFlows,
+        private ExpenseGrouper $expenseGrouper,
+        private LoanAmortizationCalculator $amortization,
     ) {}
 
     public function __invoke(int $userId, int $propertyId): ?PropertyDetailData
@@ -86,49 +90,23 @@ class GetPropertyDetail
     /** @return list<ExpenseYearData> */
     private function expenseYears(Property $property): array
     {
-        $years = [];
-
-        foreach ($property->expenses as $expense) {
-            $year = $expense->date->year;
-            $category = $expense->category->value;
-            $years[$year][$category] ??= ['label' => $expense->category->getLabel(), 'amount' => 0.0];
-            $years[$year][$category]['amount'] += (float) $expense->amount;
-        }
-
-        krsort($years);
-
-        return array_map(
-            fn (int $year): ExpenseYearData => new ExpenseYearData(
-                year: $year,
-                byCategory: $this->byCategory($years[$year]),
-                total: round(array_sum(array_column($years[$year], 'amount')), 2),
-            ),
-            array_keys($years),
+        $grouped = $this->expenseGrouper->byYear(
+            $property->expenses
+                ->map(fn (PropertyExpense $expense): array => [
+                    'year' => $expense->date->year,
+                    'category' => $expense->category->value,
+                    'label' => $expense->category->getLabel(),
+                    'amount' => (float) $expense->amount,
+                ])
+                ->values()
+                ->all(),
         );
-    }
 
-    /**
-     * Ventilation d'une année triée par montant décroissant : la plus grosse charge en tête, à
-     * égalité l'ordre suit la première dépense rencontrée (tri stable).
-     *
-     * @param  array<string, array{label: string, amount: float}>  $amounts  Clé : valeur d'`ExpenseCategory`.
-     * @return list<array{category: string, label: string, amount: float}>
-     */
-    private function byCategory(array $amounts): array
-    {
-        $entries = [];
-
-        foreach ($amounts as $category => $entry) {
-            $entries[] = [
-                'category' => $category,
-                'label' => $entry['label'],
-                'amount' => round($entry['amount'], 2),
-            ];
-        }
-
-        usort($entries, fn (array $a, array $b): int => $b['amount'] <=> $a['amount']);
-
-        return $entries;
+        return array_map(fn (array $year): ExpenseYearData => new ExpenseYearData(
+            year: $year['year'],
+            byCategory: $year['byCategory'],
+            total: $year['total'],
+        ), $grouped);
     }
 
     private function loanSummary(Property $property, Carbon $today): ?LoanSummaryData
@@ -140,16 +118,7 @@ class GetPropertyDetail
         }
 
         $schedule = $this->assembler->scheduleFor($loan);
-        $totalPaid = array_sum(array_map(fn (AmortizationLineData $line): float => $line->payment, $schedule));
-
-        /** Une échéance est réglée dès que son mois est entamé : celle du mois en cours compte. */
-        $paid = array_filter(
-            $schedule,
-            fn (AmortizationLineData $line): bool => $line->month <= $today->toDateString(),
-        );
-
-        $interestPaid = array_sum(array_map(fn (AmortizationLineData $line): float => $line->interest, $paid));
-        $interestTotal = array_sum(array_map(fn (AmortizationLineData $line): float => $line->interest, $schedule));
+        $summary = $this->amortization->summaryOf($schedule, $today->toDateString());
 
         return new LoanSummaryData(
             principal: (float) $loan->principal,
@@ -157,14 +126,14 @@ class GetPropertyDetail
             termMonths: $loan->term_months,
             startDate: $loan->start_date->toDateString(),
             monthlyInsurance: (float) $loan->monthly_insurance,
-            monthlyPayment: $schedule[0]->payment,
+            monthlyPayment: $summary['monthlyPayment'],
             remainingPrincipal: $this->assembler->remainingFor($loan, $today),
-            totalCost: round($totalPaid - (float) $loan->principal, 2),
-            endDate: $schedule[count($schedule) - 1]->month,
-            monthsPaid: count($paid),
-            principalRepaid: round(array_sum(array_map(fn (AmortizationLineData $line): float => $line->principal, $paid)), 2),
-            interestPaid: round($interestPaid, 2),
-            interestRemaining: round($interestTotal - $interestPaid, 2),
+            totalCost: round($summary['totalPaid'] - (float) $loan->principal, 2),
+            endDate: $summary['endDate'],
+            monthsPaid: $summary['monthsPaid'],
+            principalRepaid: $summary['principalRepaid'],
+            interestPaid: $summary['interestPaid'],
+            interestRemaining: $summary['interestRemaining'],
         );
     }
 }

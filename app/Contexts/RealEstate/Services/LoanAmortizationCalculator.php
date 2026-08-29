@@ -81,4 +81,32 @@ class LoanAmortizationCalculator
 
         return $remaining;
     }
+
+    /**
+     * Ce qu'un échéancier dit à une date : ce qui est réglé, ce qui reste. Une échéance compte dès
+     * que son mois est entamé, celle du mois en cours comprise.
+     *
+     * @param  list<AmortizationLineData>  $schedule
+     * @return array{monthlyPayment: float, endDate: string, monthsPaid: int, principalRepaid: float, interestPaid: float, interestRemaining: float, totalPaid: float}
+     */
+    public function summaryOf(array $schedule, string $todayLabel): array
+    {
+        $paid = array_filter(
+            $schedule,
+            fn (AmortizationLineData $line): bool => $line->month <= $todayLabel,
+        );
+
+        $interestPaid = array_sum(array_map(fn (AmortizationLineData $line): float => $line->interest, $paid));
+        $interestTotal = array_sum(array_map(fn (AmortizationLineData $line): float => $line->interest, $schedule));
+
+        return [
+            'monthlyPayment' => $schedule[0]->payment,
+            'endDate' => $schedule[count($schedule) - 1]->month,
+            'monthsPaid' => count($paid),
+            'principalRepaid' => round(array_sum(array_map(fn (AmortizationLineData $line): float => $line->principal, $paid)), 2),
+            'interestPaid' => round($interestPaid, 2),
+            'interestRemaining' => round($interestTotal - $interestPaid, 2),
+            'totalPaid' => array_sum(array_map(fn (AmortizationLineData $line): float => $line->payment, $schedule)),
+        ];
+    }
 }
