@@ -2,26 +2,15 @@
 
 namespace App\Contexts\MarketView\Actions;
 
-use App\Contexts\Identity\Models\User;
-use App\Contexts\Income\Actions\GetAnnualIncome;
-use App\Contexts\Income\Actions\GetIncomeSummary;
-use App\Contexts\Income\Datas\IncomeSummaryData;
-use App\Contexts\Income\Enums\IncomeSource;
-use App\Contexts\Income\Sources\Dividend\Actions\GetAssetDividendHistory;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\MarketView\Datas\HoldingSnapshotData;
 use App\Contexts\MarketView\Datas\InstrumentDetailData;
 use App\Contexts\MarketView\Ports\HoldingsPort;
+use App\Contexts\MarketView\Ports\IncomePort;
 use App\Contexts\MarketView\Ports\MarketDataPort;
-use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
-use App\Contexts\Portfolio\Actions\GetSectorBreakdown;
-use App\Contexts\Portfolio\Datas\PortfolioOverviewData;
-use App\Contexts\Valuation\Actions\BuildAssetPerformances;
-use App\Contexts\Valuation\Actions\BuildAssetValuationSeries;
-use App\Contexts\Valuation\Actions\BuildEvolutionSeries;
-use App\Contexts\Valuation\Actions\BuildPortfolioPerformances;
-use App\Contexts\Valuation\Datas\EvolutionSeriesData;
-use App\Contexts\Valuation\Enums\ValuationGranularity;
+use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
+use App\Contexts\MarketView\Ports\SectorBreakdownPort;
+use App\Contexts\MarketView\Ports\ValuationPort;
 use App\Contexts\Valuation\Enums\ValuationRange;
 use Illuminate\Support\Carbon;
 
@@ -40,7 +29,10 @@ class BuildMarketViewSnapshot
         private MarketDataPort $market,
         private GetInstrumentDetail $getDetail,
         private GetHoldingTrends $getTrends,
-        private GetPortfolioOverview $getOverview,
+        private PortfolioOverviewPort $overview,
+        private ValuationPort $valuation,
+        private SectorBreakdownPort $sectors,
+        private IncomePort $income,
     ) {}
 
     /**
@@ -51,21 +43,15 @@ class BuildMarketViewSnapshot
      */
     public function __invoke(int $userId): array
     {
-        $user = User::query()->find($userId);
-
-        /**
-         * `GetPortfolioOverview` et `GetSectorBreakdown` prennent un `User`, pas un identifiant :
-         * les quatre contrôleurs les gardent tous derrière un `$user !== null`. Sans cette sortie,
-         * un instantané demandé sur une base vide passerait `null` à des paramètres typés.
-         */
-        if ($user === null) {
-            return ['classes' => $this->emptyClasses(), 'assets' => []];
-        }
-
         $classes = [];
 
+        /**
+         * Aucune sortie anticipée sur une base sans utilisateur : les ports rendent déjà des
+         * listes et des totaux vides pour un identifiant inconnu, et la composition en sort
+         * identique — un chemin dédié n'aurait fait que la recopier.
+         */
         foreach (AssetClass::cases() as $exposure) {
-            $classes[$exposure->value] = $this->listFor($user, $userId, $exposure);
+            $classes[$exposure->value] = $this->listFor($userId, $exposure);
         }
 
         return ['classes' => $classes, 'assets' => $this->pagesFor($userId)];
@@ -77,31 +63,22 @@ class BuildMarketViewSnapshot
      *
      * @return array<string, mixed>
      */
-    private function listFor(User $user, int $userId, AssetClass $exposure): array
+    private function listFor(int $userId, AssetClass $exposure): array
     {
-        $classes = [$exposure];
-
         $list = [
-            'overview' => ($this->getOverview)($user, $classes),
-            'trends' => ($this->getTrends)($userId, ValuationRange::Max, $classes),
-            'performances' => app(BuildPortfolioPerformances::class)($userId, $classes),
-            'evolutionSeries' => app(BuildEvolutionSeries::class)(
-                $userId,
-                null,
-                ValuationGranularity::Week,
-                $classes,
-            ),
+            'overview' => $this->overview->overviewFor($userId, $exposure),
+            'trends' => ($this->getTrends)($userId, ValuationRange::Max, [$exposure]),
+            'performances' => $this->valuation->performancesFor($userId, $exposure),
+            'evolutionSeries' => $this->valuation->evolutionFor($userId, $exposure),
         ];
 
         if ($exposure->hasSectors()) {
-            $list['sectorBreakdown'] = app(GetSectorBreakdown::class)($user);
+            $list['sectorBreakdown'] = $this->sectors->breakdownFor($userId);
         }
 
-        $source = IncomeSource::forAssetClass($exposure);
-
-        if ($source !== null) {
-            $list['income'] = app(GetIncomeSummary::class)($userId, $source);
-            $list['annualIncome'] = app(GetAnnualIncome::class)($userId, $source);
+        if ($this->income->supportsExposure($exposure)) {
+            $list['income'] = $this->income->summaryFor($userId, $exposure);
+            $list['annualIncome'] = $this->income->annualFor($userId, $exposure);
         }
 
         return $list;
@@ -131,57 +108,19 @@ class BuildMarketViewSnapshot
         return $pages;
     }
 
-    /**
-     * Les quatre listes d'une base sans utilisateur : les mêmes `Data::empty()` que sert le
-     * contrôleur, sous les mêmes gates.
-     *
-     * @return array<string, array<string, mixed>>
-     */
-    private function emptyClasses(): array
-    {
-        $classes = [];
-
-        foreach (AssetClass::cases() as $exposure) {
-            $list = [
-                'overview' => PortfolioOverviewData::empty(),
-                'trends' => [],
-                'performances' => [],
-                'evolutionSeries' => EvolutionSeriesData::empty(),
-            ];
-
-            if ($exposure->hasSectors()) {
-                $list['sectorBreakdown'] = [];
-            }
-
-            if (IncomeSource::forAssetClass($exposure) !== null) {
-                $list['income'] = IncomeSummaryData::empty();
-                $list['annualIncome'] = [];
-            }
-
-            $classes[$exposure->value] = $list;
-        }
-
-        return $classes;
-    }
-
     /** @return array<string, mixed> */
     private function page(int $userId, int $assetId, InstrumentDetailData $detail): array
     {
         $page = [
             'instrument' => $detail,
-            'performances' => app(BuildAssetPerformances::class)($userId, $assetId),
+            'performances' => $this->valuation->assetPerformancesFor($userId, $assetId),
             'priceHistory' => $this->market->priceHistory($assetId, Carbon::now()->subMonths(12)),
-            'valuation' => app(BuildAssetValuationSeries::class)(
-                $userId,
-                $assetId,
-                ValuationRange::Max,
-                ValuationGranularity::Week,
-            ),
+            'valuation' => $this->valuation->assetSeriesFor($userId, $assetId),
         ];
 
         /** Une exposition qui ne distribue rien n'a pas de détachements : les porter gonflerait le blob pour rien. */
-        if (IncomeSource::forAssetClass($detail->assetClass) !== null) {
-            $page['dividends'] = app(GetAssetDividendHistory::class)($userId, $assetId);
+        if ($this->income->supportsExposure($detail->assetClass)) {
+            $page['dividends'] = $this->income->assetHistoryFor($userId, $assetId);
         }
 
         return $page;

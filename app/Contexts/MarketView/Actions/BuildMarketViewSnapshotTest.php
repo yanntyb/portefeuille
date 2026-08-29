@@ -58,3 +58,34 @@ it('withholds sectors and income from the exposures that have none', function ()
         ->and($snapshot['classes']['crypto'])->not->toHaveKey('sectorBreakdown')
         ->and($snapshot['classes']['crypto'])->not->toHaveKey('income');
 });
+
+/**
+ * Fige la composition servie quand la base n'a aucun utilisateur : c'est elle que garantissait
+ * `emptyClasses()`, et les ports doivent la reproduire sans ce chemin dédié.
+ */
+it('rend les mêmes listes vides sans aucun utilisateur', function () {
+    $snapshot = app(BuildMarketViewSnapshot::class)(0);
+
+    expect($snapshot['assets'])->toBe([]);
+    expect(array_keys($snapshot['classes']))
+        ->toBe(array_map(fn (AssetClass $class): string => $class->value, AssetClass::cases()));
+
+    $equity = $snapshot['classes']['equity'];
+
+    expect(array_keys($equity))->toBe([
+        'overview', 'trends', 'performances', 'evolutionSeries', 'sectorBreakdown', 'income', 'annualIncome',
+    ]);
+    expect($equity['overview']->jsonSerialize())
+        ->toBe(['totalValue' => 0.0, 'totalCost' => 0.0, 'totalGain' => 0.0, 'totalGainPct' => 0.0, 'holdings' => []]);
+    expect($equity['trends'])->toBe([])
+        ->and($equity['performances'])->toBe([])
+        ->and($equity['sectorBreakdown'])->toBe([])
+        ->and($equity['annualIncome'])->toBe([]);
+    expect($equity['evolutionSeries']->jsonSerialize())->toBe(['labels' => [], 'perAsset' => []]);
+    expect($equity['income']->jsonSerialize())->toBe([
+        'totalReceived' => 0.0, 'last12Months' => 0.0, 'estimatedAnnual' => 0.0, 'bySource' => [],
+    ]);
+
+    expect(array_keys($snapshot['classes']['crypto']))
+        ->toBe(['overview', 'trends', 'performances', 'evolutionSeries']);
+});
