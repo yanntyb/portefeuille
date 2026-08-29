@@ -55,6 +55,11 @@ class SeriesAligner
      * Plusieurs séries empilées sur une même grille. Une série plus courte laisse la fin à zéro :
      * une classe apparue en cours de route n'a rien à ajouter avant son premier point.
      *
+     * À l'inverse, une série plus longue que `$length` est tronquée à la grille plutôt que
+     * d'étendre le résultat — l'ancienne `PortfolioAssetClass::sum()` étendait le tableau dans ce
+     * cas. Inatteignable par les deux appelants actuels, qui bâtissent toujours leurs séries sur
+     * la même grille que `$length`, mais à garder en tête si un nouvel appelant les découple.
+     *
      * @param  list<list<float>>  $series
      * @return list<float>
      */

@@ -75,9 +75,8 @@ class GetSectorBreakdown
                 $weights = [];
 
                 /**
-                 * Additionne au lieu d'écraser : deux lignes du même secteur sur un même actif
-                 * s'ajoutaient dans l'ancien code, et un `mapWithKeys` n'en garderait que la
-                 * dernière.
+                 * Un actif n'a qu'une ligne par secteur (`unique(asset_id, sector)`) ;
+                 * l'accumulation est une garde, pas un cas réel.
                  */
                 foreach ($allocations as $allocation) {
                     /** @var SectorAllocation $allocation */

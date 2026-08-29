@@ -17,3 +17,8 @@ dérivation : la valeur en base fait foi, et un ETF obligataire se corrige à la
 
 L'ordre des cas de `AssetClass` est un contrat : il fixe l'ordre des lignes du résumé patrimonial
 et l'empilement des bandes de son graphe.
+
+## latestForAsset / latestClosesForAssets n'ont pas de clé de tri secondaire
+Ni `EloquentPriceRepository::latestForAsset()` ni `latestClosesForAssets()` ne trient sur une clé secondaire (seulement `orderByDesc('date')` / équivalent par jointure). Elles restent d'accord entre elles grâce à `unique(['asset_id', 'date'])` sur le chemin d'écriture `upsertForAsset()`, qui garantit au plus une ligne par actif et par jour.
+
+Une insertion de `Price` hors de ce chemin (seed manuel, script ponctuel) pourrait créer deux lignes pour le même jour et ferait diverger le dernier cours affiché en tête de fiche instrument de celui qui valorise la position en dessous. Correctif si le besoin se présente : ajouter `orderByDesc('id')` en second critère aux deux méthodes — pas fait aujourd'hui, ce n'est pas un oubli.

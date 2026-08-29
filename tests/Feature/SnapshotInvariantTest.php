@@ -2,10 +2,6 @@
 
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Wallet;
-use App\Contexts\RealEstate\Models\Lease;
-use App\Contexts\RealEstate\Models\Loan;
-use App\Contexts\RealEstate\Models\Property;
-use App\Contexts\RealEstate\Models\PropertyValuation;
 use Illuminate\Support\Carbon;
 
 /**
@@ -27,8 +23,14 @@ use Illuminate\Support\Carbon;
  * fuite dans le JSON — la parade prévue par le cahier des charges s'applique : comparer un tableau
  * normalisé plutôt que le hash brut du contrôleur.
  */
-/** Modifié une fois : gainPct rend null, et non 0.0, sur un total à coût nul. */
-const SNAPSHOT_VERSION = '68124720216879f898d1e396d79485f0af090c80';
+/**
+ * Modifié une fois : gainPct rend null, et non 0.0, sur un total à coût nul.
+ * Modifié une seconde fois : `seedSnapshotFixture()` posait un bien sans charges, recopié à la
+ * main depuis `propertyFixture(['loan' => true])` en en omettant les deux `PropertyExpense`.
+ * `expenseYears()` rendait alors `[]` et `ExpenseGrouper` ne traversait jamais le hash. L'appel à
+ * la fixture ajoute les deux charges au jeu de données, ce qui déplace le hash.
+ */
+const SNAPSHOT_VERSION = '6e25f6c1444e283d6685aabb6749d12f7c4d928a';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe
@@ -70,37 +72,11 @@ function seedSnapshotFixture(): void
         'avg_cost' => 95,
     ]);
 
-    $start = Carbon::now()->startOfMonth()->subMonthsNoOverflow(20)->toDateString();
-    $property = Property::factory()->create([
-        'user_id' => $user->id,
-        'name' => 'T2 Lyon 7e',
-        'address' => '12 rue Garibaldi, Lyon',
-        'acquisition_date' => $start,
-        'acquisition_price' => 100000,
-        'acquisition_fees' => 8000,
-    ]);
-
-    Lease::factory()->create([
-        'property_id' => $property->id,
-        'monthly_rent' => 600,
-        'start_date' => $start,
-        'end_date' => null,
-    ]);
-
-    PropertyValuation::factory()->create([
-        'property_id' => $property->id,
-        'date' => Carbon::now()->toDateString(),
-        'value' => 150000,
-    ]);
-
-    Loan::factory()->create([
-        'property_id' => $property->id,
-        'principal' => 80000,
-        'annual_rate' => 0.0,
-        'term_months' => 240,
-        'start_date' => $start,
-        'monthly_insurance' => 0,
-    ]);
+    /**
+     * `propertyFixture()` crée son propre utilisateur : rattacher le bien à celui du
+     * portefeuille, seul à porter tout le jeu de données (voir la docblock de la fonction).
+     */
+    propertyFixture(['loan' => true])['property']->update(['user_id' => $user->id]);
 }
 
 it('rend un instantané hors-ligne identique au hash de référence', function () {

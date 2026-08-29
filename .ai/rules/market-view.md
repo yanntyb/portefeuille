@@ -10,7 +10,7 @@ Le volet marché — les deux contrôleurs et `BuildMarketViewSnapshot` — ne t
 
 Les Datas de `MarketView\Datas` jumellent celles des voisins et doivent reproduire leur JSON à l'octet près, ordre des clés compris — `SnapshotController` publie `sha1(json_encode($body))` comme version du blob hors-ligne, qu'un ordre différent ferait retélécharger à tous les clients. `HoldingRowData` est le piège : treize clés pour onze propriétés, `typeLabel` et `assetClassLabel` se dérivant de leur enum au moment de sérialiser. Toute clé ajoutée à `Portfolio\HoldingLineData` doit l'être ici aussi.
 
-`PortfolioTotals` injecte `GetPortfolioOverview` et ne la construit jamais : l'action est liée en `scoped` et mémoïse ses lignes par utilisateur, une seule lecture du portefeuille servant les quatre expositions d'une requête.
+`PortfolioTotals` injecte `GetPortfolioOverview` et ne la construit jamais : l'action est liée en `scoped` et mémoïse ses lignes par utilisateur, une seule lecture du portefeuille servant les quatre expositions d'une requête. L'adaptateur injecte de la même façon `GetPortfolioPositions`, liée en `scoped` et mémoïsée par utilisateur selon le même principe.
 
 Ni la profondeur d'historique ni le pas de valorisation ne traversent les ports — ce sont des décisions de rendu, absorbées par `ValuationHistory`. Aucun type de Portfolio, Valuation ou Income n'apparaît hors de `Infrastructure/`, où traduire l'un dans l'autre est précisément le travail des adaptateurs.
 

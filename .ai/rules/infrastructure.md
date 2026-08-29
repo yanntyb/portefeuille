@@ -1,6 +1,7 @@
 ---
 paths:
   - 'app/Contexts/*/Infrastructure/**'
+  - 'app/Contexts/*/Sources/*/Infrastructure/**'
 ---
 
 # Infrastructure

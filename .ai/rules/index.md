@@ -5,10 +5,13 @@ Before planning or editing, find the row whose globs match the file's path and r
 | Applies to | Rule file |
 | --- | --- |
 | app/Contexts/** | .ai/rules/contexts.md |
-| app/Contexts/*/Infrastructure/** | .ai/rules/infrastructure.md |
+| **/Factories/** | .ai/rules/factories.md |
+| app/Contexts/*/Infrastructure/**, app/Contexts/*/Sources/*/Infrastructure/** | .ai/rules/infrastructure.md |
 | app/Contexts/MarketView/** | .ai/rules/market-view.md |
 | app/Contexts/Market/** | .ai/rules/market.md |
+| app/Contexts/Portfolio/** | .ai/rules/portfolio.md |
 | resources/js/pwa/** | .ai/rules/pwa.md |
 | app/Contexts/Market/Infrastructure/Python/** | .ai/rules/python.md |
 | app/Contexts/RealEstate/** | .ai/rules/real-estate.md |
+| app/Contexts/*/Services/** | .ai/rules/services.md |
 | app/Contexts/Wealth/** | .ai/rules/wealth.md |

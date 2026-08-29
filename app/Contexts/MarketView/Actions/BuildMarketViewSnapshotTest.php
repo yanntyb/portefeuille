@@ -31,15 +31,31 @@ it('porte la page liste et une fiche par position détenue', function () {
  * portefeuille et tous les derniers cours de l'utilisateur — un nombre de requêtes qui grossirait
  * avec le nombre de positions plutôt que de rester fixe.
  *
- * Avec deux positions détenues (`cryptoFixture()`), le nombre de requêtes vers `holdings_projection`
- * doit rester à 3 : une par lecteur qui interroge ce projecteur une fois par instantané —
+ * Le nombre de requêtes vers `holdings_projection` doit rester à 3 quel que soit le nombre de
+ * positions détenues : une par lecteur qui interroge ce projecteur une fois par instantané —
  * `GetPortfolioPositions` (mémoïsée, cette task), `GetPortfolioOverview` et `GetSectorBreakdown`
- * (déjà mémoïsées chacune de leur côté). Sans la mémoïsation de `GetPortfolioPositions`, ce même
- * jeu de données porte ce total à 11 (vérifié en désactivant temporairement `??=` pendant
- * l'écriture de ce test) : la régression corrigée par cette task est bien détectée.
+ * (déjà mémoïsées chacune de leur côté). Le jeu en sème une douzaine (`cryptoFixture()` plus dix
+ * positions supplémentaires) pour que 3 prouve l'indépendance au nombre de positions, et non un
+ * chiffre qui se serait simplement trouvé correct pour deux. Sans la mémoïsation de
+ * `GetPortfolioPositions`, ce total grossirait avec N (vérifié en désactivant temporairement `??=`
+ * pendant l'écriture de ce test) : la régression corrigée par cette task est bien détectée.
  */
 it('ne relit pas les positions une fois par fiche construite', function () {
     ['user' => $user] = cryptoFixture();
+
+    $wallet = Wallet::factory()->for($user)->create();
+
+    foreach (range(1, 10) as $i) {
+        $instrument = Instrument::factory()->create(['ticker' => "TST{$i}"]);
+        Price::factory()->create(['asset_id' => $instrument->id, 'close' => 100.0]);
+        Holding::factory()->create([
+            'user_id' => $user->id,
+            'wallet_id' => $wallet->id,
+            'asset_id' => $instrument->id,
+            'quantity' => 1,
+            'avg_cost' => 80.0,
+        ]);
+    }
 
     DB::enableQueryLog();
     DB::flushQueryLog();
