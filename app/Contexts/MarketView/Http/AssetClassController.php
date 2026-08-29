@@ -3,14 +3,11 @@
 namespace App\Contexts\MarketView\Http;
 
 use App\Contexts\Identity\Models\User;
-use App\Contexts\Income\Actions\GetAnnualIncome;
-use App\Contexts\Income\Actions\GetIncomeSummary;
-use App\Contexts\Income\Datas\IncomeSummaryData;
-use App\Contexts\Income\Enums\IncomeSource;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\MarketView\Actions\GetHoldingTrends;
+use App\Contexts\MarketView\Ports\IncomePort;
+use App\Contexts\MarketView\Ports\SectorBreakdownPort;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
-use App\Contexts\Portfolio\Actions\GetSectorBreakdown;
 use App\Contexts\Portfolio\Datas\PortfolioOverviewData;
 use App\Contexts\Valuation\Actions\BuildEvolutionSeries;
 use App\Contexts\Valuation\Actions\BuildPortfolioPerformances;
@@ -30,6 +27,8 @@ class AssetClassController
     public function __construct(
         private GetPortfolioOverview $getPortfolioOverview,
         private GetHoldingTrends $getTrends,
+        private SectorBreakdownPort $sectors,
+        private IncomePort $income,
     ) {}
 
     public function __invoke(): Response
@@ -44,8 +43,6 @@ class AssetClassController
             ? ($this->getPortfolioOverview)($user, $classes)
             : PortfolioOverviewData::empty();
 
-        $source = IncomeSource::forAssetClass($exposure);
-
         /**
          * Les deux drapeaux voyagent avec la classe : la page ne peut pas déduire d'une valeur
          * absente qu'une section n'existe pas. `aheadOfNetwork` rend `null`, jamais `undefined`,
@@ -56,7 +53,7 @@ class AssetClassController
                 'key' => $exposure->value,
                 'label' => $exposure->getLabel(),
                 'hasSectors' => $exposure->hasSectors(),
-                'hasIncome' => $source !== null,
+                'hasIncome' => $this->income->supportsExposure($exposure),
             ],
             'overview' => $overview,
             /** Un groupe par section : chaque squelette se remplit à son rythme. */
@@ -71,19 +68,19 @@ class AssetClassController
         ];
 
         if ($exposure->hasSectors()) {
-            $props['sectorBreakdown'] = Inertia::defer(fn () => $user !== null
-                ? app(GetSectorBreakdown::class)($user)
-                : [], 'secteurs');
+            $props['sectorBreakdown'] = Inertia::defer(
+                fn () => $this->sectors->breakdownFor($userId), 'secteurs',
+            );
         }
 
-        if ($source !== null) {
+        if ($this->income->supportsExposure($exposure)) {
             /** Un seul groupe pour les deux : la section les affiche ensemble. */
-            $props['income'] = Inertia::defer(fn () => $user !== null
-                ? app(GetIncomeSummary::class)($userId, $source)
-                : IncomeSummaryData::empty(), 'revenus');
-            $props['annualIncome'] = Inertia::defer(fn () => $user !== null
-                ? app(GetAnnualIncome::class)($userId, $source)
-                : [], 'revenus');
+            $props['income'] = Inertia::defer(
+                fn () => $this->income->summaryFor($userId, $exposure), 'revenus',
+            );
+            $props['annualIncome'] = Inertia::defer(
+                fn () => $this->income->annualFor($userId, $exposure), 'revenus',
+            );
         }
 
         return Inertia::render('AssetClass/Index', $props);

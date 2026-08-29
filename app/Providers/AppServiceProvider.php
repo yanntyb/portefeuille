@@ -15,8 +15,10 @@ use App\Contexts\Market\Infrastructure\EloquentPriceRepository;
 use App\Contexts\Market\Infrastructure\EloquentSectorRepository;
 use App\Contexts\Market\Infrastructure\YahooFinanceAdapter;
 use App\Contexts\Market\MarketProvider;
+use App\Contexts\MarketView\Infrastructure\IncomeTotals;
 use App\Contexts\MarketView\Infrastructure\MarketData;
 use App\Contexts\MarketView\Infrastructure\PortfolioHoldings;
+use App\Contexts\MarketView\Infrastructure\PortfolioSectors;
 use App\Contexts\MarketView\Infrastructure\PortfolioTransactions;
 use App\Contexts\MarketView\MarketViewProvider;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
@@ -73,6 +75,8 @@ class AppServiceProvider extends ServiceProvider
             marketData: MarketData::class,
             holdings: PortfolioHoldings::class,
             transactions: PortfolioTransactions::class,
+            sectorBreakdown: PortfolioSectors::class,
+            income: IncomeTotals::class,
         );
 
         IncomeProvider::registers(
