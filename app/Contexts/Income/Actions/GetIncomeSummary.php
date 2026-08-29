@@ -2,14 +2,16 @@
 
 namespace App\Contexts\Income\Actions;
 
+use App\Contexts\Income\Datas\IncomeReceiptData;
 use App\Contexts\Income\Datas\IncomeSummaryData;
 use App\Contexts\Income\Enums\IncomeSource;
 use App\Contexts\Income\Infrastructure\IncomeSourceRegistry;
+use App\Contexts\Income\Services\ReceiptTotals;
 use Illuminate\Support\Carbon;
 
 class GetIncomeSummary
 {
-    public function __construct(private IncomeSourceRegistry $sources) {}
+    public function __construct(private IncomeSourceRegistry $sources, private ReceiptTotals $totals) {}
 
     /**
      * Revenu perçu par l'utilisateur. Sans `$only`, toutes origines confondues.
@@ -26,26 +28,20 @@ class GetIncomeSummary
             return IncomeSummaryData::empty();
         }
 
-        $since = Carbon::now()->subYear()->startOfDay();
-        $total = 0.0;
-        $last12Months = 0.0;
-        $bySource = [];
-
-        foreach ($receipts as $receipt) {
-            $total += $receipt->amount;
-            $key = $receipt->source->value;
-            $bySource[$key] = ($bySource[$key] ?? 0.0) + $receipt->amount;
-
-            if ($receipt->date->gte($since)) {
-                $last12Months += $receipt->amount;
-            }
-        }
+        $summary = $this->totals->summarize(
+            array_map(fn (IncomeReceiptData $receipt): array => [
+                'date' => $receipt->date,
+                'amount' => $receipt->amount,
+                'source' => $receipt->source->value,
+            ], $receipts),
+            Carbon::now()->subYear()->startOfDay(),
+        );
 
         return new IncomeSummaryData(
-            totalReceived: round($total, 2),
-            last12Months: round($last12Months, 2),
+            totalReceived: $summary['total'],
+            last12Months: $summary['last12Months'],
             estimatedAnnual: $estimatedAnnual,
-            bySource: array_map(fn (float $amount): float => round($amount, 2), $bySource),
+            bySource: $summary['bySource'],
         );
     }
 }

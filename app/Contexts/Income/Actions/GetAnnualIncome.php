@@ -3,12 +3,14 @@
 namespace App\Contexts\Income\Actions;
 
 use App\Contexts\Income\Datas\AnnualIncomeData;
+use App\Contexts\Income\Datas\IncomeReceiptData;
 use App\Contexts\Income\Enums\IncomeSource;
 use App\Contexts\Income\Infrastructure\IncomeSourceRegistry;
+use App\Contexts\Income\Services\ReceiptTotals;
 
 class GetAnnualIncome
 {
-    public function __construct(private IncomeSourceRegistry $sources) {}
+    public function __construct(private IncomeSourceRegistry $sources, private ReceiptTotals $totals) {}
 
     /**
      * Revenu par année civile, de la plus ancienne à la plus récente. Sans `$only`, toutes
@@ -21,29 +23,18 @@ class GetAnnualIncome
      */
     public function __invoke(int $userId, ?IncomeSource $only = null): array
     {
-        /** @var array<int, array<string, float>> $bySourcePerYear */
-        $bySourcePerYear = [];
+        $byYear = $this->totals->byYear(
+            array_map(fn (IncomeReceiptData $receipt): array => [
+                'date' => $receipt->date,
+                'amount' => $receipt->amount,
+                'source' => $receipt->source->value,
+            ], $this->sources->receiptsFor($userId, $only)),
+        );
 
-        foreach ($this->sources->receiptsFor($userId, $only) as $receipt) {
-            $year = (int) $receipt->date->format('Y');
-            $key = $receipt->source->value;
-            $bySourcePerYear[$year][$key] = ($bySourcePerYear[$year][$key] ?? 0.0) + $receipt->amount;
-        }
-
-        ksort($bySourcePerYear);
-
-        $years = [];
-
-        foreach ($bySourcePerYear as $year => $bySource) {
-            $bySource = array_map(fn (float $amount): float => round($amount, 2), $bySource);
-
-            $years[] = new AnnualIncomeData(
-                year: $year,
-                total: round(array_sum($bySource), 2),
-                bySource: $bySource,
-            );
-        }
-
-        return $years;
+        return array_map(fn (int $year): AnnualIncomeData => new AnnualIncomeData(
+            year: $year,
+            total: round(array_sum($byYear[$year]), 2),
+            bySource: $byYear[$year],
+        ), array_keys($byYear));
     }
 }
