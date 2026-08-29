@@ -28,20 +28,4 @@ class InstrumentFactory extends Factory
     {
         return $this->state(['type' => $type]);
     }
-
-    public function withPrices(callable $configure): static
-    {
-        return $this->afterCreating(function (Instrument $instrument) use ($configure): void {
-            $factory = $configure(PriceFactory::new());
-            $factory->create(['asset_id' => $instrument->id]);
-        });
-    }
-
-    public function withSectors(callable $configure): static
-    {
-        return $this->afterCreating(function (Instrument $instrument) use ($configure): void {
-            $factory = $configure(SectorAllocationFactory::new());
-            $factory->create(['asset_id' => $instrument->id]);
-        });
-    }
 }
