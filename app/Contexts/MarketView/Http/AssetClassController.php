@@ -9,7 +9,6 @@ use App\Contexts\MarketView\Ports\IncomePort;
 use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
 use App\Contexts\MarketView\Ports\SectorBreakdownPort;
 use App\Contexts\MarketView\Ports\ValuationPort;
-use App\Contexts\Valuation\Enums\ValuationRange;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -32,7 +31,6 @@ class AssetClassController
     {
         $userId = (auth()->user() ?? User::query()->first())?->id ?? 0;
         $exposure = AssetClass::from((string) request()->route('exposure'));
-        $range = ValuationRange::fromRequest(request()->query('range'));
 
         /**
          * Les deux drapeaux voyagent avec la classe : la page ne peut pas déduire d'une valeur
@@ -48,7 +46,7 @@ class AssetClassController
             ],
             'overview' => $this->overview->overviewFor($userId, $exposure),
             /** Un groupe par section : chaque squelette se remplit à son rythme. */
-            'trends' => Inertia::defer(fn () => ($this->getTrends)($userId, $range, [$exposure]), 'tendances'),
+            'trends' => Inertia::defer(fn () => ($this->getTrends)($userId, [$exposure]), 'tendances'),
             'performances' => Inertia::defer(
                 fn () => $this->valuation->performancesFor($userId, $exposure), 'performances',
             ),

@@ -272,31 +272,6 @@ it('defers the trends of the held instruments and loads them on demand', functio
         );
 });
 
-it('accepts the range query param for the trends', function () {
-    $user = User::factory()->create();
-    $asset = Instrument::factory()->create();
-    Price::factory()->create(['asset_id' => $asset->id, 'date' => now()->subMonths(6), 'close' => 10]);
-    Price::factory()->create(['asset_id' => $asset->id, 'date' => now()->subDays(10), 'close' => 100]);
-    Price::factory()->create(['asset_id' => $asset->id, 'date' => now(), 'close' => 150]);
-    Holding::factory()->create([
-        'user_id' => $user->id,
-        'wallet_id' => Wallet::factory()->for($user)->create()->id,
-        'asset_id' => $asset->id,
-        'quantity' => 10,
-        'avg_cost' => 80,
-    ]);
-
-    $this->get('/actions?range=1M')
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('AssetClass/Index')
-            ->loadDeferredProps(fn (Assert $reload) => $reload
-                ->where('trends.0.changePct', fn ($value) => (float) $value === 50.0)
-                ->has('trends.0.points', 2)
-            )
-        );
-});
-
 it('diffère le revenu perçu et son historique annuel dans le groupe revenus', function () {
     $this->travelTo('2026-08-19 10:00:00');
     $user = User::factory()->create();

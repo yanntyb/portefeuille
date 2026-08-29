@@ -9,7 +9,6 @@ use App\Contexts\MarketView\Actions\GetHoldingTrends;
 use App\Contexts\MarketView\Datas\HoldingTrendData;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Wallet;
-use App\Contexts\Valuation\Enums\ValuationRange;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -45,42 +44,43 @@ beforeEach(function () {
     $this->user = User::factory()->create();
 });
 
-it('computes the change percentage between the first and the last price of the window', function () {
+it('computes the change percentage between the first and the last price held', function () {
     $asset = heldInstrument($this->user);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => Carbon::now()->subDays(10), 'close' => 100]);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => Carbon::now(), 'close' => 120]);
 
-    $trends = app(GetHoldingTrends::class)($this->user->id, ValuationRange::OneMonth);
+    $trends = app(GetHoldingTrends::class)($this->user->id);
 
     expect(trendFor($trends, $asset->id)->changePct)->toBe(20.0);
 });
 
-it('ignores the prices older than the range window', function () {
+/** La tendance n'a plus de fenêtre : le cours le plus ancien compte autant que le dernier. */
+it('counts the oldest price in, however far back it sits', function () {
     $asset = heldInstrument($this->user);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => Carbon::now()->subMonths(6), 'close' => 10]);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => Carbon::now()->subDays(10), 'close' => 100]);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => Carbon::now(), 'close' => 120]);
 
-    $trends = app(GetHoldingTrends::class)($this->user->id, ValuationRange::OneMonth);
+    $trends = app(GetHoldingTrends::class)($this->user->id);
 
-    expect(trendFor($trends, $asset->id)->changePct)->toBe(20.0);
+    expect(trendFor($trends, $asset->id)->changePct)->toBe(1100.0);
 });
 
-it('keeps the whole history when the range is max', function () {
+it('keeps the whole history, years back included', function () {
     $asset = heldInstrument($this->user);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => Carbon::now()->subYears(4), 'close' => 50]);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => Carbon::now(), 'close' => 100]);
 
-    $trends = app(GetHoldingTrends::class)($this->user->id, ValuationRange::Max);
+    $trends = app(GetHoldingTrends::class)($this->user->id);
 
     expect(trendFor($trends, $asset->id)->changePct)->toBe(100.0);
 });
 
-it('leaves the change percentage null when the window holds less than two prices', function () {
+it('leaves the change percentage null when there are less than two prices', function () {
     $asset = heldInstrument($this->user);
     Price::factory()->create(['asset_id' => $asset->id, 'date' => Carbon::now(), 'close' => 100]);
 
-    $trends = app(GetHoldingTrends::class)($this->user->id, ValuationRange::OneMonth);
+    $trends = app(GetHoldingTrends::class)($this->user->id);
 
     expect(trendFor($trends, $asset->id)->changePct)->toBeNull()
         ->and(trendFor($trends, $asset->id)->points)->toBe([100.0]);
@@ -91,7 +91,7 @@ it('returns a trend for every held instrument, even without any price', function
     $withoutPrice = heldInstrument($this->user);
     Price::factory()->create(['asset_id' => $withPrices->id, 'date' => Carbon::now(), 'close' => 100]);
 
-    $trends = app(GetHoldingTrends::class)($this->user->id, ValuationRange::Max);
+    $trends = app(GetHoldingTrends::class)($this->user->id);
 
     expect($trends)->toHaveCount(2)
         ->and(trendFor($trends, $withoutPrice->id)->changePct)->toBeNull()
@@ -103,7 +103,7 @@ it('leaves out the instruments the user does not hold', function () {
     $catalogued = Instrument::factory()->create();
     Price::factory()->create(['asset_id' => $catalogued->id, 'date' => Carbon::now(), 'close' => 100]);
 
-    $trends = app(GetHoldingTrends::class)($this->user->id, ValuationRange::Max);
+    $trends = app(GetHoldingTrends::class)($this->user->id);
 
     expect($trends)->toHaveCount(1)
         ->and($trends[0]->assetId)->toBe($held->id);
@@ -113,7 +113,7 @@ it('leaves out the positions of another user', function () {
     $other = User::factory()->create();
     heldInstrument($other);
 
-    expect(app(GetHoldingTrends::class)($this->user->id, ValuationRange::Max))->toBe([]);
+    expect(app(GetHoldingTrends::class)($this->user->id))->toBe([]);
 });
 
 it('reads the prices of every position without one query per instrument', function () {
@@ -129,7 +129,7 @@ it('reads the prices of every position without one query per instrument', functi
     DB::enableQueryLog();
     DB::flushQueryLog();
 
-    app(GetHoldingTrends::class)($this->user->id, ValuationRange::Max);
+    app(GetHoldingTrends::class)($this->user->id);
 
     expect(count(DB::getQueryLog()))->toBeLessThanOrEqual(2);
 });
@@ -145,7 +145,7 @@ it('downsamples a long history while keeping the first and the last price', func
         $close += 1;
     }
 
-    $trend = trendFor(app(GetHoldingTrends::class)($this->user->id, ValuationRange::Max), $asset->id);
+    $trend = trendFor(app(GetHoldingTrends::class)($this->user->id), $asset->id);
 
     expect(count($trend->points))->toBeLessThanOrEqual(24)
         ->and(count($trend->points))->toBeGreaterThan(1)
@@ -168,7 +168,7 @@ it('keeps only the trends of the exposures it is given', function () {
         ]);
     }
 
-    $trends = app(GetHoldingTrends::class)($user->id, ValuationRange::Max, [AssetClass::Commodity]);
+    $trends = app(GetHoldingTrends::class)($user->id, [AssetClass::Commodity]);
 
     expect(array_map(fn ($trend): int => $trend->assetId, $trends))->toBe([$gold->id]);
 });

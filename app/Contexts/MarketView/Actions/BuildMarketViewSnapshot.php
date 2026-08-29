@@ -11,7 +11,6 @@ use App\Contexts\MarketView\Ports\MarketDataPort;
 use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
 use App\Contexts\MarketView\Ports\SectorBreakdownPort;
 use App\Contexts\MarketView\Ports\ValuationPort;
-use App\Contexts\Valuation\Enums\ValuationRange;
 use Illuminate\Support\Carbon;
 
 /**
@@ -67,7 +66,7 @@ class BuildMarketViewSnapshot
     {
         $list = [
             'overview' => $this->overview->overviewFor($userId, $exposure),
-            'trends' => ($this->getTrends)($userId, ValuationRange::Max, [$exposure]),
+            'trends' => ($this->getTrends)($userId, [$exposure]),
             'performances' => $this->valuation->performancesFor($userId, $exposure),
             'evolutionSeries' => $this->valuation->evolutionFor($userId, $exposure),
         ];

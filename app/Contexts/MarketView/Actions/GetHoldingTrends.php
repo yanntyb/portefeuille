@@ -7,7 +7,6 @@ use App\Contexts\MarketView\Datas\HoldingSnapshotData;
 use App\Contexts\MarketView\Datas\HoldingTrendData;
 use App\Contexts\MarketView\Ports\HoldingsPort;
 use App\Contexts\MarketView\Ports\MarketDataPort;
-use App\Contexts\Valuation\Enums\ValuationRange;
 use Illuminate\Support\Carbon;
 
 class GetHoldingTrends
@@ -25,15 +24,14 @@ class GetHoldingTrends
      * exposition — sinon l'instantané hors-ligne porterait le portefeuille entier une fois par
      * classe, pour un rendu qui n'en montre qu'une part.
      *
+     * L'historique est pris en entier : la sparkline n'a pas de sélecteur de plage, et le
+     * sous-échantillonnage lui donne de toute façon le même nombre de points.
+     *
      * @param  ?list<AssetClass>  $classes
      * @return list<HoldingTrendData>
      */
-    public function __invoke(
-        int $userId,
-        ValuationRange $range = ValuationRange::Max,
-        ?array $classes = null,
-    ): array {
-        $since = $this->windowStart($range);
+    public function __invoke(int $userId, ?array $classes = null): array
+    {
         $assetIds = array_map(
             fn (HoldingSnapshotData $snapshot): int => $snapshot->assetId,
             $this->holdings->holdingsFor($userId),
@@ -44,21 +42,12 @@ class GetHoldingTrends
             $assetIds = array_values(array_filter($assetIds, fn (int $id): bool => isset($kept[$id])));
         }
 
-        $closes = $this->market->closeSeriesSince($assetIds, $since);
+        $closes = $this->market->closeSeriesSince($assetIds, Carbon::createFromTimestamp(0));
 
         return array_map(
             fn (int $assetId): HoldingTrendData => $this->toTrend($assetId, $closes[$assetId] ?? []),
             $assetIds,
         );
-    }
-
-    private function windowStart(ValuationRange $range): Carbon
-    {
-        $months = $range->months();
-
-        return $months === null
-            ? Carbon::createFromTimestamp(0)
-            : Carbon::now()->subMonths($months);
     }
 
     /** @param list<float> $close */
