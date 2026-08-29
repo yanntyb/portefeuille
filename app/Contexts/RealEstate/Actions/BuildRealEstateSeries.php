@@ -10,6 +10,7 @@ use App\Contexts\RealEstate\Models\PropertyValuation;
 use App\Contexts\RealEstate\Ports\RealEstateCachePort;
 use App\Contexts\RealEstate\Services\CashFlowCalculator;
 use App\Contexts\RealEstate\Services\LoanAmortizationCalculator;
+use App\Contexts\RealEstate\Services\SeriesStepper;
 use App\Contexts\RealEstate\Support\PropertyFinancialsAssembler;
 use App\Contexts\RealEstate\Support\UserProperties;
 use Illuminate\Support\Carbon;
@@ -30,6 +31,7 @@ class BuildRealEstateSeries
         private LoanAmortizationCalculator $amortization,
         private GetRealEstateCashInvested $cashInvested,
         private RealEstateCachePort $cache,
+        private SeriesStepper $stepper,
     ) {}
 
     public function __invoke(int $userId): RealEstateSeriesData
@@ -46,7 +48,7 @@ class BuildRealEstateSeries
         }
 
         $today = Carbon::now();
-        $labels = $this->weeklyLabels($properties->min('acquisition_date'), $today);
+        $labels = $this->stepper->weeklyLabels($properties->min('acquisition_date'), $today);
 
         $netWorth = array_fill(0, count($labels), 0.0);
         $invested = array_fill(0, count($labels), 0.0);
@@ -63,8 +65,8 @@ class BuildRealEstateSeries
                     continue;
                 }
 
-                $netWorth[$index] += $this->valueAt($valuations, $label) - $this->remainingAt($schedules, $label);
-                $invested[$index] += $downPayment + $this->injectedUpTo($injections, $label);
+                $netWorth[$index] += $this->stepper->valueAt($valuations, $label) - $this->remainingAt($schedules, $label);
+                $invested[$index] += $downPayment + $this->stepper->sumUpTo($injections, $label);
             }
         }
 
@@ -73,30 +75,6 @@ class BuildRealEstateSeries
             netWorth: array_map(fn (float $amount): float => round($amount, 2), $netWorth),
             invested: array_map(fn (float $amount): float => round($amount, 2), $invested),
         );
-    }
-
-    /**
-     * Tous les lundis depuis celui qui précède la plus ancienne acquisition, puis aujourd'hui —
-     * sans quoi le dernier point de la série serait vieux de six jours au plus mauvais moment.
-     *
-     * @return list<string>
-     */
-    private function weeklyLabels(Carbon $firstAcquisition, Carbon $today): array
-    {
-        $cursor = $firstAcquisition->copy()->startOfWeek();
-        $todayLabel = $today->toDateString();
-        $labels = [];
-
-        // Comparaison en jour, pas en horodatage : `$today` porte l'heure courante, et un lundi
-        // à 00:00:00 lui serait sinon antérieur, dupliquant le dernier label.
-        while ($cursor->toDateString() < $todayLabel) {
-            $labels[] = $cursor->toDateString();
-            $cursor = $cursor->addWeek();
-        }
-
-        $labels[] = $todayLabel;
-
-        return $labels;
     }
 
     /**
@@ -114,27 +92,6 @@ class BuildRealEstateSeries
             ])
             ->values()
             ->all();
-    }
-
-    /**
-     * Escalier : la dernière valeur estimée de date ≤ au label, 0 avant la première. Aucune
-     * interpolation — une valeur n'est connue que le jour où elle a été estimée.
-     *
-     * @param  list<array{0: string, 1: float}>  $points
-     */
-    private function valueAt(array $points, string $label): float
-    {
-        $value = 0.0;
-
-        foreach ($points as [$date, $amount]) {
-            if ($date > $label) {
-                break;
-            }
-
-            $value = $amount;
-        }
-
-        return $value;
     }
 
     /** @return list<list<AmortizationLineData>> */
@@ -156,19 +113,5 @@ class BuildRealEstateSeries
         }
 
         return $remaining;
-    }
-
-    /** @param  array<string, float>  $injections */
-    private function injectedUpTo(array $injections, string $label): float
-    {
-        $total = 0.0;
-
-        foreach ($injections as $month => $amount) {
-            if ($month <= $label) {
-                $total += $amount;
-            }
-        }
-
-        return $total;
     }
 }
