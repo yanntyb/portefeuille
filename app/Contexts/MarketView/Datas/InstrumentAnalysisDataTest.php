@@ -8,8 +8,6 @@ it('sérialise ses onze chiffres dans un ordre stable', function () {
         pruGapPct: 25.0,
         high52w: 94.1,
         high52wGapPct: -22.2,
-        atr: 1.9,
-        atrPct: 1.9,
         maxDrawdown: 31.4,
         portfolioWeightPct: 4.2,
     );
@@ -19,8 +17,6 @@ it('sérialise ses onze chiffres dans un ordre stable', function () {
         'pruGapPct',
         'high52w',
         'high52wGapPct',
-        'atr',
-        'atrPct',
         'maxDrawdown',
         'portfolioWeightPct',
     ]);

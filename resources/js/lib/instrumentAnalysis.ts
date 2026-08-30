@@ -6,7 +6,6 @@ export type IndicatorId =
     | 'pruGap'
     | 'high52w'
     | 'high52wGap'
-    | 'atrPct'
     | 'maxDrawdown'
     | 'portfolioWeight';
 
@@ -64,7 +63,6 @@ export const analysisGroups = (analysis: InstrumentAnalysis): AnalysisGroup[] =>
         {
             title: 'Risque',
             rows: [
-                { indicator: 'atrPct', label: 'ATR 14', value: sharePct(analysis.atrPct) },
                 { indicator: 'maxDrawdown', label: 'Max drawdown', value: drawdown(analysis.maxDrawdown) },
                 {
                     indicator: 'portfolioWeight',

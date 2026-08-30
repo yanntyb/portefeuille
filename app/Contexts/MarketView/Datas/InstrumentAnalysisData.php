@@ -24,8 +24,6 @@ readonly class InstrumentAnalysisData implements JsonSerializable
         public ?float $pruGapPct,
         public ?float $high52w,
         public ?float $high52wGapPct,
-        public ?float $atr,
-        public ?float $atrPct,
         public ?float $maxDrawdown,
         public ?float $portfolioWeightPct,
     ) {}
@@ -38,8 +36,6 @@ readonly class InstrumentAnalysisData implements JsonSerializable
             'pruGapPct' => $this->pruGapPct,
             'high52w' => $this->high52w,
             'high52wGapPct' => $this->high52wGapPct,
-            'atr' => $this->atr,
-            'atrPct' => $this->atrPct,
             'maxDrawdown' => $this->maxDrawdown,
             'portfolioWeightPct' => $this->portfolioWeightPct,
         ];

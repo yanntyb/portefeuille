@@ -64,18 +64,17 @@ it('situe le cours dans ses cinquante-deux semaines', function () {
 
     /** Clôtures 100 à 359, en hausse continue : le sommet est le dernier cours. */
     expect($data->high52w)->toBe(359.0)
-        ->and($data->high52wGapPct)->toBe(0.0)
-        ->and($data->atrPct)->not->toBeNull();
+        ->and($data->high52wGapPct)->toBe(0.0);
 });
 
-it('laisse l\'amplitude vraie à nul quand l\'historique est trop court', function () {
+it('mesure la chute maximale même sur un historique de deux séances', function () {
     ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
 
-    /** Deux séances : de quoi coter, pas de quoi moyenner quatorze amplitudes. */
+    /** La fixture cote 80 € en début d'année puis 100 € : une série qui ne recule jamais. */
     $data = $this->analysis->forAsset($user->id, $instrument->id);
 
-    expect($data->atr)->toBeNull()
-        ->and($data->atrPct)->toBeNull();
+    expect($data->maxDrawdown)->toBe(0.0)
+        ->and($data->high52w)->toBe(100.0);
 });
 
 it('rend le poids de la position dans le portefeuille entier', function () {

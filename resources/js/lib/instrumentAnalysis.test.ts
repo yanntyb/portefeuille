@@ -10,8 +10,6 @@ const analysis = (overrides: Partial<InstrumentAnalysis> = {}): InstrumentAnalys
     pruGapPct: 25,
     high52w: 94.1,
     high52wGapPct: -22.2,
-    atr: 1.9,
-    atrPct: 1.9,
     maxDrawdown: 31.4,
     portfolioWeightPct: 4.2,
     ...overrides,
@@ -35,7 +33,6 @@ describe('analysisGroups', () => {
         expect(valueOf('pruGap')).toBe('+25,0 %');
         expect(valueOf('high52w')).toBe('94,10 €');
         expect(valueOf('high52wGap')).toBe('-22,2 %');
-        expect(valueOf('atrPct')).toBe('1,9 %');
         expect(valueOf('portfolioWeight')).toBe('4,2 %');
     });
 
@@ -68,8 +65,6 @@ describe('analysisGroups', () => {
 
     it('efface un groupe dont tous les repères manquent', () => {
         const groups = analysisGroups(analysis({
-            atr: null,
-            atrPct: null,
             maxDrawdown: null,
             portfolioWeightPct: null,
         }));

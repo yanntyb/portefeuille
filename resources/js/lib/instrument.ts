@@ -82,8 +82,6 @@ export interface InstrumentAnalysis {
     pruGapPct: number | null;
     high52w: number | null;
     high52wGapPct: number | null;
-    atr: number | null;
-    atrPct: number | null;
     /** Pourcentage positif, comme le rend le serveur : le signe est posé à l'affichage. */
     maxDrawdown: number | null;
     portfolioWeightPct: number | null;
