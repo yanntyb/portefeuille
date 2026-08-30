@@ -51,8 +51,10 @@ use Illuminate\Support\Carbon;
  * `totalRealizedGain` et chaque position `realizedGain`.
  * Modifié une neuvième fois : le tableau de bord gagne une section secteurs, donc `dashboard` une
  * cinquième clé — le patrimoine ventilé par secteur, l'immobilier compris.
+ * Modifié une dixième fois : la part sans secteur d'une exposition prend le nom de celle-ci, si
+ * bien que la tranche « Autre » du jeu de données s'appelle désormais « Actions ».
  */
-const SNAPSHOT_VERSION = 'f715be19e5a497a14c0c47ff56c8b17a8012ceef';
+const SNAPSHOT_VERSION = '317de7b402178e1425de88cdd721646dee5021b0';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

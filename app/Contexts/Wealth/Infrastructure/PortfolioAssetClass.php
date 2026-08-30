@@ -6,6 +6,7 @@ use App\Contexts\Identity\Models\User;
 use App\Contexts\Income\Actions\GetIncomeSummary;
 use App\Contexts\Income\Enums\IncomeSource;
 use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\Market\Enums\Sector;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Actions\GetSectorBreakdown;
 use App\Contexts\Portfolio\Datas\AllocationSliceData;
@@ -88,9 +89,13 @@ class PortfolioAssetClass implements AssetClassPort
             return [];
         }
 
+        /**
+         * La part sans secteur prend le nom de son exposition plutôt que celui d'« Autre » : ni le
+         * bitcoin ni l'or n'ont de secteur boursier, et « Crypto » dit ce qu'« Autre » cachait.
+         */
         return array_map(
             fn (AllocationSliceData $slice): ClassSectorData => new ClassSectorData(
-                label: $slice->label,
+                label: $slice->label === Sector::Other->getLabel() ? $this->label() : $slice->label,
                 value: $slice->value,
             ),
             ($this->sectors)($user, [$this->exposure]),
