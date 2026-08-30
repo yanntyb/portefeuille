@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { analysisGroups } from '@/lib/analysis';
+import { analysisGroups } from '@/lib/instrumentAnalysis';
 import type { InstrumentAnalysis } from '@/lib/instrument';
 
 /** Copie du helper de `instrument.test.ts` : `toLocaleString` sépare avec des espaces insécables. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { analysisGroups } from '@/lib/analysis';
+import { analysisGroups } from '@/lib/instrumentAnalysis';
 import { indicatorHelp } from '@/lib/indicatorHelp';
 import type { InstrumentAnalysis } from '@/lib/instrument';
 

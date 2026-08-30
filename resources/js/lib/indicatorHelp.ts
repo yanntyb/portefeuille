@@ -1,4 +1,4 @@
-import type { IndicatorId } from '@/lib/analysis';
+import type { IndicatorId } from '@/lib/instrumentAnalysis';
 
 export interface IndicatorHelp {
     title: string;
