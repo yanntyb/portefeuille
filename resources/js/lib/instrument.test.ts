@@ -61,16 +61,17 @@ describe('heroValueOf', () => {
 });
 
 describe('heroMeta', () => {
-    it('énonce cours et prix de revient quand l\'instrument est détenu', () => {
+    it('énonce le seul prix de revient quand l\'instrument est détenu', () => {
         const entries = heroMeta(instrument());
 
-        expect(entries.map((entry) => entry.label)).toEqual(['Cours', 'PRU']);
-        expect(entries.map((entry) => normalizeSpaces(entry.value))).toEqual(['100,00 €', '80,00 €']);
+        expect(entries.map((entry) => entry.label)).toEqual(['PRU']);
+        expect(entries.map((entry) => normalizeSpaces(entry.value))).toEqual(['80,00 €']);
     });
 
-    it('laisse investi et gain à l\'en-tête, qui les colle au grand chiffre', () => {
+    it('laisse le cours à la courbe, investi et gain à l\'en-tête', () => {
         const entries = heroMeta(instrument());
 
+        expect(entries.map((entry) => entry.label)).not.toContain('Cours');
         expect(entries.map((entry) => entry.label)).not.toContain('Investi');
         expect(entries.map((entry) => entry.label)).not.toContain('Gain');
         expect(entries.filter((entry) => entry.gain !== undefined)).toHaveLength(0);
@@ -89,7 +90,7 @@ describe('heroMeta', () => {
     it('rend un tiret sur un prix de revient absent plutôt que de masquer la ligne', () => {
         const entries = heroMeta(instrument({ position: position({ avgCost: null }) }));
 
-        expect(entries[1]).toEqual({ label: 'PRU', value: '—' });
+        expect(entries[0]).toEqual({ label: 'PRU', value: '—' });
     });
 });
 

@@ -101,7 +101,8 @@ export const heroValueOf = (instrument: Instrument): number | null =>
 
 /**
  * Repères du milieu de page : paires libellé/valeur où le libellé s'efface et la valeur porte la
- * lecture. Investi et gain n'en sont pas — ils suivent le grand chiffre de l'en-tête. Sans
+ * lecture. Investi, gain et cours n'en sont pas — les deux premiers suivent le grand chiffre de
+ * l'en-tête, le dernier se lit sur la courbe. Sans
  * position, il ne reste que la date du dernier cours : un instrument seulement suivi n'a pas de
  * prix de revient.
  */
@@ -114,8 +115,5 @@ export const heroMeta = (instrument: Instrument): HeroMetaEntry[] => {
             : [{ label: '', value: `au ${frDate(instrument.lastPriceDate)}` }];
     }
 
-    return [
-        { label: 'Cours', value: eur(instrument.lastPrice) },
-        { label: 'PRU', value: eur(position.avgCost) },
-    ];
+    return [{ label: 'PRU', value: eur(position.avgCost) }];
 };
