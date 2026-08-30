@@ -256,7 +256,7 @@ it('donne une ligne à chaque repère de l\'en-tête, montant sur le bord droit'
     })";
 
     visit("/asset/{$instrument->id}")->on()->iPhone14Pro()
-        ->assertScript("document.querySelectorAll('[data-hero-meta] > span').length", 4)
+        ->assertScript("document.querySelectorAll('[data-hero-meta] > span').length", 2)
         ->assertScript($stacked, true)
         ->assertNoJavaScriptErrors();
 });

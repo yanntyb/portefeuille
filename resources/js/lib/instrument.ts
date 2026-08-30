@@ -1,4 +1,4 @@
-import { eur, frDate, signedEur } from '@/lib/format';
+import { eur, frDate } from '@/lib/format';
 
 export interface InstrumentPosition {
     quantity: number;
@@ -98,9 +98,10 @@ export const heroValueOf = (instrument: Instrument): number | null =>
     instrument.position?.marketValue ?? instrument.lastPrice;
 
 /**
- * Pied de l'en-tête : paires libellé/valeur où le libellé s'efface et la valeur porte la lecture.
- * Sans position, il ne reste que la date du dernier cours — un instrument seulement suivi n'a ni
- * prix de revient ni montant investi.
+ * Repères du milieu de page : paires libellé/valeur où le libellé s'efface et la valeur porte la
+ * lecture. Investi et gain n'en sont pas — ils suivent le grand chiffre de l'en-tête. Sans
+ * position, il ne reste que la date du dernier cours : un instrument seulement suivi n'a pas de
+ * prix de revient.
  */
 export const heroMeta = (instrument: Instrument): HeroMetaEntry[] => {
     const position = instrument.position;
@@ -112,8 +113,6 @@ export const heroMeta = (instrument: Instrument): HeroMetaEntry[] => {
     }
 
     return [
-        { label: 'Investi', value: eur(investedOf(position)) },
-        { label: 'Gain', value: signedEur(position.gain), gain: position.gain },
         { label: 'Cours', value: eur(instrument.lastPrice) },
         { label: 'PRU', value: eur(position.avgCost) },
     ];

@@ -60,29 +60,19 @@ describe('heroValueOf', () => {
 });
 
 describe('heroMeta', () => {
-    it('énonce investi, gain, cours et prix de revient quand l\'instrument est détenu', () => {
+    it('énonce cours et prix de revient quand l\'instrument est détenu', () => {
         const entries = heroMeta(instrument());
 
-        expect(entries.map((entry) => entry.label)).toEqual(['Investi', 'Gain', 'Cours', 'PRU']);
-        expect(entries.map((entry) => normalizeSpaces(entry.value))).toEqual([
-            '800,00 €',
-            '+200,00 €',
-            '100,00 €',
-            '80,00 €',
-        ]);
+        expect(entries.map((entry) => entry.label)).toEqual(['Cours', 'PRU']);
+        expect(entries.map((entry) => normalizeSpaces(entry.value))).toEqual(['100,00 €', '80,00 €']);
     });
 
-    it('marque le seul gain d\'un montant coloré, les autres stats restant neutres', () => {
-        const entries = heroMeta(instrument({ position: position({ gain: -50 }) }));
+    it('laisse investi et gain à l\'en-tête, qui les colle au grand chiffre', () => {
+        const entries = heroMeta(instrument());
 
-        expect(entries[1].gain).toBe(-50);
-        expect(entries.filter((entry) => entry.gain !== undefined)).toHaveLength(1);
-    });
-
-    it('rend un tiret sur un gain absent plutôt que de masquer la ligne', () => {
-        const entries = heroMeta(instrument({ position: position({ gain: null }) }));
-
-        expect(entries[1]).toEqual({ label: 'Gain', value: '—', gain: null });
+        expect(entries.map((entry) => entry.label)).not.toContain('Investi');
+        expect(entries.map((entry) => entry.label)).not.toContain('Gain');
+        expect(entries.filter((entry) => entry.gain !== undefined)).toHaveLength(0);
     });
 
     it('énonce la date du dernier cours quand l\'instrument n\'est pas détenu', () => {
@@ -98,8 +88,7 @@ describe('heroMeta', () => {
     it('rend un tiret sur un prix de revient absent plutôt que de masquer la ligne', () => {
         const entries = heroMeta(instrument({ position: position({ avgCost: null }) }));
 
-        expect(entries[0]).toEqual({ label: 'Investi', value: '—' });
-        expect(entries[3]).toEqual({ label: 'PRU', value: '—' });
+        expect(entries[1]).toEqual({ label: 'PRU', value: '—' });
     });
 });
 

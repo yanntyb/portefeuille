@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import GainPill from '@/components/GainPill.vue';
-import { eur as formatEur, gainClass, pct, signedEur } from '@/lib/format';
+import InvestedGainMeta from '@/components/InvestedGainMeta.vue';
+import { eur as formatEur, pct } from '@/lib/format';
 import type { PortfolioOverview } from '@/lib/portfolio';
 
 defineProps<{ overview: PortfolioOverview }>();
 
 const eur = (value: number | null): string => formatEur(value, 0);
-
-const signedRoundedEur = (value: number | null): string => signedEur(value, 0);
 </script>
 
 <template>
@@ -19,16 +18,11 @@ const signedRoundedEur = (value: number | null): string => signedEur(value, 0);
             <GainPill data-portfolio-gain-pct :value="overview.totalGain" :label="pct(overview.totalGainPct)" />
         </div>
 
-        <p data-portfolio-meta class="flex flex-wrap gap-x-5 gap-y-1 text-[13.5px] text-muted-foreground">
-            <span class="whitespace-nowrap">
-                Investi <strong class="font-semibold text-foreground tabular-nums">{{ eur(overview.totalCost) }}</strong>
-            </span>
-            <span class="whitespace-nowrap">
-                Gain
-                <strong class="font-semibold tabular-nums" :class="gainClass(overview.totalGain)">
-                    {{ signedRoundedEur(overview.totalGain) }}
-                </strong>
-            </span>
-        </p>
+        <InvestedGainMeta
+            data-portfolio-meta
+            :invested="overview.totalCost"
+            :gain="overview.totalGain"
+            :digits="0"
+        />
     </section>
 </template>

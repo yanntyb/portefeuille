@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import HeroFigures from '@/components/HeroFigures.vue';
+import InvestedGainMeta from '@/components/InvestedGainMeta.vue';
 import { pct } from '@/lib/format';
-import { heroValueOf, type Instrument } from '@/lib/instrument';
+import { heroValueOf, investedOf, type Instrument } from '@/lib/instrument';
 
 const props = defineProps<{
     instrument: Instrument;
@@ -32,6 +33,15 @@ const gainLabel = computed<string | null>(() =>
         </div>
 
         <!-- Les repères chiffrés sortent d'ici : le graphe s'intercale entre eux et la valeur. -->
-        <HeroFigures :value="heroValue" :gain="position?.gain ?? null" :gain-label="gainLabel" />
+        <HeroFigures :value="heroValue" :gain="position?.gain ?? null" :gain-label="gainLabel">
+            <!-- Investi et gain collent au grand chiffre, comme sur le tableau de bord et les listings. -->
+            <template v-if="position" #beneath-value>
+                <InvestedGainMeta
+                    data-hero-summary
+                    :invested="investedOf(position)"
+                    :gain="position.gain"
+                />
+            </template>
+        </HeroFigures>
     </header>
 </template>
