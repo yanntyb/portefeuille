@@ -16,12 +16,13 @@ readonly class WealthOverviewData implements JsonSerializable
         public float $totalInvested,
         public float $totalGain,
         public ?float $totalGainPct,
+        public float $totalRealizedGain,
         public array $classes,
     ) {}
 
     public static function empty(): self
     {
-        return new self(0.0, 0.0, 0.0, null, []);
+        return new self(0.0, 0.0, 0.0, null, 0.0, []);
     }
 
     /** @return array<string, mixed> */
@@ -32,6 +33,7 @@ readonly class WealthOverviewData implements JsonSerializable
             'totalInvested' => $this->totalInvested,
             'totalGain' => $this->totalGain,
             'totalGainPct' => $this->totalGainPct,
+            'totalRealizedGain' => $this->totalRealizedGain,
             'classes' => array_map(fn (AssetClassData $class): array => $class->jsonSerialize(), $this->classes),
         ];
     }

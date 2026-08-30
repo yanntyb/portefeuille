@@ -18,6 +18,7 @@ const position = (overrides: Partial<InstrumentPosition> = {}): InstrumentPositi
     marketValue: 1000,
     gain: 200,
     gainPct: 25,
+    realizedGain: 0,
     ...overrides,
 });
 

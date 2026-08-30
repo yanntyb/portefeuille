@@ -30,6 +30,7 @@ class GetPortfolioPositions
         private PriceRepositoryContract $prices,
         private PositionAggregator $aggregate,
         private HoldingValuator $valuator,
+        private GetRealizedGains $realizedGains,
     ) {}
 
     /** @return array<int, PositionLineData> */
@@ -51,16 +52,23 @@ class GetPortfolioPositions
             $holdings->pluck('asset_id')->map(fn ($assetId): int => (int) $assetId)->all(),
         );
 
+        $realized = ($this->realizedGains)($userId);
+
         return $holdings
             ->groupBy('asset_id')
             ->mapWithKeys(fn (Collection $rows, int|string $assetId): array => [
-                (int) $assetId => $this->position((int) $assetId, $rows, $lastPrices[(int) $assetId] ?? null),
+                (int) $assetId => $this->position(
+                    (int) $assetId,
+                    $rows,
+                    $lastPrices[(int) $assetId] ?? null,
+                    $realized[(int) $assetId] ?? 0.0,
+                ),
             ])
             ->all();
     }
 
     /** @param  Collection<int, Holding>  $rows */
-    private function position(int $assetId, Collection $rows, ?float $lastPrice): PositionLineData
+    private function position(int $assetId, Collection $rows, ?float $lastPrice, float $realizedGain): PositionLineData
     {
         $aggregated = ($this->aggregate)($rows->map(fn (Holding $holding): array => [
             'quantity' => (float) $holding->quantity,
@@ -76,6 +84,7 @@ class GetPortfolioPositions
             marketValue: $valued['marketValue'],
             gain: $valued['gain'],
             gainPct: $valued['gainPct'],
+            realizedGain: $realizedGain,
         );
     }
 }

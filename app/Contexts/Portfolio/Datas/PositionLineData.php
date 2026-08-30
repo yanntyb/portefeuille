@@ -16,5 +16,7 @@ readonly class PositionLineData
         public ?float $marketValue,
         public ?float $gain,
         public ?float $gainPct,
+        /** Gain déjà encaissé sur cet actif, toutes enveloppes confondues, nul faute de vente. */
+        public float $realizedGain,
     ) {}
 }

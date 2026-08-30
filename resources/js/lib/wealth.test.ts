@@ -10,6 +10,7 @@ const assetClass = (overrides: Partial<AssetClass> = {}): AssetClass => ({
     invested: 800,
     gain: 200,
     gainPct: 25,
+    realizedGain: 0,
     ...overrides,
 });
 
@@ -18,6 +19,7 @@ const overview = (classes: AssetClass[], totalValue?: number): WealthOverview =>
     totalInvested: 0,
     totalGain: 0,
     totalGainPct: null,
+    totalRealizedGain: 0,
     classes,
 });
 

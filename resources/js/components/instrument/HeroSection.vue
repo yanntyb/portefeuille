@@ -40,6 +40,7 @@ const gainLabel = computed<string | null>(() =>
                     data-hero-summary
                     :invested="investedOf(position)"
                     :gain="position.gain"
+                    :realized-gain="position.realizedGain"
                 />
             </template>
         </HeroFigures>

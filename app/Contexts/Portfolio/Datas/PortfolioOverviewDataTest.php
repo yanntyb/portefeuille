@@ -11,6 +11,7 @@ it('serializes an overview to the expected json shape', function () {
         totalCost: 800.0,
         totalGain: 200.0,
         totalGainPct: 25.0,
+        totalRealizedGain: 40.0,
         holdings: [new HoldingLineData(
             assetId: 7,
             assetName: 'ACME',

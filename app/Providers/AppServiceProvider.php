@@ -25,6 +25,7 @@ use App\Contexts\MarketView\Infrastructure\ValuationHistory;
 use App\Contexts\MarketView\MarketViewProvider;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Actions\GetPortfolioPositions;
+use App\Contexts\Portfolio\Actions\GetRealizedGains;
 use App\Contexts\RealEstate\Infrastructure\LaravelRealEstateCache;
 use App\Contexts\RealEstate\RealEstateProvider;
 use App\Contexts\Valuation\Infrastructure\LaravelSeriesCache;
@@ -102,6 +103,9 @@ class AppServiceProvider extends ServiceProvider
          * `GetPortfolioOverview`.
          */
         $this->app->scoped(GetPortfolioPositions::class);
+
+        /** Une lecture des ventes par requête : le gain réalisé se lit aux quatre expositions. */
+        $this->app->scoped(GetRealizedGains::class);
 
         /** L'ordre décide de celui des lignes du tableau de bord et des bandes de son graphe. */
         WealthProvider::registers(

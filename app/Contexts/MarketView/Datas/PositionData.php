@@ -12,6 +12,7 @@ readonly class PositionData implements JsonSerializable
         public ?float $marketValue,
         public ?float $gain,
         public ?float $gainPct,
+        public float $realizedGain,
     ) {}
 
     /** @return array<string, mixed> */
@@ -23,6 +24,7 @@ readonly class PositionData implements JsonSerializable
             'marketValue' => $this->marketValue,
             'gain' => $this->gain,
             'gainPct' => $this->gainPct,
+            'realizedGain' => $this->realizedGain,
         ];
     }
 }

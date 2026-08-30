@@ -47,8 +47,10 @@ use Illuminate\Support\Carbon;
  * `analyses` du blob perd `analysis`, `drawdown`, `income` et `annualIncome`.
  * Modifié une septième fois : le tableau de bord gagne une section transactions, donc `dashboard`
  * une quatrième clé — l'historique des opérations, tous actifs confondus.
+ * Modifié une huitième fois : le gain réalisé se sépare du gain latent, donc chaque aperçu gagne
+ * `totalRealizedGain` et chaque position `realizedGain`.
  */
-const SNAPSHOT_VERSION = 'dce17b84756fbd585f47c7cb49c10c3d002150aa';
+const SNAPSHOT_VERSION = '66aad38a0dd113c8511d0a0b427f037b13423b16';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

@@ -14,6 +14,7 @@ export interface AssetClass {
     invested: number;
     gain: number;
     gainPct: number | null;
+    realizedGain: number;
 }
 
 /** Les classes arrivent dans l'ordre du registre : c'est celui des lignes et des bandes du graphe. */
@@ -22,6 +23,7 @@ export interface WealthOverview {
     totalInvested: number;
     totalGain: number;
     totalGainPct: number | null;
+    totalRealizedGain: number;
     classes: AssetClass[];
 }
 

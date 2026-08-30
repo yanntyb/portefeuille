@@ -26,6 +26,7 @@ const eur = (value: number | null): string => formatEur(value, 0);
         <InvestedGainMeta
             :invested="props.overview.totalInvested"
             :gain="props.overview.totalGain"
+            :realized-gain="props.overview.totalRealizedGain"
             :digits="0"
         />
     </section>

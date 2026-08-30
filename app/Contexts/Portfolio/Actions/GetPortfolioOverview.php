@@ -24,6 +24,7 @@ class GetPortfolioOverview
     public function __construct(
         private PriceRepositoryContract $prices,
         private HoldingValuator $valuator,
+        private GetRealizedGains $realizedGains,
     ) {}
 
     /**
@@ -44,7 +45,7 @@ class GetPortfolioOverview
             ));
         }
 
-        return $this->summarize($lines);
+        return $this->summarize($lines, $this->realizedGains->totalFor($user->id, $classes));
     }
 
     /**
@@ -95,9 +96,12 @@ class GetPortfolioOverview
      * Le seul totalisage : le total du portefeuille entier et celui d'une exposition passent
      * tous deux par ici, sur les lignes déjà retenues par `__invoke()`.
      *
+     * Le gain réalisé arrive de côté : il se lit sur les ventes, pas sur les lignes, un actif
+     * soldé n'ayant plus de position à totaliser.
+     *
      * @param  list<HoldingLineData>  $lines
      */
-    private function summarize(array $lines): PortfolioOverviewData
+    private function summarize(array $lines, float $realizedGain): PortfolioOverviewData
     {
         $totals = $this->valuator->totals($lines);
 
@@ -106,6 +110,7 @@ class GetPortfolioOverview
             totalCost: $totals['totalCost'],
             totalGain: $totals['totalGain'],
             totalGainPct: $totals['totalGainPct'],
+            totalRealizedGain: $realizedGain,
             holdings: $lines,
         );
     }

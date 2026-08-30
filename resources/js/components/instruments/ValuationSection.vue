@@ -22,6 +22,7 @@ const eur = (value: number | null): string => formatEur(value, 0);
             data-portfolio-meta
             :invested="overview.totalCost"
             :gain="overview.totalGain"
+            :realized-gain="overview.totalRealizedGain"
             :digits="0"
         />
     </section>

@@ -8,6 +8,8 @@ readonly class ClassSnapshotData
     public function __construct(
         public float $value,
         public float $invested,
+        /** Gain déjà encaissé sur la classe. Nul pour une classe qui ne se vend pas par lignes. */
+        public float $realized = 0.0,
     ) {}
 
     public static function empty(): self

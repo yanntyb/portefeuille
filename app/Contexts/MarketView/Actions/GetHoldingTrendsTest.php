@@ -131,10 +131,10 @@ it('reads the prices of every position without one query per instrument', functi
 
     app(GetHoldingTrends::class)($this->user->id);
 
-    // Trois requêtes fixes, pas une par instrument : les enveloppes, les derniers cours (la
-    // position que `Portfolio` calcule est valorisée même si cette action n'en garde que la
-    // quantité) et la série de cours de la tendance.
-    expect(count(DB::getQueryLog()))->toBeLessThanOrEqual(3);
+    // Quatre requêtes fixes, pas une par instrument : les enveloppes, les derniers cours et les
+    // ventes (la position que `Portfolio` calcule est valorisée et porte son gain réalisé, même
+    // si cette action n'en garde que la quantité), puis la série de cours de la tendance.
+    expect(count(DB::getQueryLog()))->toBeLessThanOrEqual(4);
 });
 
 it('downsamples a long history while keeping the first and the last price', function () {

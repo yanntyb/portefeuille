@@ -6,6 +6,8 @@ export interface InstrumentPosition {
     marketValue: number | null;
     gain: number | null;
     gainPct: number | null;
+    /** Gain déjà encaissé sur l'actif, nul faute de vente. */
+    realizedGain: number;
 }
 
 /** The cost basis of a position, which the backend only exposes through its average cost. */

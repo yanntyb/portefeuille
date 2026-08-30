@@ -119,7 +119,14 @@ it('rend les mêmes listes vides sans aucun utilisateur', function () {
     expect(array_keys($equity))->toBe(['overview', 'trends', 'evolutionSeries']);
     // gainPct est nul, et non zéro, sur un coût nul : « 0 % » mentirait sur une mise inconnue.
     expect($equity['overview']->jsonSerialize())
-        ->toBe(['totalValue' => 0.0, 'totalCost' => 0.0, 'totalGain' => 0.0, 'totalGainPct' => null, 'holdings' => []]);
+        ->toBe([
+            'totalValue' => 0.0,
+            'totalCost' => 0.0,
+            'totalGain' => 0.0,
+            'totalGainPct' => null,
+            'totalRealizedGain' => 0.0,
+            'holdings' => [],
+        ]);
     expect($equity['trends'])->toBe([]);
     expect($equity['evolutionSeries']->jsonSerialize())->toBe(['labels' => [], 'perAsset' => []]);
 

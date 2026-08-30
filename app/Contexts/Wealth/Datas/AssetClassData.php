@@ -17,6 +17,7 @@ readonly class AssetClassData implements JsonSerializable
         public float $invested,
         public float $gain,
         public ?float $gainPct,
+        public float $realizedGain,
     ) {}
 
     public static function from(AssetClassPort $class, ClassSnapshotData $snapshot): self
@@ -30,6 +31,7 @@ readonly class AssetClassData implements JsonSerializable
             invested: round($snapshot->invested, 2),
             gain: self::gainOf($snapshot),
             gainPct: self::gainPctOf($snapshot),
+            realizedGain: round($snapshot->realized, 2),
         );
     }
 
@@ -61,6 +63,7 @@ readonly class AssetClassData implements JsonSerializable
             'invested' => $this->invested,
             'gain' => $this->gain,
             'gainPct' => $this->gainPct,
+            'realizedGain' => $this->realizedGain,
         ];
     }
 }

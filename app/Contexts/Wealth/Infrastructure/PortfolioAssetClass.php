@@ -68,7 +68,11 @@ class PortfolioAssetClass implements AssetClassPort
 
         $overview = ($this->overview)($user, [$this->exposure]);
 
-        return new ClassSnapshotData(value: $overview->totalValue, invested: $overview->totalCost);
+        return new ClassSnapshotData(
+            value: $overview->totalValue,
+            invested: $overview->totalCost,
+            realized: $overview->totalRealizedGain,
+        );
     }
 
     public function seriesFor(int $userId): ClassSeriesData

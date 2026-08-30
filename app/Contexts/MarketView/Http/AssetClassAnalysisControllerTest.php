@@ -150,7 +150,7 @@ it('sert les performances par leur seul port', function () {
     {
         public function overviewFor(int $userId, AssetClass $exposure): PortfolioSummaryData
         {
-            return new PortfolioSummaryData(1000.0, 800.0, 200.0, 25.0, [
+            return new PortfolioSummaryData(1000.0, 800.0, 200.0, 25.0, 0.0, [
                 new HoldingRowData(
                     1, 'ACME', 'ACM', InstrumentType::Stock, $exposure,
                     10.0, 80.0, 100.0, 1000.0, 200.0, 25.0,

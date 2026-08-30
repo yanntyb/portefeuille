@@ -21,6 +21,8 @@ export interface PortfolioOverview {
     totalCost: number;
     totalGain: number;
     totalGainPct: number | null;
+    /** Gain déjà encaissé sur l'exposition, ventes comprises sur les actifs soldés. */
+    totalRealizedGain: number;
     holdings: HoldingLine[];
 }
 
