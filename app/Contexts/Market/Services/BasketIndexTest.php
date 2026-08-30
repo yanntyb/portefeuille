@@ -53,6 +53,23 @@ it('n’attend pas le plus jeune instrument pour commencer l’indice', function
         ->and($index->values)->toBe([100.0, 110.0, 110.0, 121.0]);
 });
 
+it('reporte le dernier cours d’un instrument déjà entré qui manque une séance', function () {
+    /**
+     * Le second ne cote pas le troisième jour — place fermée, publication en retard. Sans report,
+     * les poids se renormaliseraient sur le seul premier et l'indice prendrait ses +10 % entiers ;
+     * avec report, le second apporte un rendement nul et l'indice ne monte que de la moitié.
+     */
+    $index = (new BasketIndex)->of(
+        closesByKey: [
+            7 => ['2024-01-01' => 100.0, '2024-01-02' => 100.0, '2024-01-03' => 110.0],
+            9 => ['2024-01-01' => 50.0, '2024-01-02' => 50.0],
+        ],
+        weightsByKey: [7 => 1000.0, 9 => 1000.0],
+    );
+
+    expect($index->values)->toBe([100.0, 100.0, 105.0]);
+});
+
 it('ignore un instrument sans poids connu', function () {
     $index = (new BasketIndex)->of(
         closesByKey: [

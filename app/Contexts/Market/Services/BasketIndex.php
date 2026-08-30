@@ -14,6 +14,12 @@ use App\Contexts\Market\Datas\BasketIndexData;
  * plus-haut. Et il laisse l'indice courir aussi loin que le plus ancien instrument : un titre
  * acheté le mois dernier entre dans le panier au jour où il commence à coter, sans tronquer
  * l'histoire des autres.
+ *
+ * Une fois entré, un instrument ne quitte plus le panier : une séance qu'il manque — place
+ * fermée, publication en retard — se comble par report de son dernier cours. C'est la différence
+ * entre « pas encore coté » et « pas coté ce jour-là », que le seul trou dans la série ne dit pas.
+ * Sans ce report, une séance où seule une partie des places a publié renormaliserait les poids sur
+ * elles et prêterait leur mouvement au panier entier — en bout de série, un faux plus-haut.
  */
 class BasketIndex
 {
@@ -37,6 +43,7 @@ class BasketIndex
         }
 
         $dates = $this->datesOf($closesByKey);
+        $closesByKey = $this->carriedForward($closesByKey, $dates);
         $labels = [];
         $values = [];
         $level = self::BASE;
@@ -72,6 +79,33 @@ class BasketIndex
         sort($dates);
 
         return $dates;
+    }
+
+    /**
+     * Chaque série comblée sur la grille commune, à partir de sa première cotation : une séance
+     * manquée reprend le dernier cours connu. Les dates antérieures à l'entrée de l'instrument
+     * restent vides — il n'a pas de cours à reporter, il n'a pas encore commencé à coter.
+     *
+     * @param  array<int|string, array<string, float>>  $closesByKey
+     * @param  list<string>  $dates
+     * @return array<int|string, array<string, float>>
+     */
+    private function carriedForward(array $closesByKey, array $dates): array
+    {
+        return array_map(function (array $closes) use ($dates): array {
+            $filled = [];
+            $last = null;
+
+            foreach ($dates as $date) {
+                $last = $closes[$date] ?? $last;
+
+                if ($last !== null) {
+                    $filled[$date] = $last;
+                }
+            }
+
+            return $filled;
+        }, $closesByKey);
     }
 
     /**
