@@ -30,12 +30,6 @@ const hasPerformances = computed<boolean>(() => (props.performances?.length ?? 0
 
 <template>
     <CollapsibleSection section="analysis" title="Analyse">
-        <!-- L'aide se lit repliée : elle explique de quoi parlent les performances, en bas de
-             section, pas ce qu'elles montrent. -->
-        <template #aside>
-            <PerformanceInfoDialog variant="periods" />
-        </template>
-
         <!--
             Deux props différées dans une seule section, donc deux squelettes : la matrice relit
             cinq ans de cours quand les performances rejouent les transactions, et la première
@@ -122,7 +116,17 @@ const hasPerformances = computed<boolean>(() => (props.performances?.length ?? 0
         <!-- Les performances ferment la section : ce qui décrit la poche se lit d'abord, ce
              qu'elle a rapporté ensuite. -->
         <div class="flex flex-col gap-2">
-            <span class="text-xs font-semibold text-muted-foreground uppercase">Performances</span>
+            <!-- L'aide se pose contre l'étiquette qu'elle explique, pas dans le titre de la
+                 section : c'est des performances qu'elle parle, pas de l'analyse. -->
+            <span data-perf-help class="flex items-center gap-1.5">
+                <span class="text-xs font-semibold text-muted-foreground uppercase">Performances</span>
+
+                <!-- Hauteur nulle, bouton centré sur la ligne : plus haut qu'une étiquette, il
+                     creuserait sinon un blanc entre elle et les barres. -->
+                <span class="flex h-0 items-center">
+                    <PerformanceInfoDialog variant="periods" />
+                </span>
+            </span>
 
             <template v-if="props.performances !== null">
                 <PerformanceBars v-if="hasPerformances" :performances="props.performances ?? []" />
