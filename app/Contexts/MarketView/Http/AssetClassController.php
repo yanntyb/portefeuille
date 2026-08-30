@@ -6,15 +6,16 @@ use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\MarketView\Actions\GetHoldingTrends;
 use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
+use App\Contexts\MarketView\Ports\SectorBreakdownPort;
 use App\Contexts\MarketView\Ports\ValuationPort;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * La page liste d'une exposition. Une seule composition sert les quatre : elles ne diffèrent que
- * par leurs données, jamais par leur forme. L'exposition arrive par le défaut de route, posé à la
- * déclaration. Secteurs, performances et revenus se lisent désormais sur la page analyse
- * (`AssetClassAnalysisController`).
+ * La page d'une exposition. Une seule composition sert les quatre : elles ne diffèrent que par
+ * leurs données, jamais par leur forme. L'exposition arrive par le défaut de route, posé à la
+ * déclaration. Performances et secteurs, un temps servis par une page analyse séparée, sont
+ * revenus ici en sections repliées : leur calcul reste différé, section par section.
  */
 class AssetClassController
 {
@@ -22,6 +23,7 @@ class AssetClassController
         private PortfolioOverviewPort $overview,
         private GetHoldingTrends $getTrends,
         private ValuationPort $valuation,
+        private SectorBreakdownPort $sectors,
     ) {}
 
     public function __invoke(): Response
@@ -34,6 +36,7 @@ class AssetClassController
                 'key' => $exposure->value,
                 'label' => $exposure->getLabel(),
                 'slug' => $exposure->slug(),
+                'hasSectors' => $exposure->hasSectors(),
             ],
             'overview' => $this->overview->overviewFor($userId, $exposure),
             /** Un groupe par section : chaque squelette se remplit à son rythme. */
@@ -41,7 +44,17 @@ class AssetClassController
             'evolutionSeries' => Inertia::defer(
                 fn () => $this->valuation->evolutionFor($userId, $exposure), 'evolution',
             ),
+            'performances' => Inertia::defer(
+                fn () => $this->valuation->performancesFor($userId, $exposure), 'performances',
+            ),
         ];
+
+        /** Une exposition sans secteur n'a rien à ventiler : la prop n'est pas servie du tout. */
+        if ($exposure->hasSectors()) {
+            $props['sectorBreakdown'] = Inertia::defer(
+                fn () => $this->sectors->breakdownFor($userId), 'secteurs',
+            );
+        }
 
         return Inertia::render('AssetClass/Index', $props);
     }

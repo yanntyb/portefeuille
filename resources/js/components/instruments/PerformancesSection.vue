@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Deferred } from '@inertiajs/vue3';
+import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
 import PerformanceBars from '@/components/PerformanceBars.vue';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
 import type { Performance } from '@/lib/performance';
@@ -11,13 +12,20 @@ const hasPerformances = computed<boolean>(() => (props.performances?.length ?? 0
 </script>
 
 <template>
-    <section data-section="performances" class="flex min-h-0 flex-1 flex-col gap-4 px-6 md:flex-none">
-        <h2 class="flex items-center gap-1 text-[17px] leading-none font-bold">
-            Performances
-            <PerformanceInfoDialog variant="periods" />
-        </h2>
+    <!-- Repliée à l'arrivée comme les autres : les performances ne se calculent qu'au dépli. -->
+    <CollapsibleSection section="performances" title="Performances">
+        <!--
+            L'aide descend sous le titre : le pli est une `<button>`, et le déclencheur du dialogue
+            en est une aussi — imbriquées, le clic de l'une avalerait l'autre.
+        -->
         <template v-if="props.performances !== null">
-            <PerformanceBars v-if="hasPerformances" :performances="props.performances ?? []" />
+            <template v-if="hasPerformances">
+                <div class="-mt-4 flex justify-end">
+                    <PerformanceInfoDialog variant="periods" />
+                </div>
+                <PerformanceBars :performances="props.performances ?? []" />
+            </template>
+
             <p v-else class="py-8 text-center text-sm text-muted-foreground">
                 Pas encore de performance à mesurer.
             </p>
@@ -38,5 +46,5 @@ const hasPerformances = computed<boolean>(() => (props.performances?.length ?? 0
 
             <span />
         </Deferred>
-    </section>
+    </CollapsibleSection>
 </template>

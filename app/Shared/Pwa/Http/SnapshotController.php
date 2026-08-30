@@ -9,7 +9,7 @@ use App\Contexts\Wealth\Actions\BuildWealthSnapshot;
 use Illuminate\Http\JsonResponse;
 
 /**
- * Instantané hors-ligne : tout ce que les six pages affichent, en une réponse. Le service worker
+ * Instantané hors-ligne : tout ce que les cinq pages affichent, en une réponse. Le service worker
  * n'indexe ses réponses que par URL, donc hors-ligne seul ce que le lecteur a déjà ouvert existe ;
  * cet instantané rend le reste lisible sans l'avoir visité.
  *
@@ -33,7 +33,6 @@ class SnapshotController
         $body = [
             'dashboard' => ($this->wealth)($userId),
             'classes' => $market['classes'],
-            'analyses' => $market['analyses'],
             'assets' => $market['assets'],
             'properties' => ($this->realEstate)($userId),
         ];

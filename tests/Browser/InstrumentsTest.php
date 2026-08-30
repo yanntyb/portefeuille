@@ -3,10 +3,8 @@
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
-use App\Contexts\Market\Models\Dividend;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Portfolio\Models\Holding;
-use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 
 it('explique les performances par période à travers un dialogue', function () {
@@ -14,8 +12,9 @@ it('explique les performances par période à travers un dialogue', function () 
 
     $this->actingAs($user);
 
-    visit('/actions/analyse')
+    visit('/actions')
         ->assertSee('Performances')
+        ->click('[data-section=performances] [data-section-toggle]')
         ->click('[aria-label="Comment lire les performances par période"]')
         ->assertSee('Comment lire les performances par période')
         ->assertSee('cumulés, pas annualisés')
@@ -45,7 +44,8 @@ it('replie les secteurs au-delà du sixième derrière une bascule', function ()
 
     $labels = "document.querySelectorAll('[data-section=\"sectors\"] [data-sector-label]').length";
 
-    visit('/actions/analyse')
+    visit('/actions')
+        ->click('[data-section=sectors] [data-section-toggle]')
         ->assertScript($labels, 6)
         ->assertDontSee('Énergie')
         ->click('[data-sector-toggle]')
@@ -74,7 +74,8 @@ it('affiche un état vide quand aucune position n\'a de valeur de marché', func
 
     $this->actingAs($user);
 
-    visit('/actions/analyse')
+    visit('/actions')
+        ->click('[data-section=sectors] [data-section-toggle]')
         ->assertSee('Pas encore de données sectorielles.')
         ->assertNoJavaScriptErrors();
 });

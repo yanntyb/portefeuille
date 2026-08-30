@@ -29,7 +29,7 @@ it('charge la page Actions, ses sections dans l\'ordre, sans erreur', function (
         ->assertSee('Investi')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'valuation|evolution|instruments',
+            'valuation|evolution|instruments|performances|sectors',
         )
         ->assertNoJavaScriptErrors();
 });
@@ -39,43 +39,12 @@ it('charge la page Crypto, ses sections dans l\'ordre, sans erreur', function ()
 
     $this->actingAs($user);
 
+    /** La crypto n'a pas de secteurs : sa page s'arrête aux performances. */
     visit('/crypto')
         ->assertSee('Investi')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'valuation|evolution|instruments',
-        )
-        ->assertNoJavaScriptErrors();
-});
-
-/**
- * Déménagée depuis les deux tests précédents : secteurs, performances et revenus vivent
- * désormais sur la page analyse, jamais sur la page liste.
- */
-it('charge la page Analyse d\'Actions, ses sections dans l\'ordre, sans erreur', function () {
-    ['user' => $user] = portfolioFixture();
-
-    $this->actingAs($user);
-
-    visit('/actions/analyse')
-        ->assertSee('Performances')
-        ->assertScript(
-            "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'performances|sectors',
-        )
-        ->assertNoJavaScriptErrors();
-});
-
-it('charge la page Analyse de Crypto, ses sections dans l\'ordre, sans erreur', function () {
-    ['user' => $user] = cryptoFixture();
-
-    $this->actingAs($user);
-
-    visit('/crypto/analyse')
-        ->assertSee('Performances')
-        ->assertScript(
-            "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'performances',
+            'valuation|evolution|instruments|performances',
         )
         ->assertNoJavaScriptErrors();
 });

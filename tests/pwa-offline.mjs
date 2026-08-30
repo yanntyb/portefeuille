@@ -49,13 +49,15 @@ try {
     );
 
     /**
-     * La page analyse n'est jamais visitée par la suite de ce script sans cette étape : ses six
+     * La page d'exposition n'est jamais visitée par la suite de ce script sans cette étape : ses
      * sections partagent le motif `Deferred`/`#rescue` de `PerformancesSection.vue`, et rien
      * d'autre ici ne prouve qu'elles se comportent pareil hors-ligne. `networkidle` attend aussi
-     * les requêtes `__sw=partial` de ses quatre groupes différés, mises en cache par le worker au
-     * même titre que la navigation elle-même.
+     * les requêtes `__sw=partial` de ses groupes différés, mises en cache par le worker au même
+     * titre que la navigation elle-même.
      */
-    await page.goto(`${BASE_URL}/actions/analyse`, { waitUntil: 'networkidle', timeout: TIMEOUT });
+    await page.goto(`${BASE_URL}/actions`, { waitUntil: 'networkidle', timeout: TIMEOUT });
+    await page.click('[data-section=performances] [data-section-toggle]');
+    await page.waitForSelector('[data-perf-label]', { timeout: TIMEOUT });
     await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: TIMEOUT });
 
     await context.setOffline(true);
@@ -114,25 +116,26 @@ try {
     );
 
     /**
-     * La page analyse a été visitée en ligne plus haut (son cache de partiels vient d'être vidé
-     * avec celui du tableau de bord, au même titre) : elle est donc dans le même cas que le
-     * tableau de bord ci-dessus, page en cache, groupes différés absents. Ses six sections
+     * La page d'exposition a été visitée en ligne plus haut (son cache de partiels vient d'être
+     * vidé avec celui du tableau de bord, au même titre) : elle est donc dans le même cas que le
+     * tableau de bord ci-dessus, page en cache, groupes différés absents. Ses sections repliées
      * doivent se combler par l'instantané plutôt que de tomber sur `#rescue`, exactement comme
      * `WealthEvolutionSection`/`WealthIncomeSection` le font sur le tableau de bord.
      */
-    await page.goto(`${BASE_URL}/actions/analyse`, { waitUntil: 'domcontentloaded', timeout: TIMEOUT });
+    await page.goto(`${BASE_URL}/actions`, { waitUntil: 'domcontentloaded', timeout: TIMEOUT });
+    await page.click('[data-section=performances] [data-section-toggle]');
 
     /** Précondition positive avant la négative : voir le commentaire équivalent ci-dessus. */
-    await page.waitForSelector('[data-section="concentration"] dl', { timeout: TIMEOUT });
+    await page.waitForSelector('[data-perf-label]', { timeout: TIMEOUT });
 
     const analysisBody = await page.textContent('body');
     assert.ok(
         !analysisBody.includes('Pas de connexion'),
-        'La page analyse en cache ne doit pas tomber sur le repli hors-ligne.',
+        'La page d\'exposition en cache ne doit pas tomber sur le repli hors-ligne.',
     );
     assert.ok(
         !analysisBody.includes('Données indisponibles hors-ligne'),
-        'L\'instantané doit combler les six sections de la page analyse, pas les renvoyer au slot #rescue.',
+        'L\'instantané doit combler les sections différées de la page, pas les renvoyer au slot #rescue.',
     );
 
     /**

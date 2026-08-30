@@ -1,7 +1,6 @@
 <?php
 
 use App\Contexts\Market\Enums\AssetClass;
-use App\Contexts\MarketView\Http\AssetClassAnalysisController;
 use App\Contexts\MarketView\Http\AssetClassController;
 use App\Contexts\MarketView\Http\AssetController;
 use App\Contexts\RealEstate\Http\PropertiesController;
@@ -22,10 +21,6 @@ foreach (AssetClass::cases() as $assetClass) {
     Route::get($assetClass->slug(), AssetClassController::class)
         ->defaults('exposure', $assetClass->value)
         ->name("classes.{$assetClass->value}");
-
-    Route::get("{$assetClass->slug()}/analyse", AssetClassAnalysisController::class)
-        ->defaults('exposure', $assetClass->value)
-        ->name("classes.{$assetClass->value}.analyse");
 }
 
 Route::get('/asset/{id}', AssetController::class)->name('assets.show');

@@ -27,15 +27,11 @@ export interface DashboardSnapshot {
     transactions: WealthTransactionLine[];
 }
 
-/** Une page liste d'exposition. */
+/** Une page d'exposition. `sectorBreakdown` n'est servi que par celles qui ont des secteurs. */
 export interface AssetClassListSnapshot {
     overview: PortfolioOverview;
     trends: CatalogTrend[];
     evolutionSeries: EvolutionSeries;
-}
-
-/** La page analyse d'une exposition. `sectorBreakdown` n'est servi que par celles qui ont des secteurs. */
-export interface AssetClassAnalysisSnapshot {
     performances: Performance[];
     sectorBreakdown?: SectorSlice[];
 }
@@ -69,8 +65,6 @@ export interface Snapshot {
     dashboard: DashboardSnapshot;
     /** Indexé par la valeur de `AssetClass` : `equity`, `bond`, `commodity`, `crypto`. */
     classes: Record<string, AssetClassListSnapshot>;
-    /** Même indexation que `classes` : une entrée par exposition, pour sa page analyse. */
-    analyses: Record<string, AssetClassAnalysisSnapshot>;
     assets: Record<string, AssetPageSnapshot>;
     properties: { list: PropertiesListSnapshot; byId: Record<string, PropertyPageSnapshot> };
 }

@@ -11,7 +11,7 @@ use Illuminate\Support\Carbon;
 /**
  * Le filet du chantier de simplification : l'instantané hors-ligne réunit les quatre contextes —
  * `dashboard` (Wealth), `classes` et `assets` (MarketView), `properties` (RealEstate, fiches et
- * échéanciers compris). Un hash inchangé prouve que les six pages rendent le même JSON, ordre des
+ * échéanciers compris). Un hash inchangé prouve que les cinq pages rendent le même JSON, ordre des
  * clés compris.
  *
  * L'horloge est gelée : presque tout le code lit `Carbon::now()` — fenêtres glissantes,
@@ -58,8 +58,11 @@ use Illuminate\Support\Carbon;
  * du tableau de bord cessent d'ignorer les loyers encaissés.
  * Modifié une douzième fois : le dividende encaissé rejoint lui aussi le gain réalisé — classe du
  * tableau de bord, résumé de la page liste et position de la fiche.
+ * Modifié une treizième fois : performances et secteurs reviennent de la page analyse vers la page
+ * d'exposition, en sections repliées. Le blob perd sa clé `analyses` et chaque entrée de `classes`
+ * gagne `performances`, plus `sectorBreakdown` pour les expositions qui en ont.
  */
-const SNAPSHOT_VERSION = '3217abb7fb53e984e3914c4551c46a54ede54440';
+const SNAPSHOT_VERSION = 'd14c2c0294311b88ccafc19e432b994f25cc256e';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

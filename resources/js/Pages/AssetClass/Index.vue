@@ -1,21 +1,27 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import { ChevronRight } from 'lucide-vue-next';
+import { Head } from '@inertiajs/vue3';
 import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
 import EvolutionSection from '@/components/instruments/EvolutionSection.vue';
 import InstrumentsSection from '@/components/instruments/InstrumentsSection.vue';
+import PerformancesSection from '@/components/instruments/PerformancesSection.vue';
+import SectorsSection from '@/components/instruments/SectorsSection.vue';
 import ValuationSection from '@/components/instruments/ValuationSection.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
 import type { CatalogTrend } from '@/lib/catalog';
+import type { Performance } from '@/lib/performance';
 import type { EvolutionSeries, PortfolioOverview } from '@/lib/portfolio';
+import type { SectorSlice } from '@/lib/sector';
 import { useSnapshotStore } from '@/stores/snapshot';
 
 const props = defineProps<{
-    assetClass: { key: string; label: string; slug: string };
+    assetClass: { key: string; label: string; slug: string; hasSectors: boolean };
     overview: PortfolioOverview;
     trends?: CatalogTrend[];
     evolutionSeries?: EvolutionSeries;
+    performances?: Performance[];
+    /** Absente des expositions sans secteur : le serveur ne l'envoie pas. */
+    sectorBreakdown?: SectorSlice[];
 }>();
 
 const snapshot = useSnapshotStore();
@@ -25,6 +31,8 @@ const cached = () => snapshot.classList(props.assetClass.key);
 /** `overview` est synchrone côté serveur : elle est toujours là, rien à combler. */
 const trends = aheadOfNetwork(() => props.trends, () => cached()?.trends);
 const evolutionSeries = aheadOfNetwork(() => props.evolutionSeries, () => cached()?.evolutionSeries);
+const performances = aheadOfNetwork(() => props.performances, () => cached()?.performances);
+const sectorBreakdown = aheadOfNetwork(() => props.sectorBreakdown, () => cached()?.sectorBreakdown);
 </script>
 
 <template>
@@ -37,14 +45,13 @@ const evolutionSeries = aheadOfNetwork(() => props.evolutionSeries, () => cached
 
         <InstrumentsSection :holdings="overview.holdings" :trends="trends" />
 
-        <Link
-            data-analysis-link
-            :href="`/${props.assetClass.slug}/analyse`"
-            class="mx-6 flex items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium hover:bg-muted"
-        >
-            Analyse de l'exposition
-            <ChevronRight class="size-4 text-muted-foreground" />
-        </Link>
+        <PerformancesSection :performances="performances" />
+
+        <!--
+            La section se décide sur la classe, jamais sur la valeur : `aheadOfNetwork` rend
+            `null` en attendant, et un `null` ne distingue pas « pas encore » de « jamais ».
+        -->
+        <SectorsSection v-if="props.assetClass.hasSectors" :slices="sectorBreakdown" />
     </AppPage>
 
     <AppBottomBar
