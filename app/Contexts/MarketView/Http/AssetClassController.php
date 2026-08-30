@@ -33,6 +33,7 @@ class AssetClassController
             'assetClass' => [
                 'key' => $exposure->value,
                 'label' => $exposure->getLabel(),
+                'slug' => $exposure->slug(),
             ],
             'overview' => $this->overview->overviewFor($userId, $exposure),
             /** Un groupe par section : chaque squelette se remplit à son rythme. */

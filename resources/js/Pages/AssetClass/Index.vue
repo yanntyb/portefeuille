@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
+import { ChevronRight } from 'lucide-vue-next';
 import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
 import EvolutionSection from '@/components/instruments/EvolutionSection.vue';
@@ -11,7 +12,7 @@ import type { EvolutionSeries, PortfolioOverview } from '@/lib/portfolio';
 import { useSnapshotStore } from '@/stores/snapshot';
 
 const props = defineProps<{
-    assetClass: { key: string; label: string };
+    assetClass: { key: string; label: string; slug: string };
     overview: PortfolioOverview;
     trends?: CatalogTrend[];
     evolutionSeries?: EvolutionSeries;
@@ -35,6 +36,15 @@ const evolutionSeries = aheadOfNetwork(() => props.evolutionSeries, () => cached
         <EvolutionSection :series="evolutionSeries" />
 
         <InstrumentsSection :holdings="overview.holdings" :trends="trends" />
+
+        <Link
+            data-analysis-link
+            :href="`/${props.assetClass.slug}/analyse`"
+            class="mx-6 flex items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium hover:bg-muted"
+        >
+            Analyse de l'exposition
+            <ChevronRight class="size-4 text-muted-foreground" />
+        </Link>
     </AppPage>
 
     <AppBottomBar

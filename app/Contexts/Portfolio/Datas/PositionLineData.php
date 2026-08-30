@@ -13,7 +13,6 @@ readonly class PositionLineData
         public int $assetId,
         public float $quantity,
         public ?float $avgCost,
-        public ?float $lastPrice,
         public ?float $marketValue,
         public ?float $gain,
         public ?float $gainPct,

@@ -23,7 +23,6 @@ it('réunit les enveloppes d\'un actif en une position valorisée', function () 
 
     expect($position->quantity)->toBe(14.0)
         ->and($position->avgCost)->toBe((10.0 * 80.0 + 4.0 * 95.0) / 14.0)
-        ->and($position->lastPrice)->toBe(100.0)
         ->and($position->marketValue)->toBe(1400.0);
 });
 

@@ -73,7 +73,6 @@ class GetPortfolioPositions
             assetId: $assetId,
             quantity: $aggregated['quantity'],
             avgCost: $aggregated['avgCost'],
-            lastPrice: $lastPrice,
             marketValue: $valued['marketValue'],
             gain: $valued['gain'],
             gainPct: $valued['gainPct'],
