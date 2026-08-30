@@ -20,6 +20,7 @@ use JsonSerializable;
 readonly class InstrumentAnalysisData implements JsonSerializable
 {
     public function __construct(
+        public ?float $marketValue,
         public ?float $pru,
         public ?float $pruGapPct,
         public ?float $high52w,
@@ -32,6 +33,7 @@ readonly class InstrumentAnalysisData implements JsonSerializable
     public function jsonSerialize(): array
     {
         return [
+            'marketValue' => $this->marketValue,
             'pru' => $this->pru,
             'pruGapPct' => $this->pruGapPct,
             'high52w' => $this->high52w,

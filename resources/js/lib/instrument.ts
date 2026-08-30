@@ -78,6 +78,7 @@ export interface Instrument {
 
 /** Jumelle d'`InstrumentAnalysisData` : tout est nullable, un instrument jeune n'a pas de tendance longue. */
 export interface InstrumentAnalysis {
+    marketValue: number | null;
     pru: number | null;
     pruGapPct: number | null;
     high52w: number | null;

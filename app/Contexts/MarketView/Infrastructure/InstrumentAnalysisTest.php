@@ -12,7 +12,7 @@ beforeEach(function () {
     $this->analysis = app(InstrumentAnalysisPort::class);
 });
 
-/** Deux cent soixante séances montant de 1 € par jour : de quoi remplir MM200, RSI et ATR. */
+/** Deux cent soixante séances montant de 1 € par jour : plus d'un an coté, sommet compris. */
 function seedRisingPrices(int $assetId, int $sessions = 260, float $start = 100.0): void
 {
     foreach (range(0, $sessions - 1) as $offset) {
@@ -43,7 +43,8 @@ it('rend le prix de revient et son écart au dernier cours', function () {
     $data = $this->analysis->forAsset($user->id, $instrument->id);
 
     /** La fixture achète 10 titres à 80 € et cote le dernier à 100 €. */
-    expect($data->pru)->toBe(80.0)
+    expect($data->marketValue)->toBe(1000.0)
+        ->and($data->pru)->toBe(80.0)
         ->and($data->pruGapPct)->toBe(25.0);
 });
 
