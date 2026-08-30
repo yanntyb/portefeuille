@@ -40,14 +40,14 @@ const transactions = aheadOfNetwork(() => props.transactions, () => snapshot.das
 
         <WealthClassesSection :overview="props.overview" />
 
-        <!-- Du plus gros grain au plus fin : les classes, puis les secteurs qui les traversent. -->
-        <WealthSectorsSection :sectors="sectors" />
-
         <!-- Repliée sur son total : le chiffre se lit dans le titre, la ventilation se demande. -->
         <WealthIncomeSection :income="income" />
 
-        <!-- L'historique ferme la page. -->
+        <!-- Ce que le patrimoine rapporte, puis ce qui l'a fait bouger. -->
         <WealthTransactionsSection :transactions="transactions" />
+
+        <!-- La lecture la plus fine ferme la page : les secteurs qui traversent les classes. -->
+        <WealthSectorsSection :sectors="sectors" />
     </AppPage>
 
     <!-- Barre sans fil d'Ariane : le tableau de bord est la racine, son fil n'aurait qu'un seul cran. -->
