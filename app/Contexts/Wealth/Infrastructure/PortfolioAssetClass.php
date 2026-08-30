@@ -7,9 +7,12 @@ use App\Contexts\Income\Actions\GetIncomeSummary;
 use App\Contexts\Income\Enums\IncomeSource;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
+use App\Contexts\Portfolio\Actions\GetSectorBreakdown;
+use App\Contexts\Portfolio\Datas\AllocationSliceData;
 use App\Contexts\Valuation\Actions\BuildEvolutionSeries;
 use App\Contexts\Valuation\Datas\AssetSeriesData;
 use App\Contexts\Valuation\Enums\ValuationGranularity;
+use App\Contexts\Wealth\Datas\ClassSectorData;
 use App\Contexts\Wealth\Datas\ClassSeriesData;
 use App\Contexts\Wealth\Datas\ClassSnapshotData;
 use App\Contexts\Wealth\Ports\AssetClassPort;
@@ -28,6 +31,7 @@ class PortfolioAssetClass implements AssetClassPort
     public function __construct(
         private AssetClass $exposure,
         private GetPortfolioOverview $overview,
+        private GetSectorBreakdown $sectors,
         private BuildEvolutionSeries $evolution,
         private GetIncomeSummary $income,
         private SeriesAligner $aligner,
@@ -72,6 +76,24 @@ class PortfolioAssetClass implements AssetClassPort
             value: $overview->totalValue,
             invested: $overview->totalCost,
             realized: $overview->totalRealizedGain,
+        );
+    }
+
+    /** @return list<ClassSectorData> */
+    public function sectorSlicesFor(int $userId): array
+    {
+        $user = User::query()->find($userId);
+
+        if ($user === null) {
+            return [];
+        }
+
+        return array_map(
+            fn (AllocationSliceData $slice): ClassSectorData => new ClassSectorData(
+                label: $slice->label,
+                value: $slice->value,
+            ),
+            ($this->sectors)($user, [$this->exposure]),
         );
     }
 

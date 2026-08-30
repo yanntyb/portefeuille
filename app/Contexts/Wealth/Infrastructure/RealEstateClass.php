@@ -6,6 +6,7 @@ use App\Contexts\RealEstate\Actions\BuildRealEstateSeries;
 use App\Contexts\RealEstate\Actions\GetRealEstateCashInvested;
 use App\Contexts\RealEstate\Actions\GetRealEstateOverview;
 use App\Contexts\RealEstate\Datas\PropertyOverviewData;
+use App\Contexts\Wealth\Datas\ClassSectorData;
 use App\Contexts\Wealth\Datas\ClassSeriesData;
 use App\Contexts\Wealth\Datas\ClassSnapshotData;
 use App\Contexts\Wealth\Ports\AssetClassPort;
@@ -50,6 +51,17 @@ class RealEstateClass implements AssetClassPort
             value: ($this->overview)($userId)->totalNetWorth,
             invested: ($this->cashInvested)($userId),
         );
+    }
+
+    /**
+     * Une tranche unique à son nom : un bien n'a pas de secteur boursier, mais il pèse dans la
+     * ventilation du patrimoine et doit s'y montrer.
+     *
+     * @return list<ClassSectorData>
+     */
+    public function sectorSlicesFor(int $userId): array
+    {
+        return [new ClassSectorData(label: $this->label(), value: ($this->overview)($userId)->totalNetWorth)];
     }
 
     public function seriesFor(int $userId): ClassSeriesData

@@ -50,3 +50,21 @@ it('mène de chaque classe d\'actif à sa page', function () {
         ->assertSeeIn('[data-section="valuation"]', 'Investi')
         ->assertNoJavaScriptErrors();
 });
+
+it('porte le secteur dominant dans le titre et la ventilation sous le pli', function () {
+    // Un titre technologique de 1 000 € et un bien de patrimoine net 150 000 € : l'immobilier
+    // domine largement, et prend donc le titre de la section.
+    ['user' => $user] = portfolioFixture();
+    propertyFixture()['property']->update(['user_id' => $user->id]);
+
+    $this->actingAs($user);
+
+    visit('/')
+        ->assertSeeIn('[data-section="wealth-sectors"]', 'Secteurs')
+        ->assertSeeIn('[data-section="wealth-sectors"] [data-sectors-dominant]', 'Immobilier')
+        /** Repliée : les barres n'apparaissent qu'au dépli. */
+        ->assertMissing('[data-section="wealth-sectors"] [data-sector-label]')
+        ->click('[data-section="wealth-sectors"] [data-section-toggle]')
+        ->assertSeeIn('[data-section="wealth-sectors"]', 'Technologie')
+        ->assertNoJavaScriptErrors();
+});

@@ -1,5 +1,6 @@
 <?php
 
+use App\Contexts\Wealth\Datas\ClassSectorData;
 use App\Contexts\Wealth\Datas\ClassSeriesData;
 use App\Contexts\Wealth\Datas\ClassSnapshotData;
 use App\Contexts\Wealth\Infrastructure\AssetClassRegistry;
@@ -34,6 +35,12 @@ function fakeAssetClass(string $key, float $value = 0.0): AssetClassPort
         public function snapshotFor(int $userId): ClassSnapshotData
         {
             return new ClassSnapshotData(value: $this->value, invested: 0.0);
+        }
+
+        /** @return list<ClassSectorData> */
+        public function sectorSlicesFor(int $userId): array
+        {
+            return [];
         }
 
         public function seriesFor(int $userId): ClassSeriesData

@@ -2,6 +2,7 @@
 
 namespace App\Contexts\Wealth\Ports;
 
+use App\Contexts\Wealth\Datas\ClassSectorData;
 use App\Contexts\Wealth\Datas\ClassSeriesData;
 use App\Contexts\Wealth\Datas\ClassSnapshotData;
 
@@ -30,6 +31,15 @@ interface AssetClassPort
     public function color(): string;
 
     public function snapshotFor(int $userId): ClassSnapshotData;
+
+    /**
+     * À quels secteurs la classe expose son porteur, et pour combien. Un portefeuille les tient de
+     * ses titres ; une classe qui n'a rien de sectoriel — un parc immobilier — rend une tranche
+     * unique portant son nom, plutôt que de se dérober au partage.
+     *
+     * @return list<ClassSectorData>
+     */
+    public function sectorSlicesFor(int $userId): array;
 
     public function seriesFor(int $userId): ClassSeriesData;
 

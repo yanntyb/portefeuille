@@ -27,6 +27,13 @@ export interface WealthOverview {
     classes: AssetClass[];
 }
 
+/** Un secteur du patrimoine : ce qu'il pèse, et la part qu'il occupe. */
+export interface WealthSector {
+    label: string;
+    value: number;
+    pct: number;
+}
+
 /** Une classe du résumé pesée contre le patrimoine entier. */
 export interface AssetClassWeight {
     line: AssetClass;

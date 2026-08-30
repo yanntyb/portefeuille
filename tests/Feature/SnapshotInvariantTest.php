@@ -49,8 +49,10 @@ use Illuminate\Support\Carbon;
  * une quatrième clé — l'historique des opérations, tous actifs confondus.
  * Modifié une huitième fois : le gain réalisé se sépare du gain latent, donc chaque aperçu gagne
  * `totalRealizedGain` et chaque position `realizedGain`.
+ * Modifié une neuvième fois : le tableau de bord gagne une section secteurs, donc `dashboard` une
+ * cinquième clé — le patrimoine ventilé par secteur, l'immobilier compris.
  */
-const SNAPSHOT_VERSION = '66aad38a0dd113c8511d0a0b427f037b13423b16';
+const SNAPSHOT_VERSION = 'f715be19e5a497a14c0c47ff56c8b17a8012ceef';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

@@ -5,6 +5,7 @@ namespace App\Contexts\Wealth;
 use App\Contexts\Income\Actions\GetIncomeSummary;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
+use App\Contexts\Portfolio\Actions\GetSectorBreakdown;
 use App\Contexts\Valuation\Actions\BuildEvolutionSeries;
 use App\Contexts\Wealth\Infrastructure\AssetClassRegistry;
 use App\Contexts\Wealth\Infrastructure\PortfolioAssetClass;
@@ -38,6 +39,7 @@ class WealthProvider extends ServiceProvider
                     fn (AssetClass $exposure): AssetClassPort => new PortfolioAssetClass(
                         $exposure,
                         $app->make(GetPortfolioOverview::class),
+                        $app->make(GetSectorBreakdown::class),
                         $app->make(BuildEvolutionSeries::class),
                         $app->make(GetIncomeSummary::class),
                         $app->make(SeriesAligner::class),

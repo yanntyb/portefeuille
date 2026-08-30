@@ -4,12 +4,13 @@ namespace App\Contexts\Wealth\Actions;
 
 use App\Contexts\Wealth\Datas\WealthIncomeData;
 use App\Contexts\Wealth\Datas\WealthOverviewData;
+use App\Contexts\Wealth\Datas\WealthSectorData;
 use App\Contexts\Wealth\Datas\WealthSeriesData;
 use App\Contexts\Wealth\Datas\WealthTransactionLineData;
 
 /**
- * Part patrimoine de l'instantané hors-ligne : les quatre props du tableau de bord, y compris les
- * trois qu'il diffère. Les mêmes actions que le contrôleur, donc jamais une composition parallèle
+ * Part patrimoine de l'instantané hors-ligne : les cinq props du tableau de bord, y compris les
+ * quatre qu'il diffère. Les mêmes actions que le contrôleur, donc jamais une composition parallèle
  * qui pourrait diverger de ce que la page affiche.
  */
 class BuildWealthSnapshot
@@ -18,6 +19,7 @@ class BuildWealthSnapshot
         private GetWealthOverview $overview,
         private BuildWealthSeries $series,
         private GetWealthIncome $income,
+        private GetWealthSectors $sectors,
         private GetWealthTransactions $transactions,
     ) {}
 
@@ -26,6 +28,7 @@ class BuildWealthSnapshot
      *     overview: WealthOverviewData,
      *     series: WealthSeriesData,
      *     income: WealthIncomeData,
+     *     sectors: list<WealthSectorData>,
      *     transactions: list<WealthTransactionLineData>,
      * }
      */
@@ -35,6 +38,7 @@ class BuildWealthSnapshot
             'overview' => ($this->overview)($userId),
             'series' => ($this->series)($userId),
             'income' => ($this->income)($userId),
+            'sectors' => ($this->sectors)($userId),
             'transactions' => ($this->transactions)($userId),
         ];
     }

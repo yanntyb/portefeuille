@@ -1,6 +1,7 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
 use App\Contexts\Market\Models\Instrument;
@@ -136,4 +137,25 @@ it('ignores the holdings of the other users', function () {
 
 it('returns nothing when the user has no holding', function () {
     expect(app(GetSectorBreakdown::class)(User::factory()->create()))->toBe([]);
+});
+
+it('restricts the breakdown to the requested exposures', function () {
+    $user = User::factory()->create();
+
+    $etf = holdingWorth($user, 1000.0);
+    withSectorWeights($etf, [Sector::Technology->value => 1.0]);
+
+    $coin = holdingWorth($user, 500.0, InstrumentType::Crypto);
+    withSectorWeights($coin, [Sector::FinancialServices->value => 1.0]);
+
+    $equityOnly = app(GetSectorBreakdown::class)($user, [AssetClass::Equity]);
+
+    // La part se calcule sur l'exposition retenue, pas sur le portefeuille entier : la ligne
+    // actions pèse 100 % des actions, même si elle ne fait que deux tiers du portefeuille.
+    expect($equityOnly)->toHaveCount(1)
+        ->and($equityOnly[0]->label)->toBe(Sector::Technology->getLabel())
+        ->and($equityOnly[0]->value)->toBe(1000.0)
+        ->and($equityOnly[0]->pct)->toBe(100.0);
+
+    expect(app(GetSectorBreakdown::class)($user, null))->toHaveCount(2);
 });

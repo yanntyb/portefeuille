@@ -16,6 +16,7 @@ use App\Contexts\RealEstate\Models\Loan;
 use App\Contexts\RealEstate\Models\Property;
 use App\Contexts\RealEstate\Models\PropertyExpense;
 use App\Contexts\RealEstate\Models\PropertyValuation;
+use App\Contexts\Wealth\Datas\ClassSectorData;
 use App\Contexts\Wealth\Datas\ClassSeriesData;
 use App\Contexts\Wealth\Datas\ClassSnapshotData;
 use App\Contexts\Wealth\Infrastructure\AssetClassRegistry;
@@ -278,9 +279,11 @@ function fakeWealthClass(
     ?ClassSeriesData $series = null,
     ?string $incomeLabel = null,
     float $monthlyIncome = 0.0,
+    array $sectors = [],
 ): AssetClassPort {
-    return new class($key, $value, $invested, $series ?? ClassSeriesData::empty(), $incomeLabel, $monthlyIncome) implements AssetClassPort
+    return new class($key, $value, $invested, $series ?? ClassSeriesData::empty(), $incomeLabel, $monthlyIncome, $sectors) implements AssetClassPort
     {
+        /** @param  array<string, float>  $sectors */
         public function __construct(
             private string $key,
             private float $value,
@@ -288,6 +291,7 @@ function fakeWealthClass(
             private ClassSeriesData $series,
             private ?string $incomeLabel,
             private float $monthlyIncome,
+            private array $sectors,
         ) {}
 
         public function key(): string
@@ -313,6 +317,15 @@ function fakeWealthClass(
         public function snapshotFor(int $userId): ClassSnapshotData
         {
             return new ClassSnapshotData($this->value, $this->invested);
+        }
+
+        /** @return list<ClassSectorData> */
+        public function sectorSlicesFor(int $userId): array
+        {
+            return array_values(array_map(
+                fn (string $label): ClassSectorData => new ClassSectorData($label, $this->sectors[$label]),
+                array_keys($this->sectors),
+            ));
         }
 
         public function seriesFor(int $userId): ClassSeriesData
