@@ -10,7 +10,7 @@ use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 
-it('ouvre la dernière année de transactions et laisse les précédentes repliées', function () {
+it('replie toutes les années de transactions et les ouvre une à une', function () {
     ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
 
     /** Une seconde année d'historique : sans elle, rien ne distingue un groupe ouvert d'une liste plate. */
@@ -31,6 +31,8 @@ it('ouvre la dernière année de transactions et laisse les précédentes repli�
             "Array.from(document.querySelectorAll('[data-transaction-year]')).map(el => el.dataset.transactionYear).join('|')",
             '2026|2025',
         )
+        ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 0)
+        ->click('[data-transaction-year="2026"]')
         ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 1)
         ->click('[data-transaction-year="2025"]')
         ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 2)
@@ -38,7 +40,7 @@ it('ouvre la dernière année de transactions et laisse les précédentes repli�
         ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 1)
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'hero|valuation|performance|sectors|transactions',
+            'hero|valuation|transactions|performance|sectors',
         )
         ->assertNoJavaScriptErrors();
 });
@@ -49,6 +51,7 @@ it('cache le détail d\'une transaction derrière un clic sur sa ligne', functio
     $this->actingAs($user);
 
     visit("/asset/{$instrument->id}")
+        ->click('[data-transaction-year="2026"]')
         ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 0)
         /**
          * La quantité se lit sur la ligne repliée, seul le prix unitaire attend le clic. Le sens de
@@ -83,6 +86,7 @@ it('affiche les frais sur la ligne de transaction, sans clic', function () {
     $this->actingAs($user);
 
     visit("/asset/{$instrument->id}")
+        ->click('[data-transaction-year="2026"]')
         ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 2)
         ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 0)
         ->assertScript("document.querySelectorAll('[data-transaction-fees]').length", 1)

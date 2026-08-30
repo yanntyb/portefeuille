@@ -55,6 +55,8 @@ const valuation = aheadOfNetwork(
 
         <PriceHistorySection v-else :price-history="priceHistory" />
 
+        <TransactionsSection :transactions="props.instrument.transactions" />
+
         <PerformanceSection
             v-if="props.instrument.position && props.performances.length"
             :performances="props.performances"
@@ -67,8 +69,6 @@ const valuation = aheadOfNetwork(
             :sectors="props.instrument.sectors"
             :market-value="props.instrument.position?.marketValue ?? null"
         />
-
-        <TransactionsSection :transactions="props.instrument.transactions" />
     </AppPage>
 
     <AppBottomBar

@@ -11,11 +11,11 @@ const years = computed<TransactionYear[]>(() => transactionYears(props.transacti
 const heading = computed<string>(() => `Transactions (${props.transactions.length})`);
 
 /**
- * Seule l'année la plus récente s'ouvre : les précédentes relèvent de l'archive. « La plus
- * récente » et non l'année civile courante — sans opération cette année, un groupe ouvert vaut
- * mieux qu'une section entièrement repliée.
+ * Toutes les années démarrent repliées : la section suit le graphe de valorisation, et un
+ * historique déroulé y repousserait performances et secteurs hors de l'écran. Le compte annoncé
+ * dans le titre suffit à dire ce qui se cache derrière le pli.
  */
-const openYears = ref<string[]>(years.value.slice(0, 1).map((group) => group.year));
+const openYears = ref<string[]>([]);
 
 const isYearOpen = (year: string): boolean => openYears.value.includes(year);
 
