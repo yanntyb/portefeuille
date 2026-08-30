@@ -48,6 +48,6 @@ it('mène du tableau de bord à la page crypto', function () {
     visit('/')
         ->assertSeeIn('[data-section="wealth-summary"]', 'Crypto')
         ->click('a[href="/crypto"]')
-        ->assertSee('Investi')
+        ->assertSeeIn('[data-section="valuation"]', 'Investi')
         ->assertNoJavaScriptErrors();
 });

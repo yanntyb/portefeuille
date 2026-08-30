@@ -1,6 +1,19 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 
+/**
+ * Précondition, à la charge de qui lance ce script : `https://argent.test` (la base de
+ * **développement**, servie par Herd, jamais une base de test) doit porter un utilisateur dont le
+ * revenu mensualisé (`[data-income-monthly]`, tableau de bord) n'est pas nul — `DividendDemoSeeder`
+ * la satisfait (`php artisan db:seed --class=DividendDemoSeeder`).
+ *
+ * Ni une base de test dédiée, ni un semis automatique en tête de ce script : Playwright pilote un
+ * vrai navigateur contre un vrai service worker, lui-même conditionné par la présence réelle de
+ * `public/build` (voir la vérification `sw.js` ci-dessous) — deux choses qu'aucune base de test
+ * éphémère (`RefreshDatabase`) ne reproduit d'un lancement à l'autre. Semer depuis ce script
+ * écrirait dans cette même base de développement à chaque exécution, ce qui serait pire qu'une
+ * précondition documentée : un script censé seulement lire finirait par la faire dériver.
+ */
 const BASE_URL = process.env.PWA_BASE_URL ?? 'https://argent.test';
 
 /** Aucune attente de ce script ne doit rester ouverte indéfiniment : un pendu est pire qu'un échec. */
@@ -34,6 +47,16 @@ try {
         undefined,
         { timeout: TIMEOUT },
     );
+
+    /**
+     * La page analyse n'est jamais visitée par la suite de ce script sans cette étape : ses six
+     * sections partagent le motif `Deferred`/`#rescue` de `PerformancesSection.vue`, et rien
+     * d'autre ici ne prouve qu'elles se comportent pareil hors-ligne. `networkidle` attend aussi
+     * les requêtes `__sw=partial` de ses quatre groupes différés, mises en cache par le worker au
+     * même titre que la navigation elle-même.
+     */
+    await page.goto(`${BASE_URL}/actions/analyse`, { waitUntil: 'networkidle', timeout: TIMEOUT });
+    await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: TIMEOUT });
 
     await context.setOffline(true);
     await page.reload({ waitUntil: 'domcontentloaded', timeout: TIMEOUT });
@@ -88,6 +111,28 @@ try {
     assert.ok(
         !dashboardBody.includes('Données indisponibles hors-ligne'),
         'L\'instantané doit combler Évolution et Revenus, pas les renvoyer au slot #rescue.',
+    );
+
+    /**
+     * La page analyse a été visitée en ligne plus haut (son cache de partiels vient d'être vidé
+     * avec celui du tableau de bord, au même titre) : elle est donc dans le même cas que le
+     * tableau de bord ci-dessus, page en cache, groupes différés absents. Ses six sections
+     * doivent se combler par l'instantané plutôt que de tomber sur `#rescue`, exactement comme
+     * `WealthEvolutionSection`/`WealthIncomeSection` le font sur le tableau de bord.
+     */
+    await page.goto(`${BASE_URL}/actions/analyse`, { waitUntil: 'domcontentloaded', timeout: TIMEOUT });
+
+    /** Précondition positive avant la négative : voir le commentaire équivalent ci-dessus. */
+    await page.waitForSelector('[data-section="concentration"] dl', { timeout: TIMEOUT });
+
+    const analysisBody = await page.textContent('body');
+    assert.ok(
+        !analysisBody.includes('Pas de connexion'),
+        'La page analyse en cache ne doit pas tomber sur le repli hors-ligne.',
+    );
+    assert.ok(
+        !analysisBody.includes('Données indisponibles hors-ligne'),
+        'L\'instantané doit combler les six sections de la page analyse, pas les renvoyer au slot #rescue.',
     );
 
     /**

@@ -15,6 +15,6 @@ it('mène de chaque classe d\'actif à sa page', function () {
         ->assertVisible('[data-wealth-class]:first-of-type [data-wealth-share]')
         ->assertVisible('[data-wealth-class]:first-of-type [data-wealth-bar]')
         ->click('a[href="/actions"]')
-        ->assertSee('Investi')
+        ->assertSeeIn('[data-section="valuation"]', 'Investi')
         ->assertNoJavaScriptErrors();
 });

@@ -66,6 +66,45 @@ it('sert une page analyse par exposition', function () {
 });
 
 /**
+ * Déménagée depuis `InstrumentsPageTest` (« sépare les propriétés différées par section, chaque
+ * groupe se chargeant seul ») : la page analyse porte désormais quatre groupes différés
+ * (`analyses`, `performances`, `secteurs`, `revenus`), et rien ne vérifiait qu'ils arrivent
+ * séparément.
+ */
+it('sépare les groupes différés de la page analyse, chaque groupe se chargeant seul', function () {
+    cryptoFixture();
+
+    $this->get('/actions/analyse')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('AssetClass/Analysis')
+            ->loadDeferredProps('secteurs', fn (Assert $reload) => $reload
+                ->has('sectorBreakdown')
+                ->missing('performances')
+                ->missing('income')
+                ->missing('analysis')
+            )
+            ->loadDeferredProps('performances', fn (Assert $reload) => $reload
+                ->has('performances')
+                ->missing('sectorBreakdown')
+                ->missing('income')
+            )
+            ->loadDeferredProps('revenus', fn (Assert $reload) => $reload
+                ->has('income')
+                ->has('annualIncome')
+                ->missing('sectorBreakdown')
+                ->missing('performances')
+            )
+            ->loadDeferredProps('analyses', fn (Assert $reload) => $reload
+                ->has('analysis')
+                ->has('drawdown')
+                ->missing('sectorBreakdown')
+                ->missing('performances')
+            )
+        );
+});
+
+/**
  * `assertInertia()` s'appuie sur `assertViewHas('page')`, qui suppose un rendu Blade complet :
  * une requête partielle (en-tête `X-Inertia`) ne produit que du JSON, sans vue. C'est pourquoi
  * `AssetClassControllerTest` et `AssetControllerTest` lisent une prop différée via `->json(...)`

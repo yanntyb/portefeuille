@@ -1,5 +1,6 @@
 <?php
 
+use App\Contexts\Market\Models\Dividend;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Wallet;
@@ -32,8 +33,12 @@ use Illuminate\Support\Carbon;
  * la fixture ajoute les deux charges au jeu de données, ce qui déplace le hash.
  * Modifié une troisième fois : secteurs, performances et revenus quittent la composition liste
  * pour la page analyse, et le blob gagne une clé `analyses` par exposition.
+ * Modifié une quatrième fois : le jeu ne posait aucun `Dividend` sur le titre détenu, donc le
+ * groupe `revenus` de la page analyse restait figé sur du vide (`bySource` en tableau plutôt
+ * qu'en objet une fois garni — la seule différence de forme JSON invisible tant que le groupe est
+ * vide). Deux détachements ajoutés sur le titre déjà détenu couvrent réellement ce groupe.
  */
-const SNAPSHOT_VERSION = 'd3ad184036987dfeaaee6ea0f2be2adde49b1887';
+const SNAPSHOT_VERSION = '2a92504cfe2ab2b8d617c0575bd7a2512ef6440b';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe
@@ -80,6 +85,15 @@ function seedSnapshotFixture(): void
      * `drawdown.maxDepth` reste à zéro, non couvert par le filet.
      */
     Price::factory()->create(['asset_id' => $stock->asset_id, 'date' => '2026-04-01', 'close' => 150]);
+
+    /**
+     * Deux détachements sur le titre déjà détenu : sans eux, le groupe `revenus` de la page
+     * analyse reste figé sur du vide (`income` à zéro, `annualIncome` à `[]`), et `bySource` sort
+     * en tableau plutôt qu'en objet — la différence de forme JSON que le filet ne peut voir que si
+     * elle est réellement exercée.
+     */
+    Dividend::factory()->create(['asset_id' => $stock->asset_id, 'ex_date' => '2026-03-05', 'amount_per_share' => 0.5]);
+    Dividend::factory()->create(['asset_id' => $stock->asset_id, 'ex_date' => '2026-06-05', 'amount_per_share' => 0.8]);
 
     /**
      * `propertyFixture()` crée son propre utilisateur : rattacher le bien à celui du
