@@ -1,5 +1,20 @@
 <?php
 
+it('garde les revenus repliés, et ne les charge qu\'au dépli', function () {
+    /** Un bien loué : sans versement, la section n'ouvrirait que sur son état vide. */
+    ['user' => $user] = propertyFixture(['loan' => true]);
+
+    $this->actingAs($user);
+
+    visit('/')
+        ->assertSeeIn('[data-section="wealth-income"]', 'Revenus')
+        /** Repliée : la prop différée n'est même pas demandée tant que le pli tient. */
+        ->assertMissing('[data-section="wealth-income"] [data-income-monthly]')
+        ->click('[data-section="wealth-income"] [data-section-toggle]')
+        ->assertVisible('[data-section="wealth-income"] [data-income-monthly]')
+        ->assertNoJavaScriptErrors();
+});
+
 it('garde les transactions repliées, et ne les charge qu\'au dépli', function () {
     ['user' => $user] = portfolioFixture();
 

@@ -100,6 +100,8 @@ try {
      * rescapage que si la section a bien rendu de vraies données ; sans cette attente, l'assertion
      * négative virerait au vert même si les deux sections avaient disparu.
      */
+    /** Revenus est repliée à l'arrivée : son chiffre ne se lit qu'une fois le pli ouvert. */
+    await page.click('[data-section="wealth-income"] [data-section-toggle]');
     await page.waitForSelector('[data-income-monthly]', { timeout: TIMEOUT });
     await page.waitForFunction(
         () => document.querySelector('[data-section="wealth-evolution"] .animate-pulse') === null,

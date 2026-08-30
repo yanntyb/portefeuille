@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Deferred } from '@inertiajs/vue3';
+import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
 import { gainClass, signedEur } from '@/lib/format';
 import type { IncomeOrigin, WealthIncome } from '@/lib/wealth';
 
@@ -16,12 +17,15 @@ const origins = computed<IncomeOrigin[]>(() => props.income?.origins ?? []);
     <!--
         Un seul chiffre net : les dividendes des douze derniers mois mensualisés, plus le locatif
         déjà net de charges et d'échéances. Le détail se lit sur la page de chaque classe.
-    -->
-    <section data-section="wealth-income" class="flex shrink-0 flex-col gap-4 px-6">
-        <h2 class="text-[17px] leading-none font-bold">Revenus</h2>
 
+        Repliée à l'arrivée, comme l'historique qui la suit : la prop différée vit sous le pli de
+        `CollapsibleSection`, qui ne monte son contenu qu'une fois ouvert, donc elle ne part qu'au
+        dépli.
+    -->
+    <CollapsibleSection section="wealth-income" title="Revenus">
         <template v-if="props.income !== null">
-            <template v-if="hasIncome">
+            <!-- Le pli espace ses enfants plus large que le bloc revenus : sa propre grille les resserre. -->
+            <div v-if="hasIncome" class="flex flex-col gap-4">
                 <p class="flex flex-wrap items-baseline gap-2">
                     <span
                         data-income-monthly
@@ -46,7 +50,7 @@ const origins = computed<IncomeOrigin[]>(() => props.income?.origins ?? []);
                         </span>
                     </li>
                 </ul>
-            </template>
+            </div>
 
             <p v-else class="py-8 text-center text-sm text-muted-foreground">
                 Aucun revenu pour l'instant.
@@ -68,5 +72,5 @@ const origins = computed<IncomeOrigin[]>(() => props.income?.origins ?? []);
 
             <span />
         </Deferred>
-    </section>
+    </CollapsibleSection>
 </template>

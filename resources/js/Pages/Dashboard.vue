@@ -37,9 +37,10 @@ const transactions = aheadOfNetwork(() => props.transactions, () => snapshot.das
 
         <WealthClassesSection :overview="props.overview" />
 
+        <!-- Repliés tous les deux : le détail se demande, la lecture d'un coup d'œil tient au-dessus. -->
         <WealthIncomeSection :income="income" />
 
-        <!-- L'historique ferme la page, replié : c'est le détail, pas la lecture d'un coup d'œil. -->
+        <!-- L'historique ferme la page. -->
         <WealthTransactionsSection :transactions="transactions" />
     </AppPage>
 
