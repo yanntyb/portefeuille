@@ -76,6 +76,22 @@ export interface Instrument {
     sectors: SectorWeight[];
 }
 
+/** Jumelle d'`InstrumentAnalysisData` : tout est nullable, un instrument jeune n'a pas de tendance longue. */
+export interface InstrumentAnalysis {
+    pru: number | null;
+    pruGapPct: number | null;
+    ma200: number | null;
+    ma200GapPct: number | null;
+    rsi14: number | null;
+    high52w: number | null;
+    high52wGapPct: number | null;
+    atr: number | null;
+    atrPct: number | null;
+    /** Pourcentage positif, comme le rend le serveur : le signe est posé à l'affichage. */
+    maxDrawdown: number | null;
+    portfolioWeightPct: number | null;
+}
+
 export interface PriceHistory {
     labels: string[];
     close: number[];

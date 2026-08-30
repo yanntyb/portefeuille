@@ -61,8 +61,10 @@ use Illuminate\Support\Carbon;
  * Modifié une treizième fois : performances et secteurs reviennent de la page analyse vers la page
  * d'exposition, en sections repliées. Le blob perd sa clé `analyses` et chaque entrée de `classes`
  * gagne `performances`, plus `sectorBreakdown` pour les expositions qui en ont.
+ * Modifié une quatorzième fois : chaque page actif porte ses repères d'analyse — prix de revient,
+ * moyenne longue, RSI, amplitude vraie, drawdown et poids dans le portefeuille.
  */
-const SNAPSHOT_VERSION = 'd14c2c0294311b88ccafc19e432b994f25cc256e';
+const SNAPSHOT_VERSION = 'da99078b48790d9bb4c8f787d2d60a6207f2399e';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe
@@ -146,6 +148,21 @@ function seedSnapshotFixture(): void
      */
     propertyFixture(['loan' => true])['property']->update(['user_id' => $user->id]);
 }
+
+it('porte les repères d\'analyse de chaque actif détenu', function () {
+    Carbon::setTestNow('2026-08-29 12:00:00');
+
+    seedSnapshotFixture();
+
+    $assets = $this->getJson('/instantane')->assertOk()->json('assets');
+
+    expect($assets)->not->toBeEmpty();
+
+    foreach ($assets as $page) {
+        expect($page)->toHaveKey('analysis')
+            ->and($page['analysis'])->toHaveKey('pru');
+    }
+});
 
 it('rend un instantané hors-ligne identique au hash de référence', function () {
     Carbon::setTestNow('2026-08-29 12:00:00');

@@ -1,6 +1,6 @@
 import type { CatalogTrend } from './catalog';
 import type { AssetDividendHistory } from './income';
-import type { Instrument, PriceHistory, ValuationSeries } from './instrument';
+import type { Instrument, InstrumentAnalysis, PriceHistory, ValuationSeries } from './instrument';
 import type { Performance } from './performance';
 import type { EvolutionSeries, PortfolioOverview } from './portfolio';
 import type {
@@ -42,6 +42,7 @@ export interface AssetPageSnapshot {
     performances: Performance[];
     priceHistory: PriceHistory;
     valuation: ValuationSeries;
+    analysis: InstrumentAnalysis | null;
     dividends?: AssetDividendHistory;
 }
 

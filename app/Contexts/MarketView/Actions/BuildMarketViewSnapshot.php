@@ -7,6 +7,7 @@ use App\Contexts\MarketView\Datas\HoldingSnapshotData;
 use App\Contexts\MarketView\Datas\InstrumentDetailData;
 use App\Contexts\MarketView\Ports\HoldingsPort;
 use App\Contexts\MarketView\Ports\IncomePort;
+use App\Contexts\MarketView\Ports\InstrumentAnalysisPort;
 use App\Contexts\MarketView\Ports\MarketDataPort;
 use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
 use App\Contexts\MarketView\Ports\SectorBreakdownPort;
@@ -32,6 +33,7 @@ class BuildMarketViewSnapshot
         private ValuationPort $valuation,
         private SectorBreakdownPort $sectors,
         private IncomePort $income,
+        private InstrumentAnalysisPort $analysis,
     ) {}
 
     /**
@@ -111,6 +113,7 @@ class BuildMarketViewSnapshot
             'performances' => $this->valuation->assetPerformancesFor($userId, $assetId),
             'priceHistory' => $this->market->priceHistory($assetId, PriceHistoryWindow::since()),
             'valuation' => $this->valuation->assetSeriesFor($userId, $assetId),
+            'analysis' => $this->analysis->forAsset($userId, $assetId),
         ];
 
         /** Une exposition qui ne distribue rien n'a pas de détachements : les porter gonflerait le blob pour rien. */
