@@ -12,7 +12,7 @@ const props = withDefaults(defineProps<{
     digits?: number;
 }>(), { realizedGain: null, digits: 2 });
 
-/** Sans vente, rien à ventiler : « Gain » reste « Gain », et la ligne ne gagne pas de repère. */
+/** Sans vente, rien à ventiler : le gain porte quand même « (latent) », sans repère « réalisé ». */
 const hasRealized = computed<boolean>(() => props.realizedGain !== null && props.realizedGain !== 0);
 </script>
 
@@ -35,7 +35,7 @@ const hasRealized = computed<boolean>(() => props.realizedGain !== null && props
                 <strong class="font-semibold tabular-nums" :class="gainClass(props.gain)">
                     {{ signedEur(props.gain, props.digits) }}
                 </strong>
-                <template v-if="hasRealized"> (latent)</template>
+                (latent)
             </span>
             <span v-if="hasRealized" data-realized-gain class="whitespace-nowrap">
                 <strong class="font-semibold tabular-nums" :class="gainClass(props.realizedGain)">
