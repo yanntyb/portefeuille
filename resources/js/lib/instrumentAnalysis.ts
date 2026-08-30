@@ -8,7 +8,10 @@ export type IndicatorId =
     | 'high52w'
     | 'high52wGap'
     | 'maxDrawdown'
-    | 'portfolioWeight';
+    | 'portfolioWeight'
+    /** Les deux repères de la poche entière, servis par la page liste. */
+    | 'classHigh52wGap'
+    | 'classMaxDrawdown';
 
 export interface AnalysisRow {
     indicator: IndicatorId;
