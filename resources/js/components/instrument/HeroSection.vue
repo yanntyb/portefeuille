@@ -22,6 +22,9 @@ const soleSector = computed<string | null>(() =>
     props.instrument.sectors.length === 1 ? props.instrument.sectors[0].label : null,
 );
 
+/** Une seule écriture d'étiquette : type et secteur sont du même rang, ils se peignent pareil. */
+const pill = 'rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground';
+
 /** Pas de position, pas de gain : un titre seulement suivi n'a rien à comparer. */
 const gainLabel = computed<string | null>(() =>
     position.value === null || position.value.gainPct === null ? null : pct(position.value.gainPct),
@@ -35,19 +38,20 @@ const gainLabel = computed<string | null>(() =>
                 {{ instrument.name }}
                 <span v-if="instrument.ticker" class="text-muted-foreground">({{ instrument.ticker }})</span>
             </h1>
-            <p class="text-[13px] font-medium text-subtle-foreground">
-                {{ instrument.typeLabel }}
-                <span v-if="instrument.isin"> · {{ instrument.isin }}</span>
+            <!-- Sous le nom, l'identifiant seul : c'est le seul texte qui désigne le titre plutôt que le classe. -->
+            <p v-if="instrument.isin" data-hero-isin class="text-[13px] font-medium text-subtle-foreground">
+                {{ instrument.isin }}
             </p>
 
-            <!-- `w-fit` : sans elle, l'étiquette prendrait la largeur de la colonne et cesserait d'en être une. -->
-            <span
-                v-if="soleSector"
-                data-hero-sector
-                class="mt-1.5 w-fit rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground"
-            >
-                {{ soleSector }}
-            </span>
+            <!--
+                Type et secteur sont deux rangements, pas deux détails du titre : ils se lisent en
+                étiquettes, côte à côte. `flex-wrap` parce qu'un libellé de secteur long tiendrait
+                mal sur la même ligne qu'un type, sur les écrans étroits.
+            -->
+            <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <span :class="pill" data-hero-type>{{ instrument.typeLabel }}</span>
+                <span v-if="soleSector" :class="pill" data-hero-sector>{{ soleSector }}</span>
+            </div>
         </div>
 
         <!-- Les repères chiffrés sortent d'ici : le graphe s'intercale entre eux et la valeur. -->

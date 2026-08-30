@@ -53,3 +53,18 @@ describe('étiquette de secteur', () => {
         expect(mountHero([]).querySelector('[data-hero-sector]')).toBeNull();
     });
 });
+
+describe('en-tête du titre', () => {
+    it('étiquette le type au lieu de l\'écrire sous le nom', () => {
+        const host = mountHero([]);
+
+        expect(host.querySelector('[data-hero-type]')?.textContent?.trim()).toBe('Action');
+        expect(host.querySelector('[data-hero-isin]')?.textContent).not.toContain('Action');
+    });
+
+    it('ne garde que l\'ISIN sous le nom', () => {
+        const host = mountHero([]);
+
+        expect(host.querySelector('[data-hero-isin]')?.textContent?.trim()).toBe('FR0000120073');
+    });
+});
