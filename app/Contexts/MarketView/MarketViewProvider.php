@@ -4,6 +4,7 @@ namespace App\Contexts\MarketView;
 
 use App\Contexts\MarketView\Ports\HoldingsPort;
 use App\Contexts\MarketView\Ports\IncomePort;
+use App\Contexts\MarketView\Ports\InstrumentAnalysisPort;
 use App\Contexts\MarketView\Ports\MarketDataPort;
 use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
 use App\Contexts\MarketView\Ports\SectorBreakdownPort;
@@ -22,6 +23,7 @@ class MarketViewProvider extends ServiceProvider
      * @param  class-string<IncomePort>  $income
      * @param  class-string<PortfolioOverviewPort>  $portfolioOverview
      * @param  class-string<ValuationPort>  $valuation
+     * @param  class-string<InstrumentAnalysisPort>  $instrumentAnalysis
      */
     public static function registers(
         Application $app,
@@ -32,6 +34,7 @@ class MarketViewProvider extends ServiceProvider
         string $income,
         string $portfolioOverview,
         string $valuation,
+        string $instrumentAnalysis,
     ): void {
         $app->bind(MarketDataPort::class, $marketData);
         $app->bind(HoldingsPort::class, $holdings);
@@ -40,5 +43,6 @@ class MarketViewProvider extends ServiceProvider
         $app->bind(IncomePort::class, $income);
         $app->bind(PortfolioOverviewPort::class, $portfolioOverview);
         $app->bind(ValuationPort::class, $valuation);
+        $app->bind(InstrumentAnalysisPort::class, $instrumentAnalysis);
     }
 }
