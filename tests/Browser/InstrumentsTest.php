@@ -14,7 +14,7 @@ it('explique les performances par période à travers un dialogue', function () 
 
     $this->actingAs($user);
 
-    visit('/actions')
+    visit('/actions/analyse')
         ->assertSee('Performances')
         ->click('[aria-label="Comment lire les performances par période"]')
         ->assertSee('Comment lire les performances par période')
@@ -45,7 +45,7 @@ it('replie les secteurs au-delà du sixième derrière une bascule', function ()
 
     $labels = "document.querySelectorAll('[data-section=\"sectors\"] [data-sector-label]').length";
 
-    visit('/actions')
+    visit('/actions/analyse')
         ->assertScript($labels, 6)
         ->assertDontSee('Énergie')
         ->click('[data-sector-toggle]')
@@ -74,7 +74,7 @@ it('affiche un état vide quand aucune position n\'a de valeur de marché', func
 
     $this->actingAs($user);
 
-    visit('/actions')
+    visit('/actions/analyse')
         ->assertSee('Pas encore de données sectorielles.')
         ->assertNoJavaScriptErrors();
 });
@@ -128,7 +128,7 @@ it('affiche le revenu perçu et son historique annuel', function () {
 
     $this->actingAs($user);
 
-    visit('/actions')
+    visit('/actions/analyse')
         ->assertSee('Revenus')
         ->assertScript("document.querySelectorAll('[data-income-year]').length", 2)
         ->assertScript("document.querySelector('[data-income-total]').textContent.includes('8,00')", true)
@@ -141,7 +141,7 @@ it('annonce l\'absence de revenu quand aucun instrument n\'en verse', function (
 
     $this->actingAs($user);
 
-    visit('/actions')
+    visit('/actions/analyse')
         ->assertSee('Aucun revenu perçu pour l\'instant.')
         ->assertNoJavaScriptErrors();
 });
@@ -169,7 +169,7 @@ it('annonce le revenu attendu sur les douze prochains mois', function () {
 
     $this->actingAs($user);
 
-    visit('/actions')
+    visit('/actions/analyse')
         ->assertScript("document.querySelector('[data-income-last12]').textContent.includes('5,00')", true)
         ->assertScript("document.querySelector('[data-income-estimate]').textContent.includes('10,00')", true)
         ->assertNoJavaScriptErrors();

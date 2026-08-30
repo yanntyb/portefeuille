@@ -37,12 +37,14 @@ class BuildMarketViewSnapshot
     /**
      * @return array{
      *     classes: array<string, array<string, mixed>>,
+     *     analyses: array<string, array<string, mixed>>,
      *     assets: array<int, array<string, mixed>>,
      * }
      */
     public function __invoke(int $userId): array
     {
         $classes = [];
+        $analyses = [];
 
         /**
          * Aucune sortie anticipée sur une base sans utilisateur : les ports rendent déjà des
@@ -51,36 +53,52 @@ class BuildMarketViewSnapshot
          */
         foreach (AssetClass::cases() as $exposure) {
             $classes[$exposure->value] = $this->listFor($userId, $exposure);
+            $analyses[$exposure->value] = $this->analysisFor($userId, $exposure);
         }
 
-        return ['classes' => $classes, 'assets' => $this->pagesFor($userId)];
+        return ['classes' => $classes, 'analyses' => $analyses, 'assets' => $this->pagesFor($userId)];
     }
 
     /**
-     * La composition d'une page liste, gates comprises. Les mêmes que celles d'`AssetClassController` :
+     * La composition d'une page liste. La même que celle d'`AssetClassController` :
      * l'instantané doit porter ce que la page affiche, jamais une composition parallèle.
      *
      * @return array<string, mixed>
      */
     private function listFor(int $userId, AssetClass $exposure): array
     {
-        $list = [
+        return [
             'overview' => $this->overview->overviewFor($userId, $exposure),
             'trends' => ($this->getTrends)($userId, [$exposure]),
-            'performances' => $this->valuation->performancesFor($userId, $exposure),
             'evolutionSeries' => $this->valuation->evolutionFor($userId, $exposure),
+        ];
+    }
+
+    /**
+     * La composition d'une page analyse, gates comprises. Les mêmes que celles
+     * d'`AssetClassAnalysisController` : l'instantané doit porter ce que la page affiche, jamais
+     * une composition parallèle.
+     *
+     * @return array<string, mixed>
+     */
+    private function analysisFor(int $userId, AssetClass $exposure): array
+    {
+        $analysis = [
+            'analysis' => $this->overview->analysisFor($userId, $exposure),
+            'drawdown' => $this->valuation->drawdownFor($userId, $exposure),
+            'performances' => $this->valuation->performancesFor($userId, $exposure),
         ];
 
         if ($exposure->hasSectors()) {
-            $list['sectorBreakdown'] = $this->sectors->breakdownFor($userId);
+            $analysis['sectorBreakdown'] = $this->sectors->breakdownFor($userId);
         }
 
         if ($this->income->supportsExposure($exposure)) {
-            $list['income'] = $this->income->summaryFor($userId, $exposure);
-            $list['annualIncome'] = $this->income->annualFor($userId, $exposure);
+            $analysis['income'] = $this->income->summaryFor($userId, $exposure);
+            $analysis['annualIncome'] = $this->income->annualFor($userId, $exposure);
         }
 
-        return $list;
+        return $analysis;
     }
 
     /**

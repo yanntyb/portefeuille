@@ -22,6 +22,10 @@ const build = (version: string): Snapshot => ({
         equity: { marker: 'equity-list' },
         crypto: { marker: 'crypto-list' },
     },
+    analyses: {
+        equity: { marker: 'equity-analysis' },
+        crypto: { marker: 'crypto-analysis' },
+    },
     assets: { '7': { instrument: { name: 'Air Liquide' } } },
     properties: {
         list: { marker: 'properties-list' },
@@ -69,6 +73,18 @@ describe('hydratation', () => {
         expect(store.snapshot).toBeNull();
         expect(store.classList('equity')).toBeNull();
         expect(store.assetPage('7')).toBeNull();
+    });
+
+    it('rejette un blob portant `classes` mais pas encore `analyses` plutôt que de le garder à moitié compris', async () => {
+        const legacy = build('sans-analyses') as unknown as Record<string, unknown>;
+        delete legacy.analyses;
+        stored.value = legacy as unknown as Snapshot;
+
+        const store = useSnapshotStore();
+        await store.hydrate();
+
+        expect(store.snapshot).toBeNull();
+        expect(store.classAnalysis('equity')).toBeNull();
     });
 });
 
@@ -154,6 +170,33 @@ describe('classList', () => {
         const store = useSnapshotStore();
 
         expect(store.classList('equity')).toBeNull();
+    });
+});
+
+describe('classAnalysis', () => {
+    it('retrouve l\'analyse d\'une exposition par sa clé', async () => {
+        stored.value = build('abc');
+
+        const store = useSnapshotStore();
+        await store.hydrate();
+
+        expect(store.classAnalysis('equity')).toEqual({ marker: 'equity-analysis' });
+        expect(store.classAnalysis('crypto')).toEqual({ marker: 'crypto-analysis' });
+    });
+
+    it('renvoie null pour une exposition absente de l\'instantané', async () => {
+        stored.value = build('abc');
+
+        const store = useSnapshotStore();
+        await store.hydrate();
+
+        expect(store.classAnalysis('bond')).toBeNull();
+    });
+
+    it('renvoie null tant qu\'aucun instantané n\'est chargé', () => {
+        const store = useSnapshotStore();
+
+        expect(store.classAnalysis('equity')).toBeNull();
     });
 });
 

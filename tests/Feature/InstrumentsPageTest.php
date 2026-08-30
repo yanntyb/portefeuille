@@ -2,11 +2,8 @@
 
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\InstrumentType;
-use App\Contexts\Market\Enums\Sector;
-use App\Contexts\Market\Models\Dividend;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
-use App\Contexts\Market\Models\SectorAllocation;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
@@ -65,16 +62,10 @@ it('sépare les propriétés différées par section, chaque groupe se chargeant
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('AssetClass/Index')
-            // Le graphe n'attend plus les secteurs ni les tendances : son groupe arrive seul.
+            // Le graphe n'attend plus les tendances : son groupe arrive seul.
             ->loadDeferredProps('evolution', fn (Assert $reload) => $reload
                 ->has('evolutionSeries')
-                ->missing('sectorBreakdown')
-                ->missing('performances')
                 ->missing('trends')
-            )
-            ->loadDeferredProps('secteurs', fn (Assert $reload) => $reload
-                ->has('sectorBreakdown')
-                ->missing('evolutionSeries')
             )
         );
 });
@@ -134,66 +125,6 @@ it('samples the evolution series week by week, not day by day', function () {
 
                     return $gaps->isNotEmpty() && $gaps->min() >= 5;
                 })
-            )
-        );
-});
-
-it('defers the sector breakdown and loads it on demand', function () {
-    $user = User::factory()->create();
-    $wallet = Wallet::factory()->for($user)->create();
-    $asset = Instrument::factory()->ofType(InstrumentType::ETF)->create(['name' => 'ACME ETF']);
-    SectorAllocation::factory()->create([
-        'asset_id' => $asset->id,
-        'sector' => Sector::Technology,
-        'weight' => 1.0,
-    ]);
-    Price::factory()->create(['asset_id' => $asset->id, 'date' => now(), 'close' => 100]);
-    Holding::factory()->create([
-        'user_id' => $user->id,
-        'wallet_id' => $wallet->id,
-        'asset_id' => $asset->id,
-        'quantity' => 10,
-        'avg_cost' => 80,
-    ]);
-
-    $this->get('/actions')
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('AssetClass/Index')
-            ->missing('sectorBreakdown')
-            ->loadDeferredProps(fn (Assert $reload) => $reload
-                ->has('sectorBreakdown', 1)
-                ->where('sectorBreakdown.0.label', 'Technologie')
-                ->where('sectorBreakdown.0.value', fn ($value) => (float) $value === 1000.0)
-                ->where('sectorBreakdown.0.pct', fn ($value) => (float) $value === 100.0)
-                ->has('sectorBreakdown.0.color')
-            )
-        );
-});
-
-it('defers the portfolio performances and loads them on demand', function () {
-    $user = User::factory()->create();
-    $wallet = Wallet::factory()->for($user)->create();
-    $asset = Instrument::factory()->create();
-    Transaction::factory()->buy()->create([
-        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
-        'quantity' => 10, 'unit_price' => 100, 'date' => '2026-01-01',
-    ]);
-    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 100]);
-    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-07-01', 'close' => 120]);
-
-    $this->get('/actions')
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('AssetClass/Index')
-            ->missing('performances')
-            ->loadDeferredProps(fn (Assert $reload) => $reload
-                ->has('performances')
-                ->where('performances.0.key', 'YTD')
-                ->where('performances.0.startDate', '2026-01-01')
-                ->has('performances.0.gain')
-                ->has('performances.0.contributions')
-                ->has('performances.0.valueStart')
             )
         );
 });
@@ -268,34 +199,6 @@ it('defers the trends of the held instruments and loads them on demand', functio
                 ->where('trends.0.assetId', $asset->id)
                 ->where('trends.0.changePct', fn ($value) => (float) $value === 50.0)
                 ->has('trends.0.points', 2)
-            )
-        );
-});
-
-it('diffère le revenu perçu et son historique annuel dans le groupe revenus', function () {
-    $this->travelTo('2026-08-19 10:00:00');
-    $user = User::factory()->create();
-    $wallet = Wallet::factory()->for($user)->create();
-    $asset = Instrument::factory()->create(['name' => 'ACME']);
-    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-07-01', 'close' => 100]);
-    Holding::factory()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id, 'quantity' => 10, 'avg_cost' => 80]);
-    Transaction::factory()->buy()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id, 'date' => '2025-01-01', 'quantity' => 10, 'unit_price' => 80]);
-    Dividend::factory()->create(['asset_id' => $asset->id, 'ex_date' => '2025-03-05', 'amount_per_share' => 0.5]);
-    Dividend::factory()->create(['asset_id' => $asset->id, 'ex_date' => '2026-03-05', 'amount_per_share' => 0.8]);
-
-    $this->actingAs($user)
-        ->get('/actions')
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->missing('income')
-            ->loadDeferredProps(fn (Assert $reload) => $reload
-                /** Clôture et cast : voir la note de `InstrumentDetailPageTest` sur `json_encode()`. */
-                ->where('income.totalReceived', fn ($v) => (float) $v === 13.0)
-                ->where('income.last12Months', fn ($v) => (float) $v === 8.0)
-                ->where('income.bySource.dividend', fn ($v) => (float) $v === 13.0)
-                ->has('annualIncome', 2)
-                ->where('annualIncome.0.year', 2025)
-                ->where('annualIncome.1.total', fn ($v) => (float) $v === 8.0)
             )
         );
 });

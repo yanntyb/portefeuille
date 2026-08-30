@@ -1,3 +1,4 @@
+import type { Analysis, Drawdown } from './analysis';
 import type { CatalogTrend } from './catalog';
 import type { AnnualIncome, AssetDividendHistory, IncomeSummary } from './income';
 import type { Instrument, PriceHistory, ValuationSeries } from './instrument';
@@ -25,12 +26,18 @@ export interface DashboardSnapshot {
     income: WealthIncome;
 }
 
-/** Une page liste d'exposition. Le trio secteurs/revenus n'est servi que par les expositions qui en ont. */
+/** Une page liste d'exposition. */
 export interface AssetClassListSnapshot {
     overview: PortfolioOverview;
     trends: CatalogTrend[];
-    performances: Performance[];
     evolutionSeries: EvolutionSeries;
+}
+
+/** La page analyse d'une exposition. Le trio secteurs/revenus n'est servi que par celles qui en ont. */
+export interface AssetClassAnalysisSnapshot {
+    analysis: Analysis;
+    drawdown: Drawdown;
+    performances: Performance[];
     sectorBreakdown?: SectorSlice[];
     income?: IncomeSummary;
     annualIncome?: AnnualIncome[];
@@ -65,6 +72,8 @@ export interface Snapshot {
     dashboard: DashboardSnapshot;
     /** Indexé par la valeur de `AssetClass` : `equity`, `bond`, `commodity`, `crypto`. */
     classes: Record<string, AssetClassListSnapshot>;
+    /** Même indexation que `classes` : une entrée par exposition, pour sa page analyse. */
+    analyses: Record<string, AssetClassAnalysisSnapshot>;
     assets: Record<string, AssetPageSnapshot>;
     properties: { list: PropertiesListSnapshot; byId: Record<string, PropertyPageSnapshot> };
 }

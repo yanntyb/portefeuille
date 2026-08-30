@@ -1,5 +1,6 @@
 <?php
 
+use App\Contexts\Market\Models\Price;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Wallet;
 use Illuminate\Support\Carbon;
@@ -29,8 +30,10 @@ use Illuminate\Support\Carbon;
  * main depuis `propertyFixture(['loan' => true])` en en omettant les deux `PropertyExpense`.
  * `expenseYears()` rendait alors `[]` et `ExpenseGrouper` ne traversait jamais le hash. L'appel à
  * la fixture ajoute les deux charges au jeu de données, ce qui déplace le hash.
+ * Modifié une troisième fois : secteurs, performances et revenus quittent la composition liste
+ * pour la page analyse, et le blob gagne une clé `analyses` par exposition.
  */
-const SNAPSHOT_VERSION = '6e25f6c1444e283d6685aabb6749d12f7c4d928a';
+const SNAPSHOT_VERSION = 'd3ad184036987dfeaaee6ea0f2be2adde49b1887';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe
@@ -71,6 +74,12 @@ function seedSnapshotFixture(): void
         'quantity' => 4,
         'avg_cost' => 95,
     ]);
+
+    /**
+     * Un cours intermédiaire plus haut que le dernier : sans lui, la série n'a jamais reculé et
+     * `drawdown.maxDepth` reste à zéro, non couvert par le filet.
+     */
+    Price::factory()->create(['asset_id' => $stock->asset_id, 'date' => '2026-04-01', 'close' => 150]);
 
     /**
      * `propertyFixture()` crée son propre utilisateur : rattacher le bien à celui du

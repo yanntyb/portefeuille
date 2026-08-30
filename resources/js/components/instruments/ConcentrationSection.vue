@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Deferred } from '@inertiajs/vue3';
 import { pct } from '@/lib/format';
 import type { Concentration } from '@/lib/analysis';
 
@@ -17,9 +18,7 @@ const hhi = (value: number | null): string => (value === null ? '—' : value.to
             </p>
         </header>
 
-        <div v-if="props.concentration === null" class="h-16 animate-pulse rounded-lg bg-muted" />
-
-        <dl v-else class="grid grid-cols-4 gap-3">
+        <dl v-if="props.concentration !== null" class="grid grid-cols-4 gap-3">
             <div v-for="entry in [
                     { label: 'Top 1', value: pct(props.concentration.top1) },
                     { label: 'Top 3', value: pct(props.concentration.top3) },
@@ -30,5 +29,19 @@ const hhi = (value: number | null): string => (value === null ? '—' : value.to
                 <dd class="text-lg font-semibold tabular-nums">{{ entry.value }}</dd>
             </div>
         </dl>
+
+        <Deferred v-else data="analysis">
+            <template #fallback>
+                <div class="h-16 animate-pulse rounded-lg bg-muted" />
+            </template>
+
+            <template #rescue>
+                <p class="py-8 text-center text-sm text-muted-foreground">
+                    Données indisponibles hors-ligne.
+                </p>
+            </template>
+
+            <span />
+        </Deferred>
     </section>
 </template>

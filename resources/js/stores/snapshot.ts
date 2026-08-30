@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { computed, ref, type ComputedRef, type Ref } from 'vue';
 import { readSnapshot, writeSnapshot } from '@/lib/snapshotStorage';
 import type {
+    AssetClassAnalysisSnapshot,
     AssetClassListSnapshot,
     AssetPageSnapshot,
     DashboardSnapshot,
@@ -17,9 +18,18 @@ const SNAPSHOT_URL = '/instantane';
  * Un blob retenu avant ce déploiement porte encore `instruments`/`crypto`, pas `classes`/`assets` :
  * IndexedDB n'a ni clé de schéma ni version, donc `hydrate()` doit lui-même savoir reconnaître la
  * forme qu'il vient de lire plutôt que de faire confiance à son type déclaré.
+ *
+ * Même précaution pour `analyses` : un blob retenu avant que secteurs, performances et revenus ne
+ * migrent vers la page analyse porte `classes` mais pas `analyses`, et le lire à moitié ferait
+ * planter `classAnalysis()`.
  */
 function isCurrentShape(candidate: Snapshot | null): candidate is Snapshot {
-    return candidate !== null && typeof candidate === 'object' && 'classes' in candidate;
+    return (
+        candidate !== null &&
+        typeof candidate === 'object' &&
+        'classes' in candidate &&
+        'analyses' in candidate
+    );
 }
 
 export const useSnapshotStore = defineStore('snapshot', () => {
@@ -41,6 +51,10 @@ export const useSnapshotStore = defineStore('snapshot', () => {
     /** L'indexation se fait en mémoire : le blob entier est déjà chargé, une requête par page n'ajouterait qu'une latence. */
     function classList(key: string): AssetClassListSnapshot | null {
         return snapshot.value?.classes[key] ?? null;
+    }
+
+    function classAnalysis(key: string): AssetClassAnalysisSnapshot | null {
+        return snapshot.value?.analyses[key] ?? null;
     }
 
     function assetPage(id: string): AssetPageSnapshot | null {
@@ -108,6 +122,7 @@ export const useSnapshotStore = defineStore('snapshot', () => {
         generatedAt,
         dashboard,
         classList,
+        classAnalysis,
         assetPage,
         propertiesList,
         propertyPage,

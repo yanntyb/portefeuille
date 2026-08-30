@@ -26,10 +26,10 @@ it('charge la page Actions, ses sections dans l\'ordre, sans erreur', function (
     $this->actingAs($user);
 
     visit('/actions')
-        ->assertSee('Performances')
+        ->assertSee('Investi')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'valuation|evolution|instruments|performances|income|sectors',
+            'valuation|evolution|instruments',
         )
         ->assertNoJavaScriptErrors();
 });
@@ -40,10 +40,42 @@ it('charge la page Crypto, ses sections dans l\'ordre, sans erreur', function ()
     $this->actingAs($user);
 
     visit('/crypto')
+        ->assertSee('Investi')
+        ->assertScript(
+            "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
+            'valuation|evolution|instruments',
+        )
+        ->assertNoJavaScriptErrors();
+});
+
+/**
+ * Déménagée depuis les deux tests précédents : secteurs, performances et revenus vivent
+ * désormais sur la page analyse, jamais sur la page liste.
+ */
+it('charge la page Analyse d\'Actions, ses sections dans l\'ordre, sans erreur', function () {
+    ['user' => $user] = portfolioFixture();
+
+    $this->actingAs($user);
+
+    visit('/actions/analyse')
         ->assertSee('Performances')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'valuation|evolution|instruments|performances',
+            'concentration|contribution|drawdown|performances|income|sectors',
+        )
+        ->assertNoJavaScriptErrors();
+});
+
+it('charge la page Analyse de Crypto, ses sections dans l\'ordre, sans erreur', function () {
+    ['user' => $user] = cryptoFixture();
+
+    $this->actingAs($user);
+
+    visit('/crypto/analyse')
+        ->assertSee('Performances')
+        ->assertScript(
+            "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
+            'concentration|contribution|drawdown|performances',
         )
         ->assertNoJavaScriptErrors();
 });
