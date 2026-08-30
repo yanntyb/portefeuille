@@ -17,7 +17,7 @@ const hasSectors = computed<boolean>(() => rows.value.length > 0);
 <template>
     <CollapsibleSection section="sectors" title="Secteurs">
         <template v-if="props.slices !== null">
-            <SectorBreakdownList v-if="hasSectors" :rows="rows" />
+            <SectorBreakdownList v-if="hasSectors" :rows="rows" :collapsible="false" />
             <p v-else class="py-8 text-center text-sm text-muted-foreground">
                 Pas encore de données sectorielles.
             </p>

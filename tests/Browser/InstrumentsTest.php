@@ -29,7 +29,7 @@ it('explique les performances par période à travers un dialogue', function () 
         ->assertNoJavaScriptErrors();
 });
 
-it('replie les secteurs au-delà du sixième derrière une bascule', function () {
+it('déroule tous les secteurs sans bascule', function () {
     // Un utilisateur nu : portfolioFixture() créerait une position sans SectorAllocation, dont le
     // poids non alloué tombe dans un secteur « Autre » — neuf secteurs au lieu de huit.
     $user = User::factory()->create();
@@ -51,14 +51,10 @@ it('replie les secteurs au-delà du sixième derrière une bascule', function ()
 
     visit('/actions')
         ->click('[data-section=sectors] [data-section-toggle]')
-        ->assertScript($labels, 6)
-        ->assertDontSee('Énergie')
-        ->click('[data-sector-toggle]')
         ->assertScript($labels, 8)
+        ->assertScript("document.querySelectorAll('[data-section=\"sectors\"] [data-sector-toggle]').length", 0)
         ->assertSee('Énergie')
         ->assertSee('Immobilier')
-        ->click('[data-sector-toggle]')
-        ->assertScript($labels, 6)
         ->assertNoJavaScriptErrors();
 });
 
