@@ -61,7 +61,7 @@ it('charge la page Analyse d\'Actions, ses sections dans l\'ordre, sans erreur',
         ->assertSee('Performances')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'concentration|contribution|drawdown|performances|income|sectors',
+            'performances|sectors',
         )
         ->assertNoJavaScriptErrors();
 });
@@ -75,7 +75,7 @@ it('charge la page Analyse de Crypto, ses sections dans l\'ordre, sans erreur', 
         ->assertSee('Performances')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'concentration|contribution|drawdown|performances',
+            'performances',
         )
         ->assertNoJavaScriptErrors();
 });

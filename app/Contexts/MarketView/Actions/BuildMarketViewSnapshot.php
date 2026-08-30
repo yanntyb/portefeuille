@@ -84,18 +84,11 @@ class BuildMarketViewSnapshot
     private function analysisFor(int $userId, AssetClass $exposure): array
     {
         $analysis = [
-            'analysis' => $this->overview->analysisFor($userId, $exposure),
-            'drawdown' => $this->valuation->drawdownFor($userId, $exposure),
             'performances' => $this->valuation->performancesFor($userId, $exposure),
         ];
 
         if ($exposure->hasSectors()) {
             $analysis['sectorBreakdown'] = $this->sectors->breakdownFor($userId);
-        }
-
-        if ($this->income->supportsExposure($exposure)) {
-            $analysis['income'] = $this->income->summaryFor($userId, $exposure);
-            $analysis['annualIncome'] = $this->income->annualFor($userId, $exposure);
         }
 
         return $analysis;

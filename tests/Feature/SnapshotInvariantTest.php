@@ -43,8 +43,10 @@ use Illuminate\Support\Carbon;
  * concentration et les contributions restaient figées sur leur cas dégénéré (top1 = top3 = top5 =
  * 100 %, HHI = 1, une seule ligne de contribution). Un second titre, de valeur différente,
  * fait maintenant traverser le hash par le tri par contribution décroissante et le cumul du top 3.
+ * Modifié une sixième fois : la page analyse ne garde que performances et secteurs, donc le bloc
+ * `analyses` du blob perd `analysis`, `drawdown`, `income` et `annualIncome`.
  */
-const SNAPSHOT_VERSION = '42f50606df10083670661bf403585a2bf1083609';
+const SNAPSHOT_VERSION = 'f762853f8652c12c4cec15640f0cb0bf7e9f540e';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

@@ -16,9 +16,7 @@ it('porte la page liste et une fiche par position détenue', function () {
     $snapshot = app(BuildMarketViewSnapshot::class)($user->id);
 
     expect($snapshot['classes']['equity'])->toHaveKeys(['overview', 'trends', 'evolutionSeries'])
-        ->and($snapshot['analyses']['equity'])->toHaveKeys([
-            'analysis', 'drawdown', 'performances', 'sectorBreakdown', 'income', 'annualIncome',
-        ])
+        ->and($snapshot['analyses']['equity'])->toHaveKeys(['performances', 'sectorBreakdown'])
         ->and($snapshot['assets'])->toHaveKey($instrument->id)
         ->and($snapshot['assets'][$instrument->id])->toHaveKeys([
             'instrument', 'performances', 'priceHistory', 'valuation', 'dividends',
@@ -96,14 +94,13 @@ it('carries one list per exposure and every held asset once', function () {
         ->and($snapshot['assets'])->toHaveKey($gold->id);
 });
 
-it('withholds sectors and income from the exposures that have none', function () {
+it('withholds sectors from the exposures that have none', function () {
     $user = User::factory()->create();
 
     $snapshot = app(BuildMarketViewSnapshot::class)($user->id);
 
-    expect($snapshot['analyses']['equity'])->toHaveKeys(['sectorBreakdown', 'income', 'annualIncome'])
-        ->and($snapshot['analyses']['crypto'])->not->toHaveKey('sectorBreakdown')
-        ->and($snapshot['analyses']['crypto'])->not->toHaveKey('income');
+    expect($snapshot['analyses']['equity'])->toHaveKeys(['performances', 'sectorBreakdown'])
+        ->and($snapshot['analyses']['crypto'])->not->toHaveKey('sectorBreakdown');
 });
 
 /**
@@ -128,18 +125,11 @@ it('rend les mêmes listes vides sans aucun utilisateur', function () {
 
     $equityAnalysis = $snapshot['analyses']['equity'];
 
-    expect(array_keys($equityAnalysis))->toBe([
-        'analysis', 'drawdown', 'performances', 'sectorBreakdown', 'income', 'annualIncome',
-    ]);
+    expect(array_keys($equityAnalysis))->toBe(['performances', 'sectorBreakdown']);
     expect($equityAnalysis['performances'])->toBe([])
-        ->and($equityAnalysis['sectorBreakdown'])->toBe([])
-        ->and($equityAnalysis['annualIncome'])->toBe([]);
-    expect($equityAnalysis['income']->jsonSerialize())->toBe([
-        'totalReceived' => 0.0, 'last12Months' => 0.0, 'estimatedAnnual' => 0.0, 'bySource' => [],
-    ]);
+        ->and($equityAnalysis['sectorBreakdown'])->toBe([]);
 
     expect(array_keys($snapshot['classes']['crypto']))
         ->toBe(['overview', 'trends', 'evolutionSeries']);
-    expect(array_keys($snapshot['analyses']['crypto']))
-        ->toBe(['analysis', 'drawdown', 'performances']);
+    expect(array_keys($snapshot['analyses']['crypto']))->toBe(['performances']);
 });

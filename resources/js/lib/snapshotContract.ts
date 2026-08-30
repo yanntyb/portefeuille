@@ -1,6 +1,5 @@
-import type { Analysis, Drawdown } from './analysis';
 import type { CatalogTrend } from './catalog';
-import type { AnnualIncome, AssetDividendHistory, IncomeSummary } from './income';
+import type { AssetDividendHistory } from './income';
 import type { Instrument, PriceHistory, ValuationSeries } from './instrument';
 import type { Performance } from './performance';
 import type { EvolutionSeries, PortfolioOverview } from './portfolio';
@@ -33,14 +32,10 @@ export interface AssetClassListSnapshot {
     evolutionSeries: EvolutionSeries;
 }
 
-/** La page analyse d'une exposition. Le trio secteurs/revenus n'est servi que par celles qui en ont. */
+/** La page analyse d'une exposition. `sectorBreakdown` n'est servi que par celles qui ont des secteurs. */
 export interface AssetClassAnalysisSnapshot {
-    analysis: Analysis;
-    drawdown: Drawdown;
     performances: Performance[];
     sectorBreakdown?: SectorSlice[];
-    income?: IncomeSummary;
-    annualIncome?: AnnualIncome[];
 }
 
 /** La fiche servie par `/asset/{id}`. `dividends` manque aux expositions qui ne distribuent rien. */
