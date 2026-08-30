@@ -54,7 +54,7 @@ class ValuationCalculator
                 $totalInvested -= $transaction->quantity * $pru - $transaction->fees;
             } else {
                 $buyQty[$assetId] = ($buyQty[$assetId] ?? 0.0) + $transaction->quantity;
-                $buyCost[$assetId] = ($buyCost[$assetId] ?? 0.0) + $transaction->quantity * $transaction->unitPrice;
+                $buyCost[$assetId] = ($buyCost[$assetId] ?? 0.0) + $transaction->quantity * $transaction->unitPrice + $transaction->fees;
                 $totalInvested += $transaction->quantity * $transaction->unitPrice + $transaction->fees;
             }
 
@@ -348,7 +348,7 @@ class ValuationCalculator
                 $invested[$assetId] -= $transaction->quantity * $pru - $transaction->fees;
             } else {
                 $buyQty[$assetId] = ($buyQty[$assetId] ?? 0.0) + $transaction->quantity;
-                $buyCost[$assetId] = ($buyCost[$assetId] ?? 0.0) + $transaction->quantity * $transaction->unitPrice;
+                $buyCost[$assetId] = ($buyCost[$assetId] ?? 0.0) + $transaction->quantity * $transaction->unitPrice + $transaction->fees;
                 $invested[$assetId] += $transaction->quantity * $transaction->unitPrice + $transaction->fees;
             }
 

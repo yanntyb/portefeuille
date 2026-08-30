@@ -90,10 +90,14 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                         -->
                         <span class="flex items-center gap-1 text-xs text-muted-foreground">
                             <span data-transaction-detail>×{{ eur(line.unitPrice) }}</span>
-                            <template v-if="line.fees">
-                                -
-                                <span data-transaction-fees>frais {{ eur(line.fees) }}</span>
-                            </template>
+                            <!--
+                                L'opérateur suit le sens : les frais alourdissent ce qu'un achat
+                                coûte et grèvent ce qu'une vente rapporte. Un « - » partout
+                                mentirait sur la moitié des lignes.
+                            -->
+                            <span v-if="line.fees" data-transaction-fees>
+                                {{ line.isSell ? '-' : '+' }} frais {{ eur(line.fees) }}
+                            </span>
                         </span>
                         <span data-transaction-amount class="text-right font-medium">
                             {{ signedEur(amountOf(line)) }}

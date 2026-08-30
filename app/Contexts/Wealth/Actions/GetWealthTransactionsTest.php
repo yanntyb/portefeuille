@@ -30,7 +30,8 @@ it('réunit les opérations de tous les actifs, la plus récente en tête', func
         ->and($lines[0]->typeLabel)->toBe('Achat')
         ->and($lines[0]->isSell)->toBeFalse()
         ->and($lines[0]->fees)->toBe(1.5)
-        ->and($lines[0]->total)->toBe(600.0)
+        /** Flux réel de l'achat : 2 × 300 sortis du compte, plus les 1,50 € de frais. */
+        ->and($lines[0]->total)->toBe(601.5)
         ->and($lines[1]->date)->toBe('2026-01-01')
         ->and($lines[1]->assetName)->toBe('ACME');
 });

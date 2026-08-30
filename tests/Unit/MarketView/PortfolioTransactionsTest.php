@@ -5,9 +5,10 @@ use App\Contexts\Market\Models\Instrument;
 use App\Contexts\MarketView\Infrastructure\PortfolioTransactions;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
+use App\Contexts\Portfolio\Services\TransactionFlow;
 
 beforeEach(function () {
-    $this->adapter = new PortfolioTransactions;
+    $this->adapter = new PortfolioTransactions(new TransactionFlow);
 });
 
 it('returns transactions for a user and asset, newest first', function () {
@@ -23,10 +24,11 @@ it('returns transactions for a user and asset, newest first', function () {
     expect($lines[0]->date)->toBe('2026-03-01');
     expect($lines[0]->isSell)->toBeTrue();
     expect($lines[0]->typeLabel)->toBe('Vente');
-    expect($lines[0]->total)->toBe(400.0);
+    /** Le montant d'une ligne est son flux réel : les frais grèvent la vente et alourdissent l'achat. */
+    expect($lines[0]->total)->toBe(398.0);
     expect($lines[1]->date)->toBe('2026-01-01');
     expect($lines[1]->typeLabel)->toBe('Achat');
-    expect($lines[1]->total)->toBe(800.0);
+    expect($lines[1]->total)->toBe(801.0);
 });
 
 it('excludes other users and other assets', function () {

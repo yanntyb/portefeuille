@@ -28,6 +28,7 @@ class CalculateRealizedGain
             $buys->map(fn (Transaction $t): array => [
                 'quantity' => (float) $t->quantity,
                 'unitPrice' => (float) $t->unit_price,
+                'fees' => (float) $t->fees,
             ])->values()->all(),
         )['average'];
 

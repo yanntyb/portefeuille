@@ -139,6 +139,16 @@ it('affiche les frais sur la ligne de transaction, sans clic', function () {
         ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 2)
         ->assertScript("document.querySelectorAll('[data-transaction-fees]').length", 1)
         /**
+         * Le montant de la ligne est le flux réel : 10 × 80 € sortis du compte, plus 3,50 € de
+         * frais. La ligne voisine, sans frais, en reste à son montant brut — deux valeurs
+         * distinctes, donc un montant qui ignorerait les frais tomberait.
+         */
+        ->assertScript(
+            "Array.from(document.querySelectorAll('[data-transaction-amount]'))"
+            .'  .map(cell => cell.textContent.replace(/\\s+/g, \' \').trim()).join(\'|\')',
+            '+300,00 €|+803,50 €',
+        )
+        /**
          * Les montants des deux lignes commencent à la même abscisse, alors qu'une seule porte des
          * frais : la colonne vide tient sa place au lieu de laisser glisser la suivante.
          */
@@ -149,13 +159,15 @@ it('affiche les frais sur la ligne de transaction, sans clic', function () {
             true,
         )
         /**
-         * Prix unitaire et frais se suivent d'un trait contre la quantité, dans cet ordre.
+         * Prix unitaire et frais se suivent d'un trait contre la quantité, dans cet ordre, et les
+         * frais s'ajoutent puisque la ligne est un achat — ils alourdissent ce qu'il a coûté.
          * `toLocaleString` sépare le montant du symbole par une espace insécable étroite, d'où le
          * remplacement, et les espaces de gabarit valent celles du texte, d'où le resserrement.
          */
         ->assertScript(
-            "document.querySelector('[data-transaction-fees]').parentElement.textContent.replace(/\\s+/g, ' ').trim()",
-            '×80,00 € - frais 3,50 €',
+            "Array.from(document.querySelector('[data-transaction-fees]').parentElement.children)"
+            .'  .map(cell => cell.textContent.replace(/\\s+/g, \' \').trim()).join(\'|\')',
+            '×80,00 €|+ frais 3,50 €',
         )
         ->assertNoJavaScriptErrors();
 });

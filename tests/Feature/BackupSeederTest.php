@@ -192,8 +192,8 @@ it('replays the transactions and lets the observer project the holdings', functi
     expect(Transaction::query()->count())->toBe(8)
         ->and(Holding::query()->count())->toBe(4)
         ->and((float) $holding->quantity)->toBe(5.0)
-        // (2 × 100 + 3 × 110) / 5, hors frais.
-        ->and((float) $holding->avg_cost)->toBe(106.0);
+        // (2 × 100 + 3 × 110 + 2 € de frais) / 5 : les frais d'achat font partie du prix de revient.
+        ->and((float) $holding->avg_cost)->toBe(106.4);
 });
 
 it('replays the Bitcoin orders of the default account, without the cancelled one', function () {
