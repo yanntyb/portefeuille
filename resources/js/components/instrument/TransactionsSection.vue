@@ -8,12 +8,10 @@ const props = defineProps<{ transactions: TransactionLine[] }>();
 
 const years = computed<TransactionYear[]>(() => transactionYears(props.transactions));
 
-const heading = computed<string>(() => `Transactions (${props.transactions.length})`);
-
 /**
  * Toutes les années démarrent repliées : la section suit le graphe de valorisation, et un
- * historique déroulé y repousserait performances et secteurs hors de l'écran. Le compte annoncé
- * dans le titre suffit à dire ce qui se cache derrière le pli.
+ * historique déroulé y repousserait performances et secteurs hors de l'écran. Les années listées
+ * et leur solde disent déjà ce qui se cache derrière le pli.
  */
 const openYears = ref<string[]>([]);
 
@@ -38,7 +36,7 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
 
 <template>
     <section data-section="transactions" class="flex flex-col gap-4 px-6">
-        <h2 class="text-[17px] leading-none font-bold">{{ heading }}</h2>
+        <h2 class="text-[17px] leading-none font-bold">Transactions</h2>
 
         <div v-if="years.length" class="flex min-w-0 flex-col">
             <div

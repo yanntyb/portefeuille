@@ -26,7 +26,7 @@ it('replie toutes les années de transactions et les ouvre une à une', function
     $this->actingAs($user);
 
     visit("/asset/{$instrument->id}")
-        ->assertSee('Transactions (2)')
+        ->assertSee('Transactions')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-transaction-year]')).map(el => el.dataset.transactionYear).join('|')",
             '2026|2025',
