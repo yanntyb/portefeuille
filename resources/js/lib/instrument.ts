@@ -25,6 +25,16 @@ export interface TransactionLine {
 }
 
 /**
+ * Une opération qui nomme son actif : la ligne de la fiche, augmentée de ce qu'elle porte — hors
+ * de sa fiche, une quantité ne dit pas de quoi elle est la quantité. Le tableau de bord et les
+ * pages d'exposition mélangent plusieurs actifs, donc en dépendent tous les deux.
+ */
+export interface NamedTransactionLine extends TransactionLine {
+    assetId: number;
+    assetName: string;
+}
+
+/**
  * Le groupe est paramétré par sa ligne : le tableau de bord y passe des lignes qui nomment leur
  * actif, la fiche des lignes nues, et le regroupement reste le même.
  */

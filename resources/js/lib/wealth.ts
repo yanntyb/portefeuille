@@ -1,5 +1,5 @@
 import { relativeBarWidth } from '@/lib/bars';
-import type { TransactionLine } from '@/lib/instrument';
+import type { NamedTransactionLine } from '@/lib/instrument';
 
 /**
  * Une classe d'actif du résumé : ce qu'elle est, ce qu'elle vaut, et l'écart à sa mise. `gainPct`
@@ -97,10 +97,7 @@ export interface WealthIncome {
 }
 
 /**
- * Une opération du patrimoine : la ligne de la fiche actif, augmentée de l'actif qu'elle porte —
- * hors de sa fiche, une quantité ne dit pas de quoi elle est la quantité.
+ * Une opération du patrimoine. Rien de propre au patrimoine : la page d'exposition sert les mêmes
+ * lignes, d'où le type partagé — le nom reste, c'est celui que le tableau de bord emploie.
  */
-export interface WealthTransactionLine extends TransactionLine {
-    assetId: number;
-    assetName: string;
-}
+export type WealthTransactionLine = NamedTransactionLine;
