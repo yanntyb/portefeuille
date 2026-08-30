@@ -462,6 +462,12 @@ function pointIndex(params: unknown): number | null {
     return typeof first?.dataIndex === 'number' ? first.dataIndex : null;
 }
 
+/**
+ * Bornes de la fenêtre visible, en millisecondes depuis l'époque. Des dates plutôt que des
+ * pourcentages d'amplitude : la fiche instrument bascule entre valorisation et cours, deux séries
+ * qui ne commencent pas le même jour — un même pourcentage y désignerait deux dates différentes,
+ * et la fenêtre se déplacerait sous l'œil du lecteur à chaque bascule.
+ */
 export type ZoomWindow = { start: number; end: number };
 
 type ValueVsInvestedInput = {
@@ -495,18 +501,22 @@ function labelTime(label: string | undefined): number {
 }
 
 /**
- * Fenêtre d'ouverture : les douze derniers mois, exprimés en pourcentage de l'amplitude totale
- * — l'axe étant temporel, le `dataZoom` répartit ses pourcentages sur la durée, pas sur les points.
- * Un historique plus court qu'un an s'affiche en entier : le plancher le fige déjà là.
+ * Fenêtre d'ouverture : les douze derniers mois, datés. Un historique plus court qu'un an
+ * s'affiche en entier — le plancher le fige déjà là. `null` sur un historique vide : aucune borne
+ * ne s'en déduit, et le graphe montre alors tout ce qu'il a.
  */
-function lastYearWindow(labels: string[]): ZoomWindow {
-    const span = labelTime(labels[labels.length - 1]) - labelTime(labels[0]);
+function lastYearWindow(labels: string[]): ZoomWindow | null {
+    const first = labelTime(labels[0]);
+    const last = labelTime(labels[labels.length - 1]);
+    const span = last - first;
 
-    if (!Number.isFinite(span) || span <= MIN_ZOOM_SPAN_MS) {
-        return { start: 0, end: 100 };
+    if (!Number.isFinite(span)) {
+        return null;
     }
 
-    return { start: 100 * (1 - MIN_ZOOM_SPAN_MS / span), end: 100 };
+    return span <= MIN_ZOOM_SPAN_MS
+        ? { start: first, end: last }
+        : { start: last - MIN_ZOOM_SPAN_MS, end: last };
 }
 
 /** Hauteur réservée sous la grille à la mini-timeline du zoom, en pixels. */
@@ -516,7 +526,7 @@ const ZOOM_SLIDER_HEIGHT = 40;
 const TIME_AXIS_LABEL_HEIGHT = 28;
 
 /** La mini-timeline est la seule commande de zoom, partagée par les deux formes de graphe. */
-function wealthZoomSlider(visible: ZoomWindow): Extract<NonNullable<ChartOption['dataZoom']>, unknown[]>[number] {
+function wealthZoomSlider(visible: ZoomWindow | null): Extract<NonNullable<ChartOption['dataZoom']>, unknown[]>[number] {
     const colors = palette();
 
     /**
@@ -526,8 +536,9 @@ function wealthZoomSlider(visible: ZoomWindow): Extract<NonNullable<ChartOption[
      */
     return {
         type: 'slider',
-        start: visible.start,
-        end: visible.end,
+        /** Bornes datées : `startValue` / `endValue` plutôt que les pourcentages de `start` / `end`. */
+        startValue: visible?.start,
+        endValue: visible?.end,
         minValueSpan: MIN_ZOOM_SPAN_MS,
         height: ZOOM_SLIDER_HEIGHT,
         bottom: 0,
@@ -714,10 +725,16 @@ type PriceHistoryInput = {
     labels: string[];
     close: number[];
     valueFormatter: ValueFormatter;
+    /** `null` à la première peinture ; sinon la fenêtre héritée de l'autre série de la fiche. */
+    window: ZoomWindow | null;
 };
 
-/** Cours d'un instrument : une courbe unique, aire dégradée sous la ligne. */
-export function buildPriceHistoryOption({ labels, close, valueFormatter }: PriceHistoryInput): ChartOption {
+/**
+ * Cours d'un instrument : une courbe unique, aire dégradée sous la ligne. Même mini-timeline que
+ * la valorisation — la fiche bascule de l'une à l'autre sans changer de fenêtre.
+ */
+export function buildPriceHistoryOption({ labels, close, valueFormatter, window }: PriceHistoryInput): ChartOption {
+    const visible = window ?? lastYearWindow(labels);
     const colors = palette();
     const points = datedPoints(labels, close);
 
@@ -725,9 +742,10 @@ export function buildPriceHistoryOption({ labels, close, valueFormatter }: Price
         ...chartFrame({
             valueFormatter,
             values: close,
-            bottom: TIME_AXIS_LABEL_HEIGHT,
+            bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT,
             description: "Historique du cours de l'instrument.",
         }),
+        dataZoom: [wealthZoomSlider(visible)],
         color: [colors.value],
         series: [{
             name: 'Cours',

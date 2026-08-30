@@ -23,6 +23,9 @@ const monthlyLabels = (months: number): string[] =>
         new Date(Date.UTC(2023, index, 1)).toISOString().slice(0, 10),
     );
 
+/** Instant d'une étiquette ISO, dans le fuseau où la fenêtre de zoom est calculée. */
+const timeOf = (label: string): number => Date.parse(`${label}T00:00:00`);
+
 const valueVsInvested = (months: number, window: { start: number; end: number } | null = null): ChartOption => {
     const labels = monthlyLabels(months);
 
@@ -167,7 +170,9 @@ describe('buildValueVsInvestedOption — axes', () => {
     it('garde la gouttière stable quand le zoom réduit la fenêtre visible', () => {
         const leftOf = (option: ChartOption): number => (option.grid as { left: number }).left;
 
-        expect(leftOf(valueVsInvested(36, { start: 90, end: 100 }))).toBe(leftOf(valueVsInvested(36)));
+        const zoomed = valueVsInvested(36, { start: timeOf('2025-01-01'), end: timeOf('2025-12-01') });
+
+        expect(leftOf(zoomed)).toBe(leftOf(valueVsInvested(36)));
     });
 });
 
@@ -225,47 +230,32 @@ describe('buildValueVsInvestedOption — description accessible', () => {
     });
 });
 
+const priceHistory = (months: number, window: { start: number; end: number } | null = null): ChartOption => {
+    const labels = monthlyLabels(months);
+
+    return buildPriceHistoryOption({
+        labels,
+        close: labels.map((_unused: string, index: number): number => 100 + index),
+        valueFormatter: (value: number): string => eur(value, 0),
+        window,
+    });
+};
+
 describe('buildPriceHistoryOption', () => {
     it('trace une seule courbe pour le cours', () => {
-        const labels = monthlyLabels(24);
-        const option = buildPriceHistoryOption({
-            labels,
-            close: labels.map((_unused: string, index: number): number => 100 + index),
-            valueFormatter: (value: number): string => eur(value, 0),
-        });
-
-        expect(seriesOf(option).map((serie) => serie.name)).toEqual(['Cours']);
+        expect(seriesOf(priceHistory(24)).map((serie) => serie.name)).toEqual(['Cours']);
     });
 
     it('cadre l\'axe des cours sur les cotations visibles au lieu de l\'ancrer à zéro', () => {
-        const labels = monthlyLabels(24);
-        const option = buildPriceHistoryOption({
-            labels,
-            close: labels.map((_unused: string, index: number): number => 100 + index),
-            valueFormatter: (value: number): string => eur(value, 0),
-        });
-
-        expect(yAxisOf(option).scale).toBe(true);
+        expect(yAxisOf(priceHistory(24)).scale).toBe(true);
     });
 
     it('se passe aussi de lignes de fond horizontales', () => {
-        const labels = monthlyLabels(24);
-        const option = buildPriceHistoryOption({
-            labels,
-            close: labels.map((): number => 100),
-            valueFormatter: (value: number): string => eur(value, 0),
-        });
-
-        expect(yAxisOf(option).splitLine.show).toBe(false);
+        expect(yAxisOf(priceHistory(24)).splitLine.show).toBe(false);
     });
 
     it('n\'étiquette que les extrêmes de l\'axe des valeurs, comme le graphe de valorisation', () => {
-        const labels = monthlyLabels(24);
-        const option = buildPriceHistoryOption({
-            labels,
-            close: labels.map((_unused: string, index: number): number => 100 + index),
-            valueFormatter: (value: number): string => eur(value, 0),
-        });
+        const option = priceHistory(24);
         const extent = { min: 100, max: 123 };
 
         expect(yAxisLabel(option, 100, extent)).not.toBe('');
@@ -273,34 +263,34 @@ describe('buildPriceHistoryOption', () => {
         expect(yAxisLabel(option, 110, extent)).toBe('');
     });
 
-    it('n\'offre pas de zoom : la fiche instrument le porte sur le graphe de valorisation', () => {
-        const labels = monthlyLabels(24);
-        const option = buildPriceHistoryOption({
-            labels,
-            close: labels.map((): number => 100),
-            valueFormatter: (value: number): string => eur(value, 0),
-        });
+    it('porte la même mini-timeline que la valorisation, ouverte sur les douze derniers mois', () => {
+        const labels = monthlyLabels(60);
+        const [slider] = dataZoomOf(priceHistory(60));
 
-        expect(option.dataZoom).toBeUndefined();
+        expect(slider.type).toBe('slider');
+        expect(slider.endValue).toBe(timeOf(labels[labels.length - 1]));
+        expect(slider.startValue).toBe(timeOf(labels[labels.length - 1]) - ONE_YEAR_MS);
+    });
+
+    it('respecte la fenêtre héritée de la valorisation quand le lecteur bascule', () => {
+        const chosen = { start: timeOf('2023-06-01'), end: timeOf('2024-06-01') };
+        const [slider] = dataZoomOf(priceHistory(60, chosen));
+
+        expect(slider).toMatchObject({ startValue: chosen.start, endValue: chosen.end });
     });
 
     it('gradue le temps comme le graphe de valorisation, année sous janvier comprise', () => {
-        const labels = monthlyLabels(24);
-        const option = buildPriceHistoryOption({
-            labels,
-            close: labels.map((): number => 100),
-            valueFormatter: (value: number): string => eur(value, 0),
-        });
+        const option = priceHistory(24);
 
         expect(xAxisLabelOf(option).formatter(new Date(2026, 0, 1).getTime())).toBe('2026');
-        expect((option.grid as { bottom: number }).bottom).toBe(28);
+        expect((option.grid as { bottom: number }).bottom).toBe(68);
     });
 });
 
 type DataZoom = {
     type: string;
-    start: number;
-    end: number;
+    startValue?: number;
+    endValue?: number;
     minValueSpan: number;
     showDetail?: boolean;
     handleLabel?: { show: boolean };
@@ -312,45 +302,47 @@ const dataZoomOf = (option: ChartOption): DataZoom[] => option.dataZoom as DataZ
 const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 
 describe('buildValueVsInvestedOption — zoom', () => {
-    it('ouvre sur les douze derniers mois d\'un historique de trois ans', () => {
+    it('borne la fenêtre en dates plutôt qu\'en pourcentages, pour qu\'elle se transpose d\'une série à l\'autre', () => {
+        const labels = monthlyLabels(36);
         const [slider] = dataZoomOf(valueVsInvested(36));
 
-        expect(slider.end).toBe(100);
-        expect(slider.end - slider.start).toBeGreaterThan(32);
-        expect(slider.end - slider.start).toBeLessThan(35);
+        expect(slider.endValue).toBe(timeOf(labels[labels.length - 1]));
+        expect(slider.startValue).toBe(timeOf(labels[labels.length - 1]) - ONE_YEAR_MS);
     });
 
     it('montre tout l\'historique quand il est plus court qu\'un an', () => {
+        const labels = monthlyLabels(6);
         const [slider] = dataZoomOf(valueVsInvested(6));
 
-        expect(slider.start).toBe(0);
-        expect(slider.end).toBe(100);
+        expect(slider.startValue).toBe(timeOf(labels[0]));
+        expect(slider.endValue).toBe(timeOf(labels[labels.length - 1]));
     });
 
     it('montre tout l\'historique quand il n\'atteint pas un an', () => {
         // Douze étiquettes mensuelles depuis janvier 2023 s'arrêtent au 1er décembre : 334 jours.
+        const labels = monthlyLabels(12);
         const [slider] = dataZoomOf(valueVsInvested(12));
 
-        expect(slider.start).toBe(0);
-        expect(slider.end).toBe(100);
+        expect(slider.startValue).toBe(timeOf(labels[0]));
     });
 
     it('montre encore tout l\'historique quand il fait exactement un an', () => {
         // Treize étiquettes vont du 1er janvier 2023 au 1er janvier 2024 : 365 jours pile,
         // 2023 n'étant pas bissextile. Le plancher se compare avec `<=`, la fenêtre reste entière.
+        const labels = monthlyLabels(13);
         const [slider] = dataZoomOf(valueVsInvested(13));
 
-        expect(slider.start).toBe(0);
-        expect(slider.end).toBe(100);
+        expect(slider.startValue).toBe(timeOf(labels[0]));
     });
 
     it('rogne l\'historique dès qu\'il dépasse un an', () => {
-        // Quatorze étiquettes vont jusqu'au 1er février 2024 : 396 jours, donc start ≈ 7,83.
+        // Quatorze étiquettes vont jusqu'au 1er février 2024 : 396 jours, un an de moins tombe donc
+        // après le premier point.
+        const labels = monthlyLabels(14);
         const [slider] = dataZoomOf(valueVsInvested(14));
 
-        expect(slider.start).toBeGreaterThan(0);
-        expect(slider.start).toBeLessThan(10);
-        expect(slider.end).toBe(100);
+        expect(slider.startValue).toBeGreaterThan(timeOf(labels[0]));
+        expect(slider.endValue).toBe(timeOf(labels[labels.length - 1]));
     });
 
     it('montre tout sur un historique vide, sans produire de fenêtre absurde', () => {
@@ -362,8 +354,10 @@ describe('buildValueVsInvestedOption — zoom', () => {
             window: null,
             description: 'Vide.',
         });
+        const [slider] = dataZoomOf(option);
 
-        expect(dataZoomOf(option)[0]).toMatchObject({ start: 0, end: 100 });
+        expect(slider.startValue).toBeUndefined();
+        expect(slider.endValue).toBeUndefined();
     });
 
     it('interdit au lecteur de descendre sous un an', () => {
@@ -374,9 +368,10 @@ describe('buildValueVsInvestedOption — zoom', () => {
     });
 
     it('respecte la fenêtre déjà choisie par le lecteur plutôt que de la remettre à douze mois', () => {
-        const [slider] = dataZoomOf(valueVsInvested(36, { start: 10, end: 60 }));
+        const chosen = { start: timeOf('2023-06-01'), end: timeOf('2024-06-01') };
+        const [slider] = dataZoomOf(valueVsInvested(36, chosen));
 
-        expect(slider).toMatchObject({ start: 10, end: 60 });
+        expect(slider).toMatchObject({ startValue: chosen.start, endValue: chosen.end });
     });
 
     it('laisse les poignées de zoom muettes, leurs bornes se lisant déjà sur l\'axe', () => {

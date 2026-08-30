@@ -2,8 +2,16 @@ import { createPinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp, nextTick, type App } from 'vue';
 
-/** Fenêtre que l'instance feinte publie : le composant la relit sur l'option courante. */
-const currentDataZoom = { start: 62.5, end: 100 };
+/**
+ * Fenêtre que l'instance feinte publie : le composant la relit sur l'option courante. ECharts y
+ * expose les deux formes de bornes — les dates qu'on lui a données, et leur part de l'amplitude.
+ */
+const currentDataZoom = {
+    start: 62.5,
+    end: 100,
+    startValue: Date.parse('2025-01-01T00:00:00'),
+    endValue: Date.parse('2025-12-01T00:00:00'),
+};
 
 const chartInstance = {
     setOption: vi.fn(),
@@ -106,11 +114,14 @@ describe('fenêtre de zoom', () => {
         expect(zoomed).not.toHaveBeenCalled();
     });
 
-    it('retient la fenêtre dès que le lecteur déplace la mini-timeline', () => {
+    it('retient la fenêtre en dates, seule forme transposable d\'une série à l\'autre', () => {
         const { zoomed } = mountChart();
 
         dragZoomHandle();
 
-        expect(zoomed).toHaveBeenCalledExactlyOnceWith({ start: 62.5, end: 100 });
+        expect(zoomed).toHaveBeenCalledExactlyOnceWith({
+            start: currentDataZoom.startValue,
+            end: currentDataZoom.endValue,
+        });
     });
 });

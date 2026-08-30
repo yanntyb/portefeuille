@@ -53,7 +53,8 @@ const zoomWindow = ref<string | null>(null);
  * charges utiles de `datazoom` diffèrent selon la poignée : l'option courante fait foi.
  */
 const publishZoom = (): ZoomWindow | null => {
-    const zooms = chart?.getOption()?.dataZoom as { start?: number; end?: number }[] | undefined;
+    const zooms = chart?.getOption()?.dataZoom as
+        { start?: number; end?: number; startValue?: number; endValue?: number }[] | undefined;
     const zoom = zooms?.[0];
 
     if (typeof zoom?.start !== 'number' || typeof zoom.end !== 'number') {
@@ -62,7 +63,16 @@ const publishZoom = (): ZoomWindow | null => {
 
     zoomWindow.value = `${Math.round(zoom.start)}-${Math.round(zoom.end)}`;
 
-    return { start: zoom.start, end: zoom.end };
+    /**
+     * L'attribut publie des pourcentages, lisibles sans connaître l'historique ; le parent, lui,
+     * reçoit les dates — seules elles gardent leur sens quand il rebâtit l'option sur une autre
+     * série, dont l'amplitude commence ailleurs.
+     */
+    if (typeof zoom.startValue !== 'number' || typeof zoom.endValue !== 'number') {
+        return null;
+    }
+
+    return { start: zoom.startValue, end: zoom.endValue };
 };
 
 /**
