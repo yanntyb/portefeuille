@@ -74,7 +74,17 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                         >
                             <span class="text-muted-foreground">{{ frDayMonth(line.date) }}</span>
                             <span :class="line.isSell ? 'text-loss' : 'text-gain'">{{ line.typeLabel }}</span>
-                            <span class="ml-auto font-medium" :class="gainClass(amountOf(line))">
+                            <span
+                                v-if="line.fees"
+                                data-transaction-fees
+                                class="ml-auto text-xs text-muted-foreground"
+                            >
+                                frais {{ eur(line.fees) }}
+                            </span>
+                            <span
+                                class="font-medium"
+                                :class="[gainClass(amountOf(line)), line.fees ? '' : 'ml-auto']"
+                            >
                                 {{ signedEur(amountOf(line)) }}
                             </span>
                         </button>
@@ -84,7 +94,7 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                             data-transaction-detail
                             class="pb-2 pl-[22px] text-xs text-muted-foreground"
                         >
-                            {{ line.quantity }} × {{ eur(line.unitPrice) }} · frais {{ eur(line.fees) }}
+                            {{ line.quantity }} × {{ eur(line.unitPrice) }}
                         </p>
                     </template>
                 </div>

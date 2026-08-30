@@ -53,9 +53,35 @@ it('cache le détail d\'une transaction derrière un clic sur sa ligne', functio
         ->click('[data-transaction-row]')
         ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 1)
         ->assertScript("document.querySelector('[data-transaction-detail]').textContent.includes('10 × 80,00')", true)
-        ->assertScript("document.querySelector('[data-transaction-detail]').textContent.includes('frais')", true)
         ->click('[data-transaction-row]')
         ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 0)
+        ->assertNoJavaScriptErrors();
+});
+
+it('affiche les frais sur la ligne de transaction, sans clic', function () {
+    ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
+
+    Transaction::query()->where('asset_id', $instrument->id)->update(['fees' => 3.5]);
+
+    /** Une seconde ligne sans frais : sans elle, rien ne distingue un montant omis d'un zéro affiché. */
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $instrument->id,
+        'quantity' => 5,
+        'unit_price' => 60,
+        'fees' => 0,
+        'date' => '2026-02-02',
+    ]);
+
+    $this->actingAs($user);
+
+    visit("/asset/{$instrument->id}")
+        ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 2)
+        ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 0)
+        ->assertScript("document.querySelectorAll('[data-transaction-fees]').length", 1)
+        /** `toLocaleString` sépare le montant du symbole par une espace insécable étroite, d'où le remplacement. */
+        ->assertScript("document.querySelector('[data-transaction-fees]').textContent.trim().replace(/\\s/g, ' ')", 'frais 3,50 €')
         ->assertNoJavaScriptErrors();
 });
 
