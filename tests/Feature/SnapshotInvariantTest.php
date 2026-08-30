@@ -56,8 +56,10 @@ use Illuminate\Support\Carbon;
  * Modifié une onzième fois : l'immobilier porte enfin un gain réalisé — le cash rendu par les mois
  * excédentaires — là où il valait zéro, donc `realizedGain` de sa classe et le `totalRealizedGain`
  * du tableau de bord cessent d'ignorer les loyers encaissés.
+ * Modifié une douzième fois : le dividende encaissé rejoint lui aussi le gain réalisé — classe du
+ * tableau de bord, résumé de la page liste et position de la fiche.
  */
-const SNAPSHOT_VERSION = '33d72d6c4b51de9133344579b7ebbed9e371ed0e';
+const SNAPSHOT_VERSION = '3217abb7fb53e984e3914c4551c46a54ede54440';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

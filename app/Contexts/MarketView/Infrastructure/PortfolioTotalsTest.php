@@ -2,6 +2,7 @@
 
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\Market\Models\Dividend;
 use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
 use Illuminate\Support\Facades\DB;
 
@@ -85,4 +86,32 @@ it('partage la lecture mémoïsée du portefeuille entre deux expositions', func
     DB::disableQueryLog();
 
     expect($queries->filter(fn (string $query): bool => str_contains($query, '"holdings"')))->toBeEmpty();
+});
+
+it('ajoute le dividende encaissé au gain réalisé, au total comme à la position', function () {
+    ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
+
+    /** Dix titres détenus depuis le 1er janvier 2026, un détachement de 2 € par titre après. */
+    Dividend::factory()->create([
+        'asset_id' => $instrument->id,
+        'ex_date' => '2026-02-01',
+        'amount_per_share' => 2.0,
+    ]);
+
+    $summary = $this->overview->overviewFor($user->id, AssetClass::Equity);
+    $position = $this->overview->positionFor($user->id, $instrument->id);
+
+    /**
+     * Aucune vente dans le jeu : le réalisé vaut donc les 20 € encaissés, ni plus ni moins. Le
+     * gain latent les rate — dernier cours et prix payé sont bruts — et rien d'autre ne les
+     * ramenait dans le patrimoine.
+     */
+    expect($summary->totalRealizedGain)->toBe(20.0)
+        ->and($position->realizedGain)->toBe(20.0);
+});
+
+it('laisse le gain réalisé d\'une exposition muette aux seules cessions', function () {
+    ['user' => $user] = cryptoFixture();
+
+    expect($this->overview->overviewFor($user->id, AssetClass::Crypto)->totalRealizedGain)->toBe(0.0);
 });

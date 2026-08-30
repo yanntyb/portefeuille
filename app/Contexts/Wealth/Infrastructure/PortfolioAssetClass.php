@@ -63,6 +63,14 @@ class PortfolioAssetClass implements AssetClassPort
         return IncomeSource::forAssetClass($this->exposure)?->getLabel();
     }
 
+    /**
+     * Le réalisé additionne les plus-values de cession et le revenu déjà encaissé par l'exposition.
+     *
+     * `Portfolio` ne compte que les cessions — il ne connaît pas les revenus — et le dividende ne
+     * se retrouvait donc nulle part : le gain latent le rate aussi, puisqu'il compare le dernier
+     * cours au prix réellement payé, tous deux bruts. Seules les séries d'évolution portent des
+     * cours ajustés, et elles ne servent pas ce compteur.
+     */
     public function snapshotFor(int $userId): ClassSnapshotData
     {
         $user = User::query()->find($userId);
@@ -76,7 +84,7 @@ class PortfolioAssetClass implements AssetClassPort
         return new ClassSnapshotData(
             value: $overview->totalValue,
             invested: $overview->totalCost,
-            realized: $overview->totalRealizedGain,
+            realized: round($overview->totalRealizedGain + $this->receivedIncomeFor($userId), 2),
         );
     }
 
@@ -134,5 +142,13 @@ class PortfolioAssetClass implements AssetClassPort
          * les compte déjà nets de son côté. Sans le filtre, ils seraient comptés deux fois.
          */
         return round(($this->income)($userId, $source)->last12Months / 12, 2);
+    }
+
+    /** Tout le revenu encaissé par l'exposition depuis toujours. Nul pour une classe muette. */
+    private function receivedIncomeFor(int $userId): float
+    {
+        $source = IncomeSource::forAssetClass($this->exposure);
+
+        return $source === null ? 0.0 : ($this->income)($userId, $source)->totalReceived;
     }
 }

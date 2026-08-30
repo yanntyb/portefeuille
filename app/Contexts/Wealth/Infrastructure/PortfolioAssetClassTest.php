@@ -4,6 +4,7 @@ use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
+use App\Contexts\Market\Models\Dividend;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Market\Models\SectorAllocation;
@@ -73,4 +74,31 @@ it('leaves a sectorised slice under its own sector', function () {
 
     expect($slices)->toHaveCount(1)
         ->and($slices[0]->label)->toBe(Sector::Technology->getLabel());
+});
+
+it('counts the dividends received in the realized gain of a distributing exposure', function () {
+    ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
+
+    // Dix titres détenus depuis le 1er janvier 2026, un détachement de 2 € par titre après.
+    Dividend::factory()->create([
+        'asset_id' => $instrument->id,
+        'ex_date' => '2026-02-01',
+        'amount_per_share' => 2.0,
+    ]);
+
+    $snapshot = app()->makeWith(PortfolioAssetClass::class, ['exposure' => AssetClass::Equity])
+        ->snapshotFor($user->id);
+
+    // Aucune vente dans le jeu : le réalisé vaut les 20 € encaissés. Le gain latent les rate,
+    // dernier cours et prix payé étant tous deux bruts.
+    expect($snapshot->realized)->toBe(20.0);
+});
+
+it('leaves the realized gain of a silent exposure to its sales alone', function () {
+    ['user' => $user] = cryptoFixture();
+
+    $snapshot = app()->makeWith(PortfolioAssetClass::class, ['exposure' => AssetClass::Crypto])
+        ->snapshotFor($user->id);
+
+    expect($snapshot->realized)->toBe(0.0);
 });

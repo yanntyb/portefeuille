@@ -10,6 +10,7 @@ use App\Contexts\MarketView\Datas\ContributionLineData;
 use App\Contexts\MarketView\Datas\HoldingRowData;
 use App\Contexts\MarketView\Datas\PortfolioSummaryData;
 use App\Contexts\MarketView\Datas\PositionData;
+use App\Contexts\MarketView\Ports\IncomePort;
 use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
 use App\Contexts\Portfolio\Actions\GetPortfolioAnalysis;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
@@ -28,6 +29,7 @@ class PortfolioTotals implements PortfolioOverviewPort
         private GetPortfolioOverview $overview,
         private GetPortfolioPositions $positions,
         private GetPortfolioAnalysis $analysis,
+        private IncomePort $income,
     ) {}
 
     public function overviewFor(int $userId, AssetClass $exposure): PortfolioSummaryData
@@ -45,7 +47,7 @@ class PortfolioTotals implements PortfolioOverviewPort
             totalCost: $overview->totalCost,
             totalGain: $overview->totalGain,
             totalGainPct: $overview->totalGainPct,
-            totalRealizedGain: $overview->totalRealizedGain,
+            totalRealizedGain: round($overview->totalRealizedGain + $this->income->summaryFor($userId, $exposure)->totalReceived, 2),
             holdings: array_map(
                 fn (HoldingLineData $line): HoldingRowData => new HoldingRowData(
                     assetId: $line->assetId,
@@ -65,6 +67,11 @@ class PortfolioTotals implements PortfolioOverviewPort
         );
     }
 
+    /**
+     * Le réalisé d'une position ajoute son revenu encaissé à ses plus-values de cession, comme le
+     * total de l'exposition : les deux compteurs portent le même libellé, ils doivent compter la
+     * même chose, sans quoi la somme des positions ne ferait plus le total de la page.
+     */
     public function positionFor(int $userId, int $assetId): ?PositionData
     {
         $position = ($this->positions)($userId)[$assetId] ?? null;
@@ -75,7 +82,7 @@ class PortfolioTotals implements PortfolioOverviewPort
             marketValue: $position->marketValue,
             gain: $position->gain,
             gainPct: $position->gainPct,
-            realizedGain: $position->realizedGain,
+            realizedGain: round($position->realizedGain + $this->income->assetHistoryFor($userId, $assetId)->totalReceived, 2),
         );
     }
 
