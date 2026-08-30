@@ -56,3 +56,20 @@ it('ne mesure rien sur une série vide', function () {
 it('ne mesure rien tant que la valeur reste nulle ou négative', function () {
     expect((new Drawdown)->of(['2026-01-01'], [0.0]))->toEqual(DrawdownData::empty());
 });
+
+it('mesure la perte en cours depuis le plus-haut historique, non depuis un sommet intermédiaire', function () {
+    $drawdown = (new Drawdown)->of(
+        ['2026-01-01', '2026-02-01', '2026-03-01', '2026-04-01'],
+        [1000.0, 400.0, 900.0, 800.0],
+    );
+
+    expect($drawdown->maxDepth)->toBe(60.0)
+        ->and($drawdown->peakLabel)->toBe('2026-01-01')
+        ->and($drawdown->troughLabel)->toBe('2026-02-01')
+        ->and($drawdown->currentDepth)->toBe(20.0);
+});
+
+it('lève une exception si labels et values ont des longueurs différentes', function () {
+    expect(fn () => (new Drawdown)->of(['a'], [1000.0, 800.0, 500.0]))
+        ->toThrow(InvalidArgumentException::class, 'labels et values doivent avoir la même longueur');
+});
