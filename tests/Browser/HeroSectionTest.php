@@ -87,11 +87,10 @@ it('sépare gain latent et gain réalisé dès qu\'une vente est passée', funct
 
     $this->actingAs($user);
 
+    /** Les deux montants vivent dans deux spans : l'écart est un `gap`, pas un blanc du texte. */
     visit("/asset/{$instrument->id}")
-        ->assertScript(
-            "({$normalise})(document.querySelector('[data-hero-summary]'))",
-            'Investi 640,00 € Gain latent +160,00 € Gain réalisé +40,00 €',
-        )
+        ->assertScript("({$normalise})(document.querySelector('[data-gain]'))", 'Gain +160,00 € (latent)+40,00 € (réalisé)')
+        ->assertScript("({$normalise})(document.querySelector('[data-realized-gain]'))", '+40,00 € (réalisé)')
         ->assertNoJavaScriptErrors();
 });
 

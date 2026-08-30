@@ -26,26 +26,23 @@ const hasRealized = computed<boolean>(() => props.realizedGain !== null && props
             </strong>
         </span>
         <!--
-            Deux variantes plutôt qu'un libellé interpolé : Vue supprime les nœuds blancs qui
-            entourent une interpolation, et le texte du repère se collerait à ses voisins.
+            Un seul repère « Gain », ses deux montants serrés sous lui : séparés, le réalisé
+            passait à la ligne à la première gêne, à égalité avec « Investi ».
         -->
-        <span v-if="hasRealized" data-gain class="whitespace-nowrap">
-            Gain latent
-            <strong class="font-semibold tabular-nums" :class="gainClass(props.gain)">
-                {{ signedEur(props.gain, props.digits) }}
-            </strong>
-        </span>
-        <span v-else data-gain class="whitespace-nowrap">
+        <span data-gain class="flex flex-wrap items-baseline gap-x-2">
             Gain
-            <strong class="font-semibold tabular-nums" :class="gainClass(props.gain)">
-                {{ signedEur(props.gain, props.digits) }}
-            </strong>
-        </span>
-        <span v-if="hasRealized" data-realized-gain class="whitespace-nowrap">
-            Gain réalisé
-            <strong class="font-semibold tabular-nums" :class="gainClass(props.realizedGain)">
-                {{ signedEur(props.realizedGain, props.digits) }}
-            </strong>
+            <span class="whitespace-nowrap">
+                <strong class="font-semibold tabular-nums" :class="gainClass(props.gain)">
+                    {{ signedEur(props.gain, props.digits) }}
+                </strong>
+                <template v-if="hasRealized"> (latent)</template>
+            </span>
+            <span v-if="hasRealized" data-realized-gain class="whitespace-nowrap">
+                <strong class="font-semibold tabular-nums" :class="gainClass(props.realizedGain)">
+                    {{ signedEur(props.realizedGain, props.digits) }}
+                </strong>
+                (réalisé)
+            </span>
         </span>
     </p>
 </template>
