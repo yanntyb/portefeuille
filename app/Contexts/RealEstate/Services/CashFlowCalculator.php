@@ -91,22 +91,47 @@ class CashFlowCalculator
      */
     public function injectionsSince(Property $property, Carbon $until): array
     {
+        return $this->netsSince($property, $until, -1.0);
+    }
+
+    /**
+     * Cash rendu mois par mois depuis l'acquisition, indexé par premier jour du mois. Miroir exact
+     * de `injectionsSince()` : seuls les mois excédentaires y figurent.
+     *
+     * Un mois ne peut pas peupler les deux tableaux, et leur union couvre tous les mois non nuls :
+     * c'est ce qui autorise à compter le rendu en gain sans jamais recouper la mise.
+     *
+     * @return array<string, float>
+     */
+    public function surplusesSince(Property $property, Carbon $until): array
+    {
+        return $this->netsSince($property, $until, 1.0);
+    }
+
+    /**
+     * Les nets du signe demandé, en valeur absolue. `$sign` vaut −1 pour les mois déficitaires,
+     * 1 pour les excédentaires.
+     *
+     * @return array<string, float>
+     */
+    private function netsSince(Property $property, Carbon $until, float $sign): array
+    {
         $from = $property->acquisition_date->copy()->startOfMonth();
 
         if ($from > $until) {
             return [];
         }
 
-        $injections = [];
+        $nets = [];
 
         foreach ($this->months($property, $from, $until) as $flow) {
-            $injected = max(0.0, -$flow->net);
+            $net = max(0.0, $sign * $flow->net);
 
-            if ($injected > 0.0) {
-                $injections[$flow->month] = $injected;
+            if ($net > 0.0) {
+                $nets[$flow->month] = $net;
             }
         }
 
-        return $injections;
+        return $nets;
     }
 }

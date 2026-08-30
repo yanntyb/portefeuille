@@ -53,8 +53,11 @@ use Illuminate\Support\Carbon;
  * cinquième clé — le patrimoine ventilé par secteur, l'immobilier compris.
  * Modifié une dixième fois : la part sans secteur d'une exposition prend le nom de celle-ci, si
  * bien que la tranche « Autre » du jeu de données s'appelle désormais « Actions ».
+ * Modifié une onzième fois : l'immobilier porte enfin un gain réalisé — le cash rendu par les mois
+ * excédentaires — là où il valait zéro, donc `realizedGain` de sa classe et le `totalRealizedGain`
+ * du tableau de bord cessent d'ignorer les loyers encaissés.
  */
-const SNAPSHOT_VERSION = '317de7b402178e1425de88cdd721646dee5021b0';
+const SNAPSHOT_VERSION = '33d72d6c4b51de9133344579b7ebbed9e371ed0e';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

@@ -4,6 +4,7 @@ namespace App\Contexts\Wealth\Infrastructure;
 
 use App\Contexts\RealEstate\Actions\BuildRealEstateSeries;
 use App\Contexts\RealEstate\Actions\GetRealEstateCashInvested;
+use App\Contexts\RealEstate\Actions\GetRealEstateCashReturned;
 use App\Contexts\RealEstate\Actions\GetRealEstateOverview;
 use App\Contexts\RealEstate\Datas\PropertyOverviewData;
 use App\Contexts\Wealth\Datas\ClassSectorData;
@@ -42,14 +43,22 @@ class RealEstateClass implements AssetClassPort
     public function __construct(
         private GetRealEstateOverview $overview,
         private GetRealEstateCashInvested $cashInvested,
+        private GetRealEstateCashReturned $cashReturned,
         private BuildRealEstateSeries $series,
     ) {}
 
+    /**
+     * Le réalisé est le miroir de la mise : `GetRealEstateCashInvested` compte les mois
+     * déficitaires, `GetRealEstateCashReturned` les excédentaires. Aucun mois ne peut peupler les
+     * deux, sans quoi le loyer encaissé sortirait du patrimoine et un bien à cash-flow positif
+     * afficherait moins de gain qu'un bien déficitaire de même rendement.
+     */
     public function snapshotFor(int $userId): ClassSnapshotData
     {
         return new ClassSnapshotData(
             value: ($this->overview)($userId)->totalNetWorth,
             invested: ($this->cashInvested)($userId),
+            realized: ($this->cashReturned)($userId),
         );
     }
 
