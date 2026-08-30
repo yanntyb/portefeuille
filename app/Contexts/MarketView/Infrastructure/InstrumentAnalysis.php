@@ -57,10 +57,32 @@ class InstrumentAnalysis implements InstrumentAnalysisPort
             return null;
         }
 
+        $portfolioWeightPct = $this->weight->of(
+            $position->marketValue,
+            array_map(fn (PositionLineData $line): ?float => $line->marketValue, array_values($positions)),
+        );
+
         $prices = $this->prices->forAssetSince($assetId, PriceHistoryWindow::since());
 
         if ($prices->isEmpty()) {
-            return InstrumentAnalysisData::empty();
+            /**
+             * Le PRU et le poids viennent de la position, pas de la série de cours : une fenêtre
+             * de cinq ans vide — un cours plus ancien fait tout de même la dernière valorisation
+             * connue — ne doit pas les faire disparaître avec le reste, qui lui dépend des cours.
+             */
+            return new InstrumentAnalysisData(
+                pru: $position->avgCost,
+                pruGapPct: null,
+                ma200: null,
+                ma200GapPct: null,
+                rsi14: null,
+                high52w: null,
+                high52wGapPct: null,
+                atr: null,
+                atrPct: null,
+                maxDrawdown: null,
+                portfolioWeightPct: $portfolioWeightPct,
+            );
         }
 
         $labels = $prices->map(fn (Price $price): string => $price->date->format('Y-m-d'))->values()->all();
@@ -87,10 +109,7 @@ class InstrumentAnalysis implements InstrumentAnalysisPort
             atr: $atr?->value,
             atrPct: $atr?->percent,
             maxDrawdown: $this->drawdown->of($labels, $closes)->maxDepth,
-            portfolioWeightPct: $this->weight->of(
-                $position->marketValue,
-                array_map(fn (PositionLineData $line): ?float => $line->marketValue, array_values($positions)),
-            ),
+            portfolioWeightPct: $portfolioWeightPct,
         );
     }
 }

@@ -95,3 +95,34 @@ it('rend le poids de la position dans le portefeuille entier', function () {
     /** 1 000 € sur 4 000 € : la position pèse un quart du portefeuille. */
     expect($this->analysis->forAsset($user->id, $instrument->id)->portfolioWeightPct)->toBe(25.0);
 });
+
+it('garde le prix de revient et le poids quand aucun cours ne tombe dans la fenêtre de cinq ans', function () {
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $instrument = Instrument::factory()->create();
+
+    /**
+     * Un seul cours, plus vieux que la fenêtre de cinq ans lue par `forAssetSince()` :
+     * `GetPortfolioPositions` le trouve quand même via `latestClosesForAssets()`, qui n'a pas
+     * cette borne, donc la position se valorise malgré une fenêtre vide.
+     */
+    Price::factory()->create([
+        'asset_id' => $instrument->id,
+        'date' => now()->subYears(6),
+        'close' => 100,
+    ]);
+    Holding::factory()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $instrument->id,
+        'quantity' => 10,
+        'avg_cost' => 80,
+    ]);
+
+    $data = $this->analysis->forAsset($user->id, $instrument->id);
+
+    /** Position unique du portefeuille : elle en pèse la totalité. */
+    expect($data->pru)->toBe(80.0)
+        ->and($data->portfolioWeightPct)->toBe(100.0)
+        ->and($data->rsi14)->toBeNull();
+});
