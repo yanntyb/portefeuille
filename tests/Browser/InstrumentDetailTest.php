@@ -44,7 +44,7 @@ it('replie toutes les années de transactions et les ouvre une à une', function
         ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 1)
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'hero|valuation|figures|transactions|performance|sectors',
+            'hero|valuation|figures|analysis|transactions|performance|sectors',
         )
         ->assertNoJavaScriptErrors();
 });
@@ -240,13 +240,13 @@ it('aligne le graphe de valorisation sur la marge du reste de la page, y compris
         ->assertNoJavaScriptErrors();
 });
 
-it('donne une ligne à chaque repère de l\'en-tête, montant sur le bord droit', function () {
+it('donne une ligne à chaque repère d\'analyse, montant sur le bord droit', function () {
     ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
 
     $this->actingAs($user);
 
     /** Chaque repère commence sous le précédent et pousse son montant contre le bord droit. */
-    $stacked = "Array.from(document.querySelectorAll('[data-hero-meta] > span')).every((entry, index, entries) => {
+    $stacked = "Array.from(document.querySelectorAll('[data-analysis-row]')).every((entry, index, entries) => {
         const row = entry.getBoundingClientRect();
         const value = entry.querySelector('strong')?.getBoundingClientRect() ?? null;
         const previous = index === 0 ? null : entries[index - 1].getBoundingClientRect();
@@ -256,7 +256,8 @@ it('donne une ligne à chaque repère de l\'en-tête, montant sur le bord droit'
     })";
 
     visit("/asset/{$instrument->id}")->on()->iPhone14Pro()
-        ->assertScript("document.querySelectorAll('[data-hero-meta] > span').length", 2)
+        ->click('[data-section="analysis"] [data-section-toggle]')
+        ->assertScript("document.querySelectorAll('[data-analysis-row]').length > 0", true)
         ->assertScript($stacked, true)
         ->assertNoJavaScriptErrors();
 });
