@@ -46,9 +46,20 @@ class BackupSeeder extends Seeder
     private const STOCK_TICKERS = ['CVX', 'AI.PA', 'TTE.PA', 'HAG.DE', 'NVDA', 'MSFT', 'AMZN', 'TSLA'];
 
     /**
-     * Compte administrateur du dump, celui avec lequel on se connecte par défaut.
+     * Compte administrateur du dump.
      */
     private const ADMIN_EMAIL = 'admin@example.test';
+
+    /**
+     * Identifiant, dans le dump, du compte que l'application ouvre par défaut.
+     *
+     * Faute d'authentification, les contrôleurs retombent sur le premier utilisateur en base
+     * (`auth()->user() ?? User::query()->first()`). C'est le compte administrateur du dump :
+     * celui qui porte le PEA et le CTO suivis dans la durée, le seul dont les séries d'évolution
+     * racontent quelque chose. Il est donc soit greffé sur le premier compte déjà en base
+     * (cf. `seedUsers()`), soit inséré avant les autres.
+     */
+    private const DEFAULT_DUMP_USER_ID = 1;
 
     /**
      * Achats Bitcoin du compte par défaut, relevés sur l'historique d'ordres Kraken.
@@ -130,10 +141,23 @@ class BackupSeeder extends Seeder
      *
      * Nom, email et mot de passe sont remplacés : le dump contient de vraies identités et de
      * vrais hashs. Tous les comptes partagent le mot de passe « password ».
+     *
+     * Le compte par défaut du dump se greffe sur le premier compte déjà en base quand il y en a
+     * un — typiquement celui de `DatabaseSeeder` après un `migrate:fresh --seed`. Sans cela le
+     * dump s'insérerait derrière lui et l'application ouvrirait un portefeuille de démonstration
+     * plutôt que l'historique réel.
      */
     private function seedUsers(MysqlDumpReader $reader): void
     {
-        foreach ($reader->rows('users') as [$dumpId, , , $role, $verifiedAt, , , $createdAt, $updatedAt]) {
+        $hostUser = User::query()->orderBy('id')->first();
+
+        foreach ($this->userRowsDefaultFirst($reader) as [$dumpId, , , $role, $verifiedAt, , , $createdAt, $updatedAt]) {
+            if ($hostUser !== null && (int) $dumpId === self::DEFAULT_DUMP_USER_ID) {
+                $this->users[(int) $dumpId] = $hostUser->id;
+
+                continue;
+            }
+
             $isAdmin = $role === Role::Admin->value;
             $email = $isAdmin ? self::ADMIN_EMAIL : "utilisateur-{$dumpId}@example.test";
 
@@ -151,6 +175,35 @@ class BackupSeeder extends Seeder
 
             $this->users[(int) $dumpId] = $user->id;
         }
+    }
+
+    /**
+     * Lignes `users` du dump, le compte par défaut en tête.
+     *
+     * L'ordre d'insertion décide de l'ordre des identifiants en base, donc du compte ouvert par
+     * l'application. Les trois lignes de la table tiennent en mémoire sans effort, contrairement
+     * aux prix et aux transactions qui restent lus au fil de l'eau.
+     *
+     * @return list<list<string|null>>
+     */
+    private function userRowsDefaultFirst(MysqlDumpReader $reader): array
+    {
+        $rows = iterator_to_array($reader->rows('users'), preserve_keys: false);
+
+        // Tri stable depuis PHP 8.0 : l'ordre du dump est conservé derrière le compte par défaut.
+        usort($rows, fn (array $left, array $right): int => $this->insertionRank($left) <=> $this->insertionRank($right));
+
+        return $rows;
+    }
+
+    /**
+     * Rang d'insertion d'une ligne `users` : 0 pour le compte par défaut, 1 pour les autres.
+     *
+     * @param  list<string|null>  $row
+     */
+    private function insertionRank(array $row): int
+    {
+        return (int) $row[0] === self::DEFAULT_DUMP_USER_ID ? 0 : 1;
     }
 
     /**
@@ -248,13 +301,13 @@ class BackupSeeder extends Seeder
      */
     private function seedCryptoOrders(): void
     {
-        $user = User::query()->where('email', self::ADMIN_EMAIL)->first();
+        $userId = $this->users[self::DEFAULT_DUMP_USER_ID] ?? null;
 
-        if ($user === null) {
+        if ($userId === null) {
             return;
         }
 
-        $wallet = Wallet::query()->firstOrCreate(['user_id' => $user->id, 'name' => self::CRYPTO_WALLET]);
+        $wallet = Wallet::query()->firstOrCreate(['user_id' => $userId, 'name' => self::CRYPTO_WALLET]);
 
         // Idempotence : purge (mass delete ne déclenche pas l'observer), puis reconstruit.
         Transaction::query()->where('wallet_id', $wallet->id)->delete();
@@ -271,7 +324,7 @@ class BackupSeeder extends Seeder
             }
 
             Transaction::query()->create([
-                'user_id' => $user->id,
+                'user_id' => $userId,
                 'wallet_id' => $wallet->id,
                 'asset_id' => $instrument->id,
                 'date' => $order['date'],

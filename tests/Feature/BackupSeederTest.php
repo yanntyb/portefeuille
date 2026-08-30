@@ -67,6 +67,23 @@ it('replaces the identities of the dump', function () {
         ->and(User::query()->where('email', 'like', '%exemple-reel.fr')->exists())->toBeFalse();
 });
 
+it('inserts the default account first, since the application falls back on it', function () {
+    $this->seed(SampleBackupSeeder::class);
+
+    expect(User::query()->orderBy('id')->value('email'))->toBe('admin@example.test');
+});
+
+it('grafts the default account onto the first user already in the database', function () {
+    $host = User::factory()->create(['email' => 'test@example.com']);
+
+    $this->seed(SampleBackupSeeder::class);
+
+    expect(User::query()->orderBy('id')->value('email'))->toBe('test@example.com')
+        ->and(User::query()->where('email', 'admin@example.test')->exists())->toBeFalse()
+        ->and(Wallet::query()->where('user_id', $host->id)->pluck('name')->sort()->values()->all())
+        ->toBe(['CTO', 'PEA', 'Portefeuille Crypto']);
+});
+
 it('lets every seeded account sign in with the shared password', function () {
     $this->seed(SampleBackupSeeder::class);
 
