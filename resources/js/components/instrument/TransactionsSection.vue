@@ -83,16 +83,17 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                             {{ line.quantity }}
                         </span>
                         <!--
-                            Colonne souple entre la quantité et le montant : le prix unitaire s'y
-                            range contre la quantité qu'il multiplie, les frais contre le montant
-                            qu'ils grèvent. Une colonne toujours présente, même vide, sinon le
-                            montant remonterait d'une colonne.
+                            Colonne souple entre la quantité et le montant : prix unitaire puis
+                            frais s'y suivent contre la quantité, pour que la ligne se lise d'un
+                            trait — quantité × prix - frais. Colonne toujours présente, même sans
+                            frais, sinon le montant remonterait d'une colonne.
                         -->
-                        <span class="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                        <span class="flex items-center gap-1 text-xs text-muted-foreground">
                             <span data-transaction-detail>×{{ eur(line.unitPrice) }}</span>
-                            <span v-if="line.fees" data-transaction-fees>
-                                frais {{ eur(line.fees) }}
-                            </span>
+                            <template v-if="line.fees">
+                                -
+                                <span data-transaction-fees>frais {{ eur(line.fees) }}</span>
+                            </template>
                         </span>
                         <span data-transaction-amount class="text-right font-medium">
                             {{ signedEur(amountOf(line)) }}

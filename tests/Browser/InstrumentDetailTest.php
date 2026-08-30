@@ -148,8 +148,15 @@ it('affiche les frais sur la ligne de transaction, sans clic', function () {
             .'  return a === b; })()',
             true,
         )
-        /** `toLocaleString` sépare le montant du symbole par une espace insécable étroite, d'où le remplacement. */
-        ->assertScript("document.querySelector('[data-transaction-fees]').textContent.trim().replace(/\\s/g, ' ')", 'frais 3,50 €')
+        /**
+         * Prix unitaire et frais se suivent d'un trait contre la quantité, dans cet ordre.
+         * `toLocaleString` sépare le montant du symbole par une espace insécable étroite, d'où le
+         * remplacement, et les espaces de gabarit valent celles du texte, d'où le resserrement.
+         */
+        ->assertScript(
+            "document.querySelector('[data-transaction-fees]').parentElement.textContent.replace(/\\s+/g, ' ').trim()",
+            '×80,00 € - frais 3,50 €',
+        )
         ->assertNoJavaScriptErrors();
 });
 
