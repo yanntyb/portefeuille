@@ -237,7 +237,8 @@ it('affiche les dividendes perçus quand l\'instrument en verse', function () {
     $recentYear = now()->subMonths(2)->format('Y');
     $olderYear = now()->subMonths(15)->format('Y');
 
-    openSection(visit("/asset/{$instrument->id}")->assertSee('Dividendes (2)'), 'dividends')
+    // Titre nu : le nombre de détachements se lit dans la liste dépliée, pas dans l'en-tête.
+    openSection(visit("/asset/{$instrument->id}")->assertSee('Dividendes')->assertDontSee('Dividendes (2)'), 'dividends')
         // Les dividendes se lisent avant la répartition sectorielle : ce que l'actif rapporte
         // passe devant sa composition. Ordre relatif seul, les autres sections du gabarit
         // dépendant de la fixture.

@@ -9,8 +9,6 @@ const props = defineProps<{ dividends: AssetDividendHistory }>();
 
 const years = computed<DividendYear[]>(() => dividendYears(props.dividends.receipts));
 
-const heading = computed<string>(() => `Dividendes (${props.dividends.receipts.length})`);
-
 /**
  * Seule l'année la plus récente s'ouvre : les précédentes relèvent de l'archive. « La plus
  * récente » et non l'année civile courante — sans détachement cette année, un groupe ouvert vaut
@@ -38,7 +36,7 @@ const perShare = (value: number): string => eur(value, 3);
 </script>
 
 <template>
-    <CollapsibleSection section="dividends" :title="heading">
+    <CollapsibleSection section="dividends" title="Dividendes">
         <p class="text-sm text-muted-foreground">
             <span data-dividend-total>{{ eur(props.dividends.totalReceived) }}</span> perçus,
             dont <span data-dividend-last12>{{ eur(props.dividends.last12Months) }}</span> sur douze mois
