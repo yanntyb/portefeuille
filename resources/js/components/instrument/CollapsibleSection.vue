@@ -46,8 +46,13 @@ const toggle = (): void => {
             -->
             <slot name="value" />
 
-            <!-- Ce qui s'ouvre sur autre chose que le pli : posé au-dessus de la couche de bascule. -->
-            <span v-if="$slots.aside" class="relative flex items-center">
+            <!--
+                Ce qui s'ouvre sur autre chose que le pli : posé au-dessus de la couche de bascule.
+                Hauteur nulle, contenu centré sur la ligne : un bouton d'aide est plus haut qu'un
+                titre, et sans cette garde il grandirait sa section, donc l'écart à ses deux
+                voisines — le pas de la page cesserait d'être constant.
+            -->
+            <span v-if="$slots.aside" class="relative flex h-0 items-center">
                 <slot name="aside" />
             </span>
 
