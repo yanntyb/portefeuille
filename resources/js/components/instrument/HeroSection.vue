@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import HeroFigures from '@/components/HeroFigures.vue';
 import { pct } from '@/lib/format';
-import { heroMeta, heroValueOf, type HeroMetaEntry, type Instrument } from '@/lib/instrument';
+import { heroValueOf, type Instrument } from '@/lib/instrument';
 
 const props = defineProps<{
     instrument: Instrument;
@@ -11,8 +11,6 @@ const props = defineProps<{
 const position = computed(() => props.instrument.position);
 
 const heroValue = computed<number | null>(() => heroValueOf(props.instrument));
-
-const metaEntries = computed<HeroMetaEntry[]>(() => heroMeta(props.instrument));
 
 /** Pas de position, pas de gain : un titre seulement suivi n'a rien à comparer. */
 const gainLabel = computed<string | null>(() =>
@@ -33,11 +31,7 @@ const gainLabel = computed<string | null>(() =>
             </p>
         </div>
 
-        <HeroFigures
-            :value="heroValue"
-            :gain="position?.gain ?? null"
-            :gain-label="gainLabel"
-            :entries="metaEntries"
-        />
+        <!-- Les repères chiffrés sortent d'ici : le graphe s'intercale entre eux et la valeur. -->
+        <HeroFigures :value="heroValue" :gain="position?.gain ?? null" :gain-label="gainLabel" />
     </header>
 </template>

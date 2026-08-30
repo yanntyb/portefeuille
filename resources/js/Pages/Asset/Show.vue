@@ -4,6 +4,7 @@ import { Head } from '@inertiajs/vue3';
 import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
 import DividendsSection from '@/components/instrument/DividendsSection.vue';
+import FiguresSection from '@/components/instrument/FiguresSection.vue';
 import HeroSection from '@/components/instrument/HeroSection.vue';
 import PerformanceSection from '@/components/instrument/PerformanceSection.vue';
 import PriceHistorySection from '@/components/instrument/PriceHistorySection.vue';
@@ -54,6 +55,9 @@ const valuation = aheadOfNetwork(
         />
 
         <PriceHistorySection v-else :price-history="priceHistory" />
+
+        <!-- La courbe suit immédiatement la valeur qu'elle raconte ; les repères viennent ensuite. -->
+        <FiguresSection :instrument="props.instrument" />
 
         <TransactionsSection :transactions="props.instrument.transactions" />
 
