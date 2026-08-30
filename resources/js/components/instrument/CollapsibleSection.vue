@@ -22,13 +22,21 @@ const toggle = (): void => {
             Le chevron ferme la ligne au lieu de l'ouvrir : posé avant le titre, il décalerait tous
             les titres de section de sa propre largeur, hors de la marge que suit le reste de la page.
         -->
-        <button
-            type="button"
-            data-section-toggle
-            class="flex w-full items-center gap-1.5 text-left"
-            :aria-expanded="isOpen"
-            @click="toggle"
-        >
+        <div class="relative flex w-full items-center gap-1.5">
+            <!--
+                La bascule est une couche sous la ligne, pas la ligne elle-même : le slot `aside`
+                porte des boutons (le dialogue d'aide des performances), et deux `<button>`
+                imbriquées seraient invalides. Le titre la nomme pour les technologies d'assistance.
+            -->
+            <button
+                type="button"
+                data-section-toggle
+                class="absolute inset-0"
+                :aria-label="props.title"
+                :aria-expanded="isOpen"
+                @click="toggle"
+            ></button>
+
             <h2 class="text-[17px] leading-none font-bold">{{ props.title }}</h2>
 
             <!--
@@ -38,11 +46,16 @@ const toggle = (): void => {
             -->
             <slot name="value" />
 
+            <!-- Ce qui s'ouvre sur autre chose que le pli : posé au-dessus de la couche de bascule. -->
+            <span v-if="$slots.aside" class="relative flex items-center">
+                <slot name="aside" />
+            </span>
+
             <ChevronRight
                 class="ml-auto size-4 shrink-0 text-muted-foreground transition-transform"
                 :class="isOpen ? 'rotate-90' : ''"
             />
-        </button>
+        </div>
 
         <slot v-if="isOpen" />
     </section>

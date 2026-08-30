@@ -14,17 +14,13 @@ const hasPerformances = computed<boolean>(() => (props.performances?.length ?? 0
 <template>
     <!-- Repliée à l'arrivée comme les autres : les performances ne se calculent qu'au dépli. -->
     <CollapsibleSection section="performances" title="Performances">
-        <!--
-            L'aide descend sous le titre : le pli est une `<button>`, et le déclencheur du dialogue
-            en est une aussi — imbriquées, le clic de l'une avalerait l'autre.
-        -->
+        <!-- L'aide se lit repliée : elle explique de quoi parle la section, pas ce qu'elle montre. -->
+        <template #aside>
+            <PerformanceInfoDialog variant="periods" />
+        </template>
+
         <template v-if="props.performances !== null">
-            <template v-if="hasPerformances">
-                <div class="-mt-4 flex justify-end">
-                    <PerformanceInfoDialog variant="periods" />
-                </div>
-                <PerformanceBars :performances="props.performances ?? []" />
-            </template>
+            <PerformanceBars v-if="hasPerformances" :performances="props.performances ?? []" />
 
             <p v-else class="py-8 text-center text-sm text-muted-foreground">
                 Pas encore de performance à mesurer.
