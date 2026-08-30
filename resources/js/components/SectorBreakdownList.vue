@@ -4,11 +4,18 @@ import { Button } from '@/components/ui/button';
 import { eur as formatEur, sharePct as share } from '@/lib/format';
 import { collapsedSectors, type SectorBreakdownRow, type SectorView } from '@/lib/sector';
 
-const props = defineProps<{ rows: SectorBreakdownRow[] }>();
+const props = withDefaults(
+    defineProps<{
+        rows: SectorBreakdownRow[];
+        /** Repliée, la liste s'arrête au sixième secteur derrière une bascule ; dépliée, elle montre tout. */
+        collapsible?: boolean;
+    }>(),
+    { collapsible: true },
+);
 
 const isExpanded = ref<boolean>(false);
 
-const view = computed<SectorView>(() => collapsedSectors(props.rows, isExpanded.value));
+const view = computed<SectorView>(() => collapsedSectors(props.rows, !props.collapsible || isExpanded.value));
 
 const amount = (value: number): string => formatEur(value, 0);
 </script>
@@ -37,7 +44,7 @@ const amount = (value: number): string => formatEur(value, 0);
             </li>
         </ul>
 
-        <div v-if="view.hiddenCount > 0" class="flex justify-center pt-5">
+        <div v-if="collapsible && view.hiddenCount > 0" class="flex justify-center pt-5">
             <Button
                 variant="outline"
                 size="sm"

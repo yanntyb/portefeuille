@@ -377,3 +377,47 @@ it('pointe d\'une pastille chaque détachement sur le graphe de valorisation', f
         ->assertScript(dividendMarkers(), 1)
         ->assertNoJavaScriptErrors();
 });
+
+it('montre tous les secteurs de la fiche sans bascule « Voir plus »', function () {
+    // Huit secteurs, soit deux de plus que le repli de la liste : sur la fiche d'un titre ils
+    // doivent tous s'afficher d'emblée, sans bouton pour dérouler le reste.
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $instrument = Instrument::factory()->create(['name' => 'ACME ETF']);
+    Price::factory()->create(['asset_id' => $instrument->id, 'date' => '2026-07-01', 'close' => 100]);
+
+    $weights = [
+        Sector::Technology->value => 0.3,
+        Sector::Healthcare->value => 0.2,
+        Sector::FinancialServices->value => 0.15,
+        Sector::CommunicationServices->value => 0.12,
+        Sector::ConsumerCyclical->value => 0.1,
+        Sector::Industrials->value => 0.07,
+        Sector::Energy->value => 0.04,
+        Sector::RealEstate->value => 0.02,
+    ];
+
+    foreach ($weights as $sector => $weight) {
+        SectorAllocation::factory()->create([
+            'asset_id' => $instrument->id,
+            'sector' => Sector::from($sector),
+            'weight' => $weight,
+        ]);
+    }
+
+    Holding::factory()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $instrument->id,
+        'quantity' => 10,
+        'avg_cost' => 80,
+    ]);
+
+    $this->actingAs($user);
+
+    openSection(visit("/asset/{$instrument->id}"), 'sectors')
+        ->assertScript('document.querySelectorAll(\'[data-section="sectors"] [data-sector-label]\').length', 8)
+        ->assertSee('Énergie')
+        ->assertScript('document.querySelectorAll(\'[data-section="sectors"] [data-sector-toggle]\').length', 0)
+        ->assertNoJavaScriptErrors();
+});

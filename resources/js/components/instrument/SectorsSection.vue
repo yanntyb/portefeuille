@@ -19,6 +19,7 @@ const rows = computed<SectorBreakdownRow[]>(() =>
 
 <template>
     <CollapsibleSection section="sectors" title="Secteurs">
-        <SectorBreakdownList :rows="rows" />
+        <!-- La page d'un titre n'a qu'une poignée de secteurs : les replier derrière une bascule n'apporte rien. -->
+        <SectorBreakdownList :rows="rows" :collapsible="false" />
     </CollapsibleSection>
 </template>
