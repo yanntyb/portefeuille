@@ -44,13 +44,13 @@ it('colle investi et gain au grand chiffre, comme le tableau de bord', function 
         ->assertNoJavaScriptErrors();
 });
 
-it('détaille le seul prix de revient, le cours se lisant sur la courbe', function () use ($metaEntries) {
+it('ne laisse plus de repère sous le graphe d\'un titre détenu : ils vivent dans l\'analyse', function () {
     ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
 
     $this->actingAs($user);
 
     visit("/asset/{$instrument->id}")
-        ->assertScript($metaEntries, 'PRU 80,00 €')
+        ->assertScript("document.querySelectorAll('[data-hero-meta]').length", 0)
         ->assertNoJavaScriptErrors();
 });
 

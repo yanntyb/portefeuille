@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
+import AnalysisSection from '@/components/instrument/AnalysisSection.vue';
 import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
 import DividendsSection from '@/components/instrument/DividendsSection.vue';
@@ -13,7 +14,7 @@ import SectorsSection from '@/components/instrument/SectorsSection.vue';
 import TransactionsSection from '@/components/instrument/TransactionsSection.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
 import type { AssetDividendHistory } from '@/lib/income';
-import type { Instrument, PriceHistory, ValuationSeries } from '@/lib/instrument';
+import type { Instrument, InstrumentAnalysis, PriceHistory, ValuationSeries } from '@/lib/instrument';
 import type { Performance } from '@/lib/performance';
 import { useSnapshotStore } from '@/stores/snapshot';
 
@@ -24,6 +25,7 @@ const props = defineProps<{
     valuation?: ValuationSeries;
     /** Absente des expositions qui ne distribuent rien : le serveur ne l'envoie pas. */
     dividends?: AssetDividendHistory;
+    analysis?: InstrumentAnalysis;
 }>();
 
 const snapshot = useSnapshotStore();
@@ -39,6 +41,10 @@ const priceHistory = aheadOfNetwork(
 const valuation = aheadOfNetwork(
     () => props.valuation,
     () => snapshot.assetPage(String(props.instrument.id))?.valuation,
+);
+const analysis = aheadOfNetwork(
+    () => props.analysis,
+    () => snapshot.assetPage(String(props.instrument.id))?.analysis ?? undefined,
 );
 </script>
 
@@ -59,6 +65,8 @@ const valuation = aheadOfNetwork(
 
         <!-- La courbe suit immédiatement la valeur qu'elle raconte ; les repères viennent ensuite. -->
         <FiguresSection :instrument="props.instrument" />
+
+        <AnalysisSection v-if="props.instrument.position" :analysis="analysis" />
 
         <TransactionsSection :transactions="props.instrument.transactions" />
 

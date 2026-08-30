@@ -1,4 +1,4 @@
-import { eur, frDate } from '@/lib/format';
+import { frDate } from '@/lib/format';
 
 export interface InstrumentPosition {
     quantity: number;
@@ -116,20 +116,16 @@ export const heroValueOf = (instrument: Instrument): number | null =>
     instrument.position?.marketValue ?? instrument.lastPrice;
 
 /**
- * Repères du milieu de page : paires libellé/valeur où le libellé s'efface et la valeur porte la
- * lecture. Investi, gain et cours n'en sont pas — les deux premiers suivent le grand chiffre de
- * l'en-tête, le dernier se lit sur la courbe. Sans
- * position, il ne reste que la date du dernier cours : un instrument seulement suivi n'a pas de
- * prix de revient.
+ * Repères du milieu de page. Une position n'en pose plus aucun : prix de revient, tendance et
+ * risque se lisent dans la section Analyse, qui les explique. Il ne reste ici que le cas d'un
+ * instrument seulement suivi — la date de son dernier cours, qu'aucune autre section ne porte.
  */
 export const heroMeta = (instrument: Instrument): HeroMetaEntry[] => {
-    const position = instrument.position;
-
-    if (position === null) {
-        return instrument.lastPriceDate === null
-            ? []
-            : [{ label: '', value: `au ${frDate(instrument.lastPriceDate)}` }];
+    if (instrument.position !== null) {
+        return [];
     }
 
-    return [{ label: 'PRU', value: eur(position.avgCost) }];
+    return instrument.lastPriceDate === null
+        ? []
+        : [{ label: '', value: `au ${frDate(instrument.lastPriceDate)}` }];
 };

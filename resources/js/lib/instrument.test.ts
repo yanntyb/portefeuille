@@ -9,9 +9,6 @@ import {
     type TransactionLine,
 } from '@/lib/instrument';
 
-/** `Intl` en fr-FR pose U+202F comme séparateur de milliers et U+00A0 avant l'euro : normalise les deux. */
-const normalizeSpaces = (value: string): string => value.replace(/[\xa0\u202f]/g, ' ');
-
 const position = (overrides: Partial<InstrumentPosition> = {}): InstrumentPosition => ({
     quantity: 10,
     avgCost: 80,
@@ -61,20 +58,8 @@ describe('heroValueOf', () => {
 });
 
 describe('heroMeta', () => {
-    it('énonce le seul prix de revient quand l\'instrument est détenu', () => {
-        const entries = heroMeta(instrument());
-
-        expect(entries.map((entry) => entry.label)).toEqual(['PRU']);
-        expect(entries.map((entry) => normalizeSpaces(entry.value))).toEqual(['80,00 €']);
-    });
-
-    it('laisse le cours à la courbe, investi et gain à l\'en-tête', () => {
-        const entries = heroMeta(instrument());
-
-        expect(entries.map((entry) => entry.label)).not.toContain('Cours');
-        expect(entries.map((entry) => entry.label)).not.toContain('Investi');
-        expect(entries.map((entry) => entry.label)).not.toContain('Gain');
-        expect(entries.filter((entry) => entry.gain !== undefined)).toHaveLength(0);
+    it('ne rend plus rien pour une position : ses repères vivent dans la section Analyse', () => {
+        expect(heroMeta(instrument())).toEqual([]);
     });
 
     it('énonce la date du dernier cours quand l\'instrument n\'est pas détenu', () => {
@@ -85,12 +70,6 @@ describe('heroMeta', () => {
 
     it('n\'énonce rien quand l\'instrument n\'est ni détenu ni coté', () => {
         expect(heroMeta(instrument({ position: null, lastPriceDate: null }))).toEqual([]);
-    });
-
-    it('rend un tiret sur un prix de revient absent plutôt que de masquer la ligne', () => {
-        const entries = heroMeta(instrument({ position: position({ avgCost: null }) }));
-
-        expect(entries[0]).toEqual({ label: 'PRU', value: '—' });
     });
 });
 
