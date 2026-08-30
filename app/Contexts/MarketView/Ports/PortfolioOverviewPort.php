@@ -3,6 +3,7 @@
 namespace App\Contexts\MarketView\Ports;
 
 use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\MarketView\Datas\AnalysisData;
 use App\Contexts\MarketView\Datas\PortfolioSummaryData;
 use App\Contexts\MarketView\Datas\PositionData;
 
@@ -16,4 +17,7 @@ interface PortfolioOverviewPort
 
     /** La position d'un actif, enveloppes confondues et valorisée. Nulle si l'actif n'est pas détenu. */
     public function positionFor(int $userId, int $assetId): ?PositionData;
+
+    /** Les analyses d'une exposition : ce qu'elle concentre, et ce qui la fait avancer. */
+    public function analysisFor(int $userId, AssetClass $exposure): AnalysisData;
 }

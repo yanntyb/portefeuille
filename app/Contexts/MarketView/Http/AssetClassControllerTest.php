@@ -2,9 +2,11 @@
 
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\MarketView\Datas\AnalysisData;
 use App\Contexts\MarketView\Datas\AssetLineData;
 use App\Contexts\MarketView\Datas\AssetValuationData;
 use App\Contexts\MarketView\Datas\DividendHistoryData;
+use App\Contexts\MarketView\Datas\DrawdownData;
 use App\Contexts\MarketView\Datas\EvolutionData;
 use App\Contexts\MarketView\Datas\HoldingRowData;
 use App\Contexts\MarketView\Datas\IncomeOverviewData;
@@ -125,6 +127,11 @@ it('sert l\'aperçu, les performances et l\'évolution par leurs seuls ports', f
         {
             return null;
         }
+
+        public function analysisFor(int $userId, AssetClass $exposure): AnalysisData
+        {
+            return AnalysisData::empty();
+        }
     });
 
     app()->instance(ValuationPort::class, new class implements ValuationPort
@@ -147,6 +154,11 @@ it('sert l\'aperçu, les performances et l\'évolution par leurs seuls ports', f
         public function assetSeriesFor(int $userId, int $assetId): AssetValuationData
         {
             return AssetValuationData::empty();
+        }
+
+        public function drawdownFor(int $userId, AssetClass $exposure): DrawdownData
+        {
+            return DrawdownData::empty();
         }
     });
 

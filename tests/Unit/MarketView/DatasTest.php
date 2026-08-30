@@ -2,11 +2,15 @@
 
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\MarketView\Datas\ConcentrationData;
+use App\Contexts\MarketView\Datas\ContributionLineData;
+use App\Contexts\MarketView\Datas\DrawdownData;
 use App\Contexts\MarketView\Datas\InstrumentDetailData;
 use App\Contexts\MarketView\Datas\PositionData;
 use App\Contexts\MarketView\Datas\PriceHistoryData;
 use App\Contexts\MarketView\Datas\SectorWeightData;
 use App\Contexts\MarketView\Datas\TransactionLineData;
+use App\Contexts\Portfolio\Datas\ContributionData;
 
 it('serializes an instrument detail with nested position', function () {
     $detail = new InstrumentDetailData(
@@ -33,4 +37,25 @@ it('serializes price history as parallel arrays', function () {
     $history = new PriceHistoryData(labels: ['2026-01-01'], close: [100.0]);
 
     expect($history->jsonSerialize())->toBe(['labels' => ['2026-01-01'], 'close' => [100.0]]);
+});
+
+it('reproduit le JSON des analyses de Portfolio à la clé près', function () {
+    $twin = new ConcentrationData(25.0, 75.0, 100.0, 0.25);
+    $origin = new App\Contexts\Portfolio\Datas\ConcentrationData(25.0, 75.0, 100.0, 0.25);
+
+    expect(json_encode($twin))->toBe(json_encode($origin));
+});
+
+it('reproduit le JSON du drawdown de Valuation à la clé près', function () {
+    $twin = new DrawdownData(25.0, '2026-02-01', '2026-03-01', 10.0);
+    $origin = new App\Contexts\Valuation\Datas\DrawdownData(25.0, '2026-02-01', '2026-03-01', 10.0);
+
+    expect(json_encode($twin))->toBe(json_encode($origin));
+});
+
+it('reproduit le JSON d\'une contribution à la clé près', function () {
+    $twin = new ContributionLineData(1, 'ACME', 3.6, 30.0);
+    $origin = new ContributionData(1, 'ACME', 3.6, 30.0);
+
+    expect(json_encode($twin))->toBe(json_encode($origin));
 });

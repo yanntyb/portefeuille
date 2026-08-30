@@ -6,6 +6,7 @@ use App\Contexts\Market\Models\Instrument;
 use App\Contexts\MarketView\Datas\AssetValuationData;
 use App\Contexts\MarketView\Datas\DividendHistoryData;
 use App\Contexts\MarketView\Datas\DividendLineData;
+use App\Contexts\MarketView\Datas\DrawdownData;
 use App\Contexts\MarketView\Datas\EvolutionData;
 use App\Contexts\MarketView\Datas\IncomeOverviewData;
 use App\Contexts\MarketView\Datas\PerformanceLineData;
@@ -61,6 +62,11 @@ it('sert les performances, la valorisation et les détachements par leurs seuls 
         public function assetSeriesFor(int $userId, int $assetId): AssetValuationData
         {
             return new AssetValuationData(['2026-08-01'], [100.0], [80.0], [10.0]);
+        }
+
+        public function drawdownFor(int $userId, AssetClass $exposure): DrawdownData
+        {
+            return DrawdownData::empty();
         }
     });
 

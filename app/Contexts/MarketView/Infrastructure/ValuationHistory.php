@@ -5,17 +5,21 @@ namespace App\Contexts\MarketView\Infrastructure;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\MarketView\Datas\AssetLineData;
 use App\Contexts\MarketView\Datas\AssetValuationData;
+use App\Contexts\MarketView\Datas\DrawdownData;
 use App\Contexts\MarketView\Datas\EvolutionData;
 use App\Contexts\MarketView\Datas\PerformanceLineData;
 use App\Contexts\MarketView\Ports\ValuationPort;
 use App\Contexts\Valuation\Actions\BuildAssetPerformances;
 use App\Contexts\Valuation\Actions\BuildAssetValuationSeries;
 use App\Contexts\Valuation\Actions\BuildEvolutionSeries;
+use App\Contexts\Valuation\Actions\BuildExposureSeries;
 use App\Contexts\Valuation\Actions\BuildPortfolioPerformances;
 use App\Contexts\Valuation\Datas\AssetSeriesData;
 use App\Contexts\Valuation\Datas\PerformanceData;
 use App\Contexts\Valuation\Enums\ValuationGranularity;
 use App\Contexts\Valuation\Enums\ValuationRange;
+use App\Contexts\Valuation\Services\Drawdown;
+use InvalidArgumentException;
 
 /**
  * Pur remappage : le partage par exposition est passé aux actions telles quelles, jamais refait
@@ -29,6 +33,8 @@ class ValuationHistory implements ValuationPort
         private BuildEvolutionSeries $evolution,
         private BuildAssetPerformances $assetPerformances,
         private BuildAssetValuationSeries $assetSeries,
+        private BuildExposureSeries $exposureSeries,
+        private Drawdown $drawdown,
     ) {}
 
     /** @return list<PerformanceLineData> */
@@ -86,6 +92,30 @@ class ValuationHistory implements ValuationPort
             valuations: $series->valuations,
             invested: $series->invested,
             prices: $series->prices,
+        );
+    }
+
+    /**
+     * `BuildExposureSeries` garantit `labels` et `valuations` de même longueur ; on le vérifie
+     * plutôt que de le supposer, `Drawdown::of` levant sinon une exception.
+     */
+    public function drawdownFor(int $userId, AssetClass $exposure): DrawdownData
+    {
+        $series = ($this->exposureSeries)($userId, [$exposure]);
+
+        if (count($series->labels) !== count($series->valuations)) {
+            throw new InvalidArgumentException(
+                'labels et valuations doivent avoir la même longueur (labels: '.count($series->labels).', valuations: '.count($series->valuations).')'
+            );
+        }
+
+        $drawdown = $this->drawdown->of($series->labels, $series->valuations);
+
+        return new DrawdownData(
+            maxDepth: $drawdown->maxDepth,
+            peakLabel: $drawdown->peakLabel,
+            troughLabel: $drawdown->troughLabel,
+            currentDepth: $drawdown->currentDepth,
         );
     }
 
