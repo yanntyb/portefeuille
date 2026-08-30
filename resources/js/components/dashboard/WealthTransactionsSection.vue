@@ -91,10 +91,19 @@ const amountOf = (line: WealthTransactionLine): number => (line.isSell ? -line.t
                                 <span data-transaction-asset class="truncate font-medium">
                                     {{ line.assetName }}
                                 </span>
-                                <span class="text-right" :class="line.isSell ? 'text-loss' : 'text-gain'">
+                                <!--
+                                    Le sens se lit sur la seule quantité : teinter aussi le montant
+                                    doublerait le signal, et deux colonnes colorées par ligne
+                                    feraient de la liste un damier illisible.
+                                -->
+                                <span
+                                    data-transaction-quantity
+                                    class="text-right"
+                                    :class="line.isSell ? 'text-loss' : 'text-gain'"
+                                >
                                     {{ line.quantity }}
                                 </span>
-                                <span class="text-right font-medium" :class="gainClass(amountOf(line))">
+                                <span data-transaction-amount class="text-right font-medium">
                                     {{ signedEur(amountOf(line)) }}
                                 </span>
                             </button>

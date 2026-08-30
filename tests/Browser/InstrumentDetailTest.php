@@ -71,6 +71,44 @@ it('cache le détail d\'une transaction derrière un clic sur sa ligne', functio
         ->assertNoJavaScriptErrors();
 });
 
+it('ne teinte que la quantité d\'une transaction, jamais son montant', function () {
+    ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
+
+    /** Une vente en regard de l'achat de la fixture : les deux sens doivent tomber sur le même verdict. */
+    Transaction::factory()->sell()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $instrument->id,
+        'quantity' => 4,
+        'unit_price' => 95,
+        'date' => '2026-03-03',
+    ]);
+
+    $this->actingAs($user);
+
+    /**
+     * La couleur du montant se compare à celle de la date, teintée en `muted-foreground` : deux
+     * quantités de teintes distinctes, et deux montants qui ne portent ni l'une ni l'autre.
+     */
+    openSection(visit("/asset/{$instrument->id}"), 'transactions')
+        ->click('[data-transaction-year="2026"]')
+        ->assertScript("document.querySelectorAll('[data-transaction-quantity]').length", 2)
+        ->assertScript(
+            "(() => { const [a, b] = Array.from(document.querySelectorAll('[data-transaction-quantity]'))"
+            .'  .map(cell => getComputedStyle(cell).color);'
+            .'  return a !== b; })()',
+            true,
+        )
+        ->assertScript(
+            "(() => { const quantities = Array.from(document.querySelectorAll('[data-transaction-quantity]'))"
+            .'  .map(cell => getComputedStyle(cell).color);'
+            ."  return Array.from(document.querySelectorAll('[data-transaction-amount]'))"
+            .'  .every(cell => !quantities.includes(getComputedStyle(cell).color)); })()',
+            true,
+        )
+        ->assertNoJavaScriptErrors();
+});
+
 it('affiche les frais sur la ligne de transaction, sans clic', function () {
     ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
 

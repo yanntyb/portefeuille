@@ -79,7 +79,16 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                             @click="toggleLine(`${group.year}-${index}`)"
                         >
                             <span class="text-muted-foreground">{{ frDayMonth(line.date) }}</span>
-                            <span class="text-right" :class="line.isSell ? 'text-loss' : 'text-gain'">
+                            <!--
+                                Le sens se lit sur la seule quantité : teinter aussi le montant
+                                doublerait le signal, et deux colonnes colorées par ligne feraient
+                                de la liste un damier illisible.
+                            -->
+                            <span
+                                data-transaction-quantity
+                                class="text-right"
+                                :class="line.isSell ? 'text-loss' : 'text-gain'"
+                            >
                                 {{ line.quantity }}
                             </span>
                             <!-- Une cellule vide plutôt qu'aucune : sinon le montant remonterait d'une colonne. -->
@@ -91,7 +100,7 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                                 frais {{ eur(line.fees) }}
                             </span>
                             <span v-else />
-                            <span class="text-right font-medium" :class="gainClass(amountOf(line))">
+                            <span data-transaction-amount class="text-right font-medium">
                                 {{ signedEur(amountOf(line)) }}
                             </span>
                         </button>
