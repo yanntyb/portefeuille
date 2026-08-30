@@ -36,14 +36,19 @@ trait SyncsMarketData
     }
 
     /**
-     * Remplit les prix et les secteurs de tous les actifs en une passe.
+     * Remplit les prix, les secteurs et les détachements de tous les actifs en une passe.
      *
-     * Le fournisseur récupère les cours par lot : une commande sans `--asset` coûte un seul
-     * appel là où une boucle par actif en coûterait autant que d'instruments.
+     * Le fournisseur récupère les cours et les dividendes par lot : une commande sans `--asset`
+     * coûte un seul appel là où une boucle par actif en coûterait autant que d'instruments.
+     *
+     * Les détachements partent de la même borne basse que les cours : sans eux, une base
+     * fraîchement seedée n'afficherait aucun dividende perçu tant que la tâche planifiée
+     * `market:sync-dividends` ne serait pas passée.
      */
     private function syncAllMarketData(string $since): void
     {
         Artisan::call('market:sync-prices', ['--since' => $since]);
         Artisan::call('market:sync-sectors');
+        Artisan::call('market:sync-dividends', ['--since' => $since]);
     }
 }

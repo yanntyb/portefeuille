@@ -2,14 +2,18 @@
 
 use App\Contexts\Identity\Enums\Role;
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Datas\DividendData;
+use App\Contexts\Market\Datas\DividendRequestData;
 use App\Contexts\Market\Datas\PriceData;
 use App\Contexts\Market\Datas\PriceRequestData;
 use App\Contexts\Market\Datas\SectorAllocationData;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
+use App\Contexts\Market\Models\Dividend;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Market\Models\SectorAllocation;
+use App\Contexts\Market\Ports\DividendFeedPort;
 use App\Contexts\Market\Ports\PriceFeedPort;
 use App\Contexts\Market\Ports\SectorProviderPort;
 use App\Contexts\Portfolio\Enums\TransactionType;
@@ -21,9 +25,9 @@ use Tests\Fixtures\MissingBackupSeeder;
 use Tests\Fixtures\SampleBackupSeeder;
 
 /**
- * Le seeder ne rejoue plus les prix ni les secteurs du dump : il appelle `market:sync-prices` et
- * `market:sync-sectors`. Le fournisseur est donc doublé dans chaque test, sinon la suite
- * interrogerait Yahoo.
+ * Le seeder ne rejoue plus les prix ni les secteurs du dump : il appelle `market:sync-prices`,
+ * `market:sync-sectors` et `market:sync-dividends`. Le fournisseur est donc doublé dans chaque
+ * test, sinon la suite interrogerait Yahoo.
  */
 beforeEach(function () {
     $this->mock(PriceFeedPort::class, function ($mock) {
@@ -39,6 +43,13 @@ beforeEach(function () {
         $mock->shouldReceive('getSectorAllocations')->andReturn([
             new SectorAllocationData(sector: Sector::Technology, weight: 1.0),
         ]);
+    });
+
+    $this->mock(DividendFeedPort::class, function ($mock) {
+        $mock->shouldReceive('supportsDividendFeed')->andReturn(true);
+        $mock->shouldReceive('fetchDividends')->andReturn(['CVX' => [
+            new DividendData(exDate: '2026-02-10', amountPerShare: 1.63),
+        ]]);
     });
 });
 
@@ -131,6 +142,32 @@ it('takes the prices from the provider, from the oldest transaction onwards', fu
         ->and((float) Price::query()->where('asset_id', $amundi->id)->sole()->close)->toBe(100.5);
 });
 
+it('takes the dividends from the provider, from the oldest transaction onwards', function () {
+    $requests = [];
+
+    $this->mock(DividendFeedPort::class, function ($mock) use (&$requests) {
+        $mock->shouldReceive('supportsDividendFeed')->andReturn(true);
+        $mock->shouldReceive('fetchDividends')->andReturnUsing(function (array $received) use (&$requests): array {
+            $requests = $received;
+
+            return ['CVX' => [new DividendData(exDate: '2026-02-10', amountPerShare: 1.63)]];
+        });
+    });
+
+    $this->seed(SampleBackupSeeder::class);
+
+    $chevron = Instrument::query()->where('ticker', 'CVX')->sole();
+    $startDates = array_map(fn (DividendRequestData $request): string => $request->startDate, $requests);
+
+    // La transaction la plus ancienne du dump est datée du 2026-01-02.
+    expect($startDates)->not->toBeEmpty()
+        ->and(array_unique($startDates))->toBe(['2026-01-02'])
+        ->and(Dividend::query()->count())->toBe(1)
+        ->and(Dividend::query()->where('asset_id', $chevron->id)->sole())
+        ->ex_date->toDateString()->toBe('2026-02-10')
+        ->and((float) Dividend::query()->where('asset_id', $chevron->id)->sole()->amount_per_share)->toBe(1.63);
+});
+
 it('stores prices with the canonical date format, one row per day', function () {
     $this->seed(SampleBackupSeeder::class);
     $this->seed(SampleBackupSeeder::class);
@@ -209,6 +246,7 @@ it('can be seeded twice without duplicating anything', function () {
         ->and(Instrument::query()->count())->toBe(4)
         ->and(SectorAllocation::query()->count())->toBe(4)
         ->and(Price::query()->count())->toBe(2)
+        ->and(Dividend::query()->count())->toBe(1)
         ->and(Transaction::query()->count())->toBe(8)
         ->and(Holding::query()->count())->toBe(4)
         ->and(DB::table('wallet_fees')->count())->toBe(1);
