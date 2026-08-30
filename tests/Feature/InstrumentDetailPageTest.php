@@ -156,3 +156,39 @@ it('rend un historique de dividendes vide sur un capitalisant', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->has('dividends.receipts', 0));
 });
+
+it('defers the analysis figures and loads them on demand', function () {
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $asset = Instrument::factory()->create(['name' => 'ACME']);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-07-01', 'close' => 100]);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 80]);
+    Holding::factory()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id, 'quantity' => 10, 'avg_cost' => 80]);
+
+    $this->actingAs($user)
+        ->get("/asset/{$asset->id}")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Asset/Show')
+            ->missing('analysis')
+            ->loadDeferredProps(fn (Assert $reload) => $reload
+                ->where('analysis.pru', fn ($v) => (float) $v === 80.0)
+                ->where('analysis.pruGapPct', fn ($v) => (float) $v === 25.0)
+                ->where('analysis.ma200', null)
+            )
+        );
+});
+
+it('omits the analysis when the instrument is not held', function () {
+    $user = User::factory()->create();
+    $asset = Instrument::factory()->create();
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-07-01', 'close' => 100]);
+
+    $this->actingAs($user)
+        ->get("/asset/{$asset->id}")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Asset/Show')
+            ->loadDeferredProps(fn (Assert $reload) => $reload->where('analysis', null))
+        );
+});

@@ -5,6 +5,7 @@ namespace App\Contexts\MarketView\Http;
 use App\Contexts\Identity\Models\User;
 use App\Contexts\MarketView\Actions\GetInstrumentDetail;
 use App\Contexts\MarketView\Ports\IncomePort;
+use App\Contexts\MarketView\Ports\InstrumentAnalysisPort;
 use App\Contexts\MarketView\Ports\MarketDataPort;
 use App\Contexts\MarketView\Ports\ValuationPort;
 use App\Contexts\MarketView\Services\PriceHistoryWindow;
@@ -24,6 +25,7 @@ class AssetController
         private MarketDataPort $market,
         private ValuationPort $valuation,
         private IncomePort $income,
+        private InstrumentAnalysisPort $analysis,
     ) {}
 
     public function __invoke(int $id): Response
@@ -44,6 +46,12 @@ class AssetController
                 fn () => $this->market->priceHistory($id, PriceHistoryWindow::since())
             ),
             'valuation' => Inertia::defer(fn () => $this->valuation->assetSeriesFor($userId, $id)),
+            /**
+             * Différée comme l'historique de cours, qu'elle relit : cinq ans de barres pour une
+             * moyenne longue, un RSI et une amplitude vraie. Sans position, la section n'a rien à
+             * dire — pas de prix de revient, pas de poids — et la prop reste absente plutôt que vide.
+             */
+            'analysis' => Inertia::defer(fn () => $this->analysis->forAsset($userId, $id)),
         ];
 
         /**
