@@ -46,7 +46,7 @@ it('mène du tableau de bord à la page crypto', function () {
     $this->actingAs($user);
 
     visit('/')
-        ->assertSeeIn('[data-section="wealth-summary"]', 'Crypto')
+        ->assertSeeIn('[data-section="wealth-classes"]', 'Crypto')
         ->click('a[href="/crypto"]')
         ->assertSeeIn('[data-section="valuation"]', 'Investi')
         ->assertNoJavaScriptErrors();
