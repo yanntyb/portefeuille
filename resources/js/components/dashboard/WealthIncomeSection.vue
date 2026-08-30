@@ -34,7 +34,7 @@ const origins = computed<IncomeOrigin[]>(() => props.income?.origins ?? []);
                 >
                     {{ signedEur(monthlyTotal) }}
                 </span>
-                <span class="text-[13.5px] leading-none text-muted-foreground">par mois</span>
+                <span class="text-[13.5px] leading-none text-muted-foreground">/ mois</span>
             </span>
 
             <Deferred v-else data="income">

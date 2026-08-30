@@ -33,9 +33,10 @@ const toggle = (): void => {
 
             <!--
                 Le chiffre que la section résume tient dans son titre : replié, il se lit quand
-                même. `ml-auto` le pousse à droite ; le chevron n'a alors plus de place à prendre.
+                même. Collé au titre plutôt que poussé à droite — c'est la suite de la phrase que
+                le titre commence, pas une colonne de chiffres. Le chevron garde le bord droit.
             -->
-            <span class="ml-auto"><slot name="value" /></span>
+            <slot name="value" />
 
             <ChevronRight
                 class="ml-auto size-4 shrink-0 text-muted-foreground transition-transform"
