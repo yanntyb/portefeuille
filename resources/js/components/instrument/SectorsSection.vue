@@ -18,7 +18,7 @@ const rows = computed<SectorBreakdownRow[]>(() =>
 
 <template>
     <section data-section="sectors" class="flex flex-col gap-6 px-6">
-        <h2 class="text-[17px] leading-none font-bold">Répartition sectorielle</h2>
+        <h2 class="text-[17px] leading-none font-bold">Secteurs</h2>
         <SectorBreakdownList :rows="rows" />
     </section>
 </template>

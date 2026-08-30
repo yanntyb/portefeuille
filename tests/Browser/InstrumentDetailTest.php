@@ -128,6 +128,7 @@ it('détaille le montant de chaque secteur quand l\'instrument est détenu', fun
     $this->actingAs($user);
 
     visit("/asset/{$instrument->id}")
+        ->assertSeeIn('[data-section="sectors"] h2', 'Secteurs')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-sector-amount]')).map(el => el.textContent.replace(/\\s/g, ' ')).join('|')",
             '600 €|400 €',
