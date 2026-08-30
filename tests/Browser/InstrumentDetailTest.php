@@ -212,9 +212,8 @@ it('affiche les dividendes perçus quand l\'instrument en verse', function () {
 
     /**
      * Deux détachements de part et d'autre de la borne des douze mois, avec des montants par
-     * action distincts : le total cumule les deux, le perçu à douze mois n'en garde qu'un, ce qui
-     * rend `data-dividend-total` et `data-dividend-last12` discriminants l'un de l'autre. Des
-     * dates relatives, comme dans `DashboardTest`, pour que le test reste vrai au-delà de 2027.
+     * action distincts : ils tombent dans deux groupes d'années distincts. Des dates relatives,
+     * comme dans `DashboardTest`, pour que le test reste vrai au-delà de 2027.
      */
     Dividend::factory()->create([
         'asset_id' => $instrument->id,
@@ -250,16 +249,6 @@ it('affiche les dividendes perçus quand l\'instrument en verse', function () {
             "Array.from(document.querySelectorAll('[data-dividend-year]')).map(el => el.dataset.dividendYear).join('|')",
             "{$recentYear}|{$olderYear}",
         )
-        // `includes` et non une égalité : `Intl` sépare le montant du symbole par une espace
-        // insécable étroite, invisible dans le source du test mais fatale à une comparaison stricte.
-        // Le total (8,00 €) cumule les deux détachements ; le perçu à douze mois (5,00 €) ne garde
-        // que celui d'il y a deux mois — les deux valeurs diffèrent, donc un gabarit qui les
-        // intervertirait serait pris en défaut.
-        ->assertScript("document.querySelector('[data-dividend-total]').textContent.includes('8,00')", true)
-        ->assertScript("document.querySelector('[data-dividend-last12]').textContent.includes('5,00')", true)
-        // Rendement calculé sur le seul détachement de la fenêtre des douze mois (5,00 € rapportés
-        // à un coût de 800 €), pas sur le total des deux.
-        ->assertScript("document.querySelector('[data-dividend-yield]').textContent.includes('0,6')", true)
         // Seule l'année la plus récente est dépliée : sa ligne est celle du détachement d'il y a
         // deux mois, et le détail par action reste caché jusqu'au clic sur la ligne.
         ->assertScript("document.querySelectorAll('[data-dividend-row]').length", 1)
@@ -283,55 +272,6 @@ it('n\'affiche aucune section dividendes sur un instrument capitalisant', functi
     visit("/asset/{$instrument->id}")
         ->assertDontSee('Dividendes')
         ->assertScript("document.querySelectorAll('[data-section=\"dividends\"]').length", 0)
-        ->assertNoJavaScriptErrors();
-});
-
-it('annonce le revenu attendu sur les douze prochains mois', function () {
-    ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
-
-    Transaction::query()->where('asset_id', $instrument->id)->update(['date' => now()->subYears(2)->format('Y-m-d')]);
-
-    Dividend::factory()->create([
-        'asset_id' => $instrument->id,
-        'ex_date' => now()->subMonths(2)->format('Y-m-d'),
-        'amount_per_share' => 0.5,
-    ]);
-
-    /**
-     * Renfort postérieur au détachement : la position passe à 20 titres sans rien percevoir de
-     * plus. Le perçu reste sur 10 titres (5,00 €), l'estimation porte sur 20 (10,00 €) — deux
-     * valeurs distinctes, donc un gabarit qui les intervertirait tomberait.
-     */
-    Transaction::factory()->buy()->create([
-        'user_id' => $user->id,
-        'wallet_id' => Wallet::query()->where('user_id', $user->id)->value('id'),
-        'asset_id' => $instrument->id,
-        'quantity' => 10,
-        'unit_price' => 90,
-        'date' => now()->subMonth()->format('Y-m-d'),
-    ]);
-
-    $this->actingAs($user);
-
-    openSection(visit("/asset/{$instrument->id}"), 'dividends')
-        ->assertScript("document.querySelector('[data-dividend-last12]').textContent.includes('5,00')", true)
-        ->assertScript("document.querySelector('[data-dividend-estimate]').textContent.includes('10,00')", true)
-        ->assertNoJavaScriptErrors();
-});
-
-it('n\'annonce aucun revenu attendu quand le dernier détachement date de plus de douze mois', function () {
-    ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
-
-    Dividend::factory()->create([
-        'asset_id' => $instrument->id,
-        'ex_date' => now()->subMonths(15)->format('Y-m-d'),
-        'amount_per_share' => 0.3,
-    ]);
-
-    $this->actingAs($user);
-
-    visit("/asset/{$instrument->id}")
-        ->assertScript("document.querySelectorAll('[data-dividend-estimate]').length", 0)
         ->assertNoJavaScriptErrors();
 });
 

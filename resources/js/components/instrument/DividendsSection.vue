@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue';
 import { ChevronRight } from 'lucide-vue-next';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
-import { eur, frDayMonth, pct } from '@/lib/format';
+import { eur, frDayMonth } from '@/lib/format';
 import { dividendYears, type AssetDividendHistory, type DividendYear } from '@/lib/income';
 
 const props = defineProps<{ dividends: AssetDividendHistory }>();
@@ -37,17 +37,6 @@ const perShare = (value: number): string => eur(value, 3);
 
 <template>
     <CollapsibleSection section="dividends" title="Dividendes">
-        <p class="text-sm text-muted-foreground">
-            <span data-dividend-total>{{ eur(props.dividends.totalReceived) }}</span> perçus,
-            dont <span data-dividend-last12>{{ eur(props.dividends.last12Months) }}</span> sur douze mois
-            <template v-if="props.dividends.yieldOnCost !== null">
-                · <span data-dividend-yield>{{ pct(props.dividends.yieldOnCost) }}</span> du prix de revient
-            </template>
-            <template v-if="props.dividends.estimatedAnnual > 0">
-                · <span data-dividend-estimate>~{{ eur(props.dividends.estimatedAnnual) }}</span> estimés sur douze mois
-            </template>
-        </p>
-
         <div class="flex min-w-0 flex-col">
             <div
                 v-for="group in years"
