@@ -10,11 +10,11 @@ const props = defineProps<{ dividends: AssetDividendHistory }>();
 const years = computed<DividendYear[]>(() => dividendYears(props.dividends.receipts));
 
 /**
- * Seule l'année la plus récente s'ouvre : les précédentes relèvent de l'archive. « La plus
- * récente » et non l'année civile courante — sans détachement cette année, un groupe ouvert vaut
- * mieux qu'une section entièrement repliée.
+ * Toutes les années repliées au dépliage de la section : la section elle-même s'ouvre déjà sur un
+ * clic, et un groupe ouvert d'office pousserait les suivants hors de l'écran. Le pli ne se mémorise
+ * pas d'une visite à l'autre.
  */
-const openYears = ref<string[]>(years.value.slice(0, 1).map((group) => group.year));
+const openYears = ref<string[]>([]);
 
 const isYearOpen = (year: string): boolean => openYears.value.includes(year);
 

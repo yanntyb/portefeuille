@@ -230,8 +230,7 @@ it('affiche les dividendes perçus quand l\'instrument en verse', function () {
 
     /**
      * Treize mois séparent les deux détachements : ils tombent toujours sur deux années civiles
-     * distinctes, quelle que soit la date d'exécution — donc sur deux groupes dont seul le plus
-     * récent s'ouvre.
+     * distinctes, quelle que soit la date d'exécution — donc sur deux groupes repliés.
      */
     $recentYear = now()->subMonths(2)->format('Y');
     $olderYear = now()->subMonths(15)->format('Y');
@@ -249,8 +248,10 @@ it('affiche les dividendes perçus quand l\'instrument en verse', function () {
             "Array.from(document.querySelectorAll('[data-dividend-year]')).map(el => el.dataset.dividendYear).join('|')",
             "{$recentYear}|{$olderYear}",
         )
-        // Seule l'année la plus récente est dépliée : sa ligne est celle du détachement d'il y a
-        // deux mois, et le détail par action reste caché jusqu'au clic sur la ligne.
+        // Toutes les années repliées à l'ouverture de la section : aucune ligne avant le clic sur
+        // un groupe. Déplié, le groupe récent montre sa seule ligne, détail par action caché.
+        ->assertScript("document.querySelectorAll('[data-dividend-row]').length", 0)
+        ->click('[data-dividend-year="'.$recentYear.'"]')
         ->assertScript("document.querySelectorAll('[data-dividend-row]').length", 1)
         ->assertScript("document.querySelector('[data-dividend-amount]').textContent.includes('5,00')", true)
         ->assertScript("document.querySelectorAll('[data-dividend-detail]').length", 0)
