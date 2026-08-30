@@ -7,7 +7,7 @@ defineProps<{ performances: Performance[] }>();
 
 <template>
     <section data-section="performance" class="flex flex-col gap-6 px-6">
-        <h2 class="text-[17px] leading-none font-bold">Performance</h2>
+        <h2 class="text-[17px] leading-none font-bold">Performances</h2>
         <PerformanceBars :performances="performances" />
     </section>
 </template>

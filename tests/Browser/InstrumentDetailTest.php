@@ -166,7 +166,7 @@ it('aligne le graphe de valorisation sur la marge du reste de la page, y compris
     })()";
 
     visit("/asset/{$instrument->id}")->on()->iPhone14Pro()
-        ->assertSee('Performance')
+        ->assertSee('Performances')
         ->assertScript($paddingGaps, '0|0')
         ->assertNoJavaScriptErrors();
 });
