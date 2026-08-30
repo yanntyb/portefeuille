@@ -196,10 +196,11 @@ describe('buildValueVsInvestedOption — séries', () => {
         expect(seriesOf(valueVsInvested(36)).map((serie) => serie.name)).toEqual(['Valeur', 'Investi']);
     });
 
-    it('trace l\'investi en escalier et sans aire, celle de la valeur le recouvrant', () => {
+    it('trace l\'investi en escalier pointillé et sans aire, celle de la valeur le recouvrant', () => {
         const [, invested] = seriesOf(valueVsInvested(36));
 
         expect(invested.step).toBe('end');
+        expect(invested.lineStyle?.type).toBe('dashed');
         expect(invested.areaStyle).toBeUndefined();
     });
 

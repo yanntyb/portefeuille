@@ -359,7 +359,8 @@ function valueSeries(
             step: 'end',
             symbol: 'none',
             sampling: 'lttb',
-            lineStyle: { width: 1.5, color: colors.invested },
+            /** Pointillé : la mise n'est pas une mesure de marché, elle ne se lit pas comme la valeur. */
+            lineStyle: { width: 1.5, color: colors.invested, type: 'dashed' },
             data: datedPoints(labels, invested),
         },
     ];
