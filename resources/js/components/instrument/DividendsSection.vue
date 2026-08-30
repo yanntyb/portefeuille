@@ -24,13 +24,6 @@ const toggleYear = (year: string): void => {
         : [...openYears.value, year];
 };
 
-/** Une seule ligne détaillée à la fois : le détail se lit en regard de la ligne, pas en liste. */
-const openLine = ref<string | null>(null);
-
-const toggleLine = (key: string): void => {
-    openLine.value = openLine.value === key ? null : key;
-};
-
 /** Un montant par action se lit au millième : 0,51 € et 0,515 € ne sont pas le même dividende. */
 const perShare = (value: number): string => eur(value, 3);
 </script>
@@ -58,28 +51,37 @@ const perShare = (value: number): string => eur(value, 3);
                     <span class="ml-auto font-semibold">{{ eur(group.total) }}</span>
                 </button>
 
-                <div v-if="isYearOpen(group.year)" class="flex flex-col pb-2">
-                    <template v-for="(receipt, index) in group.receipts" :key="`${group.year}-${index}`">
-                        <button
-                            type="button"
-                            data-dividend-row
-                            class="flex items-center gap-3 py-2 pl-[22px] text-sm"
-                            :aria-expanded="openLine === `${group.year}-${index}`"
-                            @click="toggleLine(`${group.year}-${index}`)"
-                        >
-                            <span class="text-muted-foreground">{{ frDayMonth(receipt.exDate) }}</span>
-                            <span class="ml-auto font-medium" data-dividend-amount>{{ eur(receipt.amount) }}</span>
-                        </button>
-
-                        <p
-                            v-if="openLine === `${group.year}-${index}`"
-                            data-dividend-detail
-                            class="pb-2 pl-[22px] text-xs text-muted-foreground"
-                        >
-                            <span data-dividend-quantity>{{ receipt.quantity }}</span> ×
-                            <span data-dividend-per-share>{{ perShare(receipt.amountPerShare) }}</span> par action
-                        </p>
-                    </template>
+                <!--
+                    Mêmes pistes que les transactions : les deux sections se suivent sur la fiche,
+                    et une ligne de dividende qui se lirait autrement qu'une ligne d'achat ferait
+                    lire deux historiques là où il n'y en a qu'un. Les colonnes se déclarent sur le
+                    groupe, `grid-cols-subgrid` les fait hériter aux lignes, sans quoi chaque ligne
+                    se dimensionnerait sur son seul contenu et deux voisines ne s'aligneraient pas.
+                -->
+                <div
+                    v-if="isYearOpen(group.year)"
+                    class="grid grid-cols-[auto_auto_1fr_auto] items-center gap-x-3 pb-2 pl-[22px]"
+                >
+                    <div
+                        v-for="(receipt, index) in group.receipts"
+                        :key="`${group.year}-${index}`"
+                        data-dividend-row
+                        class="col-span-4 grid grid-cols-subgrid items-center gap-x-3 py-2 text-left text-sm"
+                    >
+                        <span class="text-muted-foreground">{{ frDayMonth(receipt.exDate) }}</span>
+                        <!--
+                            Le calcul tient dans la ligne : quantité × montant par action = montant
+                            versé. Il tenait sous un pli, mais c'est justement ce produit qui
+                            explique pourquoi deux versements d'un même titre diffèrent.
+                        -->
+                        <span data-dividend-quantity class="text-right">{{ receipt.quantity }}</span>
+                        <span data-dividend-per-share class="text-xs text-muted-foreground">
+                            ×{{ perShare(receipt.amountPerShare) }}
+                        </span>
+                        <span data-dividend-amount class="text-right font-medium">
+                            {{ eur(receipt.amount) }}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
