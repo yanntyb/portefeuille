@@ -7,6 +7,7 @@ use App\Contexts\Market\Models\Price;
 use App\Contexts\MarketView\Infrastructure\ClassAnalysis;
 use App\Contexts\MarketView\Ports\ClassAnalysisPort;
 use App\Contexts\Portfolio\Models\Holding;
+use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 use Illuminate\Support\Carbon;
 
@@ -17,7 +18,9 @@ beforeEach(function () {
 });
 
 /**
- * Un instrument détenu, coté chaque jour jusqu'à aujourd'hui.
+ * Un instrument détenu, coté chaque jour jusqu'à aujourd'hui, acheté en une fois à sa première
+ * séance. L'achat n'est pas décoratif : la distance au plus-haut se mesure sur la valorisation de
+ * la poche, que les transactions construisent — un instrument sans transaction ne vaut rien.
  *
  * @param  list<float>  $closes  Clôtures dans l'ordre chronologique, la dernière datée d'aujourd'hui.
  */
@@ -47,6 +50,15 @@ function classInstrument(
         'asset_id' => $instrument->id,
         'quantity' => $quantity,
         'avg_cost' => $closes[0],
+    ]);
+
+    Transaction::factory()->buy()->create([
+        'user_id' => test()->user->id,
+        'wallet_id' => test()->wallet->id,
+        'asset_id' => $instrument->id,
+        'date' => Carbon::today()->subDays(count($closes) - 1),
+        'quantity' => $quantity,
+        'unit_price' => $closes[0],
     ]);
 
     return $instrument;
@@ -99,6 +111,26 @@ it('situe la poche sous son plus-haut', function () {
 
     expect($this->analysis->forClass($this->user->id, AssetClass::Equity)->high52wGapPct)
         ->toBe(-25.0);
+});
+
+it('mesure la distance au plus-haut sur la valorisation, allégements compris', function () {
+    /**
+     * Le cours ne bouge pas de la semaine : l'indice du panier reste plat et ne verrait aucune
+     * chute. La poche, elle, a été allégée de moitié hier — c'est ce que la ligne doit dire.
+     */
+    $instrument = classInstrument('AAA', [100.0, 100.0, 100.0], quantity: 2.0);
+
+    Transaction::factory()->sell()->create([
+        'user_id' => $this->user->id,
+        'wallet_id' => $this->wallet->id,
+        'asset_id' => $instrument->id,
+        'date' => Carbon::today()->subDay(),
+        'quantity' => 1.0,
+        'unit_price' => 100.0,
+    ]);
+
+    expect($this->analysis->forClass($this->user->id, AssetClass::Equity)->high52wGapPct)
+        ->toBe(-50.0);
 });
 
 it('pèse chaque instrument dans l’indice selon sa place dans la poche', function () {

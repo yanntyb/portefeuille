@@ -14,6 +14,7 @@ use App\Contexts\MarketView\Ports\ClassAnalysisPort;
 use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
 use App\Contexts\MarketView\Services\CorrelationWindow;
 use App\Contexts\MarketView\Services\PriceHistoryWindow;
+use App\Contexts\Valuation\Actions\BuildExposureSeries;
 use App\Contexts\Valuation\Services\Drawdown;
 
 /**
@@ -24,6 +25,13 @@ use App\Contexts\Valuation\Services\Drawdown;
  * Deux fenêtres cohabitent, et ce choix lui revient : l'indice de la poche court sur toute la
  * profondeur servie à la fiche instrument — une chute mémorable a besoin d'années — quand la
  * matrice ne regarde qu'un an, car une corrélation vieillit vite.
+ *
+ * Deux séries aussi, et pour deux questions distinctes. La chute maximale se lit sur l'indice, à
+ * pondération courante : elle raconte ce que les marchés ont fait subir au panier, indépendamment
+ * des versements. La distance au plus-haut se lit sur la valorisation de la poche, celle-là même
+ * que trace le graphe au-dessus : elle répond à « où en suis-je par rapport à mon sommet », et
+ * cette question-là compte les allégements et les apports. Deux repères posés côte à côte sur la
+ * même série se contrediraient moins, mais l'un des deux mentirait.
  */
 class ClassAnalysis implements ClassAnalysisPort
 {
@@ -37,6 +45,7 @@ class ClassAnalysis implements ClassAnalysisPort
         private BasketIndex $basket,
         private Drawdown $drawdown,
         private FiftyTwoWeekRange $fiftyTwoWeeks,
+        private BuildExposureSeries $exposureSeries,
     ) {}
 
     public function forClass(int $userId, AssetClass $exposure): ClassAnalysisData
@@ -50,11 +59,11 @@ class ClassAnalysis implements ClassAnalysisPort
 
         $closesByAsset = $this->closesByAsset(array_keys($weights));
         $index = $this->basket->of($closesByAsset, $weights);
-        $fiftyTwoWeeks = $this->fiftyTwoWeeks->of($index->values);
+        $valuations = ($this->exposureSeries)($userId, [$exposure])->valuations;
 
         return new ClassAnalysisData(
             maxDrawdown: $this->drawdown->of($index->labels, $index->values)->maxDepth,
-            high52wGapPct: $fiftyTwoWeeks?->gapPct,
+            high52wGapPct: $this->fiftyTwoWeeks->of($valuations)?->gapPct,
             instruments: $this->instrumentsOf($holdings, array_keys($weights)),
             correlations: $this->correlation->matrix($this->recentOf($closesByAsset))->rows,
         );
