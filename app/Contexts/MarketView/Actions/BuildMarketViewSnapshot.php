@@ -11,7 +11,7 @@ use App\Contexts\MarketView\Ports\MarketDataPort;
 use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
 use App\Contexts\MarketView\Ports\SectorBreakdownPort;
 use App\Contexts\MarketView\Ports\ValuationPort;
-use Illuminate\Support\Carbon;
+use App\Contexts\MarketView\Services\PriceHistoryWindow;
 
 /**
  * Instantané hors-ligne du volet marché : une page liste par exposition, et une fiche par
@@ -124,7 +124,7 @@ class BuildMarketViewSnapshot
         $page = [
             'instrument' => $detail,
             'performances' => $this->valuation->assetPerformancesFor($userId, $assetId),
-            'priceHistory' => $this->market->priceHistory($assetId, Carbon::now()->subMonths(12)),
+            'priceHistory' => $this->market->priceHistory($assetId, PriceHistoryWindow::since()),
             'valuation' => $this->valuation->assetSeriesFor($userId, $assetId),
         ];
 

@@ -7,7 +7,7 @@ use App\Contexts\MarketView\Actions\GetInstrumentDetail;
 use App\Contexts\MarketView\Ports\IncomePort;
 use App\Contexts\MarketView\Ports\MarketDataPort;
 use App\Contexts\MarketView\Ports\ValuationPort;
-use Illuminate\Support\Carbon;
+use App\Contexts\MarketView\Services\PriceHistoryWindow;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -41,7 +41,7 @@ class AssetController
             'instrument' => $detail,
             'performances' => $this->valuation->assetPerformancesFor($userId, $id),
             'priceHistory' => Inertia::defer(
-                fn () => $this->market->priceHistory($id, Carbon::now()->subMonths(12))
+                fn () => $this->market->priceHistory($id, PriceHistoryWindow::since())
             ),
             'valuation' => Inertia::defer(fn () => $this->valuation->assetSeriesFor($userId, $id)),
         ];
