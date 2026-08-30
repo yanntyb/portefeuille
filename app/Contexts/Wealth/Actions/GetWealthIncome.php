@@ -8,7 +8,8 @@ use App\Contexts\Wealth\Infrastructure\AssetClassRegistry;
 
 /**
  * Ce que le patrimoine laisse chaque mois. Chaque classe d'actif dit ce qu'elle rapporte et sous
- * quel nom ; celles qui ne rapportent rien — la crypto — ne prennent pas de ligne.
+ * quel nom ; celles qui ne rapportent rien ne prennent pas de ligne — ni la crypto, qui n'a pas
+ * d'origine du tout, ni une origine restée à zéro ce mois-ci.
  */
 class GetWealthIncome
 {
@@ -26,8 +27,13 @@ class GetWealthIncome
                 continue;
             }
 
-            $amount = $class->monthlyIncomeFor($userId);
-            $origins[] = new IncomeOriginData(label: $label, amount: round($amount, 2));
+            $amount = round($class->monthlyIncomeFor($userId), 2);
+
+            if ($amount === 0.0) {
+                continue;
+            }
+
+            $origins[] = new IncomeOriginData(label: $label, amount: $amount);
             $total += $amount;
         }
 
