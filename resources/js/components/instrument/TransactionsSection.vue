@@ -73,7 +73,9 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                             @click="toggleLine(`${group.year}-${index}`)"
                         >
                             <span class="text-muted-foreground">{{ frDayMonth(line.date) }}</span>
-                            <span :class="line.isSell ? 'text-loss' : 'text-gain'">{{ line.typeLabel }}</span>
+                            <span :class="line.isSell ? 'text-loss' : 'text-gain'">
+                                {{ line.typeLabel }} {{ line.quantity }}
+                            </span>
                             <span
                                 v-if="line.fees"
                                 data-transaction-fees
@@ -94,7 +96,7 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                             data-transaction-detail
                             class="pb-2 pl-[22px] text-xs text-muted-foreground"
                         >
-                            {{ line.quantity }} × {{ eur(line.unitPrice) }}
+                            {{ eur(line.unitPrice) }} l'unité
                         </p>
                     </template>
                 </div>
