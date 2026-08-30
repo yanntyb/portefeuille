@@ -70,12 +70,11 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                             data-transaction-row
                             class="flex items-center gap-3 py-2 pl-[22px] text-sm"
                             :aria-expanded="openLine === `${group.year}-${index}`"
+                            :aria-label="`${line.typeLabel} ${line.quantity}`"
                             @click="toggleLine(`${group.year}-${index}`)"
                         >
                             <span class="text-muted-foreground">{{ frDayMonth(line.date) }}</span>
-                            <span :class="line.isSell ? 'text-loss' : 'text-gain'">
-                                {{ line.typeLabel }} {{ line.quantity }}
-                            </span>
+                            <span :class="line.isSell ? 'text-loss' : 'text-gain'">{{ line.quantity }}</span>
                             <span
                                 v-if="line.fees"
                                 data-transaction-fees

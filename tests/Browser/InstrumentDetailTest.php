@@ -50,8 +50,12 @@ it('cache le détail d\'une transaction derrière un clic sur sa ligne', functio
 
     visit("/asset/{$instrument->id}")
         ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 0)
-        /** Sens et quantité se lisent sur la ligne repliée : seul le prix unitaire attend le clic. */
-        ->assertScript("document.querySelector('[data-transaction-row]').textContent.includes('Achat 10')", true)
+        /**
+         * La quantité se lit sur la ligne repliée, seul le prix unitaire attend le clic. Le sens de
+         * l'opération passe par la couleur, doublé d'un `aria-label` pour qui ne la perçoit pas.
+         */
+        ->assertScript("document.querySelector('[data-transaction-row]').textContent.includes('Achat')", false)
+        ->assertScript("document.querySelector('[data-transaction-row]').getAttribute('aria-label')", 'Achat 10')
         ->click('[data-transaction-row]')
         ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 1)
         ->assertScript("document.querySelector('[data-transaction-detail]').textContent.includes('80,00')", true)
