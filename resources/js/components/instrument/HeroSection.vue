@@ -13,6 +13,15 @@ const position = computed(() => props.instrument.position);
 
 const heroValue = computed<number | null>(() => heroValueOf(props.instrument));
 
+/**
+ * Un titre vif n'a qu'un secteur, à 100 % : une section de ventilation n'y répartirait rien. Il se
+ * lit alors comme une étiquette de l'en-tête, au même rang que le type et l'ISIN. Les expositions
+ * qui en traversent plusieurs gardent leur section — c'est là qu'il y a des parts à comparer.
+ */
+const soleSector = computed<string | null>(() =>
+    props.instrument.sectors.length === 1 ? props.instrument.sectors[0].label : null,
+);
+
 /** Pas de position, pas de gain : un titre seulement suivi n'a rien à comparer. */
 const gainLabel = computed<string | null>(() =>
     position.value === null || position.value.gainPct === null ? null : pct(position.value.gainPct),
@@ -30,6 +39,15 @@ const gainLabel = computed<string | null>(() =>
                 {{ instrument.typeLabel }}
                 <span v-if="instrument.isin"> · {{ instrument.isin }}</span>
             </p>
+
+            <!-- `w-fit` : sans elle, l'étiquette prendrait la largeur de la colonne et cesserait d'en être une. -->
+            <span
+                v-if="soleSector"
+                data-hero-sector
+                class="mt-1.5 w-fit rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground"
+            >
+                {{ soleSector }}
+            </span>
         </div>
 
         <!-- Les repères chiffrés sortent d'ici : le graphe s'intercale entre eux et la valeur. -->

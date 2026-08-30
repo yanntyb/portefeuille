@@ -75,8 +75,9 @@ const analysis = aheadOfNetwork(
 
         <DividendsSection v-if="props.dividends && receipts.length" :dividends="props.dividends" />
 
+        <!-- Un secteur unique se lit en étiquette dans l'en-tête : sa section n'aurait qu'une ligne à 100 %. -->
         <SectorsSection
-            v-if="props.instrument.sectors.length"
+            v-if="props.instrument.sectors.length > 1"
             :sectors="props.instrument.sectors"
             :market-value="props.instrument.position?.marketValue ?? null"
         />
