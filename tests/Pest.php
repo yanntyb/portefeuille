@@ -23,6 +23,7 @@ use App\Contexts\Wealth\Ports\AssetClassPort;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
+use Pest\Browser\Api\AwaitableWebpage;
 use Pest\Browser\Api\PendingAwaitablePage;
 use Tests\TestCase;
 
@@ -389,6 +390,15 @@ function holdingWithSectors(User $user, string $name, float $close, array $secto
             'weight' => $weight,
         ]);
     }
+}
+
+/**
+ * Déplie une section de la fiche instrument, toutes repliées à l'ouverture de la page. Rendue
+ * chaînable pour se glisser au fil d'une visite, entre le `visit()` et les assertions.
+ */
+function openSection(PendingAwaitablePage|AwaitableWebpage $page, string $section): AwaitableWebpage
+{
+    return $page->click("[data-section=\"{$section}\"] [data-section-toggle]");
 }
 
 /** Amplitude de la fenêtre visible, en pourcentage de l'historique, publiée par le graphe en attribut. */

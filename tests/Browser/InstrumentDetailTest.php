@@ -25,8 +25,12 @@ it('replie toutes les années de transactions et les ouvre une à une', function
 
     $this->actingAs($user);
 
-    visit("/asset/{$instrument->id}")
+    $page = visit("/asset/{$instrument->id}")
         ->assertSee('Transactions')
+        /** Repliée, la section ne montre que son titre : pas même la liste des années. */
+        ->assertScript("document.querySelectorAll('[data-transaction-year]').length", 0);
+
+    openSection($page, 'transactions')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-transaction-year]')).map(el => el.dataset.transactionYear).join('|')",
             '2026|2025',
@@ -50,7 +54,7 @@ it('cache le détail d\'une transaction derrière un clic sur sa ligne', functio
 
     $this->actingAs($user);
 
-    visit("/asset/{$instrument->id}")
+    openSection(visit("/asset/{$instrument->id}"), 'transactions')
         ->click('[data-transaction-year="2026"]')
         ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 0)
         /**
@@ -85,7 +89,7 @@ it('affiche les frais sur la ligne de transaction, sans clic', function () {
 
     $this->actingAs($user);
 
-    visit("/asset/{$instrument->id}")
+    openSection(visit("/asset/{$instrument->id}"), 'transactions')
         ->click('[data-transaction-year="2026"]')
         ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 2)
         ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 0)
@@ -127,8 +131,7 @@ it('détaille le montant de chaque secteur quand l\'instrument est détenu', fun
 
     $this->actingAs($user);
 
-    visit("/asset/{$instrument->id}")
-        ->assertSeeIn('[data-section="sectors"] h2', 'Secteurs')
+    openSection(visit("/asset/{$instrument->id}")->assertSeeIn('[data-section="sectors"] h2', 'Secteurs'), 'sectors')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-sector-amount]')).map(el => el.textContent.replace(/\\s/g, ' ')).join('|')",
             '600 €|400 €',
@@ -146,7 +149,7 @@ it('affiche uniquement la part sectorielle quand l\'instrument n\'est pas déten
 
     $this->actingAs($user);
 
-    visit("/asset/{$instrument->id}")
+    openSection(visit("/asset/{$instrument->id}"), 'sectors')
         ->assertScript("document.querySelectorAll('[data-sector-amount]').length", 0)
         ->assertScript("document.querySelectorAll('[data-sector-share]').length", 2)
         ->assertNoJavaScriptErrors();
@@ -155,13 +158,15 @@ it('affiche uniquement la part sectorielle quand l\'instrument n\'est pas déten
 it('aligne le graphe de valorisation sur la marge du reste de la page, y compris sur mobile', function () {
     // Le graphe débordait de la marge : rendu bord à bord sur mobile, il commençait avant les
     // titres et finissait après eux. Les deux écarts sont mesurés, pas seulement celui de gauche.
+    // Le repère est la bascule de la section, et non son `h2` : le titre s'ajuste désormais à son
+    // texte au sein d'un flex, sa boîte ne touche plus la marge droite.
     ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
 
     $this->actingAs($user);
 
     $paddingGaps = "(() => {
         const chart = document.querySelector('[data-section=\"valuation\"] [data-chart]').getBoundingClientRect();
-        const heading = document.querySelector('[data-section=\"performance\"] h2').getBoundingClientRect();
+        const heading = document.querySelector('[data-section=\"performance\"] [data-section-toggle]').getBoundingClientRect();
 
         return [Math.round(chart.left - heading.left), Math.round(chart.right - heading.right)].join('|');
     })()";
@@ -232,8 +237,7 @@ it('affiche les dividendes perçus quand l\'instrument en verse', function () {
     $recentYear = now()->subMonths(2)->format('Y');
     $olderYear = now()->subMonths(15)->format('Y');
 
-    visit("/asset/{$instrument->id}")
-        ->assertSee('Dividendes (2)')
+    openSection(visit("/asset/{$instrument->id}")->assertSee('Dividendes (2)'), 'dividends')
         // Les dividendes se lisent avant la répartition sectorielle : ce que l'actif rapporte
         // passe devant sa composition. Ordre relatif seul, les autres sections du gabarit
         // dépendant de la fixture.
@@ -308,7 +312,7 @@ it('annonce le revenu attendu sur les douze prochains mois', function () {
 
     $this->actingAs($user);
 
-    visit("/asset/{$instrument->id}")
+    openSection(visit("/asset/{$instrument->id}"), 'dividends')
         ->assertScript("document.querySelector('[data-dividend-last12]').textContent.includes('5,00')", true)
         ->assertScript("document.querySelector('[data-dividend-estimate]').textContent.includes('10,00')", true)
         ->assertNoJavaScriptErrors();

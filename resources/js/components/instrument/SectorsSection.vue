@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
 import SectorBreakdownList from '@/components/SectorBreakdownList.vue';
 import type { SectorWeight } from '@/lib/instrument';
 import type { SectorBreakdownRow } from '@/lib/sector';
@@ -17,8 +18,7 @@ const rows = computed<SectorBreakdownRow[]>(() =>
 </script>
 
 <template>
-    <section data-section="sectors" class="flex flex-col gap-6 px-6">
-        <h2 class="text-[17px] leading-none font-bold">Secteurs</h2>
+    <CollapsibleSection section="sectors" title="Secteurs">
         <SectorBreakdownList :rows="rows" />
-    </section>
+    </CollapsibleSection>
 </template>

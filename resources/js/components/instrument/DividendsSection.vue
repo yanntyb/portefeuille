@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { ChevronRight } from 'lucide-vue-next';
+import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
 import { eur, frDayMonth, pct } from '@/lib/format';
 import { dividendYears, type AssetDividendHistory, type DividendYear } from '@/lib/income';
 
@@ -37,20 +38,17 @@ const perShare = (value: number): string => eur(value, 3);
 </script>
 
 <template>
-    <section data-section="dividends" class="flex flex-col gap-4 px-6">
-        <div class="flex flex-col gap-1.5">
-            <h2 class="text-[17px] leading-none font-bold">{{ heading }}</h2>
-            <p class="text-sm text-muted-foreground">
-                <span data-dividend-total>{{ eur(props.dividends.totalReceived) }}</span> perçus,
-                dont <span data-dividend-last12>{{ eur(props.dividends.last12Months) }}</span> sur douze mois
-                <template v-if="props.dividends.yieldOnCost !== null">
-                    · <span data-dividend-yield>{{ pct(props.dividends.yieldOnCost) }}</span> du prix de revient
-                </template>
-                <template v-if="props.dividends.estimatedAnnual > 0">
-                    · <span data-dividend-estimate>~{{ eur(props.dividends.estimatedAnnual) }}</span> estimés sur douze mois
-                </template>
-            </p>
-        </div>
+    <CollapsibleSection section="dividends" :title="heading">
+        <p class="text-sm text-muted-foreground">
+            <span data-dividend-total>{{ eur(props.dividends.totalReceived) }}</span> perçus,
+            dont <span data-dividend-last12>{{ eur(props.dividends.last12Months) }}</span> sur douze mois
+            <template v-if="props.dividends.yieldOnCost !== null">
+                · <span data-dividend-yield>{{ pct(props.dividends.yieldOnCost) }}</span> du prix de revient
+            </template>
+            <template v-if="props.dividends.estimatedAnnual > 0">
+                · <span data-dividend-estimate>~{{ eur(props.dividends.estimatedAnnual) }}</span> estimés sur douze mois
+            </template>
+        </p>
 
         <div class="flex min-w-0 flex-col">
             <div
@@ -98,5 +96,5 @@ const perShare = (value: number): string => eur(value, 3);
                 </div>
             </div>
         </div>
-    </section>
+    </CollapsibleSection>
 </template>

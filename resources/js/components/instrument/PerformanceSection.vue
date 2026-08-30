@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
 import PerformanceBars from '@/components/PerformanceBars.vue';
 import type { Performance } from '@/lib/performance';
 
@@ -6,8 +7,7 @@ defineProps<{ performances: Performance[] }>();
 </script>
 
 <template>
-    <section data-section="performance" class="flex flex-col gap-6 px-6">
-        <h2 class="text-[17px] leading-none font-bold">Performances</h2>
+    <CollapsibleSection section="performance" title="Performances">
         <PerformanceBars :performances="performances" />
-    </section>
+    </CollapsibleSection>
 </template>

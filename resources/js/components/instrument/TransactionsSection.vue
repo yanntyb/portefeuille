@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { ChevronRight } from 'lucide-vue-next';
+import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
 import { eur, frDayMonth, gainClass, signedEur } from '@/lib/format';
 import { transactionYears, type TransactionLine, type TransactionYear } from '@/lib/instrument';
 
@@ -35,9 +36,7 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
 </script>
 
 <template>
-    <section data-section="transactions" class="flex flex-col gap-4 px-6">
-        <h2 class="text-[17px] leading-none font-bold">Transactions</h2>
-
+    <CollapsibleSection section="transactions" title="Transactions">
         <div v-if="years.length" class="flex min-w-0 flex-col">
             <div
                 v-for="group in years"
@@ -112,5 +111,5 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
         <p v-else class="py-8 text-center text-sm text-muted-foreground">
             Aucune transaction sur cet actif.
         </p>
-    </section>
+    </CollapsibleSection>
 </template>
