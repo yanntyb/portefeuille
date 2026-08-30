@@ -8,7 +8,6 @@ import DividendsSection from '@/components/instrument/DividendsSection.vue';
 import FiguresSection from '@/components/instrument/FiguresSection.vue';
 import HeroSection from '@/components/instrument/HeroSection.vue';
 import InstrumentChart from '@/components/instrument/InstrumentChart.vue';
-import PerformanceSection from '@/components/instrument/PerformanceSection.vue';
 import PriceHistorySection from '@/components/instrument/PriceHistorySection.vue';
 import SectorsSection from '@/components/instrument/SectorsSection.vue';
 import TransactionsSection from '@/components/instrument/TransactionsSection.vue';
@@ -66,14 +65,13 @@ const analysis = aheadOfNetwork(
         <!-- La courbe suit immédiatement la valeur qu'elle raconte ; les repères viennent ensuite. -->
         <FiguresSection :instrument="props.instrument" />
 
-        <AnalysisSection v-if="props.instrument.position" :analysis="analysis" />
-
-        <TransactionsSection :transactions="props.instrument.transactions" />
-
-        <PerformanceSection
-            v-if="props.instrument.position && props.performances.length"
+        <AnalysisSection
+            v-if="props.instrument.position"
+            :analysis="analysis"
             :performances="props.performances"
         />
+
+        <TransactionsSection :transactions="props.instrument.transactions" />
 
         <DividendsSection v-if="props.dividends && receipts.length" :dividends="props.dividends" />
 

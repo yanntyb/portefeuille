@@ -32,3 +32,19 @@ it('n\'offre pas d\'analyse sur un titre qui n\'est pas détenu', function () {
         ->assertScript("document.querySelectorAll('[data-section=\"analysis\"]').length", 0)
         ->assertNoJavaScriptErrors();
 });
+
+it('finit l\'analyse d\'une position par ses performances', function () {
+    ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
+
+    $this->actingAs($user);
+
+    visit("/asset/{$instrument->id}")
+        ->click('[data-section=analysis] [data-section-toggle]')
+        ->assertSee('Performances')
+        ->assertScript("document.querySelectorAll('[data-section=analysis] [data-perf-row]').length > 0", true)
+        ->assertScript(
+            "!!document.querySelector('[data-perf-help] [aria-label=\"Comment lire les performances par période\"]')",
+            true,
+        )
+        ->assertNoJavaScriptErrors();
+});

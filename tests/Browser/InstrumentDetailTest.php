@@ -44,7 +44,7 @@ it('replie toutes les années de transactions et les ouvre une à une', function
         ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 1)
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'hero|valuation|analysis|transactions|performance|sectors',
+            'hero|valuation|analysis|transactions|sectors',
         )
         ->assertNoJavaScriptErrors();
 });
@@ -229,13 +229,13 @@ it('aligne le graphe de valorisation sur la marge du reste de la page, y compris
 
     $paddingGaps = "(() => {
         const chart = document.querySelector('[data-section=\"valuation\"] [data-chart]').getBoundingClientRect();
-        const heading = document.querySelector('[data-section=\"performance\"] [data-section-toggle]').getBoundingClientRect();
+        const heading = document.querySelector('[data-section=\"transactions\"] [data-section-toggle]').getBoundingClientRect();
 
         return [Math.round(chart.left - heading.left), Math.round(chart.right - heading.right)].join('|');
     })()";
 
     visit("/asset/{$instrument->id}")->on()->iPhone14Pro()
-        ->assertSee('Performances')
+        ->assertSee('Transactions')
         ->assertScript($paddingGaps, '0|0')
         ->assertNoJavaScriptErrors();
 });
