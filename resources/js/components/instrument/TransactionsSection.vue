@@ -24,13 +24,6 @@ const toggleYear = (year: string): void => {
         : [...openYears.value, year];
 };
 
-/** Une seule ligne détaillée à la fois : le détail se lit en regard de la ligne, pas en liste. */
-const openLine = ref<string | null>(null);
-
-const toggleLine = (key: string): void => {
-    openLine.value = openLine.value === key ? null : key;
-};
-
 /** Le flux investi de la ligne : un achat entre en positif, une vente en sort. */
 const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total : line.total);
 </script>
@@ -69,50 +62,42 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                     v-if="isYearOpen(group.year)"
                     class="grid grid-cols-[auto_auto_1fr_auto] items-center gap-x-3 pb-2 pl-[22px]"
                 >
-                    <template v-for="(line, index) in group.lines" :key="`${group.year}-${index}`">
-                        <button
-                            type="button"
-                            data-transaction-row
-                            class="col-span-4 grid grid-cols-subgrid items-center gap-x-3 py-2 text-left text-sm"
-                            :aria-expanded="openLine === `${group.year}-${index}`"
-                            :aria-label="`${line.typeLabel} ${line.quantity}`"
-                            @click="toggleLine(`${group.year}-${index}`)"
+                    <div
+                        v-for="(line, index) in group.lines"
+                        :key="`${group.year}-${index}`"
+                        data-transaction-row
+                        class="col-span-4 grid grid-cols-subgrid items-center gap-x-3 py-2 text-left text-sm"
+                        :aria-label="`${line.typeLabel} ${line.quantity}`"
+                    >
+                        <span class="text-muted-foreground">{{ frDayMonth(line.date) }}</span>
+                        <!--
+                            Le sens se lit sur la seule quantité : teinter aussi le montant
+                            doublerait le signal, et deux colonnes colorées par ligne feraient de la
+                            liste un damier illisible.
+                        -->
+                        <span
+                            data-transaction-quantity
+                            class="text-right"
+                            :class="line.isSell ? 'text-loss' : 'text-gain'"
                         >
-                            <span class="text-muted-foreground">{{ frDayMonth(line.date) }}</span>
-                            <!--
-                                Le sens se lit sur la seule quantité : teinter aussi le montant
-                                doublerait le signal, et deux colonnes colorées par ligne feraient
-                                de la liste un damier illisible.
-                            -->
-                            <span
-                                data-transaction-quantity
-                                class="text-right"
-                                :class="line.isSell ? 'text-loss' : 'text-gain'"
-                            >
-                                {{ line.quantity }}
-                            </span>
-                            <!-- Une cellule vide plutôt qu'aucune : sinon le montant remonterait d'une colonne. -->
-                            <span
-                                v-if="line.fees"
-                                data-transaction-fees
-                                class="text-right text-xs text-muted-foreground"
-                            >
+                            {{ line.quantity }}
+                        </span>
+                        <!--
+                            Colonne souple entre la quantité et le montant : le prix unitaire s'y
+                            range contre la quantité qu'il multiplie, les frais contre le montant
+                            qu'ils grèvent. Une colonne toujours présente, même vide, sinon le
+                            montant remonterait d'une colonne.
+                        -->
+                        <span class="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                            <span data-transaction-detail>×{{ eur(line.unitPrice) }}</span>
+                            <span v-if="line.fees" data-transaction-fees>
                                 frais {{ eur(line.fees) }}
                             </span>
-                            <span v-else />
-                            <span data-transaction-amount class="text-right font-medium">
-                                {{ signedEur(amountOf(line)) }}
-                            </span>
-                        </button>
-
-                        <p
-                            v-if="openLine === `${group.year}-${index}`"
-                            data-transaction-detail
-                            class="col-span-4 pb-2 text-xs text-muted-foreground"
-                        >
-                            {{ eur(line.unitPrice) }} l'unité
-                        </p>
-                    </template>
+                        </span>
+                        <span data-transaction-amount class="text-right font-medium">
+                            {{ signedEur(amountOf(line)) }}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>

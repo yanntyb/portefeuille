@@ -49,25 +49,31 @@ it('replie toutes les années de transactions et les ouvre une à une', function
         ->assertNoJavaScriptErrors();
 });
 
-it('cache le détail d\'une transaction derrière un clic sur sa ligne', function () {
+it('affiche le prix unitaire d\'une transaction sur sa ligne, sans clic', function () {
     ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
 
     $this->actingAs($user);
 
     openSection(visit("/asset/{$instrument->id}"), 'transactions')
         ->click('[data-transaction-year="2026"]')
-        ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 0)
         /**
-         * La quantité se lit sur la ligne repliée, seul le prix unitaire attend le clic. Le sens de
-         * l'opération passe par la couleur, doublé d'un `aria-label` pour qui ne la perçoit pas.
+         * Le sens de l'opération passe par la couleur de la quantité, doublé d'un `aria-label` pour
+         * qui ne la perçoit pas : le libellé n'occupe pas de colonne.
          */
         ->assertScript("document.querySelector('[data-transaction-row]').textContent.includes('Achat')", false)
         ->assertScript("document.querySelector('[data-transaction-row]').getAttribute('aria-label')", 'Achat 10')
-        ->click('[data-transaction-row]')
         ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 1)
-        ->assertScript("document.querySelector('[data-transaction-detail]').textContent.includes('80,00')", true)
-        ->click('[data-transaction-row]')
-        ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 0)
+        ->assertScript("document.querySelector('[data-transaction-detail]').textContent.trim().replace(/\\s/g, ' ')", '×80,00 €')
+        /**
+         * Le prix unitaire se lit entre la quantité qu'il multiplie et le montant qu'il produit :
+         * une position dans la ligne, pas une ligne de plus sous elle.
+         */
+        ->assertScript(
+            "(() => { const cell = document.querySelector('[data-transaction-detail]').closest('[data-transaction-row] > *');"
+            ."  return cell.previousElementSibling.matches('[data-transaction-quantity]')"
+            ."  && cell.nextElementSibling.matches('[data-transaction-amount]'); })()",
+            true,
+        )
         ->assertNoJavaScriptErrors();
 });
 
@@ -131,7 +137,6 @@ it('affiche les frais sur la ligne de transaction, sans clic', function () {
     openSection(visit("/asset/{$instrument->id}"), 'transactions')
         ->click('[data-transaction-year="2026"]')
         ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 2)
-        ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 0)
         ->assertScript("document.querySelectorAll('[data-transaction-fees]').length", 1)
         /**
          * Les montants des deux lignes commencent à la même abscisse, alors qu'une seule porte des
