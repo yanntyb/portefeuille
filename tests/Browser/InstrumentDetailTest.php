@@ -86,6 +86,16 @@ it('affiche les frais sur la ligne de transaction, sans clic', function () {
         ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 2)
         ->assertScript("document.querySelectorAll('[data-transaction-detail]').length", 0)
         ->assertScript("document.querySelectorAll('[data-transaction-fees]').length", 1)
+        /**
+         * Les montants des deux lignes commencent à la même abscisse, alors qu'une seule porte des
+         * frais : la colonne vide tient sa place au lieu de laisser glisser la suivante.
+         */
+        ->assertScript(
+            "(() => { const [a, b] = Array.from(document.querySelectorAll('[data-transaction-row]'))"
+            .'  .map(row => row.lastElementChild.getBoundingClientRect().left);'
+            .'  return a === b; })()',
+            true,
+        )
         /** `toLocaleString` sépare le montant du symbole par une espace insécable étroite, d'où le remplacement. */
         ->assertScript("document.querySelector('[data-transaction-fees]').textContent.trim().replace(/\\s/g, ' ')", 'frais 3,50 €')
         ->assertNoJavaScriptErrors();

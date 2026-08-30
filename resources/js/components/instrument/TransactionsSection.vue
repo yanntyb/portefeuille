@@ -63,29 +63,38 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                     </span>
                 </button>
 
-                <div v-if="isYearOpen(group.year)" class="flex flex-col pb-2">
+                <!--
+                    Les colonnes se déclarent sur le groupe et non sur la ligne : une grille par
+                    ligne se dimensionnerait sur son seul contenu, et deux lignes voisines ne
+                    s'aligneraient pas. `grid-cols-subgrid` fait hériter les pistes du groupe.
+                -->
+                <div
+                    v-if="isYearOpen(group.year)"
+                    class="grid grid-cols-[auto_auto_1fr_auto] items-center gap-x-3 pb-2 pl-[22px]"
+                >
                     <template v-for="(line, index) in group.lines" :key="`${group.year}-${index}`">
                         <button
                             type="button"
                             data-transaction-row
-                            class="flex items-center gap-3 py-2 pl-[22px] text-sm"
+                            class="col-span-4 grid grid-cols-subgrid items-center gap-x-3 py-2 text-left text-sm"
                             :aria-expanded="openLine === `${group.year}-${index}`"
                             :aria-label="`${line.typeLabel} ${line.quantity}`"
                             @click="toggleLine(`${group.year}-${index}`)"
                         >
                             <span class="text-muted-foreground">{{ frDayMonth(line.date) }}</span>
-                            <span :class="line.isSell ? 'text-loss' : 'text-gain'">{{ line.quantity }}</span>
+                            <span class="text-right" :class="line.isSell ? 'text-loss' : 'text-gain'">
+                                {{ line.quantity }}
+                            </span>
+                            <!-- Une cellule vide plutôt qu'aucune : sinon le montant remonterait d'une colonne. -->
                             <span
                                 v-if="line.fees"
                                 data-transaction-fees
-                                class="ml-auto text-xs text-muted-foreground"
+                                class="text-right text-xs text-muted-foreground"
                             >
                                 frais {{ eur(line.fees) }}
                             </span>
-                            <span
-                                class="font-medium"
-                                :class="[gainClass(amountOf(line)), line.fees ? '' : 'ml-auto']"
-                            >
+                            <span v-else />
+                            <span class="text-right font-medium" :class="gainClass(amountOf(line))">
                                 {{ signedEur(amountOf(line)) }}
                             </span>
                         </button>
@@ -93,7 +102,7 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                         <p
                             v-if="openLine === `${group.year}-${index}`"
                             data-transaction-detail
-                            class="pb-2 pl-[22px] text-xs text-muted-foreground"
+                            class="col-span-4 pb-2 text-xs text-muted-foreground"
                         >
                             {{ eur(line.unitPrice) }} l'unité
                         </p>
