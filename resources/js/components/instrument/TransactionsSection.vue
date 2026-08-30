@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue';
 import { ChevronRight } from 'lucide-vue-next';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
-import { eur, frDayMonth, gainClass, signedEur } from '@/lib/format';
+import { eur, frDayMonth, signedEur } from '@/lib/format';
 import { transactionYears, type TransactionLine, type TransactionYear } from '@/lib/instrument';
 
 const props = defineProps<{ transactions: TransactionLine[] }>();
@@ -55,7 +55,7 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                         :class="isYearOpen(group.year) ? 'rotate-90' : ''"
                     />
                     <span class="font-semibold">{{ group.year }}</span>
-                    <span class="ml-auto font-semibold" :class="gainClass(group.net)">
+                    <span data-transaction-year-net class="ml-auto font-semibold">
                         {{ signedEur(group.net) }}
                     </span>
                 </button>

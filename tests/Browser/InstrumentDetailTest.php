@@ -99,10 +99,11 @@ it('ne teinte que la quantité d\'une transaction, jamais son montant', function
             .'  return a !== b; })()',
             true,
         )
+        /** Le solde de l'année suit la règle des lignes : signé, mais jamais teinté. */
         ->assertScript(
             "(() => { const quantities = Array.from(document.querySelectorAll('[data-transaction-quantity]'))"
             .'  .map(cell => getComputedStyle(cell).color);'
-            ."  return Array.from(document.querySelectorAll('[data-transaction-amount]'))"
+            ."  return Array.from(document.querySelectorAll('[data-transaction-amount], [data-transaction-year-net]'))"
             .'  .every(cell => !quantities.includes(getComputedStyle(cell).color)); })()',
             true,
         )

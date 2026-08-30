@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 import { Deferred } from '@inertiajs/vue3';
 import { ChevronRight } from 'lucide-vue-next';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
-import { eur, frDayMonth, gainClass, signedEur } from '@/lib/format';
+import { eur, frDayMonth, signedEur } from '@/lib/format';
 import { transactionYears, type TransactionYear } from '@/lib/instrument';
 import type { WealthTransactionLine } from '@/lib/wealth';
 
@@ -64,7 +64,7 @@ const amountOf = (line: WealthTransactionLine): number => (line.isSell ? -line.t
                             :class="isYearOpen(group.year) ? 'rotate-90' : ''"
                         />
                         <span class="font-semibold">{{ group.year }}</span>
-                        <span class="ml-auto font-semibold" :class="gainClass(group.net)">
+                        <span data-transaction-year-net class="ml-auto font-semibold">
                             {{ signedEur(group.net) }}
                         </span>
                     </button>
