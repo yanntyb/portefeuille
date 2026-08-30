@@ -5,6 +5,7 @@ namespace App\Contexts\MarketView\Actions;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\MarketView\Datas\HoldingSnapshotData;
 use App\Contexts\MarketView\Datas\InstrumentDetailData;
+use App\Contexts\MarketView\Ports\ClassAnalysisPort;
 use App\Contexts\MarketView\Ports\HoldingsPort;
 use App\Contexts\MarketView\Ports\IncomePort;
 use App\Contexts\MarketView\Ports\InstrumentAnalysisPort;
@@ -34,6 +35,7 @@ class BuildMarketViewSnapshot
         private SectorBreakdownPort $sectors,
         private IncomePort $income,
         private InstrumentAnalysisPort $analysis,
+        private ClassAnalysisPort $classAnalysis,
     ) {}
 
     /**
@@ -72,6 +74,7 @@ class BuildMarketViewSnapshot
             'trends' => ($this->getTrends)($userId, [$exposure]),
             'evolutionSeries' => $this->valuation->evolutionFor($userId, $exposure),
             'performances' => $this->valuation->performancesFor($userId, $exposure),
+            'classAnalysis' => $this->classAnalysis->forClass($userId, $exposure),
         ];
 
         if ($exposure->hasSectors()) {

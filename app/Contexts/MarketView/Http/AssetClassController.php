@@ -5,6 +5,7 @@ namespace App\Contexts\MarketView\Http;
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\MarketView\Actions\GetHoldingTrends;
+use App\Contexts\MarketView\Ports\ClassAnalysisPort;
 use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
 use App\Contexts\MarketView\Ports\SectorBreakdownPort;
 use App\Contexts\MarketView\Ports\ValuationPort;
@@ -24,6 +25,7 @@ class AssetClassController
         private GetHoldingTrends $getTrends,
         private ValuationPort $valuation,
         private SectorBreakdownPort $sectors,
+        private ClassAnalysisPort $classAnalysis,
     ) {}
 
     public function __invoke(): Response
@@ -46,6 +48,9 @@ class AssetClassController
             ),
             'performances' => Inertia::defer(
                 fn () => $this->valuation->performancesFor($userId, $exposure), 'performances',
+            ),
+            'classAnalysis' => Inertia::defer(
+                fn () => $this->classAnalysis->forClass($userId, $exposure), 'analyse',
             ),
         ];
 

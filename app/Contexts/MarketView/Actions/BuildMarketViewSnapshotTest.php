@@ -16,7 +16,7 @@ it('porte la page liste et une fiche par position détenue', function () {
     $snapshot = app(BuildMarketViewSnapshot::class)($user->id);
 
     expect($snapshot['classes']['equity'])->toHaveKeys([
-        'overview', 'trends', 'evolutionSeries', 'performances', 'sectorBreakdown',
+        'overview', 'trends', 'evolutionSeries', 'performances', 'classAnalysis', 'sectorBreakdown',
     ])
         ->and($snapshot['assets'])->toHaveKey($instrument->id)
         ->and($snapshot['assets'][$instrument->id])->toHaveKeys([
@@ -118,7 +118,7 @@ it('rend les mêmes listes vides sans aucun utilisateur', function () {
     $equity = $snapshot['classes']['equity'];
 
     expect(array_keys($equity))
-        ->toBe(['overview', 'trends', 'evolutionSeries', 'performances', 'sectorBreakdown']);
+        ->toBe(['overview', 'trends', 'evolutionSeries', 'performances', 'classAnalysis', 'sectorBreakdown']);
     // gainPct est nul, et non zéro, sur un coût nul : « 0 % » mentirait sur une mise inconnue.
     expect($equity['overview']->jsonSerialize())
         ->toBe([
@@ -135,5 +135,5 @@ it('rend les mêmes listes vides sans aucun utilisateur', function () {
         ->and($equity['sectorBreakdown'])->toBe([]);
 
     expect(array_keys($snapshot['classes']['crypto']))
-        ->toBe(['overview', 'trends', 'evolutionSeries', 'performances']);
+        ->toBe(['overview', 'trends', 'evolutionSeries', 'performances', 'classAnalysis']);
 });

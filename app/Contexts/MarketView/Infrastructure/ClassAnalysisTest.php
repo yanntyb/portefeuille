@@ -21,7 +21,7 @@ beforeEach(function () {
  *
  * @param  list<float>  $closes  Clôtures dans l'ordre chronologique, la dernière datée d'aujourd'hui.
  */
-function heldInstrument(
+function classInstrument(
     string $ticker,
     array $closes,
     float $quantity = 1.0,
@@ -53,8 +53,8 @@ function heldInstrument(
 }
 
 it('range les instruments du plus lourd au plus léger', function () {
-    heldInstrument('PETIT', [10.0, 12.0], quantity: 1);
-    heldInstrument('GROS', [100.0, 120.0], quantity: 10);
+    classInstrument('PETIT', [10.0, 12.0], quantity: 1);
+    classInstrument('GROS', [100.0, 120.0], quantity: 10);
 
     $data = $this->analysis->forClass($this->user->id, AssetClass::Equity);
 
@@ -62,8 +62,8 @@ it('range les instruments du plus lourd au plus léger', function () {
 });
 
 it('rend une matrice carrée, symétrique et parfaite sur sa diagonale', function () {
-    heldInstrument('AAA', array_map(fn (int $day): float => 100.0 + $day, range(0, 59)));
-    heldInstrument('BBB', array_map(fn (int $day): float => 50.0 + $day / 2, range(0, 59)));
+    classInstrument('AAA', array_map(fn (int $day): float => 100.0 + $day, range(0, 59)));
+    classInstrument('BBB', array_map(fn (int $day): float => 50.0 + $day / 2, range(0, 59)));
 
     $data = $this->analysis->forClass($this->user->id, AssetClass::Equity);
 
@@ -76,7 +76,7 @@ it('rend une matrice carrée, symétrique et parfaite sur sa diagonale', functio
 
 it('ne garde que les huit plus gros poids de la classe', function () {
     foreach (range(1, 9) as $rank) {
-        heldInstrument('I'.$rank, [100.0, 110.0], quantity: $rank);
+        classInstrument('I'.$rank, [100.0, 110.0], quantity: $rank);
     }
 
     $data = $this->analysis->forClass($this->user->id, AssetClass::Equity);
@@ -88,14 +88,14 @@ it('ne garde que les huit plus gros poids de la classe', function () {
 });
 
 it('mesure la chute maximale de la poche', function () {
-    heldInstrument('AAA', [100.0, 120.0, 90.0]);
+    classInstrument('AAA', [100.0, 120.0, 90.0]);
 
     expect($this->analysis->forClass($this->user->id, AssetClass::Equity)->maxDrawdown)
         ->toBe(25.0);
 });
 
 it('situe la poche sous son plus-haut', function () {
-    heldInstrument('AAA', [100.0, 120.0, 90.0]);
+    classInstrument('AAA', [100.0, 120.0, 90.0]);
 
     expect($this->analysis->forClass($this->user->id, AssetClass::Equity)->high52wGapPct)
         ->toBe(-25.0);
@@ -103,16 +103,16 @@ it('situe la poche sous son plus-haut', function () {
 
 it('pèse chaque instrument dans l’indice selon sa place dans la poche', function () {
     /** Trois quarts sur un titre qui perd 20 %, un quart sur un titre étale : la poche perd 15 %. */
-    heldInstrument('GROS', [100.0, 80.0], quantity: 37.5);
-    heldInstrument('PETIT', [100.0, 100.0], quantity: 10);
+    classInstrument('GROS', [100.0, 80.0], quantity: 37.5);
+    classInstrument('PETIT', [100.0, 100.0], quantity: 10);
 
     expect($this->analysis->forClass($this->user->id, AssetClass::Equity)->maxDrawdown)
         ->toBe(15.0);
 });
 
 it('ignore les instruments des autres expositions', function () {
-    heldInstrument('ACTION', [100.0, 120.0]);
-    heldInstrument('BITCOIN', [1000.0, 900.0], assetClass: AssetClass::Crypto);
+    classInstrument('ACTION', [100.0, 120.0]);
+    classInstrument('BITCOIN', [1000.0, 900.0], assetClass: AssetClass::Crypto);
 
     $data = $this->analysis->forClass($this->user->id, AssetClass::Equity);
 

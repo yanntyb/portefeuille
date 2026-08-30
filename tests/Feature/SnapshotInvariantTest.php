@@ -66,8 +66,11 @@ use Illuminate\Support\Carbon;
  * Modifié une quinzième fois : la section Analyse se resserre sur sept repères — la moyenne
  * longue, son écart, le RSI et l'amplitude vraie quittent la fiche et le dernier cours l'y
  * rejoint, en tête, donc le blob suit dans les deux sens.
+ * Modifié une seizième fois : chaque page liste porte l'analyse de son exposition — la chute
+ * maximale de la poche, sa distance au plus-haut et la matrice de corrélations de ses huit plus
+ * grosses lignes.
  */
-const SNAPSHOT_VERSION = '0c150d94ea9c5ebc6cb6478d4b1dcb7ee6c3ea76';
+const SNAPSHOT_VERSION = '591122f506961a84533117c73377f391a4280336';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

@@ -261,3 +261,21 @@ it('defers the portfolio performances and loads them on demand', function () {
             )
         );
 });
+
+it('diffère l’analyse de la classe et la charge à la demande', function () {
+    portfolioFixture();
+
+    $this->get('/actions')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('AssetClass/Index')
+            ->missing('classAnalysis')
+            ->loadDeferredProps('analyse', fn (Assert $reload) => $reload
+                ->has('classAnalysis.instruments.0.label')
+                ->has('classAnalysis.correlations')
+                ->has('classAnalysis.maxDrawdown')
+                ->has('classAnalysis.high52wGapPct')
+                ->missing('performances')
+            )
+        );
+});
