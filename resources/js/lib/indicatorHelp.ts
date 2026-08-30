@@ -90,7 +90,7 @@ export const indicatorHelp: Record<IndicatorId, IndicatorHelp> = {
         title: 'Comment lire le max drawdown',
         subtitle: 'La pire chute depuis un sommet',
         body: [
-            'La plus forte baisse subie entre un plus-haut et le creux qui l\'a suivi, sur tout l\'historique connu. Le risque déjà vécu par le titre, en une mesure.',
+            'La plus forte baisse subie entre un plus-haut et le creux qui l\'a suivi, sur l\'historique connu, cinq ans au plus. Le risque déjà vécu par le titre, en une mesure.',
             'Il répond à « qu\'est-ce que j\'aurais encaissé au pire moment », ce qu\'aucune moyenne de volatilité ne dit aussi clairement.',
         ],
         caveat: 'C\'est du passé, pas une borne : rien n\'empêche une chute plus profonde que celles déjà vues.',

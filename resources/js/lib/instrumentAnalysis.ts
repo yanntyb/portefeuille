@@ -29,8 +29,13 @@ export interface AnalysisGroup {
 /** Le RSI se lit en entier : sa décimale n'ajoute rien à une échelle de 0 à 100. */
 const index = (value: number | null): string => (value === null ? '—' : String(Math.round(value)));
 
-/** Le serveur rend une profondeur positive ; la chute se lit avec son signe. */
-const drawdown = (value: number | null): string => (value === null ? '—' : pct(-value));
+/**
+ * Le serveur rend une profondeur positive ; la chute se lit avec son signe. Une chute nulle est un
+ * cas à part : `pct(-0)` colle un `+` (car `-0 >= 0`) devant un `-0,0` que rend `toLocaleString`,
+ * soit `+-0,0 %`. `sharePct`, qui ne pose jamais de signe, évite l'écueil.
+ */
+const drawdown = (value: number | null): string =>
+    value === null ? '—' : value === 0 ? sharePct(0) : pct(-value);
 
 /**
  * Les repères d'analyse en groupes de lignes prêtes à rendre. Un repère absent garde sa ligne et

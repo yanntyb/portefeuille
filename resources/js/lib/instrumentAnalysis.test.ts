@@ -50,6 +50,13 @@ describe('analysisGroups', () => {
             .toBe('-31,4 %');
     });
 
+    it('ne pose aucun signe sur un drawdown nul', () => {
+        const rows = analysisGroups(analysis({ maxDrawdown: 0 })).flatMap((group) => group.rows);
+
+        expect(normalizeSpaces(rows.find((row) => row.indicator === 'maxDrawdown')!.value))
+            .toBe('0,0 %');
+    });
+
     it('ne colore que l\'écart au prix de revient', () => {
         const rows = analysisGroups(analysis()).flatMap((group) => group.rows);
         const colored = rows.filter((row) => row.gain !== undefined);

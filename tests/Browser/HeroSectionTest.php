@@ -29,13 +29,12 @@ it('colle investi et gain au grand chiffre, comme le tableau de bord', function 
 
     $this->actingAs($user);
 
-    /** Le résumé se lit entre la valeur et les repères du milieu de page. */
+    /** Le résumé se lit sous la valeur ; un titre détenu n'a plus de repères en dessous. */
     $beneathValue = "(() => {
         const value = document.querySelector('[data-hero-value]').getBoundingClientRect();
         const summary = document.querySelector('[data-hero-summary]').getBoundingClientRect();
-        const meta = document.querySelector('[data-hero-meta]').getBoundingClientRect();
 
-        return summary.top >= value.bottom - 1 && summary.bottom <= meta.top + 1;
+        return summary.top >= value.bottom - 1 && document.querySelector('[data-hero-meta]') === null;
     })()";
 
     visit("/asset/{$instrument->id}")

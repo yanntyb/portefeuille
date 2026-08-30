@@ -44,7 +44,7 @@ it('replie toutes les années de transactions et les ouvre une à une', function
         ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 1)
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'hero|valuation|figures|analysis|transactions|performance|sectors',
+            'hero|valuation|analysis|transactions|performance|sectors',
         )
         ->assertNoJavaScriptErrors();
 });

@@ -31,9 +31,3 @@ it('sérialise ses onze chiffres dans un ordre stable', function () {
         'portfolioWeightPct',
     ]);
 });
-
-it('sérialise les chiffres absents en nul plutôt que de les omettre', function () {
-    $empty = InstrumentAnalysisData::empty();
-
-    expect($empty->jsonSerialize())->each->toBeNull();
-});

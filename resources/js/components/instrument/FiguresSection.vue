@@ -9,7 +9,7 @@ const metaEntries = computed<HeroMetaEntry[]>(() => heroMeta(props.instrument));
 </script>
 
 <template>
-    <section data-section="figures" class="px-6">
+    <section v-if="metaEntries.length" data-section="figures" class="px-6">
         <HeroMetaList :entries="metaEntries" />
     </section>
 </template>

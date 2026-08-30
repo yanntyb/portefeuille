@@ -33,11 +33,6 @@ readonly class InstrumentAnalysisData implements JsonSerializable
         public ?float $portfolioWeightPct,
     ) {}
 
-    public static function empty(): self
-    {
-        return new self(null, null, null, null, null, null, null, null, null, null, null);
-    }
-
     /** @return array<string, mixed> */
     public function jsonSerialize(): array
     {
