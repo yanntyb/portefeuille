@@ -63,3 +63,31 @@ it('dit qu\'il n\'y a rien à corréler sur une exposition vide', function () {
         ->assertSee('Pas encore de quoi analyser cette exposition.')
         ->assertNoJavaScriptErrors();
 });
+
+it('explique la matrice de corrélations à travers un dialogue', function () {
+    ['user' => $user, 'wallet' => $wallet] = portfolioFixture();
+
+    $other = Instrument::factory()->create(['name' => 'DELTA', 'ticker' => 'DEL']);
+    Price::factory()->create(['asset_id' => $other->id, 'date' => now(), 'close' => 400]);
+    Holding::factory()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $other->id,
+        'quantity' => 3,
+        'avg_cost' => 350,
+    ]);
+
+    $this->actingAs($user);
+
+    /** L'aide se pose contre l'étiquette qu'elle explique, comme celle des performances. */
+    visit('/actions')
+        ->click('[data-section=analysis] [data-section-toggle]')
+        ->assertScript(
+            "!!document.querySelector('[data-correlation-help] [aria-label=\"Comment lire les corrélations\"]')",
+            true,
+        )
+        ->click('[aria-label="Comment lire les corrélations"]')
+        ->assertSee('Comment lire les corrélations')
+        ->assertSee('rendements journaliers')
+        ->assertNoJavaScriptErrors();
+});

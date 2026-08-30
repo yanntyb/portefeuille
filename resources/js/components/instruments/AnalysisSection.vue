@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { Deferred } from '@inertiajs/vue3';
 import AnalysisRow from '@/components/instrument/AnalysisRow.vue';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
+import CorrelationInfoDialog from '@/components/CorrelationInfoDialog.vue';
 import PerformanceBars from '@/components/PerformanceBars.vue';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
 import { basketRows, correlationGrid, type ClassAnalysis, type CorrelationRow } from '@/lib/classAnalysis';
@@ -48,7 +49,15 @@ const hasPerformances = computed<boolean>(() => (props.performances?.length ?? 0
                 </div>
 
                 <div v-if="hasMatrix" class="flex flex-col gap-2">
-                    <span class="text-xs font-semibold text-muted-foreground uppercase">Corrélations</span>
+                    <span data-correlation-help class="flex items-center gap-1.5">
+                        <span class="text-xs font-semibold text-muted-foreground uppercase">Corrélations</span>
+
+                        <!-- Hauteur nulle, bouton centré sur la ligne : plus haut qu'une
+                             étiquette, il creuserait sinon un blanc sous elle. -->
+                        <span class="flex h-0 items-center">
+                            <CorrelationInfoDialog />
+                        </span>
+                    </span>
 
                     <!-- La matrice déborde du téléphone dès quatre lignes : elle défile dans son
                          propre cadre, jamais la page. -->
