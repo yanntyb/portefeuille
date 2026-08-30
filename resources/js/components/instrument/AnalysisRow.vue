@@ -1,9 +1,14 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import IndicatorInfoDialog from '@/components/IndicatorInfoDialog.vue';
 import { gainClass } from '@/lib/format';
+import { indicatorHelp } from '@/lib/indicatorHelp';
 import type { AnalysisRow } from '@/lib/instrumentAnalysis';
 
 const props = defineProps<{ row: AnalysisRow }>();
+
+/** Seuls les repères qui ne se lisent pas dans leur libellé portent une aide. */
+const hasHelp = computed<boolean>(() => indicatorHelp[props.row.indicator] !== undefined);
 </script>
 
 <template>
@@ -15,7 +20,7 @@ const props = defineProps<{ row: AnalysisRow }>();
     >
         <span class="flex items-center gap-0.5 text-muted-foreground">
             {{ props.row.label }}
-            <IndicatorInfoDialog :indicator="props.row.indicator" />
+            <IndicatorInfoDialog v-if="hasHelp" :indicator="props.row.indicator" />
         </span>
 
         <strong

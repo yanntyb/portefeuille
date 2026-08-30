@@ -15,11 +15,12 @@ import { indicatorHelp } from '@/lib/indicatorHelp';
 
 const props = defineProps<{ indicator: IndicatorId }>();
 
-const help = computed(() => indicatorHelp[props.indicator]);
+/** Nul pour un repère sans aide : la table n'en porte que pour ceux dont le nom ne suffit pas. */
+const help = computed(() => indicatorHelp[props.indicator] ?? null);
 </script>
 
 <template>
-    <Dialog>
+    <Dialog v-if="help">
         <DialogTrigger as-child>
             <Button
                 variant="ghost"

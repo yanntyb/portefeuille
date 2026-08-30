@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { analysisGroups } from '@/lib/instrumentAnalysis';
+import { analysisGroups, type IndicatorId } from '@/lib/instrumentAnalysis';
 import { indicatorHelp } from '@/lib/indicatorHelp';
 import type { InstrumentAnalysis } from '@/lib/instrument';
 
@@ -15,11 +15,15 @@ const full: InstrumentAnalysis = {
 };
 
 describe('indicatorHelp', () => {
-    it('couvre chaque repère que la section peut afficher', () => {
+    it('n\'explique que l\'ATR : les autres repères se lisent dans leur libellé', () => {
+        expect(Object.keys(indicatorHelp)).toEqual(['atrPct']);
+    });
+
+    it('n\'explique aucun repère que la section n\'affiche pas', () => {
         const shown = analysisGroups(full).flatMap((group) => group.rows.map((row) => row.indicator));
 
-        shown.forEach((indicator) => {
-            expect(indicatorHelp[indicator], indicator).toBeDefined();
+        Object.keys(indicatorHelp).forEach((indicator) => {
+            expect(shown).toContain(indicator as IndicatorId);
         });
     });
 
