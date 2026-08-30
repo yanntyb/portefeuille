@@ -147,3 +147,19 @@
         @apply bg-background text-foreground;
     }
 }
+
+/*
+ * Barre de chargement d'Inertia. Ses styles sont injectés dans un `<style>` ajouté à la fin du
+ * `<head>` au démarrage, donc `!important` est le seul moyen de reprendre la main dessus. On la
+ * rebranche sur `--brand` pour qu'elle suive le thème, que la couleur passée à `createInertiaApp`
+ * fige au premier rendu.
+ */
+#nprogress .bar {
+    background: var(--brand) !important;
+}
+
+#nprogress .peg {
+    box-shadow:
+        0 0 10px var(--brand),
+        0 0 5px var(--brand) !important;
+}

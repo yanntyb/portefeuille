@@ -3,6 +3,7 @@ import '../css/app.css';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h, type DefineComponent } from 'vue';
+import { progressSettings } from '@/lib/progress';
 import { mountServiceWorkerBanner } from '@/pwa/banner';
 import { pinia } from '@/stores/pinia';
 import { useSnapshotStore } from '@/stores/snapshot';
@@ -47,9 +48,7 @@ createInertiaApp({
             .use(pinia)
             .mount(el);
     },
-    progress: {
-        color: '#5257d6',
-    },
+    progress: progressSettings,
     defaults: {
         prefetch: {
             hoverDelay: 75,
