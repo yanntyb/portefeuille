@@ -2,7 +2,7 @@ import { eur, pct, sharePct } from '@/lib/format';
 import type { InstrumentAnalysis } from '@/lib/instrument';
 
 export type IndicatorId =
-    | 'marketValue'
+    | 'price'
     | 'pru'
     | 'pruGap'
     | 'high52w'
@@ -41,7 +41,7 @@ export const analysisGroups = (analysis: InstrumentAnalysis): AnalysisGroup[] =>
         {
             title: null,
             rows: [
-                { indicator: 'marketValue', label: 'Valeur', value: eur(analysis.marketValue) },
+                { indicator: 'price', label: 'Prix', value: eur(analysis.price) },
                 { indicator: 'pru', label: 'PRU', value: eur(analysis.pru) },
                 {
                     indicator: 'pruGap',

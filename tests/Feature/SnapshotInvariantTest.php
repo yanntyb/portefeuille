@@ -64,10 +64,10 @@ use Illuminate\Support\Carbon;
  * Modifié une quatorzième fois : chaque page actif porte ses repères d'analyse — prix de revient,
  * moyenne longue, RSI, amplitude vraie, drawdown et poids dans le portefeuille.
  * Modifié une quinzième fois : la section Analyse se resserre sur sept repères — la moyenne
- * longue, son écart, le RSI et l'amplitude vraie quittent la fiche et la valeur de marché de la
- * position l'y rejoint, donc le blob suit dans les deux sens.
+ * longue, son écart, le RSI et l'amplitude vraie quittent la fiche et le dernier cours l'y
+ * rejoint, en tête, donc le blob suit dans les deux sens.
  */
-const SNAPSHOT_VERSION = '780cf0c218dd4789736d8611db44966cc1741cb1';
+const SNAPSHOT_VERSION = '0c150d94ea9c5ebc6cb6478d4b1dcb7ee6c3ea76';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

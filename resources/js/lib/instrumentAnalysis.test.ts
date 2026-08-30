@@ -6,7 +6,7 @@ import type { InstrumentAnalysis } from '@/lib/instrument';
 const normalizeSpaces = (value: string): string => value.replace(/[\xa0\u202f]/g, ' ');
 
 const analysis = (overrides: Partial<InstrumentAnalysis> = {}): InstrumentAnalysis => ({
-    marketValue: 1000,
+    price: 100,
     pru: 80,
     pruGapPct: 25,
     high52w: 94.1,
@@ -30,7 +30,7 @@ describe('analysisGroups', () => {
         const valueOf = (indicator: string): string =>
             normalizeSpaces(rows.find((row) => row.indicator === indicator)!.value);
 
-        expect(valueOf('marketValue')).toBe('1 000,00 €');
+        expect(valueOf('price')).toBe('100,00 €');
         expect(valueOf('pru')).toBe('80,00 €');
         expect(valueOf('pruGap')).toBe('+25,0 %');
         expect(valueOf('high52w')).toBe('94,10 €');

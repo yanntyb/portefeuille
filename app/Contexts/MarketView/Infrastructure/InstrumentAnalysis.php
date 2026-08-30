@@ -61,7 +61,7 @@ class InstrumentAnalysis implements InstrumentAnalysisPort
              * connue — ne doit pas les faire disparaître avec le reste, qui lui dépend des cours.
              */
             return new InstrumentAnalysisData(
-                marketValue: $position->marketValue,
+                price: null,
                 pru: $position->avgCost,
                 pruGapPct: null,
                 high52w: null,
@@ -77,7 +77,7 @@ class InstrumentAnalysis implements InstrumentAnalysisPort
         $fiftyTwoWeeks = $this->fiftyTwoWeeks->of($closes);
 
         return new InstrumentAnalysisData(
-            marketValue: $position->marketValue,
+            price: $lastClose,
             pru: $position->avgCost,
             pruGapPct: $this->priceGap->pct($position->avgCost, $lastClose),
             high52w: $fiftyTwoWeeks?->high,

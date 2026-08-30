@@ -4,7 +4,7 @@ use App\Contexts\MarketView\Datas\InstrumentAnalysisData;
 
 it('sérialise ses onze chiffres dans un ordre stable', function () {
     $data = new InstrumentAnalysisData(
-        marketValue: 1000.0,
+        price: 100.0,
         pru: 80.0,
         pruGapPct: 25.0,
         high52w: 94.1,
@@ -14,7 +14,7 @@ it('sérialise ses onze chiffres dans un ordre stable', function () {
     );
 
     expect(array_keys($data->jsonSerialize()))->toBe([
-        'marketValue',
+        'price',
         'pru',
         'pruGapPct',
         'high52w',

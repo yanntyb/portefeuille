@@ -76,9 +76,9 @@ export interface Instrument {
     sectors: SectorWeight[];
 }
 
-/** Jumelle d'`InstrumentAnalysisData` : tout est nullable, un instrument jeune n'a pas de tendance longue. */
+/** Jumelle d'`InstrumentAnalysisData` : tout est nullable, un instrument sans cours n'a que son PRU. */
 export interface InstrumentAnalysis {
-    marketValue: number | null;
+    price: number | null;
     pru: number | null;
     pruGapPct: number | null;
     high52w: number | null;

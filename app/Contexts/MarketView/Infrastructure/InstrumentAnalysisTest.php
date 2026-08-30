@@ -43,7 +43,7 @@ it('rend le prix de revient et son écart au dernier cours', function () {
     $data = $this->analysis->forAsset($user->id, $instrument->id);
 
     /** La fixture achète 10 titres à 80 € et cote le dernier à 100 €. */
-    expect($data->marketValue)->toBe(1000.0)
+    expect($data->price)->toBe(100.0)
         ->and($data->pru)->toBe(80.0)
         ->and($data->pruGapPct)->toBe(25.0);
 });
