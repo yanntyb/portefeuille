@@ -12,7 +12,7 @@ import type {
     RealEstateSeries,
 } from './realEstate';
 import type { SectorSlice } from './sector';
-import type { WealthIncome, WealthOverview, WealthSeries } from './wealth';
+import type { WealthIncome, WealthOverview, WealthSeries, WealthTransactionLine } from './wealth';
 
 /**
  * Miroir exact de ce que sert `GET /instantane`. Chaque bloc reprend les noms de props de la page
@@ -23,6 +23,7 @@ export interface DashboardSnapshot {
     overview: WealthOverview;
     series: WealthSeries;
     income: WealthIncome;
+    transactions: WealthTransactionLine[];
 }
 
 /** Une page liste d'exposition. */

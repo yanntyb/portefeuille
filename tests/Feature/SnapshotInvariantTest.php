@@ -45,8 +45,10 @@ use Illuminate\Support\Carbon;
  * fait maintenant traverser le hash par le tri par contribution décroissante et le cumul du top 3.
  * Modifié une sixième fois : la page analyse ne garde que performances et secteurs, donc le bloc
  * `analyses` du blob perd `analysis`, `drawdown`, `income` et `annualIncome`.
+ * Modifié une septième fois : le tableau de bord gagne une section transactions, donc `dashboard`
+ * une quatrième clé — l'historique des opérations, tous actifs confondus.
  */
-const SNAPSHOT_VERSION = 'f762853f8652c12c4cec15640f0cb0bf7e9f540e';
+const SNAPSHOT_VERSION = 'dce17b84756fbd585f47c7cb49c10c3d002150aa';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

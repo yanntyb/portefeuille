@@ -32,6 +32,7 @@ use App\Contexts\Valuation\Infrastructure\MarketInstrumentDirectory;
 use App\Contexts\Valuation\Infrastructure\MarketPriceHistory;
 use App\Contexts\Valuation\Infrastructure\PortfolioTransactionHistory;
 use App\Contexts\Valuation\ValuationProvider;
+use App\Contexts\Wealth\Infrastructure\PortfolioLedger;
 use App\Contexts\Wealth\Infrastructure\RealEstateClass;
 use App\Contexts\Wealth\WealthProvider;
 use App\Shared\Python\ProcessPythonRunner;
@@ -103,7 +104,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(GetPortfolioPositions::class);
 
         /** L'ordre décide de celui des lignes du tableau de bord et des bandes de son graphe. */
-        WealthProvider::registers(app: $this->app, extra: [RealEstateClass::class]);
+        WealthProvider::registers(
+            app: $this->app,
+            extra: [RealEstateClass::class],
+            transactions: PortfolioLedger::class,
+        );
     }
 
     public function boot(): void

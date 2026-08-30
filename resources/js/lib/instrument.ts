@@ -22,16 +22,20 @@ export interface TransactionLine {
     total: number;
 }
 
-export interface TransactionYear {
+/**
+ * Le groupe est paramétré par sa ligne : le tableau de bord y passe des lignes qui nomment leur
+ * actif, la fiche des lignes nues, et le regroupement reste le même.
+ */
+export interface TransactionYear<Line extends TransactionLine = TransactionLine> {
     year: string;
     /** Flux investi de l'année : les achats en positif, les ventes en négatif. */
     net: number;
-    lines: TransactionLine[];
+    lines: Line[];
 }
 
 /** Regroupe les transactions par année, la plus récente en tête, l'ordre reçu conservé dans chaque groupe. */
-export const transactionYears = (lines: TransactionLine[]): TransactionYear[] => {
-    const groups = new Map<string, TransactionLine[]>();
+export const transactionYears = <Line extends TransactionLine>(lines: Line[]): TransactionYear<Line>[] => {
+    const groups = new Map<string, Line[]>();
 
     for (const line of lines) {
         const year = line.date.slice(0, 4);

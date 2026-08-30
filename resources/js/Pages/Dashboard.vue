@@ -6,14 +6,16 @@ import WealthClassesSection from '@/components/dashboard/WealthClassesSection.vu
 import WealthEvolutionSection from '@/components/dashboard/WealthEvolutionSection.vue';
 import WealthIncomeSection from '@/components/dashboard/WealthIncomeSection.vue';
 import WealthSummarySection from '@/components/dashboard/WealthSummarySection.vue';
+import WealthTransactionsSection from '@/components/dashboard/WealthTransactionsSection.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
-import type { WealthIncome, WealthOverview, WealthSeries } from '@/lib/wealth';
+import type { WealthIncome, WealthOverview, WealthSeries, WealthTransactionLine } from '@/lib/wealth';
 import { useSnapshotStore } from '@/stores/snapshot';
 
 const props = defineProps<{
     overview: WealthOverview;
     series?: WealthSeries;
     income?: WealthIncome;
+    transactions?: WealthTransactionLine[];
 }>();
 
 const snapshot = useSnapshotStore();
@@ -21,6 +23,7 @@ const snapshot = useSnapshotStore();
 /** `overview` est synchrone côté serveur : elle est toujours là, rien à combler. */
 const series = aheadOfNetwork(() => props.series, () => snapshot.dashboard?.series);
 const income = aheadOfNetwork(() => props.income, () => snapshot.dashboard?.income);
+const transactions = aheadOfNetwork(() => props.transactions, () => snapshot.dashboard?.transactions);
 </script>
 
 <template>
@@ -35,6 +38,9 @@ const income = aheadOfNetwork(() => props.income, () => snapshot.dashboard?.inco
         <WealthClassesSection :overview="props.overview" />
 
         <WealthIncomeSection :income="income" />
+
+        <!-- L'historique ferme la page, replié : c'est le détail, pas la lecture d'un coup d'œil. -->
+        <WealthTransactionsSection :transactions="transactions" />
     </AppPage>
 
     <!-- Barre sans fil d'Ariane : le tableau de bord est la racine, son fil n'aurait qu'un seul cran. -->

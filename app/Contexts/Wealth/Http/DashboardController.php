@@ -6,6 +6,7 @@ use App\Contexts\Identity\Models\User;
 use App\Contexts\Wealth\Actions\BuildWealthSeries;
 use App\Contexts\Wealth\Actions\GetWealthIncome;
 use App\Contexts\Wealth\Actions\GetWealthOverview;
+use App\Contexts\Wealth\Actions\GetWealthTransactions;
 use App\Contexts\Wealth\Datas\WealthIncomeData;
 use App\Contexts\Wealth\Datas\WealthOverviewData;
 use App\Contexts\Wealth\Datas\WealthSeriesData;
@@ -35,6 +36,10 @@ class DashboardController
             'income' => Inertia::defer(fn () => $user !== null
                 ? app(GetWealthIncome::class)($user->id)
                 : WealthIncomeData::empty(), 'revenus'),
+            /** Repliée à l'arrivée : l'historique entier ne se charge que pour qui le déplie. */
+            'transactions' => Inertia::defer(fn (): array => $user !== null
+                ? app(GetWealthTransactions::class)($user->id)
+                : [], 'transactions'),
         ]);
     }
 }

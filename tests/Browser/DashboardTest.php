@@ -1,5 +1,21 @@
 <?php
 
+it('garde les transactions repliées, et ne les charge qu\'au dépli', function () {
+    ['user' => $user] = portfolioFixture();
+
+    $this->actingAs($user);
+
+    visit('/')
+        ->assertSeeIn('[data-section="wealth-transactions"]', 'Transactions')
+        /** Repliée : la prop différée n'est même pas demandée tant que le pli tient. */
+        ->assertMissing('[data-section="wealth-transactions"] [data-transaction-year]')
+        ->click('[data-section="wealth-transactions"] [data-section-toggle]')
+        ->assertSeeIn('[data-section="wealth-transactions"] [data-transaction-year="2026"]', '2026')
+        ->click('[data-transaction-year="2026"]')
+        ->assertSeeIn('[data-transaction-row] [data-transaction-asset]', 'ACME')
+        ->assertNoJavaScriptErrors();
+});
+
 it('mène de chaque classe d\'actif à sa page', function () {
     ['user' => $user] = portfolioFixture();
 

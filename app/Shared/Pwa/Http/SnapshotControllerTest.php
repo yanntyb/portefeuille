@@ -19,7 +19,7 @@ it('sert l\'instantané complet du patrimoine', function () {
         ->assertJsonStructure([
             'version',
             'generatedAt',
-            'dashboard' => ['overview', 'series', 'income'],
+            'dashboard' => ['overview', 'series', 'income', 'transactions'],
             'classes' => ['equity', 'bond', 'commodity', 'crypto'],
             'assets',
             'properties' => ['list', 'byId'],

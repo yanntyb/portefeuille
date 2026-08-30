@@ -1,4 +1,5 @@
 import { relativeBarWidth } from '@/lib/bars';
+import type { TransactionLine } from '@/lib/instrument';
 
 /**
  * Une classe d'actif du résumé : ce qu'elle est, ce qu'elle vaut, et l'écart à sa mise. `gainPct`
@@ -84,4 +85,13 @@ export interface IncomeOrigin {
 export interface WealthIncome {
     monthlyTotal: number;
     origins: IncomeOrigin[];
+}
+
+/**
+ * Une opération du patrimoine : la ligne de la fiche actif, augmentée de l'actif qu'elle porte —
+ * hors de sa fiche, une quantité ne dit pas de quoi elle est la quantité.
+ */
+export interface WealthTransactionLine extends TransactionLine {
+    assetId: number;
+    assetName: string;
 }

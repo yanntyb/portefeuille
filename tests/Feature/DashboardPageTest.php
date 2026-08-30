@@ -82,6 +82,29 @@ it('diffère le revenu mensuel et n\'y compte les loyers qu\'une fois', function
         ->and($byLabel['Locatif net']->amount)->toBeLessThan(600.0);
 });
 
+it('diffère les transactions et les nomme par leur actif', function () {
+    ['user' => $user] = portfolioFixture();
+
+    $this->actingAs($user)
+        ->get('/')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->missing('transactions'));
+
+    /** Le groupe `transactions` n'arrive qu'à la requête partielle que déclenche le dépli. */
+    $this->actingAs($user)
+        ->get('/', [
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => Inertia::getVersion(),
+            'X-Inertia-Partial-Component' => 'Dashboard',
+            'X-Inertia-Partial-Data' => 'transactions',
+        ])
+        ->assertOk()
+        ->assertJsonStructure(['props' => ['transactions' => [
+            ['date', 'assetId', 'assetName', 'isSell', 'typeLabel', 'quantity', 'unitPrice', 'fees', 'total'],
+        ]]])
+        ->assertJsonPath('props.transactions.0.assetName', 'ACME');
+});
+
 it('compte la crypto comme sa propre classe, séparée des titres', function () {
     ['user' => $user] = portfolioFixture();
 
