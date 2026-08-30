@@ -3,10 +3,16 @@ import { computed } from 'vue';
 import { Deferred } from '@inertiajs/vue3';
 import AnalysisRow from '@/components/instrument/AnalysisRow.vue';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
+import PerformanceBars from '@/components/PerformanceBars.vue';
+import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
 import { basketRows, correlationGrid, type ClassAnalysis, type CorrelationRow } from '@/lib/classAnalysis';
 import type { AnalysisRow as Row } from '@/lib/instrumentAnalysis';
+import type { Performance } from '@/lib/performance';
 
-const props = defineProps<{ analysis?: ClassAnalysis | null }>();
+const props = defineProps<{
+    analysis?: ClassAnalysis | null;
+    performances?: Performance[] | null;
+}>();
 
 const rows = computed<Row[]>(() => (props.analysis ? basketRows(props.analysis) : []));
 
@@ -18,10 +24,23 @@ const grid = computed<CorrelationRow[]>(() =>
 const hasMatrix = computed<boolean>(() => grid.value.length > 1);
 
 const isEmpty = computed<boolean>(() => grid.value.length === 0);
+
+const hasPerformances = computed<boolean>(() => (props.performances?.length ?? 0) > 0);
 </script>
 
 <template>
     <CollapsibleSection section="analysis" title="Analyse">
+        <!-- L'aide se lit repliée : elle explique de quoi parlent les performances, en bas de
+             section, pas ce qu'elles montrent. -->
+        <template #aside>
+            <PerformanceInfoDialog variant="periods" />
+        </template>
+
+        <!--
+            Deux props différées dans une seule section, donc deux squelettes : la matrice relit
+            cinq ans de cours quand les performances rejouent les transactions, et la première
+            servie ne doit pas attendre l'autre pour se peindre.
+        -->
         <template v-if="props.analysis !== undefined && props.analysis !== null">
             <p v-if="isEmpty" class="py-8 text-center text-sm text-muted-foreground">
                 Pas encore de quoi analyser cette exposition.
@@ -99,5 +118,35 @@ const isEmpty = computed<boolean>(() => grid.value.length === 0);
 
             <span />
         </Deferred>
+
+        <!-- Les performances ferment la section : ce qui décrit la poche se lit d'abord, ce
+             qu'elle a rapporté ensuite. -->
+        <div class="flex flex-col gap-2">
+            <span class="text-xs font-semibold text-muted-foreground uppercase">Performances</span>
+
+            <template v-if="props.performances !== null">
+                <PerformanceBars v-if="hasPerformances" :performances="props.performances ?? []" />
+
+                <p v-else class="py-8 text-center text-sm text-muted-foreground">
+                    Pas encore de performance à mesurer.
+                </p>
+            </template>
+
+            <Deferred v-else data="performances">
+                <template #fallback>
+                    <div class="flex flex-col gap-2">
+                        <div v-for="n in 5" :key="n" class="h-8 w-full animate-pulse rounded-md bg-muted"></div>
+                    </div>
+                </template>
+
+                <template #rescue>
+                    <p class="py-8 text-center text-sm text-muted-foreground">
+                        Données indisponibles hors-ligne.
+                    </p>
+                </template>
+
+                <span />
+            </Deferred>
+        </div>
     </CollapsibleSection>
 </template>

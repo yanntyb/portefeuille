@@ -12,9 +12,9 @@ it('explique les performances par période à travers un dialogue', function () 
 
     $this->actingAs($user);
 
-    // L'aide vit dans le titre de la section : elle s'ouvre sans déplier les barres.
+    // L'aide vit dans le titre de la section Analyse : elle s'ouvre sans la déplier.
     visit('/actions')
-        ->assertSee('Performances')
+        ->assertSee('Analyse')
         ->click('[aria-label="Comment lire les performances par période"]')
         ->assertSee('Comment lire les performances par période')
         ->assertSee('cumulés, pas annualisés')

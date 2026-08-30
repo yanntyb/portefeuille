@@ -13,7 +13,7 @@ it('trace une barre par période servie', function () {
     $this->actingAs($user);
 
     visit('/actions')
-        ->click('[data-section=performances] [data-section-toggle]')
+        ->click('[data-section=analysis] [data-section-toggle]')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-perf-label]')).map(el => el.textContent.trim()).join('|')",
             'YTD|1 mois|3 mois|6 mois|Max',
@@ -29,7 +29,7 @@ it('mesure les barres contre la plus grande, qui occupe toute la largeur', funct
     $widths = "Array.from(document.querySelectorAll('[data-perf-bar]')).map(el => parseFloat(el.style.width))";
 
     visit('/actions')
-        ->click('[data-section=performances] [data-section-toggle]')
+        ->click('[data-section=analysis] [data-section-toggle]')
         ->assertScript("Math.max(...{$widths})", 100)
         ->assertScript("{$widths}.every(width => width >= 0 && width <= 100)", true)
         ->assertNoJavaScriptErrors();
@@ -41,7 +41,7 @@ it('porte la valeur de début et les apports en libellé de survol', function ()
     $this->actingAs($user);
 
     visit('/actions')
-        ->click('[data-section=performances] [data-section-toggle]')
+        ->click('[data-section=analysis] [data-section-toggle]')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-perf-row]')).every(el => /^Valeur début .+ · Apports [+-]?.+$/.test(el.title))",
             true,
@@ -58,7 +58,7 @@ it('colore le gain et le pourcentage de chaque période', function () {
         /text-(gain|loss|muted-foreground)/.test(el.className))";
 
     visit('/actions')
-        ->click('[data-section=performances] [data-section-toggle]')
+        ->click('[data-section=analysis] [data-section-toggle]')
         ->assertScript("document.querySelectorAll('[data-perf-gain]').length", 5)
         ->assertScript("document.querySelectorAll('[data-perf-pct]').length", 5)
         ->assertScript($toned, true)

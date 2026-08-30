@@ -29,7 +29,7 @@ it('charge la page Actions, ses sections dans l\'ordre, sans erreur', function (
         ->assertSee('Investi')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'valuation|evolution|instruments|performances|analysis|sectors',
+            'valuation|evolution|instruments|analysis|sectors',
         )
         ->assertNoJavaScriptErrors();
 });
@@ -44,7 +44,7 @@ it('charge la page Crypto, ses sections dans l\'ordre, sans erreur', function ()
         ->assertSee('Investi')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'valuation|evolution|instruments|performances|analysis',
+            'valuation|evolution|instruments|analysis',
         )
         ->assertNoJavaScriptErrors();
 });

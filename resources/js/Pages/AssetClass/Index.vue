@@ -5,7 +5,6 @@ import AppPage from '@/components/AppPage.vue';
 import AnalysisSection from '@/components/instruments/AnalysisSection.vue';
 import EvolutionSection from '@/components/instruments/EvolutionSection.vue';
 import InstrumentsSection from '@/components/instruments/InstrumentsSection.vue';
-import PerformancesSection from '@/components/instruments/PerformancesSection.vue';
 import SectorsSection from '@/components/instruments/SectorsSection.vue';
 import ValuationSection from '@/components/instruments/ValuationSection.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
@@ -49,9 +48,7 @@ const sectorBreakdown = aheadOfNetwork(() => props.sectorBreakdown, () => cached
 
         <InstrumentsSection :holdings="overview.holdings" :trends="trends" />
 
-        <PerformancesSection :performances="performances" />
-
-        <AnalysisSection :analysis="classAnalysis" />
+        <AnalysisSection :analysis="classAnalysis" :performances="performances" />
 
         <!--
             La section se décide sur la classe, jamais sur la valeur : `aheadOfNetwork` rend
