@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent } from 'vue';
+import { computed } from 'vue';
 import { Deferred } from '@inertiajs/vue3';
+import { AsyncBaseChart } from '@/components/AsyncBaseChart';
 import ChartSkeleton from '@/components/ChartSkeleton.vue';
 import { buildWealthStackOption, type ZoomWindow } from '@/lib/chart';
 import { eur } from '@/lib/format';
@@ -8,13 +9,6 @@ import type { ChartOption } from '@/lib/echarts';
 import type { WealthSeries } from '@/lib/wealth';
 
 const props = defineProps<{ series?: WealthSeries | null }>();
-
-/** Echarts pèse les deux tiers du JS : il n'est demandé qu'au montage réel d'un graphe. */
-const BaseChart = defineAsyncComponent({
-    loader: () => import('@/components/BaseChart.vue'),
-    loadingComponent: ChartSkeleton,
-    delay: 0,
-});
 
 /** Non réactive, comme sur la fiche instrument : la rendre réactive repeindrait à chaque pixel. */
 let lastZoom: ZoomWindow | null = null;
@@ -43,7 +37,7 @@ const option = computed<ChartOption>(() => buildWealthStackOption({
 
         <template v-if="props.series !== null">
             <div v-if="hasHistory" class="px-6">
-                <BaseChart :option="option" @zoom="rememberZoom" />
+                <AsyncBaseChart :option="option" @zoom="rememberZoom" />
             </div>
             <p v-else class="py-8 text-center text-sm text-muted-foreground">
                 Pas encore d'historique de valorisation.

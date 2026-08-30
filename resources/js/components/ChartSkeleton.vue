@@ -7,5 +7,5 @@ import { chartHeight } from '@/lib/layout';
 </script>
 
 <template>
-    <div class="w-full animate-pulse rounded-md bg-muted" :style="{ height: `${chartHeight}px` }"></div>
+    <div data-chart-skeleton class="w-full animate-pulse rounded-md bg-muted" :style="{ height: `${chartHeight}px` }"></div>
 </template>

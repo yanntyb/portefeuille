@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent } from 'vue';
+import { computed } from 'vue';
 import { Deferred } from '@inertiajs/vue3';
+import { AsyncBaseChart } from '@/components/AsyncBaseChart';
 import ChartSkeleton from '@/components/ChartSkeleton.vue';
 import { buildValueVsInvestedOption, type ZoomWindow } from '@/lib/chart';
 import { eur } from '@/lib/format';
@@ -22,16 +23,6 @@ const props = defineProps<{
     /** Absents sur le tableau de bord : seule la fiche instrument annote ses détachements. */
     dividends?: DividendReceipt[];
 }>();
-
-/**
- * Echarts pèse à lui seul les deux tiers du JS de l'application. Il n'est demandé qu'au
- * moment où un graphe est réellement monté, donc jamais avant le premier rendu.
- */
-const BaseChart = defineAsyncComponent({
-    loader: () => import('@/components/BaseChart.vue'),
-    loadingComponent: ChartSkeleton,
-    delay: 0,
-});
 
 /**
  * Volontairement non réactive : le zoom est déjà appliqué dans l'instance quand l'événement
@@ -65,7 +56,7 @@ const option = computed<ChartOption>(() => buildValueVsInvestedOption({
     <div class="flex flex-col gap-6">
         <template v-if="loaded">
             <div v-if="hasHistory" class="px-6">
-                <BaseChart :option="option" @zoom="rememberZoom" />
+                <AsyncBaseChart :option="option" @zoom="rememberZoom" />
             </div>
             <p v-else class="py-8 text-center text-sm text-muted-foreground">
                 Pas encore d'historique de valorisation.
