@@ -25,64 +25,69 @@ const props = defineProps<{
             v-for="row in rows"
             :key="row.id"
             data-instrument-row
-            class="flex max-h-24 grow flex-col justify-center gap-1.5 border-b border-separator py-3 last:border-b-0 md:max-h-none md:grow-0"
+            class="flex max-h-24 grow flex-col justify-center border-b border-separator last:border-b-0 md:max-h-none md:grow-0"
         >
-            <div class="flex items-center gap-3">
-                <Link
-                    :href="`/asset/${row.id}`"
-                    prefetch
-                    data-instrument-name
-                    class="block min-w-0 flex-1 truncate font-semibold hover:underline"
-                >
-                    {{ row.name }}
-                    <span v-if="row.ticker" class="text-muted-foreground">({{ row.ticker }})</span>
-                </Link>
+            <!--
+                La ligne entière mène à la fiche, teintée au clic comme une classe du tableau de
+                bord : la valeur et le poids racontent l'actif autant que son nom.
+            -->
+            <Link
+                :href="`/asset/${row.id}`"
+                prefetch
+                class="flex flex-col gap-1.5 rounded-md px-3 py-3 hover:bg-muted"
+            >
+                <span class="flex items-center gap-3">
+                    <span data-instrument-name class="block min-w-0 flex-1 truncate font-semibold">
+                        {{ row.name }}
+                        <span v-if="row.ticker" class="text-muted-foreground">({{ row.ticker }})</span>
+                    </span>
 
-                <span data-instrument-value class="w-24 shrink-0 text-right font-bold tabular-nums">
-                    {{ eur(row.marketValue, 0) }}
-                </span>
+                    <span data-instrument-value class="w-24 shrink-0 text-right font-bold tabular-nums">
+                        {{ eur(row.marketValue, 0) }}
+                    </span>
 
-                <span
-                    data-instrument-change
-                    class="w-20 shrink-0 text-right text-sm font-semibold tabular-nums"
-                    :class="gainClass(row.gainPct)"
-                >
-                    {{ pct(row.gainPct) }}
-                </span>
-            </div>
-
-            <!-- Le détail passe sur une seconde ligne : la colonne est trop étroite pour huit colonnes. -->
-            <div class="flex items-center gap-3 text-xs">
-                <span class="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-separator md:w-28">
                     <span
-                        data-instrument-bar
-                        class="block h-full rounded-full bg-sector-bar"
-                        :style="{ width: row.barWidth ?? '0%' }"
-                    ></span>
+                        data-instrument-change
+                        class="w-20 shrink-0 text-right text-sm font-semibold tabular-nums"
+                        :class="gainClass(row.gainPct)"
+                    >
+                        {{ pct(row.gainPct) }}
+                    </span>
                 </span>
 
-                <span data-instrument-weight class="w-12 shrink-0 tabular-nums text-subtle-foreground">
-                    {{ share(row.share ?? 0) }}
-                </span>
+                <!-- Le détail passe sur une seconde ligne : la colonne est trop étroite pour huit colonnes. -->
+                <span class="flex items-center gap-3 text-xs">
+                    <span class="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-separator md:w-28">
+                        <span
+                            data-instrument-bar
+                            class="block h-full rounded-full bg-sector-bar"
+                            :style="{ width: row.barWidth ?? '0%' }"
+                        ></span>
+                    </span>
 
-                <!-- Largeurs de queue identiques à la première ligne : tendance sous la valeur, gain sous le pourcentage. -->
-                <span data-instrument-trend class="ml-auto w-24 shrink-0">
-                    <Sparkline
-                        v-if="row.points.length > 1"
-                        :values="row.points"
-                        :width="SPARKLINE_WIDTH"
-                    />
-                    <span v-else-if="loading" class="block h-5 w-full animate-pulse rounded bg-muted"></span>
-                </span>
+                    <span data-instrument-weight class="w-12 shrink-0 tabular-nums text-subtle-foreground">
+                        {{ share(row.share ?? 0) }}
+                    </span>
 
-                <span
-                    data-instrument-gain
-                    class="w-20 shrink-0 text-right tabular-nums"
-                    :class="gainClass(row.gain)"
-                >
-                    {{ signedEur(row.gain, 0) }}
+                    <!-- Largeurs de queue identiques à la première ligne : tendance sous la valeur, gain sous le pourcentage. -->
+                    <span data-instrument-trend class="ml-auto w-24 shrink-0">
+                        <Sparkline
+                            v-if="row.points.length > 1"
+                            :values="row.points"
+                            :width="SPARKLINE_WIDTH"
+                        />
+                        <span v-else-if="loading" class="block h-5 w-full animate-pulse rounded bg-muted"></span>
+                    </span>
+
+                    <span
+                        data-instrument-gain
+                        class="w-20 shrink-0 text-right tabular-nums"
+                        :class="gainClass(row.gain)"
+                    >
+                        {{ signedEur(row.gain, 0) }}
+                    </span>
                 </span>
-            </div>
+            </Link>
         </li>
     </ul>
 

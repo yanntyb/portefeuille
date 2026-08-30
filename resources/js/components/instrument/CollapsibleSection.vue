@@ -30,6 +30,13 @@ const toggle = (): void => {
             @click="toggle"
         >
             <h2 class="text-[17px] leading-none font-bold">{{ props.title }}</h2>
+
+            <!--
+                Le chiffre que la section résume tient dans son titre : replié, il se lit quand
+                même. `ml-auto` le pousse à droite ; le chevron n'a alors plus de place à prendre.
+            -->
+            <span class="ml-auto"><slot name="value" /></span>
+
             <ChevronRight
                 class="ml-auto size-4 shrink-0 text-muted-foreground transition-transform"
                 :class="isOpen ? 'rotate-90' : ''"

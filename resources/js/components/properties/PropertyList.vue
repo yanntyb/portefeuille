@@ -10,8 +10,8 @@ const rows = computed<PropertyRow[]>(() => propertyRows(props.properties));
 </script>
 
 <template>
-    <section data-section="real-estate" class="flex min-h-0 flex-1 flex-col gap-4 px-6 md:flex-none">
-        <h2 class="shrink-0 text-[17px] leading-none font-bold">Biens</h2>
+    <section data-section="real-estate" class="flex min-h-0 flex-1 flex-col gap-4 px-3 md:flex-none">
+        <h2 class="shrink-0 px-3 text-[17px] leading-none font-bold">Biens</h2>
 
         <!-- Deux lignes par bien, comme une position du portefeuille : la valeur et son gain
              d'abord, le poids dans le parc et la quittance ensuite. -->
@@ -20,53 +20,55 @@ const rows = computed<PropertyRow[]>(() => propertyRows(props.properties));
                 v-for="row in rows"
                 :key="row.id"
                 data-property-row
-                class="flex flex-col gap-1.5 border-b border-separator py-3 last:border-b-0"
+                class="flex flex-col border-b border-separator last:border-b-0"
             >
-                <div class="flex items-center gap-3">
-                    <Link
-                        :href="`/properties/${row.id}`"
-                        prefetch
-                        data-property-name
-                        class="block min-w-0 flex-1 truncate font-semibold hover:underline"
-                    >
-                        {{ row.name }}
-                    </Link>
+                <!-- La ligne entière mène au bien, teintée au clic comme une classe du tableau de bord. -->
+                <Link
+                    :href="`/properties/${row.id}`"
+                    prefetch
+                    class="flex flex-col gap-1.5 rounded-md px-3 py-3 hover:bg-muted"
+                >
+                    <span class="flex items-center gap-3">
+                        <span data-property-name class="block min-w-0 flex-1 truncate font-semibold">
+                            {{ row.name }}
+                        </span>
 
-                    <span data-property-net class="w-24 shrink-0 text-right font-bold tabular-nums">
-                        {{ eur(row.netWorth, 0) }}
-                    </span>
+                        <span data-property-net class="w-24 shrink-0 text-right font-bold tabular-nums">
+                            {{ eur(row.netWorth, 0) }}
+                        </span>
 
-                    <span
-                        data-property-gain-pct
-                        class="w-20 shrink-0 text-right text-sm font-semibold tabular-nums"
-                        :class="gainClass(row.gainPct)"
-                    >
-                        {{ pct(row.gainPct) }}
-                    </span>
-                </div>
-
-                <div class="flex items-center gap-3 text-xs">
-                    <span class="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-separator md:w-28">
                         <span
-                            data-property-bar
-                            class="block h-full rounded-full bg-sector-bar"
-                            :style="{ width: row.barWidth }"
-                        ></span>
+                            data-property-gain-pct
+                            class="w-20 shrink-0 text-right text-sm font-semibold tabular-nums"
+                            :class="gainClass(row.gainPct)"
+                        >
+                            {{ pct(row.gainPct) }}
+                        </span>
                     </span>
 
-                    <span data-property-weight class="w-12 shrink-0 tabular-nums text-subtle-foreground">
-                        {{ share(row.share) }}
-                    </span>
+                    <span class="flex items-center gap-3 text-xs">
+                        <span class="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-separator md:w-28">
+                            <span
+                                data-property-bar
+                                class="block h-full rounded-full bg-sector-bar"
+                                :style="{ width: row.barWidth }"
+                            ></span>
+                        </span>
 
-                    <!-- La quittance sur le bord droit, sous le gain : la queue des deux lignes s'aligne. -->
-                    <span
-                        data-property-cash-flow
-                        class="ml-auto shrink-0 text-right tabular-nums"
-                        :class="gainClass(row.monthlyCashFlow)"
-                    >
-                        {{ signedEur(row.monthlyCashFlow, 0) }}/mois
+                        <span data-property-weight class="w-12 shrink-0 tabular-nums text-subtle-foreground">
+                            {{ share(row.share) }}
+                        </span>
+
+                        <!-- La quittance sur le bord droit, sous le gain : la queue des deux lignes s'aligne. -->
+                        <span
+                            data-property-cash-flow
+                            class="ml-auto shrink-0 text-right tabular-nums"
+                            :class="gainClass(row.monthlyCashFlow)"
+                        >
+                            {{ signedEur(row.monthlyCashFlow, 0) }}/mois
+                        </span>
                     </span>
-                </div>
+                </Link>
             </li>
         </ul>
 

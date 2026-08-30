@@ -37,7 +37,7 @@ const transactions = aheadOfNetwork(() => props.transactions, () => snapshot.das
 
         <WealthClassesSection :overview="props.overview" />
 
-        <!-- Repliés tous les deux : le détail se demande, la lecture d'un coup d'œil tient au-dessus. -->
+        <!-- Repliée sur son total : le chiffre se lit dans le titre, la ventilation se demande. -->
         <WealthIncomeSection :income="income" />
 
         <!-- L'historique ferme la page. -->

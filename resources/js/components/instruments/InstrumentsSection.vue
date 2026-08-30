@@ -23,7 +23,7 @@ const rows = computed<InstrumentRow[]>(() => holdingRows(props.holdings, props.t
     <!-- La section s'étire : sur mobile c'est elle, et pas le bas de la page, qui porte l'espace libre. -->
     <section
         data-section="instruments"
-        class="flex min-h-0 flex-1 flex-col gap-4 px-6 md:flex-none"
+        class="flex min-h-0 flex-1 flex-col gap-4 px-3 md:flex-none"
         aria-label="Instruments"
     >
         <InstrumentList

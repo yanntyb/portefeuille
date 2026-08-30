@@ -1,6 +1,6 @@
 <?php
 
-it('garde les revenus repliés, et ne les charge qu\'au dépli', function () {
+it('porte le revenu mensuel dans le titre et sa ventilation sous le pli', function () {
     /** Un bien loué : sans versement, la section n'ouvrirait que sur son état vide. */
     ['user' => $user] = propertyFixture(['loan' => true]);
 
@@ -8,10 +8,11 @@ it('garde les revenus repliés, et ne les charge qu\'au dépli', function () {
 
     visit('/')
         ->assertSeeIn('[data-section="wealth-income"]', 'Revenus')
-        /** Repliée : la prop différée n'est même pas demandée tant que le pli tient. */
-        ->assertMissing('[data-section="wealth-income"] [data-income-monthly]')
-        ->click('[data-section="wealth-income"] [data-section-toggle]')
+        /** Le total se lit replié : c'est lui que le titre porte. */
         ->assertVisible('[data-section="wealth-income"] [data-income-monthly]')
+        ->assertMissing('[data-section="wealth-income"] [data-income-origin]')
+        ->click('[data-section="wealth-income"] [data-section-toggle]')
+        ->assertSeeIn('[data-section="wealth-income"] [data-income-origin]', 'Locatif net')
         ->assertNoJavaScriptErrors();
 });
 
