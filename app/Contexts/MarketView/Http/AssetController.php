@@ -49,7 +49,8 @@ class AssetController
             /**
              * Différée comme l'historique de cours, qu'elle relit : cinq ans de barres pour une
              * moyenne longue, un RSI et une amplitude vraie. Sans position, la section n'a rien à
-             * dire — pas de prix de revient, pas de poids — et la prop reste absente plutôt que vide.
+             * dire — pas de prix de revient, pas de poids — et une fois la prop résolue, elle vaut
+             * `null` plutôt qu'une analyse vide.
              */
             'analysis' => Inertia::defer(fn () => $this->analysis->forAsset($userId, $id)),
         ];
