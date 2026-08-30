@@ -1,6 +1,7 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
@@ -199,6 +200,37 @@ it('defers the trends of the held instruments and loads them on demand', functio
                 ->where('trends.0.assetId', $asset->id)
                 ->where('trends.0.changePct', fn ($value) => (float) $value === 50.0)
                 ->has('trends.0.points', 2)
+            )
+        );
+});
+
+it('diffère les opérations de l\'exposition, chaque ligne nommant son actif', function () {
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $asset = Instrument::factory()->create(['name' => 'ACME', 'asset_class' => AssetClass::Equity]);
+    $crypto = Instrument::factory()->create(['name' => 'Bitcoin', 'asset_class' => AssetClass::Crypto]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'quantity' => 10, 'unit_price' => 100, 'fees' => 1, 'date' => '2026-01-01',
+    ]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $crypto->id,
+        'quantity' => 1, 'unit_price' => 30000, 'date' => '2026-02-01',
+    ]);
+
+    $this->actingAs($user)
+        ->get('/actions')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('AssetClass/Index')
+            ->missing('transactions')
+            /** Le groupe est à part : le dépli de la section ne réveille pas les autres. */
+            ->loadDeferredProps('transactions', fn (Assert $reload) => $reload
+                ->has('transactions', 1)
+                ->where('transactions.0.assetName', 'ACME')
+                /** Les frais entrent dans le montant de l'achat, une seule fois. */
+                ->where('transactions.0.total', fn ($total) => (float) $total === 1001.0)
+                ->missing('evolutionSeries')
             )
         );
 });

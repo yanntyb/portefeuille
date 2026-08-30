@@ -6,10 +6,12 @@ import AnalysisSection from '@/components/instruments/AnalysisSection.vue';
 import EvolutionSection from '@/components/instruments/EvolutionSection.vue';
 import InstrumentsSection from '@/components/instruments/InstrumentsSection.vue';
 import SectorsSection from '@/components/instruments/SectorsSection.vue';
+import TransactionsSection from '@/components/instruments/TransactionsSection.vue';
 import ValuationSection from '@/components/instruments/ValuationSection.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
 import type { ClassAnalysis } from '@/lib/classAnalysis';
 import type { CatalogTrend } from '@/lib/catalog';
+import type { NamedTransactionLine } from '@/lib/instrument';
 import type { Performance } from '@/lib/performance';
 import type { EvolutionSeries, PortfolioOverview } from '@/lib/portfolio';
 import type { SectorSlice } from '@/lib/sector';
@@ -22,6 +24,7 @@ const props = defineProps<{
     evolutionSeries?: EvolutionSeries;
     performances?: Performance[];
     classAnalysis?: ClassAnalysis;
+    transactions?: NamedTransactionLine[];
     /** Absente des expositions sans secteur : le serveur ne l'envoie pas. */
     sectorBreakdown?: SectorSlice[];
 }>();
@@ -35,6 +38,7 @@ const trends = aheadOfNetwork(() => props.trends, () => cached()?.trends);
 const evolutionSeries = aheadOfNetwork(() => props.evolutionSeries, () => cached()?.evolutionSeries);
 const performances = aheadOfNetwork(() => props.performances, () => cached()?.performances);
 const classAnalysis = aheadOfNetwork(() => props.classAnalysis, () => cached()?.classAnalysis);
+const transactions = aheadOfNetwork(() => props.transactions, () => cached()?.transactions);
 const sectorBreakdown = aheadOfNetwork(() => props.sectorBreakdown, () => cached()?.sectorBreakdown);
 </script>
 
@@ -49,6 +53,8 @@ const sectorBreakdown = aheadOfNetwork(() => props.sectorBreakdown, () => cached
         <InstrumentsSection :holdings="overview.holdings" :trends="trends" />
 
         <AnalysisSection :analysis="classAnalysis" :performances="performances" />
+
+        <TransactionsSection :transactions="transactions" />
 
         <!--
             La section se décide sur la classe, jamais sur la valeur : `aheadOfNetwork` rend

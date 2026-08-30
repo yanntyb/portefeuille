@@ -106,3 +106,19 @@ it('replie la liste des instruments derrière sa bascule', function () {
         ->assertScript($rows, 0)
         ->assertNoJavaScriptErrors();
 });
+
+it('garde les opérations de la poche repliées, et ne les charge qu\'au dépli', function () {
+    ['user' => $user] = portfolioFixture();
+
+    $this->actingAs($user);
+
+    visit('/actions')
+        ->assertSeeIn('[data-section="class-transactions"]', 'Transactions')
+        /** Repliée : la prop différée n'est même pas demandée tant que le pli tient. */
+        ->assertMissing('[data-section="class-transactions"] [data-transaction-year]')
+        ->click('[data-section="class-transactions"] [data-section-toggle]')
+        ->assertSeeIn('[data-section="class-transactions"] [data-transaction-year="2026"]', '2026')
+        ->click('[data-transaction-year="2026"]')
+        ->assertSeeIn('[data-transaction-row] [data-transaction-asset]', 'ACME')
+        ->assertNoJavaScriptErrors();
+});

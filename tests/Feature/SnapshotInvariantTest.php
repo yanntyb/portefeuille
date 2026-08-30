@@ -69,8 +69,10 @@ use Illuminate\Support\Carbon;
  * Modifié une seizième fois : chaque page liste porte l'analyse de son exposition — la chute
  * maximale de la poche, sa distance au plus-haut et la matrice de corrélations de ses huit plus
  * grosses lignes.
+ * Modifié une dix-septième fois : chaque page d'exposition porte ses opérations — l'historique de
+ * la poche, tous ses actifs confondus, chaque ligne nommant le sien.
  */
-const SNAPSHOT_VERSION = '591122f506961a84533117c73377f391a4280336';
+const SNAPSHOT_VERSION = 'fc973b94274d0a51def21d73cc8afb283ffabe7d';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

@@ -12,6 +12,7 @@ use App\Contexts\MarketView\Ports\InstrumentAnalysisPort;
 use App\Contexts\MarketView\Ports\MarketDataPort;
 use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
 use App\Contexts\MarketView\Ports\SectorBreakdownPort;
+use App\Contexts\MarketView\Ports\TransactionsPort;
 use App\Contexts\MarketView\Ports\ValuationPort;
 use App\Contexts\MarketView\Services\PriceHistoryWindow;
 
@@ -36,6 +37,7 @@ class BuildMarketViewSnapshot
         private IncomePort $income,
         private InstrumentAnalysisPort $analysis,
         private ClassAnalysisPort $classAnalysis,
+        private TransactionsPort $transactions,
     ) {}
 
     /**
@@ -75,6 +77,7 @@ class BuildMarketViewSnapshot
             'evolutionSeries' => $this->valuation->evolutionFor($userId, $exposure),
             'performances' => $this->valuation->performancesFor($userId, $exposure),
             'classAnalysis' => $this->classAnalysis->forClass($userId, $exposure),
+            'transactions' => $this->transactions->transactionsForClass($userId, $exposure),
         ];
 
         if ($exposure->hasSectors()) {

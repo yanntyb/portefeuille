@@ -1,7 +1,13 @@
 import type { CatalogTrend } from './catalog';
 import type { ClassAnalysis } from './classAnalysis';
 import type { AssetDividendHistory } from './income';
-import type { Instrument, InstrumentAnalysis, PriceHistory, ValuationSeries } from './instrument';
+import type {
+    Instrument,
+    InstrumentAnalysis,
+    NamedTransactionLine,
+    PriceHistory,
+    ValuationSeries,
+} from './instrument';
 import type { Performance } from './performance';
 import type { EvolutionSeries, PortfolioOverview } from './portfolio';
 import type {
@@ -35,6 +41,7 @@ export interface AssetClassListSnapshot {
     evolutionSeries: EvolutionSeries;
     performances: Performance[];
     classAnalysis: ClassAnalysis;
+    transactions: NamedTransactionLine[];
     sectorBreakdown?: SectorSlice[];
 }
 

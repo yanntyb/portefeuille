@@ -29,7 +29,7 @@ it('charge la page Actions, ses sections dans l\'ordre, sans erreur', function (
         ->assertSee('Investi')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'valuation|evolution|instruments|analysis|sectors',
+            'valuation|evolution|instruments|analysis|class-transactions|sectors',
         )
         ->assertNoJavaScriptErrors();
 });
@@ -39,12 +39,12 @@ it('charge la page Crypto, ses sections dans l\'ordre, sans erreur', function ()
 
     $this->actingAs($user);
 
-    /** La crypto n'a pas de secteurs : sa page s'arrête aux performances. */
+    /** La crypto n'a pas de secteurs : sa page s'arrête aux transactions. */
     visit('/crypto')
         ->assertSee('Investi')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'valuation|evolution|instruments|analysis',
+            'valuation|evolution|instruments|analysis|class-transactions',
         )
         ->assertNoJavaScriptErrors();
 });

@@ -8,6 +8,7 @@ use App\Contexts\MarketView\Actions\GetHoldingTrends;
 use App\Contexts\MarketView\Ports\ClassAnalysisPort;
 use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
 use App\Contexts\MarketView\Ports\SectorBreakdownPort;
+use App\Contexts\MarketView\Ports\TransactionsPort;
 use App\Contexts\MarketView\Ports\ValuationPort;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -26,6 +27,7 @@ class AssetClassController
         private ValuationPort $valuation,
         private SectorBreakdownPort $sectors,
         private ClassAnalysisPort $classAnalysis,
+        private TransactionsPort $transactions,
     ) {}
 
     public function __invoke(): Response
@@ -51,6 +53,13 @@ class AssetClassController
             ),
             'classAnalysis' => Inertia::defer(
                 fn () => $this->classAnalysis->forClass($userId, $exposure), 'analyse',
+            ),
+            /**
+             * L'historique entier de la poche, sans fenêtre : la section reste repliée, et son
+             * groupe ne part qu'au dépli.
+             */
+            'transactions' => Inertia::defer(
+                fn () => $this->transactions->transactionsForClass($userId, $exposure), 'transactions',
             ),
         ];
 
