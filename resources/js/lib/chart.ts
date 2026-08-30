@@ -203,6 +203,21 @@ function yAxisGutter(values: number[], valueFormatter: ValueFormatter): number {
     return Math.ceil(widest) + AXIS_LABEL_MARGIN;
 }
 
+/** Une série à mesurer : ses valeurs, et le formateur qui en fera des étiquettes. */
+export type GutterSeries = { values: number[]; valueFormatter: ValueFormatter };
+
+/**
+ * Gouttière assez large pour toutes les séries qu'un même cadre tracera tour à tour. La fiche
+ * instrument bascule entre la valeur d'une position et le cours d'une part : mesurée série par
+ * série, la gouttière changerait de largeur à chaque bascule et décalerait le tracé, la
+ * mini-timeline et la graduation temporelle sous l'œil du lecteur.
+ */
+export function axisGutter(series: GutterSeries[]): number {
+    return Math.max(...series.map(
+        ({ values, valueFormatter }: GutterSeries): number => yAxisGutter(values, valueFormatter),
+    ));
+}
+
 type AxisExtent = { min: number; max: number };
 
 /**
@@ -221,13 +236,15 @@ type ChartFrameInput = {
     values: number[];
     bottom: number;
     description: string;
+    /** Largeur imposée par un cadre partagé avec d'autres séries ; sinon celle de ces valeurs. */
+    gutter?: number;
 };
 
 /**
  * Ossature partagée par les trois graphes : axes, grille et cadre d'infobulle suivent le thème.
  * La description accessible est rédigée à la main plutôt que laissée au gabarit anglais d'ECharts.
  */
-function chartFrame({ valueFormatter, values, bottom, description }: ChartFrameInput): ChartOption {
+function chartFrame({ valueFormatter, values, bottom, description, gutter }: ChartFrameInput): ChartOption {
     const colors = palette();
 
     /**
@@ -247,7 +264,7 @@ function chartFrame({ valueFormatter, values, bottom, description }: ChartFrameI
         animation: false,
         aria: { enabled: true, label: { description } },
         grid: {
-            left: yAxisGutter(values, valueFormatter),
+            left: gutter ?? yAxisGutter(values, valueFormatter),
             right: LAST_POINT_OVERFLOW,
             top: CHART_TOP_INSET,
             bottom,
@@ -480,6 +497,8 @@ type ValueVsInvestedInput = {
     description: string;
     /** Absent sur le tableau de bord : seule la fiche instrument annote ses détachements. */
     dividends?: DividendMark[];
+    /** Posée par la fiche instrument, dont le cadre sert aussi au cours (cf. `axisGutter`). */
+    gutter?: number;
 };
 
 /** Le tableau de bord raisonne sur le portefeuille entier : les titres ne sont qu'un détail de calcul. */
@@ -565,7 +584,7 @@ function wealthZoomSlider(visible: ZoomWindow | null): Extract<NonNullable<Chart
  * rien ici ne dépend du réseau.
  */
 export function buildValueVsInvestedOption(
-    { labels, value, invested, valueFormatter, window, description, dividends = [] }: ValueVsInvestedInput,
+    { labels, value, invested, valueFormatter, window, description, dividends = [], gutter }: ValueVsInvestedInput,
 ): ChartOption {
     const visible = window ?? lastYearWindow(labels);
     const colors = palette();
@@ -576,6 +595,7 @@ export function buildValueVsInvestedOption(
             values: value,
             bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT,
             description,
+            gutter,
         }),
         color: [colors.value],
         series: valueSeries(labels, value, dividends),
@@ -727,13 +747,17 @@ type PriceHistoryInput = {
     valueFormatter: ValueFormatter;
     /** `null` à la première peinture ; sinon la fenêtre héritée de l'autre série de la fiche. */
     window: ZoomWindow | null;
+    /** Partagée avec la valorisation : le cadre ne doit pas bouger à la bascule. */
+    gutter?: number;
 };
 
 /**
  * Cours d'un instrument : une courbe unique, aire dégradée sous la ligne. Même mini-timeline que
  * la valorisation — la fiche bascule de l'une à l'autre sans changer de fenêtre.
  */
-export function buildPriceHistoryOption({ labels, close, valueFormatter, window }: PriceHistoryInput): ChartOption {
+export function buildPriceHistoryOption(
+    { labels, close, valueFormatter, window, gutter }: PriceHistoryInput,
+): ChartOption {
     const visible = window ?? lastYearWindow(labels);
     const colors = palette();
     const points = datedPoints(labels, close);
@@ -744,6 +768,7 @@ export function buildPriceHistoryOption({ labels, close, valueFormatter, window 
             values: close,
             bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT,
             description: "Historique du cours de l'instrument.",
+            gutter,
         }),
         dataZoom: [wealthZoomSlider(visible)],
         color: [colors.value],

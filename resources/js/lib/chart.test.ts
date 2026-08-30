@@ -6,7 +6,7 @@ import { eur } from '@/lib/format';
 import type { DividendMark } from '@/lib/income';
 
 const { useThemeStore } = await import('@/stores/theme');
-const { buildPriceHistoryOption, buildValueVsInvestedOption, buildWealthStackOption, sumPerAsset } = await import('@/lib/chart');
+const { axisGutter, buildPriceHistoryOption, buildValueVsInvestedOption, buildWealthStackOption, sumPerAsset } = await import('@/lib/chart');
 
 /**
  * Le store de thème lit `usePreferredDark()`, qui rendrait la palette dépendante de
@@ -167,6 +167,21 @@ describe('buildValueVsInvestedOption — axes', () => {
         expect(gutterOf(1000)).toBeGreaterThan(gutterOf(1));
     });
 
+    it('préfère la gouttière imposée à celle que ses propres valeurs réclameraient', () => {
+        const labels = monthlyLabels(36);
+        const option = buildValueVsInvestedOption({
+            labels,
+            value: labels.map((): number => 1000),
+            invested: labels.map((): number => 900),
+            valueFormatter: (value: number): string => eur(value, 0),
+            window: null,
+            description: 'Évolution.',
+            gutter: 120,
+        });
+
+        expect((option.grid as { left: number }).left).toBe(120);
+    });
+
     it('garde la gouttière stable quand le zoom réduit la fenêtre visible', () => {
         const leftOf = (option: ChartOption): number => (option.grid as { left: number }).left;
 
@@ -227,6 +242,30 @@ describe('buildValueVsInvestedOption — description accessible', () => {
 
         expect(aria.enabled).toBe(true);
         expect(aria.label.description).toBe('Évolution de la valeur du portefeuille face aux montants investis.');
+    });
+});
+
+describe('axisGutter', () => {
+    it('réclame la largeur de la série la plus bavarde, pour que toutes tiennent dans le même cadre', () => {
+        const position = { values: [123456], valueFormatter: (value: number): string => eur(value, 0) };
+        const price = { values: [12.34], valueFormatter: (value: number): string => eur(value) };
+
+        const shared = axisGutter([position, price]);
+
+        expect(shared).toBe(axisGutter([position]));
+        expect(shared).toBeGreaterThan(axisGutter([price]));
+    });
+
+    it('vaut celle d\'une série seule quand on ne lui en donne qu\'une', () => {
+        const price = { values: [12.34], valueFormatter: (value: number): string => eur(value) };
+        const option = buildPriceHistoryOption({
+            labels: monthlyLabels(24),
+            close: [12.34],
+            valueFormatter: (value: number): string => eur(value),
+            window: null,
+        });
+
+        expect(axisGutter([price])).toBe((option.grid as { left: number }).left);
     });
 });
 

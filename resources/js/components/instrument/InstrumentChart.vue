@@ -4,8 +4,9 @@ import { Deferred } from '@inertiajs/vue3';
 import { AsyncBaseChart } from '@/components/AsyncBaseChart';
 import ChartSkeleton from '@/components/ChartSkeleton.vue';
 import SegmentedControl, { type Segment } from '@/components/ui/SegmentedControl.vue';
-import { buildPriceHistoryOption, buildValueVsInvestedOption, type ZoomWindow } from '@/lib/chart';
+import { axisGutter, buildPriceHistoryOption, buildValueVsInvestedOption, type ZoomWindow } from '@/lib/chart';
 import { eur } from '@/lib/format';
+import { chartHeight } from '@/lib/layout';
 import { dividendMarks, type DividendMark, type DividendReceipt } from '@/lib/income';
 import type { ChartOption } from '@/lib/echarts';
 import type { PriceHistory, ValuationSeries } from '@/lib/instrument';
@@ -56,14 +57,27 @@ const marks = computed<DividendMark[]>(
     () => dividendMarks(props.valuation?.labels ?? [], props.dividends),
 );
 
+const amountFormatter = (amount: number): string => eur(amount, 0);
+
+/**
+ * Une seule gouttière pour les deux séries : mesurée séparément, la valeur d'une position à cinq
+ * chiffres et le cours d'une part à deux décimales n'ouvrent pas le cadre à la même abscisse, et
+ * le tracé sauterait latéralement à chaque bascule.
+ */
+const gutter = computed<number>(() => axisGutter([
+    { values: props.valuation?.valuations ?? [], valueFormatter: amountFormatter },
+    { values: props.priceHistory?.close ?? [], valueFormatter: eur },
+]));
+
 const valuationOption = computed<ChartOption>(() => buildValueVsInvestedOption({
     labels: props.valuation?.labels ?? [],
     value: props.valuation?.valuations ?? [],
     invested: props.valuation?.invested ?? [],
-    valueFormatter: (amount: number): string => eur(amount, 0),
+    valueFormatter: amountFormatter,
     window: lastZoom,
     description: 'Valeur de la position comparée au montant investi.',
     dividends: marks.value,
+    gutter: gutter.value,
 }));
 
 const priceOption = computed<ChartOption>(() => buildPriceHistoryOption({
@@ -71,6 +85,7 @@ const priceOption = computed<ChartOption>(() => buildPriceHistoryOption({
     close: props.priceHistory?.close ?? [],
     valueFormatter: eur,
     window: lastZoom,
+    gutter: gutter.value,
 }));
 
 const option = computed<ChartOption>(
@@ -100,7 +115,15 @@ const emptyLabel = computed<string>(() => (mode.value === 'valuation'
             <div v-if="hasHistory" class="px-6">
                 <AsyncBaseChart :option="option" @zoom="rememberZoom" />
             </div>
-            <p v-else class="py-8 text-center text-sm text-muted-foreground">{{ emptyLabel }}</p>
+            <!-- Le vide occupe la place du graphe : la bascule ne doit rien faire remonter. -->
+            <p
+                v-else
+                data-chart-placeholder
+                class="flex items-center justify-center px-6 text-center text-sm text-muted-foreground"
+                :style="{ height: `${chartHeight}px` }"
+            >
+                {{ emptyLabel }}
+            </p>
         </template>
 
         <Deferred v-else :data="deferKey">

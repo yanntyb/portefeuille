@@ -2,6 +2,7 @@ import { createPinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp, nextTick } from 'vue';
 import type { ChartOption } from '@/lib/echarts';
+import { chartHeight } from '@/lib/layout';
 
 /** Fenêtre que l'instance feinte rend sur son option courante, comme ECharts après un déplacement. */
 const readerWindow = {
@@ -33,15 +34,16 @@ vi.mock('@/lib/echarts', () => ({
 
 const { default: InstrumentChart } = await import('@/components/instrument/InstrumentChart.vue');
 
+/** Position à cinq chiffres : ses montants sont bien plus larges que le cours d'une part. */
 const valuation = {
     labels: ['2023-01-01', '2024-01-01', '2025-01-01', '2025-12-01'],
-    valuations: [1000, 1100, 1200, 1300],
-    invested: [900, 900, 900, 900],
+    valuations: [123000, 124000, 125000, 126000],
+    invested: [120000, 120000, 120000, 120000],
 };
 
 const priceHistory = {
     labels: ['2021-01-01', '2023-01-01', '2025-12-01'],
-    close: [80, 100, 130],
+    close: [80.5, 100.25, 130.75],
 };
 
 type Props = { valuation?: unknown; priceHistory?: unknown };
@@ -96,6 +98,9 @@ const seriesNames = (option: ChartOption): (string | undefined)[] =>
 const windowOf = (option: ChartOption): { startValue?: number; endValue?: number } =>
     (option.dataZoom as { startValue?: number; endValue?: number }[])[0];
 
+/** Largeur réservée aux montants de l'axe : c'est elle qui décale le tracé quand elle change. */
+const gutterOf = (option: ChartOption): number => (option.grid as { left: number }).left;
+
 beforeEach((): void => {
     class FakeResizeObserver implements ResizeObserver {
         observe(): void {}
@@ -138,6 +143,25 @@ describe('bascule entre valorisation et cours', () => {
             startValue: readerWindow.startValue,
             endValue: readerWindow.endValue,
         });
+    });
+
+    it('garde le même cadre d\'une série à l\'autre, quelle que soit la largeur des montants', async () => {
+        const host = mountChart();
+        await settle(host);
+
+        const onValuation = gutterOf(lastPainted());
+        await choose(host, 'price');
+
+        expect(gutterOf(lastPainted())).toBe(onValuation);
+    });
+
+    it('réserve au message d\'absence la place qu\'aurait prise le graphe', async () => {
+        const host = mountChart({ valuation: { labels: [], valuations: [], invested: [] } });
+        await nextTick();
+
+        const empty = host.querySelector<HTMLElement>('[data-chart-placeholder]');
+
+        expect(empty?.style.height).toBe(`${chartHeight.value}px`);
     });
 
     it('désactive le segment du cours quand aucune cotation n\'est arrivée', async () => {
