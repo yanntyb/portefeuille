@@ -6,11 +6,11 @@ import AppPage from '@/components/AppPage.vue';
 import DividendsSection from '@/components/instrument/DividendsSection.vue';
 import FiguresSection from '@/components/instrument/FiguresSection.vue';
 import HeroSection from '@/components/instrument/HeroSection.vue';
+import InstrumentChart from '@/components/instrument/InstrumentChart.vue';
 import PerformanceSection from '@/components/instrument/PerformanceSection.vue';
 import PriceHistorySection from '@/components/instrument/PriceHistorySection.vue';
 import SectorsSection from '@/components/instrument/SectorsSection.vue';
 import TransactionsSection from '@/components/instrument/TransactionsSection.vue';
-import ValuationSection from '@/components/instrument/ValuationSection.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
 import type { AssetDividendHistory } from '@/lib/income';
 import type { Instrument, PriceHistory, ValuationSeries } from '@/lib/instrument';
@@ -48,9 +48,10 @@ const valuation = aheadOfNetwork(
     <AppPage>
         <HeroSection :instrument="props.instrument" />
 
-        <ValuationSection
+        <InstrumentChart
             v-if="props.instrument.position"
             :valuation="valuation"
+            :price-history="priceHistory"
             :dividends="receipts"
         />
 
