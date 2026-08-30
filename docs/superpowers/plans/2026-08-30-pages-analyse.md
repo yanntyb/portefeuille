@@ -247,15 +247,15 @@ Créer `app/Contexts/Portfolio/Services/PerformanceContributionTest.php` :
 
 use App\Contexts\Portfolio\Services\PerformanceContribution;
 
-function position(int $id, string $name, ?float $gain, ?float $marketValue): array
+function contributionPosition(int $id, string $name, ?float $gain, ?float $marketValue): array
 {
     return ['assetId' => $id, 'assetName' => $name, 'gain' => $gain, 'marketValue' => $marketValue];
 }
 
 it('rapporte le gain d\'une position à la valeur totale, pas à son propre coût', function () {
     $lines = (new PerformanceContribution)->of([
-        position(1, 'Petite ligne', 80.0, 200.0),
-        position(2, 'Grosse ligne', 360.0, 3000.0),
+        contributionPosition(1, 'Petite ligne', 80.0, 200.0),
+        contributionPosition(2, 'Grosse ligne', 360.0, 3000.0),
     ], 10000.0);
 
     expect($lines[0]->assetName)->toBe('Grosse ligne')
@@ -267,8 +267,8 @@ it('rapporte le gain d\'une position à la valeur totale, pas à son propre coû
 
 it('trie par contribution décroissante', function () {
     $lines = (new PerformanceContribution)->of([
-        position(1, 'Faible', 100.0, 1000.0),
-        position(2, 'Forte', 900.0, 1000.0),
+        contributionPosition(1, 'Faible', 100.0, 1000.0),
+        contributionPosition(2, 'Forte', 900.0, 1000.0),
     ], 10000.0);
 
     expect(array_map(fn ($line): string => $line->assetName, $lines))->toBe(['Forte', 'Faible']);
@@ -276,7 +276,7 @@ it('trie par contribution décroissante', function () {
 
 it('garde les contributions négatives d\'un portefeuille en perte', function () {
     $lines = (new PerformanceContribution)->of([
-        position(1, 'Perdante', -500.0, 1000.0),
+        contributionPosition(1, 'Perdante', -500.0, 1000.0),
     ], 10000.0);
 
     expect($lines[0]->contribution)->toBe(-5.0);
@@ -284,8 +284,8 @@ it('garde les contributions négatives d\'un portefeuille en perte', function ()
 
 it('exclut les positions dont le gain est inconnu', function () {
     $lines = (new PerformanceContribution)->of([
-        position(1, 'Connue', 100.0, 1000.0),
-        position(2, 'Inconnue', null, 1000.0),
+        contributionPosition(1, 'Connue', 100.0, 1000.0),
+        contributionPosition(2, 'Inconnue', null, 1000.0),
     ], 10000.0);
 
     expect($lines)->toHaveCount(1)
@@ -293,14 +293,14 @@ it('exclut les positions dont le gain est inconnu', function () {
 });
 
 it('ne définit ni contribution ni poids sur une valeur totale nulle', function () {
-    $lines = (new PerformanceContribution)->of([position(1, 'Ligne', 100.0, 1000.0)], 0.0);
+    $lines = (new PerformanceContribution)->of([contributionPosition(1, 'Ligne', 100.0, 1000.0)], 0.0);
 
     expect($lines[0]->contribution)->toBeNull()
         ->and($lines[0]->weight)->toBeNull();
 });
 
 it('ne définit aucun poids pour une position sans valeur de marché', function () {
-    $lines = (new PerformanceContribution)->of([position(1, 'Ligne', 100.0, null)], 10000.0);
+    $lines = (new PerformanceContribution)->of([contributionPosition(1, 'Ligne', 100.0, null)], 10000.0);
 
     expect($lines[0]->contribution)->toBe(1.0)
         ->and($lines[0]->weight)->toBeNull();
@@ -675,7 +675,22 @@ it('rend une série vide pour un utilisateur sans transaction', function () {
 });
 ```
 
-`cryptoFixture()` pose 10 titres à 100 € (soit 1000 €) et 1 bitcoin à 400 €. La crypto n'a aucune transaction dans cette fixture : le second test compare donc une série garnie à une série vide, ce qui est bien une différence — si tu juges le test trop faible, ajoute une transaction crypto plutôt que de l'affaiblir.
+`cryptoFixture()` pose 10 titres à 100 € (soit 1000 €) et 1 bitcoin à 400 €, **mais aucune transaction sur le bitcoin** — seulement une ligne de portefeuille. Le second test comparerait donc une série garnie à une série vide, et `end([])` rend `false`, ce qui ferait passer l'assertion sans rien prouver.
+
+**Ajoute une transaction d'achat sur le bitcoin dans ce test**, sur le modèle de celle que `portfolioFixture()` crée pour son titre :
+
+```php
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id,
+        'wallet_id' => Wallet::factory()->for($user)->create()->id,
+        'asset_id' => $crypto->id,
+        'quantity' => 1,
+        'unit_price' => 300,
+        'date' => '2026-01-01',
+    ]);
+```
+
+en récupérant `$crypto` par `['user' => $user, 'crypto' => $crypto] = cryptoFixture();`. Les deux séries portent alors des valeurs réelles et différentes.
 
 - [ ] **Step 2: Lancer pour vérifier l'échec**
 
