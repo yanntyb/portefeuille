@@ -4,9 +4,6 @@ import type { InstrumentAnalysis } from '@/lib/instrument';
 export type IndicatorId =
     | 'pru'
     | 'pruGap'
-    | 'ma200'
-    | 'ma200Gap'
-    | 'rsi14'
     | 'high52w'
     | 'high52wGap'
     | 'atrPct'
@@ -25,9 +22,6 @@ export interface AnalysisGroup {
     title: string | null;
     rows: AnalysisRow[];
 }
-
-/** Le RSI se lit en entier : sa décimale n'ajoute rien à une échelle de 0 à 100. */
-const index = (value: number | null): string => (value === null ? '—' : String(Math.round(value)));
 
 /**
  * Le serveur rend une profondeur positive ; la chute se lit avec son signe. Une chute nulle est un
@@ -59,9 +53,6 @@ export const analysisGroups = (analysis: InstrumentAnalysis): AnalysisGroup[] =>
         {
             title: 'Tendance',
             rows: [
-                { indicator: 'ma200', label: 'MM200', value: eur(analysis.ma200) },
-                { indicator: 'ma200Gap', label: 'Cours vs MM200', value: pct(analysis.ma200GapPct) },
-                { indicator: 'rsi14', label: 'RSI 14', value: index(analysis.rsi14) },
                 { indicator: 'high52w', label: 'Plus-haut 52 s.', value: eur(analysis.high52w) },
                 {
                     indicator: 'high52wGap',

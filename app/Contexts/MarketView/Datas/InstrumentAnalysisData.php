@@ -22,9 +22,6 @@ readonly class InstrumentAnalysisData implements JsonSerializable
     public function __construct(
         public ?float $pru,
         public ?float $pruGapPct,
-        public ?float $ma200,
-        public ?float $ma200GapPct,
-        public ?float $rsi14,
         public ?float $high52w,
         public ?float $high52wGapPct,
         public ?float $atr,
@@ -39,9 +36,6 @@ readonly class InstrumentAnalysisData implements JsonSerializable
         return [
             'pru' => $this->pru,
             'pruGapPct' => $this->pruGapPct,
-            'ma200' => $this->ma200,
-            'ma200GapPct' => $this->ma200GapPct,
-            'rsi14' => $this->rsi14,
             'high52w' => $this->high52w,
             'high52wGapPct' => $this->high52wGapPct,
             'atr' => $this->atr,

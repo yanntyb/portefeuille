@@ -6,9 +6,6 @@ import type { InstrumentAnalysis } from '@/lib/instrument';
 const full: InstrumentAnalysis = {
     pru: 80,
     pruGapPct: 25,
-    ma200: 82.4,
-    ma200GapPct: -11.2,
-    rsi14: 38,
     high52w: 94.1,
     high52wGapPct: -22.2,
     atr: 1.9,

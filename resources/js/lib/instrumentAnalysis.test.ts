@@ -8,9 +8,6 @@ const normalizeSpaces = (value: string): string => value.replace(/[\xa0\u202f]/g
 const analysis = (overrides: Partial<InstrumentAnalysis> = {}): InstrumentAnalysis => ({
     pru: 80,
     pruGapPct: 25,
-    ma200: 82.4,
-    ma200GapPct: -11.2,
-    rsi14: 38.4,
     high52w: 94.1,
     high52wGapPct: -22.2,
     atr: 1.9,
@@ -36,9 +33,8 @@ describe('analysisGroups', () => {
 
         expect(valueOf('pru')).toBe('80,00 €');
         expect(valueOf('pruGap')).toBe('+25,0 %');
-        expect(valueOf('ma200')).toBe('82,40 €');
-        expect(valueOf('ma200Gap')).toBe('-11,2 %');
-        expect(valueOf('rsi14')).toBe('38');
+        expect(valueOf('high52w')).toBe('94,10 €');
+        expect(valueOf('high52wGap')).toBe('-22,2 %');
         expect(valueOf('atrPct')).toBe('1,9 %');
         expect(valueOf('portfolioWeight')).toBe('4,2 %');
     });
@@ -65,9 +61,9 @@ describe('analysisGroups', () => {
     });
 
     it('rend un tiret sur un repère absent plutôt que de masquer sa ligne', () => {
-        const rows = analysisGroups(analysis({ rsi14: null })).flatMap((group) => group.rows);
+        const rows = analysisGroups(analysis({ high52w: null })).flatMap((group) => group.rows);
 
-        expect(rows.find((row) => row.indicator === 'rsi14')!.value).toBe('—');
+        expect(rows.find((row) => row.indicator === 'high52w')!.value).toBe('—');
     });
 
     it('efface un groupe dont tous les repères manquent', () => {

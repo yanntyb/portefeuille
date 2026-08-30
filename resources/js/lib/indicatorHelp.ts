@@ -11,7 +11,7 @@ export interface IndicatorHelp {
 }
 
 /**
- * Le texte des aides de la section Analyse, en données plutôt qu'en gabarit : dix indicateurs
+ * Le texte des aides de la section Analyse, en données plutôt qu'en gabarit : sept indicateurs
  * feraient d'un composant à `v-if` un mur illisible, et un test peut vérifier ici qu'aucun bouton
  * n'ouvre du vide.
  */
@@ -33,32 +33,6 @@ export const indicatorHelp: Record<IndicatorId, IndicatorHelp> = {
         ],
         formula: '(cours − PRU) ÷ PRU',
         caveat: 'Ne dit rien du bon moment pour agir : une ligne à +80 % peut rester une bonne affaire, une ligne à −20 % un piège. Le marché ignore ton prix d\'entrée.',
-    },
-    ma200: {
-        title: 'Comment lire la MM200',
-        subtitle: 'La moyenne mobile à 200 séances',
-        body: [
-            'La moyenne des 200 dernières clôtures, recalculée chaque jour. Elle lisse le bruit quotidien pour ne garder que la tendance de fond — environ dix mois de cotation.',
-        ],
-        formula: 'moyenne des 200 dernières clôtures',
-    },
-    ma200Gap: {
-        title: 'Comment lire l\'écart à la MM200',
-        subtitle: 'La position du cours face à sa tendance longue',
-        body: [
-            'Au-dessus de zéro, le cours se paie plus cher que sa moyenne longue : la tendance est haussière. En dessous, le marché paie moins cher que cette moyenne.',
-            'À un horizon de renforts mensuels, c\'est l\'indicateur qui situe le mieux : un écart franchement négatif signale un repli par rapport à la tendance de fond.',
-        ],
-        caveat: 'Un titre peut rester des mois sous sa MM200 et continuer de baisser. Sous la moyenne ne veut pas dire bon marché.',
-    },
-    rsi14: {
-        title: 'Comment lire le RSI',
-        subtitle: 'L\'indice de force relative sur 14 séances',
-        body: [
-            'Il compare la vigueur des hausses à celle des baisses sur les 14 dernières séances, et rend un chiffre entre 0 et 100.',
-            'Sous 30, on parle de « survendu » : les baisses dominent nettement. Au-dessus de 70, de « suracheté ». Entre les deux, il ne dit rien de particulier.',
-        ],
-        caveat: 'En tendance forte, le RSI colle à son extrême pendant des semaines. Ce n\'est pas un compte à rebours : un RSI à 25 peut descendre à 15 avant de remonter.',
     },
     high52w: {
         title: 'Comment lire le plus-haut 52 semaines',

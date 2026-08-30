@@ -174,7 +174,7 @@ it('defers the analysis figures and loads them on demand', function () {
             ->loadDeferredProps(fn (Assert $reload) => $reload
                 ->where('analysis.pru', fn ($v) => (float) $v === 80.0)
                 ->where('analysis.pruGapPct', fn ($v) => (float) $v === 25.0)
-                ->where('analysis.ma200', null)
+                ->where('analysis.high52w', fn ($v) => (float) $v === 100.0)
             )
         );
 });

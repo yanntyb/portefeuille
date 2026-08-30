@@ -63,8 +63,10 @@ use Illuminate\Support\Carbon;
  * gagne `performances`, plus `sectorBreakdown` pour les expositions qui en ont.
  * Modifié une quatorzième fois : chaque page actif porte ses repères d'analyse — prix de revient,
  * moyenne longue, RSI, amplitude vraie, drawdown et poids dans le portefeuille.
+ * Modifié une quinzième fois : la section Analyse se resserre sur sept repères — la moyenne
+ * longue, son écart et le RSI quittent la fiche, donc aussi le blob.
  */
-const SNAPSHOT_VERSION = 'da99078b48790d9bb4c8f787d2d60a6207f2399e';
+const SNAPSHOT_VERSION = '0745db4c69205fbd782286d0663d5dae063a379c';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

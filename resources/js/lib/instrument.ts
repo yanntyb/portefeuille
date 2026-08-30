@@ -80,9 +80,6 @@ export interface Instrument {
 export interface InstrumentAnalysis {
     pru: number | null;
     pruGapPct: number | null;
-    ma200: number | null;
-    ma200GapPct: number | null;
-    rsi14: number | null;
     high52w: number | null;
     high52wGapPct: number | null;
     atr: number | null;

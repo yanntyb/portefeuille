@@ -7,9 +7,7 @@ use App\Contexts\Market\Datas\TrueRangeBar;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Market\Services\AverageTrueRange;
 use App\Contexts\Market\Services\FiftyTwoWeekRange;
-use App\Contexts\Market\Services\MovingAverage;
 use App\Contexts\Market\Services\PriceGap;
-use App\Contexts\Market\Services\RelativeStrengthIndex;
 use App\Contexts\MarketView\Datas\InstrumentAnalysisData;
 use App\Contexts\MarketView\Ports\InstrumentAnalysisPort;
 use App\Contexts\MarketView\Services\PriceHistoryWindow;
@@ -33,15 +31,10 @@ use App\Contexts\Valuation\Services\Drawdown;
  */
 class InstrumentAnalysis implements InstrumentAnalysisPort
 {
-    /** La moyenne longue de référence : deux cents séances, environ dix mois cotés. */
-    private const LONG_TERM_SESSIONS = 200;
-
     public function __construct(
         private PriceRepositoryContract $prices,
         private GetPortfolioPositions $positions,
-        private MovingAverage $movingAverage,
         private PriceGap $priceGap,
-        private RelativeStrengthIndex $rsi,
         private AverageTrueRange $atr,
         private FiftyTwoWeekRange $fiftyTwoWeeks,
         private Drawdown $drawdown,
@@ -73,9 +66,6 @@ class InstrumentAnalysis implements InstrumentAnalysisPort
             return new InstrumentAnalysisData(
                 pru: $position->avgCost,
                 pruGapPct: null,
-                ma200: null,
-                ma200GapPct: null,
-                rsi14: null,
                 high52w: null,
                 high52wGapPct: null,
                 atr: null,
@@ -94,16 +84,12 @@ class InstrumentAnalysis implements InstrumentAnalysisPort
         ))->values()->all();
 
         $lastClose = $closes[count($closes) - 1];
-        $movingAverage = $this->movingAverage->of($closes, self::LONG_TERM_SESSIONS);
         $atr = $this->atr->of($bars);
         $fiftyTwoWeeks = $this->fiftyTwoWeeks->of($closes);
 
         return new InstrumentAnalysisData(
             pru: $position->avgCost,
             pruGapPct: $this->priceGap->pct($position->avgCost, $lastClose),
-            ma200: $movingAverage,
-            ma200GapPct: $this->priceGap->pct($movingAverage, $lastClose),
-            rsi14: $this->rsi->of($closes),
             high52w: $fiftyTwoWeeks?->high,
             high52wGapPct: $fiftyTwoWeeks?->gapPct,
             atr: $atr?->value,

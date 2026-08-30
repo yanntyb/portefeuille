@@ -47,7 +47,7 @@ it('rend le prix de revient et son écart au dernier cours', function () {
         ->and($data->pruGapPct)->toBe(25.0);
 });
 
-it('rend la moyenne à deux cents séances et l\'écart du cours à cette moyenne', function () {
+it('situe le cours dans ses cinquante-deux semaines', function () {
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $instrument = Instrument::factory()->create();
@@ -62,21 +62,20 @@ it('rend la moyenne à deux cents séances et l\'écart du cours à cette moyenn
 
     $data = $this->analysis->forAsset($user->id, $instrument->id);
 
-    /** Clôtures 100 à 359 : la moyenne des 200 dernières vaut 259,5, le dernier cours 359. */
-    expect($data->ma200)->toBe(259.5)
-        ->and(round($data->ma200GapPct, 4))->toBe(round((359 - 259.5) / 259.5 * 100, 4))
-        ->and($data->rsi14)->toBe(100.0)
-        ->and($data->high52w)->toBe(359.0)
-        ->and($data->high52wGapPct)->toBe(0.0);
+    /** Clôtures 100 à 359, en hausse continue : le sommet est le dernier cours. */
+    expect($data->high52w)->toBe(359.0)
+        ->and($data->high52wGapPct)->toBe(0.0)
+        ->and($data->atrPct)->not->toBeNull();
 });
 
-it('laisse la moyenne longue à nul quand l\'historique est trop court', function () {
+it('laisse l\'amplitude vraie à nul quand l\'historique est trop court', function () {
     ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
 
+    /** Deux séances : de quoi coter, pas de quoi moyenner quatorze amplitudes. */
     $data = $this->analysis->forAsset($user->id, $instrument->id);
 
-    expect($data->ma200)->toBeNull()
-        ->and($data->ma200GapPct)->toBeNull();
+    expect($data->atr)->toBeNull()
+        ->and($data->atrPct)->toBeNull();
 });
 
 it('rend le poids de la position dans le portefeuille entier', function () {
@@ -124,5 +123,5 @@ it('garde le prix de revient et le poids quand aucun cours ne tombe dans la fen�
     /** Position unique du portefeuille : elle en pèse la totalité. */
     expect($data->pru)->toBe(80.0)
         ->and($data->portfolioWeightPct)->toBe(100.0)
-        ->and($data->rsi14)->toBeNull();
+        ->and($data->high52w)->toBeNull();
 });
