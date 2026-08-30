@@ -14,3 +14,10 @@ paths:
 
 ## Les analyses lisent les positions, les listes lisent les lignes
 `HoldingLineData` = une ligne par enveloppe ; `PositionLineData` = une position par actif, enveloppes confondues. La page liste affiche des lignes, la page analyse raisonne en positions. L'argument est la concentration : un titre à 30 % réparti sur deux comptes apparaîtrait comme deux lignes à 15 %, et le HHI le ferait passer pour une exposition modérée — l'enveloppe est un fait fiscal, pas un fait de marché. Conséquence assumée : un même titre apparaît une fois sur `/actions/analyse` et deux sur `/actions`, et tout rendu qui regroupe doit le dire. `GetPortfolioAnalysis::positionsOf()` refait ce regroupement au lieu de réutiliser `GetPortfolioPositions`, faute d'avoir étendu cette dernière avec un filtre par classe et le nom de l'actif — consolidation à trancher dans un chantier ultérieur, pas un correctif à faire au fil de l'eau.
+
+## Les frais entrent une fois dans le coût, jamais deux
+`CostBasis` ajoute les frais d'achat au coût : le PRU projeté sur une position est frais inclus, donc l'investi, le gain et le pourcentage de la fiche le sont aussi. `CalculateRealizedGain` n'en compte pas deux fois — les frais d'achat sont déjà dans le PRU, seuls ceux de la vente se soustraient encore.
+
+`TransactionFlow` est le seul site du montant d'une ligne : achat majoré de ses frais, vente minorée des siens, toujours rendu positif. Les adaptateurs de transactions (`MarketView\Infrastructure\PortfolioTransactions`, `Wealth\Infrastructure\PortfolioLedger`) l'appellent au lieu de refaire `quantité × prix` ; le solde d'une année, somme des montants, en hérite côté front.
+
+`Valuation\Services\ValuationCalculator` tient son propre PRU pour ses ventes : les frais y entrent aussi, sans quoi son investi et son coût diraient deux montants différents.
