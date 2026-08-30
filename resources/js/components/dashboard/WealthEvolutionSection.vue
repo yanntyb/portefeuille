@@ -33,8 +33,6 @@ const option = computed<ChartOption>(() => buildWealthStackOption({
 
 <template>
     <section data-section="wealth-evolution" class="flex shrink-0 flex-col gap-4">
-        <h2 class="px-6 text-[17px] leading-none font-bold">Évolution</h2>
-
         <template v-if="props.series !== null">
             <div v-if="hasHistory" class="px-6">
                 <AsyncBaseChart :option="option" @zoom="rememberZoom" />

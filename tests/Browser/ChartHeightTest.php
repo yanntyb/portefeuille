@@ -15,7 +15,7 @@ it('donne au graphe de la fiche instrument la hauteur de celui du tableau de bor
 
     $this->actingAs($user);
 
-    $dashboard = visit('/')->assertSee('Évolution');
+    $dashboard = visit('/')->assertVisible('[data-section=wealth-evolution] [data-chart] svg');
     $detail = visit("/asset/{$instrument->id}")->assertSee('ACME');
 
     expect($detail->script(chartHeight()))
@@ -31,7 +31,7 @@ it('garde les deux graphes à la même hauteur compacte sur mobile', function ()
 
     $this->actingAs($user);
 
-    $dashboard = visit('/')->on()->iPhone14Pro()->assertSee('Évolution');
+    $dashboard = visit('/')->on()->iPhone14Pro()->assertVisible('[data-section=wealth-evolution] [data-chart] svg');
     $detail = visit("/asset/{$instrument->id}")->on()->iPhone14Pro()->assertSee('ACME');
 
     expect($detail->script(chartHeight()))

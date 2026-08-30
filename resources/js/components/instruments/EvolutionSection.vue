@@ -21,8 +21,6 @@ const invested = computed<number[]>(
 
 <template>
     <section data-section="evolution" class="flex shrink-0 flex-col gap-4">
-        <h2 class="px-6 text-[17px] leading-none font-bold">Évolution</h2>
-
         <ValueVsInvestedChart
             defer-key="evolutionSeries"
             :loaded="props.series !== null"
