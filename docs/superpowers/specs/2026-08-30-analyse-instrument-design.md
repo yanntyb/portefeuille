@@ -76,6 +76,10 @@ construisant l'objet au `new`, sans base de données.
 | `AverageTrueRange` | `of(list<TrueRangeBar> $bars, int $period = 14): ?AtrData` | True Range = `max(high − low, |high − closeVeille|, |low − closeVeille|)`, moyenné à la Wilder. `AtrData` porte la valeur absolue **et** son pourcentage du dernier cours, pour que ce ratio n'ait qu'un seul site de calcul. |
 | `FiftyTwoWeekRange` | `of(list<float> $closes): ?FiftyTwoWeekData` | Plus-haut, plus-bas et distance au plus-haut en %, sur les **252 dernières séances** (ou toute la série si plus courte). |
 
+S'y ajoute `PriceGap::pct(?float $reference, ?float $price): ?float`, l'écart d'un cours à une
+référence en pourcentage : il sert deux fois (écart au PRU, écart à la MM200) et n'a donc pas à
+être réécrit dans l'adaptateur.
+
 Nouvelles Datas de `Market\Datas` : `TrueRangeBar` (high, low, close), `AtrData` (value, percent),
 `FiftyTwoWeekData` (high, low, gapPct).
 
@@ -100,10 +104,16 @@ Nouveau port `MarketView\Ports\InstrumentAnalysisPort` et son adaptateur
 L'adaptateur **compose**, il ne calcule pas — règle MarketView :
 
 1. lit les barres via `Market\Contracts\PriceRepositoryContract` sur la fenêtre `PriceHistoryWindow` ;
-2. appelle les quatre calculateurs de `Market\Services` ;
+2. appelle les calculateurs de `Market\Services` ;
 3. passe labels + clôtures à `Valuation\Services\Drawdown` ;
-4. tire la position et les valeurs de marché du portefeuille de `PortfolioOverviewPort`, puis
-   `Portfolio\Services\PositionWeight`.
+4. tire la position et les valeurs de marché du portefeuille des actions `Portfolio` injectées —
+   `GetPortfolioPositions` et `GetPortfolioOverview`, toutes deux liées en `scoped` et mémoïsées
+   par utilisateur — puis `Portfolio\Services\PositionWeight`.
+
+Ce sont bien les actions qui sont injectées, et non `PortfolioOverviewPort` : ce port ne sait
+répondre que par exposition (« une exposition à la fois », dit son contrat), alors que le poids
+d'une ligne se rapporte au portefeuille entier. `PortfolioTotals` injecte déjà ces mêmes actions
+de la même façon — c'est le travail d'un adaptateur de `Infrastructure/`.
 
 Aucune formule ne s'écrit dans l'adaptateur : les écarts en pourcentage (`pruGapPct`,
 `ma200GapPct`) sont rendus par les calculateurs ou par la Data, jamais improvisés ici.
