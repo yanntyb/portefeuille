@@ -1,6 +1,8 @@
 <?php
 
+use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Dividend;
+use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Wallet;
@@ -37,8 +39,12 @@ use Illuminate\Support\Carbon;
  * groupe `revenus` de la page analyse restait figé sur du vide (`bySource` en tableau plutôt
  * qu'en objet une fois garni — la seule différence de forme JSON invisible tant que le groupe est
  * vide). Deux détachements ajoutés sur le titre déjà détenu couvrent réellement ce groupe.
+ * Modifié une cinquième fois : le jeu ne posait qu'un seul instrument actions, si bien que la
+ * concentration et les contributions restaient figées sur leur cas dégénéré (top1 = top3 = top5 =
+ * 100 %, HHI = 1, une seule ligne de contribution). Un second titre, de valeur différente,
+ * fait maintenant traverser le hash par le tri par contribution décroissante et le cumul du top 3.
  */
-const SNAPSHOT_VERSION = '2a92504cfe2ab2b8d617c0575bd7a2512ef6440b';
+const SNAPSHOT_VERSION = '42f50606df10083670661bf403585a2bf1083609';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe
@@ -78,6 +84,27 @@ function seedSnapshotFixture(): void
         'asset_id' => $stock->asset_id,
         'quantity' => 4,
         'avg_cost' => 95,
+    ]);
+
+    /**
+     * Un second titre, de valeur différente du premier : sans lui la concentration et les
+     * contributions restent figées sur leur cas dégénéré (une seule position mesurable, donc
+     * top1 = top3 = top5 = 100 % et HHI = 1). Le ticker est fixé explicitement — `InstrumentFactory`
+     * le tire au sort et `normalizeSnapshotBody()` ne neutralise qu'`isin` (voir `.ai/rules/factories.md`).
+     */
+    $secondInstrument = Instrument::factory()->ofType(InstrumentType::Stock)->create([
+        'name' => 'Globex',
+        'ticker' => 'GBX',
+    ]);
+
+    Price::factory()->create(['asset_id' => $secondInstrument->id, 'date' => '2026-08-29', 'close' => 50]);
+
+    Holding::factory()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $second->id,
+        'asset_id' => $secondInstrument->id,
+        'quantity' => 5,
+        'avg_cost' => 40,
     ]);
 
     /**

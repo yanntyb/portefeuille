@@ -18,7 +18,7 @@ use App\Contexts\Portfolio\Datas\ContributionData;
 use App\Contexts\Portfolio\Datas\HoldingLineData;
 
 /**
- * Les deux actions sont injectées, jamais résolues ni construites ici : elles sont liées en
+ * Les trois actions sont injectées, jamais résolues ni construites ici : elles sont liées en
  * `scoped` et mémoïsent leurs lignes par utilisateur, si bien qu'une seule lecture du portefeuille
  * sert les quatre expositions d'une requête. Les reconstruire les relirait une fois par exposition.
  */

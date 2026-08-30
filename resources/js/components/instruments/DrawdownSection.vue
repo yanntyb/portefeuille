@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Deferred } from '@inertiajs/vue3';
-import { pct } from '@/lib/format';
+import { frDate, sharePct } from '@/lib/format';
 import type { Drawdown } from '@/lib/analysis';
 
 const props = defineProps<{ drawdown: Drawdown | null }>();
@@ -16,15 +16,15 @@ const props = defineProps<{ drawdown: Drawdown | null }>();
             <div class="flex flex-col gap-0.5">
                 <dt class="text-[13px] text-muted-foreground">
                     <template v-if="props.drawdown.peakLabel">
-                        du {{ props.drawdown.peakLabel }} au {{ props.drawdown.troughLabel }}
+                        du {{ frDate(props.drawdown.peakLabel) }} au {{ frDate(props.drawdown.troughLabel) }}
                     </template>
                     <template v-else>Aucune baisse depuis le plus-haut</template>
                 </dt>
-                <dd class="text-lg font-semibold tabular-nums">{{ pct(props.drawdown.maxDepth) }}</dd>
+                <dd class="text-lg font-semibold tabular-nums">{{ sharePct(props.drawdown.maxDepth) }}</dd>
             </div>
             <div class="flex flex-col gap-0.5">
                 <dt class="text-[13px] text-muted-foreground">Perte en cours</dt>
-                <dd class="text-lg font-semibold tabular-nums">{{ pct(props.drawdown.currentDepth) }}</dd>
+                <dd class="text-lg font-semibold tabular-nums">{{ sharePct(props.drawdown.currentDepth) }}</dd>
             </div>
         </dl>
 

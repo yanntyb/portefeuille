@@ -172,7 +172,7 @@ ne se découpe pas après coup — un nom réutilisé servirait le résultat d'u
 | Page | Sections |
 | --- | --- |
 | Listing (`/actions`) | Valorisation, Évolution, Instruments |
-| Analyse (`/actions/analyse`) | Concentration, Contribution, Drawdown, Performances, Secteurs, Revenus |
+| Analyse (`/actions/analyse`) | Concentration, Contribution, Drawdown, Performances, Revenus, Secteurs |
 
 `SectorsSection`, `PerformancesSection` et `IncomeSection` déménagent telles quelles : ce chantier
 ne les réécrit pas.
@@ -228,8 +228,11 @@ Deux conséquences assumées :
    hash sur des sections vides, l'erreur que la revue du chantier précédent a relevée sur les
    charges d'un bien.
 2. **Le store front gagne un accesseur.** `useSnapshotStore` expose `classList(key)` ; il lui faut
-   `classAnalysis(key)`. `swCache.ts` sert déjà les pages jamais visitées depuis le blob, donc
-   `/actions/analyse` sera lisible hors ligne sans y être passé — c'est l'intérêt.
+   `classAnalysis(key)`. Mais le blob ne fabrique pas un document : `cachedPagePayload`
+   (`resources/js/pwa/strategies.ts`) exige que la réponse HTML de la page soit déjà en cache et
+   rend `Response.error()` sinon — l'instantané ne comble que les props différées d'une page déjà
+   visitée. **Hors ligne, le lien vers `/{slug}/analyse` est donc un cul-de-sac pour qui n'y est
+   jamais allé en ligne au préalable.**
 
 Rappel du piège documenté : une réponse partielle synthétisée ne doit jamais porter
 `deferredProps`, sous peine de boucle infinie de rendu.
@@ -267,3 +270,8 @@ Tout texte visible reste en français.
 - **`PositionLineData::$lastPrice`** n'a aujourd'hui aucun appelant en production. Les analyses
   n'en ont pas besoin non plus. Si ce chantier ne lui en donne pas un, il faut le retirer plutôt
   que de le laisser grossir la Data.
+- **Un vrai précache hors ligne du document `/{slug}/analyse`** reste à faire : tant qu'il n'existe
+  pas, la page n'est lisible hors ligne que pour qui l'a déjà visitée en ligne.
+- **`GetPortfolioAnalysis::positionsOf()` refait le regroupement ligne→position** que
+  `GetPortfolioPositions::position()` fait déjà, faute d'avoir étendu cette dernière avec un filtre
+  par classe et le nom de l'actif. Consolidation à trancher dans un chantier ultérieur.

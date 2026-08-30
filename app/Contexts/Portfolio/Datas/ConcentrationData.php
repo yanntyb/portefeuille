@@ -5,9 +5,9 @@ namespace App\Contexts\Portfolio\Datas;
 use JsonSerializable;
 
 /**
- * Ce qu'un portefeuille concentre. Les quatre indicateurs sont nuls, et non zéro, quand aucune
- * position n'a de valeur connue : un portefeuille sans exposition n'a pas une concentration de
- * zéro, il n'en a pas.
+ * Ce qu'une exposition concentre. Les quatre indicateurs sont nuls, et non zéro, quand aucune
+ * position n'a de valeur connue : une exposition sans positions n'a pas une concentration de
+ * zéro, elle n'en a pas.
  */
 readonly class ConcentrationData implements JsonSerializable
 {

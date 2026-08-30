@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Deferred } from '@inertiajs/vue3';
-import { pct } from '@/lib/format';
+import { sharePct } from '@/lib/format';
 import type { Concentration } from '@/lib/analysis';
 
 const props = defineProps<{ concentration: Concentration | null }>();
@@ -20,9 +20,9 @@ const hhi = (value: number | null): string => (value === null ? '—' : value.to
 
         <dl v-if="props.concentration !== null" class="grid grid-cols-4 gap-3">
             <div v-for="entry in [
-                    { label: 'Top 1', value: pct(props.concentration.top1) },
-                    { label: 'Top 3', value: pct(props.concentration.top3) },
-                    { label: 'Top 5', value: pct(props.concentration.top5) },
+                    { label: 'Top 1', value: sharePct(props.concentration.top1) },
+                    { label: 'Top 3', value: sharePct(props.concentration.top3) },
+                    { label: 'Top 5', value: sharePct(props.concentration.top5) },
                     { label: 'HHI', value: hhi(props.concentration.hhi) },
                 ]" :key="entry.label" class="flex flex-col gap-0.5">
                 <dt class="text-[13px] text-muted-foreground">{{ entry.label }}</dt>

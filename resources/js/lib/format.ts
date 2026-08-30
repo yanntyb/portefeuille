@@ -14,7 +14,7 @@ export const pct = (value: number | null): string =>
     value === null ? '—' : `${value >= 0 ? '+' : ''}${oneDecimal(value)} %`;
 
 /** Part d'un tout, une décimale, jamais de signe ajouté : « 42,1 % ». */
-export const sharePct = (value: number): string => `${oneDecimal(value)} %`;
+export const sharePct = (value: number | null): string => (value === null ? '—' : `${oneDecimal(value)} %`);
 
 /**
  * Formate une fraction (0,0655 = 6,55 %), à la différence de `pct()` qui reçoit des points de
@@ -33,8 +33,8 @@ const frDateFormat = (value: string, options: Intl.DateTimeFormatOptions): strin
     return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('fr-FR', options);
 };
 
-export const frDate = (value: string): string =>
-    frDateFormat(value, { day: '2-digit', month: '2-digit', year: 'numeric' });
+export const frDate = (value: string | null): string =>
+    value === null ? '—' : frDateFormat(value, { day: '2-digit', month: '2-digit', year: 'numeric' });
 
 /** Jour et mois seuls : dans un groupe déjà titré par son année, la répéter sur chaque ligne est du bruit. */
 export const frDayMonth = (value: string): string => frDateFormat(value, { day: '2-digit', month: 'short' });

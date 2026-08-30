@@ -5,12 +5,12 @@ namespace App\Contexts\Portfolio\Services;
 use App\Contexts\Portfolio\Datas\ContributionData;
 
 /**
- * Ce que chaque position apporte au rendement du portefeuille, en points de ce rendement.
+ * Ce que chaque position apporte au rendement de l'exposition, en points de ce rendement.
  *
- * Le dénominateur est la valeur totale, jamais le gain total. « Quelle part du gain vient de cette
- * ligne » paraît plus direct mais s'effondre dès que le portefeuille perd : le dénominateur
- * devient négatif, et une position gagnante afficherait une contribution négative. Rapportée à la
- * valeur, la mesure garde son sens dans les deux cas.
+ * Le dénominateur est la valeur totale de l'exposition, jamais le gain total. « Quelle part du
+ * gain vient de cette ligne » paraît plus direct mais s'effondre dès que l'exposition perd : le
+ * dénominateur devient négatif, et une position gagnante afficherait une contribution négative.
+ * Rapportée à la valeur, la mesure garde son sens dans les deux cas.
  */
 class PerformanceContribution
 {

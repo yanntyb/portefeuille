@@ -69,6 +69,10 @@ describe('sharePct', () => {
     it('laisse le signe négatif d\'une classe en négatif', () => {
         expect(sharePct(-25)).toBe('-25,0 %');
     });
+
+    it('rend un tiret quand la valeur est absente', () => {
+        expect(sharePct(null)).toBe('—');
+    });
 });
 
 describe('fractionPct', () => {
@@ -92,6 +96,10 @@ describe('frDate', () => {
 
     it('rend la valeur telle quelle quand elle n\'est pas une date', () => {
         expect(frDate('pas une date')).toBe('pas une date');
+    });
+
+    it('rend un tiret quand la valeur est absente', () => {
+        expect(frDate(null)).toBe('—');
     });
 });
 

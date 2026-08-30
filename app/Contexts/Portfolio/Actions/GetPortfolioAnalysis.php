@@ -47,8 +47,8 @@ class GetPortfolioAnalysis
     }
 
     /**
-     * Les lignes regroupées par actif : quantités sommées, prix de revient moyenné, valeur et gain
-     * recalculés sur la position entière.
+     * Les lignes de l'exposition regroupées par actif : quantités sommées, prix de revient moyenné,
+     * valeur et gain recalculés sur la position entière.
      *
      * @param  list<HoldingLineData>  $lines
      * @return list<array{assetId: int, assetName: string, gain: ?float, marketValue: ?float}>

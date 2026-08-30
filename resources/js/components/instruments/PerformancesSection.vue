@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { Deferred } from '@inertiajs/vue3';
 import PerformanceBars from '@/components/PerformanceBars.vue';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
 import type { Performance } from '@/lib/performance';
 
 const props = defineProps<{ performances?: Performance[] | null }>();
+
+const hasPerformances = computed<boolean>(() => (props.performances?.length ?? 0) > 0);
 </script>
 
 <template>
@@ -14,10 +17,10 @@ const props = defineProps<{ performances?: Performance[] | null }>();
             <PerformanceInfoDialog variant="periods" />
         </h2>
         <template v-if="props.performances !== null">
-            <PerformanceBars
-                v-if="props.performances && props.performances.length"
-                :performances="props.performances"
-            />
+            <PerformanceBars v-if="hasPerformances" :performances="props.performances ?? []" />
+            <p v-else class="py-8 text-center text-sm text-muted-foreground">
+                Pas encore de performance à mesurer.
+            </p>
         </template>
 
         <Deferred v-else data="performances">

@@ -10,3 +10,6 @@ Une réponse Inertia partielle synthétisée (rescapée depuis le cache) ne doit
 
 ## L'await sur notify(...) dans networkFirst est critique pour l'ordre
 Dans `networkFirst` (resources/js/pwa/strategies.ts), `await notify(cache, broadcast, { type: 'FRESH' })` doit rester attendu avant que la réponse ne soit renvoyée au navigateur. Le marqueur d'état doit être persisté en cache AVANT le retour de la réponse, sinon le client qui vient de démarrer sur ce document peut envoyer son `REQUEST_STATUS` avant l'écriture et lire l'état précédent au lieu du sien. Ne pas retirer cet `await` pour « alléger » le chemin chaud — ce nettoyage en apparence évident réintroduit ce bug.
+
+## Le service worker ne sert hors-ligne qu'une page déjà visitée
+`cachedPagePayload` exige une réponse déjà en cache et rend `Response.error()` sinon. L'instantané (le blob de `SnapshotController`) comble les props différées d'une page visitée ; il ne fabrique pas un document pour une page jamais atteinte. Une conception s'est déjà trompée là-dessus (spec `2026-08-30-pages-analyse-design.md`, section Hors-ligne) en affirmant l'inverse — vérifier `strategies.ts` avant d'écrire qu'une page sera lisible hors ligne sans y être passé.

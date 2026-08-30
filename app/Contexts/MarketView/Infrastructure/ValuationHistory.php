@@ -21,9 +21,13 @@ use App\Contexts\Valuation\Enums\ValuationRange;
 use App\Contexts\Valuation\Services\Drawdown;
 
 /**
- * Pur remappage : le partage par exposition est passé aux actions telles quelles, jamais refait
- * ici. Les performances filtrent avant leur cache, l'évolution après le sien — refiltrer de ce
- * côté rendrait l'un des deux caches incohérent.
+ * Le partage par exposition est passé aux actions telles quelles, jamais refait ici : les
+ * performances filtrent avant leur cache, l'évolution après le sien — refiltrer de ce côté
+ * rendrait l'un des deux caches incohérent.
+ *
+ * `drawdownFor()` fait exception au remappage pur : elle enchaîne une action (`BuildExposureSeries`)
+ * et un calculateur (`Valuation\Services\Drawdown`) du contexte propriétaire, sans jamais écrire
+ * la formule elle-même — la composition reste ici, le calcul reste chez `Valuation`.
  */
 class ValuationHistory implements ValuationPort
 {
