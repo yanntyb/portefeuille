@@ -368,8 +368,12 @@ type MarkPointItem = {
  * dernier. Un seul `markPoint` par série chez ECharts, d'où leur cohabitation ici — chaque point
  * porte donc sa taille et sa couleur, aucune ne pouvant être commune.
  */
-function markPoints(points: [string, number][], dividends: DividendMark[]): LineSeriesOption['markPoint'] {
-    const data = [...dividendPoints(points, dividends), ...lastValuePoint(points)];
+function markPoints(
+    points: [string, number][],
+    dividends: DividendMark[],
+    color?: string,
+): LineSeriesOption['markPoint'] {
+    const data = [...dividendPoints(points, dividends), ...lastValuePoint(points, color)];
 
     if (data.length === 0) {
         return undefined;
@@ -383,8 +387,12 @@ function markPoints(points: [string, number][], dividends: DividendMark[]): Line
     };
 }
 
-/** Pastille sur la dernière valeur : elle ancre la lecture sur « où en est-on aujourd'hui ». */
-function lastValuePoint(points: [string, number][]): MarkPointItem[] {
+/**
+ * Pastille sur la dernière valeur : elle ancre la lecture sur « où en est-on aujourd'hui ». Sa
+ * teinte suit celle du tracé qu'elle termine, la courbe de l'investi n'étant pas de la couleur des
+ * valeurs.
+ */
+function lastValuePoint(points: [string, number][], color?: string): MarkPointItem[] {
     const last = points[points.length - 1];
 
     if (last === undefined) {
@@ -397,7 +405,7 @@ function lastValuePoint(points: [string, number][]): MarkPointItem[] {
         name: 'Dernière valeur',
         coord: last,
         symbolSize: LAST_POINT_SIZE,
-        itemStyle: { color: colors.value, borderColor: colors.surface, borderWidth: 2 },
+        itemStyle: { color: color ?? colors.value, borderColor: colors.surface, borderWidth: 2 },
     }];
 }
 
@@ -738,6 +746,53 @@ export function buildWealthStackOption(
         series: wealthStackSeries(labels, classes),
         tooltip: wealthStackTooltip(labels, classes, invested, valueFormatter),
         dataZoom: [wealthZoomSlider(visible)],
+    };
+}
+
+type InvestedInput = {
+    labels: string[];
+    invested: number[];
+    valueFormatter: ValueFormatter;
+    /** `null` à la première peinture ; sinon la fenêtre héritée de l'autre série de la fiche. */
+    window: ZoomWindow | null;
+    /** Partagée avec la valorisation et le cours : le cadre ne doit pas bouger à la bascule. */
+    gutter?: number;
+};
+
+/**
+ * Montant investi seul : une courbe en escalier, chaque marche étant un achat ou une vente. Elle ne
+ * cohabite pas avec la valeur, qui la surplomberait de trop loin pour qu'on lise ses paliers ;
+ * l'infobulle de la valorisation, elle, continue de donner les deux chiffres côte à côte.
+ */
+export function buildInvestedOption(
+    { labels, invested, valueFormatter, window, gutter }: InvestedInput,
+): ChartOption {
+    const visible = window ?? lastYearWindow(labels);
+    const colors = palette();
+    const points = datedPoints(labels, invested);
+
+    return {
+        ...chartFrame({
+            valueFormatter,
+            values: invested,
+            bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT,
+            description: 'Montant investi sur la position au fil du temps.',
+            gutter,
+        }),
+        dataZoom: [wealthZoomSlider(visible)],
+        color: [colors.invested],
+        series: [{
+            name: 'Investi',
+            type: 'line',
+            /** Les mises ne glissent pas d'un jour à l'autre : elles sautent le jour de l'ordre. */
+            step: 'end',
+            symbol: 'none',
+            sampling: 'lttb',
+            lineStyle: { width: 2.5 },
+            areaStyle: { color: fadedArea(colors.invested) },
+            markPoint: markPoints(points, [], colors.invested),
+            data: points,
+        }],
     };
 }
 

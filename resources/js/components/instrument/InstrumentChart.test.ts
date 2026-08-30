@@ -132,6 +132,28 @@ describe('bascule entre valorisation et cours', () => {
         expect(seriesNames(lastPainted())).toEqual(['Cours']);
     });
 
+    it('trace l\'investi seul dès que le lecteur choisit ce segment', async () => {
+        const host = mountChart();
+        await settle(host);
+
+        await choose(host, 'invested');
+
+        expect(seriesNames(lastPainted())).toEqual(['Investi']);
+        expect((lastPainted().series as { data: [string, number][] }[])[0].data).toEqual(
+            valuation.labels.map((label, index) => [label, valuation.invested[index]]),
+        );
+    });
+
+    it('garde le même cadre entre la valorisation et l\'investi', async () => {
+        const host = mountChart();
+        await settle(host);
+
+        const onValuation = gutterOf(lastPainted());
+        await choose(host, 'invested');
+
+        expect(gutterOf(lastPainted())).toBe(onValuation);
+    });
+
     it('garde la fenêtre choisie par le lecteur en changeant de série', async () => {
         const host = mountChart();
         await settle(host);
