@@ -24,6 +24,7 @@
 - Tests : `php artisan test --compact` (suite complète avant chaque commit), `--filter=<nom>` pour cibler. `bun run test:js` et `bun run typecheck` dès qu'un `.ts` ou `.vue` change.
 - `tests/Feature/SnapshotInvariantTest.php` fige un hash de l'instantané. **Seule la Task 8 a le droit de le faire bouger**, et elle doit écrire la raison à côté de la constante.
 - `InstrumentFactory` tire `isin` et `ticker` au sort. Tout `Instrument::factory()` ajouté à un jeu qui alimente le filet **doit fixer son `ticker`** (`.ai/rules/factories.md`).
+- `share.txt` est un fichier non suivi préexistant, étranger à ce chantier : ne le stage jamais, et préfère `git add <chemins>` à `git add -A`.
 - Fixtures globales de `tests/Pest.php` : `portfolioFixture()`, `cryptoFixture()`, `propertyFixture(['loan' => true])`, `dividendFixture()`.
 
 ---
