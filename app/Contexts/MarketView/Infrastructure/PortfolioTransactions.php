@@ -2,6 +2,8 @@
 
 namespace App\Contexts\MarketView\Infrastructure;
 
+use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\MarketView\Datas\ClassTransactionLineData;
 use App\Contexts\MarketView\Datas\TransactionLineData;
 use App\Contexts\MarketView\Ports\TransactionsPort;
 use App\Contexts\Portfolio\Enums\TransactionType;
@@ -28,6 +30,48 @@ class PortfolioTransactions implements TransactionsPort
 
                 return new TransactionLineData(
                     date: $transaction->date->format('Y-m-d'),
+                    isSell: $isSell,
+                    typeLabel: $transaction->type->getLabel(),
+                    quantity: $quantity,
+                    unitPrice: $unitPrice,
+                    fees: $fees,
+                    total: $this->flow->of($quantity, $unitPrice, $fees, $isSell),
+                );
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * La jointure sert deux fins : nommer l'actif en une requête — une ligne chargeant le sien
+     * rouvrirait un N+1 sur tout l'historique — et porter le partage par exposition, qui se lit sur
+     * `assets.asset_class` et nulle part ailleurs.
+     *
+     * `asset_id` est nullable en base ; une opération sans actif n'appartient à aucune exposition
+     * et ne prend pas de ligne.
+     *
+     * @return list<ClassTransactionLineData>
+     */
+    public function transactionsForClass(int $userId, AssetClass $exposure): array
+    {
+        return Transaction::query()
+            ->join('assets', 'assets.id', '=', 'transactions.asset_id')
+            ->where('transactions.user_id', $userId)
+            ->where('assets.asset_class', $exposure->value)
+            ->orderByDesc('transactions.date')
+            ->orderByDesc('transactions.id')
+            ->select('transactions.*', 'assets.name as asset_name')
+            ->get()
+            ->map(function (Transaction $transaction): ClassTransactionLineData {
+                $quantity = (float) $transaction->quantity;
+                $unitPrice = (float) $transaction->unit_price;
+                $fees = (float) $transaction->fees;
+                $isSell = $transaction->type === TransactionType::Sell;
+
+                return new ClassTransactionLineData(
+                    date: $transaction->date->format('Y-m-d'),
+                    assetId: (int) $transaction->asset_id,
+                    assetName: (string) $transaction->getAttribute('asset_name'),
                     isSell: $isSell,
                     typeLabel: $transaction->type->getLabel(),
                     quantity: $quantity,

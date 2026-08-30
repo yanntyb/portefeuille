@@ -3,6 +3,7 @@
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\MarketView\Datas\AnalysisData;
+use App\Contexts\MarketView\Datas\ClassTransactionLineData;
 use App\Contexts\MarketView\Datas\ConcentrationData;
 use App\Contexts\MarketView\Datas\ContributionLineData;
 use App\Contexts\MarketView\Datas\DrawdownData;
@@ -13,6 +14,7 @@ use App\Contexts\MarketView\Datas\SectorWeightData;
 use App\Contexts\MarketView\Datas\TransactionLineData;
 use App\Contexts\Portfolio\Datas\ContributionData;
 use App\Contexts\Portfolio\Datas\PortfolioAnalysisData;
+use App\Contexts\Wealth\Datas\WealthTransactionLineData;
 
 it('serializes an instrument detail with nested position', function () {
     $detail = new InstrumentDetailData(
@@ -71,6 +73,13 @@ it('reproduit le JSON composite des analyses de Portfolio à la clé et à l\'or
         concentration: new App\Contexts\Portfolio\Datas\ConcentrationData(25.0, 75.0, 100.0, 0.25),
         contributions: [new ContributionData(1, 'ACME', 3.6, 30.0)],
     );
+
+    expect(json_encode($twin))->toBe(json_encode($origin));
+});
+
+it('reproduit le JSON d\'une opération du patrimoine à la clé et à l\'ordre près', function () {
+    $twin = new ClassTransactionLineData('2026-01-01', 7, 'ACME', false, 'Achat', 10.0, 80.0, 1.0, 801.0);
+    $origin = new WealthTransactionLineData('2026-01-01', 7, 'ACME', false, 'Achat', 10.0, 80.0, 1.0, 801.0);
 
     expect(json_encode($twin))->toBe(json_encode($origin));
 });
