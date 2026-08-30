@@ -86,6 +86,21 @@ it('nomme la section des instruments pour les technologies d\'assistance', funct
 
     visit('/actions')
         ->assertScript("document.querySelector('[data-section=instruments]').getAttribute('aria-label')", 'Instruments')
-        ->assertScript("document.querySelectorAll('[data-instrument-row]').length >= 1", true)
+        ->assertNoJavaScriptErrors();
+});
+
+it('replie la liste des instruments derrière sa bascule', function () {
+    ['user' => $user] = portfolioFixture();
+
+    $this->actingAs($user);
+
+    $rows = "document.querySelectorAll('[data-instrument-row]').length";
+
+    visit('/actions')
+        ->assertScript($rows, 0)
+        ->click('[data-section=instruments] [data-section-toggle]')
+        ->assertScript("{$rows} >= 1", true)
+        ->click('[data-section=instruments] [data-section-toggle]')
+        ->assertScript($rows, 0)
         ->assertNoJavaScriptErrors();
 });

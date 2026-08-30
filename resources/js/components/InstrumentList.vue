@@ -16,16 +16,15 @@ const props = defineProps<{
 
 <template>
     <!--
-        La liste prend la hauteur restante et ses lignes s'y répartissent : sans cela un petit
-        portefeuille laisse un bloc vide sous lui, à un écran du bas de la page. Le `max-h` borne
-        l'étirement — trois positions ne doivent pas devenir trois bandeaux.
+        La liste vit désormais dans une section repliée : elle ne s'étire plus pour occuper le bas de
+        la page, ses lignes prennent la hauteur de leur contenu.
     -->
-    <ul v-if="rows.length" class="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain md:flex-none md:overflow-visible">
+    <ul v-if="rows.length" class="flex flex-col">
         <li
             v-for="row in rows"
             :key="row.id"
             data-instrument-row
-            class="flex max-h-24 grow flex-col justify-center border-b border-separator last:border-b-0 md:max-h-none md:grow-0"
+            class="flex flex-col justify-center border-b border-separator last:border-b-0"
         >
             <!--
                 La ligne entière mène à la fiche, teintée au clic comme une classe du tableau de
@@ -91,7 +90,7 @@ const props = defineProps<{
         </li>
     </ul>
 
-    <p v-else data-instrument-empty class="min-h-0 flex-1 py-8 text-center text-sm text-muted-foreground md:flex-none">
+    <p v-else data-instrument-empty class="py-8 text-center text-sm text-muted-foreground">
         {{ emptyLabel }}
     </p>
 </template>

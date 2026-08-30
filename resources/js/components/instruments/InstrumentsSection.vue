@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
+import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
 import InstrumentList from '@/components/InstrumentList.vue';
 import type { CatalogTrend } from '@/lib/catalog';
 import { areTrendsPending, holdingRows, type InstrumentRow } from '@/lib/instrumentList';
@@ -20,16 +21,14 @@ const rows = computed<InstrumentRow[]>(() => holdingRows(props.holdings, props.t
 </script>
 
 <template>
-    <!-- La section s'étire : sur mobile c'est elle, et pas le bas de la page, qui porte l'espace libre. -->
-    <section
-        data-section="instruments"
-        class="flex min-h-0 flex-1 flex-col gap-4 px-3 md:flex-none"
-        aria-label="Instruments"
-    >
-        <InstrumentList
-            :rows="rows"
-            :loading="loading"
-            empty-label="Aucune position pour le moment."
-        />
-    </section>
+    <CollapsibleSection section="instruments" title="Instruments" aria-label="Instruments">
+        <!-- La section porte `px-6`, les lignes leur propre `px-3` : le retrait les ramène à la marge des listes. -->
+        <div class="-mx-3">
+            <InstrumentList
+                :rows="rows"
+                :loading="loading"
+                empty-label="Aucune position pour le moment."
+            />
+        </div>
+    </CollapsibleSection>
 </template>

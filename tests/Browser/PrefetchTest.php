@@ -13,7 +13,9 @@ it('précharge la fiche instrument au survol d\'une ligne de la page Actions', f
 
     $this->actingAs($user);
 
-    $page = visit('/actions')->assertSee('Alpha');
+    $page = visit('/actions')
+        ->click('[data-section=instruments] [data-section-toggle]')
+        ->assertSee('Alpha');
 
     expect($page->script(hasRequestedPath("/asset/{$instrument->id}")))->toBeFalse();
 

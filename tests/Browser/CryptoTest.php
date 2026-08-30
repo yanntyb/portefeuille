@@ -13,6 +13,7 @@ it('ne valorise que la crypto sur sa page', function () use ($normalise) {
 
     visit('/crypto')
         ->assertScript("({$normalise})(document.querySelector('[data-portfolio-value]'))", '400 €')
+        ->click('[data-section=instruments] [data-section-toggle]')
         ->assertScript("({$normalise})(document.querySelector('[data-instrument-name]'))", 'Bitcoin (BTC-EUR)')
         ->assertNoJavaScriptErrors();
 });
@@ -34,6 +35,7 @@ it('mène de la liste crypto à la fiche de la crypto', function () {
     $this->actingAs($user);
 
     visit('/crypto')
+        ->click('[data-section=instruments] [data-section-toggle]')
         ->click('[data-instrument-name]')
         ->assertScript('location.pathname', "/asset/{$bitcoin->id}")
         ->assertSee('Bitcoin')
