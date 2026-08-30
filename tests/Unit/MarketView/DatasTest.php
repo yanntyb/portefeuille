@@ -2,6 +2,7 @@
 
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\MarketView\Datas\AnalysisData;
 use App\Contexts\MarketView\Datas\ConcentrationData;
 use App\Contexts\MarketView\Datas\ContributionLineData;
 use App\Contexts\MarketView\Datas\DrawdownData;
@@ -11,6 +12,7 @@ use App\Contexts\MarketView\Datas\PriceHistoryData;
 use App\Contexts\MarketView\Datas\SectorWeightData;
 use App\Contexts\MarketView\Datas\TransactionLineData;
 use App\Contexts\Portfolio\Datas\ContributionData;
+use App\Contexts\Portfolio\Datas\PortfolioAnalysisData;
 
 it('serializes an instrument detail with nested position', function () {
     $detail = new InstrumentDetailData(
@@ -56,6 +58,19 @@ it('reproduit le JSON du drawdown de Valuation à la clé près', function () {
 it('reproduit le JSON d\'une contribution à la clé près', function () {
     $twin = new ContributionLineData(1, 'ACME', 3.6, 30.0);
     $origin = new ContributionData(1, 'ACME', 3.6, 30.0);
+
+    expect(json_encode($twin))->toBe(json_encode($origin));
+});
+
+it('reproduit le JSON composite des analyses de Portfolio à la clé et à l\'ordre près', function () {
+    $twin = new AnalysisData(
+        concentration: new ConcentrationData(25.0, 75.0, 100.0, 0.25),
+        contributions: [new ContributionLineData(1, 'ACME', 3.6, 30.0)],
+    );
+    $origin = new PortfolioAnalysisData(
+        concentration: new App\Contexts\Portfolio\Datas\ConcentrationData(25.0, 75.0, 100.0, 0.25),
+        contributions: [new ContributionData(1, 'ACME', 3.6, 30.0)],
+    );
 
     expect(json_encode($twin))->toBe(json_encode($origin));
 });

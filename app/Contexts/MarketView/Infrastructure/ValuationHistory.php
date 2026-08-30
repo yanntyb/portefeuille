@@ -19,7 +19,6 @@ use App\Contexts\Valuation\Datas\PerformanceData;
 use App\Contexts\Valuation\Enums\ValuationGranularity;
 use App\Contexts\Valuation\Enums\ValuationRange;
 use App\Contexts\Valuation\Services\Drawdown;
-use InvalidArgumentException;
 
 /**
  * Pur remappage : le partage par exposition est passé aux actions telles quelles, jamais refait
@@ -95,20 +94,9 @@ class ValuationHistory implements ValuationPort
         );
     }
 
-    /**
-     * `BuildExposureSeries` garantit `labels` et `valuations` de même longueur ; on le vérifie
-     * plutôt que de le supposer, `Drawdown::of` levant sinon une exception.
-     */
     public function drawdownFor(int $userId, AssetClass $exposure): DrawdownData
     {
         $series = ($this->exposureSeries)($userId, [$exposure]);
-
-        if (count($series->labels) !== count($series->valuations)) {
-            throw new InvalidArgumentException(
-                'labels et valuations doivent avoir la même longueur (labels: '.count($series->labels).', valuations: '.count($series->valuations).')'
-            );
-        }
-
         $drawdown = $this->drawdown->of($series->labels, $series->valuations);
 
         return new DrawdownData(
