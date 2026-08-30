@@ -11,6 +11,10 @@ use App\Contexts\Portfolio\Datas\ConcentrationData;
  *
  * Prend des valeurs et non des poids : la normalisation vit ici, pour que l'appelant n'ait pas à
  * diviser avant et que la règle d'exclusion n'ait qu'un site.
+ *
+ * Attention : les `topN` (top1, top3, top5) sont arrondis à 2 décimales pour neutraliser les
+ * erreurs de précision en virgule flottante lors de la sommation des poids. Le HHI, en revanche,
+ * n'est pas arrondi : ce n'est pas un pourcentage mais un indice sur une échelle différente (0 à 1).
  */
 class Concentration
 {
