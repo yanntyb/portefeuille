@@ -192,8 +192,15 @@ describe('buildValueVsInvestedOption — axes', () => {
 });
 
 describe('buildValueVsInvestedOption — séries', () => {
-    it('ne trace que la valeur : l\'investi se lit dans l\'infobulle, pas en courbe', () => {
-        expect(seriesOf(valueVsInvested(36)).map((serie) => serie.name)).toEqual(['Valeur']);
+    it('trace la valeur et l\'investi, dont l\'écart est le gain', () => {
+        expect(seriesOf(valueVsInvested(36)).map((serie) => serie.name)).toEqual(['Valeur', 'Investi']);
+    });
+
+    it('trace l\'investi en escalier et sans aire, celle de la valeur le recouvrant', () => {
+        const [, invested] = seriesOf(valueVsInvested(36));
+
+        expect(invested.step).toBe('end');
+        expect(invested.areaStyle).toBeUndefined();
     });
 
     it('trace la valeur sur une aire dégradée', () => {

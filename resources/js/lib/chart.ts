@@ -327,11 +327,17 @@ function datedPoints(labels: string[], values: number[]): [string, number][] {
 }
 
 /**
- * Courbe de valeur, identique sur le tableau de bord et la fiche instrument. Le montant investi ne
- * porte plus sa propre courbe : il variait trop peu pour mériter un tracé, et l'infobulle le donne
- * chiffré à côté du gain.
+ * Valeur et investi sur le même cadre, identiques sur le tableau de bord et la fiche instrument :
+ * l'écart entre les deux tracés est le gain, que l'infobulle continue de chiffrer. L'investi passe
+ * en escalier — les mises sautent le jour de l'ordre plutôt que de glisser d'un jour à l'autre — et
+ * reste sans aire, celle de la valeur le recouvrant.
  */
-function valueSeries(labels: string[], value: number[], dividends: DividendMark[]): LineSeriesOption[] {
+function valueSeries(
+    labels: string[],
+    value: number[],
+    invested: number[],
+    dividends: DividendMark[],
+): LineSeriesOption[] {
     const colors = palette();
     const points = datedPoints(labels, value);
 
@@ -346,6 +352,15 @@ function valueSeries(labels: string[], value: number[], dividends: DividendMark[
             areaStyle: { color: fadedArea(colors.value) },
             markPoint: markPoints(points, dividends),
             data: points,
+        },
+        {
+            name: 'Investi',
+            type: 'line',
+            step: 'end',
+            symbol: 'none',
+            sampling: 'lttb',
+            lineStyle: { width: 1.5, color: colors.invested },
+            data: datedPoints(labels, invested),
         },
     ];
 }
@@ -600,13 +615,14 @@ export function buildValueVsInvestedOption(
     return {
         ...chartFrame({
             valueFormatter,
-            values: value,
+            /** L'investi peut passer sous la valeur comme au-dessus : l'axe doit tenir les deux. */
+            values: [...value, ...invested],
             bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT,
             description,
             gutter,
         }),
-        color: [colors.value],
-        series: valueSeries(labels, value, dividends),
+        color: [colors.value, colors.invested],
+        series: valueSeries(labels, value, invested, dividends),
         tooltip: valueVsInvestedTooltip(labels, value, invested, valueFormatter, dividends),
         dataZoom: [wealthZoomSlider(visible)],
     };
@@ -746,53 +762,6 @@ export function buildWealthStackOption(
         series: wealthStackSeries(labels, classes),
         tooltip: wealthStackTooltip(labels, classes, invested, valueFormatter),
         dataZoom: [wealthZoomSlider(visible)],
-    };
-}
-
-type InvestedInput = {
-    labels: string[];
-    invested: number[];
-    valueFormatter: ValueFormatter;
-    /** `null` à la première peinture ; sinon la fenêtre héritée de l'autre série de la fiche. */
-    window: ZoomWindow | null;
-    /** Partagée avec la valorisation et le cours : le cadre ne doit pas bouger à la bascule. */
-    gutter?: number;
-};
-
-/**
- * Montant investi seul : une courbe en escalier, chaque marche étant un achat ou une vente. Elle ne
- * cohabite pas avec la valeur, qui la surplomberait de trop loin pour qu'on lise ses paliers ;
- * l'infobulle de la valorisation, elle, continue de donner les deux chiffres côte à côte.
- */
-export function buildInvestedOption(
-    { labels, invested, valueFormatter, window, gutter }: InvestedInput,
-): ChartOption {
-    const visible = window ?? lastYearWindow(labels);
-    const colors = palette();
-    const points = datedPoints(labels, invested);
-
-    return {
-        ...chartFrame({
-            valueFormatter,
-            values: invested,
-            bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT,
-            description: 'Montant investi sur la position au fil du temps.',
-            gutter,
-        }),
-        dataZoom: [wealthZoomSlider(visible)],
-        color: [colors.invested],
-        series: [{
-            name: 'Investi',
-            type: 'line',
-            /** Les mises ne glissent pas d'un jour à l'autre : elles sautent le jour de l'ordre. */
-            step: 'end',
-            symbol: 'none',
-            sampling: 'lttb',
-            lineStyle: { width: 2.5 },
-            areaStyle: { color: fadedArea(colors.invested) },
-            markPoint: markPoints(points, [], colors.invested),
-            data: points,
-        }],
     };
 }
 

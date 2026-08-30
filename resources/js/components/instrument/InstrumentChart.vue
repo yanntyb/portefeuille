@@ -4,24 +4,15 @@ import { Deferred } from '@inertiajs/vue3';
 import { AsyncBaseChart } from '@/components/AsyncBaseChart';
 import ChartSkeleton from '@/components/ChartSkeleton.vue';
 import SegmentedControl, { type Segment } from '@/components/ui/SegmentedControl.vue';
-import {
-    axisGutter,
-    buildInvestedOption,
-    buildPriceHistoryOption,
-    buildValueVsInvestedOption,
-    type ZoomWindow,
-} from '@/lib/chart';
+import { axisGutter, buildPriceHistoryOption, buildValueVsInvestedOption, type ZoomWindow } from '@/lib/chart';
 import { eur } from '@/lib/format';
 import { chartHeight } from '@/lib/layout';
 import { dividendMarks, type DividendMark, type DividendReceipt } from '@/lib/income';
 import type { ChartOption } from '@/lib/echarts';
 import type { PriceHistory, ValuationSeries } from '@/lib/instrument';
 
-/**
- * Les trois lectures d'un même titre : ce que vaut la position, ce qu'on y a mis, et ce que cote
- * la part.
- */
-type Mode = 'valuation' | 'invested' | 'price';
+/** Les deux lectures d'un même titre : ce que vaut la position, et ce que cote la part. */
+type Mode = 'valuation' | 'price';
 
 const props = defineProps<{
     /** `null` tant que ni le réseau ni l'instantané n'ont livré la série. */
@@ -46,25 +37,20 @@ const rememberZoom = (window: ZoomWindow): void => {
 
 const hasPrices = computed<boolean>(() => (props.priceHistory?.labels.length ?? 0) > 0);
 
-/** L'investi vient de la même série que la valeur : les deux segments s'éteignent ensemble. */
-const hasValuation = computed<boolean>(() => (props.valuation?.labels.length ?? 0) > 0);
-
 const segments = computed<Segment[]>(() => [
     { value: 'valuation', label: 'Valorisation' },
-    { value: 'invested', label: 'Investissement' },
     { value: 'price', label: 'Cours', disabled: !hasPrices.value },
 ]);
 
-/** Le cours a sa propre série ; la valorisation et l'investi partagent la leur. */
-const onPrices = computed<boolean>(() => mode.value === 'price');
-
 /** La série du mode courant est-elle arrivée ? Le squelette n'attend que celle-là. */
 const loaded = computed<boolean>(() =>
-    (onPrices.value ? props.priceHistory : props.valuation) !== null);
+    (mode.value === 'valuation' ? props.valuation : props.priceHistory) !== null);
 
-const deferKey = computed<string>(() => (onPrices.value ? 'priceHistory' : 'valuation'));
+const deferKey = computed<string>(() => (mode.value === 'valuation' ? 'valuation' : 'priceHistory'));
 
-const hasHistory = computed<boolean>(() => (onPrices.value ? hasPrices.value : hasValuation.value));
+const hasHistory = computed<boolean>(() => (mode.value === 'valuation'
+    ? (props.valuation?.labels.length ?? 0) > 0
+    : hasPrices.value));
 
 /** Les repères se calent sur les points de la série : ils attendent donc que celle-ci arrive. */
 const marks = computed<DividendMark[]>(
@@ -95,14 +81,6 @@ const valuationOption = computed<ChartOption>(() => buildValueVsInvestedOption({
     gutter: gutter.value,
 }));
 
-const investedOption = computed<ChartOption>(() => buildInvestedOption({
-    labels: props.valuation?.labels ?? [],
-    invested: props.valuation?.invested ?? [],
-    valueFormatter: amountFormatter,
-    window: lastZoom,
-    gutter: gutter.value,
-}));
-
 const priceOption = computed<ChartOption>(() => buildPriceHistoryOption({
     labels: props.priceHistory?.labels ?? [],
     close: props.priceHistory?.close ?? [],
@@ -111,26 +89,13 @@ const priceOption = computed<ChartOption>(() => buildPriceHistoryOption({
     gutter: gutter.value,
 }));
 
-/**
- * Une seule option lue par bascule : toutes les évaluer d'un coup figerait celles des autres
- * séries avant que le lecteur ait déplacé la fenêtre, et `lastZoom` — volontairement non réactive —
- * n'y entrerait jamais.
- */
-const option = computed<ChartOption>(() => {
-    if (mode.value === 'valuation') {
-        return valuationOption.value;
-    }
+const option = computed<ChartOption>(
+    () => (mode.value === 'valuation' ? valuationOption.value : priceOption.value),
+);
 
-    return mode.value === 'invested' ? investedOption.value : priceOption.value;
-});
-
-const emptyLabels: Record<Mode, string> = {
-    valuation: "Pas encore d'historique de valorisation.",
-    invested: "Pas encore d'historique d'investissement.",
-    price: "Pas d'historique de prix disponible.",
-};
-
-const emptyLabel = computed<string>(() => emptyLabels[mode.value]);
+const emptyLabel = computed<string>(() => (mode.value === 'valuation'
+    ? "Pas encore d'historique de valorisation."
+    : "Pas d'historique de prix disponible."));
 </script>
 
 <template>
