@@ -195,3 +195,17 @@ Vue components must have a single root element.
 - IMPORTANT: Activate `inertia-vue-development` when working with Inertia Vue client-side patterns.
 
 </laravel-boost-guidelines>
+
+# Règles du projet
+
+## Une seule migration par table : pas de migration d'ajout
+
+L'application n'est pas en production, et sa base se reconstruit à volonté. Une colonne nouvelle
+se pose donc **dans la migration de création de sa table**, jamais dans une migration d'ajout :
+le schéma se lit d'un seul fichier par table, sans reconstituer une pile de `add_*_to_*`.
+
+Après avoir modifié une migration déjà jouée, reconstruire la base — `php artisan migrate:fresh`,
+puis les seeders voulus, `BackupSeeder` n'étant pas appelé par `DatabaseSeeder`.
+
+Cette règle tombera à la première mise en production : à partir de là, une migration jouée est
+figée et tout changement de schéma repasse par une migration d'ajout.
