@@ -130,12 +130,7 @@ const hasPerformances = computed<boolean>(() => (props.performances?.length ?? 0
             <span />
         </Deferred>
 
-        <!-- La ventilation sectorielle reste du côté de ce qui décrit la poche : elle précède
-             donc les performances, qui ferment la section. -->
-        <SectorsBlock v-if="props.hasSectors" :slices="props.slices" />
-
-        <!-- Les performances ferment la section : ce qui décrit la poche se lit d'abord, ce
-             qu'elle a rapporté ensuite. -->
+        <!-- Ce qui décrit la poche se lit d'abord, ce qu'elle a rapporté ensuite. -->
         <div class="flex flex-col gap-2">
             <!-- L'aide se pose contre l'étiquette qu'elle explique, pas dans le titre de la
                  section : c'est des performances qu'elle parle, pas de l'analyse. -->
@@ -173,5 +168,8 @@ const hasPerformances = computed<boolean>(() => (props.performances?.length ?? 0
                 <span />
             </Deferred>
         </div>
+
+        <!-- La lecture la plus fine ferme la section : les secteurs que traverse la poche. -->
+        <SectorsBlock v-if="props.hasSectors" :slices="props.slices" />
     </CollapsibleSection>
 </template>

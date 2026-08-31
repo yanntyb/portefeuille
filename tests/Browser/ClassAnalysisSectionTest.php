@@ -42,7 +42,7 @@ it('finit la section par les performances de l\'exposition', function () {
 
     $this->actingAs($user);
 
-    /** Les barres ferment la section : elles se lisent après ce qui décrit la poche. */
+    /** Les barres suivent les corrélations : elles se lisent après ce qui décrit la poche. */
     $order = "Array.from(document.querySelectorAll('[data-section=analysis] [data-correlation-cell], [data-section=analysis] [data-perf-row]'))
         .map(el => el.hasAttribute('data-perf-row') ? 'perf' : 'cell')";
 

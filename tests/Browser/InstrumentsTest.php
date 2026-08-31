@@ -54,6 +54,12 @@ it('déroule tous les secteurs sans bascule', function () {
         ->click('[data-section=analysis] [data-section-toggle]')
         ->assertScript($labels, 8)
         ->assertScript("document.querySelectorAll('[data-sectors-block] [data-sector-toggle]').length", 0)
+        /** Les secteurs ferment la section : ils viennent après les performances. */
+        ->assertScript(
+            "Array.from(document.querySelectorAll('[data-section=analysis] [data-perf-help], [data-section=analysis] [data-sectors-block]'))
+                .map(el => el.hasAttribute('data-sectors-block') ? 'sectors' : 'perf').join('|')",
+            'perf|sectors',
+        )
         ->assertSee('Énergie')
         ->assertSee('Immobilier')
         ->assertNoJavaScriptErrors();
