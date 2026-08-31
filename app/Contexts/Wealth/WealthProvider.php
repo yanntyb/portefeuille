@@ -9,6 +9,7 @@ use App\Contexts\Portfolio\Actions\GetSectorBreakdown;
 use App\Contexts\Valuation\Actions\BuildEvolutionSeries;
 use App\Contexts\Wealth\Infrastructure\AssetClassRegistry;
 use App\Contexts\Wealth\Infrastructure\PortfolioAssetClass;
+use App\Contexts\Wealth\Ports\AccountsPort;
 use App\Contexts\Wealth\Ports\AssetClassPort;
 use App\Contexts\Wealth\Ports\TransactionsPort;
 use App\Contexts\Wealth\Services\SeriesAligner;
@@ -27,10 +28,12 @@ class WealthProvider extends ServiceProvider
      *
      * @param  list<class-string<AssetClassPort>>  $extra  classes écrites à la main
      * @param  class-string<TransactionsPort>  $transactions
+     * @param  class-string<AccountsPort>  $accounts
      */
-    public static function registers(Application $app, array $extra, string $transactions): void
+    public static function registers(Application $app, array $extra, string $transactions, string $accounts): void
     {
         $app->bind(TransactionsPort::class, $transactions);
+        $app->bind(AccountsPort::class, $accounts);
 
         $app->scoped(
             AssetClassRegistry::class,

@@ -36,6 +36,7 @@ use App\Contexts\Valuation\Infrastructure\MarketInstrumentDirectory;
 use App\Contexts\Valuation\Infrastructure\MarketPriceHistory;
 use App\Contexts\Valuation\Infrastructure\PortfolioTransactionHistory;
 use App\Contexts\Valuation\ValuationProvider;
+use App\Contexts\Wealth\Infrastructure\PortfolioAccounts;
 use App\Contexts\Wealth\Infrastructure\PortfolioLedger;
 use App\Contexts\Wealth\Infrastructure\RealEstateClass;
 use App\Contexts\Wealth\WealthProvider;
@@ -118,6 +119,7 @@ class AppServiceProvider extends ServiceProvider
             app: $this->app,
             extra: [RealEstateClass::class],
             transactions: PortfolioLedger::class,
+            accounts: PortfolioAccounts::class,
         );
     }
 
