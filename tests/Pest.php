@@ -7,6 +7,7 @@ use App\Contexts\Market\Models\Dividend;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Market\Models\SectorAllocation;
+use App\Contexts\Portfolio\Datas\TransactionInputData;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
@@ -516,4 +517,23 @@ function restoreServiceWorkerRuntime(?string $contents): void
     }
 
     File::put($path, $contents);
+}
+
+/**
+ * Une opération telle qu'un formulaire la remet : un achat de 5 titres à 120 €, 2,50 € de frais.
+ * Partagée par les tests des trois actions d'écriture, qui n'en changent qu'un champ à la fois.
+ *
+ * @param  array<string, mixed>  $overrides
+ */
+function inputData(int $walletId, int $assetId, array $overrides = []): TransactionInputData
+{
+    return TransactionInputData::fromValidated(array_merge([
+        'walletId' => $walletId,
+        'assetId' => $assetId,
+        'date' => '2026-04-01',
+        'type' => 'buy',
+        'quantity' => 5,
+        'unitPrice' => 120,
+        'fees' => 2.5,
+    ], $overrides));
 }
