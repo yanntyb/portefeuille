@@ -241,7 +241,6 @@ it('replays the crypto orders of the default account, without the cancelled one'
     // L'ordre annulé du 18 mai n'est pas rejoué : 6 achats, pas 7.
     expect($orders)->toHaveCount(6)
         ->and($orders->pluck('type')->unique()->all())->toBe([TransactionType::Buy])
-        ->and($orders->pluck('broker')->unique()->all())->toBe(['Kraken'])
         ->and($orders->map(fn (Transaction $order): string => $order->date->toDateString())->all())
         ->toBe(['2026-05-18', '2026-06-01', '2026-07-01', '2026-07-31', '2026-08-31', '2026-08-31'])
         ->and((float) $orders->first()->unit_price)->toBe(66020.6)
@@ -258,15 +257,6 @@ it('keeps the details of the transactions', function () {
 
     expect((float) $transaction->fees)->toBe(3.0)
         ->and($transaction->date->toDateString())->toBe('2026-01-06');
-});
-
-it('books every transaction of the securities wallets at IBKR', function () {
-    $this->seed(SampleBackupSeeder::class);
-
-    $securities = Wallet::query()->whereIn('name', ['PEA', 'CTO'])->pluck('id');
-
-    expect(Transaction::query()->whereIn('wallet_id', $securities)->pluck('broker')->unique()->all())
-        ->toBe(['IBKR']);
 });
 
 it('books every securities wallet at IBKR and the crypto one at Kraken', function () {

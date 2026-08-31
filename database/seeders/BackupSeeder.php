@@ -62,12 +62,12 @@ class BackupSeeder extends Seeder
     ];
 
     /**
-     * Courtier de chaque portefeuille de titres, imposé au dump.
+     * Établissement qui tient chaque portefeuille de titres.
      *
-     * La colonne `broker` du dump est presque toujours vide, et porte ailleurs le courtier d'où
-     * la ligne avait été importée à l'époque plutôt que celui qui tient le compte aujourd'hui.
-     * Les deux portefeuilles sont chez IBKR : c'est ce que le seeder inscrit, sur le portefeuille
-     * comme sur ses transactions. Un portefeuille absent de cette table garde le courtier du dump.
+     * Le dump porte un courtier par transaction — presque toujours vide, et nommant ailleurs
+     * celui d'où la ligne avait été importée à l'époque. La base n'a plus cette colonne : le
+     * compte est tenu par un établissement, l'ordre n'en nomme aucun. Les deux portefeuilles de
+     * titres sont chez IBKR. Un portefeuille absent de cette table n'a pas de courtier.
      *
      * @var array<string, string>
      */
@@ -139,13 +139,6 @@ class BackupSeeder extends Seeder
 
     /** @var array<int, int> */
     private array $wallets = [];
-
-    /**
-     * Courtier imposé à chaque portefeuille du dump, `id du dump => courtier`.
-     *
-     * @var array<int, string>
-     */
-    private array $walletBrokers = [];
 
     /** @var array<int, int> */
     private array $instruments = [];
@@ -284,17 +277,13 @@ class BackupSeeder extends Seeder
                 ],
             );
 
-            // Rejeu : une ligne créée par un lancement antérieur au typage garde son défaut de
-            // colonne (compte-titres, courtier vide) tant qu'elle n'est pas remise à jour ici.
+            // Rejeu : une ligne déjà créée garde son type et son courtier d'alors — le défaut de
+            // colonne pour l'un, rien pour l'autre — tant qu'elle n'est pas remise à jour ici.
             if ($wallet->account_type->value !== $accountType || $wallet->broker !== $broker) {
                 $wallet->fill(['account_type' => $accountType, 'broker' => $broker])->save();
             }
 
             $this->wallets[(int) $dumpId] = $wallet->id;
-
-            if (isset(self::WALLET_BROKERS[$name])) {
-                $this->walletBrokers[(int) $dumpId] = self::WALLET_BROKERS[$name];
-            }
         }
     }
 
@@ -323,7 +312,8 @@ class BackupSeeder extends Seeder
 
     /**
      * Colonnes du dump : id, user_id, wallet_id, date, type, security_id, broker, quantity,
-     * unit_price, fees, realized_gain, notes, created_at, updated_at.
+     * unit_price, fees, realized_gain, notes, created_at, updated_at. Le courtier du dump est
+     * ignoré : il se porte désormais sur le portefeuille (cf. `WALLET_BROKERS`).
      *
      * Une création Eloquent par ligne, et non un `insert()` groupé : c'est `TransactionObserver`
      * qui alimente `holdings_projection`, et il n'écoute que les événements de modèle. Il
@@ -332,7 +322,7 @@ class BackupSeeder extends Seeder
     private function seedTransactions(MysqlDumpReader $reader): void
     {
         foreach ($reader->rows('transactions') as $row) {
-            [, $dumpUserId, $dumpWalletId, $date, $type, $dumpAssetId, $broker, $quantity, $unitPrice, $fees, , $notes, $createdAt, $updatedAt] = $row;
+            [, $dumpUserId, $dumpWalletId, $date, $type, $dumpAssetId, , $quantity, $unitPrice, $fees, , $notes, $createdAt, $updatedAt] = $row;
 
             $walletId = $this->wallets[(int) $dumpWalletId] ?? null;
 
@@ -352,7 +342,6 @@ class BackupSeeder extends Seeder
                 'asset_id' => $dumpAssetId === null ? null : ($this->instruments[(int) $dumpAssetId] ?? null),
                 'date' => $date,
                 'type' => $type,
-                'broker' => $this->walletBrokers[(int) $dumpWalletId] ?? $broker,
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
                 'fees' => $fees,
@@ -383,7 +372,7 @@ class BackupSeeder extends Seeder
             ['broker' => self::CRYPTO_BROKER],
         );
 
-        // Rejeu : un portefeuille créé avant la colonne `broker` la garde vide sans cette reprise.
+        // Rejeu : un portefeuille déjà créé garde son courtier d'alors sans cette reprise.
         if ($wallet->broker !== self::CRYPTO_BROKER) {
             $wallet->fill(['broker' => self::CRYPTO_BROKER])->save();
         }
@@ -403,7 +392,6 @@ class BackupSeeder extends Seeder
                 'asset_id' => $this->cryptoInstrument($order['ticker'])->id,
                 'date' => $order['date'],
                 'type' => TransactionType::Buy,
-                'broker' => self::CRYPTO_BROKER,
                 'quantity' => $order['quantity'],
                 'unit_price' => $order['unit_price'],
                 'fees' => $order['fees'],

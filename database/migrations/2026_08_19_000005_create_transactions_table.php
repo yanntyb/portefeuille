@@ -10,6 +10,9 @@ return new class extends Migration
      * `quantity` accepte 8 décimales pour les fractions de crypto, `unit_price` 4 comme les
      * cotations. `asset_id` et `user_id` passent à NULL à la suppression : une transaction
      * orpheline reste préférable à une perte d'historique.
+     *
+     * Aucune colonne `broker` ici : l'établissement tient le compte, pas l'ordre. Il se lit sur
+     * `wallets.broker`, et s'en déduit pour toute transaction du portefeuille.
      */
     public function up(): void
     {
@@ -20,7 +23,6 @@ return new class extends Migration
             $table->foreignId('wallet_id')->constrained()->cascadeOnDelete();
             $table->foreignId('asset_id')->nullable()->constrained()->nullOnDelete();
             $table->string('type')->default('buy')->index();
-            $table->string('broker')->nullable();
             $table->decimal('quantity', 20, 8)->nullable();
             $table->decimal('unit_price', 12, 4)->nullable();
             $table->decimal('fees', 10, 2)->default(0);
