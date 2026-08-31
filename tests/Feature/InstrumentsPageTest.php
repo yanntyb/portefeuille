@@ -204,6 +204,29 @@ it('defers the trends of the held instruments and loads them on demand', functio
         );
 });
 
+it('nomme l\'enveloppe de chaque position de la liste', function () {
+    Carbon::setTestNow('2026-08-21');
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->pea()->create();
+    $asset = Instrument::factory()->ofType(InstrumentType::Stock)->create(['ticker' => 'TTE.PA']);
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => now(), 'close' => 100]);
+    Holding::factory()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $asset->id,
+        'quantity' => 10,
+        'avg_cost' => 80,
+    ]);
+
+    $this->get('/actions')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('overview.holdings.0.walletName', 'PEA')
+            ->where('overview.holdings.0.accountType', 'pea')
+            ->where('overview.holdings.0.accountTypeLabel', 'PEA')
+        );
+});
+
 it('diffère les opérations de l\'exposition, chaque ligne nommant son actif', function () {
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();

@@ -91,7 +91,8 @@ expect()->extend('toBeOne', function () {
 function portfolioFixture(array $overrides = []): array
 {
     $user = User::factory()->create();
-    $wallet = Wallet::factory()->for($user)->create();
+    /** Nom figé : alimente `SnapshotInvariantTest`, où un nom tiré au sort ferait dériver le hash. */
+    $wallet = Wallet::factory()->for($user)->create(['name' => 'Compte-titres']);
 
     $instrument = Instrument::factory()
         ->ofType(InstrumentType::Stock)
@@ -240,7 +241,8 @@ function cryptoFixture(): array
 {
     ['user' => $user] = portfolioFixture();
 
-    $wallet = Wallet::factory()->for($user)->create();
+    /** Nom figé : alimente `SnapshotInvariantTest`, où un nom tiré au sort ferait dériver le hash. */
+    $wallet = Wallet::factory()->for($user)->create(['name' => 'Crypto']);
     $bitcoin = Instrument::factory()
         ->ofType(InstrumentType::Crypto)
         ->create(['name' => 'Bitcoin', 'ticker' => 'BTC-EUR']);

@@ -20,6 +20,7 @@ use App\Contexts\MarketView\Datas\SectorSliceData;
 use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
 use App\Contexts\MarketView\Ports\SectorBreakdownPort;
 use App\Contexts\MarketView\Ports\ValuationPort;
+use App\Contexts\Portfolio\Enums\AccountType;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
@@ -68,6 +69,7 @@ function fakeOverviewPort(): PortfolioOverviewPort
             return new PortfolioSummaryData(1000.0, 800.0, 200.0, 25.0, 0.0, [
                 new HoldingRowData(
                     1, 'ACME', 'ACM', InstrumentType::Stock, $exposure,
+                    1, 'Compte-titres', AccountType::Cto,
                     10.0, 80.0, 100.0, 1000.0, 200.0, 25.0,
                 ),
             ]);

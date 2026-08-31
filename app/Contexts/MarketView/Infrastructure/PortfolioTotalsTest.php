@@ -4,6 +4,7 @@ use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Dividend;
 use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
+use App\Contexts\Portfolio\Enums\AccountType;
 use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
@@ -46,12 +47,13 @@ it('rend un total vide pour un utilisateur inconnu', function () {
 });
 
 /**
- * Les treize clés sont recopiées à la main depuis `Portfolio\Datas\HoldingLineData::jsonSerialize()` :
- * les tirer de la classe voisine ne prouverait rien. `typeLabel` et `assetClassLabel` n'ont pas de
- * propriété — elles se dérivent de l'enum, et c'est précisément ce que ce test protège.
+ * Les dix-sept clés sont recopiées à la main depuis `Portfolio\Datas\HoldingLineData::jsonSerialize()` :
+ * les tirer de la classe voisine ne prouverait rien. `typeLabel`, `assetClassLabel` et
+ * `accountTypeLabel` n'ont pas de propriété — elles se dérivent de l'enum, et c'est précisément ce
+ * que ce test protège.
  */
-it('rend les treize clés que le tableau du front attend, dans l\'ordre', function () {
-    ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
+it('rend les dix-sept clés que le tableau du front attend, dans l\'ordre', function () {
+    ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
 
     $line = $this->overview->overviewFor($user->id, AssetClass::Equity)->holdings[0];
 
@@ -63,6 +65,10 @@ it('rend les treize clés que le tableau du front attend, dans l\'ordre', functi
         'typeLabel' => InstrumentType::Stock->getLabel(),
         'assetClass' => AssetClass::Equity->value,
         'assetClassLabel' => AssetClass::Equity->getLabel(),
+        'walletId' => $wallet->id,
+        'walletName' => 'Compte-titres',
+        'accountType' => AccountType::Cto->value,
+        'accountTypeLabel' => AccountType::Cto->getLabel(),
         'quantity' => 10.0,
         'avgCost' => 80.0,
         'lastPrice' => 100.0,

@@ -71,8 +71,14 @@ use Illuminate\Support\Carbon;
  * grosses lignes.
  * Modifié une dix-septième fois : chaque page d'exposition porte ses opérations — l'historique de
  * la poche, tous ses actifs confondus, chaque ligne nommant le sien.
+ * Modifié une dix-huitième fois : chaque ligne de position nomme son enveloppe de détention, donc
+ * l'aperçu de chaque exposition gagne `walletId`, `walletName`, `accountType` et
+ * `accountTypeLabel` par position. `walletName` expose au passage un nom de portefeuille jusque-là
+ * tiré au sort par `WalletFactory::definition()` dans les fixtures qui alimentent ce test —
+ * `portfolioFixture()`, `cryptoFixture()` et le second portefeuille de `seedSnapshotFixture()`
+ * fixent désormais leur nom, comme `.ai/rules/factories.md` le demande déjà pour `ticker`.
  */
-const SNAPSHOT_VERSION = 'fc973b94274d0a51def21d73cc8afb283ffabe7d';
+const SNAPSHOT_VERSION = 'd97a5464dce6babc4561de31bcca66199c304b9c';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe
@@ -104,7 +110,8 @@ function seedSnapshotFixture(): void
 
     /** Le même titre dans une deuxième enveloppe, à un autre prix de revient. */
     $stock = Holding::query()->where('user_id', $user->id)->where('asset_id', '!=', $crypto->id)->first();
-    $second = Wallet::factory()->for($user)->create();
+    /** Nom figé, comme les deux autres portefeuilles du jeu : un nom tiré au sort ferait dériver le hash. */
+    $second = Wallet::factory()->for($user)->create(['name' => 'Compte-titres 2']);
 
     Holding::factory()->create([
         'user_id' => $user->id,
