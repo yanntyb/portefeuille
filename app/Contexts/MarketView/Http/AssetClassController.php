@@ -2,7 +2,6 @@
 
 namespace App\Contexts\MarketView\Http;
 
-use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\MarketView\Actions\GetHoldingTrends;
 use App\Contexts\MarketView\Ports\ClassAnalysisPort;
@@ -32,7 +31,7 @@ class AssetClassController
 
     public function __invoke(): Response
     {
-        $userId = (auth()->user() ?? User::query()->first())?->id ?? 0;
+        $userId = auth()->id() ?? 0;
         $exposure = AssetClass::from((string) request()->route('exposure'));
 
         $props = [

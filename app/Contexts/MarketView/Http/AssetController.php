@@ -2,7 +2,6 @@
 
 namespace App\Contexts\MarketView\Http;
 
-use App\Contexts\Identity\Models\User;
 use App\Contexts\MarketView\Actions\GetInstrumentDetail;
 use App\Contexts\MarketView\Ports\IncomePort;
 use App\Contexts\MarketView\Ports\InstrumentAnalysisPort;
@@ -30,8 +29,7 @@ class AssetController
 
     public function __invoke(int $id): Response
     {
-        $user = auth()->user() ?? User::query()->first();
-        $userId = $user?->id ?? 0;
+        $userId = auth()->id() ?? 0;
 
         $detail = ($this->getDetail)($userId, $id);
 

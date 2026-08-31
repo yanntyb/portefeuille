@@ -2,7 +2,6 @@
 
 namespace App\Contexts\Wealth\Http;
 
-use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Ports\MarketSyncStatePort;
 use App\Contexts\Wealth\Actions\BuildWealthSeries;
 use App\Contexts\Wealth\Actions\GetWealthAccounts;
@@ -25,7 +24,7 @@ class DashboardController
 
     public function __invoke(): Response
     {
-        $user = auth()->user() ?? User::query()->first();
+        $user = auth()->user();
 
         return Inertia::render('Dashboard', [
             /**

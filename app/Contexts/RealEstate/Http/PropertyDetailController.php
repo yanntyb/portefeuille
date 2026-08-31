@@ -2,7 +2,6 @@
 
 namespace App\Contexts\RealEstate\Http;
 
-use App\Contexts\Identity\Models\User;
 use App\Contexts\RealEstate\Actions\GetLoanSchedule;
 use App\Contexts\RealEstate\Actions\GetPropertyDetail;
 use Inertia\Inertia;
@@ -14,8 +13,7 @@ class PropertyDetailController
 
     public function __invoke(int $id): Response
     {
-        $user = auth()->user() ?? User::query()->first();
-        $userId = $user?->id ?? 0;
+        $userId = auth()->id() ?? 0;
 
         $detail = ($this->getDetail)($userId, $id);
 

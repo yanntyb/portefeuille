@@ -2,7 +2,6 @@
 
 namespace App\Shared\Pwa\Http;
 
-use App\Contexts\Identity\Models\User;
 use App\Contexts\MarketView\Actions\BuildMarketViewSnapshot;
 use App\Contexts\RealEstate\Actions\BuildRealEstateSnapshot;
 use App\Contexts\Wealth\Actions\BuildWealthSnapshot;
@@ -26,7 +25,7 @@ class SnapshotController
 
     public function __invoke(): JsonResponse
     {
-        $userId = (auth()->user() ?? User::query()->first())?->id ?? 0;
+        $userId = auth()->id() ?? 0;
 
         $market = ($this->marketView)($userId);
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Contexts\Identity\Http\AuthenticateDefaultUser;
 use App\Contexts\Market\Console\SyncCommand;
 use App\Contexts\Market\Console\SyncDividendsCommand;
 use App\Contexts\Market\Console\SyncPricesCommand;
@@ -42,6 +43,8 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
+            /** Avant Inertia : un futur `share(['auth' => …])` doit voir l'utilisateur connecté. */
+            AuthenticateDefaultUser::class,
             HandleInertiaRequests::class,
         ]);
     })

@@ -2,7 +2,6 @@
 
 namespace App\Contexts\RealEstate\Http;
 
-use App\Contexts\Identity\Models\User;
 use App\Contexts\RealEstate\Actions\BuildRealEstateSeries;
 use App\Contexts\RealEstate\Actions\GetRealEstateIncome;
 use App\Contexts\RealEstate\Actions\GetRealEstateOverview;
@@ -19,7 +18,7 @@ class PropertiesController
 
     public function __invoke(): Response
     {
-        $user = auth()->user() ?? User::query()->first();
+        $user = auth()->user();
 
         /**
          * Synchrone et non différé : c'est le grand chiffre de la page, et le différer le ferait
