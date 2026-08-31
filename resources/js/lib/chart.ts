@@ -584,6 +584,8 @@ function detailTooltip(
 
             const instrumentRows = perAsset
                 .map((asset: AssetSeries, rank: number) => ({ asset, rank, amount: asset.value[index] ?? 0 }))
+                /** Un instrument à zéro n'était pas encore détenu ce jour-là : le citer encombre. */
+                .filter((row): boolean => row.amount > 0)
                 .sort((left, right): number => right.amount - left.amount)
                 .map((row): string => tooltipRow(seriesColor(row.rank), row.asset.name, valueFormatter(row.amount)))
                 .join('');

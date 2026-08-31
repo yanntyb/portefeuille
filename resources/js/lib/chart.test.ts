@@ -878,6 +878,25 @@ describe('buildValueVsInvestedOption — infobulle du détail', () => {
         expect(html.indexOf('Titre 2')).toBeLessThan(html.indexOf('Titre 1'));
     });
 
+    it('tait un instrument encore à zéro, que la poche ne détenait pas ce jour-là', () => {
+        const labels = monthlyLabels(3);
+        const option = buildValueVsInvestedOption({
+            labels,
+            value: [100, 100, 300],
+            invested: [100, 100, 300],
+            valueFormatter: (value: number): string => eur(value, 0),
+            window: null,
+            description: 'Poche.',
+            perAsset: [
+                { assetId: 1, name: 'Ancien', value: [100, 100, 100], invested: [100, 100, 100] },
+                { assetId: 2, name: 'Nouveau', value: [0, 0, 200], invested: [0, 0, 200] },
+            ],
+        });
+
+        expect(detailTooltipHtml(option, 0)).not.toContain('Nouveau');
+        expect(detailTooltipHtml(option, 2)).toContain('Nouveau');
+    });
+
     it('nomme chaque bande de la pile, l\'infobulle étant seule à les identifier', () => {
         const html = detailTooltipHtml(detailed(3), 10);
 
