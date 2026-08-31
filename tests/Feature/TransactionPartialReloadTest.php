@@ -53,7 +53,7 @@ it('resolves a deferred group when the partial names it', function () {
     $lines = partialVisit('/', 'Dashboard', 'transactions')->json('props.transactions');
 
     expect($lines)->toHaveCount(1)
-        ->and($lines[0]['id'])->toBe(Transaction::query()->sole()->id);
+        ->and($lines[0]['id'])->toBe(Transaction::query()->where('type', 'buy')->sole()->id);
 });
 
 it('rends the fresh line right after a write, in one round trip', function () {

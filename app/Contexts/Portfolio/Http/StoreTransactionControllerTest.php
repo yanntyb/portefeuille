@@ -16,7 +16,8 @@ it('records the line and sends the visitor back', function () {
         ->post('/transactions', transactionPayload($wallet->id, $instrument->id))
         ->assertRedirect('/');
 
-    $transaction = Transaction::query()->latest('id')->first();
+    /** `latest('id')` seul attraperait le versement déduit que l'observateur écrit derrière. */
+    $transaction = Transaction::query()->where('type', 'buy')->latest('id')->first();
 
     expect($transaction->user_id)->toBe($user->id)
         ->and((float) $transaction->quantity)->toBe(5.0);
@@ -50,12 +51,13 @@ it('ignores a smuggled owner and a smuggled realized gain', function () {
 
 it('refuses a date in the future', function () {
     ['wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
+    $before = Transaction::query()->count();
 
     $this->post('/transactions', transactionPayload($wallet->id, $instrument->id, [
         'date' => now()->addDay()->format('Y-m-d'),
     ]))->assertSessionHasErrors('date');
 
-    expect(Transaction::query()->count())->toBe(1);
+    expect(Transaction::query()->count())->toBe($before);
 });
 
 it('refuses a quantity or a price that is not strictly positive', function (string $field, string $value) {

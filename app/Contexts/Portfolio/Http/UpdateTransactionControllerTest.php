@@ -7,7 +7,7 @@ use App\Contexts\Portfolio\Models\Wallet;
 
 it('corrects the line and reprojects the position', function () {
     ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
-    $transaction = Transaction::query()->where('user_id', $user->id)->sole();
+    $transaction = Transaction::query()->where('user_id', $user->id)->where('type', 'buy')->sole();
 
     $this->from('/')
         ->put("/transactions/{$transaction->id}", transactionPayload($wallet->id, $instrument->id, [
@@ -29,7 +29,7 @@ it('corrects the line and reprojects the position', function () {
 it('reprojects the wallet the line came from when it moves', function () {
     ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
     $elsewhere = Wallet::factory()->for($user)->create(['name' => 'Ailleurs']);
-    $transaction = Transaction::query()->where('user_id', $user->id)->sole();
+    $transaction = Transaction::query()->where('user_id', $user->id)->where('type', 'buy')->sole();
 
     $this->put("/transactions/{$transaction->id}", transactionPayload($elsewhere->id, $instrument->id, [
         'quantity' => '10',
@@ -47,7 +47,7 @@ it('reprojects the wallet the line came from when it moves', function () {
 it('answers 404 on the line of another user', function () {
     ['wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
     ['user' => $stranger] = portfolioFixture(['name' => 'Globex', 'ticker' => 'GBX']);
-    $theirs = Transaction::query()->where('user_id', $stranger->id)->sole();
+    $theirs = Transaction::query()->where('user_id', $stranger->id)->where('type', 'buy')->sole();
     $quantityBefore = $theirs->quantity;
 
     /**
@@ -69,7 +69,7 @@ it('answers 404 on the line of another user', function () {
 it('leaves the owner of the line alone', function () {
     ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
     $intruder = User::factory()->create();
-    $transaction = Transaction::query()->where('user_id', $user->id)->sole();
+    $transaction = Transaction::query()->where('user_id', $user->id)->where('type', 'buy')->sole();
 
     $this->put("/transactions/{$transaction->id}", transactionPayload($wallet->id, $instrument->id, [
         'quantity' => '10',
@@ -114,7 +114,7 @@ it('lets a sell keep its own quantity out of the stock it checks against', funct
 
 it('never reaches the controller with a non numeric id', function () {
     ['user' => $user] = portfolioFixture();
-    $before = Transaction::query()->where('user_id', $user->id)->sole()->quantity;
+    $before = Transaction::query()->where('user_id', $user->id)->where('type', 'buy')->sole()->quantity;
 
     /**
      * `whereNumber` empêche la route de correspondre. Le rendu d'exception de `bootstrap/app.php`
@@ -123,5 +123,5 @@ it('never reaches the controller with a non numeric id', function () {
      */
     $this->put('/transactions/abc', [])->assertRedirect('/');
 
-    expect(Transaction::query()->where('user_id', $user->id)->sole()->quantity)->toBe($before);
+    expect(Transaction::query()->where('user_id', $user->id)->where('type', 'buy')->sole()->quantity)->toBe($before);
 });

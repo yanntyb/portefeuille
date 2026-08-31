@@ -31,7 +31,8 @@ it('enregistre une transaction depuis le tableau de bord', function () {
         ->assertMissing('[data-transaction-dialog]')
         ->assertNoJavaScriptErrors();
 
-    expect(Transaction::query()->where('user_id', $user->id)->count())->toBe(2);
+    /** L'achat de la fixture ET le nouveau sont chacun non financés : deux versements déduits en plus. */
+    expect(Transaction::query()->where('user_id', $user->id)->where('type', 'buy')->count())->toBe(2);
 
     /** La position suit sans qu'on ait rechargé la page. */
     expect((float) Holding::query()
@@ -78,12 +79,12 @@ it('corrige une transaction depuis la fiche de son actif', function () {
         ->assertMissing('[data-transaction-dialog]')
         ->assertNoJavaScriptErrors();
 
-    expect((float) Transaction::query()->where('user_id', $user->id)->sole()->quantity)->toBe(6.0);
+    expect((float) Transaction::query()->where('user_id', $user->id)->where('type', 'buy')->sole()->quantity)->toBe(6.0);
 });
 
 it('supprime une transaction après confirmation', function () {
     ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
-    $transaction = Transaction::query()->where('user_id', $user->id)->sole();
+    $transaction = Transaction::query()->where('user_id', $user->id)->where('type', 'buy')->sole();
 
     $this->actingAs($user);
 
@@ -105,7 +106,7 @@ it('supprime une transaction après confirmation', function () {
 
 it('renonce à une suppression sans rien effacer', function () {
     ['user' => $user] = portfolioFixture();
-    $transaction = Transaction::query()->where('user_id', $user->id)->sole();
+    $transaction = Transaction::query()->where('user_id', $user->id)->where('type', 'buy')->sole();
 
     $this->actingAs($user);
 

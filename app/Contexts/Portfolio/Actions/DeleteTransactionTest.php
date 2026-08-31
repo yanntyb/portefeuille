@@ -28,7 +28,7 @@ it('deletes the position when nothing is left of it', function () {
     ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
 
     /** L'unique achat de la fixture : l'effacer vide la position. */
-    $only = Transaction::query()->where('user_id', $user->id)->sole();
+    $only = Transaction::query()->where('user_id', $user->id)->where('type', 'buy')->sole();
 
     app(DeleteTransaction::class)($only);
 

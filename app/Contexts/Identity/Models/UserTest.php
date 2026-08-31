@@ -42,7 +42,8 @@ it('exposes its transactions', function () {
     Transaction::factory()->count(3)->for($user)->create();
     Transaction::factory()->for(User::factory()->create())->create();
 
-    expect($user->transactions)->toHaveCount(3);
+    /** Chaque achat non financé écrit son propre versement déduit : 3 achats, 6 lignes. */
+    expect($user->transactions)->toHaveCount(6);
 });
 
 it('exposes its holdings', function () {

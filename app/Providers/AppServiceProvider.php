@@ -26,6 +26,7 @@ use App\Contexts\MarketView\Infrastructure\PortfolioTotals;
 use App\Contexts\MarketView\Infrastructure\PortfolioTransactions;
 use App\Contexts\MarketView\Infrastructure\ValuationHistory;
 use App\Contexts\MarketView\MarketViewProvider;
+use App\Contexts\Portfolio\Actions\GetCashMovements;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Actions\GetPortfolioPositions;
 use App\Contexts\Portfolio\Actions\GetRealizedGains;
@@ -113,6 +114,12 @@ class AppServiceProvider extends ServiceProvider
 
         /** Une lecture des ventes par requête : le gain réalisé se lit aux quatre expositions. */
         $this->app->scoped(GetRealizedGains::class);
+
+        /**
+         * Une lecture des mouvements d'espèces par requête : `RecomputeCashDeposits` la relit à
+         * chaque transaction touchée, sur le même principe que `GetPortfolioOverview`.
+         */
+        $this->app->scoped(GetCashMovements::class);
 
         /** L'ordre décide de celui des lignes du tableau de bord et des bandes de son graphe. */
         WealthProvider::registers(

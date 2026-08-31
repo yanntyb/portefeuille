@@ -5,7 +5,7 @@ use App\Contexts\Portfolio\Models\Transaction;
 
 it('erases the line and the position it was holding up', function () {
     ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
-    $transaction = Transaction::query()->where('user_id', $user->id)->sole();
+    $transaction = Transaction::query()->where('user_id', $user->id)->where('type', 'buy')->sole();
 
     $this->from('/')
         ->delete("/transactions/{$transaction->id}")
@@ -39,7 +39,7 @@ it('keeps the position when something is left of it', function () {
 it('answers 404 on the line of another user and erases nothing', function () {
     portfolioFixture();
     ['user' => $stranger] = portfolioFixture(['name' => 'Globex', 'ticker' => 'GBX']);
-    $theirs = Transaction::query()->where('user_id', $stranger->id)->sole();
+    $theirs = Transaction::query()->where('user_id', $stranger->id)->where('type', 'buy')->sole();
 
     $this->delete("/transactions/{$theirs->id}")->assertNotFound();
 

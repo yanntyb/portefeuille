@@ -219,7 +219,8 @@ it('replays the transactions and lets the observer project the holdings', functi
 
     $holding = Holding::query()->where('wallet_id', $pea->id)->where('asset_id', $amundi->id)->sole();
 
-    expect(Transaction::query()->count())->toBe(10)
+    /** 10 achats rejoués, chacun non financé : 10 versements déduits s'y ajoutent. */
+    expect(Transaction::query()->count())->toBe(20)
         ->and(Holding::query()->count())->toBe(5)
         ->and((float) $holding->quantity)->toBe(5.0)
         // (2 × 100 + 3 × 110 + 2 € de frais) / 5 : les frais d'achat font partie du prix de revient.
@@ -234,7 +235,7 @@ it('replays the crypto orders of the default account, without the cancelled one'
     $bitcoin = Instrument::query()->where('ticker', 'BTC-EUR')->sole();
     $ethereum = Instrument::query()->where('ticker', 'ETH-EUR')->sole();
 
-    $orders = Transaction::query()->where('wallet_id', $crypto->id)->orderBy('date')->get();
+    $orders = Transaction::query()->where('wallet_id', $crypto->id)->where('type', 'buy')->orderBy('date')->get();
     $bitcoinHolding = Holding::query()->where('wallet_id', $crypto->id)->where('asset_id', $bitcoin->id)->sole();
     $ethereumHolding = Holding::query()->where('wallet_id', $crypto->id)->where('asset_id', $ethereum->id)->sole();
 
@@ -292,7 +293,7 @@ it('can be seeded twice without duplicating anything', function () {
         ->and(SectorAllocation::query()->count())->toBe(5)
         ->and(Price::query()->count())->toBe(2)
         ->and(Dividend::query()->count())->toBe(1)
-        ->and(Transaction::query()->count())->toBe(10)
+        ->and(Transaction::query()->count())->toBe(20)
         ->and(Holding::query()->count())->toBe(5)
         ->and(DB::table('wallet_fees')->count())->toBe(1);
 });
