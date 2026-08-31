@@ -58,7 +58,8 @@ describe('liste des transactions par année', () => {
         await click(row);
 
         const detail = host.querySelector('[data-transaction-detail]');
-        expect(detail?.textContent).toContain('Achat');
+        /** Le sens se lit déjà sur la couleur de la quantité : le détail ne le répète pas. */
+        expect(detail?.textContent).not.toContain('Achat');
         expect(detail?.textContent).toContain('300,00');
         expect(detail?.textContent).toContain('frais');
     });

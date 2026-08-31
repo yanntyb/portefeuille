@@ -158,7 +158,7 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                         data-transaction-detail
                         class="col-span-4 pb-2 text-xs text-muted-foreground"
                     >
-                        {{ line.typeLabel }} · {{ eur(line.unitPrice) }} l'unité<template
+                        {{ eur(line.unitPrice) }} l'unité<template
                             v-if="line.fees"
                         >
                             · frais {{ eur(line.fees) }}</template
