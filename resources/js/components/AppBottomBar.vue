@@ -1,18 +1,28 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import { ChevronRight } from 'lucide-vue-next';
+import SyncButton from '@/components/SyncButton.vue';
 import ThemeToggle from '@/components/ThemeToggle.vue';
 import { pageContainer, type PageWidth } from '@/lib/layout';
+import type { SyncState } from '@/lib/sync';
 
 interface BreadcrumbItem {
     label: string;
     href?: string;
 }
 
-const props = withDefaults(defineProps<{ items?: BreadcrumbItem[]; width?: PageWidth }>(), {
-    items: () => [],
-    width: 'narrow',
-});
+/**
+ * `sync` absente : pas de bouton de synchronisation. Seul le tableau de bord sert cet état, les
+ * autres pages n'ont donc que leur fil d'Ariane et le thème.
+ */
+const props = withDefaults(
+    defineProps<{ items?: BreadcrumbItem[]; width?: PageWidth; sync?: SyncState | null }>(),
+    {
+        items: () => [],
+        width: 'narrow',
+        sync: null,
+    },
+);
 </script>
 
 <template>
@@ -38,7 +48,10 @@ const props = withDefaults(defineProps<{ items?: BreadcrumbItem[]; width?: PageW
                 </template>
             </nav>
 
-            <ThemeToggle class="ml-auto shrink-0" />
+            <!-- Le bouton de synchro prend la marge : le thème reste le dernier cran de la barre. -->
+            <SyncButton v-if="props.sync" :state="props.sync" class="ml-auto shrink-0" />
+
+            <ThemeToggle :class="[props.sync ? 'shrink-0' : 'ml-auto shrink-0']" />
         </div>
     </footer>
 </template>

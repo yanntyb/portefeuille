@@ -1,6 +1,7 @@
 <?php
 
 use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\Market\Http\StartSyncController;
 use App\Contexts\MarketView\Http\AssetClassController;
 use App\Contexts\MarketView\Http\AssetController;
 use App\Contexts\RealEstate\Http\PropertiesController;
@@ -11,6 +12,9 @@ use Illuminate\Support\Facades\Route;
 require __DIR__.'/pwa.php';
 
 Route::get('/', DashboardController::class)->name('dashboard');
+
+/** Seule route de mutation de l'application : elle ne fait que mettre un job en file. */
+Route::post('/synchronisation', StartSyncController::class)->name('sync.start');
 
 /**
  * Une route par exposition, engendrée depuis l'enum : ajouter une classe d'actif n'est jamais

@@ -61,16 +61,15 @@ export const gainClass = (value: number | null): string =>
  * dépendant de la version d'ICU, pas garanti par la spec. `getHours()` renvoie un entier 0-23
  * sans zéro de tête, déterministe quel que soit l'environnement.
  */
-export const syncedAtLabel = (timestamp: number | null): string => {
-    if (timestamp === null) {
-        return 'Données hors-ligne';
-    }
-
+export const frDayTime = (timestamp: number): string => {
     const date = new Date(timestamp);
     const day = date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
     const hour = date.getHours();
     const minutes = date.getMinutes();
     const time = minutes === 0 ? `${hour}h` : `${hour}h${String(minutes).padStart(2, '0')}`;
 
-    return `Données du ${day} à ${time}`;
+    return `${day} à ${time}`;
 };
+
+export const syncedAtLabel = (timestamp: number | null): string =>
+    timestamp === null ? 'Données hors-ligne' : `Données du ${frDayTime(timestamp)}`;

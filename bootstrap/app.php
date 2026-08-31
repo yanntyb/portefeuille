@@ -1,5 +1,6 @@
 <?php
 
+use App\Contexts\Market\Console\SyncCommand;
 use App\Contexts\Market\Console\SyncDividendsCommand;
 use App\Contexts\Market\Console\SyncPricesCommand;
 use App\Contexts\Market\Console\SyncSectorsCommand;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withCommands([
+        SyncCommand::class,
         SyncDividendsCommand::class,
         SyncPricesCommand::class,
         SyncSectorsCommand::class,

@@ -9,11 +9,13 @@ import WealthSectorsSection from '@/components/dashboard/WealthSectorsSection.vu
 import WealthSummarySection from '@/components/dashboard/WealthSummarySection.vue';
 import WealthTransactionsSection from '@/components/dashboard/WealthTransactionsSection.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
+import type { SyncState } from '@/lib/sync';
 import type { WealthIncome, WealthOverview, WealthSector, WealthSeries, WealthTransactionLine } from '@/lib/wealth';
 import { useSnapshotStore } from '@/stores/snapshot';
 
 const props = defineProps<{
     overview: WealthOverview;
+    sync: SyncState;
     series?: WealthSeries;
     income?: WealthIncome;
     sectors?: WealthSector[];
@@ -51,5 +53,5 @@ const transactions = aheadOfNetwork(() => props.transactions, () => snapshot.das
     </AppPage>
 
     <!-- Barre sans fil d'Ariane : le tableau de bord est la racine, son fil n'aurait qu'un seul cran. -->
-    <AppBottomBar />
+    <AppBottomBar :sync="props.sync" />
 </template>

@@ -4,6 +4,7 @@ use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
+use App\Contexts\Market\Ports\MarketSyncStatePort;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Wallet;
 use App\Contexts\Wealth\Actions\GetWealthIncome;
@@ -129,4 +130,31 @@ it('compte la crypto comme sa propre classe, séparée des titres', function () 
             ->where('overview.classes.0.value', fn (float|int $value): bool => (float) $value === 1000.0)
             ->where('overview.totalValue', fn (float|int $value): bool => (float) $value === 1400.0)
         );
+});
+
+it('sert l\'état de synchronisation, et le rend seul en requête partielle', function () {
+    ['user' => $user] = portfolioFixture();
+
+    $this->actingAs($user)
+        ->get('/')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('sync.status', 'idle')
+            ->where('sync.startedAt', null)
+            ->where('sync.finishedAt', null)
+        );
+
+    app(MarketSyncStatePort::class)->begin();
+
+    /** C'est la seule prop que le bouton redemande pendant une synchronisation. */
+    $this->actingAs($user)
+        ->get('/', [
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => Inertia::getVersion(),
+            'X-Inertia-Partial-Component' => 'Dashboard',
+            'X-Inertia-Partial-Data' => 'sync',
+        ])
+        ->assertOk()
+        ->assertJsonPath('props.sync.status', 'queued')
+        ->assertJsonMissingPath('props.overview');
 });

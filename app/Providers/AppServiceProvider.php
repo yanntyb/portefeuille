@@ -8,6 +8,7 @@ use App\Contexts\Income\Sources\Dividend\Infrastructure\MarketDividendHistory;
 use App\Contexts\Income\Sources\Dividend\Infrastructure\PortfolioPositionHistory;
 use App\Contexts\Income\Sources\Rent\Infrastructure\RealEstateRentSchedule;
 use App\Contexts\Income\Sources\Rent\RentIncomeSource;
+use App\Contexts\Market\Infrastructure\CacheMarketSyncState;
 use App\Contexts\Market\Infrastructure\DatabaseAssetPriceAdapter;
 use App\Contexts\Market\Infrastructure\EloquentDividendRepository;
 use App\Contexts\Market\Infrastructure\EloquentInstrumentRepository;
@@ -62,6 +63,7 @@ class AppServiceProvider extends ServiceProvider
             sectorProvider: YahooFinanceAdapter::class,
             dividendRepository: EloquentDividendRepository::class,
             dividendFeed: YahooFinanceAdapter::class,
+            syncState: CacheMarketSyncState::class,
         );
 
         ValuationProvider::registers(

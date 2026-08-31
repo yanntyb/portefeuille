@@ -3,6 +3,7 @@
 namespace App\Contexts\Wealth\Http;
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Ports\MarketSyncStatePort;
 use App\Contexts\Wealth\Actions\BuildWealthSeries;
 use App\Contexts\Wealth\Actions\GetWealthIncome;
 use App\Contexts\Wealth\Actions\GetWealthOverview;
@@ -16,13 +17,22 @@ use Inertia\Response;
 
 class DashboardController
 {
-    public function __construct(private GetWealthOverview $overview) {}
+    public function __construct(
+        private GetWealthOverview $overview,
+        private MarketSyncStatePort $syncState,
+    ) {}
 
     public function __invoke(): Response
     {
         $user = auth()->user() ?? User::query()->first();
 
         return Inertia::render('Dashboard', [
+            /**
+             * Synchrone et non différée : un squelette pour un statut n'aurait rien à montrer, et
+             * le bouton de la barre du bas doit s'afficher juste dès le premier rendu. C'est aussi
+             * la seule prop que le sondage redemande pendant une synchronisation.
+             */
+            'sync' => $this->syncState->current(),
             /**
              * Synchrone : c'est le grand chiffre, et le différer le ferait sauter à l'arrivée.
              * C'est aussi ce qui le place dans le document initial, donc dans le cache du service

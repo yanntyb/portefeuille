@@ -7,6 +7,7 @@ use App\Contexts\Market\Contracts\InstrumentRepositoryContract;
 use App\Contexts\Market\Contracts\PriceRepositoryContract;
 use App\Contexts\Market\Contracts\SectorRepositoryContract;
 use App\Contexts\Market\Ports\DividendFeedPort;
+use App\Contexts\Market\Ports\MarketSyncStatePort;
 use App\Contexts\Market\Ports\PriceFeedPort;
 use App\Contexts\Market\Ports\PriceProviderPort;
 use App\Contexts\Market\Ports\SectorProviderPort;
@@ -24,6 +25,7 @@ class MarketProvider extends ServiceProvider
      * @param  class-string<SectorProviderPort>  $sectorProvider
      * @param  class-string<DividendRepositoryContract>  $dividendRepository
      * @param  class-string<DividendFeedPort>  $dividendFeed
+     * @param  class-string<MarketSyncStatePort>  $syncState
      */
     public static function registers(
         Application $app,
@@ -35,6 +37,7 @@ class MarketProvider extends ServiceProvider
         string $sectorProvider,
         string $dividendRepository,
         string $dividendFeed,
+        string $syncState,
     ): void {
         $app->bind(InstrumentRepositoryContract::class, $instrumentRepository);
         $app->bind(PriceRepositoryContract::class, $priceRepository);
@@ -44,5 +47,6 @@ class MarketProvider extends ServiceProvider
         $app->bind(SectorProviderPort::class, $sectorProvider);
         $app->bind(DividendRepositoryContract::class, $dividendRepository);
         $app->bind(DividendFeedPort::class, $dividendFeed);
+        $app->bind(MarketSyncStatePort::class, $syncState);
     }
 }

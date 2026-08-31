@@ -7,6 +7,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Contexts/** | .ai/rules/contexts.md |
 | **/Factories/** | .ai/rules/factories.md |
 | app/Contexts/*/Infrastructure/**, app/Contexts/*/Sources/*/Infrastructure/** | .ai/rules/infrastructure.md |
+| app/Contexts/Market/Jobs/** | .ai/rules/jobs.md |
 | app/Contexts/MarketView/** | .ai/rules/market-view.md |
 | app/Contexts/Market/** | .ai/rules/market.md |
 | app/Contexts/Portfolio/** | .ai/rules/portfolio.md |
