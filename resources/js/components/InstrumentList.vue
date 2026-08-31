@@ -56,13 +56,19 @@ const props = defineProps<{
 
                 <!-- Le détail passe sur une seconde ligne : la colonne est trop étroite pour huit colonnes. -->
                 <span class="flex items-center gap-3 text-xs">
+                    <!--
+                        Le badge porte l'enveloppe, pas le portefeuille : « PEA » ou « Hot wallet »
+                        disent le régime et la garde en un mot, là où deux noms de portefeuille se
+                        ressemblent souvent au point d'être indiscernables une fois tronqués. Le nom
+                        reste en `title`, pour qui a plusieurs comptes de même type.
+                    -->
                     <span
                         v-if="row.walletName"
                         data-instrument-wallet
                         :title="`${row.walletName} — ${row.accountTypeLabel}`"
-                        class="max-w-[3.5rem] shrink-0 truncate rounded-full bg-muted px-2 py-0.5 font-semibold text-muted-foreground md:max-w-[9rem]"
+                        class="max-w-[5.5rem] shrink-0 truncate rounded-full bg-muted px-2 py-0.5 font-semibold text-muted-foreground md:max-w-[9rem]"
                     >
-                        {{ row.walletName }}
+                        {{ row.accountTypeLabel }}
                     </span>
 
                     <span class="h-1.5 w-6 shrink-0 overflow-hidden rounded-full bg-separator md:w-28">

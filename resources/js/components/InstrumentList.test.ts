@@ -79,8 +79,8 @@ describe('ligne d\'un instrument', () => {
                     ...row,
                     rowKey: '7-20',
                     walletId: 20,
-                    walletName: 'Portefeuille Crypto',
-                    accountTypeLabel: 'Compte-titres',
+                    walletName: 'Portefeuille Kraken',
+                    accountTypeLabel: 'Hot wallet',
                 },
             ],
             loading: false,
@@ -88,11 +88,11 @@ describe('ligne d\'un instrument', () => {
         }).mount(host);
 
         const badges = host.querySelectorAll('[data-instrument-wallet]');
-        expect([...badges].map((badge) => badge.textContent?.trim())).toEqual(['PEA', 'Portefeuille Crypto']);
+        expect([...badges].map((badge) => badge.textContent?.trim())).toEqual(['PEA', 'Hot wallet']);
         expect(host.querySelectorAll('[data-instrument-row]')).toHaveLength(2);
 
-        // Le badge se tronque visuellement sur mobile (`max-w-[3.5rem] truncate`) : le nom, qui
-        // discrimine deux comptes du même type, doit rester lisible au survol, à côté du type.
-        expect(badges[1].getAttribute('title')).toBe('Portefeuille Crypto — Compte-titres');
+        // Le badge dit l'enveloppe ; le nom du portefeuille, qui discrimine deux comptes du même
+        // type, reste lisible au survol.
+        expect(badges[1].getAttribute('title')).toBe('Portefeuille Kraken — Hot wallet');
     });
 });

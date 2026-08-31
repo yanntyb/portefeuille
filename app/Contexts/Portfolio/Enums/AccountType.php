@@ -42,8 +42,8 @@ enum AccountType: string
         return match ($this) {
             self::Pea => 'PEA',
             self::Cto => 'Compte-titres',
-            self::CryptoHotWallet => 'Crypto hot wallet',
-            self::CryptoColdWallet => 'Crypto cold wallet',
+            self::CryptoHotWallet => 'Hot wallet',
+            self::CryptoColdWallet => 'Cold wallet',
         };
     }
 
