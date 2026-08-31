@@ -15,6 +15,8 @@ const { default: WealthTransactionsSection } = await import(
 );
 
 const line = (overrides: Partial<WealthTransactionLine> = {}): WealthTransactionLine => ({
+    id: 1,
+    walletId: 3,
     date: '2026-03-04',
     assetId: 7,
     assetName: 'Bitcoin',

@@ -11,6 +11,8 @@ use JsonSerializable;
 readonly class WealthTransactionLineData implements JsonSerializable
 {
     public function __construct(
+        public int $id,
+        public int $walletId,
         public string $date,
         public int $assetId,
         public string $assetName,
@@ -26,6 +28,8 @@ readonly class WealthTransactionLineData implements JsonSerializable
     public function jsonSerialize(): array
     {
         return [
+            'id' => $this->id,
+            'walletId' => $this->walletId,
             'date' => $this->date,
             'assetId' => $this->assetId,
             'assetName' => $this->assetName,

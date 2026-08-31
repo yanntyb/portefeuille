@@ -15,6 +15,12 @@ export const investedOf = (position: InstrumentPosition): number | null =>
     position.avgCost === null ? null : position.avgCost * position.quantity;
 
 export interface TransactionLine {
+    id: number;
+    /**
+     * L'enveloppe de détention, pour que l'édition d'une ligne la réécrive là où elle est : la même
+     * quantité du même actif peut être tenue dans deux comptes.
+     */
+    walletId: number;
     date: string;
     isSell: boolean;
     typeLabel: string;

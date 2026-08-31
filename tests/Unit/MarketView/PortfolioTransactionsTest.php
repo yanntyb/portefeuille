@@ -17,11 +17,14 @@ it('returns transactions for a user and asset, newest first', function () {
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->create();
     Transaction::factory()->buy()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id, 'date' => '2026-01-01', 'quantity' => 10, 'unit_price' => 80, 'fees' => 1]);
-    Transaction::factory()->sell()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id, 'date' => '2026-03-01', 'quantity' => 4, 'unit_price' => 100, 'fees' => 2]);
+    $sell = Transaction::factory()->sell()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id, 'date' => '2026-03-01', 'quantity' => 4, 'unit_price' => 100, 'fees' => 2]);
 
     $lines = $this->adapter->transactionsFor($user->id, $asset->id);
 
     expect($lines)->toHaveCount(2);
+    /** L'identifiant et l'enveloppe ouvrent l'édition depuis la liste. */
+    expect($lines[0]->id)->toBe($sell->id);
+    expect($lines[0]->walletId)->toBe($wallet->id);
     expect($lines[0]->date)->toBe('2026-03-01');
     expect($lines[0]->isSell)->toBeTrue();
     expect($lines[0]->typeLabel)->toBe('Vente');
@@ -37,13 +40,15 @@ it('returns the transactions of a whole exposure, each line naming its asset', f
     $wallet = Wallet::factory()->for($user)->create();
     $equity = Instrument::factory()->create(['name' => 'ACME', 'asset_class' => AssetClass::Equity]);
     $crypto = Instrument::factory()->create(['name' => 'Bitcoin', 'asset_class' => AssetClass::Crypto]);
-    Transaction::factory()->buy()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $equity->id, 'date' => '2026-01-01', 'quantity' => 10, 'unit_price' => 80, 'fees' => 1]);
+    $buy = Transaction::factory()->buy()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $equity->id, 'date' => '2026-01-01', 'quantity' => 10, 'unit_price' => 80, 'fees' => 1]);
     Transaction::factory()->buy()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $crypto->id, 'date' => '2026-03-01']);
 
     $lines = $this->adapter->transactionsForClass($user->id, AssetClass::Equity);
 
     /** Une opération d'une autre exposition n'a rien à faire sur la page : la jointure la coupe. */
     expect($lines)->toHaveCount(1);
+    expect($lines[0]->id)->toBe($buy->id);
+    expect($lines[0]->walletId)->toBe($wallet->id);
     expect($lines[0]->assetId)->toBe($equity->id);
     expect($lines[0]->assetName)->toBe('ACME');
     /** Le montant d'une ligne est son flux réel : les frais alourdissent l'achat. */

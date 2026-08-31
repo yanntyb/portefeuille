@@ -4,9 +4,20 @@ namespace App\Contexts\MarketView\Datas;
 
 use JsonSerializable;
 
+/**
+ * Une opération sur un actif. `id` et `walletId` ouvrent l'édition depuis la liste : sans l'un on
+ * ne sait pas quelle ligne réécrire, sans l'autre on la réécrirait sur la mauvaise enveloppe — la
+ * même quantité du même actif peut être tenue dans deux comptes.
+ *
+ * Les deux sont en tête et non près de leurs voisins de sens, parce que les trois jumelles doivent
+ * porter les mêmes clés dans le même ordre (`.ai/rules/market-view.md`) et que celle-ci n'a pas
+ * d'`assetId` : la tête est la seule position que les trois peuvent partager.
+ */
 readonly class TransactionLineData implements JsonSerializable
 {
     public function __construct(
+        public int $id,
+        public int $walletId,
         public string $date,
         public bool $isSell,
         public string $typeLabel,
@@ -20,6 +31,8 @@ readonly class TransactionLineData implements JsonSerializable
     public function jsonSerialize(): array
     {
         return [
+            'id' => $this->id,
+            'walletId' => $this->walletId,
             'date' => $this->date,
             'isSell' => $this->isSell,
             'typeLabel' => $this->typeLabel,

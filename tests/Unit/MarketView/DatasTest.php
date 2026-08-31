@@ -22,7 +22,7 @@ it('serializes an instrument detail with nested position', function () {
         assetClass: AssetClass::Equity,
         lastPrice: 100.0, lastPriceDate: '2026-07-01',
         position: new PositionData(10.0, 80.0, 1000.0, 200.0, 25.0, 40.0),
-        transactions: [new TransactionLineData('2026-01-01', false, 'Achat', 10.0, 80.0, 0.0, 800.0)],
+        transactions: [new TransactionLineData(1, 3, '2026-01-01', false, 'Achat', 10.0, 80.0, 0.0, 800.0)],
         sectors: [new SectorWeightData('Technologie', 0.5)],
     );
 
@@ -78,8 +78,8 @@ it('reproduit le JSON composite des analyses de Portfolio à la clé et à l\'or
 });
 
 it('reproduit le JSON d\'une opération du patrimoine à la clé et à l\'ordre près', function () {
-    $twin = new ClassTransactionLineData('2026-01-01', 7, 'ACME', false, 'Achat', 10.0, 80.0, 1.0, 801.0);
-    $origin = new WealthTransactionLineData('2026-01-01', 7, 'ACME', false, 'Achat', 10.0, 80.0, 1.0, 801.0);
+    $twin = new ClassTransactionLineData(1, 3, '2026-01-01', 7, 'ACME', false, 'Achat', 10.0, 80.0, 1.0, 801.0);
+    $origin = new WealthTransactionLineData(1, 3, '2026-01-01', 7, 'ACME', false, 'Achat', 10.0, 80.0, 1.0, 801.0);
 
     expect(json_encode($twin))->toBe(json_encode($origin));
 });

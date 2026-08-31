@@ -84,8 +84,17 @@ use Illuminate\Support\Carbon;
  * `broker` s'ajoute à la ligne d'enveloppe, à côté du nom du portefeuille.
  * Modifié une vingt-et-unième fois : le compte-titres se nomme « CTO », son sigle d'usage, pour
  * tenir dans le badge d'enveloppe de la liste d'instruments comme « PEA » y tient déjà.
+ * Modifié une vingt-deuxième fois : chaque ligne d'opération porte son identifiant et son
+ * enveloppe, pour que l'édition et la suppression puissent partir de la liste — sans `id` on ne
+ * sait pas quelle ligne réécrire, sans `walletId` on la réécrirait sur le mauvais compte.
+ *
+ * Nouvelle fragilité que cette clé introduit : `id` est un auto-incrément, donc l'ORDRE
+ * d'insertion des transactions des fixtures alimente désormais le hash. Il est stable ici (SQLite
+ * en mémoire sous `RefreshDatabase`, séquence remise à zéro à chaque test), mais réordonner les
+ * créations de `portfolioFixture()`, `cryptoFixture()` ou `seedSnapshotFixture()` déplacera le
+ * hash pour une raison étrangère à la forme du JSON. `.ai/rules/tests.md` le consigne.
  */
-const SNAPSHOT_VERSION = '231c8916e25a4347141b8091ef62a326d18e4017';
+const SNAPSHOT_VERSION = 'b5de58da13e641dc12f77aaa84198d5feb2d52b9';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

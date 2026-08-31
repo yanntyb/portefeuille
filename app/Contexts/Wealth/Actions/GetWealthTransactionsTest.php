@@ -11,7 +11,7 @@ it('réunit les opérations de tous les actifs, la plus récente en tête', func
 
     $bitcoin = Instrument::factory()->ofType(InstrumentType::Crypto)->create(['name' => 'Bitcoin']);
 
-    Transaction::factory()->buy()->create([
+    $buy = Transaction::factory()->buy()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
         'asset_id' => $bitcoin->id,
@@ -24,6 +24,9 @@ it('réunit les opérations de tous les actifs, la plus récente en tête', func
     $lines = app(GetWealthTransactions::class)($user->id);
 
     expect($lines)->toHaveCount(2)
+        /** L'identifiant et l'enveloppe ouvrent l'édition depuis la liste. */
+        ->and($lines[0]->id)->toBe($buy->id)
+        ->and($lines[0]->walletId)->toBe($wallet->id)
         ->and($lines[0]->date)->toBe('2026-03-04')
         ->and($lines[0]->assetId)->toBe($bitcoin->id)
         ->and($lines[0]->assetName)->toBe('Bitcoin')

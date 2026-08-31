@@ -74,6 +74,8 @@ describe('heroMeta', () => {
 });
 
 const line = (overrides: Partial<TransactionLine> = {}): TransactionLine => ({
+    id: 1,
+    walletId: 3,
     date: '2026-03-12',
     isSell: false,
     typeLabel: 'Achat',

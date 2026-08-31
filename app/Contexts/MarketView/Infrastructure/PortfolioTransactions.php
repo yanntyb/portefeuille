@@ -29,6 +29,8 @@ class PortfolioTransactions implements TransactionsPort
                 $isSell = $transaction->type === TransactionType::Sell;
 
                 return new TransactionLineData(
+                    id: $transaction->id,
+                    walletId: $transaction->wallet_id,
                     date: $transaction->date->format('Y-m-d'),
                     isSell: $isSell,
                     typeLabel: $transaction->type->getLabel(),
@@ -69,6 +71,8 @@ class PortfolioTransactions implements TransactionsPort
                 $isSell = $transaction->type === TransactionType::Sell;
 
                 return new ClassTransactionLineData(
+                    id: $transaction->id,
+                    walletId: $transaction->wallet_id,
                     date: $transaction->date->format('Y-m-d'),
                     assetId: (int) $transaction->asset_id,
                     assetName: (string) $transaction->getAttribute('asset_name'),

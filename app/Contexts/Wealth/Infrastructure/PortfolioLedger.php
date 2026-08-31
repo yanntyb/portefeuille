@@ -37,6 +37,8 @@ class PortfolioLedger implements TransactionsPort
                 $isSell = $transaction->type === TransactionType::Sell;
 
                 return new WealthTransactionLineData(
+                    id: $transaction->id,
+                    walletId: $transaction->wallet_id,
                     date: $transaction->date->format('Y-m-d'),
                     assetId: (int) $transaction->asset_id,
                     assetName: (string) $transaction->getAttribute('asset_name'),
