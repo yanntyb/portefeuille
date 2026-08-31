@@ -7,7 +7,7 @@ use App\Contexts\Portfolio\Models\Wallet;
 
 it('offers the wallets of the user and nobody else\'s', function () {
     ['user' => $user] = portfolioFixture();
-    Wallet::factory()->for($user)->pea()->create();
+    Wallet::factory()->for($user)->pea()->create(['broker' => 'IBKR']);
     Wallet::factory()->create(['name' => 'Ailleurs']);
 
     $wallets = $this->getJson('/transactions/options')->assertOk()->json('wallets');
@@ -15,7 +15,10 @@ it('offers the wallets of the user and nobody else\'s', function () {
     expect(array_column($wallets, 'name'))->toBe(['Compte-titres', 'PEA'])
         ->and($wallets[0]['accountType'])->toBe('cto')
         ->and($wallets[0]['accountTypeLabel'])->toBe('CTO')
-        ->and($wallets[1]['accountTypeLabel'])->toBe('PEA');
+        /** Sans établissement en base, la clé reste là et nulle : le front y retombe sur le nom. */
+        ->and($wallets[0]['broker'])->toBeNull()
+        ->and($wallets[1]['accountTypeLabel'])->toBe('PEA')
+        ->and($wallets[1]['broker'])->toBe('IBKR');
 });
 
 it('offers the whole catalogue, held or not, with its last close', function () {
@@ -55,7 +58,7 @@ it('keeps the key order of its payload', function () {
     $body = $this->getJson('/transactions/options')->json();
 
     expect(array_keys($body))->toBe(['wallets', 'instruments', 'types'])
-        ->and(array_keys($body['wallets'][0]))->toBe(['id', 'name', 'accountType', 'accountTypeLabel'])
+        ->and(array_keys($body['wallets'][0]))->toBe(['id', 'name', 'broker', 'accountType', 'accountTypeLabel'])
         ->and(array_keys($body['instruments'][0]))
         ->toBe(['id', 'name', 'ticker', 'assetClass', 'assetClassLabel', 'lastPrice']);
 });

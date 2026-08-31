@@ -37,6 +37,7 @@ class GetTransactionFormOptions
                 ->map(fn (Wallet $wallet): WalletOptionData => new WalletOptionData(
                     id: $wallet->id,
                     name: $wallet->name,
+                    broker: $wallet->broker,
                     accountType: $wallet->account_type->value,
                     accountTypeLabel: $wallet->account_type->getLabel(),
                 ))

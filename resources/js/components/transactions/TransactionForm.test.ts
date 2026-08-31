@@ -70,8 +70,8 @@ const { default: TransactionForm } = await import('@/components/transactions/Tra
 
 const options = {
     wallets: [
-        { id: 3, name: 'Compte-titres', accountType: 'cto', accountTypeLabel: 'CTO' },
-        { id: 4, name: 'PEA', accountType: 'pea', accountTypeLabel: 'PEA' },
+        { id: 3, name: 'Compte-titres', broker: 'IBKR', accountType: 'cto', accountTypeLabel: 'CTO' },
+        { id: 4, name: 'PEA', broker: null, accountType: 'pea', accountTypeLabel: 'PEA' },
     ],
     instruments: [
         { id: 7, name: 'ACME', ticker: 'ACM', lastPrice: 120 },
@@ -155,8 +155,8 @@ describe('champs', () => {
 
         expect(wallets.map((option) => option.textContent?.trim())).toEqual([
             'Choisir une enveloppe',
-            'Compte-titres · CTO',
-            'PEA · PEA',
+            'CTO - IBKR',
+            'PEA - PEA',
         ]);
         expect(instruments.map((option) => option.textContent?.trim())).toEqual([
             'Choisir un actif',

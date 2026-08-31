@@ -17,7 +17,7 @@ import { useTransactionDialogStore } from '@/stores/transactionDialog';
 
 /** Ce que sert `/transactions/options`. */
 type FormOptions = {
-    wallets: { id: number; name: string; accountType: string; accountTypeLabel: string }[];
+    wallets: { id: number; name: string; broker: string | null; accountType: string; accountTypeLabel: string }[];
     instruments: { id: number; name: string; ticker: string | null; lastPrice: number | null }[];
     types: { value: string; label: string }[];
 };
@@ -67,10 +67,15 @@ onMounted(async (): Promise<void> => {
     }
 });
 
+/**
+ * Régime d'abord, établissement ensuite — « CTO - IBKR » : c'est le régime qui décide de la
+ * saisie, l'établissement ne fait que départager deux comptes qui le partagent. Sans
+ * établissement, le nom du compte prend sa place, comme sur les cartes d'enveloppes.
+ */
 const walletOptions: ComputedRef<SelectOption[]> = computed((): SelectOption[] =>
     (options.value?.wallets ?? []).map((wallet): SelectOption => ({
         value: String(wallet.id),
-        label: `${wallet.name} · ${wallet.accountTypeLabel}`,
+        label: `${wallet.accountTypeLabel} - ${wallet.broker ?? wallet.name}`,
     })),
 );
 
