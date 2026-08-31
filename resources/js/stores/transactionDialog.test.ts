@@ -1,6 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NamedTransactionLine } from '@/lib/instrument';
+import { resetModalHistory } from '@/lib/modalHistory';
 import { useTransactionDialogStore } from '@/stores/transactionDialog';
 
 const line: NamedTransactionLine = {
@@ -138,5 +139,37 @@ describe('fermeture', () => {
         expect(dialog.lockedAssetId).toBeNull();
         expect(dialog.lockedAssetName).toBeNull();
         expect(dialog.draft.quantity).toBe('');
+    });
+});
+
+describe('entrée d\'historique', () => {
+    it('en pousse une à l\'ouverture et la consomme à la fermeture', () => {
+        const pushState = vi.fn();
+        const back = vi.fn();
+        vi.stubGlobal('history', { state: { page: {} }, pushState, back });
+        resetModalHistory();
+
+        const dialog = useTransactionDialogStore();
+
+        dialog.openCreate();
+        expect(pushState).toHaveBeenCalledTimes(1);
+
+        /** Passer au volet de confirmation ne rouvre rien : une seule entrée pour une modale. */
+        dialog.openEdit(line);
+        dialog.askDelete('peu importe');
+        expect(pushState).toHaveBeenCalledTimes(1);
+
+        dialog.close();
+        expect(back).toHaveBeenCalledTimes(1);
+    });
+
+    it('en pousse une aussi quand la suppression s\'ouvre depuis la liste', () => {
+        const pushState = vi.fn();
+        vi.stubGlobal('history', { state: { page: {} }, pushState, back: vi.fn() });
+        resetModalHistory();
+
+        useTransactionDialogStore().askDeleteLine(line, 'Vente de 2 le 04/03');
+
+        expect(pushState).toHaveBeenCalledTimes(1);
     });
 });

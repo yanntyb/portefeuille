@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { Ref } from 'vue';
 import type { TransactionLine } from '@/lib/instrument';
+import { consumeModalEntry, pushModalEntry } from '@/lib/modalHistory';
 import { draftFromLine, emptyDraft, type TransactionDraft } from '@/lib/transactionForm';
 
 export type TransactionDialogMode = 'closed' | 'create' | 'edit' | 'confirm-delete';
@@ -53,6 +54,7 @@ export const useTransactionDialogStore = defineStore('transactionDialog', () => 
         draft.value = emptyDraft(asset === undefined ? {} : { assetId: String(asset.id) });
         formKey.value += 1;
         mode.value = 'create';
+        pushModalEntry();
     }
 
     function openEdit(line: TransactionLine & { assetId?: number }, asset?: { id: number; name: string }): void {
@@ -64,6 +66,7 @@ export const useTransactionDialogStore = defineStore('transactionDialog', () => 
         draft.value = draftFromLine(line, asset === undefined ? {} : { assetId: String(asset.id) });
         formKey.value += 1;
         mode.value = 'edit';
+        pushModalEntry();
     }
 
     /** Depuis le formulaire d'édition : la confirmation remplace le volet, elle ne s'empile pas. */
@@ -83,6 +86,8 @@ export const useTransactionDialogStore = defineStore('transactionDialog', () => 
         deleting.value = { id: line.id, label };
         deleteCameFromForm.value = false;
         mode.value = 'confirm-delete';
+        /** La modale s'ouvre directement sur la confirmation : une entrée de garde lui est due. */
+        pushModalEntry();
     }
 
     /**
@@ -101,6 +106,12 @@ export const useTransactionDialogStore = defineStore('transactionDialog', () => 
     }
 
     function close(): void {
+        /**
+         * Avant de fermer : l'entrée de garde doit disparaître de l'historique, sinon le retour
+         * arrière suivant semblerait ne rien faire tout en remontant la page.
+         */
+        consumeModalEntry();
+
         mode.value = 'closed';
         editingId.value = null;
         deleting.value = null;

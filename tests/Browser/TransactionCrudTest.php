@@ -101,3 +101,69 @@ it('renonce à une suppression sans rien effacer', function () {
 
     expect(Transaction::query()->whereKey($transaction->id)->exists())->toBeTrue();
 });
+
+it('ferme la modale au retour arrière, sans quitter la page ni la replier', function () {
+    ['user' => $user] = portfolioFixture();
+
+    $this->actingAs($user);
+
+    visit('/')
+        ->click('[data-section="wealth-transactions"] [data-section-toggle]')
+        ->click('[data-transaction-year="2026"]')
+        ->assertVisible('[data-transaction-row]')
+        ->click('[data-section="wealth-transactions"] [data-transaction-add]')
+        ->assertVisible('[data-transaction-dialog]')
+        ->back()
+        ->assertMissing('[data-transaction-dialog]')
+        /**
+         * On reste sur le tableau de bord : la modale n'est pas une page. Et la section comme
+         * l'année restent dépliées — c'est ce qu'Inertia détruirait s'il traitait ce `popstate`,
+         * puisqu'il restaure avec `preserveState: false`.
+         */
+        ->assertUrlIs(url('/'))
+        ->assertVisible('[data-transaction-row]')
+        ->assertNoJavaScriptErrors();
+});
+
+it('quitte la page au second retour arrière', function () {
+    ['user' => $user] = portfolioFixture();
+
+    $this->actingAs($user);
+
+    visit('/')
+        /** Une vraie navigation Inertia, donc une entrée d'historique sous celle de la modale. */
+        ->click('[data-section="wealth-classes"] a')
+        ->assertUrlIs(url('/actions'))
+        ->click('[data-section="class-transactions"] [data-transaction-add]')
+        ->assertVisible('[data-transaction-dialog]')
+        ->back()
+        /** Premier retour : la modale, et rien d'autre. */
+        ->assertMissing('[data-transaction-dialog]')
+        ->assertUrlIs(url('/actions'))
+        ->back()
+        /** Second retour : la navigation, cette fois traitée par Inertia. */
+        ->assertUrlIs(url('/'))
+        ->assertNoJavaScriptErrors();
+});
+
+it('ne laisse pas d\'entrée derrière elle quand on ferme autrement', function () {
+    ['user' => $user] = portfolioFixture();
+
+    $this->actingAs($user);
+
+    visit('/')
+        ->click('[data-section="wealth-classes"] a')
+        ->assertUrlIs(url('/actions'))
+        ->click('[data-section="class-transactions"] [data-transaction-add]')
+        ->assertVisible('[data-transaction-dialog]')
+        /** Fermeture par le bouton, pas par le retour arrière. */
+        ->press('Annuler')
+        ->assertMissing('[data-transaction-dialog]')
+        ->back()
+        /**
+         * Un seul retour suffit à quitter la page : sans consommation de l'entrée de garde, ce
+         * retour-ci n'aurait rien fait de visible et il en aurait fallu un second.
+         */
+        ->assertUrlIs(url('/'))
+        ->assertNoJavaScriptErrors();
+});
