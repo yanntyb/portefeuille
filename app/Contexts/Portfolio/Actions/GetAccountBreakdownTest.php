@@ -81,6 +81,29 @@ it('compte l\'ancienneté et la maturité du PEA, et rien sans date d\'ouverture
         ->and($lines[1]->maturityYears)->toBeNull();
 });
 
+it('convertit l\'ancienneté sans dépréciation PHP, même sur une date d\'ouverture non ronde', function () {
+    Carbon::setTestNow('2026-08-31');
+    $user = User::factory()->create();
+    $pea = Wallet::factory()->for($user)->pea()->create(['opened_at' => '2019-06-01']);
+
+    holdIn($pea, InstrumentType::Stock, close: 100, qty: 10, avgCost: 80);
+
+    $deprecations = [];
+    set_error_handler(function (int $errno, string $errstr) use (&$deprecations): bool {
+        $deprecations[] = $errstr;
+
+        return true;
+    }, E_DEPRECATED);
+
+    $ageInYears = app(GetAccountBreakdown::class)($user)[0]->ageInYears;
+
+    restore_error_handler();
+
+    // Du 1er juin 2019 au 31 août 2026 : 7 ans révolus, tronqués, pas arrondis.
+    expect($deprecations)->toBe([])
+        ->and($ageInYears)->toBe(7);
+});
+
 it('signale une position que l\'enveloppe n\'admet pas', function () {
     $user = User::factory()->create();
     $pea = Wallet::factory()->for($user)->pea()->create();
