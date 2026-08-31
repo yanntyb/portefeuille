@@ -13,6 +13,14 @@ return new class extends Migration
      *
      * Aucune colonne `broker` ici : l'établissement tient le compte, pas l'ordre. Il se lit sur
      * `wallets.broker`, et s'en déduit pour toute transaction du portefeuille.
+     *
+     * `amount` porte le montant des mouvements d'espèces — versement, retrait, dividende — que
+     * `quantity × unit_price` ne sait pas exprimer. Elle n'est jamais signée : le sens vient du
+     * type, sans quoi un retrait de -200 € saisi par erreur se comporterait comme un versement.
+     *
+     * `auto` distingue une ligne déduite par le système d'une ligne saisie. Les versements que
+     * `RecomputeCashDeposits` écrit pour financer un achat sont réécrits à chaque correction ;
+     * une ligne saisie ne l'est jamais.
      */
     public function up(): void
     {
@@ -27,6 +35,8 @@ return new class extends Migration
             $table->decimal('unit_price', 12, 4)->nullable();
             $table->decimal('fees', 10, 2)->default(0);
             $table->decimal('realized_gain', 12, 2)->nullable();
+            $table->decimal('amount', 12, 2)->nullable();
+            $table->boolean('auto')->default(false)->index();
             $table->text('notes')->nullable();
             $table->timestamps();
 

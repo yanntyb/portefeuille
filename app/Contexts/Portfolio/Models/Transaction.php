@@ -24,6 +24,8 @@ use Illuminate\Support\Carbon;
  * @property string $unit_price
  * @property string $fees
  * @property ?string $realized_gain
+ * @property ?string $amount
+ * @property bool $auto
  */
 #[ObservedBy(TransactionObserver::class)]
 #[UseFactory(TransactionFactory::class)]
@@ -46,6 +48,8 @@ class Transaction extends Model
             'unit_price' => 'decimal:4',
             'fees' => 'decimal:2',
             'realized_gain' => 'decimal:2',
+            'amount' => 'decimal:2',
+            'auto' => 'boolean',
         ];
     }
 

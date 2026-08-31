@@ -28,6 +28,7 @@ class TransactionFactory extends Factory
             'quantity' => fake()->randomFloat(4, 1, 100),
             'unit_price' => fake()->randomFloat(4, 10, 500),
             'fees' => 0,
+            'auto' => false,
         ];
     }
 
@@ -39,5 +40,37 @@ class TransactionFactory extends Factory
     public function sell(): static
     {
         return $this->state(['type' => TransactionType::Sell]);
+    }
+
+    public function deposit(): static
+    {
+        return $this->state([
+            'type' => TransactionType::Deposit,
+            'asset_id' => null,
+            'quantity' => null,
+            'unit_price' => null,
+            'amount' => fake()->randomFloat(2, 100, 5000),
+        ]);
+    }
+
+    public function withdrawal(): static
+    {
+        return $this->deposit()->state(['type' => TransactionType::Withdrawal]);
+    }
+
+    public function dividend(): static
+    {
+        return $this->state([
+            'type' => TransactionType::Dividend,
+            'quantity' => null,
+            'unit_price' => null,
+            'amount' => fake()->randomFloat(2, 1, 200),
+        ]);
+    }
+
+    /** Une ligne déduite par le système, que le recalcul réécrit. */
+    public function auto(): static
+    {
+        return $this->state(['auto' => true]);
     }
 }
