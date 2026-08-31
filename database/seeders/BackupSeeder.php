@@ -78,22 +78,36 @@ class BackupSeeder extends Seeder
     private const DEFAULT_DUMP_USER_ID = 1;
 
     /**
-     * Achats Bitcoin du compte par défaut, relevés sur l'historique d'ordres Kraken.
+     * Achats crypto du compte par défaut, relevés sur l'historique d'ordres Kraken.
      *
      * Ils ne sont pas dans le dump, qui précède l'ouverture du portefeuille crypto. L'ordre
      * annulé du 18 mai 2026 n'est pas repris : `transactions` n'a pas de colonne de statut, un
      * ordre annulé y deviendrait un achat réel et gonflerait la position.
      *
-     * @var list<array{date: string, quantity: string, unit_price: string}>
+     * Les frais des premiers ordres ne figurent pas sur les relevés conservés, ils restent à zéro.
+     * Ceux repris ici gardent la précision du relevé Kraken ; `transactions.fees` n'ayant que deux
+     * décimales, ils sont arrondis à l'insertion.
+     *
+     * @var list<array{date: string, ticker: string, quantity: string, unit_price: string, fees: string}>
      */
     private const CRYPTO_ORDERS = [
-        ['date' => '2026-05-18', 'quantity' => '0.00075430', 'unit_price' => '66020.6000'],
-        ['date' => '2026-06-01', 'quantity' => '0.00081870', 'unit_price' => '61070.1000'],
-        ['date' => '2026-07-01', 'quantity' => '0.00097200', 'unit_price' => '51439.4000'],
-        ['date' => '2026-07-31', 'quantity' => '0.00090400', 'unit_price' => '55312.0000'],
+        ['date' => '2026-05-18', 'ticker' => 'BTC-EUR', 'quantity' => '0.00075430', 'unit_price' => '66020.6000', 'fees' => '0'],
+        ['date' => '2026-06-01', 'ticker' => 'BTC-EUR', 'quantity' => '0.00081870', 'unit_price' => '61070.1000', 'fees' => '0'],
+        ['date' => '2026-07-01', 'ticker' => 'BTC-EUR', 'quantity' => '0.00097200', 'unit_price' => '51439.4000', 'fees' => '0'],
+        ['date' => '2026-07-31', 'ticker' => 'BTC-EUR', 'quantity' => '0.00090400', 'unit_price' => '55312.0000', 'fees' => '0'],
+        ['date' => '2026-08-31', 'ticker' => 'BTC-EUR', 'quantity' => '0.00073812', 'unit_price' => '67769.9000', 'fees' => '0.2001'],
+        ['date' => '2026-08-31', 'ticker' => 'ETH-EUR', 'quantity' => '0.02343151', 'unit_price' => '2125.7600', 'fees' => '0.3985'],
     ];
 
-    private const CRYPTO_TICKER = 'BTC-EUR';
+    /**
+     * Nom de chaque crypto achetée, aucune ne figurant dans le dump.
+     *
+     * @var array<string, string>
+     */
+    private const CRYPTO_NAMES = [
+        'BTC-EUR' => 'Bitcoin',
+        'ETH-EUR' => 'Ethereum',
+    ];
 
     private const CRYPTO_WALLET = 'Portefeuille Crypto';
 
@@ -317,9 +331,9 @@ class BackupSeeder extends Seeder
     }
 
     /**
-     * Rejoue les achats Bitcoin du compte par défaut dans un portefeuille crypto dédié.
+     * Rejoue les achats crypto du compte par défaut dans un portefeuille dédié.
      *
-     * Instrument et portefeuille sont créés au besoin : ni `BTC-EUR` ni ce portefeuille ne
+     * Instruments et portefeuille sont créés au besoin : ni les cryptos ni ce portefeuille ne
      * figurent dans le dump. Une création Eloquent par ordre, comme pour les transactions du
      * dump, sinon `TransactionObserver` n'alimenterait pas `holdings_projection`.
      */
@@ -337,11 +351,6 @@ class BackupSeeder extends Seeder
         Transaction::query()->where('wallet_id', $wallet->id)->delete();
         Holding::query()->where('wallet_id', $wallet->id)->delete();
 
-        $instrument = Instrument::query()->firstOrCreate(
-            ['ticker' => self::CRYPTO_TICKER],
-            ['isin' => null, 'name' => 'Bitcoin', 'type' => InstrumentType::Crypto],
-        );
-
         foreach (self::CRYPTO_ORDERS as $order) {
             if ($this->earliestTransactionDate === null || $order['date'] < $this->earliestTransactionDate) {
                 $this->earliestTransactionDate = $order['date'];
@@ -350,15 +359,26 @@ class BackupSeeder extends Seeder
             Transaction::query()->create([
                 'user_id' => $userId,
                 'wallet_id' => $wallet->id,
-                'asset_id' => $instrument->id,
+                'asset_id' => $this->cryptoInstrument($order['ticker'])->id,
                 'date' => $order['date'],
                 'type' => TransactionType::Buy,
                 'broker' => self::CRYPTO_BROKER,
                 'quantity' => $order['quantity'],
                 'unit_price' => $order['unit_price'],
-                'fees' => 0,
+                'fees' => $order['fees'],
             ]);
         }
+    }
+
+    /**
+     * Instrument crypto correspondant au ticker, créé au besoin.
+     */
+    private function cryptoInstrument(string $ticker): Instrument
+    {
+        return Instrument::query()->firstOrCreate(
+            ['ticker' => $ticker],
+            ['isin' => null, 'name' => self::CRYPTO_NAMES[$ticker], 'type' => InstrumentType::Crypto],
+        );
     }
 
     /**

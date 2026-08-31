@@ -68,7 +68,8 @@ class GetAccountBreakdown
                 marketValue: $totals['totalValue'],
                 gain: $totals['totalGain'],
                 gainPct: $totals['totalGainPct'],
-                ageInYears: $opened?->diffInYears(now()),
+                // diffInYears() rend un float depuis Carbon 3 ; on tronque, on n'arrondit pas.
+                ageInYears: $opened === null ? null : (int) $opened->diffInYears(now()),
                 maturityYears: $accountType->maturityYears(),
                 taxRegimeLabel: $accountType->taxRegimeLabel(),
                 ineligibleAssetNames: $ineligible,
