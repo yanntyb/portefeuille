@@ -101,6 +101,16 @@ async function mountForm(): Promise<HTMLElement> {
 const field = (host: HTMLElement, id: string): HTMLInputElement | HTMLSelectElement =>
     host.querySelector(`#${id}`) as HTMLInputElement | HTMLSelectElement;
 
+/** Le champ d'actif est un combobox : sa liste se déroule, elle n'est pas dans le document. */
+async function openAssets(host: HTMLElement): Promise<void> {
+    field(host, 'transaction-asset')
+        .dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+
+    await nextTick();
+    await nextTick();
+    await nextTick();
+}
+
 let pinia: ReturnType<typeof createPinia>;
 
 beforeEach((): void => {
@@ -147,22 +157,57 @@ describe('champs', () => {
         }
     });
 
-    it('garnit les deux listes depuis la route d\'options', async () => {
+    it('garnit les enveloppes depuis la route d\'options', async () => {
         const host = await mountForm();
 
         const wallets = [...(field(host, 'transaction-wallet') as HTMLSelectElement).options];
-        const instruments = [...(field(host, 'transaction-asset') as HTMLSelectElement).options];
 
         expect(wallets.map((option) => option.textContent?.trim())).toEqual([
             'Choisir une enveloppe',
             'IBKR - CTO',
             'PEA - PEA',
         ]);
-        expect(instruments.map((option) => option.textContent?.trim())).toEqual([
-            'Choisir un actif',
-            'ACME · ACM',
-            'Sans cours',
-        ]);
+    });
+
+    it('garnit la recherche d\'actifs depuis la route d\'options', async () => {
+        const host = await mountForm();
+        const asset = field(host, 'transaction-asset');
+
+        /** Le libellé d'attente n'est plus une entrée inerte de liste, c'est un `placeholder`. */
+        expect(asset.getAttribute('placeholder')).toBe('Choisir un actif');
+
+        await openAssets(host);
+
+        expect([...host.querySelectorAll('[role="option"]')].map((option) => option.textContent?.trim()))
+            .toEqual(['ACME · ACM', 'Sans cours']);
+    });
+
+    it('pose le cours connu dans le prix unitaire au choix de l\'actif', async () => {
+        const host = await mountForm();
+
+        await openAssets(host);
+        (host.querySelector('[data-search-select-option="7"]') as HTMLElement).click();
+        await nextTick();
+        await nextTick();
+
+        expect((field(host, 'transaction-unit-price') as HTMLInputElement).value).toBe('120');
+    });
+
+    it('ne réécrit pas un prix déjà saisi', async () => {
+        const host = await mountForm();
+        const price = field(host, 'transaction-unit-price') as HTMLInputElement;
+
+        price.value = '99';
+        price.dispatchEvent(new Event('input', { bubbles: true }));
+        await nextTick();
+
+        await openAssets(host);
+        (host.querySelector('[data-search-select-option="7"]') as HTMLElement).click();
+        await nextTick();
+        await nextTick();
+
+        /** Le cours pré-remplit un champ vide ; il ne corrige jamais une saisie en cours. */
+        expect(price.value).toBe('99');
     });
 
     it('affiche l\'actif en clair, sans sélecteur, quand la page l\'impose', async () => {

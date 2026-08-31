@@ -18,7 +18,9 @@ it('enregistre une transaction depuis le tableau de bord', function () {
     visit('/')
         ->click('[data-section="wealth-transactions"] [data-transaction-add]')
         ->assertVisible('[data-transaction-dialog]')
-        ->select('#transaction-asset', (string) $instrument->id)
+        /** L'actif n'est plus un déroulant : on le cherche, puis on retient une proposition. */
+        ->fill('#transaction-asset', 'ACME')
+        ->click('[data-search-select-option="'.$instrument->id.'"]')
         ->fill('#transaction-quantity', '4')
         ->fill('#transaction-unit-price', '120')
         ->fill('#transaction-fees', '1,5')
@@ -37,6 +39,24 @@ it('enregistre une transaction depuis le tableau de bord', function () {
         ->where('wallet_id', $wallet->id)
         ->first()
         ->quantity)->toBe(14.0);
+});
+
+it('cherche un actif sans jamais en inventer un', function () {
+    ['user' => $user] = portfolioFixture();
+
+    $this->actingAs($user);
+
+    visit('/')
+        ->click('[data-section="wealth-transactions"] [data-transaction-add]')
+        ->assertVisible('[data-transaction-dialog]')
+        ->fill('#transaction-asset', 'zzz')
+        /** Une frappe sans correspondance ne propose rien, et surtout pas de créer l'instrument. */
+        ->assertSee('Aucun instrument')
+        ->assertMissing('[data-search-select-option]')
+        /** Échap referme la liste, pas la modale : la couche la plus haute, et elle seule. */
+        ->keys('#transaction-asset', 'Escape')
+        ->assertVisible('[data-transaction-dialog]')
+        ->assertNoJavaScriptErrors();
 });
 
 it('corrige une transaction depuis la fiche de son actif', function () {

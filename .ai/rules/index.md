@@ -19,4 +19,5 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Contexts/*/Services/** | .ai/rules/services.md |
 | tests/** | .ai/rules/tests.md |
 | resources/js/components/transactions/** | .ai/rules/transactions.md |
+| resources/js/components/ui/** | .ai/rules/ui.md |
 | app/Contexts/Wealth/** | .ai/rules/wealth.md |

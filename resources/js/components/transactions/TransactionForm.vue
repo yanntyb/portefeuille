@@ -7,6 +7,7 @@ import { DialogFooter } from '@/components/ui/dialog';
 import { FormField } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, type SelectOption } from '@/components/ui/native-select';
+import { SearchSelect } from '@/components/ui/search-select';
 import SegmentedControl, { type Segment } from '@/components/ui/SegmentedControl.vue';
 import { eur, frDate } from '@/lib/format';
 import { refreshableKeys } from '@/lib/inertiaRefresh';
@@ -211,11 +212,16 @@ const serverUnreachable: Ref<boolean> = ref(false);
 
         <FormField v-else id="transaction-asset" label="Actif" :error="form.errors.assetId">
             <template #default="{ describedBy, invalid }">
-                <NativeSelect
+                <!--
+                    Le seul champ cherchable du formulaire : le catalogue est la seule liste qui
+                    grossit sans limite, et le ticker se tape plus vite qu'il ne se déroule.
+                -->
+                <SearchSelect
                     id="transaction-asset"
                     v-model="form.assetId"
                     :options="instrumentOptions"
                     placeholder="Choisir un actif"
+                    empty="Aucun instrument"
                     :invalid="invalid"
                     :disabled="blocked"
                     :aria-describedby="describedBy"
