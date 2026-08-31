@@ -183,6 +183,21 @@ const serverUnreachable: Ref<boolean> = ref(false);
             Les enveloppes et les instruments n'ont pas pu être chargés.
         </p>
 
+        <!-- En premier : l'enveloppe est le cadre de l'opération, tout le reste s'y inscrit. -->
+        <FormField id="transaction-wallet" label="Enveloppe" :error="form.errors.walletId">
+            <template #default="{ describedBy, invalid }">
+                <NativeSelect
+                    id="transaction-wallet"
+                    v-model="form.walletId"
+                    :options="walletOptions"
+                    placeholder="Choisir une enveloppe"
+                    :invalid="invalid"
+                    :disabled="blocked"
+                    :aria-describedby="describedBy"
+                />
+            </template>
+        </FormField>
+
         <!--
             Instrument imposé par la page : sur une fiche d'actif, un sélecteur modifiable
             laisserait enregistrer une opération qui n'apparaîtrait pas sur la page qu'on regarde.
@@ -286,21 +301,6 @@ const serverUnreachable: Ref<boolean> = ref(false);
                     autocomplete="off"
                     :disabled="blocked"
                     :aria-invalid="invalid || undefined"
-                    :aria-describedby="describedBy"
-                />
-            </template>
-        </FormField>
-
-        <!-- En dernier : c'est le champ qui change le moins souvent d'une saisie à l'autre. -->
-        <FormField id="transaction-wallet" label="Enveloppe" :error="form.errors.walletId">
-            <template #default="{ describedBy, invalid }">
-                <NativeSelect
-                    id="transaction-wallet"
-                    v-model="form.walletId"
-                    :options="walletOptions"
-                    placeholder="Choisir une enveloppe"
-                    :invalid="invalid"
-                    :disabled="blocked"
                     :aria-describedby="describedBy"
                 />
             </template>

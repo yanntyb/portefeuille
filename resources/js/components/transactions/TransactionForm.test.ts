@@ -124,12 +124,12 @@ describe('champs', () => {
         const ids = [...host.querySelectorAll('input[id], select[id]')].map((element) => element.id);
 
         expect(ids).toEqual([
+            'transaction-wallet',
             'transaction-asset',
             'transaction-date',
             'transaction-quantity',
             'transaction-unit-price',
             'transaction-fees',
-            'transaction-wallet',
         ]);
         /** Le sens n'est pas un `<input>` : c'est le contrôle segmenté, en groupe de radios. */
         expect(host.querySelector('[role="radiogroup"]')).not.toBeNull();
