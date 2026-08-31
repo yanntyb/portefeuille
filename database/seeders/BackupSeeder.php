@@ -128,6 +128,9 @@ class BackupSeeder extends Seeder
 
     private const CRYPTO_BROKER = 'Kraken';
 
+    /** Kraken détient les clés pour son client : c'est un portefeuille chaud, pas un compte-titres. */
+    private const CRYPTO_ACCOUNT_TYPE = AccountType::CryptoHotWallet;
+
     private const ROW_CHUNK = 100;
 
     /**
@@ -369,12 +372,15 @@ class BackupSeeder extends Seeder
 
         $wallet = Wallet::query()->firstOrCreate(
             ['user_id' => $userId, 'name' => self::CRYPTO_WALLET],
-            ['broker' => self::CRYPTO_BROKER],
+            ['broker' => self::CRYPTO_BROKER, 'account_type' => self::CRYPTO_ACCOUNT_TYPE],
         );
 
-        // Rejeu : un portefeuille déjà créé garde son courtier d'alors sans cette reprise.
-        if ($wallet->broker !== self::CRYPTO_BROKER) {
-            $wallet->fill(['broker' => self::CRYPTO_BROKER])->save();
+        // Rejeu : un portefeuille déjà créé garde son courtier et son type d'alors sans reprise.
+        if ($wallet->broker !== self::CRYPTO_BROKER || $wallet->account_type !== self::CRYPTO_ACCOUNT_TYPE) {
+            $wallet->fill([
+                'broker' => self::CRYPTO_BROKER,
+                'account_type' => self::CRYPTO_ACCOUNT_TYPE,
+            ])->save();
         }
 
         // Idempotence : purge (mass delete ne déclenche pas l'observer), puis reconstruit.

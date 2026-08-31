@@ -110,7 +110,7 @@ it('type les enveloppes du dump d\'après leur nom', function () {
         ->and(Wallet::query()->where('name', 'CTO')->pluck('account_type')->unique()->all())
         ->toBe([AccountType::Cto])
         ->and(Wallet::query()->where('name', 'Portefeuille Crypto')->value('account_type'))
-        ->toBe(AccountType::Cto);
+        ->toBe(AccountType::CryptoHotWallet);
 });
 
 it('infers the instrument type absent from the dump', function () {
@@ -262,7 +262,11 @@ it('keeps the details of the transactions', function () {
 it('books every securities wallet at IBKR and the crypto one at Kraken', function () {
     $this->seed(SampleBackupSeeder::class);
 
-    expect(Wallet::query()->where('name', 'PEA')->first()->broker)->toBe('IBKR')
+    $crypto = Wallet::query()->where('name', 'Portefeuille Crypto')->sole();
+
+    // Kraken garde les clés : c'est un portefeuille chaud, pas un compte-titres.
+    expect($crypto->account_type)->toBe(AccountType::CryptoHotWallet)
+        ->and(Wallet::query()->where('name', 'PEA')->first()->broker)->toBe('IBKR')
         ->and(Wallet::query()->where('name', 'CTO')->sole()->broker)->toBe('IBKR')
         ->and(Wallet::query()->where('name', 'Portefeuille Crypto')->sole()->broker)->toBe('Kraken');
 });

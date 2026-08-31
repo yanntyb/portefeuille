@@ -22,6 +22,15 @@ enum AccountType: string
     case Pea = 'pea';
     case Cto = 'cto';
 
+    /**
+     * Les deux façons de garder des jetons : sur une plateforme d'échange, qui détient les clés
+     * pour le porteur, ou sur un support hors ligne dont il est seul à les avoir. La distinction
+     * n'est pas fiscale — les deux relèvent du même régime — mais elle dit qui, en pratique, peut
+     * disposer des avoirs.
+     */
+    case CryptoHotWallet = 'crypto_hot_wallet';
+    case CryptoColdWallet = 'crypto_cold_wallet';
+
     /** @return list<string> */
     public static function values(): array
     {
@@ -33,6 +42,8 @@ enum AccountType: string
         return match ($this) {
             self::Pea => 'PEA',
             self::Cto => 'Compte-titres',
+            self::CryptoHotWallet => 'Crypto hot wallet',
+            self::CryptoColdWallet => 'Crypto cold wallet',
         };
     }
 
@@ -41,7 +52,7 @@ enum AccountType: string
     {
         return match ($this) {
             self::Pea => 'Exonéré après 5 ans, prélèvements sociaux 17,2 %',
-            self::Cto => 'Flat tax 30 %',
+            self::Cto, self::CryptoHotWallet, self::CryptoColdWallet => 'Flat tax 30 %',
         };
     }
 
@@ -50,7 +61,7 @@ enum AccountType: string
     {
         return match ($this) {
             self::Pea => 5,
-            self::Cto => null,
+            self::Cto, self::CryptoHotWallet, self::CryptoColdWallet => null,
         };
     }
 
@@ -61,6 +72,9 @@ enum AccountType: string
      * restriction aux titres de l'Union n'est pas représentable ici, elle n'est donc pas
      * prétendue.
      *
+     * Les deux portefeuilles crypto ne tiennent que des jetons : un titre y serait une erreur de
+     * saisie, et l'alerte d'éligibilité est là pour la dire.
+     *
      * @return ?list<AssetClass>
      */
     public function allowedAssetClasses(): ?array
@@ -68,6 +82,7 @@ enum AccountType: string
         return match ($this) {
             self::Pea => [AssetClass::Equity],
             self::Cto => null,
+            self::CryptoHotWallet, self::CryptoColdWallet => [AssetClass::Crypto],
         };
     }
 
