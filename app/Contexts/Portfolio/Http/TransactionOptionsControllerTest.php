@@ -41,6 +41,19 @@ it('offers the whole catalogue, held or not, with its last close', function () {
         ->and($instruments[1]['assetClassLabel'])->toBe('Crypto');
 });
 
+it('tells what each wallet holds of each asset, and nobody else\'s', function () {
+    ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
+    portfolioFixture();
+
+    $held = $this->actingAs($user)->getJson('/transactions/options')->assertOk()->json('held');
+
+    /** De quoi plafonner une vente à la frappe ; le serveur reste seul juge de la survente. */
+    expect($held)->toHaveCount(1)
+        ->and($held[0]['walletId'])->toBe($wallet->id)
+        ->and($held[0]['assetId'])->toBe($instrument->id)
+        ->and((float) $held[0]['quantity'])->toBe(10.0);
+});
+
 it('names the two directions of an operation from the enum', function () {
     portfolioFixture();
 
@@ -57,10 +70,11 @@ it('keeps the key order of its payload', function () {
 
     $body = $this->getJson('/transactions/options')->json();
 
-    expect(array_keys($body))->toBe(['wallets', 'instruments', 'types'])
+    expect(array_keys($body))->toBe(['wallets', 'instruments', 'held', 'types'])
         ->and(array_keys($body['wallets'][0]))->toBe(['id', 'name', 'broker', 'accountType', 'accountTypeLabel'])
         ->and(array_keys($body['instruments'][0]))
-        ->toBe(['id', 'name', 'ticker', 'assetClass', 'assetClassLabel', 'lastPrice']);
+        ->toBe(['id', 'name', 'ticker', 'assetClass', 'assetClassLabel', 'lastPrice'])
+        ->and(array_keys($body['held'][0]))->toBe(['walletId', 'assetId', 'quantity']);
 });
 
 it('rends empty lists rather than failing on a database with no user', function () {
@@ -68,6 +82,7 @@ it('rends empty lists rather than failing on a database with no user', function 
         ->toBe([
             'wallets' => [],
             'instruments' => [],
+            'held' => [],
             'types' => [
                 ['value' => 'buy', 'label' => 'Achat'],
                 ['value' => 'sell', 'label' => 'Vente'],

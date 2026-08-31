@@ -11,7 +11,7 @@ import { SearchSelect } from '@/components/ui/search-select';
 import SegmentedControl, { type Segment } from '@/components/ui/SegmentedControl.vue';
 import { eur, frDate } from '@/lib/format';
 import { refreshableKeys } from '@/lib/inertiaRefresh';
-import { payloadOf, transactionTotal, type TransactionDraft } from '@/lib/transactionForm';
+import { parseDecimalInput, payloadOf, transactionTotal, type TransactionDraft } from '@/lib/transactionForm';
 import { useNetworkStore } from '@/stores/network';
 import { useSnapshotStore } from '@/stores/snapshot';
 import { useTransactionDialogStore } from '@/stores/transactionDialog';
@@ -20,6 +20,7 @@ import { useTransactionDialogStore } from '@/stores/transactionDialog';
 type FormOptions = {
     wallets: { id: number; name: string; broker: string | null; accountType: string; accountTypeLabel: string }[];
     instruments: { id: number; name: string; ticker: string | null; lastPrice: number | null }[];
+    held: { walletId: number; assetId: number; quantity: number }[];
     types: { value: string; label: string }[];
 };
 
@@ -37,6 +38,12 @@ const page = usePage();
  * et sans remontage un formulaire d'édition garderait celles de la fois précédente.
  */
 const form = useForm<TransactionDraft>({ ...dialog.draft });
+
+/**
+ * La ligne telle qu'elle était à l'ouverture. `form` bouge au fil de la frappe, et le stock
+ * disponible d'une correction se lit contre la ligne d'origine, pas contre la saisie en cours.
+ */
+const opened: TransactionDraft = { ...dialog.draft };
 
 const options: Ref<FormOptions | null> = ref(null);
 const optionsFailed: Ref<boolean> = ref(false);
@@ -101,6 +108,69 @@ const total: ComputedRef<number | null> = computed((): number | null => transact
 
 const blocked: ComputedRef<boolean> = computed((): boolean => !network.isOnline || form.processing);
 
+/**
+ * Ce que l'enveloppe choisie détient de l'actif choisi, et `null` tant que l'un des deux manque —
+ * il n'y a alors pas de plafond à annoncer, pas un plafond de zéro.
+ *
+ * La projection compte la ligne en cours de correction ; le serveur, lui, s'en abstrait. On la
+ * remet donc : corriger une vente de 4 en 5 se compare à un stock qui n'a pas déjà retranché ces 4
+ * titres — même raisonnement que l'`$ignoringTransactionId` de `GetPositionStock`.
+ */
+const heldQuantity: ComputedRef<number | null> = computed((): number | null => {
+    if (form.walletId === '' || form.assetId === '') {
+        return null;
+    }
+
+    const position = options.value?.held.find(
+        (stock): boolean =>
+            String(stock.walletId) === form.walletId && String(stock.assetId) === form.assetId,
+    );
+
+    const projected = position?.quantity ?? 0;
+
+    if (!isEditing.value || opened.walletId !== form.walletId || opened.assetId !== form.assetId) {
+        return projected;
+    }
+
+    const own = parseDecimalInput(opened.quantity) ?? 0;
+
+    return opened.type === 'sell' ? projected + own : projected - own;
+});
+
+/**
+ * Une vente ne peut porter que sur ce qu'on détient : `ProjectHolding` supprime la position dès que
+ * la quantité tombe à zéro, si bien qu'une survente l'effacerait au lieu de la mettre en défaut. Le
+ * serveur le refuse déjà — on le dit ici avant l'envoi, dans les mêmes mots.
+ */
+const oversold: ComputedRef<boolean> = computed((): boolean => {
+    const wanted = parseDecimalInput(form.quantity);
+
+    return form.type === 'sell' && wanted !== null && heldQuantity.value !== null
+        && wanted > heldQuantity.value;
+});
+
+/** Autant de décimales que la saisie en demande, sans les zéros que personne ne lit. */
+const quantityLabel = (value: number): string =>
+    value.toLocaleString('fr-FR', { maximumFractionDigits: 8 });
+
+/** Le plafond, sous le champ, dès que l'enveloppe et l'actif sont connus et qu'on vend. */
+const quantityHint: ComputedRef<string | undefined> = computed((): string | undefined =>
+    form.type === 'sell' && heldQuantity.value !== null
+        ? `Maximum : ${quantityLabel(heldQuantity.value)} titre(s) détenu(s)`
+        : undefined,
+);
+
+/** Le message du serveur d'abord : lui seul connaît l'état après une saisie concurrente. */
+const quantityError: ComputedRef<string | null> = computed((): string | null => {
+    if (form.errors.quantity) {
+        return form.errors.quantity;
+    }
+
+    return oversold.value && heldQuantity.value !== null
+        ? `Vous ne détenez que ${quantityLabel(heldQuantity.value)} titre(s) dans cette enveloppe.`
+        : null;
+});
+
 /** Ce que le volet de confirmation récapitule ; la date s'y lit en français, pas en ISO. */
 const deletionLabel: ComputedRef<string> = computed(
     (): string => `${form.type === 'sell' ? 'Vente' : 'Achat'} du ${frDate(form.date)}`,
@@ -126,7 +196,7 @@ const onInstrumentChange = (): void => {
 };
 
 const submit = (): void => {
-    if (blocked.value) {
+    if (blocked.value || oversold.value) {
         return;
     }
 
@@ -262,7 +332,12 @@ const serverUnreachable: Ref<boolean> = ref(false);
             une virgule, qui rend un champ numérique invalide et vide sa valeur sans un mot.
             `inputmode="decimal"` appelle quand même le pavé numérique sur mobile.
         -->
-        <FormField id="transaction-quantity" label="Quantité" :error="form.errors.quantity">
+        <FormField
+            id="transaction-quantity"
+            label="Quantité"
+            :hint="quantityHint"
+            :error="quantityError"
+        >
             <template #default="{ describedBy, invalid }">
                 <Input
                     id="transaction-quantity"
@@ -336,7 +411,8 @@ const serverUnreachable: Ref<boolean> = ref(false);
                 Annuler
             </Button>
 
-            <Button type="submit" data-transaction-submit :disabled="blocked">
+            <!-- Une vente au-delà du stock ne part pas : le serveur la refuserait, et le dit déjà. -->
+            <Button type="submit" data-transaction-submit :disabled="blocked || oversold">
                 {{ form.processing ? 'Enregistrement…' : 'Enregistrer' }}
             </Button>
         </DialogFooter>

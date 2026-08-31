@@ -77,6 +77,7 @@ const options = {
         { id: 7, name: 'ACME', ticker: 'ACM', lastPrice: 120 },
         { id: 9, name: 'Sans cours', ticker: null, lastPrice: null },
     ],
+    held: [{ walletId: 3, assetId: 7, quantity: 10 }],
     types: [
         { value: 'buy', label: 'Achat' },
         { value: 'sell', label: 'Vente' },
@@ -219,6 +220,97 @@ describe('champs', () => {
         /** Un sélecteur modifiable laisserait saisir une opération invisible sur cette page. */
         expect(host.querySelector('[data-transaction-asset-locked]')?.textContent?.trim()).toBe('ACME');
         expect(host.querySelector('#transaction-asset')).toBeNull();
+    });
+});
+
+describe('plafond d\'une vente', () => {
+    /** Enveloppe et actif choisis, sens porté à la vente : le stock détenu devient un plafond. */
+    async function sellFrom(host: HTMLElement, quantity: string): Promise<void> {
+        const wallet = field(host, 'transaction-wallet') as HTMLSelectElement;
+        wallet.value = '3';
+        wallet.dispatchEvent(new Event('change', { bubbles: true }));
+
+        await openAssets(host);
+        (host.querySelector('[data-search-select-option="7"]') as HTMLElement).click();
+        await nextTick();
+
+        (host.querySelector('[data-segment="sell"]') as HTMLElement).click();
+
+        const field_ = field(host, 'transaction-quantity') as HTMLInputElement;
+        field_.value = quantity;
+        field_.dispatchEvent(new Event('input', { bubbles: true }));
+        await nextTick();
+    }
+
+    const hint = (host: HTMLElement): string | undefined =>
+        host.querySelector('#transaction-quantity-hint')?.textContent?.trim();
+
+    const submitButton = (host: HTMLElement): HTMLButtonElement =>
+        host.querySelector('[data-transaction-submit]') as HTMLButtonElement;
+
+    it('annonce ce que l\'enveloppe détient de l\'actif', async () => {
+        const host = await mountForm();
+        await sellFrom(host, '2');
+
+        expect(hint(host)).toBe('Maximum : 10 titre(s) détenu(s)');
+        expect(submitButton(host).disabled).toBe(false);
+    });
+
+    it('ne plafonne pas un achat', async () => {
+        const host = await mountForm();
+        await sellFrom(host, '2');
+
+        (host.querySelector('[data-segment="buy"]') as HTMLElement).click();
+        await nextTick();
+
+        /** On achète ce qu'on veut : seule une vente est bornée par ce qu'on détient. */
+        expect(hint(host)).toBeUndefined();
+    });
+
+    it('refuse une vente au-delà du stock, dans les mots du serveur', async () => {
+        const host = await mountForm();
+        await sellFrom(host, '12');
+
+        expect(host.querySelector('#transaction-quantity-error')?.textContent?.trim())
+            .toBe('Vous ne détenez que 10 titre(s) dans cette enveloppe.');
+        expect(submitButton(host).disabled).toBe(true);
+
+        (host.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+        await nextTick();
+
+        expect(post).not.toHaveBeenCalled();
+    });
+
+    it('laisse passer une vente de tout le stock', async () => {
+        const host = await mountForm();
+        await sellFrom(host, '10');
+
+        expect(host.querySelector('#transaction-quantity-error')).toBeNull();
+        expect(submitButton(host).disabled).toBe(false);
+    });
+
+    it('rend à une correction de vente ses propres titres', async () => {
+        const dialog = useTransactionDialogStore();
+        dialog.openEdit({
+            id: 42,
+            walletId: 3,
+            assetId: 7,
+            date: '2026-03-04',
+            isSell: true,
+            typeLabel: 'Vente',
+            quantity: 4,
+            unitPrice: 300,
+            fees: 0,
+            total: 1200,
+        });
+
+        const host = await mountForm();
+
+        /**
+         * La projection a déjà retranché ces 4 titres ; le serveur les rend en excluant la ligne
+         * éditée. Porter la vente de 4 à 14 doit donc rester possible.
+         */
+        expect(hint(host)).toBe('Maximum : 14 titre(s) détenu(s)');
     });
 });
 

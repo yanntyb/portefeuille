@@ -7,7 +7,7 @@ use JsonSerializable;
 
 /**
  * De quoi garnir le formulaire de saisie : les enveloppes de l'utilisateur, le catalogue
- * d'instruments, et les deux sens d'une opération.
+ * d'instruments, les positions détenues et les deux sens d'une opération.
  *
  * Les libellés des types viennent de l'enum et non du front : `TransactionType::getLabel()` est
  * déjà la seule définition d'« Achat » et de « Vente », et la liste des transactions les affiche
@@ -18,10 +18,12 @@ readonly class TransactionFormOptionsData implements JsonSerializable
     /**
      * @param  list<WalletOptionData>  $wallets
      * @param  list<InstrumentOptionData>  $instruments
+     * @param  list<HeldStockData>  $held
      */
     public function __construct(
         public array $wallets,
         public array $instruments,
+        public array $held,
     ) {}
 
     /** @return array<string, mixed> */
@@ -30,6 +32,7 @@ readonly class TransactionFormOptionsData implements JsonSerializable
         return [
             'wallets' => $this->wallets,
             'instruments' => $this->instruments,
+            'held' => $this->held,
             'types' => array_map(
                 fn (TransactionType $type): array => [
                     'value' => $type->value,
