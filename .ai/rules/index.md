@@ -6,6 +6,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | --- | --- |
 | app/Contexts/** | .ai/rules/contexts.md |
 | **/Factories/** | .ai/rules/factories.md |
+| app/Contexts/*/Http/** | .ai/rules/http.md |
 | app/Contexts/*/Infrastructure/**, app/Contexts/*/Sources/*/Infrastructure/** | .ai/rules/infrastructure.md |
 | app/Contexts/Market/Jobs/** | .ai/rules/jobs.md |
 | resources/js/lib/chart*.ts | .ai/rules/lib.md |
@@ -17,4 +18,5 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Contexts/RealEstate/** | .ai/rules/real-estate.md |
 | app/Contexts/*/Services/** | .ai/rules/services.md |
 | tests/** | .ai/rules/tests.md |
+| resources/js/components/transactions/** | .ai/rules/transactions.md |
 | app/Contexts/Wealth/** | .ai/rules/wealth.md |

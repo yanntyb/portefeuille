@@ -28,3 +28,12 @@ paths:
 Le plafond de versement en est délibérément absent : `TransactionType` n'a que `Buy`/`Sell`, aucun mouvement d'espèces, donc aucun montant versé n'est calculable, et un plafond sans son solde ne renseigne sur rien. Un cumul de flux nets serait faux — réinvestir le produit d'une vente ne consomme pas de plafond.
 
 Une position se lit par actif ET par enveloppe : `holdings_projection` a pour clé primaire `(asset_id, wallet_id)`, et `HoldingLineData` porte `walletId`. Tout regroupement côté front doit donc clé sur les deux — `instrumentList.ts` le faisait sur `assetId` seul et confondait les deux lignes d'un titre tenu dans deux comptes.
+
+## GetPositionStock est le site unique du stock d'une position, et le gain réalisé se recalcule en grappe
+`GetPositionStock` porte l'arithmétique « achats moins ventes », prix de revient compris. `ProjectHolding` la consomme, et le contrôle de survente de `TransactionRequest` aussi — avec son argument `$ignoringTransactionId`, sans lequel porter une vente de 4 à 5 se comparerait à un stock dont ses propres 4 titres sont déjà déduits.
+
+`realized_gain` est une colonne STOCKÉE que `GetRealizedGains` relit telle quelle, et `CalculateRealizedGain` la dérive des achats antérieurs à la vente. Corriger ou supprimer un achat rend donc faux le gain de chaque vente postérieure : `RecomputeRealizedGains`, appelée par l'observateur, réécrit toutes les ventes de l'enveloppe — par `saveQuietly()`, sinon `updating` la rappellerait sans fin.
+
+Survente refusée à la saisie, mais pour une raison précise : `ProjectHolding` SUPPRIME la ligne de position dès que la quantité tombe à zéro ou moins, si bien qu'une survente effacerait la position au lieu de la mettre en défaut. Le contrôle est volontairement aveugle aux dates, comme la projection : une vente datée avant son achat passe.
+
+`AccountType` ne bloque aucune écriture — les règles d'enveloppe sont déclaratives. Un achat de crypto dans un PEA se saisit, et un test le fige.
