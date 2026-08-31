@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 import TransactionForm from '@/components/transactions/TransactionForm.vue';
@@ -15,7 +15,6 @@ import {
 import { refreshableKeys } from '@/lib/inertiaRefresh';
 import { useSnapshotStore } from '@/stores/snapshot';
 import { useTransactionDialogStore } from '@/stores/transactionDialog';
-import { usePage } from '@inertiajs/vue3';
 
 /**
  * La modale de saisie, montée une fois par page en frère de `AppPage` — pas dedans : son conteneur
@@ -58,6 +57,7 @@ const confirmDelete = (): void => {
         preserveScroll: true,
         onSuccess: (): void => {
             dialog.close();
+            /** Sinon le blob hors-ligne garde l'état d'avant et clignoterait à la prochaine visite. */
             void snapshot.sync();
         },
         onFinish: (): void => {
@@ -77,19 +77,30 @@ const onOpenChange = (open: boolean): void => {
 <template>
     <Dialog :open="isOpen" @update:open="onOpenChange">
         <!-- Sans plafond de hauteur, les boutons sortent de l'écran clavier virtuel ouvert. -->
-        <DialogContent class="max-h-[calc(100dvh-2rem)] overflow-y-auto" data-transaction-dialog>
-            <DialogHeader>
-                <DialogTitle>{{ title }}</DialogTitle>
-                <DialogDescription v-if="isConfirming && dialog.deleting !== null">
-                    {{ dialog.deleting.label }} — cette suppression est définitive et la position
-                    sera reprojetée.
-                </DialogDescription>
-            </DialogHeader>
+        <DialogContent class="max-h-[calc(100dvh-2rem)] overflow-y-auto">
+            <!--
+                Le marqueur est posé sur un enfant et non sur `DialogContent` : la racine de
+                celui-ci est `DialogPortal`, qui n'hérite pas des attributs — l'attribut
+                disparaîtrait sans un mot, et un test croirait la modale absente alors qu'elle est
+                ouverte. `contents` laisse la grille du dialogue traverser ce div.
+            -->
+            <div data-transaction-dialog class="contents">
+                <DialogHeader>
+                    <DialogTitle>{{ title }}</DialogTitle>
+                    <DialogDescription v-if="isConfirming && dialog.deleting !== null">
+                        {{ dialog.deleting.label }} — cette suppression est définitive, et la
+                        position sera reprojetée.
+                    </DialogDescription>
+                </DialogHeader>
 
-            <template v-if="isConfirming">
-                <DialogFooter>
-                    <!-- Le focus part sur l'annulation : la sortie sûre, pas l'action destructrice. -->
-                    <Button type="button" variant="outline" :disabled="deleting" @click="dialog.backToForm()">
+                <DialogFooter v-if="isConfirming">
+                    <!-- L'annulation d'abord : la sortie sûre passe avant l'action destructrice. -->
+                    <Button
+                        type="button"
+                        variant="outline"
+                        :disabled="deleting"
+                        @click="dialog.backToForm()"
+                    >
                         Annuler
                     </Button>
 
@@ -103,14 +114,14 @@ const onOpenChange = (open: boolean): void => {
                         {{ deleting ? 'Suppression…' : 'Supprimer' }}
                     </Button>
                 </DialogFooter>
-            </template>
 
-            <!--
-                La clé remonte le formulaire à chaque ouverture : `useForm` fige ses valeurs
-                initiales, et sans elle une correction hériterait des valeurs et des erreurs de la
-                précédente.
-            -->
-            <TransactionForm v-else :key="dialog.formKey" />
+                <!--
+                    La clé remonte le formulaire à chaque ouverture : `useForm` fige ses valeurs
+                    initiales, et sans elle une correction hériterait des valeurs et des erreurs de
+                    la précédente.
+                -->
+                <TransactionForm v-else :key="dialog.formKey" />
+            </div>
         </DialogContent>
     </Dialog>
 </template>
