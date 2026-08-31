@@ -9,7 +9,11 @@ const segments: Segment[] = [
 
 type Mounted = { host: HTMLElement; chosen: ReturnType<typeof vi.fn> };
 
-function mountControl(modelValue: string, override: Segment[] = segments): Mounted {
+function mountControl(
+    modelValue: string,
+    override: Segment[] = segments,
+    variant?: 'tabs' | 'radio',
+): Mounted {
     const chosen = vi.fn();
     const host = document.createElement('div');
     document.body.append(host);
@@ -18,6 +22,7 @@ function mountControl(modelValue: string, override: Segment[] = segments): Mount
         modelValue,
         segments: override,
         label: 'Série tracée',
+        variant,
         'onUpdate:modelValue': chosen,
     }).mount(host);
 
@@ -107,5 +112,30 @@ describe('rendu', () => {
 
         expect(segment(host, 'price').getAttribute('aria-selected')).toBe('true');
         expect(segment(host, 'valuation').getAttribute('aria-selected')).toBe('false');
+    });
+});
+
+describe('variante radio', () => {
+    it('annonce un groupe de boutons radio et non un jeu d\'onglets', async () => {
+        const { host } = mountControl('price', segments, 'radio');
+        await nextTick();
+
+        /**
+         * Dans un formulaire, le rôle par défaut ferait annoncer « onglet Achat » : faux du sens
+         * comme de l'effet, puisque rien ne bascule de vue.
+         */
+        expect(host.querySelector('[role="radiogroup"]')).not.toBeNull();
+        expect(host.querySelector('[role="tablist"]')).toBeNull();
+        expect(segment(host, 'price').getAttribute('aria-checked')).toBe('true');
+        expect(segment(host, 'valuation').getAttribute('aria-checked')).toBe('false');
+        expect(segment(host, 'price').hasAttribute('aria-selected')).toBe(false);
+    });
+
+    it('garde les flèches et la sélection de la variante par défaut', () => {
+        const { host, chosen } = mountControl('valuation', segments, 'radio');
+
+        pressArrow(host, 'valuation', 'ArrowRight');
+
+        expect(chosen).toHaveBeenCalledWith('price');
     });
 });

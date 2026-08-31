@@ -6,7 +6,20 @@ export type Segment = {
     disabled?: boolean;
 };
 
-const props = defineProps<{ modelValue: string; segments: Segment[]; label: string }>();
+const props = withDefaults(
+    defineProps<{
+        modelValue: string;
+        segments: Segment[];
+        label: string;
+        /**
+         * `tabs` bascule entre deux vues de la même chose — plage d'un graphe, mode d'affichage.
+         * `radio` choisit une valeur dans un formulaire : un lecteur d'écran annoncerait « onglet
+         * Achat » sous le rôle par défaut, ce qui est faux du sens comme de l'effet.
+         */
+        variant?: 'tabs' | 'radio';
+    }>(),
+    { variant: 'tabs' },
+);
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
 
@@ -41,7 +54,7 @@ const onArrow = (event: KeyboardEvent): void => {
 
 <template>
     <div
-        role="tablist"
+        :role="props.variant === 'radio' ? 'radiogroup' : 'tablist'"
         :aria-label="props.label"
         class="inline-flex gap-0.5 rounded-full bg-muted p-0.5 text-sm"
         @keydown="onArrow"
@@ -50,9 +63,10 @@ const onArrow = (event: KeyboardEvent): void => {
             v-for="segment in props.segments"
             :key="segment.value"
             type="button"
-            role="tab"
+            :role="props.variant === 'radio' ? 'radio' : 'tab'"
             :data-segment="segment.value"
-            :aria-selected="segment.value === props.modelValue"
+            :aria-selected="props.variant === 'radio' ? undefined : segment.value === props.modelValue"
+            :aria-checked="props.variant === 'radio' ? segment.value === props.modelValue : undefined"
             :disabled="segment.disabled"
             :tabindex="segment.value === props.modelValue ? 0 : -1"
             class="rounded-full px-3 py-1 leading-none font-medium transition-colors disabled:opacity-40"
