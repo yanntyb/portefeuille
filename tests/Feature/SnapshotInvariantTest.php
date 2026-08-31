@@ -82,8 +82,10 @@ use Illuminate\Support\Carbon;
  * chacun.
  * Modifié une vingtième fois : chaque enveloppe nomme l'établissement qui tient le compte, donc
  * `broker` s'ajoute à la ligne d'enveloppe, à côté du nom du portefeuille.
+ * Modifié une vingt-et-unième fois : le compte-titres se nomme « CTO », son sigle d'usage, pour
+ * tenir dans le badge d'enveloppe de la liste d'instruments comme « PEA » y tient déjà.
  */
-const SNAPSHOT_VERSION = 'a1a7a9848d5c0ab6e919ca11c8865e48380c0529';
+const SNAPSHOT_VERSION = '231c8916e25a4347141b8091ef62a326d18e4017';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

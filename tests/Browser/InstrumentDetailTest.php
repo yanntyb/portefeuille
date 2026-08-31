@@ -23,6 +23,13 @@ it('replie toutes les années de transactions et les ouvre une à une', function
         'date' => '2025-06-04',
     ]);
 
+    /**
+     * Un second secteur : la section « Secteurs » ne paraît qu'au-delà d'un secteur unique, celui
+     * de la fixture se lisant dans le hero. Sans elle, l'ordre attendu n'aurait pas de dernier cran.
+     */
+    SectorAllocation::query()->where('asset_id', $instrument->id)->update(['weight' => 0.6]);
+    SectorAllocation::factory()->create(['asset_id' => $instrument->id, 'sector' => Sector::Healthcare, 'weight' => 0.4]);
+
     $this->actingAs($user);
 
     $page = visit("/asset/{$instrument->id}")
@@ -289,6 +296,10 @@ it('affiche les dividendes perçus quand l\'instrument en verse', function () {
         'ex_date' => now()->subMonths(2)->format('Y-m-d'),
         'amount_per_share' => 0.5,
     ]);
+
+    /** Un second secteur, pour que la section « Secteurs » paraisse : c'est elle qui suit. */
+    SectorAllocation::query()->where('asset_id', $instrument->id)->update(['weight' => 0.6]);
+    SectorAllocation::factory()->create(['asset_id' => $instrument->id, 'sector' => Sector::Healthcare, 'weight' => 0.4]);
 
     $this->actingAs($user);
 

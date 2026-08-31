@@ -101,7 +101,7 @@ describe('lignes du portefeuille', () => {
         const rows = holdingRows(
             [
                 holdingLine({ walletId: 10, walletName: 'PEA', marketValue: 750 }),
-                holdingLine({ walletId: 20, walletName: 'CTO', accountTypeLabel: 'Compte-titres', marketValue: 250 }),
+                holdingLine({ walletId: 20, walletName: 'CTO', accountTypeLabel: 'CTO', marketValue: 250 }),
             ],
             null,
         );

@@ -67,12 +67,16 @@ describe('section enveloppes du tableau de bord', () => {
     });
 
     it('nomme chaque enveloppe, son type et son régime', async () => {
-        const host = await mountSection([account(), account({ walletId: 2, walletName: 'CTO', accountTypeLabel: 'Compte-titres' })]);
+        const host = await mountSection([
+            account(),
+            account({ walletId: 2, broker: 'Bourse Directe', accountTypeLabel: 'CTO' }),
+        ]);
 
         const cards = host.querySelectorAll('[data-account-card]');
         expect(cards).toHaveLength(2);
         expect(cards[0].querySelector('[data-account-name]')?.textContent).toContain('PEA');
-        expect(cards[1].querySelector('[data-account-name]')?.textContent).toContain('Compte-titres');
+        expect(cards[1].querySelector('[data-account-name]')?.textContent).toContain('Bourse Directe');
+        expect(cards[1].querySelector('[data-account-name]')?.textContent).toContain('CTO');
         expect(cards[0].querySelector('[data-account-regime]')?.textContent?.trim())
             .toBe('Exonéré après 5 ans, prélèvements sociaux 17,2 %');
     });

@@ -37,8 +37,10 @@ it('colle investi et gain au grand chiffre, comme le tableau de bord', function 
         return summary.top >= value.bottom - 1 && document.querySelector('[data-hero-meta]') === null;
     })()";
 
+    // Sans vente, le gain reste seul mais porte quand même « (latent) » : le mot dit de quoi
+    // parle le montant, il ne dépend pas d'un réalisé posé à côté.
     visit("/asset/{$instrument->id}")
-        ->assertScript("({$normalise})(document.querySelector('[data-hero-summary]'))", 'Investi 800,00 € Gain +200,00 €')
+        ->assertScript("({$normalise})(document.querySelector('[data-hero-summary]'))", 'Investi 800,00 € Gain +200,00 € (latent)')
         ->assertScript($beneathValue, true)
         ->assertNoJavaScriptErrors();
 });
@@ -86,9 +88,9 @@ it('sépare gain latent et gain réalisé dès qu\'une vente est passée', funct
 
     $this->actingAs($user);
 
-    /** Les deux montants vivent dans deux spans : l'écart est un `gap`, pas un blanc du texte. */
+    /** Les deux montants vivent dans deux spans, chacun qualifié : latent d'abord, réalisé ensuite. */
     visit("/asset/{$instrument->id}")
-        ->assertScript("({$normalise})(document.querySelector('[data-gain]'))", 'Gain +160,00 € (latent)+40,00 € (réalisé)')
+        ->assertScript("({$normalise})(document.querySelector('[data-gain]'))", 'Gain +160,00 € (latent) +40,00 € (réalisé)')
         ->assertScript("({$normalise})(document.querySelector('[data-realized-gain]'))", '+40,00 € (réalisé)')
         ->assertNoJavaScriptErrors();
 });
@@ -99,7 +101,7 @@ it('garde le seul repère « Gain » sur un portefeuille sans vente', function (
     $this->actingAs($user);
 
     visit("/asset/{$instrument->id}")
-        ->assertScript("({$normalise})(document.querySelector('[data-hero-summary]'))", 'Investi 800,00 € Gain +200,00 €')
+        ->assertScript("({$normalise})(document.querySelector('[data-hero-summary]'))", 'Investi 800,00 € Gain +200,00 € (latent)')
         ->assertScript("document.querySelectorAll('[data-realized-gain]').length", 0)
         ->assertNoJavaScriptErrors();
 });

@@ -55,6 +55,9 @@ it('ne chiffre que le minimum et le maximum sur le cours d\'un instrument', func
  * Historique en deux paliers : cours à 1 000 € sur la première moitié, oscillant entre 100 et 200 €
  * sur la seconde. Sur plus d'un an la fenêtre d'ouverture ne montre que la seconde moitié, en
  * dessous elle montre tout : les deux cas donnent des extrêmes différents sur les mêmes données.
+ *
+ * Prix de revient à 150 €, entre les deux cours du palier bas : l'axe couvre la valeur et
+ * l'investi, un investi hors de la bande volerait le minimum aux cours qu'on veut lire.
  */
 function steppedHistoryFixture(int $days): array
 {
@@ -75,14 +78,14 @@ function steppedHistoryFixture(int $days): array
         'wallet_id' => $wallet->id,
         'asset_id' => $instrument->id,
         'quantity' => 1,
-        'avg_cost' => 10,
+        'avg_cost' => 150,
     ]);
     Transaction::factory()->buy()->create([
         'user_id' => $user->id,
         'wallet_id' => $wallet->id,
         'asset_id' => $instrument->id,
         'quantity' => 1,
-        'unit_price' => 10,
+        'unit_price' => 150,
         'date' => now()->subDays($days)->format('Y-m-d'),
     ]);
 

@@ -25,7 +25,7 @@ it('détaille le montant investi et le gain sous la valeur', function () use ($n
     $this->actingAs($user);
 
     visit('/actions')
-        ->assertScript("({$normalise})(document.querySelector('[data-portfolio-meta]'))", 'Investi 800 € Gain +200 €')
+        ->assertScript("({$normalise})(document.querySelector('[data-portfolio-meta]'))", 'Investi 800 € Gain +200 € (latent)')
         ->assertNoJavaScriptErrors();
 });
 

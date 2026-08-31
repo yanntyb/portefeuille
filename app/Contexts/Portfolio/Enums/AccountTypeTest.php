@@ -9,7 +9,7 @@ it('rend les valeurs de tous les cas', function () {
 
 it('nomme chaque enveloppe en français', function () {
     expect(AccountType::Pea->getLabel())->toBe('PEA')
-        ->and(AccountType::Cto->getLabel())->toBe('Compte-titres')
+        ->and(AccountType::Cto->getLabel())->toBe('CTO')
         ->and(AccountType::CryptoHotWallet->getLabel())->toBe('Hot wallet')
         ->and(AccountType::CryptoColdWallet->getLabel())->toBe('Cold wallet');
 });
