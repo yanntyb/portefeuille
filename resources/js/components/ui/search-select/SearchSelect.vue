@@ -12,7 +12,7 @@ import {
   ComboboxTrigger,
   ComboboxViewport,
 } from "reka-ui"
-import { ref, watch } from "vue"
+import { nextTick, ref, useTemplateRef, watch } from "vue"
 import type { Ref } from "vue"
 import type { SelectOption } from "@/components/ui/native-select"
 import { cn } from "@/lib/utils"
@@ -66,6 +66,7 @@ const emit = defineEmits<{ change: [value: string] }>()
 
 const open: Ref<boolean> = ref(false)
 const query: Ref<string> = ref("")
+const input = useTemplateRef("input")
 
 /**
  * Sert deux fois : au `display-value` de reka, qui repose le texte du champ quand la valeur change,
@@ -90,6 +91,15 @@ const onChosen = (value: AcceptableValue): void => {
 
   model.value = chosen
   emit("change", chosen)
+
+  /**
+   * Le focus revient au champ et l'intitulé s'y réinstalle : le prochain mot doit le remplacer.
+   * Deux cycles, parce que reka repose le texte à son propre `nextTick` — sélectionner au premier
+   * ne sélectionnerait qu'un champ encore vide.
+   */
+  void nextTick((): void => {
+    void nextTick(selectAll)
+  })
 }
 
 /**
@@ -108,6 +118,23 @@ watch(
   },
   { immediate: true },
 )
+
+/**
+ * Le champ montre l'intitulé retenu, et reka prend sa valeur entière pour terme de recherche. Sans
+ * cette sélection, la frappe suivante se collerait à l'intitulé — « tot » après « AIR LIQUIDE ·
+ * AI.PA » cherchait « totAIR LIQUIDE · AI.PA », donc ne trouvait plus rien.
+ *
+ * On sélectionne donc le texte à chaque fois que le champ (re)devient un point de départ : à la
+ * prise de focus, et juste après un choix, où le focus revient au champ sans nouvel événement. La
+ * première touche remplace la sélection, et le terme de recherche redevient ce qu'on tape.
+ */
+const selectAll = (): void => {
+  const element = input.value?.$el
+
+  if (element instanceof HTMLInputElement) {
+    element.select()
+  }
+}
 
 /**
  * Liste ouverte sans entrée surlignée — l'état vide —, reka laisse passer `Entrée`, qui soumettrait
@@ -135,6 +162,7 @@ const onEnter = (event: KeyboardEvent): void => {
     -->
     <ComboboxInput
       :id="props.id"
+      ref="input"
       v-model="query"
       :display-value="labelOf"
       data-slot="search-select"
@@ -148,6 +176,7 @@ const onEnter = (event: KeyboardEvent): void => {
         'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive',
         props.class,
       )"
+      @focus="selectAll"
       @keydown.enter="onEnter"
     />
 

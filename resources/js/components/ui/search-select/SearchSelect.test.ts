@@ -107,6 +107,26 @@ describe('SearchSelect', () => {
         expect(changed).not.toHaveBeenCalled();
     });
 
+    it('repart d\'une recherche neuve après un choix', async () => {
+        /** Sans écouteur sur le modèle, `defineModel` le tient lui-même : l'intitulé se repose. */
+        const host = document.createElement('div');
+        document.body.append(host);
+        createApp(SearchSelect, { options, modelValue: '' }).mount(host);
+        await settle();
+        await open(host);
+
+        (host.querySelector('[data-search-select-option="3"]') as HTMLElement).click();
+        await settle();
+
+        /**
+         * Le champ montre l'intitulé retenu, et reka prend sa valeur entière pour terme de
+         * recherche : sans la sélection du texte, la frappe suivante s'y collerait et ne
+         * trouverait plus rien.
+         */
+        expect(input(host).selectionStart).toBe(0);
+        expect(input(host).selectionEnd).toBe('Société Générale'.length);
+    });
+
     it('affiche l\'intitulé de la valeur déjà choisie', async () => {
         const { host } = mountSelect({ modelValue: '4' });
         await settle();
