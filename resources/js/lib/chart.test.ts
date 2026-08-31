@@ -889,3 +889,33 @@ describe('buildValueVsInvestedOption — infobulle du détail', () => {
         expect(html).not.toContain('Gain');
     });
 });
+
+describe('buildValueVsInvestedOption — tenue de l\'infobulle', () => {
+    it('confine l\'infobulle au cadre, un nom d\'ETF la poussant sinon hors de l\'écran', () => {
+        const tooltip = detailed(6).tooltip as { confine?: boolean };
+
+        expect(tooltip.confine).toBe(true);
+    });
+
+    it('borne la largeur de l\'infobulle et laisse les longs noms revenir à la ligne', () => {
+        const tooltip = detailed(6).tooltip as { extraCssText?: string };
+
+        expect(tooltip.extraCssText).toContain('max-width');
+        expect(tooltip.extraCssText).toContain('white-space:normal');
+    });
+});
+
+describe('buildValueVsInvestedOption — légende du détail', () => {
+    it('tronque les noms à rallonge, un intitulé d\'ETF prenant sinon toute la largeur', () => {
+        const legend = detailed(1).legend as { formatter: (name: string) => string };
+        const long = 'Amundi PEA Nasdaq-100 UCITS ETF Acc EUR Capitalisant';
+
+        expect(legend.formatter(long)).toBe('Amundi PEA Nasdaq-100 UCI…');
+    });
+
+    it('laisse intact un nom qui tient déjà, plutôt que de le raboter par principe', () => {
+        const legend = detailed(1).legend as { formatter: (name: string) => string };
+
+        expect(legend.formatter('Air Liquide')).toBe('Air Liquide');
+    });
+});

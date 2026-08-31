@@ -321,6 +321,12 @@ function chartTooltip(): TooltipComponentOption {
 
     return {
         trigger: 'axis',
+        /**
+         * Un nom d'ETF tient sur une ligne entière : sans confinement l'infobulle sortait de
+         * l'écran par la gauche, et sans largeur bornée elle y poussait le cadre à elle seule.
+         */
+        confine: true,
+        extraCssText: 'max-width:min(320px,calc(100vw - 2rem));white-space:normal;',
         backgroundColor: colors.tooltipBackground,
         borderColor: colors.tooltipBorder,
         borderRadius: 10,
@@ -680,15 +686,22 @@ const TIME_AXIS_LABEL_HEIGHT = 28;
 /** Hauteur de la bande de légende, glissée entre la graduation temporelle et la mini-timeline. */
 const LEGEND_HEIGHT = 30;
 
+/** Longueur au-delà de laquelle un intitulé de légende est coupé, l'ellipse comprise. */
+const LEGEND_NAME_LENGTH = 26;
+
 /**
  * La légende du mode détail : défilante, une poche pouvant aligner vingt instruments. Le clic sur
  * une pastille masque sa courbe — c'est la seule façon d'isoler une ligne dans un tel faisceau.
+ * Les intitulés y sont coupés : un nom d'ETF complet occuperait à lui seul toute la largeur.
  */
 function seriesLegend(): NonNullable<ChartOption['legend']> {
     const colors = palette();
 
     return {
         type: 'scroll',
+        formatter: (name: string): string => (name.length > LEGEND_NAME_LENGTH
+            ? `${name.slice(0, LEGEND_NAME_LENGTH - 1).trimEnd()}…`
+            : name),
         bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT,
         icon: 'roundRect',
         itemWidth: 10,
