@@ -269,6 +269,14 @@ it('books every transaction of the securities wallets at IBKR', function () {
         ->toBe(['IBKR']);
 });
 
+it('books every securities wallet at IBKR and the crypto one at Kraken', function () {
+    $this->seed(SampleBackupSeeder::class);
+
+    expect(Wallet::query()->where('name', 'PEA')->first()->broker)->toBe('IBKR')
+        ->and(Wallet::query()->where('name', 'CTO')->sole()->broker)->toBe('IBKR')
+        ->and(Wallet::query()->where('name', 'Portefeuille Crypto')->sole()->broker)->toBe('Kraken');
+});
+
 it('restores the tables that have no Eloquent model', function () {
     $this->seed(SampleBackupSeeder::class);
 

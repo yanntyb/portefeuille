@@ -30,6 +30,7 @@ class PortfolioAccounts implements AccountsPort
             fn (AccountLineData $line): WealthAccountData => new WealthAccountData(
                 walletId: $line->walletId,
                 walletName: $line->walletName,
+                broker: $line->broker,
                 accountType: $line->accountType->value,
                 accountTypeLabel: $line->accountType->getLabel(),
                 marketValue: $line->marketValue,

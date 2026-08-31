@@ -106,6 +106,8 @@ export type WealthTransactionLine = NamedTransactionLine;
 export interface WealthAccount {
     walletId: number;
     walletName: string;
+    /** Établissement qui tient le compte ; `null` quand il n'est pas renseigné. */
+    broker: string | null;
     accountType: string;
     accountTypeLabel: string;
     marketValue: number;

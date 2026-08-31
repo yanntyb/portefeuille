@@ -80,8 +80,10 @@ use Illuminate\Support\Carbon;
  * Modifié une dix-neuvième fois : le tableau de bord gagne une section enveloppes, donc `dashboard`
  * une sixième clé — le portefeuille regroupé par compte de détention, avec le régime déclaré de
  * chacun.
+ * Modifié une vingtième fois : chaque enveloppe nomme l'établissement qui tient le compte, donc
+ * `broker` s'ajoute à la ligne d'enveloppe, à côté du nom du portefeuille.
  */
-const SNAPSHOT_VERSION = '70aea6f86ca7a1c51ff43b3338168b4010f44943';
+const SNAPSHOT_VERSION = 'a1a7a9848d5c0ab6e919ca11c8865e48380c0529';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

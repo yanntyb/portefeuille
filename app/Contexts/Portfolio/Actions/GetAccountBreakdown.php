@@ -42,16 +42,18 @@ class GetAccountBreakdown
             return [];
         }
 
-        $openedAt = Wallet::query()
+        $wallets = Wallet::query()
             ->whereIn('id', array_keys($byWallet))
-            ->pluck('opened_at', 'id');
+            ->get(['id', 'opened_at', 'broker'])
+            ->keyBy('id');
 
         $accounts = [];
 
         foreach ($byWallet as $walletId => $walletLines) {
             $accountType = $walletLines[0]->accountType;
             $totals = $this->valuator->totals($walletLines);
-            $opened = $openedAt[$walletId] ?? null;
+            $wallet = $wallets[$walletId] ?? null;
+            $opened = $wallet?->opened_at;
 
             $ineligible = [];
 
@@ -64,6 +66,7 @@ class GetAccountBreakdown
             $accounts[] = new AccountLineData(
                 walletId: $walletId,
                 walletName: $walletLines[0]->walletName,
+                broker: $wallet?->broker,
                 accountType: $accountType,
                 marketValue: $totals['totalValue'],
                 gain: $totals['totalGain'],

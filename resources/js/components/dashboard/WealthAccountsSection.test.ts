@@ -26,6 +26,7 @@ const account = (overrides: Partial<WealthAccount> = {}): WealthAccount => ({
     maturityYears: 5,
     taxRegimeLabel: 'Exonéré après 5 ans, prélèvements sociaux 17,2 %',
     ineligibleAssetNames: [],
+    broker: 'IBKR',
     ...overrides,
 });
 
@@ -42,6 +43,20 @@ async function mountSection(accounts: WealthAccount[]): Promise<HTMLElement> {
 }
 
 describe('section enveloppes du tableau de bord', () => {
+    it('titre la carte du courtier qui tient le compte, l\'enveloppe suivant entre parenthèses', async () => {
+        const host = await mountSection([account()]);
+
+        expect(host.querySelector('[data-account-name]')?.textContent?.replace(/\s+/g, ' ').trim())
+            .toBe('IBKR (PEA)');
+    });
+
+    it('retombe sur le nom du portefeuille quand aucun courtier n\'est renseigné', async () => {
+        const host = await mountSection([account({ broker: null })]);
+
+        expect(host.querySelector('[data-account-name]')?.textContent?.replace(/\s+/g, ' ').trim())
+            .toBe('PEA (PEA)');
+    });
+
     it('arrive repliée : aucune carte avant le premier clic', () => {
         const host = document.createElement('div');
         document.body.append(host);

@@ -47,6 +47,20 @@ it('regroupe les positions par enveloppe et totalise chacune', function () {
         ->and($lines[1]->gain)->toBe(0.0);
 });
 
+it('porte le courtier du portefeuille, qui tient le compte', function () {
+    $user = User::factory()->create();
+    $pea = Wallet::factory()->for($user)->pea()->create(['broker' => 'IBKR']);
+    $cto = Wallet::factory()->for($user)->cto()->create(['broker' => null]);
+
+    holdIn($pea, InstrumentType::Stock, close: 100, qty: 10, avgCost: 80);
+    holdIn($cto, InstrumentType::Stock, close: 50, qty: 4, avgCost: 50);
+
+    $lines = app(GetAccountBreakdown::class)($user);
+
+    expect($lines[0]->broker)->toBe('IBKR')
+        ->and($lines[1]->broker)->toBeNull();
+});
+
 it('rend un pourcentage nul, et non zéro, sur une enveloppe à coût nul', function () {
     $user = User::factory()->create();
     $cto = Wallet::factory()->for($user)->cto()->create();

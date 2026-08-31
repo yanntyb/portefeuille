@@ -22,6 +22,7 @@ class WalletFactory extends Factory
             'name' => fake()->unique()->words(2, true),
             'account_type' => AccountType::Cto,
             'opened_at' => null,
+            'broker' => null,
         ];
     }
 

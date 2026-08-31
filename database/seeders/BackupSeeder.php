@@ -66,8 +66,8 @@ class BackupSeeder extends Seeder
      *
      * La colonne `broker` du dump est presque toujours vide, et porte ailleurs le courtier d'où
      * la ligne avait été importée à l'époque plutôt que celui qui tient le compte aujourd'hui.
-     * Les deux portefeuilles sont chez IBKR : c'est ce que le seeder inscrit. Un portefeuille
-     * absent de cette table garde le courtier du dump.
+     * Les deux portefeuilles sont chez IBKR : c'est ce que le seeder inscrit, sur le portefeuille
+     * comme sur ses transactions. Un portefeuille absent de cette table garde le courtier du dump.
      *
      * @var array<string, string>
      */
@@ -272,15 +272,22 @@ class BackupSeeder extends Seeder
 
             $accountType = self::WALLET_ACCOUNT_TYPES[$name] ?? AccountType::Cto->value;
 
+            $broker = self::WALLET_BROKERS[$name] ?? null;
+
             $wallet = Wallet::query()->firstOrCreate(
                 ['user_id' => $userId, 'name' => $name],
-                ['account_type' => $accountType, 'created_at' => $createdAt, 'updated_at' => $updatedAt],
+                [
+                    'account_type' => $accountType,
+                    'broker' => $broker,
+                    'created_at' => $createdAt,
+                    'updated_at' => $updatedAt,
+                ],
             );
 
             // Rejeu : une ligne créée par un lancement antérieur au typage garde son défaut de
-            // colonne (compte-titres) tant qu'elle n'est pas remise à jour ici.
-            if ($wallet->account_type->value !== $accountType) {
-                $wallet->fill(['account_type' => $accountType])->save();
+            // colonne (compte-titres, courtier vide) tant qu'elle n'est pas remise à jour ici.
+            if ($wallet->account_type->value !== $accountType || $wallet->broker !== $broker) {
+                $wallet->fill(['account_type' => $accountType, 'broker' => $broker])->save();
             }
 
             $this->wallets[(int) $dumpId] = $wallet->id;
@@ -371,7 +378,15 @@ class BackupSeeder extends Seeder
             return;
         }
 
-        $wallet = Wallet::query()->firstOrCreate(['user_id' => $userId, 'name' => self::CRYPTO_WALLET]);
+        $wallet = Wallet::query()->firstOrCreate(
+            ['user_id' => $userId, 'name' => self::CRYPTO_WALLET],
+            ['broker' => self::CRYPTO_BROKER],
+        );
+
+        // Rejeu : un portefeuille créé avant la colonne `broker` la garde vide sans cette reprise.
+        if ($wallet->broker !== self::CRYPTO_BROKER) {
+            $wallet->fill(['broker' => self::CRYPTO_BROKER])->save();
+        }
 
         // Idempotence : purge (mass delete ne déclenche pas l'observer), puis reconstruit.
         Transaction::query()->where('wallet_id', $wallet->id)->delete();

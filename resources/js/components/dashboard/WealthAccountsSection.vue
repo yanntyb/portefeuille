@@ -43,7 +43,7 @@ const maturity = (account: WealthAccount): string | null => {
                 >
                     <span class="flex items-center gap-3">
                         <span data-account-name class="min-w-0 flex-1 truncate font-semibold">
-                            {{ account.walletName }}
+                            {{ account.broker ?? account.walletName }}
                             <span class="text-muted-foreground">({{ account.accountTypeLabel }})</span>
                         </span>
 

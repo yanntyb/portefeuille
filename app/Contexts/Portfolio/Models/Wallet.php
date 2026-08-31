@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
  * @property int $user_id
  * @property string $name
  * @property AccountType $account_type
+ * @property ?string $broker
  * @property ?Carbon $opened_at
  */
 #[UseFactory(WalletFactory::class)]

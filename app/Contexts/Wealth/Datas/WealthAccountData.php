@@ -18,6 +18,8 @@ readonly class WealthAccountData implements JsonSerializable
     public function __construct(
         public int $walletId,
         public string $walletName,
+        /** Établissement qui tient le compte ; `null` quand il n'est pas renseigné. */
+        public ?string $broker,
         public string $accountType,
         public string $accountTypeLabel,
         public float $marketValue,
@@ -35,6 +37,7 @@ readonly class WealthAccountData implements JsonSerializable
         return [
             'walletId' => $this->walletId,
             'walletName' => $this->walletName,
+            'broker' => $this->broker,
             'accountType' => $this->accountType,
             'accountTypeLabel' => $this->accountTypeLabel,
             'marketValue' => $this->marketValue,

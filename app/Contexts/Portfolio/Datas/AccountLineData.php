@@ -21,6 +21,8 @@ readonly class AccountLineData implements JsonSerializable
     public function __construct(
         public int $walletId,
         public string $walletName,
+        /** Établissement qui tient le compte ; `null` quand il n'est pas renseigné. */
+        public ?string $broker,
         public AccountType $accountType,
         public float $marketValue,
         public float $gain,
@@ -37,6 +39,7 @@ readonly class AccountLineData implements JsonSerializable
         return [
             'walletId' => $this->walletId,
             'walletName' => $this->walletName,
+            'broker' => $this->broker,
             'accountType' => $this->accountType->value,
             'accountTypeLabel' => $this->accountType->getLabel(),
             'marketValue' => $this->marketValue,
