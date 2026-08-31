@@ -21,3 +21,10 @@ paths:
 `TransactionFlow` est le seul site du montant d'une ligne : achat majoré de ses frais, vente minorée des siens, toujours rendu positif. Les adaptateurs de transactions (`MarketView\Infrastructure\PortfolioTransactions`, `Wealth\Infrastructure\PortfolioLedger`) l'appellent au lieu de refaire `quantité × prix` ; le solde d'une année, somme des montants, en hérite côté front.
 
 `Valuation\Services\ValuationCalculator` tient son propre PRU pour ses ventes : les frais y entrent aussi, sans quoi son investi et son coût diraient deux montants différents.
+
+## AccountType est le seul site des règles d'enveloppe
+`Portfolio\Enums\AccountType` porte tout ce que dit une enveloppe de détention : libellé, régime d'imposition, maturité, expositions admises. Les règles sont déclaratives — affichées, jamais appliquées à un calcul. L'application n'estime aucun impôt.
+
+Le plafond de versement en est délibérément absent : `TransactionType` n'a que `Buy`/`Sell`, aucun mouvement d'espèces, donc aucun montant versé n'est calculable, et un plafond sans son solde ne renseigne sur rien. Un cumul de flux nets serait faux — réinvestir le produit d'une vente ne consomme pas de plafond.
+
+Une position se lit par actif ET par enveloppe : `holdings_projection` a pour clé primaire `(asset_id, wallet_id)`, et `HoldingLineData` porte `walletId`. Tout regroupement côté front doit donc clé sur les deux — `instrumentList.ts` le faisait sur `assetId` seul et confondait les deux lignes d'un titre tenu dans deux comptes.
