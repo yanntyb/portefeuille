@@ -71,6 +71,23 @@ describe('section enveloppes du tableau de bord', () => {
         expect(unknown.querySelector('[data-account-age]')).toBeNull();
     });
 
+    it('accorde « 1 an » au singulier, ancienneté comme seuil', async () => {
+        const oneYearOld = await mountSection([account({ ageInYears: 1, maturityYears: 5 })]);
+        const oneYearOldText = oneYearOld.querySelector('[data-account-age]')?.textContent;
+        expect(oneYearOldText).toContain('1 an');
+        expect(oneYearOldText).not.toContain('1 ans');
+
+        const oneYearToGo = await mountSection([account({ ageInYears: 4, maturityYears: 5 })]);
+        const oneYearToGoText = oneYearToGo.querySelector('[data-account-age]')?.textContent;
+        expect(oneYearToGoText).toContain('dans 1 an');
+        expect(oneYearToGoText).not.toContain('dans 1 ans');
+
+        const oneYearThreshold = await mountSection([account({ ageInYears: 1, maturityYears: 1 })]);
+        const oneYearThresholdText = oneYearThreshold.querySelector('[data-account-age]')?.textContent;
+        expect(oneYearThresholdText).toContain('Seuil de 1 an franchi');
+        expect(oneYearThresholdText).not.toContain('Seuil de 1 ans');
+    });
+
     it('signale les actifs que l\'enveloppe n\'admet pas', async () => {
         const host = await mountSection([account({ ineligibleAssetNames: ['Bitcoin'] })]);
 

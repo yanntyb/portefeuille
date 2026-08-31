@@ -12,9 +12,12 @@ const rows = computed<WealthAccount[]>(() => props.accounts ?? []);
 
 const hasAccounts = computed<boolean>(() => rows.value.length > 0);
 
+/** Accord du singulier : « 1 an », jamais « 1 ans ». */
+const years = (n: number): string => (n === 1 ? '1 an' : `${n} ans`);
+
 /** L'ancienneté ne s'affiche pas sans date d'ouverture : un compte « 0 an » mentirait. */
 const age = (account: WealthAccount): string | null =>
-    account.ageInYears === null ? null : `${account.ageInYears} ans`;
+    account.ageInYears === null ? null : years(account.ageInYears);
 
 const maturity = (account: WealthAccount): string | null => {
     if (account.maturityYears === null || account.ageInYears === null) {
@@ -22,8 +25,8 @@ const maturity = (account: WealthAccount): string | null => {
     }
 
     return account.ageInYears >= account.maturityYears
-        ? `Seuil de ${account.maturityYears} ans franchi`
-        : `Seuil de ${account.maturityYears} ans dans ${account.maturityYears - account.ageInYears} ans`;
+        ? `Seuil de ${years(account.maturityYears)} franchi`
+        : `Seuil de ${years(account.maturityYears)} dans ${years(account.maturityYears - account.ageInYears)}`;
 };
 </script>
 
