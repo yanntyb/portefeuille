@@ -792,21 +792,27 @@ const detailed = (count: number, months = 36): ChartOption => {
 };
 
 describe('buildValueVsInvestedOption — détail par instrument', () => {
-    it('ajoute une courbe par instrument derrière le total, qui reste en tête', () => {
+    it('ne trace que les instruments : empilés, leur sommet redit déjà la valeur totale', () => {
         expect(seriesOf(detailed(3)).map((serie) => serie.name))
-            .toEqual(['Valeur', 'Investi', 'Titre 1', 'Titre 2', 'Titre 3']);
+            .toEqual(['Titre 1', 'Titre 2', 'Titre 3']);
     });
 
-    it('trace chaque instrument au trait fin, sans aire ni pastille : le total garde la vedette', () => {
-        const [, , first] = seriesOf(detailed(3));
+    it('empile les instruments sur une même pile, le tracé du haut valant le total', () => {
+        const stacks = seriesOf(detailed(3)).map((serie) => serie.stack);
 
-        expect(first.lineStyle?.width).toBe(1.25);
-        expect(first.areaStyle).toBeUndefined();
+        expect(new Set(stacks).size).toBe(1);
+        expect(stacks[0]).toBeDefined();
+    });
+
+    it('remplit chaque bande d\'une aire pleine, sans quoi l\'empilement ne se lirait pas', () => {
+        const [first] = seriesOf(detailed(3));
+
+        expect(first.areaStyle).toBeDefined();
         expect(first.markPoint).toBeUndefined();
     });
 
     it('date les points de chaque instrument, l\'axe temporel attendant des couples', () => {
-        const [, , first] = seriesOf(detailed(1, 3));
+        const [first] = seriesOf(detailed(1, 3));
 
         expect(first.data).toEqual([
             ['2023-01-01', 100],
@@ -816,21 +822,18 @@ describe('buildValueVsInvestedOption — détail par instrument', () => {
     });
 
     it('donne à chaque instrument sa propre teinte, pour qu\'aucune paire ne se confonde', () => {
-        const colors = detailed(6).color as string[];
-
-        expect(new Set(colors.slice(2)).size).toBe(6);
+        expect(new Set(detailed(6).color as string[]).size).toBe(6);
     });
 
-    it('recycle la palette au-delà de ses teintes, plutôt que de laisser une courbe sans couleur', () => {
-        const colors = detailed(12).color as string[];
-        const instruments = colors.slice(2);
+    it('recycle la palette au-delà de ses teintes, plutôt que de laisser une bande sans couleur', () => {
+        const instruments = detailed(12).color as string[];
 
         expect(instruments).toHaveLength(12);
         expect(instruments.every((color: string): boolean => typeof color === 'string' && color !== '')).toBe(true);
         expect(instruments[10]).toBe(instruments[0]);
     });
 
-    it('ouvre une légende défilante, seul moyen de retrouver une courbe parmi vingt', () => {
+    it('ouvre une légende défilante, seul moyen de retrouver une bande parmi vingt', () => {
         const legend = detailed(20).legend as { type?: string; show?: boolean };
 
         expect(legend).toBeDefined();
@@ -856,37 +859,36 @@ const detailTooltipHtml = (option: ChartOption, dataIndex: number, visible: stri
 };
 
 describe('buildValueVsInvestedOption — infobulle du détail', () => {
-    it('chiffre chaque instrument survolé, sous le total qu\'ils composent', () => {
-        const html = detailTooltipHtml(detailed(2), 10, ['Valeur', 'Investi', 'Titre 1', 'Titre 2'])
-            .replace(/[\xa0 ]/g, ' ');
+    it('chiffre chaque instrument survolé', () => {
+        const html = detailTooltipHtml(detailed(2), 10, ['Titre 1', 'Titre 2'])
+            .replace(/[\xa0\u202f]/g, ' ');
 
-        expect(html).toContain('Valeur');
         expect(html).toContain('Titre 1');
         expect(html).toContain('110 €');
         expect(html).toContain('Titre 2');
         expect(html).toContain('210 €');
     });
 
+    it('tait la valeur et l\'investi, que le mode détail ne trace plus', () => {
+        const html = detailTooltipHtml(detailed(2), 10, ['Titre 1', 'Titre 2']);
+
+        expect(html).not.toContain('Valeur');
+        expect(html).not.toContain('Investi');
+        expect(html).not.toContain('Gain');
+    });
+
     it('classe les instruments du plus lourd au plus léger, la lecture cherchant les gros porteurs', () => {
-        const html = detailTooltipHtml(detailed(3), 10, ['Valeur', 'Investi', 'Titre 1', 'Titre 2', 'Titre 3']);
+        const html = detailTooltipHtml(detailed(3), 10, ['Titre 1', 'Titre 2', 'Titre 3']);
 
         expect(html.indexOf('Titre 3')).toBeLessThan(html.indexOf('Titre 2'));
         expect(html.indexOf('Titre 2')).toBeLessThan(html.indexOf('Titre 1'));
     });
 
-    it('tait la courbe que le lecteur a masquée depuis la légende', () => {
-        const html = detailTooltipHtml(detailed(3), 10, ['Valeur', 'Investi', 'Titre 1', 'Titre 3']);
+    it('tait la bande que le lecteur a masquée depuis la légende', () => {
+        const html = detailTooltipHtml(detailed(3), 10, ['Titre 1', 'Titre 3']);
 
         expect(html).toContain('Titre 1');
         expect(html).not.toContain('Titre 2');
-    });
-
-    it('retire le gain dès que l\'une des deux courbes qui le mesurent est masquée', () => {
-        const html = detailTooltipHtml(detailed(2), 10, ['Valeur', 'Titre 1']);
-
-        expect(html).toContain('Valeur');
-        expect(html).not.toContain('Investi');
-        expect(html).not.toContain('Gain');
     });
 });
 
@@ -917,5 +919,24 @@ describe('buildValueVsInvestedOption — légende du détail', () => {
         const legend = detailed(1).legend as { formatter: (name: string) => string };
 
         expect(legend.formatter('Air Liquide')).toBe('Air Liquide');
+    });
+});
+
+describe('buildValueVsInvestedOption — assise du détail', () => {
+    it('ancre l\'axe à zéro sous la pile, dont l\'épaisseur des bandes serait sinon fausse', () => {
+        const yAxis = yAxisOf(detailed(3));
+
+        expect(yAxis.min({ min: 300, max: 6000 })).toBe(0);
+        expect(yAxis.max({ min: 300, max: 6000 })).toBe(6000);
+    });
+
+    it('chiffre le zéro qu\'il vient d\'imposer, l\'étiquette du bas donnant l\'échelle', () => {
+        const option = detailed(3);
+
+        expect(yAxisLabel(option, 0, { min: 300, max: 6000 }).replace(/[\xa0 ]/g, ' ')).toBe('0 €');
+    });
+
+    it('garde le cadrage serré hors détail, où l\'ancrage à zéro écraserait la variation', () => {
+        expect(yAxisOf(valueVsInvested(36)).min({ min: 900, max: 1350 })).toBe(900);
     });
 });

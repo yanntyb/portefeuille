@@ -91,13 +91,13 @@ describe('bascule entre total et détail', () => {
         expect(host.querySelector('[data-segment="total"]')?.getAttribute('aria-selected')).toBe('true');
     });
 
-    it('trace chaque instrument de la poche dès que le lecteur choisit le détail', async () => {
+    it('empile les instruments de la poche dès que le lecteur choisit le détail', async () => {
         const host = mountSection(3);
         await settle(host);
 
         await choose(host, 'detail');
 
-        expect(seriesNames(lastPainted())).toEqual(['Valeur', 'Investi', 'Titre 1', 'Titre 2', 'Titre 3']);
+        expect(seriesNames(lastPainted())).toEqual(['Titre 1', 'Titre 2', 'Titre 3']);
     });
 
     it('revient au total, la bascule ne devant pas être un aller simple', async () => {

@@ -248,13 +248,20 @@ type ChartFrameInput = {
     description: string;
     /** Largeur imposée par un cadre partagé avec d'autres séries ; sinon celle de ces valeurs. */
     gutter?: number;
+    /**
+     * Assoit l'axe sur zéro au lieu du minimum visible. Réservé aux tracés empilés : l'épaisseur
+     * d'une bande n'y a de sens que mesurée depuis zéro, un cadrage serré la ferait mentir.
+     */
+    anchoredAtZero?: boolean;
 };
 
 /**
  * Ossature partagée par les trois graphes : axes, grille et cadre d'infobulle suivent le thème.
  * La description accessible est rédigée à la main plutôt que laissée au gabarit anglais d'ECharts.
  */
-function chartFrame({ valueFormatter, values, bottom, description, gutter }: ChartFrameInput): ChartOption {
+function chartFrame(
+    { valueFormatter, values, bottom, description, gutter, anchoredAtZero = false }: ChartFrameInput,
+): ChartOption {
     const colors = palette();
 
     /**
@@ -265,9 +272,9 @@ function chartFrame({ valueFormatter, values, bottom, description, gutter }: Cha
     let extent: AxisExtent = { min: Number.NaN, max: Number.NaN };
 
     const rememberExtent = (bounds: AxisExtent): AxisExtent => {
-        extent = bounds;
+        extent = anchoredAtZero ? { min: 0, max: bounds.max } : bounds;
 
-        return bounds;
+        return extent;
     };
 
     return {
@@ -389,20 +396,30 @@ function seriesColor(rank: number): string {
     return tones[rank % tones.length] as string;
 }
 
+/** Nom de la pile sur laquelle les bandes du détail s'additionnent. */
+const INSTRUMENT_STACK = 'instruments';
+
 /**
- * Une courbe par instrument de la poche, ajoutée derrière le duo valeur / investi. Trait fin, sans
- * aire ni pastille : le total garde la vedette, ces tracés ne font que le décomposer.
+ * Une bande par instrument de la poche, empilées : leur sommet vaut la valeur totale, que ce mode
+ * n'a donc plus à tracer à part. L'aire est pleine — c'est elle qui donne l'épaisseur de chaque
+ * ligne, seule lecture qu'un empilement autorise.
  */
 function instrumentSeries(labels: string[], perAsset: AssetSeries[]): LineSeriesOption[] {
-    return perAsset.map((asset: AssetSeries, rank: number): LineSeriesOption => ({
-        name: asset.name,
-        type: 'line',
-        smooth: true,
-        symbol: 'none',
-        sampling: 'lttb',
-        lineStyle: { width: 1.25, color: seriesColor(rank) },
-        data: datedPoints(labels, asset.value),
-    }));
+    return perAsset.map((asset: AssetSeries, rank: number): LineSeriesOption => {
+        const color = seriesColor(rank);
+
+        return {
+            name: asset.name,
+            type: 'line',
+            stack: INSTRUMENT_STACK,
+            smooth: true,
+            symbol: 'none',
+            sampling: 'lttb',
+            lineStyle: { width: 1, color },
+            areaStyle: { color: rgba(color, useThemeStore().isDark ? 0.55 : 0.45) },
+            data: datedPoints(labels, asset.value),
+        };
+    });
 }
 
 /** Diamètre de la pastille de dernière valeur, la plus grosse du tracé. */
@@ -548,20 +565,16 @@ function visibleSeries(params: unknown): Set<string> {
 }
 
 /**
- * L'infobulle du mode détail : le total, puis chaque instrument survolé du plus lourd au plus
- * léger. Les montants se relisent dans les tableaux d'origine plutôt que dans les points d'ECharts,
- * qui portent des couples datés — seule la visibilité se lit dans `params`.
+ * L'infobulle du mode détail : chaque instrument survolé, du plus lourd au plus léger. Les montants
+ * se relisent dans les séries d'origine plutôt que dans les points d'ECharts — empilés, ceux-ci
+ * portent la somme des bandes du dessous, pas la valeur de l'instrument. Seule la visibilité se lit
+ * dans `params`, que la légende a filtré.
  */
 function detailTooltip(
     labels: string[],
-    value: number[],
-    invested: number[],
     perAsset: AssetSeries[],
     valueFormatter: ValueFormatter,
-    dividends: DividendMark[],
 ): TooltipComponentOption {
-    const colors = palette();
-
     return {
         ...chartTooltip(),
         formatter: (params: unknown): string => {
@@ -571,9 +584,6 @@ function detailTooltip(
             }
 
             const visible = visibleSeries(params);
-            const totalValue = value[index] ?? 0;
-            const totalInvested = invested[index] ?? 0;
-            const gain = totalValue - totalInvested;
 
             const instrumentRows = perAsset
                 .map((asset: AssetSeries, rank: number) => ({ asset, rank, amount: asset.value[index] ?? 0 }))
@@ -582,26 +592,7 @@ function detailTooltip(
                 .map((row): string => tooltipRow(seriesColor(row.rank), row.asset.name, valueFormatter(row.amount)))
                 .join('');
 
-            const dividendRows = dividendsAt(dividends, index)
-                .map((mark: DividendMark): string => tooltipRow(
-                    colors.gain,
-                    `Dividende · ${mark.dateLabel}`,
-                    mark.amountLabel,
-                ))
-                .join('');
-
-            return tooltipTitle(labels[index] ?? '')
-                + (visible.has('Valeur') ? tooltipRow(colors.value, 'Valeur', valueFormatter(totalValue)) : '')
-                + (visible.has('Investi') ? tooltipRow(colors.invested, 'Investi', valueFormatter(totalInvested)) : '')
-                + (visible.has('Valeur') && visible.has('Investi')
-                    ? tooltipRow(
-                        gain >= 0 ? colors.gain : colors.loss,
-                        gain >= 0 ? 'Gain' : 'Perte',
-                        `${gain >= 0 ? '+' : '−'} ${valueFormatter(Math.abs(gain))}`,
-                    )
-                    : '')
-                + instrumentRows
-                + dividendRows;
+            return tooltipTitle(labels[index] ?? '') + instrumentRows;
         },
     };
 }
@@ -778,19 +769,17 @@ export function buildValueVsInvestedOption(
             bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT + legendBand,
             description,
             gutter,
+            anchoredAtZero: detailed,
         }),
-        color: [
-            colors.value,
-            colors.invested,
-            ...perAsset.map((_asset: AssetSeries, rank: number): string => seriesColor(rank)),
-        ],
-        series: [
-            ...valueSeries(labels, value, invested, dividends),
-            ...instrumentSeries(labels, perAsset),
-        ],
+        color: detailed
+            ? perAsset.map((_asset: AssetSeries, rank: number): string => seriesColor(rank))
+            : [colors.value, colors.invested],
+        series: detailed
+            ? instrumentSeries(labels, perAsset)
+            : valueSeries(labels, value, invested, dividends),
         ...(detailed ? { legend: seriesLegend() } : {}),
         tooltip: detailed
-            ? detailTooltip(labels, value, invested, perAsset, valueFormatter, dividends)
+            ? detailTooltip(labels, perAsset, valueFormatter)
             : valueVsInvestedTooltip(labels, value, invested, valueFormatter, dividends),
         dataZoom: [wealthZoomSlider(visible)],
     };

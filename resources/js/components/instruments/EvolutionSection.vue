@@ -35,7 +35,7 @@ const segments: Segment[] = [
 const detailed = computed<AssetSeries[]>(() => (mode.value === 'detail' ? perAsset.value : []));
 
 const description = computed<string>(() => (mode.value === 'detail'
-    ? 'Valeur de chaque instrument de la poche, sous la valeur totale du portefeuille.'
+    ? 'Valeur de chaque instrument de la poche, empilée : le sommet vaut le total.'
     : 'Valeur du portefeuille comparée au montant investi.'));
 </script>
 
