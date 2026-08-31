@@ -68,6 +68,127 @@ class CashLedger
     }
 
     /**
+     * De quoi le cash restant est fait : ce qui vient d'un apport, et ce qui vient de chaque
+     * exposition. Un débit consomme les crédits du plus ancien au plus récent — la lecture par
+     * exposition d'une page se lit ici, jamais sur un second solde.
+     *
+     * @param  list<CashMovementData>  $movements
+     * @return array{deposits: float, exposures: array<string, float>}
+     */
+    public function compositionAt(array $movements, string $date): array
+    {
+        /** @var list<array{exposure: ?string, amount: float}> $credits */
+        $credits = [];
+
+        foreach ($this->chronological($movements) as $movement) {
+            if ($movement->date > $date) {
+                continue;
+            }
+
+            if ($movement->delta >= 0.0) {
+                $credits[] = [
+                    'exposure' => $movement->exposure?->value,
+                    'amount' => $movement->delta,
+                ];
+
+                continue;
+            }
+
+            $this->consume($credits, -$movement->delta);
+        }
+
+        $deposits = 0.0;
+        $exposures = [];
+
+        foreach ($credits as $credit) {
+            if ($credit['amount'] <= 0.0) {
+                continue;
+            }
+
+            if ($credit['exposure'] === null) {
+                $deposits = round($deposits + $credit['amount'], 2);
+
+                continue;
+            }
+
+            $exposures[$credit['exposure']] = round(($exposures[$credit['exposure']] ?? 0.0) + $credit['amount'], 2);
+        }
+
+        return ['deposits' => $deposits, 'exposures' => $exposures];
+    }
+
+    /**
+     * Ce que le porteur a réellement sorti de sa poche : versements moins retraits. L'imputation
+     * suit l'achat financé — réinvestir le produit d'une vente ne crée aucun apport, le sortir
+     * vers une autre exposition déplace celui d'origine.
+     *
+     * @param  list<CashMovementData>  $movements
+     * @return array{total: float, byExposure: array<string, float>}
+     */
+    public function netContributions(array $movements): array
+    {
+        /** @var list<array{exposure: ?string, amount: float}> $credits */
+        $credits = [];
+        $total = 0.0;
+        $byExposure = [];
+
+        foreach ($this->chronological($movements) as $movement) {
+            if ($movement->delta >= 0.0) {
+                $credits[] = ['exposure' => $movement->isDeposit ? null : $movement->exposure?->value, 'amount' => $movement->delta];
+
+                if ($movement->isDeposit) {
+                    $total = round($total + $movement->delta, 2);
+                }
+
+                continue;
+            }
+
+            $spent = $this->consume($credits, -$movement->delta);
+
+            if ($movement->isWithdrawal) {
+                $total = round($total - $spent['deposits'], 2);
+
+                continue;
+            }
+
+            if ($movement->exposure !== null && $spent['deposits'] > 0.0) {
+                $key = $movement->exposure->value;
+                $byExposure[$key] = round(($byExposure[$key] ?? 0.0) + $spent['deposits'], 2);
+            }
+        }
+
+        return ['total' => $total, 'byExposure' => $byExposure];
+    }
+
+    /**
+     * Épuise les crédits les plus anciens à hauteur du débit, et rend ce qui a été pris à un apport
+     * plutôt qu'à une exposition.
+     *
+     * @param  list<array{exposure: ?string, amount: float}>  $credits
+     * @return array{deposits: float}
+     */
+    private function consume(array &$credits, float $debit): array
+    {
+        $fromDeposits = 0.0;
+
+        foreach ($credits as $index => $credit) {
+            if ($debit <= 0.0) {
+                break;
+            }
+
+            $taken = min($credit['amount'], $debit);
+            $credits[$index]['amount'] = round($credit['amount'] - $taken, 2);
+            $debit = round($debit - $taken, 2);
+
+            if ($credit['exposure'] === null) {
+                $fromDeposits = round($fromDeposits + $taken, 2);
+            }
+        }
+
+        return ['deposits' => $fromDeposits];
+    }
+
+    /**
      * Les crédits avant les débits à date égale : un achat et la vente qui le finance saisis le
      * même jour ne doivent pas déduire un versement pour un manque d'un instant.
      *
