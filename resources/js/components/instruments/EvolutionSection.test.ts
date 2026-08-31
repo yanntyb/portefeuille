@@ -88,7 +88,11 @@ describe('bascule entre total et détail', () => {
         await settle(host);
 
         expect(seriesNames(lastPainted())).toEqual(['Valeur', 'Investi']);
-        expect(host.querySelector('[data-segment="total"]')?.getAttribute('aria-selected')).toBe('true');
+
+        const segment = host.querySelector('[data-segment="total"]');
+
+        expect(segment?.getAttribute('aria-selected')).toBe('true');
+        expect(segment?.textContent?.trim()).toBe('Valeur');
     });
 
     it('empile les instruments de la poche dès que le lecteur choisit le détail', async () => {

@@ -28,7 +28,7 @@ const invested = computed<number[]>(
 const hasDetail = computed<boolean>(() => perAsset.value.length > 1);
 
 const segments: Segment[] = [
-    { value: 'total', label: 'Total' },
+    { value: 'total', label: 'Valeur' },
     { value: 'detail', label: 'Détail' },
 ];
 
