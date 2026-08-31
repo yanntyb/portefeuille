@@ -101,3 +101,21 @@ export interface WealthIncome {
  * lignes, d'où le type partagé — le nom reste, c'est celui que le tableau de bord emploie.
  */
 export type WealthTransactionLine = NamedTransactionLine;
+
+/** Une enveloppe de détention : ce qu'elle tient, et les règles qu'elle déclare. */
+export interface WealthAccount {
+    walletId: number;
+    walletName: string;
+    accountType: string;
+    accountTypeLabel: string;
+    marketValue: number;
+    gain: number;
+    gainPct: number | null;
+    /** Ancienneté en années ; `null` quand la date d'ouverture est inconnue. */
+    ageInYears: number | null;
+    /** Années de détention avant le régime favorable ; `null` quand l'enveloppe n'en a pas. */
+    maturityYears: number | null;
+    taxRegimeLabel: string;
+    /** Actifs que l'enveloppe n'admet pas. Vide dans le cas normal. */
+    ineligibleAssetNames: string[];
+}

@@ -5,12 +5,20 @@ import AppPage from '@/components/AppPage.vue';
 import WealthClassesSection from '@/components/dashboard/WealthClassesSection.vue';
 import WealthEvolutionSection from '@/components/dashboard/WealthEvolutionSection.vue';
 import WealthIncomeSection from '@/components/dashboard/WealthIncomeSection.vue';
+import WealthAccountsSection from '@/components/dashboard/WealthAccountsSection.vue';
 import WealthSectorsSection from '@/components/dashboard/WealthSectorsSection.vue';
 import WealthSummarySection from '@/components/dashboard/WealthSummarySection.vue';
 import WealthTransactionsSection from '@/components/dashboard/WealthTransactionsSection.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
 import type { SyncState } from '@/lib/sync';
-import type { WealthIncome, WealthOverview, WealthSector, WealthSeries, WealthTransactionLine } from '@/lib/wealth';
+import type {
+    WealthAccount,
+    WealthIncome,
+    WealthOverview,
+    WealthSector,
+    WealthSeries,
+    WealthTransactionLine,
+} from '@/lib/wealth';
 import { useSnapshotStore } from '@/stores/snapshot';
 
 const props = defineProps<{
@@ -20,6 +28,7 @@ const props = defineProps<{
     income?: WealthIncome;
     sectors?: WealthSector[];
     transactions?: WealthTransactionLine[];
+    accounts?: WealthAccount[];
 }>();
 
 const snapshot = useSnapshotStore();
@@ -29,6 +38,7 @@ const series = aheadOfNetwork(() => props.series, () => snapshot.dashboard?.seri
 const income = aheadOfNetwork(() => props.income, () => snapshot.dashboard?.income);
 const sectors = aheadOfNetwork(() => props.sectors, () => snapshot.dashboard?.sectors);
 const transactions = aheadOfNetwork(() => props.transactions, () => snapshot.dashboard?.transactions);
+const accounts = aheadOfNetwork(() => props.accounts, () => snapshot.dashboard?.accounts);
 </script>
 
 <template>
@@ -47,6 +57,10 @@ const transactions = aheadOfNetwork(() => props.transactions, () => snapshot.das
 
         <!-- Ce que le patrimoine rapporte, puis ce qui l'a fait bouger. -->
         <WealthTransactionsSection :transactions="transactions" />
+
+        <!-- Sous quel régime tout cela est tenu : la lecture par enveloppe, toutes classes
+             confondues — un PEA tient des actions, un compte-titres tient le reste. -->
+        <WealthAccountsSection :accounts="accounts" />
 
         <!-- La lecture la plus fine ferme la page : les secteurs qui traversent les classes. -->
         <WealthSectorsSection :sectors="sectors" />

@@ -19,7 +19,14 @@ import type {
     RealEstateSeries,
 } from './realEstate';
 import type { SectorSlice } from './sector';
-import type { WealthIncome, WealthOverview, WealthSector, WealthSeries, WealthTransactionLine } from './wealth';
+import type {
+    WealthAccount,
+    WealthIncome,
+    WealthOverview,
+    WealthSector,
+    WealthSeries,
+    WealthTransactionLine,
+} from './wealth';
 
 /**
  * Miroir exact de ce que sert `GET /instantane`. Chaque bloc reprend les noms de props de la page
@@ -32,6 +39,7 @@ export interface DashboardSnapshot {
     income: WealthIncome;
     sectors: WealthSector[];
     transactions: WealthTransactionLine[];
+    accounts: WealthAccount[];
 }
 
 /** Une page d'exposition. `sectorBreakdown` n'est servi que par celles qui ont des secteurs. */
