@@ -69,16 +69,18 @@ class CashLedger
 
     /**
      * De quoi le cash restant est fait : ce qui vient d'un apport, et ce qui vient de chaque
-     * exposition. Un débit consomme les crédits du plus ancien au plus récent — la lecture par
-     * exposition d'une page se lit ici, jamais sur un second solde.
+     * exposition, toutes enveloppes confondues. Un débit consomme les crédits du plus ancien au
+     * plus récent, mais seulement ceux de sa propre enveloppe — un pool de crédits par `walletId`,
+     * comme `missingDeposits()` cloisonne ses soldes, sans quoi le débit d'une enveloppe
+     * consommerait le crédit d'une autre. Seule la sortie agrège toutes les enveloppes.
      *
      * @param  list<CashMovementData>  $movements
      * @return array{deposits: float, exposures: array<string, float>}
      */
     public function compositionAt(array $movements, string $date): array
     {
-        /** @var list<array{exposure: ?string, amount: float}> $credits */
-        $credits = [];
+        /** @var array<int, list<array{exposure: ?string, amount: float}>> $creditsByWallet */
+        $creditsByWallet = [];
 
         foreach ($this->chronological($movements) as $movement) {
             if ($movement->date > $date) {
@@ -86,55 +88,61 @@ class CashLedger
             }
 
             if ($movement->delta >= 0.0) {
-                $credits[] = [
-                    'exposure' => $movement->exposure?->value,
+                $creditsByWallet[$movement->walletId][] = [
+                    'exposure' => $movement->isDeposit ? null : $movement->exposure?->value,
                     'amount' => $movement->delta,
                 ];
 
                 continue;
             }
 
+            $credits = $creditsByWallet[$movement->walletId] ?? [];
             $this->consume($credits, -$movement->delta);
+            $creditsByWallet[$movement->walletId] = $credits;
         }
 
         $deposits = 0.0;
         $exposures = [];
 
-        foreach ($credits as $credit) {
-            if ($credit['amount'] <= 0.0) {
-                continue;
+        foreach ($creditsByWallet as $credits) {
+            foreach ($credits as $credit) {
+                if ($credit['amount'] <= 0.0) {
+                    continue;
+                }
+
+                if ($credit['exposure'] === null) {
+                    $deposits = round($deposits + $credit['amount'], 2);
+
+                    continue;
+                }
+
+                $exposures[$credit['exposure']] = round(($exposures[$credit['exposure']] ?? 0.0) + $credit['amount'], 2);
             }
-
-            if ($credit['exposure'] === null) {
-                $deposits = round($deposits + $credit['amount'], 2);
-
-                continue;
-            }
-
-            $exposures[$credit['exposure']] = round(($exposures[$credit['exposure']] ?? 0.0) + $credit['amount'], 2);
         }
 
         return ['deposits' => $deposits, 'exposures' => $exposures];
     }
 
     /**
-     * Ce que le porteur a réellement sorti de sa poche : versements moins retraits. L'imputation
-     * suit l'achat financé — réinvestir le produit d'une vente ne crée aucun apport, le sortir
-     * vers une autre exposition déplace celui d'origine.
+     * Ce que le porteur a réellement sorti de sa poche : versements moins retraits, toutes
+     * enveloppes confondues. L'imputation suit l'achat financé — réinvestir le produit d'une vente
+     * ne crée aucun apport, le sortir vers une autre exposition déplace celui d'origine. La
+     * consommation FIFO se cloisonne par enveloppe, comme `compositionAt()` : un achat du CTO ne
+     * doit jamais consommer l'apport versé sur le PEA.
      *
      * @param  list<CashMovementData>  $movements
      * @return array{total: float, byExposure: array<string, float>}
      */
     public function netContributions(array $movements): array
     {
-        /** @var list<array{exposure: ?string, amount: float}> $credits */
-        $credits = [];
+        /** @var array<int, list<array{exposure: ?string, amount: float}>> $creditsByWallet */
+        $creditsByWallet = [];
         $total = 0.0;
         $byExposure = [];
 
         foreach ($this->chronological($movements) as $movement) {
             if ($movement->delta >= 0.0) {
-                $credits[] = ['exposure' => $movement->isDeposit ? null : $movement->exposure?->value, 'amount' => $movement->delta];
+                $creditsByWallet[$movement->walletId][] = ['exposure' => $movement->isDeposit ? null : $movement->exposure?->value, 'amount' => $movement->delta];
 
                 if ($movement->isDeposit) {
                     $total = round($total + $movement->delta, 2);
@@ -143,7 +151,9 @@ class CashLedger
                 continue;
             }
 
+            $credits = $creditsByWallet[$movement->walletId] ?? [];
             $spent = $this->consume($credits, -$movement->delta);
+            $creditsByWallet[$movement->walletId] = $credits;
 
             if ($movement->isWithdrawal) {
                 $total = round($total - $spent['deposits'], 2);

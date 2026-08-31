@@ -160,3 +160,25 @@ it('retranche les retraits des apports nets', function () {
 
     expect((new CashLedger)->netContributions($movements)['total'])->toBe(700.0);
 });
+
+it('ne fait jamais consommer un crédit d\'une enveloppe par le débit d\'une autre — compositionAt', function () {
+    $movements = [
+        cashMovement('2026-01-01', 500.0, walletId: 2, exposure: AssetClass::Equity),
+        cashMovement('2026-01-02', 500.0, walletId: 1, isDeposit: true),
+        cashMovement('2026-01-03', -500.0, walletId: 1),
+    ];
+
+    expect((new CashLedger)->compositionAt($movements, '2026-12-31'))
+        ->toBe(['deposits' => 0.0, 'exposures' => ['equity' => 500.0]]);
+});
+
+it('ne fait jamais imputer l\'apport d\'une enveloppe à l\'achat d\'une autre — netContributions', function () {
+    $movements = [
+        cashMovement('2026-01-01', 500.0, walletId: 2, exposure: AssetClass::Equity),
+        cashMovement('2026-01-02', 500.0, walletId: 1, isDeposit: true),
+        cashMovement('2026-01-03', -500.0, walletId: 1, exposure: AssetClass::Crypto),
+    ];
+
+    expect((new CashLedger)->netContributions($movements))
+        ->toBe(['total' => 500.0, 'byExposure' => ['crypto' => 500.0]]);
+});
