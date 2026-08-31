@@ -14,6 +14,17 @@ const BUILD_PREFIX = '/build/';
  */
 const SNAPSHOT_PATH = '/instantane';
 
+/**
+ * Les listes du formulaire de saisie. Même traitement que l'instantané, pour une autre raison :
+ * c'est de la donnée du chemin d'écriture, et une liste d'enveloppes ou d'instruments servie depuis
+ * le cache ferait saisir contre un catalogue périmé — un instrument ajouté par une synchronisation
+ * n'apparaîtrait pas, une enveloppe supprimée s'y proposerait encore.
+ *
+ * Hors-ligne, la requête échoue donc franchement, ce qui est le comportement voulu : la saisie y
+ * est bloquée.
+ */
+const TRANSACTION_OPTIONS_PATH = '/transactions/options';
+
 export type SwRequestKind = 'passthrough' | 'asset' | 'inertia' | 'navigation' | 'other';
 
 /** Ce que le worker retient d'une requête pour décider quoi en faire. */
@@ -57,7 +68,7 @@ export function classifyRequest(request: RequestShape, workerOrigin: string): Sw
         return 'passthrough';
     }
 
-    if (url.pathname === SNAPSHOT_PATH) {
+    if (url.pathname === SNAPSHOT_PATH || url.pathname === TRANSACTION_OPTIONS_PATH) {
         return 'passthrough';
     }
 

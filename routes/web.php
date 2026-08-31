@@ -6,6 +6,7 @@ use App\Contexts\MarketView\Http\AssetClassController;
 use App\Contexts\MarketView\Http\AssetController;
 use App\Contexts\Portfolio\Http\DeleteTransactionController;
 use App\Contexts\Portfolio\Http\StoreTransactionController;
+use App\Contexts\Portfolio\Http\TransactionOptionsController;
 use App\Contexts\Portfolio\Http\UpdateTransactionController;
 use App\Contexts\RealEstate\Http\PropertiesController;
 use App\Contexts\RealEstate\Http\PropertyDetailController;
@@ -27,6 +28,8 @@ Route::post('/synchronisation', StartSyncController::class)->name('sync.start');
  * l'accueil, si bien qu'un identifiant non numérique donnerait une redirection silencieuse plutôt
  * qu'un 404 lisible.
  */
+/** Déclarée avant les routes `{id}`, sinon « options » serait lu comme un identifiant. */
+Route::get('/transactions/options', TransactionOptionsController::class)->name('transactions.options');
 Route::post('/transactions', StoreTransactionController::class)->name('transactions.store');
 Route::put('/transactions/{id}', UpdateTransactionController::class)
     ->whereNumber('id')

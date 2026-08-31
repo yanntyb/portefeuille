@@ -59,6 +59,22 @@ describe('classifyRequest', () => {
 
         expect(classifyRequest(shape, 'https://argent.test')).toBe('passthrough');
     });
+
+    it('laisse passer les listes du formulaire de saisie, jamais servies périmées', () => {
+        const shape = {
+            method: 'GET',
+            url: 'https://argent.test/transactions/options',
+            mode: 'cors',
+            inertia: false,
+            partialData: null,
+        };
+
+        /**
+         * Sans ce cas, `staleWhileRevalidate` les servirait depuis le cache et l'on saisirait
+         * contre un catalogue périmé.
+         */
+        expect(classifyRequest(shape, 'https://argent.test')).toBe('passthrough');
+    });
 });
 
 describe('cacheKeyFor', () => {
