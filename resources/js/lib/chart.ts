@@ -118,7 +118,8 @@ function tooltipTitle(label: string): string {
 function tooltipRow(color: string, label: string, value: string): string {
     return '<div style="display:flex;align-items:center;gap:6px;font-size:12px;line-height:1.6;">'
         + `<span style="width:8px;height:8px;border-radius:9999px;background:${color};"></span>`
-        + `<span style="flex:1;">${label}</span>`
+        + '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'
+        + `${label}</span>`
         + `<span style="font-weight:600;">${value}</span>`
         + '</div>';
 }
@@ -324,9 +325,10 @@ function chartTooltip(): TooltipComponentOption {
         /**
          * Un nom d'ETF tient sur une ligne entière : sans confinement l'infobulle sortait de
          * l'écran par la gauche, et sans largeur bornée elle y poussait le cadre à elle seule.
+         * Au-delà de cette largeur, c'est le libellé qui se coupe (cf. `tooltipRow`).
          */
         confine: true,
-        extraCssText: 'max-width:min(320px,calc(100vw - 2rem));white-space:normal;',
+        extraCssText: 'max-width:min(420px,calc(100vw - 2rem));',
         backgroundColor: colors.tooltipBackground,
         borderColor: colors.tooltipBorder,
         borderRadius: 10,

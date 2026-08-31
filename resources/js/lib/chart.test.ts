@@ -894,11 +894,20 @@ describe('buildValueVsInvestedOption — tenue de l\'infobulle', () => {
         expect(tooltip.confine).toBe(true);
     });
 
-    it('borne la largeur de l\'infobulle et laisse les longs noms revenir à la ligne', () => {
+    it('borne la largeur de l\'infobulle sans jamais dépasser l\'écran', () => {
         const tooltip = detailed(6).tooltip as { extraCssText?: string };
 
-        expect(tooltip.extraCssText).toContain('max-width');
-        expect(tooltip.extraCssText).toContain('white-space:normal');
+        expect(tooltip.extraCssText).toContain('max-width:min(420px,calc(100vw - 2rem))');
+    });
+
+    it('coupe un nom trop long sur une seule ligne, plutôt que de l\'enrouler sur trois', () => {
+        const html = detailTooltipHtml(detailed(2), 10);
+
+        expect(html).toContain('text-overflow:ellipsis');
+        expect(html).toContain('white-space:nowrap');
+        expect(html).toContain('overflow:hidden');
+        /** Sans quoi une boîte flex refuse de descendre sous la largeur de son contenu. */
+        expect(html).toContain('min-width:0');
     });
 });
 
