@@ -804,10 +804,10 @@ describe('buildValueVsInvestedOption — détail par instrument', () => {
         expect(stacks[0]).toBeDefined();
     });
 
-    it('remplit chaque bande d\'une aire pleine, sans quoi l\'empilement ne se lirait pas', () => {
+    it('laisse les courbes nues : vingt aires pleines empilées noieraient le tracé', () => {
         const [first] = seriesOf(detailed(3));
 
-        expect(first.areaStyle).toBeDefined();
+        expect(first.areaStyle).toBeUndefined();
         expect(first.markPoint).toBeUndefined();
     });
 

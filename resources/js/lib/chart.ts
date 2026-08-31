@@ -400,9 +400,9 @@ function seriesColor(rank: number): string {
 const INSTRUMENT_STACK = 'instruments';
 
 /**
- * Une bande par instrument de la poche, empilées : leur sommet vaut la valeur totale, que ce mode
- * n'a donc plus à tracer à part. L'aire est pleine — c'est elle qui donne l'épaisseur de chaque
- * ligne, seule lecture qu'un empilement autorise.
+ * Une courbe par instrument de la poche, empilées : leur sommet vaut la valeur totale, que ce mode
+ * n'a donc plus à tracer à part. Tracés nus, sans aire — vingt remplissages superposés noieraient
+ * le graphe, et l'écart entre deux courbes dit déjà le poids de celle du dessus.
  */
 function instrumentSeries(labels: string[], perAsset: AssetSeries[]): LineSeriesOption[] {
     return perAsset.map((asset: AssetSeries, rank: number): LineSeriesOption => {
@@ -415,8 +415,7 @@ function instrumentSeries(labels: string[], perAsset: AssetSeries[]): LineSeries
             smooth: true,
             symbol: 'none',
             sampling: 'lttb',
-            lineStyle: { width: 1, color },
-            areaStyle: { color: rgba(color, useThemeStore().isDark ? 0.55 : 0.45) },
+            lineStyle: { width: 1.5, color },
             data: datedPoints(labels, asset.value),
         };
     });
