@@ -57,7 +57,7 @@ class GetPortfolioOverview
     private function readLines(User $user): array
     {
         $holdings = Holding::query()
-            ->with('asset')
+            ->with(['asset', 'wallet'])
             ->where('user_id', $user->id)
             ->get();
 
@@ -80,6 +80,9 @@ class GetPortfolioOverview
                 ticker: $holding->asset->ticker,
                 type: $holding->asset->type,
                 assetClass: $holding->asset->asset_class,
+                walletId: (int) $holding->wallet_id,
+                walletName: $holding->wallet->name,
+                accountType: $holding->wallet->account_type,
                 quantity: $quantity,
                 avgCost: $avgCost,
                 lastPrice: $lastPrice,

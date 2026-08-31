@@ -6,6 +6,7 @@ use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
+use App\Contexts\Portfolio\Enums\AccountType;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Wallet;
 use Illuminate\Support\Facades\DB;
@@ -169,4 +170,49 @@ it('reads the holdings once, however many exposures ask for them', function () {
 
 it('is bound scoped so every resolution within a request shares the same memoised instance', function () {
     expect(app(GetPortfolioOverview::class))->toBe(app(GetPortfolioOverview::class));
+});
+
+it('porte l\'enveloppe de détention sur chaque ligne', function () {
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->pea()->create();
+    $asset = Instrument::factory()->ofType(InstrumentType::Stock)->create();
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => now(), 'close' => 100]);
+    Holding::factory()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $asset->id,
+        'quantity' => 10,
+        'avg_cost' => 80,
+    ]);
+
+    $line = app(GetPortfolioOverview::class)($user)->holdings[0];
+
+    expect($line->walletId)->toBe($wallet->id)
+        ->and($line->walletName)->toBe('PEA')
+        ->and($line->accountType)->toBe(AccountType::Pea)
+        ->and($line->jsonSerialize()['accountTypeLabel'])->toBe('PEA');
+});
+
+it('rend deux lignes distinctes pour un même actif tenu dans deux enveloppes', function () {
+    $user = User::factory()->create();
+    $pea = Wallet::factory()->for($user)->pea()->create();
+    $cto = Wallet::factory()->for($user)->cto()->create();
+    $asset = Instrument::factory()->ofType(InstrumentType::Stock)->create();
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => now(), 'close' => 100]);
+
+    foreach ([$pea, $cto] as $wallet) {
+        Holding::factory()->create([
+            'user_id' => $user->id,
+            'wallet_id' => $wallet->id,
+            'asset_id' => $asset->id,
+            'quantity' => 5,
+            'avg_cost' => 80,
+        ]);
+    }
+
+    $holdings = app(GetPortfolioOverview::class)($user)->holdings;
+
+    expect($holdings)->toHaveCount(2)
+        ->and(array_map(fn ($line): int => $line->walletId, $holdings))
+        ->toEqualCanonicalizing([$pea->id, $cto->id]);
 });

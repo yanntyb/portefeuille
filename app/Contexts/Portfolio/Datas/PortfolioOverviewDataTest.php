@@ -4,6 +4,7 @@ use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Portfolio\Datas\HoldingLineData;
 use App\Contexts\Portfolio\Datas\PortfolioOverviewData;
+use App\Contexts\Portfolio\Enums\AccountType;
 
 it('serializes an overview to the expected json shape', function () {
     $overview = new PortfolioOverviewData(
@@ -18,6 +19,9 @@ it('serializes an overview to the expected json shape', function () {
             ticker: 'ACM',
             type: InstrumentType::Stock,
             assetClass: AssetClass::Equity,
+            walletId: 1,
+            walletName: 'PEA',
+            accountType: AccountType::Pea,
             quantity: 10.0,
             avgCost: 80.0,
             lastPrice: 100.0,

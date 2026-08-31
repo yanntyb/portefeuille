@@ -3,6 +3,7 @@
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Portfolio\Datas\HoldingLineData;
+use App\Contexts\Portfolio\Enums\AccountType;
 use App\Contexts\Portfolio\Services\HoldingValuator;
 
 function valuedLine(?float $marketValue, ?float $gain, float $quantity = 1.0, ?float $avgCost = null): HoldingLineData
@@ -13,6 +14,9 @@ function valuedLine(?float $marketValue, ?float $gain, float $quantity = 1.0, ?f
         ticker: 'ACM',
         type: InstrumentType::Stock,
         assetClass: AssetClass::Equity,
+        walletId: 1,
+        walletName: 'PEA',
+        accountType: AccountType::Pea,
         quantity: $quantity,
         avgCost: $avgCost,
         lastPrice: null,
