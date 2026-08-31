@@ -16,6 +16,7 @@ use App\Contexts\Market\Models\SectorAllocation;
 use App\Contexts\Market\Ports\DividendFeedPort;
 use App\Contexts\Market\Ports\PriceFeedPort;
 use App\Contexts\Market\Ports\SectorProviderPort;
+use App\Contexts\Portfolio\Enums\AccountType;
 use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
@@ -99,6 +100,17 @@ it('rebuilds the wallets of each user', function () {
     expect(Wallet::query()->count())->toBe(4)
         ->and(Wallet::query()->where('user_id', $admin->id)->pluck('name')->sort()->values()->all())
         ->toBe(['CTO', 'PEA', 'Portefeuille Crypto']);
+});
+
+it('type les enveloppes du dump d\'après leur nom', function () {
+    $this->seed(SampleBackupSeeder::class);
+
+    expect(Wallet::query()->where('name', 'PEA')->pluck('account_type')->unique()->all())
+        ->toBe([AccountType::Pea])
+        ->and(Wallet::query()->where('name', 'CTO')->pluck('account_type')->unique()->all())
+        ->toBe([AccountType::Cto])
+        ->and(Wallet::query()->where('name', 'Portefeuille Crypto')->value('account_type'))
+        ->toBe(AccountType::Cto);
 });
 
 it('infers the instrument type absent from the dump', function () {

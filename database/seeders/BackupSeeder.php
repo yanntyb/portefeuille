@@ -6,6 +6,7 @@ use App\Contexts\Identity\Enums\Role;
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
+use App\Contexts\Portfolio\Enums\AccountType;
 use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
@@ -44,6 +45,21 @@ class BackupSeeder extends Seeder
      * @var list<string>
      */
     private const STOCK_TICKERS = ['CVX', 'AI.PA', 'TTE.PA', 'HAG.DE', 'NVDA', 'MSFT', 'AMZN', 'TSLA'];
+
+    /**
+     * Enveloppe de chaque nom de portefeuille du dump, qui précède la colonne `account_type`.
+     *
+     * Même principe que `STOCK_TICKERS` pour `assets.type` : la colonne se déduit, la
+     * correspondance est écrite ici. Tout nom inconnu retombe sur le compte-titres — l'enveloppe
+     * la moins affirmative : typer à tort en PEA lèverait des alertes d'éligibilité fausses,
+     * l'inverse n'affirme rien.
+     *
+     * @var array<string, string>
+     */
+    private const WALLET_ACCOUNT_TYPES = [
+        'PEA' => 'pea',
+        'CTO' => 'cto',
+    ];
 
     /**
      * Compte administrateur du dump.
@@ -218,10 +234,18 @@ class BackupSeeder extends Seeder
                 continue;
             }
 
+            $accountType = self::WALLET_ACCOUNT_TYPES[$name] ?? AccountType::Cto->value;
+
             $wallet = Wallet::query()->firstOrCreate(
                 ['user_id' => $userId, 'name' => $name],
-                ['created_at' => $createdAt, 'updated_at' => $updatedAt],
+                ['account_type' => $accountType, 'created_at' => $createdAt, 'updated_at' => $updatedAt],
             );
+
+            // Rejeu : une ligne créée par un lancement antérieur au typage garde son défaut de
+            // colonne (compte-titres) tant qu'elle n'est pas remise à jour ici.
+            if ($wallet->account_type->value !== $accountType) {
+                $wallet->fill(['account_type' => $accountType])->save();
+            }
 
             $this->wallets[(int) $dumpId] = $wallet->id;
         }
