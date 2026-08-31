@@ -1107,9 +1107,38 @@ it('garde le produit d\'une vente en liquidités', function () {
 Dans `LaravelSeriesCacheTest.php`, sur le modèle des cas existants :
 
 ```php
-it('périme la série quand un achat devient une vente', function () { /* ... */ });
-it('périme la série quand le montant d\'un versement change', function () { /* ... */ });
+it('périme la série quand un achat devient une vente', function () {
+    $calls = 0;
+    $transaction = buyFor($this);
+    rememberSerie($this->user->id, $calls);
+
+    /**
+     * Ni la cardinalité ni les sommes de quantité, de prix ou d'actif ne bougent : sans le
+     * comptage des ventes dans l'empreinte, la série périmée serait servie.
+     */
+    $transaction->update(['type' => TransactionType::Sell]);
+
+    rememberSerie($this->user->id, $calls);
+
+    expect($calls)->toBe(2);
+});
+
+it('périme la série quand le montant d\'un versement change', function () {
+    $calls = 0;
+    $deposit = Transaction::factory()->deposit()->create([
+        'user_id' => $this->user->id, 'wallet_id' => $this->wallet->id, 'date' => '2026-01-01', 'amount' => 1000,
+    ]);
+    rememberSerie($this->user->id, $calls);
+
+    $deposit->update(['amount' => 1500]);
+
+    rememberSerie($this->user->id, $calls);
+
+    expect($calls)->toBe(2);
+});
 ```
+
+Attention au piège du fichier : `LaravelSeriesCacheTest` construit **une instance par appel** (`rememberSerie()`), parce que l'empreinte est mémoïsée le temps d'une requête et que c'est d'une requête à la suivante que l'invalidation doit se voir. Ne pas réutiliser une instance entre deux `remember()`.
 
 - [ ] **Step 2: Run test to verify it fails**
 
