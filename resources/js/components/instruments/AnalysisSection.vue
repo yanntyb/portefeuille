@@ -6,13 +6,21 @@ import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
 import CorrelationInfoDialog from '@/components/CorrelationInfoDialog.vue';
 import PerformanceBars from '@/components/PerformanceBars.vue';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
+import SectorsBlock from '@/components/instruments/SectorsBlock.vue';
 import { basketRows, correlationGrid, type ClassAnalysis, type CorrelationRow } from '@/lib/classAnalysis';
 import type { AnalysisRow as Row } from '@/lib/instrumentAnalysis';
 import type { Performance } from '@/lib/performance';
+import type { SectorSlice } from '@/lib/sector';
 
 const props = defineProps<{
     analysis?: ClassAnalysis | null;
     performances?: Performance[] | null;
+    /**
+     * Le bloc sectoriel se décide sur la classe, jamais sur la valeur : `aheadOfNetwork` rend
+     * `null` en attendant, et un `null` ne distingue pas « pas encore » de « jamais ».
+     */
+    hasSectors: boolean;
+    slices?: SectorSlice[] | null;
 }>();
 
 const rows = computed<Row[]>(() => (props.analysis ? basketRows(props.analysis) : []));
@@ -121,6 +129,10 @@ const hasPerformances = computed<boolean>(() => (props.performances?.length ?? 0
 
             <span />
         </Deferred>
+
+        <!-- La ventilation sectorielle reste du côté de ce qui décrit la poche : elle précède
+             donc les performances, qui ferment la section. -->
+        <SectorsBlock v-if="props.hasSectors" :slices="props.slices" />
 
         <!-- Les performances ferment la section : ce qui décrit la poche se lit d'abord, ce
              qu'elle a rapporté ensuite. -->

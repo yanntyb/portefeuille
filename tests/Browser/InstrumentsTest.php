@@ -47,12 +47,13 @@ it('déroule tous les secteurs sans bascule', function () {
 
     $this->actingAs($user);
 
-    $labels = "document.querySelectorAll('[data-section=\"sectors\"] [data-sector-label]').length";
+    /** Les secteurs se lisent dans la section Analyse, sans pli à eux. */
+    $labels = "document.querySelectorAll('[data-section=\"analysis\"] [data-sectors-block] [data-sector-label]').length";
 
     visit('/actions')
-        ->click('[data-section=sectors] [data-section-toggle]')
+        ->click('[data-section=analysis] [data-section-toggle]')
         ->assertScript($labels, 8)
-        ->assertScript("document.querySelectorAll('[data-section=\"sectors\"] [data-sector-toggle]').length", 0)
+        ->assertScript("document.querySelectorAll('[data-sectors-block] [data-sector-toggle]').length", 0)
         ->assertSee('Énergie')
         ->assertSee('Immobilier')
         ->assertNoJavaScriptErrors();
@@ -76,7 +77,7 @@ it('affiche un état vide quand aucune position n\'a de valeur de marché', func
     $this->actingAs($user);
 
     visit('/actions')
-        ->click('[data-section=sectors] [data-section-toggle]')
+        ->click('[data-section=analysis] [data-section-toggle]')
         ->assertSee('Pas encore de données sectorielles.')
         ->assertNoJavaScriptErrors();
 });

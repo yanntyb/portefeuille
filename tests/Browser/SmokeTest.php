@@ -15,7 +15,7 @@ it('charge le tableau de bord, ses sections dans l\'ordre, sans erreur', functio
         ->assertSee('Investi')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'wealth-summary|wealth-evolution|wealth-classes|wealth-sectors|wealth-income|wealth-transactions',
+            'wealth-summary|wealth-evolution|wealth-classes|wealth-income|wealth-transactions|wealth-sectors',
         )
         ->assertNoJavaScriptErrors();
 });
@@ -29,7 +29,7 @@ it('charge la page Actions, ses sections dans l\'ordre, sans erreur', function (
         ->assertSee('Investi')
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-section]')).map(el => el.dataset.section).join('|')",
-            'valuation|evolution|instruments|analysis|class-transactions|sectors',
+            'valuation|evolution|instruments|analysis|class-transactions',
         )
         ->assertNoJavaScriptErrors();
 });

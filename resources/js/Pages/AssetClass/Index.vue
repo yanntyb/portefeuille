@@ -5,7 +5,6 @@ import AppPage from '@/components/AppPage.vue';
 import AnalysisSection from '@/components/instruments/AnalysisSection.vue';
 import EvolutionSection from '@/components/instruments/EvolutionSection.vue';
 import InstrumentsSection from '@/components/instruments/InstrumentsSection.vue';
-import SectorsSection from '@/components/instruments/SectorsSection.vue';
 import TransactionsSection from '@/components/instruments/TransactionsSection.vue';
 import ValuationSection from '@/components/instruments/ValuationSection.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
@@ -52,15 +51,16 @@ const sectorBreakdown = aheadOfNetwork(() => props.sectorBreakdown, () => cached
 
         <InstrumentsSection :holdings="overview.holdings" :trends="trends" />
 
-        <AnalysisSection :analysis="classAnalysis" :performances="performances" />
+        <!-- Les secteurs vivent dans l'analyse : c'est une lecture de la poche, pas une section
+             à part. -->
+        <AnalysisSection
+            :analysis="classAnalysis"
+            :performances="performances"
+            :has-sectors="props.assetClass.hasSectors"
+            :slices="sectorBreakdown"
+        />
 
         <TransactionsSection :transactions="transactions" />
-
-        <!--
-            La section se décide sur la classe, jamais sur la valeur : `aheadOfNetwork` rend
-            `null` en attendant, et un `null` ne distingue pas « pas encore » de « jamais ».
-        -->
-        <SectorsSection v-if="props.assetClass.hasSectors" :slices="sectorBreakdown" />
     </AppPage>
 
     <AppBottomBar
