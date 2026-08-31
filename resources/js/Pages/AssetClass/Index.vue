@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
+import TransactionDialog from '@/components/transactions/TransactionDialog.vue';
 import AnalysisSection from '@/components/instruments/AnalysisSection.vue';
 import EvolutionSection from '@/components/instruments/EvolutionSection.vue';
 import InstrumentsSection from '@/components/instruments/InstrumentsSection.vue';
@@ -66,4 +67,7 @@ const sectorBreakdown = aheadOfNetwork(() => props.sectorBreakdown, () => cached
     <AppBottomBar
         :items="[{ label: 'Tableau de bord', href: '/' }, { label: props.assetClass.label }]"
     />
+
+    <!-- Frère d'`AppPage` : dedans, il ajouterait un écart fantôme au `gap-6` du conteneur. -->
+    <TransactionDialog />
 </template>

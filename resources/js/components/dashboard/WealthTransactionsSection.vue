@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Deferred } from '@inertiajs/vue3';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
+import AddTransactionButton from '@/components/transactions/AddTransactionButton.vue';
 import TransactionYearList from '@/components/transactions/TransactionYearList.vue';
 import type { WealthTransactionLine } from '@/lib/wealth';
 
@@ -14,6 +15,14 @@ const props = defineProps<{ transactions?: WealthTransactionLine[] | null }>();
         paie donc l'historique entier que pour qui le demande.
     -->
     <CollapsibleSection section="wealth-transactions" title="Transactions">
+        <!--
+            Dans le slot `aside`, dont la bascule de dépli est une couche sœur : le clic sur « + »
+            n'ouvre donc pas la section, et le bouton reste atteignable pli fermé.
+        -->
+        <template #aside>
+            <AddTransactionButton />
+        </template>
+
         <TransactionYearList
             v-if="props.transactions !== null && props.transactions !== undefined"
             :lines="props.transactions"

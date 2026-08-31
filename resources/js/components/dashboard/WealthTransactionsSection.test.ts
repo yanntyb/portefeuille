@@ -1,3 +1,4 @@
+import { createPinia } from 'pinia';
 import { describe, expect, it, vi } from 'vitest';
 import { createApp, nextTick } from 'vue';
 import type { WealthTransactionLine } from '@/lib/wealth';
@@ -29,12 +30,17 @@ const line = (overrides: Partial<WealthTransactionLine> = {}): WealthTransaction
     ...overrides,
 });
 
-/** Monte la section sur un hôte neuf et rend son DOM initial. */
+/**
+ * Monte la section sur un hôte neuf et rend son DOM initial.
+ *
+ * Pinia est nécessaire depuis que l'en-tête porte le bouton d'ajout, qui lit l'état du réseau et
+ * celui de la modale.
+ */
 function mountSection(transactions: WealthTransactionLine[]): HTMLElement {
     const host = document.createElement('div');
     document.body.append(host);
 
-    createApp(WealthTransactionsSection, { transactions }).mount(host);
+    createApp(WealthTransactionsSection, { transactions }).use(createPinia()).mount(host);
 
     return host;
 }
@@ -98,5 +104,30 @@ describe('section transactions du tableau de bord', () => {
         return nextTick().then(() => {
             expect(host.textContent).toContain('Aucune transaction pour l\'instant.');
         });
+    });
+});
+
+describe('bouton d\'ajout', () => {
+    it('siège dans l\'en-tête et reste atteignable section repliée', () => {
+        const host = mountSection([line()]);
+
+        const add = host.querySelector('[data-transaction-add]');
+
+        expect(add).not.toBeNull();
+        /** Repliée : aucune année rendue, et le bouton pourtant là. */
+        expect(host.querySelector('[data-transaction-year]')).toBeNull();
+    });
+
+    it('ne déplie pas la section quand on le clique', async () => {
+        const host = mountSection([line()]);
+
+        await click(host.querySelector('[data-transaction-add]'));
+
+        /**
+         * La bascule de dépli est une couche sœur du slot `aside`, pas son ancêtre : rien ne
+         * remonte vers elle. Si ce test tombe, c'est que la structure de `CollapsibleSection` a
+         * changé et que chaque ajout ouvrirait une section par surprise.
+         */
+        expect(host.querySelector('[data-transaction-year]')).toBeNull();
     });
 });

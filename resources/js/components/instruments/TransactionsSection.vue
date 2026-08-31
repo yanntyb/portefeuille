@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Deferred } from '@inertiajs/vue3';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
+import AddTransactionButton from '@/components/transactions/AddTransactionButton.vue';
 import TransactionYearList from '@/components/transactions/TransactionYearList.vue';
 import type { NamedTransactionLine } from '@/lib/instrument';
 
@@ -14,6 +15,10 @@ const props = defineProps<{ transactions?: NamedTransactionLine[] | null }>();
         l'historique de la poche que pour qui le demande.
     -->
     <CollapsibleSection section="class-transactions" title="Transactions">
+        <template #aside>
+            <AddTransactionButton />
+        </template>
+
         <TransactionYearList
             v-if="props.transactions !== null && props.transactions !== undefined"
             :lines="props.transactions"

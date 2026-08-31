@@ -9,6 +9,7 @@ import WealthAccountsSection from '@/components/dashboard/WealthAccountsSection.
 import WealthSectorsSection from '@/components/dashboard/WealthSectorsSection.vue';
 import WealthSummarySection from '@/components/dashboard/WealthSummarySection.vue';
 import WealthTransactionsSection from '@/components/dashboard/WealthTransactionsSection.vue';
+import TransactionDialog from '@/components/transactions/TransactionDialog.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
 import type { SyncState } from '@/lib/sync';
 import type {
@@ -68,4 +69,10 @@ const accounts = aheadOfNetwork(() => props.accounts, () => snapshot.dashboard?.
 
     <!-- Barre sans fil d'Ariane : le tableau de bord est la racine, son fil n'aurait qu'un seul cran. -->
     <AppBottomBar :sync="props.sync" />
+
+    <!--
+        Frère d'`AppPage` et non enfant : le conteneur de la page est un `flex flex-col gap-6`, où
+        un enfant sans rendu visible ajouterait un écart fantôme en bas de page.
+    -->
+    <TransactionDialog />
 </template>

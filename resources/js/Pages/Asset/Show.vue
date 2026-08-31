@@ -4,6 +4,7 @@ import { Head } from '@inertiajs/vue3';
 import AnalysisSection from '@/components/instrument/AnalysisSection.vue';
 import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
+import TransactionDialog from '@/components/transactions/TransactionDialog.vue';
 import DividendsSection from '@/components/instrument/DividendsSection.vue';
 import FiguresSection from '@/components/instrument/FiguresSection.vue';
 import HeroSection from '@/components/instrument/HeroSection.vue';
@@ -71,7 +72,11 @@ const analysis = aheadOfNetwork(
             :performances="props.performances"
         />
 
-        <TransactionsSection :transactions="props.instrument.transactions" />
+        <TransactionsSection
+            :transactions="props.instrument.transactions"
+            :asset-id="props.instrument.id"
+            :asset-name="props.instrument.name"
+        />
 
         <DividendsSection v-if="props.dividends && receipts.length" :dividends="props.dividends" />
 
@@ -90,4 +95,7 @@ const analysis = aheadOfNetwork(
             { label: props.instrument.name },
         ]"
     />
+
+    <!-- Frère d'`AppPage` : dedans, il ajouterait un écart fantôme au `gap-6` du conteneur. -->
+    <TransactionDialog />
 </template>
