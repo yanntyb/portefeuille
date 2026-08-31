@@ -13,6 +13,8 @@ type ChartPalette = {
     commodity: string;
     realEstate: string;
     crypto: string;
+    /** Teintes catégorielles des courbes d'instruments, recyclées au-delà de la dixième. */
+    series: string[];
     axisLabel: string;
     filler: string;
     dataBackground: string;
@@ -38,6 +40,10 @@ function palette(): ChartPalette {
             commodity: '#d6e85e',
             realEstate: '#e0a75f',
             crypto: '#e879f9',
+            series: [
+                '#8f93f0', '#2dd4bf', '#e0a75f', '#e879f9', '#f87171',
+                '#34d399', '#d6e85e', '#60a5fa', '#f472b6', '#a8a29e',
+            ],
             axisLabel: '#7f858f',
             filler: 'rgba(143,147,240,0.18)',
             dataBackground: '#2f343e',
@@ -56,6 +62,10 @@ function palette(): ChartPalette {
             commodity: '#535e08',
             realEstate: '#b3701a',
             crypto: '#a21caf',
+            series: [
+                '#5257d6', '#0d9488', '#b3701a', '#a21caf', '#c2321f',
+                '#00915d', '#535e08', '#2563eb', '#db2777', '#78716c',
+            ],
             axisLabel: '#9aa0ac',
             filler: 'rgba(82,87,214,0.12)',
             dataBackground: '#e2e4ea',
@@ -366,6 +376,29 @@ function valueSeries(
     ];
 }
 
+/** Teinte d'un instrument selon son rang, la palette se rembobinant au-delà de sa dernière. */
+function seriesColor(rank: number): string {
+    const tones = palette().series;
+
+    return tones[rank % tones.length] as string;
+}
+
+/**
+ * Une courbe par instrument de la poche, ajoutée derrière le duo valeur / investi. Trait fin, sans
+ * aire ni pastille : le total garde la vedette, ces tracés ne font que le décomposer.
+ */
+function instrumentSeries(labels: string[], perAsset: AssetSeries[]): LineSeriesOption[] {
+    return perAsset.map((asset: AssetSeries, rank: number): LineSeriesOption => ({
+        name: asset.name,
+        type: 'line',
+        smooth: true,
+        symbol: 'none',
+        sampling: 'lttb',
+        lineStyle: { width: 1.25, color: seriesColor(rank) },
+        data: datedPoints(labels, asset.value),
+    }));
+}
+
 /** Diamètre de la pastille de dernière valeur, la plus grosse du tracé. */
 const LAST_POINT_SIZE = 8;
 
@@ -496,6 +529,77 @@ function valueVsInvestedTooltip(
 }
 
 /** ECharts passe un tableau de points survolés ; tous partagent le même index de catégorie. */
+/**
+ * Noms des courbes encore visibles : ECharts ne passe au formateur que les séries que la légende
+ * n'a pas masquées. L'infobulle du détail s'y cale, plutôt que de rechiffrer des tracés effacés.
+ */
+function visibleSeries(params: unknown): Set<string> {
+    const points = Array.isArray(params) ? params : [params];
+
+    return new Set(points
+        .map((point: unknown): unknown => (point as { seriesName?: unknown }).seriesName)
+        .filter((name: unknown): name is string => typeof name === 'string'));
+}
+
+/**
+ * L'infobulle du mode détail : le total, puis chaque instrument survolé du plus lourd au plus
+ * léger. Les montants se relisent dans les tableaux d'origine plutôt que dans les points d'ECharts,
+ * qui portent des couples datés — seule la visibilité se lit dans `params`.
+ */
+function detailTooltip(
+    labels: string[],
+    value: number[],
+    invested: number[],
+    perAsset: AssetSeries[],
+    valueFormatter: ValueFormatter,
+    dividends: DividendMark[],
+): TooltipComponentOption {
+    const colors = palette();
+
+    return {
+        ...chartTooltip(),
+        formatter: (params: unknown): string => {
+            const index = pointIndex(params);
+            if (index === null) {
+                return '';
+            }
+
+            const visible = visibleSeries(params);
+            const totalValue = value[index] ?? 0;
+            const totalInvested = invested[index] ?? 0;
+            const gain = totalValue - totalInvested;
+
+            const instrumentRows = perAsset
+                .map((asset: AssetSeries, rank: number) => ({ asset, rank, amount: asset.value[index] ?? 0 }))
+                .filter((row): boolean => visible.has(row.asset.name))
+                .sort((left, right): number => right.amount - left.amount)
+                .map((row): string => tooltipRow(seriesColor(row.rank), row.asset.name, valueFormatter(row.amount)))
+                .join('');
+
+            const dividendRows = dividendsAt(dividends, index)
+                .map((mark: DividendMark): string => tooltipRow(
+                    colors.gain,
+                    `Dividende · ${mark.dateLabel}`,
+                    mark.amountLabel,
+                ))
+                .join('');
+
+            return tooltipTitle(labels[index] ?? '')
+                + (visible.has('Valeur') ? tooltipRow(colors.value, 'Valeur', valueFormatter(totalValue)) : '')
+                + (visible.has('Investi') ? tooltipRow(colors.invested, 'Investi', valueFormatter(totalInvested)) : '')
+                + (visible.has('Valeur') && visible.has('Investi')
+                    ? tooltipRow(
+                        gain >= 0 ? colors.gain : colors.loss,
+                        gain >= 0 ? 'Gain' : 'Perte',
+                        `${gain >= 0 ? '+' : '−'} ${valueFormatter(Math.abs(gain))}`,
+                    )
+                    : '')
+                + instrumentRows
+                + dividendRows;
+        },
+    };
+}
+
 function pointIndex(params: unknown): number | null {
     const points = Array.isArray(params) ? params : [params];
     const first = points[0] as { dataIndex?: number } | undefined;
@@ -523,6 +627,11 @@ type ValueVsInvestedInput = {
     dividends?: DividendMark[];
     /** Posée par la fiche instrument, dont le cadre sert aussi au cours (cf. `axisGutter`). */
     gutter?: number;
+    /**
+     * Détail de la poche : une courbe par instrument sous le total. Absent partout ailleurs — le
+     * tableau de bord et la fiche instrument n'ont rien à décomposer.
+     */
+    perAsset?: AssetSeries[];
 };
 
 /** Le tableau de bord raisonne sur le portefeuille entier : les titres ne sont qu'un détail de calcul. */
@@ -568,6 +677,29 @@ const ZOOM_SLIDER_HEIGHT = 40;
 /** Bande réservée à la graduation temporelle : une ligne, l'année en suffixe sous janvier. */
 const TIME_AXIS_LABEL_HEIGHT = 28;
 
+/** Hauteur de la bande de légende, glissée entre la graduation temporelle et la mini-timeline. */
+const LEGEND_HEIGHT = 30;
+
+/**
+ * La légende du mode détail : défilante, une poche pouvant aligner vingt instruments. Le clic sur
+ * une pastille masque sa courbe — c'est la seule façon d'isoler une ligne dans un tel faisceau.
+ */
+function seriesLegend(): NonNullable<ChartOption['legend']> {
+    const colors = palette();
+
+    return {
+        type: 'scroll',
+        bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT,
+        icon: 'roundRect',
+        itemWidth: 10,
+        itemHeight: 3,
+        textStyle: { color: colors.axisLabel, fontSize: 11 },
+        pageIconColor: colors.axisLabel,
+        pageIconInactiveColor: colors.dataBackground,
+        pageTextStyle: { color: colors.axisLabel },
+    };
+}
+
 /** La mini-timeline est la seule commande de zoom, partagée par les deux formes de graphe. */
 function wealthZoomSlider(visible: ZoomWindow | null): Extract<NonNullable<ChartOption['dataZoom']>, unknown[]>[number] {
     const colors = palette();
@@ -608,23 +740,45 @@ function wealthZoomSlider(visible: ZoomWindow | null): Extract<NonNullable<Chart
  * rien ici ne dépend du réseau.
  */
 export function buildValueVsInvestedOption(
-    { labels, value, invested, valueFormatter, window, description, dividends = [], gutter }: ValueVsInvestedInput,
+    {
+        labels,
+        value,
+        invested,
+        valueFormatter,
+        window,
+        description,
+        dividends = [],
+        gutter,
+        perAsset = [],
+    }: ValueVsInvestedInput,
 ): ChartOption {
     const visible = window ?? lastYearWindow(labels);
     const colors = palette();
+    const detailed = perAsset.length > 0;
+    const legendBand = detailed ? LEGEND_HEIGHT : 0;
 
     return {
         ...chartFrame({
             valueFormatter,
             /** L'investi peut passer sous la valeur comme au-dessus : l'axe doit tenir les deux. */
             values: [...value, ...invested],
-            bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT,
+            bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT + legendBand,
             description,
             gutter,
         }),
-        color: [colors.value, colors.invested],
-        series: valueSeries(labels, value, invested, dividends),
-        tooltip: valueVsInvestedTooltip(labels, value, invested, valueFormatter, dividends),
+        color: [
+            colors.value,
+            colors.invested,
+            ...perAsset.map((_asset: AssetSeries, rank: number): string => seriesColor(rank)),
+        ],
+        series: [
+            ...valueSeries(labels, value, invested, dividends),
+            ...instrumentSeries(labels, perAsset),
+        ],
+        ...(detailed ? { legend: seriesLegend() } : {}),
+        tooltip: detailed
+            ? detailTooltip(labels, value, invested, perAsset, valueFormatter, dividends)
+            : valueVsInvestedTooltip(labels, value, invested, valueFormatter, dividends),
         dataZoom: [wealthZoomSlider(visible)],
     };
 }

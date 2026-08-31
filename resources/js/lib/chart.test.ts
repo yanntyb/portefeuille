@@ -767,3 +767,125 @@ describe('buildWealthStackOption', () => {
         expect(new Set(strokes).size).toBe(4);
     });
 });
+
+/** Poche de `count` instruments sur la grille mensuelle, chacun pesant un dixième de plus. */
+const perAssetSeries = (count: number, months: number) =>
+    Array.from({ length: count }, (_unused: unknown, rank: number) => ({
+        assetId: rank + 1,
+        name: `Titre ${rank + 1}`,
+        value: monthlyLabels(months).map((_label: string, index: number): number => 100 * (rank + 1) + index),
+        invested: monthlyLabels(months).map((): number => 100 * (rank + 1)),
+    }));
+
+const detailed = (count: number, months = 36): ChartOption => {
+    const labels = monthlyLabels(months);
+
+    return buildValueVsInvestedOption({
+        labels,
+        value: labels.map((_unused: string, index: number): number => 1000 + index * 10),
+        invested: labels.map((): number => 900),
+        valueFormatter: (value: number): string => eur(value, 0),
+        window: null,
+        description: 'Détail par instrument.',
+        perAsset: perAssetSeries(count, months),
+    });
+};
+
+describe('buildValueVsInvestedOption — détail par instrument', () => {
+    it('ajoute une courbe par instrument derrière le total, qui reste en tête', () => {
+        expect(seriesOf(detailed(3)).map((serie) => serie.name))
+            .toEqual(['Valeur', 'Investi', 'Titre 1', 'Titre 2', 'Titre 3']);
+    });
+
+    it('trace chaque instrument au trait fin, sans aire ni pastille : le total garde la vedette', () => {
+        const [, , first] = seriesOf(detailed(3));
+
+        expect(first.lineStyle?.width).toBe(1.25);
+        expect(first.areaStyle).toBeUndefined();
+        expect(first.markPoint).toBeUndefined();
+    });
+
+    it('date les points de chaque instrument, l\'axe temporel attendant des couples', () => {
+        const [, , first] = seriesOf(detailed(1, 3));
+
+        expect(first.data).toEqual([
+            ['2023-01-01', 100],
+            ['2023-02-01', 101],
+            ['2023-03-01', 102],
+        ]);
+    });
+
+    it('donne à chaque instrument sa propre teinte, pour qu\'aucune paire ne se confonde', () => {
+        const colors = detailed(6).color as string[];
+
+        expect(new Set(colors.slice(2)).size).toBe(6);
+    });
+
+    it('recycle la palette au-delà de ses teintes, plutôt que de laisser une courbe sans couleur', () => {
+        const colors = detailed(12).color as string[];
+        const instruments = colors.slice(2);
+
+        expect(instruments).toHaveLength(12);
+        expect(instruments.every((color: string): boolean => typeof color === 'string' && color !== '')).toBe(true);
+        expect(instruments[10]).toBe(instruments[0]);
+    });
+
+    it('ouvre une légende défilante, seul moyen de retrouver une courbe parmi vingt', () => {
+        const legend = detailed(20).legend as { type?: string; show?: boolean };
+
+        expect(legend).toBeDefined();
+        expect(legend.type).toBe('scroll');
+    });
+
+    it('se passe de légende sans détail : deux courbes nommées dans l\'infobulle suffisent', () => {
+        expect(valueVsInvested(36).legend).toBeUndefined();
+    });
+
+    it('réserve sous la grille la bande que la légende occupe, sans mordre sur le tracé', () => {
+        const bottomOf = (option: ChartOption): number => (option.grid as { bottom: number }).bottom;
+
+        expect(bottomOf(detailed(3))).toBeGreaterThan(bottomOf(valueVsInvested(36)));
+    });
+});
+
+/** Infobulle du mode détail : ECharts y passe un point par série encore visible. */
+const detailTooltipHtml = (option: ChartOption, dataIndex: number, visible: string[]): string => {
+    const formatter = (option.tooltip as { formatter: (params: unknown) => string }).formatter;
+
+    return formatter(visible.map((seriesName: string) => ({ dataIndex, seriesName })));
+};
+
+describe('buildValueVsInvestedOption — infobulle du détail', () => {
+    it('chiffre chaque instrument survolé, sous le total qu\'ils composent', () => {
+        const html = detailTooltipHtml(detailed(2), 10, ['Valeur', 'Investi', 'Titre 1', 'Titre 2'])
+            .replace(/[\xa0 ]/g, ' ');
+
+        expect(html).toContain('Valeur');
+        expect(html).toContain('Titre 1');
+        expect(html).toContain('110 €');
+        expect(html).toContain('Titre 2');
+        expect(html).toContain('210 €');
+    });
+
+    it('classe les instruments du plus lourd au plus léger, la lecture cherchant les gros porteurs', () => {
+        const html = detailTooltipHtml(detailed(3), 10, ['Valeur', 'Investi', 'Titre 1', 'Titre 2', 'Titre 3']);
+
+        expect(html.indexOf('Titre 3')).toBeLessThan(html.indexOf('Titre 2'));
+        expect(html.indexOf('Titre 2')).toBeLessThan(html.indexOf('Titre 1'));
+    });
+
+    it('tait la courbe que le lecteur a masquée depuis la légende', () => {
+        const html = detailTooltipHtml(detailed(3), 10, ['Valeur', 'Investi', 'Titre 1', 'Titre 3']);
+
+        expect(html).toContain('Titre 1');
+        expect(html).not.toContain('Titre 2');
+    });
+
+    it('retire le gain dès que l\'une des deux courbes qui le mesurent est masquée', () => {
+        const html = detailTooltipHtml(detailed(2), 10, ['Valeur', 'Titre 1']);
+
+        expect(html).toContain('Valeur');
+        expect(html).not.toContain('Investi');
+        expect(html).not.toContain('Gain');
+    });
+});

@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { Deferred } from '@inertiajs/vue3';
 import { AsyncBaseChart } from '@/components/AsyncBaseChart';
 import ChartSkeleton from '@/components/ChartSkeleton.vue';
-import { buildValueVsInvestedOption, type ZoomWindow } from '@/lib/chart';
+import { buildValueVsInvestedOption, type AssetSeries, type ZoomWindow } from '@/lib/chart';
 import { eur } from '@/lib/format';
 import { dividendMarks, type DividendMark, type DividendReceipt } from '@/lib/income';
 import type { ChartOption } from '@/lib/echarts';
@@ -22,6 +22,11 @@ const props = defineProps<{
     description: string;
     /** Absents sur le tableau de bord : seule la fiche instrument annote ses détachements. */
     dividends?: DividendReceipt[];
+    /**
+     * Détail de la poche, posé seulement par la page d'une exposition quand le lecteur le demande :
+     * une courbe s'ajoute alors par instrument, sous le total.
+     */
+    perAsset?: AssetSeries[];
 }>();
 
 /**
@@ -49,6 +54,7 @@ const option = computed<ChartOption>(() => buildValueVsInvestedOption({
     window: lastZoom,
     description: props.description,
     dividends: marks.value,
+    perAsset: props.perAsset ?? [],
 }));
 </script>
 
