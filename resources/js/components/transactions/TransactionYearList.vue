@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { ChevronRight } from 'lucide-vue-next';
+import { ChevronRight, Pencil, Trash2 } from 'lucide-vue-next';
+import { Button } from '@/components/ui/button';
 import { eur, frDayMonth, signedEur } from '@/lib/format';
 import {
     transactionYears,
@@ -17,15 +18,39 @@ import {
  * prix unitaire, frais — se replie sous la ligne, faute de place à côté.
  * `bare` : un seul actif, la colonne libérée porte prix unitaire et frais en clair.
  */
-const props = defineProps<{
-    lines: TransactionLine[];
-    variant: 'named' | 'bare';
-    emptyLabel: string;
-}>();
+const props = withDefaults(
+    defineProps<{
+        lines: TransactionLine[];
+        variant: 'named' | 'bare';
+        emptyLabel: string;
+        /**
+         * Ouvre la correction et la suppression. Faux par défaut : les appelants qui ne la
+         * demandent pas ne bougent pas d'un pixel.
+         */
+        editable?: boolean;
+    }>(),
+    { editable: false },
+);
+
+const emit = defineEmits<{ edit: [line: TransactionLine]; delete: [line: TransactionLine] }>();
 
 const years = computed<TransactionYear[]>(() => transactionYears(props.lines));
 
 const isNamed = computed<boolean>(() => props.variant === 'named');
+
+/** La piste souple change de place avec la variante, et `bare` en gagne une pour le crayon. */
+const gridColumns = computed<string>(() => {
+    if (isNamed.value) {
+        return 'grid-cols-[auto_1fr_auto_auto]';
+    }
+
+    return props.editable
+        ? 'grid-cols-[auto_auto_1fr_auto_auto]'
+        : 'grid-cols-[auto_auto_1fr_auto]';
+});
+
+/** Doit suivre le nombre de pistes, sinon les lignes cessent de s'aligner sur le groupe. */
+const rowSpan = computed<string>(() => (!isNamed.value && props.editable ? 'col-span-5' : 'col-span-4'));
 
 /** L'actif ne se lit que sur les lignes qui le portent : la variante `bare` n'en a aucun. */
 const assetNameOf = (line: TransactionLine): string => (line as NamedTransactionLine).assetName;
@@ -51,6 +76,20 @@ const openLine = ref<string | null>(null);
 const toggleLine = (key: string): void => {
     openLine.value = openLine.value === key ? null : key;
 };
+
+/**
+ * Où vivent les actions, et pourquoi elles ne sont pas au même endroit selon la variante.
+ *
+ * En `named`, la ligne est un dépli : on greffe sur le dépli, dans le bloc de détail — qui est un
+ * frère de la ligne, pas un enfant. C'est aussi une contrainte technique : poser un bouton dans
+ * l'élément `[data-transaction-row]`, qui est lui-même un `<button>`, serait du HTML invalide.
+ * Et une lecture plus calme : la liste repliée ne se couvre pas d'icônes, les actions apparaissent
+ * là où le lecteur a déjà dit « c'est de cette ligne que je parle ».
+ *
+ * En `bare`, tout est déjà déplié et il n'y a rien où se cacher : la ligne est un `<div>`, donc une
+ * piste de grille de plus porte le crayon. Un seul bouton, pas deux — la suppression passe par la
+ * modale de correction, pour ne pas doubler les icônes sur la page la plus dense.
+ */
 
 /** Le flux investi de la ligne : un achat entre en positif, une vente en sort. */
 const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total : line.total);
@@ -91,14 +130,14 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
             <div
                 v-if="isYearOpen(group.year)"
                 class="grid items-center gap-x-3 pb-2 pl-[22px]"
-                :class="isNamed ? 'grid-cols-[auto_1fr_auto_auto]' : 'grid-cols-[auto_auto_1fr_auto]'"
+                :class="gridColumns"
             >
                 <template v-for="(line, index) in group.lines" :key="`${group.year}-${index}`">
                     <component
                         :is="isNamed ? 'button' : 'div'"
                         :type="isNamed ? 'button' : undefined"
                         data-transaction-row
-                        class="col-span-4 grid grid-cols-subgrid items-center gap-x-3 py-2 text-left text-sm"
+                        :class="[rowSpan, 'grid grid-cols-subgrid items-center gap-x-3 py-2 text-left text-sm']"
                         :aria-expanded="isNamed ? openLine === `${group.year}-${index}` : undefined"
                         :aria-label="
                             isNamed
@@ -150,20 +189,68 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                         <span data-transaction-amount class="text-right font-medium">
                             {{ signedEur(amountOf(line)) }}
                         </span>
+
+                        <!--
+                            La ligne est un `<div>` en variante `bare` : un bouton peut y vivre. En
+                            `named` elle est un `<button>`, et les actions vivent dans le détail.
+                        -->
+                        <Button
+                            v-if="!isNamed && props.editable"
+                            type="button"
+                            variant="ghost"
+                            size="icon-xs"
+                            data-transaction-edit
+                            :aria-label="`Modifier ${line.typeLabel} du ${frDayMonth(line.date)}`"
+                            class="text-muted-foreground hover:text-foreground"
+                            @click="emit('edit', line)"
+                        >
+                            <Pencil />
+                        </Button>
                     </component>
 
-                    <!-- Les frais tiennent dans le détail : hors de la fiche, l'actif prend leur colonne. -->
-                    <p
+                    <!--
+                        Les frais tiennent dans le détail : hors de la fiche, l'actif prend leur
+                        colonne. Les actions les rejoignent, à droite — ce bloc est un frère de la
+                        ligne, donc on n'imbrique aucun bouton dans le `<button>` qu'elle est.
+                    -->
+                    <div
                         v-if="isNamed && openLine === `${group.year}-${index}`"
                         data-transaction-detail
-                        class="col-span-4 pb-2 text-xs text-muted-foreground"
+                        class="col-span-4 flex items-center gap-3 pb-2 text-xs text-muted-foreground"
                     >
-                        {{ eur(line.unitPrice) }} l'unité<template
-                            v-if="line.fees"
-                        >
-                            · frais {{ eur(line.fees) }}</template
-                        >
-                    </p>
+                        <span>
+                            {{ eur(line.unitPrice) }} l'unité<template
+                                v-if="line.fees"
+                            >
+                                · frais {{ eur(line.fees) }}</template
+                            >
+                        </span>
+
+                        <span v-if="props.editable" class="ml-auto flex items-center gap-1">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="xs"
+                                data-transaction-edit
+                                @click="emit('edit', line)"
+                            >
+                                <Pencil />
+                                Modifier
+                            </Button>
+
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="xs"
+                                data-transaction-delete
+                                class="text-destructive hover:text-destructive"
+                                @click="emit('delete', line)"
+                            >
+                                <Trash2 />
+                                Supprimer
+                            </Button>
+                        </span>
+                    </div>
                 </template>
             </div>
         </div>

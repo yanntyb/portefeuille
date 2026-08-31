@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createApp, nextTick } from 'vue';
 import TransactionYearList from '@/components/transactions/TransactionYearList.vue';
 import type { NamedTransactionLine, TransactionLine } from '@/lib/instrument';
@@ -18,14 +18,33 @@ const line = (overrides: Partial<NamedTransactionLine> = {}): NamedTransactionLi
     ...overrides,
 });
 
+type Mounted = { host: HTMLElement; edited: ReturnType<typeof vi.fn>; removed: ReturnType<typeof vi.fn> };
+
 /** Monte la liste sur un hôte neuf et rend son DOM initial. */
 function mountList(lines: TransactionLine[], variant: 'named' | 'bare'): HTMLElement {
+    return mountEditable(lines, variant, false).host;
+}
+
+function mountEditable(
+    lines: TransactionLine[],
+    variant: 'named' | 'bare',
+    editable = true,
+): Mounted {
+    const edited = vi.fn();
+    const removed = vi.fn();
     const host = document.createElement('div');
     document.body.append(host);
 
-    createApp(TransactionYearList, { lines, variant, emptyLabel: 'Rien à montrer.' }).mount(host);
+    createApp(TransactionYearList, {
+        lines,
+        variant,
+        emptyLabel: 'Rien à montrer.',
+        editable,
+        onEdit: edited,
+        onDelete: removed,
+    }).mount(host);
 
-    return host;
+    return { host, edited, removed };
 }
 
 const click = async (element: Element | null): Promise<void> => {
@@ -81,5 +100,68 @@ describe('liste des transactions par année', () => {
         const host = mountList([], 'named');
 
         expect(host.textContent).toContain('Rien à montrer.');
+    });
+});
+
+describe('correction depuis la liste', () => {
+    it('ne montre aucune action sans qu\'on l\'ait demandé', async () => {
+        const host = mountList([line()], 'named');
+
+        await click(host.querySelector('[data-transaction-year]'));
+        await click(host.querySelector('[data-transaction-row]'));
+
+        expect(host.querySelector('[data-transaction-edit]')).toBeNull();
+        expect(host.querySelector('[data-transaction-delete]')).toBeNull();
+    });
+
+    it('cache les actions dans le détail en variante « named », et remonte la ligne', async () => {
+        const { host, edited, removed } = mountEditable([line()], 'named');
+
+        await click(host.querySelector('[data-transaction-year]'));
+
+        /** Repliée, la liste ne se couvre pas d'icônes : les actions suivent le dépli de la ligne. */
+        expect(host.querySelector('[data-transaction-edit]')).toBeNull();
+
+        await click(host.querySelector('[data-transaction-row]'));
+
+        expect(host.querySelector('[data-transaction-edit]')).not.toBeNull();
+
+        await click(host.querySelector('[data-transaction-edit]'));
+        expect(edited).toHaveBeenCalledWith(expect.objectContaining({ id: 1, walletId: 3 }));
+
+        await click(host.querySelector('[data-transaction-delete]'));
+        expect(removed).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
+    });
+
+    it('garde le détail lisible sous les actions', async () => {
+        const { host } = mountEditable([line()], 'named');
+
+        await click(host.querySelector('[data-transaction-year]'));
+        await click(host.querySelector('[data-transaction-row]'));
+
+        const detail = host.querySelector('[data-transaction-detail]');
+
+        expect(detail?.textContent).toContain("l'unité");
+        expect(detail?.textContent).toContain('frais');
+    });
+
+    it('pose un crayon par ligne en variante « bare », sans toucher au détail', async () => {
+        const { host, edited } = mountEditable([line()], 'bare');
+
+        await click(host.querySelector('[data-transaction-year]'));
+
+        /** Tout est déjà déplié : il n'y a nulle part où cacher l'action. */
+        const pencils = host.querySelectorAll('[data-transaction-edit]');
+        expect(pencils).toHaveLength(1);
+
+        /** Un seul bouton : la suppression passe par la modale de correction. */
+        expect(host.querySelector('[data-transaction-delete]')).toBeNull();
+
+        const row = host.querySelector('[data-transaction-row]');
+        expect(row?.textContent).toContain('×');
+        expect(row?.textContent).toContain('frais');
+
+        await click(pencils[0]);
+        expect(edited).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
     });
 });

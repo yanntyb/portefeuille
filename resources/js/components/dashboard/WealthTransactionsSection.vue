@@ -3,9 +3,17 @@ import { Deferred } from '@inertiajs/vue3';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
 import AddTransactionButton from '@/components/transactions/AddTransactionButton.vue';
 import TransactionYearList from '@/components/transactions/TransactionYearList.vue';
+import { frDate } from '@/lib/format';
 import type { WealthTransactionLine } from '@/lib/wealth';
+import { useTransactionDialogStore } from '@/stores/transactionDialog';
 
 const props = defineProps<{ transactions?: WealthTransactionLine[] | null }>();
+
+const dialog = useTransactionDialogStore();
+
+/** Ce que le volet de confirmation récapitule : de quelle opération il s'agit, en une phrase. */
+const labelOf = (line: WealthTransactionLine): string =>
+    `${line.typeLabel} de ${line.quantity} ${line.assetName} du ${frDate(line.date)}`;
 </script>
 
 <template>
@@ -28,6 +36,9 @@ const props = defineProps<{ transactions?: WealthTransactionLine[] | null }>();
             :lines="props.transactions"
             variant="named"
             empty-label="Aucune transaction pour l'instant."
+            editable
+            @edit="dialog.openEdit($event as WealthTransactionLine)"
+            @delete="dialog.askDeleteLine($event, labelOf($event as WealthTransactionLine))"
         />
 
         <Deferred v-else data="transactions">

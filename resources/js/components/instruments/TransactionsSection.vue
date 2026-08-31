@@ -3,9 +3,16 @@ import { Deferred } from '@inertiajs/vue3';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
 import AddTransactionButton from '@/components/transactions/AddTransactionButton.vue';
 import TransactionYearList from '@/components/transactions/TransactionYearList.vue';
+import { frDate } from '@/lib/format';
 import type { NamedTransactionLine } from '@/lib/instrument';
+import { useTransactionDialogStore } from '@/stores/transactionDialog';
 
 const props = defineProps<{ transactions?: NamedTransactionLine[] | null }>();
+
+const dialog = useTransactionDialogStore();
+
+const labelOf = (line: NamedTransactionLine): string =>
+    `${line.typeLabel} de ${line.quantity} ${line.assetName} du ${frDate(line.date)}`;
 </script>
 
 <template>
@@ -24,6 +31,9 @@ const props = defineProps<{ transactions?: NamedTransactionLine[] | null }>();
             :lines="props.transactions"
             variant="named"
             empty-label="Aucune transaction sur cette classe."
+            editable
+            @edit="dialog.openEdit($event as NamedTransactionLine)"
+            @delete="dialog.askDeleteLine($event, labelOf($event as NamedTransactionLine))"
         />
 
         <Deferred v-else data="transactions">
