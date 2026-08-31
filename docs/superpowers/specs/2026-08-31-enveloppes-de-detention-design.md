@@ -20,7 +20,7 @@ Dedans :
 
 - typage des enveloppes (`AccountType`), date d'ouverture, règles déclaratives attachées ;
 - l'enveloppe sur chaque ligne de position, affichée en badge sur les pages liste ;
-- un bloc « Enveloppes » dans la section Analyse du tableau de bord ;
+- une section « Enveloppes » sur le tableau de bord ;
 - alerte d'éligibilité : une position dont la classe d'actif n'est pas admise par l'enveloppe.
 
 Dehors, explicitement :
@@ -163,10 +163,15 @@ ligne portant `walletName`, avec `accountTypeLabel` en attribut `title`. Le nom 
 discriminant que le type — deux CTO chez deux courtiers portent des noms différents et le même
 type.
 
-**Section Analyse du tableau de bord** : un bloc « Enveloppes », une carte par compte —
-nom, type, valeur, gain, régime d'imposition, ancienneté et seuil de maturité s'ils sont
-connus, et l'alerte d'éligibilité quand `ineligibleAssetNames` n'est pas
-vide. Le bloc se place après les secteurs, dernier de la section.
+**Tableau de bord** : une section « Enveloppes », repliée à l'arrivée et alimentée par une prop
+différée comme les secteurs et l'historique, avec une carte par compte — nom, type, valeur, gain,
+régime d'imposition, ancienneté et seuil de maturité s'ils sont connus, et l'alerte d'éligibilité
+quand `ineligibleAssetNames` n'est pas vide. Elle se place entre les transactions et les secteurs.
+
+Une section propre, et non un bloc dans une section existante : le tableau de bord n'a pas de
+section Analyse — celle-ci n'existe que sur les pages d'exposition —, et une enveloppe traverse
+les classes d'actif. La loger dans l'Analyse d'une page classe montrerait un compte amputé de ce
+qu'il tient ailleurs.
 
 Tout le texte visible est en français.
 
