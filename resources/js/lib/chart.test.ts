@@ -833,35 +833,28 @@ describe('buildValueVsInvestedOption — détail par instrument', () => {
         expect(instruments[10]).toBe(instruments[0]);
     });
 
-    it('ouvre une légende défilante, seul moyen de retrouver une bande parmi vingt', () => {
-        const legend = detailed(20).legend as { type?: string; show?: boolean };
-
-        expect(legend).toBeDefined();
-        expect(legend.type).toBe('scroll');
-    });
-
-    it('se passe de légende sans détail : deux courbes nommées dans l\'infobulle suffisent', () => {
+    it('se passe de légende : vingt intitulés d\'ETF mangeraient le graphe, l\'infobulle les nomme', () => {
+        expect(detailed(20).legend).toBeUndefined();
         expect(valueVsInvested(36).legend).toBeUndefined();
     });
 
-    it('réserve sous la grille la bande que la légende occupe, sans mordre sur le tracé', () => {
+    it('rend au tracé la bande qu\'une légende aurait prise', () => {
         const bottomOf = (option: ChartOption): number => (option.grid as { bottom: number }).bottom;
 
-        expect(bottomOf(detailed(3))).toBeGreaterThan(bottomOf(valueVsInvested(36)));
+        expect(bottomOf(detailed(3))).toBe(bottomOf(valueVsInvested(36)));
     });
 });
 
-/** Infobulle du mode détail : ECharts y passe un point par série encore visible. */
-const detailTooltipHtml = (option: ChartOption, dataIndex: number, visible: string[]): string => {
+/** Infobulle du mode détail : ECharts y passe un point par bande de la pile. */
+const detailTooltipHtml = (option: ChartOption, dataIndex: number): string => {
     const formatter = (option.tooltip as { formatter: (params: unknown) => string }).formatter;
 
-    return formatter(visible.map((seriesName: string) => ({ dataIndex, seriesName })));
+    return formatter([{ dataIndex }]);
 };
 
 describe('buildValueVsInvestedOption — infobulle du détail', () => {
     it('chiffre chaque instrument survolé', () => {
-        const html = detailTooltipHtml(detailed(2), 10, ['Titre 1', 'Titre 2'])
-            .replace(/[\xa0\u202f]/g, ' ');
+        const html = detailTooltipHtml(detailed(2), 10).replace(/[\xa0\u202f]/g, ' ');
 
         expect(html).toContain('Titre 1');
         expect(html).toContain('110 €');
@@ -870,7 +863,7 @@ describe('buildValueVsInvestedOption — infobulle du détail', () => {
     });
 
     it('tait la valeur et l\'investi, que le mode détail ne trace plus', () => {
-        const html = detailTooltipHtml(detailed(2), 10, ['Titre 1', 'Titre 2']);
+        const html = detailTooltipHtml(detailed(2), 10);
 
         expect(html).not.toContain('Valeur');
         expect(html).not.toContain('Investi');
@@ -878,17 +871,18 @@ describe('buildValueVsInvestedOption — infobulle du détail', () => {
     });
 
     it('classe les instruments du plus lourd au plus léger, la lecture cherchant les gros porteurs', () => {
-        const html = detailTooltipHtml(detailed(3), 10, ['Titre 1', 'Titre 2', 'Titre 3']);
+        const html = detailTooltipHtml(detailed(3), 10);
 
         expect(html.indexOf('Titre 3')).toBeLessThan(html.indexOf('Titre 2'));
         expect(html.indexOf('Titre 2')).toBeLessThan(html.indexOf('Titre 1'));
     });
 
-    it('tait la bande que le lecteur a masquée depuis la légende', () => {
-        const html = detailTooltipHtml(detailed(3), 10, ['Titre 1', 'Titre 3']);
+    it('nomme chaque bande de la pile, l\'infobulle étant seule à les identifier', () => {
+        const html = detailTooltipHtml(detailed(3), 10);
 
         expect(html).toContain('Titre 1');
-        expect(html).not.toContain('Titre 2');
+        expect(html).toContain('Titre 2');
+        expect(html).toContain('Titre 3');
     });
 });
 
@@ -904,21 +898,6 @@ describe('buildValueVsInvestedOption — tenue de l\'infobulle', () => {
 
         expect(tooltip.extraCssText).toContain('max-width');
         expect(tooltip.extraCssText).toContain('white-space:normal');
-    });
-});
-
-describe('buildValueVsInvestedOption — légende du détail', () => {
-    it('tronque les noms à rallonge, un intitulé d\'ETF prenant sinon toute la largeur', () => {
-        const legend = detailed(1).legend as { formatter: (name: string) => string };
-        const long = 'Amundi PEA Nasdaq-100 UCITS ETF Acc EUR Capitalisant';
-
-        expect(legend.formatter(long)).toBe('Amundi PEA Nasdaq-100 UCI…');
-    });
-
-    it('laisse intact un nom qui tient déjà, plutôt que de le raboter par principe', () => {
-        const legend = detailed(1).legend as { formatter: (name: string) => string };
-
-        expect(legend.formatter('Air Liquide')).toBe('Air Liquide');
     });
 });
 

@@ -16,17 +16,30 @@ function render(option: Record<string, unknown>): string {
     return host.innerHTML;
 }
 
-const lineOf = (name: string) => ({ name, type: 'line', data: [1, 2] });
+const line = {
+    xAxis: { type: 'category', data: ['a', 'b'] },
+    yAxis: { type: 'value' },
+    series: [{ name: 'Titre', type: 'line', data: [1, 2] }],
+};
+
+/** Nombre de tracés peints : un composant non enregistré n'en ajoute aucun. */
+const paths = (html: string): number => html.split('<path').length;
 
 describe('composants enregistrés', () => {
-    it('peint la légende, sans laquelle une courbe parmi vingt reste anonyme', () => {
-        const html = render({
-            legend: { type: 'scroll' },
-            xAxis: { type: 'category', data: ['a', 'b'] },
-            yAxis: { type: 'value' },
-            series: [lineOf('Titre 1')],
-        });
+    it('peint la mini-timeline du zoom, seule commande de fenêtre du graphe', () => {
+        expect(paths(render({ ...line, dataZoom: [{ type: 'slider' }] })))
+            .toBeGreaterThan(paths(render(line)));
+    });
 
-        expect(html).toContain('Titre 1');
+    it('peint les pastilles posées sur la courbe, qui ancrent la dernière valeur', () => {
+        const marked = {
+            ...line,
+            series: [{
+                ...line.series[0],
+                markPoint: { symbol: 'circle', data: [{ coord: ['b', 2], symbolSize: 8 }] },
+            }],
+        };
+
+        expect(paths(render(marked))).toBeGreaterThan(paths(render(line)));
     });
 });

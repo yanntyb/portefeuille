@@ -553,22 +553,10 @@ function valueVsInvestedTooltip(
 
 /** ECharts passe un tableau de points survolés ; tous partagent le même index de catégorie. */
 /**
- * Noms des courbes encore visibles : ECharts ne passe au formateur que les séries que la légende
- * n'a pas masquées. L'infobulle du détail s'y cale, plutôt que de rechiffrer des tracés effacés.
- */
-function visibleSeries(params: unknown): Set<string> {
-    const points = Array.isArray(params) ? params : [params];
-
-    return new Set(points
-        .map((point: unknown): unknown => (point as { seriesName?: unknown }).seriesName)
-        .filter((name: unknown): name is string => typeof name === 'string'));
-}
-
-/**
  * L'infobulle du mode détail : chaque instrument survolé, du plus lourd au plus léger. Les montants
  * se relisent dans les séries d'origine plutôt que dans les points d'ECharts — empilés, ceux-ci
- * portent la somme des bandes du dessous, pas la valeur de l'instrument. Seule la visibilité se lit
- * dans `params`, que la légende a filtré.
+ * portent la somme des bandes du dessous, pas la valeur de l'instrument. Elle est seule à nommer
+ * les bandes : la pile se passe de légende, vingt intitulés d'ETF mangeraient le graphe.
  */
 function detailTooltip(
     labels: string[],
@@ -583,11 +571,8 @@ function detailTooltip(
                 return '';
             }
 
-            const visible = visibleSeries(params);
-
             const instrumentRows = perAsset
                 .map((asset: AssetSeries, rank: number) => ({ asset, rank, amount: asset.value[index] ?? 0 }))
-                .filter((row): boolean => visible.has(row.asset.name))
                 .sort((left, right): number => right.amount - left.amount)
                 .map((row): string => tooltipRow(seriesColor(row.rank), row.asset.name, valueFormatter(row.amount)))
                 .join('');
@@ -674,36 +659,6 @@ const ZOOM_SLIDER_HEIGHT = 40;
 /** Bande réservée à la graduation temporelle : une ligne, l'année en suffixe sous janvier. */
 const TIME_AXIS_LABEL_HEIGHT = 28;
 
-/** Hauteur de la bande de légende, glissée entre la graduation temporelle et la mini-timeline. */
-const LEGEND_HEIGHT = 30;
-
-/** Longueur au-delà de laquelle un intitulé de légende est coupé, l'ellipse comprise. */
-const LEGEND_NAME_LENGTH = 26;
-
-/**
- * La légende du mode détail : défilante, une poche pouvant aligner vingt instruments. Le clic sur
- * une pastille masque sa courbe — c'est la seule façon d'isoler une ligne dans un tel faisceau.
- * Les intitulés y sont coupés : un nom d'ETF complet occuperait à lui seul toute la largeur.
- */
-function seriesLegend(): NonNullable<ChartOption['legend']> {
-    const colors = palette();
-
-    return {
-        type: 'scroll',
-        formatter: (name: string): string => (name.length > LEGEND_NAME_LENGTH
-            ? `${name.slice(0, LEGEND_NAME_LENGTH - 1).trimEnd()}…`
-            : name),
-        bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT,
-        icon: 'roundRect',
-        itemWidth: 10,
-        itemHeight: 3,
-        textStyle: { color: colors.axisLabel, fontSize: 11 },
-        pageIconColor: colors.axisLabel,
-        pageIconInactiveColor: colors.dataBackground,
-        pageTextStyle: { color: colors.axisLabel },
-    };
-}
-
 /** La mini-timeline est la seule commande de zoom, partagée par les deux formes de graphe. */
 function wealthZoomSlider(visible: ZoomWindow | null): Extract<NonNullable<ChartOption['dataZoom']>, unknown[]>[number] {
     const colors = palette();
@@ -759,14 +714,13 @@ export function buildValueVsInvestedOption(
     const visible = window ?? lastYearWindow(labels);
     const colors = palette();
     const detailed = perAsset.length > 0;
-    const legendBand = detailed ? LEGEND_HEIGHT : 0;
 
     return {
         ...chartFrame({
             valueFormatter,
             /** L'investi peut passer sous la valeur comme au-dessus : l'axe doit tenir les deux. */
             values: [...value, ...invested],
-            bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT + legendBand,
+            bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT,
             description,
             gutter,
             anchoredAtZero: detailed,
@@ -777,7 +731,6 @@ export function buildValueVsInvestedOption(
         series: detailed
             ? instrumentSeries(labels, perAsset)
             : valueSeries(labels, value, invested, dividends),
-        ...(detailed ? { legend: seriesLegend() } : {}),
         tooltip: detailed
             ? detailTooltip(labels, perAsset, valueFormatter)
             : valueVsInvestedTooltip(labels, value, invested, valueFormatter, dividends),
