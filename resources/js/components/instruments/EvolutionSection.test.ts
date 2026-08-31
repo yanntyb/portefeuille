@@ -101,7 +101,7 @@ describe('bascule entre total et détail', () => {
 
         await choose(host, 'detail');
 
-        expect(seriesNames(lastPainted())).toEqual(['Titre 1', 'Titre 2', 'Titre 3']);
+        expect(seriesNames(lastPainted())).toEqual(['Total', 'Titre 1', 'Titre 2', 'Titre 3']);
     });
 
     it('revient au total, la bascule ne devant pas être un aller simple', async () => {

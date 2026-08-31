@@ -400,6 +400,23 @@ function seriesColor(rank: number): string {
 const INSTRUMENT_STACK = 'instruments';
 
 /**
+ * Porteur du total, en tête et invisible. La mini-timeline du zoom ne sait montrer qu'une série,
+ * la première, et en valeurs brutes : l'empilement lui échappe. Sans ce porteur elle dessinerait
+ * l'allure du premier instrument seul, à un ordre de grandeur du portefeuille — ce que le graphe
+ * au-dessus dément aussitôt. Muet et transparent, il ne sert qu'à cet aperçu.
+ */
+function totalCarrier(labels: string[], value: number[]): LineSeriesOption {
+    return {
+        name: 'Total',
+        type: 'line',
+        silent: true,
+        symbol: 'none',
+        lineStyle: { opacity: 0 },
+        data: datedPoints(labels, value),
+    };
+}
+
+/**
  * Une courbe par instrument de la poche, empilées : leur sommet vaut la valeur totale, que ce mode
  * n'a donc plus à tracer à part. Tracés nus, sans aire — vingt remplissages superposés noieraient
  * le graphe, et l'écart entre deux courbes dit déjà le poids de celle du dessus.
@@ -725,10 +742,10 @@ export function buildValueVsInvestedOption(
             anchoredAtZero: detailed,
         }),
         color: detailed
-            ? perAsset.map((_asset: AssetSeries, rank: number): string => seriesColor(rank))
+            ? ['transparent', ...perAsset.map((_asset: AssetSeries, rank: number): string => seriesColor(rank))]
             : [colors.value, colors.invested],
         series: detailed
-            ? instrumentSeries(labels, perAsset)
+            ? [totalCarrier(labels, value), ...instrumentSeries(labels, perAsset)]
             : valueSeries(labels, value, invested, dividends),
         tooltip: detailed
             ? detailTooltip(labels, perAsset, valueFormatter)

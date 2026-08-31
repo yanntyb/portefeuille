@@ -792,27 +792,28 @@ const detailed = (count: number, months = 36): ChartOption => {
 };
 
 describe('buildValueVsInvestedOption — détail par instrument', () => {
-    it('ne trace que les instruments : empilés, leur sommet redit déjà la valeur totale', () => {
+    it('ne trace que les instruments, précédés du total muet qui nourrit la mini-timeline', () => {
         expect(seriesOf(detailed(3)).map((serie) => serie.name))
-            .toEqual(['Titre 1', 'Titre 2', 'Titre 3']);
+            .toEqual(['Total', 'Titre 1', 'Titre 2', 'Titre 3']);
     });
 
     it('empile les instruments sur une même pile, le tracé du haut valant le total', () => {
-        const stacks = seriesOf(detailed(3)).map((serie) => serie.stack);
+        const [ghost, ...instruments] = seriesOf(detailed(3));
 
-        expect(new Set(stacks).size).toBe(1);
-        expect(stacks[0]).toBeDefined();
+        expect(new Set(instruments.map((serie) => serie.stack)).size).toBe(1);
+        expect(instruments[0].stack).toBeDefined();
+        expect(ghost.stack).toBeUndefined();
     });
 
     it('laisse les courbes nues : vingt aires pleines empilées noieraient le tracé', () => {
-        const [first] = seriesOf(detailed(3));
+        const [, first] = seriesOf(detailed(3));
 
         expect(first.areaStyle).toBeUndefined();
         expect(first.markPoint).toBeUndefined();
     });
 
     it('date les points de chaque instrument, l\'axe temporel attendant des couples', () => {
-        const [first] = seriesOf(detailed(1, 3));
+        const [, first] = seriesOf(detailed(1, 3));
 
         expect(first.data).toEqual([
             ['2023-01-01', 100],
@@ -822,11 +823,11 @@ describe('buildValueVsInvestedOption — détail par instrument', () => {
     });
 
     it('donne à chaque instrument sa propre teinte, pour qu\'aucune paire ne se confonde', () => {
-        expect(new Set(detailed(6).color as string[]).size).toBe(6);
+        expect(new Set((detailed(6).color as string[]).slice(1)).size).toBe(6);
     });
 
     it('recycle la palette au-delà de ses teintes, plutôt que de laisser une bande sans couleur', () => {
-        const instruments = detailed(12).color as string[];
+        const instruments = (detailed(12).color as string[]).slice(1);
 
         expect(instruments).toHaveLength(12);
         expect(instruments.every((color: string): boolean => typeof color === 'string' && color !== '')).toBe(true);
@@ -898,6 +899,29 @@ describe('buildValueVsInvestedOption — tenue de l\'infobulle', () => {
 
         expect(tooltip.extraCssText).toContain('max-width');
         expect(tooltip.extraCssText).toContain('white-space:normal');
+    });
+});
+
+describe('buildValueVsInvestedOption — aperçu de la mini-timeline', () => {
+    it('porte le total en tête, seule série qu\'ECharts sait montrer dans la mini-timeline', () => {
+        // La mini-timeline dessine la première série, en valeurs brutes : sans ce porteur, elle
+        // afficherait l'allure du premier instrument seul, à un ordre de grandeur du portefeuille.
+        const [ghost] = seriesOf(detailed(1, 3));
+
+        expect(ghost.data).toEqual([
+            ['2023-01-01', 1000],
+            ['2023-02-01', 1010],
+            ['2023-03-01', 1020],
+        ]);
+    });
+
+    it('rend ce porteur invisible dans le cadre, où il doublerait le sommet de la pile', () => {
+        const [ghost] = seriesOf(detailed(3));
+
+        expect(ghost.lineStyle?.opacity).toBe(0);
+        expect(ghost.silent).toBe(true);
+        expect(ghost.areaStyle).toBeUndefined();
+        expect(ghost.markPoint).toBeUndefined();
     });
 });
 
