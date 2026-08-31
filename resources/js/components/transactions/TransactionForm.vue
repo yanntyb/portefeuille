@@ -8,7 +8,7 @@ import { FormField } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, type SelectOption } from '@/components/ui/native-select';
 import SegmentedControl, { type Segment } from '@/components/ui/SegmentedControl.vue';
-import { eur } from '@/lib/format';
+import { eur, frDate } from '@/lib/format';
 import { refreshableKeys } from '@/lib/inertiaRefresh';
 import { payloadOf, transactionTotal, type TransactionDraft } from '@/lib/transactionForm';
 import { useNetworkStore } from '@/stores/network';
@@ -94,6 +94,11 @@ const isEditing: ComputedRef<boolean> = computed((): boolean => dialog.editingId
 const total: ComputedRef<number | null> = computed((): number | null => transactionTotal(form.data()));
 
 const blocked: ComputedRef<boolean> = computed((): boolean => !network.isOnline || form.processing);
+
+/** Ce que le volet de confirmation récapitule ; la date s'y lit en français, pas en ISO. */
+const deletionLabel: ComputedRef<string> = computed(
+    (): string => `${form.type === 'sell' ? 'Vente' : 'Achat'} du ${frDate(form.date)}`,
+);
 
 /**
  * Le cours connu pré-remplit le prix unitaire — la valeur la plus souvent juste pour un ordre saisi
@@ -308,10 +313,10 @@ const serverUnreachable: Ref<boolean> = ref(false);
                 v-if="isEditing"
                 type="button"
                 variant="ghost"
-                data-transaction-delete
+                data-transaction-delete-edited
                 class="text-destructive hover:text-destructive sm:mr-auto"
                 :disabled="form.processing"
-                @click="dialog.askDelete(`${form.type === 'sell' ? 'Vente' : 'Achat'} du ${form.date}`)"
+                @click="dialog.askDelete(deletionLabel)"
             >
                 Supprimer
             </Button>
