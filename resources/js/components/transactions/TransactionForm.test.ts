@@ -155,7 +155,7 @@ describe('champs', () => {
 
         expect(wallets.map((option) => option.textContent?.trim())).toEqual([
             'Choisir une enveloppe',
-            'CTO - IBKR',
+            'IBKR - CTO',
             'PEA - PEA',
         ]);
         expect(instruments.map((option) => option.textContent?.trim())).toEqual([

@@ -68,14 +68,14 @@ onMounted(async (): Promise<void> => {
 });
 
 /**
- * Régime d'abord, établissement ensuite — « CTO - IBKR » : c'est le régime qui décide de la
- * saisie, l'établissement ne fait que départager deux comptes qui le partagent. Sans
- * établissement, le nom du compte prend sa place, comme sur les cartes d'enveloppes.
+ * Établissement d'abord, régime ensuite — « IBKR - CTO » : c'est l'établissement qui situe le
+ * compte, le régime le qualifie. Sans établissement, le nom du compte prend sa place, comme sur
+ * les cartes d'enveloppes.
  */
 const walletOptions: ComputedRef<SelectOption[]> = computed((): SelectOption[] =>
     (options.value?.wallets ?? []).map((wallet): SelectOption => ({
         value: String(wallet.id),
-        label: `${wallet.accountTypeLabel} - ${wallet.broker ?? wallet.name}`,
+        label: `${wallet.broker ?? wallet.name} - ${wallet.accountTypeLabel}`,
     })),
 );
 
