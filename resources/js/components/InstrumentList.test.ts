@@ -33,6 +33,10 @@ const row: InstrumentRow = {
     gainPct: 7.1,
     share: 12,
     barWidth: '50%',
+    rowKey: '7-10',
+    walletId: 10,
+    walletName: 'PEA',
+    accountTypeLabel: 'PEA',
 };
 
 /** Monte la liste sur un hôte neuf et rend son DOM initial. */
@@ -62,5 +66,24 @@ describe('ligne d\'un instrument', () => {
 
         expect(link?.className).toContain('hover:bg-muted');
         expect(host.querySelector('[data-instrument-name]')?.className).not.toContain('hover:underline');
+    });
+
+    it('affiche l\'enveloppe de chaque position, un même titre tenu deux fois comprise', () => {
+        const host = document.createElement('div');
+        document.body.append(host);
+
+        createApp(InstrumentList, {
+            rows: [
+                row,
+                { ...row, rowKey: '7-20', walletId: 20, walletName: 'CTO', accountTypeLabel: 'Compte-titres' },
+            ],
+            loading: false,
+            emptyLabel: 'Aucune position.',
+        }).mount(host);
+
+        const badges = host.querySelectorAll('[data-instrument-wallet]');
+        expect([...badges].map((badge) => badge.textContent?.trim())).toEqual(['PEA', 'CTO']);
+        expect(badges[1].getAttribute('title')).toBe('Compte-titres');
+        expect(host.querySelectorAll('[data-instrument-row]')).toHaveLength(2);
     });
 });

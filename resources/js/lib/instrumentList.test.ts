@@ -16,12 +16,37 @@ const holding = (assetId: number, assetName: string, marketValue: number): Holdi
     typeLabel: 'Action',
     assetClass: 'equity',
     assetClassLabel: 'Actions',
+    walletId: 10,
+    walletName: 'PEA',
+    accountType: 'pea',
+    accountTypeLabel: 'PEA',
     quantity: 10,
     avgCost: 80,
     lastPrice: marketValue / 10,
     marketValue,
     gain: 200,
     gainPct: 25,
+});
+
+const holdingLine = (overrides: Partial<HoldingLine> = {}): HoldingLine => ({
+    assetId: 1,
+    assetName: 'Apple',
+    ticker: 'AAPL',
+    type: 'stock',
+    typeLabel: 'Action',
+    assetClass: 'equity',
+    assetClassLabel: 'Actions',
+    walletId: 10,
+    walletName: 'PEA',
+    accountType: 'pea',
+    accountTypeLabel: 'PEA',
+    quantity: 3,
+    avgCost: 100,
+    lastPrice: 200,
+    marketValue: 600,
+    gain: 300,
+    gainPct: 100,
+    ...overrides,
 });
 
 const names = (rows: InstrumentRow[]): string[] => rows.map((row) => row.name);
@@ -68,6 +93,23 @@ describe('holdingRows', () => {
 
         expect(rows[0].changePct).toBeNull();
         expect(rows[0].points).toEqual([]);
+    });
+});
+
+describe('lignes du portefeuille', () => {
+    it('rend une ligne par actif et par enveloppe, chacune avec son propre poids', () => {
+        const rows = holdingRows(
+            [
+                holdingLine({ walletId: 10, walletName: 'PEA', marketValue: 750 }),
+                holdingLine({ walletId: 20, walletName: 'CTO', accountTypeLabel: 'Compte-titres', marketValue: 250 }),
+            ],
+            null,
+        );
+
+        expect(rows).toHaveLength(2);
+        expect(rows.map((row) => row.rowKey)).toEqual(['1-10', '1-20']);
+        expect(rows.map((row) => row.share)).toEqual([75, 25]);
+        expect(rows.map((row) => row.walletName)).toEqual(['PEA', 'CTO']);
     });
 });
 

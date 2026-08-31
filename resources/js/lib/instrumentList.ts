@@ -10,6 +10,15 @@ export interface InstrumentRow extends CatalogRow {
     share: number | null;
     /** Largeur CSS de la barre de poids. */
     barWidth: string | null;
+    /**
+     * Clé de rendu : l'actif seul ne suffit pas. Un titre tenu dans deux enveloppes fait deux
+     * lignes de même `id`, que Vue confondrait et dont la seconde écraserait le poids de la
+     * première.
+     */
+    rowKey: string;
+    walletId: number;
+    walletName: string;
+    accountTypeLabel: string;
 }
 
 /** Une position ramenée à la forme d'une ligne de catalogue, que les tendances savent joindre. */
@@ -29,22 +38,27 @@ const asCatalogLine = (weight: HoldingWeight): CatalogLine => ({
 const byMarketValue = (left: InstrumentRow, right: InstrumentRow): number =>
     (right.marketValue ?? 0) - (left.marketValue ?? 0);
 
+/** L'actif seul ne discrimine pas deux lignes d'une même position tenue dans deux enveloppes. */
+const keyOf = (line: HoldingLine): string => `${line.assetId}-${line.walletId}`;
+
 /**
  * Les positions du portefeuille, rangées par valeur. Les tendances arrivent différées : les lignes
  * sont servies sans elles, et les étincelles se remplissent ensuite sans que la liste ait été vide.
+ *
+ * `joinTrends` (`@/lib/catalog`) est un `lines.map(...)` pur : même ordre, même cardinal, aucun
+ * filtrage. Le poids se rattache donc par position d'index plutôt que par une `Map` indexée sur
+ * l'actif, qui confondrait deux lignes du même actif tenues dans deux enveloppes différentes.
  */
 export const holdingRows = (
     holdings: HoldingLine[],
     trends: CatalogTrend[] | null | undefined,
 ): InstrumentRow[] => {
     const weights = holdingWeights(holdings);
-    const weightByAsset = new Map<number, HoldingWeight>(
-        weights.map((weight: HoldingWeight): [number, HoldingWeight] => [weight.line.assetId, weight]),
-    );
+    const joined = joinTrends(weights.map(asCatalogLine), trends);
 
-    return joinTrends(weights.map(asCatalogLine), trends)
-        .map((row: CatalogRow): InstrumentRow => {
-            const weight = weightByAsset.get(row.id);
+    return joined
+        .map((row: CatalogRow, index: number): InstrumentRow => {
+            const weight = weights[index];
 
             return {
                 ...row,
@@ -52,6 +66,10 @@ export const holdingRows = (
                 gainPct: weight?.line.gainPct ?? null,
                 share: weight?.share ?? null,
                 barWidth: weight?.barWidth ?? null,
+                rowKey: weight === undefined ? String(row.id) : keyOf(weight.line),
+                walletId: weight?.line.walletId ?? 0,
+                walletName: weight?.line.walletName ?? '',
+                accountTypeLabel: weight?.line.accountTypeLabel ?? '',
             };
         })
         .sort(byMarketValue);

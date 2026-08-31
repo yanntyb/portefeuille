@@ -22,7 +22,7 @@ const props = defineProps<{
     <ul v-if="rows.length" class="flex flex-col">
         <li
             v-for="row in rows"
-            :key="row.id"
+            :key="row.rowKey"
             data-instrument-row
             class="flex flex-col justify-center border-b border-separator last:border-b-0"
         >
@@ -56,7 +56,16 @@ const props = defineProps<{
 
                 <!-- Le détail passe sur une seconde ligne : la colonne est trop étroite pour huit colonnes. -->
                 <span class="flex items-center gap-3 text-xs">
-                    <span class="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-separator md:w-28">
+                    <span
+                        v-if="row.walletName"
+                        data-instrument-wallet
+                        :title="row.accountTypeLabel"
+                        class="max-w-[3.5rem] shrink-0 truncate rounded-full bg-muted px-2 py-0.5 font-semibold text-muted-foreground md:max-w-[9rem]"
+                    >
+                        {{ row.walletName }}
+                    </span>
+
+                    <span class="h-1.5 w-6 shrink-0 overflow-hidden rounded-full bg-separator md:w-28">
                         <span
                             data-instrument-bar
                             class="block h-full rounded-full bg-sector-bar"

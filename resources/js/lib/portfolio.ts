@@ -8,6 +8,10 @@ export interface HoldingLine {
     typeLabel: string;
     assetClass: string;
     assetClassLabel: string;
+    walletId: number;
+    walletName: string;
+    accountType: string;
+    accountTypeLabel: string;
     quantity: number;
     avgCost: number | null;
     lastPrice: number | null;
