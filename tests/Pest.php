@@ -537,3 +537,23 @@ function inputData(int $walletId, int $assetId, array $overrides = []): Transact
         'fees' => 2.5,
     ], $overrides));
 }
+
+/**
+ * La même opération que `inputData()`, mais telle qu'un formulaire l'envoie : des chaînes, et les
+ * clés camelCase du fil. Partagée par les tests des trois contrôleurs d'écriture.
+ *
+ * @param  array<string, mixed>  $overrides
+ * @return array<string, mixed>
+ */
+function transactionPayload(int $walletId, int $assetId, array $overrides = []): array
+{
+    return array_merge([
+        'walletId' => $walletId,
+        'assetId' => $assetId,
+        'date' => '2026-04-01',
+        'type' => 'buy',
+        'quantity' => '5',
+        'unitPrice' => '120',
+        'fees' => '2.5',
+    ], $overrides);
+}
