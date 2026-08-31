@@ -62,6 +62,21 @@ class BackupSeeder extends Seeder
     ];
 
     /**
+     * Courtier de chaque portefeuille de titres, imposé au dump.
+     *
+     * La colonne `broker` du dump est presque toujours vide, et porte ailleurs le courtier d'où
+     * la ligne avait été importée à l'époque plutôt que celui qui tient le compte aujourd'hui.
+     * Les deux portefeuilles sont chez IBKR : c'est ce que le seeder inscrit. Un portefeuille
+     * absent de cette table garde le courtier du dump.
+     *
+     * @var array<string, string>
+     */
+    private const WALLET_BROKERS = [
+        'PEA' => 'IBKR',
+        'CTO' => 'IBKR',
+    ];
+
+    /**
      * Compte administrateur du dump.
      */
     private const ADMIN_EMAIL = 'admin@example.test';
@@ -124,6 +139,13 @@ class BackupSeeder extends Seeder
 
     /** @var array<int, int> */
     private array $wallets = [];
+
+    /**
+     * Courtier imposé à chaque portefeuille du dump, `id du dump => courtier`.
+     *
+     * @var array<int, string>
+     */
+    private array $walletBrokers = [];
 
     /** @var array<int, int> */
     private array $instruments = [];
@@ -262,6 +284,10 @@ class BackupSeeder extends Seeder
             }
 
             $this->wallets[(int) $dumpId] = $wallet->id;
+
+            if (isset(self::WALLET_BROKERS[$name])) {
+                $this->walletBrokers[(int) $dumpId] = self::WALLET_BROKERS[$name];
+            }
         }
     }
 
@@ -319,7 +345,7 @@ class BackupSeeder extends Seeder
                 'asset_id' => $dumpAssetId === null ? null : ($this->instruments[(int) $dumpAssetId] ?? null),
                 'date' => $date,
                 'type' => $type,
-                'broker' => $broker,
+                'broker' => $this->walletBrokers[(int) $dumpWalletId] ?? $broker,
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
                 'fees' => $fees,

@@ -254,11 +254,19 @@ it('replays the crypto orders of the default account, without the cancelled one'
 it('keeps the details of the transactions', function () {
     $this->seed(SampleBackupSeeder::class);
 
-    $transaction = Transaction::query()->where('broker', 'IBKR')->sole();
+    $transaction = Transaction::query()->where('notes', "Ligne d'exemple")->sole();
 
-    expect($transaction->notes)->toBe("Ligne d'exemple")
-        ->and((float) $transaction->fees)->toBe(3.0)
+    expect((float) $transaction->fees)->toBe(3.0)
         ->and($transaction->date->toDateString())->toBe('2026-01-06');
+});
+
+it('books every transaction of the securities wallets at IBKR', function () {
+    $this->seed(SampleBackupSeeder::class);
+
+    $securities = Wallet::query()->whereIn('name', ['PEA', 'CTO'])->pluck('id');
+
+    expect(Transaction::query()->whereIn('wallet_id', $securities)->pluck('broker')->unique()->all())
+        ->toBe(['IBKR']);
 });
 
 it('restores the tables that have no Eloquent model', function () {
