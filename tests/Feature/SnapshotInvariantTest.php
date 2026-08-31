@@ -77,8 +77,11 @@ use Illuminate\Support\Carbon;
  * tiré au sort par `WalletFactory::definition()` dans les fixtures qui alimentent ce test —
  * `portfolioFixture()`, `cryptoFixture()` et le second portefeuille de `seedSnapshotFixture()`
  * fixent désormais leur nom, comme `.ai/rules/factories.md` le demande déjà pour `ticker`.
+ * Modifié une dix-neuvième fois : le tableau de bord gagne une section enveloppes, donc `dashboard`
+ * une sixième clé — le portefeuille regroupé par compte de détention, avec le régime déclaré de
+ * chacun.
  */
-const SNAPSHOT_VERSION = 'd97a5464dce6babc4561de31bcca66199c304b9c';
+const SNAPSHOT_VERSION = '70aea6f86ca7a1c51ff43b3338168b4010f44943';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

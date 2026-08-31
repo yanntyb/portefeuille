@@ -158,3 +158,40 @@ it('sert l\'état de synchronisation, et le rend seul en requête partielle', fu
         ->assertJsonPath('props.sync.status', 'queued')
         ->assertJsonMissingPath('props.overview');
 });
+
+it('sert les enveloppes de détention au tableau de bord', function () {
+    Carbon::setTestNow('2026-08-31');
+    $user = User::factory()->create();
+    $pea = Wallet::factory()->for($user)->pea()->create();
+    $asset = Instrument::factory()->ofType(InstrumentType::Stock)->create();
+    Price::factory()->create(['asset_id' => $asset->id, 'date' => now(), 'close' => 100]);
+    Holding::factory()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $pea->id,
+        'asset_id' => $asset->id,
+        'quantity' => 10,
+        'avg_cost' => 80,
+    ]);
+
+    $this->actingAs($user)
+        ->get('/')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->missing('accounts'));
+
+    /** Le groupe `enveloppes` n'arrive qu'à la requête partielle que déclenche le dépli. */
+    $this->actingAs($user)
+        ->get('/', [
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => Inertia::getVersion(),
+            'X-Inertia-Partial-Component' => 'Dashboard',
+            'X-Inertia-Partial-Data' => 'accounts',
+        ])
+        ->assertOk()
+        ->assertJsonCount(1, 'props.accounts')
+        ->assertJsonPath('props.accounts.0.walletName', 'PEA')
+        ->assertJsonPath('props.accounts.0.accountTypeLabel', 'PEA')
+        ->assertJsonPath('props.accounts.0.marketValue', 1000)
+        ->assertJsonPath('props.accounts.0.taxRegimeLabel', 'Exonéré après 5 ans, prélèvements sociaux 17,2 %')
+        ->assertJsonPath('props.accounts.0.maturityYears', 5)
+        ->assertJsonPath('props.accounts.0.ineligibleAssetNames', []);
+});

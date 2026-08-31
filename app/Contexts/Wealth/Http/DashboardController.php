@@ -5,6 +5,7 @@ namespace App\Contexts\Wealth\Http;
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Ports\MarketSyncStatePort;
 use App\Contexts\Wealth\Actions\BuildWealthSeries;
+use App\Contexts\Wealth\Actions\GetWealthAccounts;
 use App\Contexts\Wealth\Actions\GetWealthIncome;
 use App\Contexts\Wealth\Actions\GetWealthOverview;
 use App\Contexts\Wealth\Actions\GetWealthSectors;
@@ -55,6 +56,13 @@ class DashboardController
             'transactions' => Inertia::defer(fn (): array => $user !== null
                 ? app(GetWealthTransactions::class)($user->id)
                 : [], 'transactions'),
+            /**
+             * Repliée à l'arrivée : la lecture fiscale des enveloppes ne se charge que pour qui la
+             * déplie, comme les secteurs et l'historique.
+             */
+            'accounts' => Inertia::defer(fn (): array => $user !== null
+                ? app(GetWealthAccounts::class)($user->id)
+                : [], 'enveloppes'),
         ]);
     }
 }
