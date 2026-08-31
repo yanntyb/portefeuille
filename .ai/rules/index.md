@@ -15,4 +15,5 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Contexts/Market/Infrastructure/Python/** | .ai/rules/python.md |
 | app/Contexts/RealEstate/** | .ai/rules/real-estate.md |
 | app/Contexts/*/Services/** | .ai/rules/services.md |
+| tests/** | .ai/rules/tests.md |
 | app/Contexts/Wealth/** | .ai/rules/wealth.md |
