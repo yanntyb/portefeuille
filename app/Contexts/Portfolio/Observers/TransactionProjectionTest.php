@@ -50,6 +50,30 @@ it('deletes the projection when a delete empties the position', function () {
     expect(Holding::query()->where('asset_id', $this->asset->id)->exists())->toBeFalse();
 });
 
+it('recomputes the realized gain of a later sell when its buy is corrected', function () {
+    $buy = makeTx($this, 'buy', 10, 100, ['fees' => 0, 'date' => '2026-01-01']);
+    $sell = makeTx($this, 'sell', 5, 150, ['fees' => 0, 'date' => '2026-03-01']);
+
+    expect((float) $sell->fresh()->realized_gain)->toBe(250.0);
+
+    $buy->update(['unit_price' => 120]);
+
+    /** Le gain de la vente suit le prix de revient : c'est une autre ligne que celle qui a bougé. */
+    expect((float) $sell->fresh()->realized_gain)->toBe(150.0);
+});
+
+it('recomputes the realized gain of a sell when one of its buys is deleted', function () {
+    $first = makeTx($this, 'buy', 10, 100, ['fees' => 0, 'date' => '2026-01-01']);
+    makeTx($this, 'buy', 10, 140, ['fees' => 0, 'date' => '2026-01-15']);
+    $sell = makeTx($this, 'sell', 5, 150, ['fees' => 0, 'date' => '2026-03-01']);
+
+    expect((float) $sell->fresh()->realized_gain)->toBe(150.0); // PRU 120
+
+    $first->delete();
+
+    expect((float) $sell->fresh()->realized_gain)->toBe(50.0); // PRU 140
+});
+
 it('reprojects the old and new wallet when a transaction moves', function () {
     $otherWallet = Wallet::factory()->for($this->user)->create();
     $buy = makeTx($this, 'buy', 10, 80);

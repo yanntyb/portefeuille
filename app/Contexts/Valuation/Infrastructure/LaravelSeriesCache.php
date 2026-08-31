@@ -39,6 +39,10 @@ class LaravelSeriesCache implements SeriesCachePort
      * ne descend pas sous la seconde : une correction saisie dans la seconde qui suit la
      * création ne se verrait pas sans elles.
      *
+     * Les sommes d'`asset_id` et de `wallet_id` sont là pour la même raison : une ligne déplacée
+     * d'une enveloppe ou d'un actif à l'autre ne change aucun montant, et se verrait donc passer
+     * inaperçue.
+     *
      * Volontairement lu dans les données plutôt que posé par un observateur : un import SQL ou
      * une migration contourneraient l'observateur, pas les agrégats.
      */
@@ -54,6 +58,8 @@ class LaravelSeriesCache implements SeriesCachePort
                 ->selectRaw('coalesce(sum(quantity), 0) as quantity')
                 ->selectRaw('coalesce(sum(unit_price), 0) as unit_price')
                 ->selectRaw('coalesce(sum(fees), 0) as fees')
+                ->selectRaw('coalesce(sum(asset_id), 0) as assets')
+                ->selectRaw('coalesce(sum(wallet_id), 0) as wallets')
                 ->toBase()
                 ->first()),
         ]));

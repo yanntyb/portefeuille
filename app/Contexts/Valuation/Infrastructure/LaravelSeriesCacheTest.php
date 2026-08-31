@@ -83,6 +83,24 @@ it('recalcule après la suppression d\'une transaction', function () {
     expect($calls)->toBe(2);
 });
 
+it('recalcule quand une transaction change d\'enveloppe sans rien changer d\'autre', function () {
+    $elsewhere = Wallet::factory()->for($this->user)->create();
+    $transaction = buyFor($this);
+    $calls = 0;
+    rememberSerie($this->user->id, $calls);
+
+    /**
+     * Le cas que les sommes de quantité, de prix et de frais ne voient pas : rien ne change de ce
+     * qu'elles agrègent, et `updated_at` ne descend pas sous la seconde. Sans `sum(wallet_id)`
+     * dans l'empreinte, la série resterait celle d'avant le déménagement.
+     */
+    $transaction->update(['wallet_id' => $elsewhere->id]);
+
+    rememberSerie($this->user->id, $calls);
+
+    expect($calls)->toBe(2);
+});
+
 it('ne mélange pas les séries de deux utilisateurs', function () {
     $other = User::factory()->create();
     $calls = 0;
