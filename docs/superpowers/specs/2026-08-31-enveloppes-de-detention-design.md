@@ -25,12 +25,13 @@ Dedans :
 
 Dehors, explicitement :
 
-- **plafond de versement consommé.** `TransactionType` n'a que `Buy`/`Sell`, aucun mouvement
-  d'espèces. Le plafond PEA porte sur les versements, pas sur les achats : réinvestir le produit
-  d'une vente ne consomme pas de plafond. Un cumul de flux nets afficherait donc un chiffre faux,
-  et un cas `Deposit`/`Withdrawal` traverserait `ProjectHolding`, `TransactionObserver`,
-  `CalculateRealizedGain`, `PortfolioLedger` et `ValuationCalculator` pour une seule jauge. Le
-  plafond reste un **libellé informatif** (« plafond 150 000 € »), sans montant versé ni jauge.
+- **le plafond de versement, sous toutes ses formes** — ni montant consommé, ni jauge, ni même
+  le plafond légal en libellé. `TransactionType` n'a que `Buy`/`Sell`, aucun mouvement d'espèces :
+  le plafond PEA porte sur les versements et non sur les achats, un cumul de flux nets afficherait
+  donc un chiffre faux, et un cas `Deposit`/`Withdrawal` traverserait `ProjectHolding`,
+  `TransactionObserver`, `CalculateRealizedGain`, `PortfolioLedger` et `ValuationCalculator` pour
+  une seule jauge. Afficher le plafond seul, sans ce qu'il en reste, ne renseigne sur rien.
+  `AccountType` ne porte aucune méthode de plafond.
 - imposition estimée, coût fiscal d'une vente, recommandation d'enveloppe ;
 - écran de création ou d'édition des enveloppes : le type vient du seeder ;
 - déclinaison des séries d'évolution et des performances par enveloppe ;
@@ -63,7 +64,7 @@ PEA.
 ## AccountType
 
 `app/Contexts/Portfolio/Enums/AccountType.php`, sur le modèle de `Market\Enums\AssetClass` : les
-règles vivent dans l'enum, en `match` sur `$this`. Un plafond légal est une constante, pas de la
+règles vivent dans l'enum, en `match` sur `$this`. Une règle fiscale est une constante, pas de la
 configuration.
 
 ```php
@@ -76,9 +77,6 @@ enum AccountType: string
 
     /** Régime d'imposition, texte informatif. Jamais un calcul. */
     public function taxRegimeLabel(): string;
-
-    /** Plafond légal de versement, informatif ; null quand l'enveloppe n'en a pas. */
-    public function contributionCap(): ?float;
 
     /** Années de détention avant le régime favorable ; null quand il n'y en a pas. */
     public function maturityYears(): ?int;
@@ -100,7 +98,6 @@ Valeurs :
 | --- | --- | --- |
 | `getLabel()` | `PEA` | `Compte-titres` |
 | `taxRegimeLabel()` | `Exonéré après 5 ans, prélèvements sociaux 17,2 %` | `Flat tax 30 %` |
-| `contributionCap()` | `150000.0` | `null` |
 | `maturityYears()` | `5` | `null` |
 | `allowedAssetClasses()` | `[AssetClass::Equity]` | `null` |
 
@@ -145,7 +142,6 @@ readonly class AccountLineData implements JsonSerializable
         public ?float $gainPct,
         public ?int $ageInYears,
         public ?int $maturityYears,
-        public ?float $contributionCap,
         public string $taxRegimeLabel,
         public array $ineligibleAssetNames,
     ) {}
@@ -168,8 +164,8 @@ discriminant que le type — deux CTO chez deux courtiers portent des noms diff�
 type.
 
 **Section Analyse du tableau de bord** : un bloc « Enveloppes », une carte par compte —
-nom, type, valeur, gain, régime d'imposition, plafond légal s'il existe, ancienneté et seuil de
-maturité s'ils sont connus, et l'alerte d'éligibilité quand `ineligibleAssetNames` n'est pas
+nom, type, valeur, gain, régime d'imposition, ancienneté et seuil de maturité s'ils sont
+connus, et l'alerte d'éligibilité quand `ineligibleAssetNames` n'est pas
 vide. Le bloc se place après les secteurs, dernier de la section.
 
 Tout le texte visible est en français.
@@ -195,7 +191,7 @@ lèverait des alertes d'éligibilité fausses, l'inverse n'affirme rien.
 
 ## Tests
 
-- `AccountTypeTest` : libellés, plafond, maturité, `admits()` pour chaque cas et chaque
+- `AccountTypeTest` : libellés, régime, maturité, `admits()` pour chaque cas et chaque
   `AssetClass` — y compris que le CTO admet tout et que le PEA refuse crypto, obligation et
   matière première.
 - `GetPortfolioOverviewTest` : les lignes portent le wallet ; un même actif sur deux wallets rend
@@ -209,5 +205,6 @@ lèverait des alertes d'éligibilité fausses, l'inverse n'affirme rien.
 ## Règle à enregistrer
 
 Après implémentation, consigner via `record-rule` sur `app/Contexts/Portfolio/**` : l'enveloppe
-est une donnée déclarative, `AccountType` en est le site unique, et le plafond de versement est
-affiché sans jamais être consommé — faute de mouvements d'espèces dans `TransactionType`.
+est une donnée déclarative, `AccountType` en est le site unique, et le plafond de versement n'y
+figure volontairement pas : `TransactionType` n'ayant pas de mouvement d'espèces, aucun montant
+versé n'est calculable, et un plafond sans son solde ne renseigne sur rien.
