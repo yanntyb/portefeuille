@@ -248,20 +248,13 @@ type ChartFrameInput = {
     description: string;
     /** Largeur imposée par un cadre partagé avec d'autres séries ; sinon celle de ces valeurs. */
     gutter?: number;
-    /**
-     * Assoit l'axe sur zéro au lieu du minimum visible. Réservé aux tracés empilés : l'épaisseur
-     * d'une bande n'y a de sens que mesurée depuis zéro, un cadrage serré la ferait mentir.
-     */
-    anchoredAtZero?: boolean;
 };
 
 /**
  * Ossature partagée par les trois graphes : axes, grille et cadre d'infobulle suivent le thème.
  * La description accessible est rédigée à la main plutôt que laissée au gabarit anglais d'ECharts.
  */
-function chartFrame(
-    { valueFormatter, values, bottom, description, gutter, anchoredAtZero = false }: ChartFrameInput,
-): ChartOption {
+function chartFrame({ valueFormatter, values, bottom, description, gutter }: ChartFrameInput): ChartOption {
     const colors = palette();
 
     /**
@@ -272,9 +265,9 @@ function chartFrame(
     let extent: AxisExtent = { min: Number.NaN, max: Number.NaN };
 
     const rememberExtent = (bounds: AxisExtent): AxisExtent => {
-        extent = anchoredAtZero ? { min: 0, max: bounds.max } : bounds;
+        extent = bounds;
 
-        return extent;
+        return bounds;
     };
 
     return {
@@ -739,7 +732,6 @@ export function buildValueVsInvestedOption(
             bottom: ZOOM_SLIDER_HEIGHT + TIME_AXIS_LABEL_HEIGHT,
             description,
             gutter,
-            anchoredAtZero: detailed,
         }),
         color: detailed
             ? ['transparent', ...perAsset.map((_asset: AssetSeries, rank: number): string => seriesColor(rank))]

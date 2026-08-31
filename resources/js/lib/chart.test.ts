@@ -926,20 +926,19 @@ describe('buildValueVsInvestedOption — aperçu de la mini-timeline', () => {
 });
 
 describe('buildValueVsInvestedOption — assise du détail', () => {
-    it('ancre l\'axe à zéro sous la pile, dont l\'épaisseur des bandes serait sinon fausse', () => {
+    it('cadre la pile sur les extrêmes visibles, comme la courbe de valeur', () => {
         const yAxis = yAxisOf(detailed(3));
 
-        expect(yAxis.min({ min: 300, max: 6000 })).toBe(0);
+        expect(yAxis.min({ min: 300, max: 6000 })).toBe(300);
         expect(yAxis.max({ min: 300, max: 6000 })).toBe(6000);
     });
 
-    it('chiffre le zéro qu\'il vient d\'imposer, l\'étiquette du bas donnant l\'échelle', () => {
+    it('chiffre ces deux extrêmes et eux seuls, le zéro n\'ayant plus à figurer', () => {
         const option = detailed(3);
+        const extent = { min: 300, max: 6000 };
 
-        expect(yAxisLabel(option, 0, { min: 300, max: 6000 }).replace(/[\xa0 ]/g, ' ')).toBe('0 €');
-    });
-
-    it('garde le cadrage serré hors détail, où l\'ancrage à zéro écraserait la variation', () => {
-        expect(yAxisOf(valueVsInvested(36)).min({ min: 900, max: 1350 })).toBe(900);
+        expect(yAxisLabel(option, 300, extent)).not.toBe('');
+        expect(yAxisLabel(option, 6000, extent)).not.toBe('');
+        expect(yAxisLabel(option, 0, extent)).toBe('');
     });
 });
