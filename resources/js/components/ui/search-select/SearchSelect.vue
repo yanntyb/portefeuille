@@ -4,7 +4,6 @@ import type { HTMLAttributes } from "vue"
 import { Check, ChevronDown } from "lucide-vue-next"
 import {
   ComboboxContent,
-  ComboboxEmpty,
   ComboboxInput,
   ComboboxItem,
   ComboboxItemIndicator,
@@ -12,8 +11,8 @@ import {
   ComboboxTrigger,
   ComboboxViewport,
 } from "reka-ui"
-import { nextTick, ref, useTemplateRef, watch } from "vue"
-import type { Ref } from "vue"
+import { computed, nextTick, ref, useTemplateRef, watch } from "vue"
+import type { ComputedRef, Ref } from "vue"
 import type { SelectOption } from "@/components/ui/native-select"
 import { cn } from "@/lib/utils"
 
@@ -31,9 +30,14 @@ import { cn } from "@/lib/utils"
  *
  * Ce qu'on paie : `ComboboxContentImpl` importe `PopperContent` statiquement, donc floating-ui
  * entre dans le bundle sans jamais s'exécuter. Une douzaine de kilo-octets, précachés une fois pour
- * toutes par le service worker. Ce qu'on achète : un filtrage insensible aux accents et à la casse
- * — « societe » trouve « Société » — qu'aucun `<select>` ni `<datalist>` ne donne, sur la seule
- * liste du formulaire qui grossira sans limite.
+ * toutes par le service worker. Ce qu'on achète : le clavier, les rôles ARIA et la gestion du
+ * surlignage d'un listbox conforme, sur la seule liste du formulaire qui grossira sans limite.
+ *
+ * Le filtrage, en revanche, est le nôtre — `ignore-filter` désarme celui de reka. Le sien passe par
+ * `useComposing`, qui ignore toute saisie tant qu'une composition est en cours : sur un clavier
+ * Android, le mot entier reste en composition jusqu'à l'espace, si bien que la liste ne se resserrait
+ * pas d'une seule frappe sur téléphone. On écoute donc l'événement `input` brut, et on compare des
+ * intitulés dépliés — sans accents ni casse, « societe » trouve « Société ».
  *
  * Le dossier ne s'appelle ni `combobox/` ni `command/` : ce sont les deux noms qu'un futur
  * `shadcn-vue add combobox` réclamerait, et il les écraserait. Même précaution que `native-select/`,
@@ -66,7 +70,26 @@ const emit = defineEmits<{ change: [value: string] }>()
 
 const open: Ref<boolean> = ref(false)
 const query: Ref<string> = ref("")
+const search: Ref<string> = ref("")
 const input = useTemplateRef("input")
+
+/**
+ * Déplie un intitulé pour le comparer : accents retirés, casse ramenée au bas. `NFD` sépare la
+ * lettre de son signe, la classe `\p{Diacritic}` enlève le signe.
+ */
+const fold = (text: string): string =>
+  text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase()
+
+/** Ce que la liste montre : tout au repos, ce qui contient la frappe dès qu'on cherche. */
+const visible: ComputedRef<SelectOption[]> = computed((): SelectOption[] => {
+  const term = fold(search.value.trim())
+
+  if (term === "") {
+    return props.options
+  }
+
+  return props.options.filter((option: SelectOption): boolean => fold(option.label).includes(term))
+})
 
 /**
  * Sert deux fois : au `display-value` de reka, qui repose le texte du champ quand la valeur change,
@@ -114,10 +137,21 @@ watch(
   (): void => {
     if (!open.value) {
       query.value = labelOf(model.value)
+      /** Refermée, la liste repart de toutes ses entrées : la recherche précédente est finie. */
+      search.value = ""
     }
   },
   { immediate: true },
 )
+
+/**
+ * L'événement `input` brut, et non le modèle de reka : le sien attend la fin d'une composition, que
+ * le clavier Android ne termine qu'à l'espace. C'est ici que la liste se resserre, frappe par frappe.
+ */
+const onInput = (event: Event): void => {
+  search.value = (event.target as HTMLInputElement).value
+  open.value = true
+}
 
 /**
  * Le champ montre l'intitulé retenu, et reka prend sa valeur entière pour terme de recherche. Sans
@@ -153,6 +187,7 @@ const onEnter = (event: KeyboardEvent): void => {
     :model-value="model"
     :disabled="props.disabled"
     open-on-click
+    ignore-filter
     class="relative"
     @update:model-value="onChosen"
   >
@@ -177,6 +212,7 @@ const onEnter = (event: KeyboardEvent): void => {
         props.class,
       )"
       @focus="selectAll"
+      @input="onInput"
       @keydown.enter="onEnter"
     />
 
@@ -192,12 +228,20 @@ const onEnter = (event: KeyboardEvent): void => {
       class="border-border bg-popover text-popover-foreground absolute top-full right-0 left-0 z-50 mt-1 overflow-hidden rounded-md border shadow-md"
     >
       <ComboboxViewport class="max-h-56 overflow-y-auto p-1">
-        <ComboboxEmpty data-search-select-empty class="text-muted-foreground px-2 py-1.5 text-sm">
+        <!--
+          Notre état vide et non `ComboboxEmpty` : celui-ci se règle sur le filtre de reka, que
+          `ignore-filter` a désarmé — il ne se montrerait jamais.
+        -->
+        <p
+          v-if="visible.length === 0"
+          data-search-select-empty
+          class="text-muted-foreground px-2 py-1.5 text-sm"
+        >
           {{ props.empty ?? "Aucun résultat" }}
-        </ComboboxEmpty>
+        </p>
 
         <ComboboxItem
-          v-for="option in props.options"
+          v-for="option in visible"
           :key="option.value"
           :value="option.value"
           :data-search-select-option="option.value"

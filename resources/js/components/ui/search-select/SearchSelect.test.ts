@@ -76,6 +76,30 @@ describe('SearchSelect', () => {
         expect(entries(host)).toEqual(['Société Générale']);
     });
 
+    it('cherche depuis une liste encore fermée', async () => {
+        const { host } = mountSelect();
+        await settle();
+
+        /** Taper ouvre et filtre du même geste : personne ne déroule avant de chercher. */
+        await search(host, 'pea');
+
+        expect(entries(host)).toEqual(['PEA']);
+    });
+
+    it('cherche pendant la composition du clavier virtuel', async () => {
+        const { host } = mountSelect();
+        await open(host);
+
+        /**
+         * Un clavier Android laisse le mot en composition jusqu'à l'espace. Le filtre de reka
+         * l'ignore jusque-là ; le nôtre écoute l'`input` brut, donc la liste se resserre quand même.
+         */
+        input(host).dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+        await search(host, 'pea');
+
+        expect(entries(host)).toEqual(['PEA']);
+    });
+
     it('dit qu\'il n\'a rien trouvé plutôt que de proposer d\'en créer un', async () => {
         const { host } = mountSelect({ empty: 'Aucun instrument' });
         await open(host);
