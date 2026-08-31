@@ -75,15 +75,24 @@ describe('ligne d\'un instrument', () => {
         createApp(InstrumentList, {
             rows: [
                 row,
-                { ...row, rowKey: '7-20', walletId: 20, walletName: 'CTO', accountTypeLabel: 'Compte-titres' },
+                {
+                    ...row,
+                    rowKey: '7-20',
+                    walletId: 20,
+                    walletName: 'Portefeuille Crypto',
+                    accountTypeLabel: 'Compte-titres',
+                },
             ],
             loading: false,
             emptyLabel: 'Aucune position.',
         }).mount(host);
 
         const badges = host.querySelectorAll('[data-instrument-wallet]');
-        expect([...badges].map((badge) => badge.textContent?.trim())).toEqual(['PEA', 'CTO']);
-        expect(badges[1].getAttribute('title')).toBe('Compte-titres');
+        expect([...badges].map((badge) => badge.textContent?.trim())).toEqual(['PEA', 'Portefeuille Crypto']);
         expect(host.querySelectorAll('[data-instrument-row]')).toHaveLength(2);
+
+        // Le badge se tronque visuellement sur mobile (`max-w-[3.5rem] truncate`) : le nom, qui
+        // discrimine deux comptes du même type, doit rester lisible au survol, à côté du type.
+        expect(badges[1].getAttribute('title')).toBe('Portefeuille Crypto — Compte-titres');
     });
 });

@@ -59,7 +59,7 @@ const props = defineProps<{
                     <span
                         v-if="row.walletName"
                         data-instrument-wallet
-                        :title="row.accountTypeLabel"
+                        :title="`${row.walletName} — ${row.accountTypeLabel}`"
                         class="max-w-[3.5rem] shrink-0 truncate rounded-full bg-muted px-2 py-0.5 font-semibold text-muted-foreground md:max-w-[9rem]"
                     >
                         {{ row.walletName }}
