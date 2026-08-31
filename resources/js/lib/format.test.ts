@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { eur, fractionPct, frDate, frDayMonth, frLongDate, frMonthYear, gainClass, pct, sharePct, signedEur, syncedAtLabel } from '@/lib/format';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { eur, fractionPct, frDate, frDayMonth, frLongDate, frMonthYear, gainClass, isoToday, pct, sharePct, signedEur, syncedAtLabel } from '@/lib/format';
 
 /**
  * `Intl` en fr-FR pose des espaces fines insécables (U+202F) entre les milliers et avant l'euro,
@@ -161,5 +161,30 @@ describe('frLongDate', () => {
 
     it('rend la valeur telle quelle quand elle n\'est pas une date', () => {
         expect(frLongDate('pas une date')).toBe('pas une date');
+    });
+});
+
+describe('isoToday', () => {
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it('rend la date locale, et non celle d\'UTC, tard le soir', () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date(2026, 3, 15, 23, 45, 0));
+
+        /**
+         * `toISOString().slice(0, 10)` rendrait le 16 en été comme le 15 selon le fuseau : à 23 h 45
+         * à Paris, l'UTC a changé de jour. Le formulaire proposerait alors une date d'opération
+         * fausse à qui saisit le soir.
+         */
+        expect(isoToday()).toBe('2026-04-15');
+    });
+
+    it('rend la date locale tôt le matin', () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date(2026, 0, 1, 0, 30, 0));
+
+        expect(isoToday()).toBe('2026-01-01');
     });
 });

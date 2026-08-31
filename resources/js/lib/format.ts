@@ -73,3 +73,12 @@ export const frDayTime = (timestamp: number): string => {
 
 export const syncedAtLabel = (timestamp: number | null): string =>
     timestamp === null ? 'Données hors-ligne' : `Données du ${frDayTime(timestamp)}`;
+
+/**
+ * La date du jour au format que le serveur attend (`Y-m-d`), construite **en local**.
+ *
+ * `new Date().toISOString().slice(0, 10)` serait en UTC : passé 22 h à Paris — 23 h l'hiver — il
+ * rendrait la veille, et le formulaire proposerait une date d'opération fausse à qui saisit le
+ * soir. `en-CA` rend précisément `AAAA-MM-JJ` sur le fuseau du lecteur.
+ */
+export const isoToday = (): string => new Date().toLocaleDateString('en-CA');

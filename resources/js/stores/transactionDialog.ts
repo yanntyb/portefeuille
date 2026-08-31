@@ -1,0 +1,128 @@
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
+import type { Ref } from 'vue';
+import type { TransactionLine } from '@/lib/instrument';
+import { draftFromLine, emptyDraft, type TransactionDraft } from '@/lib/transactionForm';
+
+export type TransactionDialogMode = 'closed' | 'create' | 'edit' | 'confirm-delete';
+
+/** Ce que la modale a besoin de savoir de la ligne qu'elle s'apprête à supprimer. */
+export type DeletionTarget = {
+    id: number;
+    label: string;
+};
+
+/**
+ * L'état de la modale de saisie, partagé plutôt que local.
+ *
+ * Il n'y a pas de layout Inertia : chaque page est une racine indépendante, si bien qu'un
+ * `provide` serait à répéter dans les trois pages et qu'un `inject` manquant échouerait en silence.
+ * Et le bouton d'édition vit deux niveaux sous la page (`section` → `liste` → `ligne`) : un
+ * chaînage d'émissions sur trois crans pour dire « corrige cette ligne » serait du bruit.
+ *
+ * C'est le motif de la maison — `snapshot`, `viewport`, `theme`, `serviceWorker` — avec l'instance
+ * unique de `stores/pinia.ts`.
+ */
+export const useTransactionDialogStore = defineStore('transactionDialog', () => {
+    const mode: Ref<TransactionDialogMode> = ref('closed');
+    const draft: Ref<TransactionDraft> = ref(emptyDraft());
+    const editingId: Ref<number | null> = ref(null);
+    const deleting: Ref<DeletionTarget | null> = ref(null);
+    /** D'où vient la demande de suppression : l'annulation n'a de formulaire où revenir que du volet. */
+    const deleteCameFromForm: Ref<boolean> = ref(false);
+
+    /** Instrument imposé par le contexte : sur une fiche d'actif, on ne saisit que celui-là. */
+    const lockedAssetId: Ref<number | null> = ref(null);
+    const lockedAssetName: Ref<string | null> = ref(null);
+
+    /**
+     * Remonte à chaque ouverture, pour servir de `key` au formulaire.
+     *
+     * `useForm()` fige ses valeurs initiales une fois pour toutes : passer de « créer » à
+     * « corriger la ligne 42 » sans remonter le composant garderait les anciennes valeurs **et**
+     * les anciennes erreurs.
+     */
+    const formKey: Ref<number> = ref(0);
+
+    function openCreate(asset?: { id: number; name: string }): void {
+        lockedAssetId.value = asset?.id ?? null;
+        lockedAssetName.value = asset?.name ?? null;
+        editingId.value = null;
+        deleting.value = null;
+        deleteCameFromForm.value = false;
+        draft.value = emptyDraft(asset === undefined ? {} : { assetId: String(asset.id) });
+        formKey.value += 1;
+        mode.value = 'create';
+    }
+
+    function openEdit(line: TransactionLine & { assetId?: number }, asset?: { id: number; name: string }): void {
+        lockedAssetId.value = asset?.id ?? null;
+        lockedAssetName.value = asset?.name ?? null;
+        editingId.value = line.id;
+        deleting.value = null;
+        deleteCameFromForm.value = false;
+        draft.value = draftFromLine(line, asset === undefined ? {} : { assetId: String(asset.id) });
+        formKey.value += 1;
+        mode.value = 'edit';
+    }
+
+    /** Depuis le formulaire d'édition : la confirmation remplace le volet, elle ne s'empile pas. */
+    function askDelete(label: string): void {
+        if (editingId.value === null) {
+            return;
+        }
+
+        deleting.value = { id: editingId.value, label };
+        deleteCameFromForm.value = true;
+        mode.value = 'confirm-delete';
+    }
+
+    /** Depuis la liste, sans passer par le formulaire. */
+    function askDeleteLine(line: TransactionLine, label: string): void {
+        editingId.value = line.id;
+        deleting.value = { id: line.id, label };
+        deleteCameFromForm.value = false;
+        mode.value = 'confirm-delete';
+    }
+
+    /**
+     * Annulation d'une confirmation. Elle revient au formulaire quand on en venait, et ferme quand
+     * la suppression a été demandée depuis la liste : il n'y aurait pas de formulaire où revenir.
+     */
+    function backToForm(): void {
+        if (!deleteCameFromForm.value) {
+            close();
+
+            return;
+        }
+
+        deleting.value = null;
+        mode.value = 'edit';
+    }
+
+    function close(): void {
+        mode.value = 'closed';
+        editingId.value = null;
+        deleting.value = null;
+        deleteCameFromForm.value = false;
+        lockedAssetId.value = null;
+        lockedAssetName.value = null;
+        draft.value = emptyDraft();
+    }
+
+    return {
+        mode,
+        draft,
+        editingId,
+        deleting,
+        lockedAssetId,
+        lockedAssetName,
+        formKey,
+        openCreate,
+        openEdit,
+        askDelete,
+        askDeleteLine,
+        backToForm,
+        close,
+    };
+});
