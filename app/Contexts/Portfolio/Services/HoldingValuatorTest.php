@@ -35,8 +35,24 @@ it('valorise une ligne complète', function () {
     ]);
 });
 
-it('laisse tout à null sans dernier cours', function () {
+/**
+ * Sans cotation, le dernier prix connu d'une position est celui qu'on a payé — comme un bien
+ * immobilier vaut son prix d'acquisition tant qu'aucune réévaluation ne l'a touché. Rendre `null`
+ * la faisait sortir de la valeur ET du coût, et depuis que les apports nets se répartissent entre
+ * les classes, ce zéro inventait une perte du montant de l'achat.
+ */
+it('vaut son prix de revient sans dernier cours', function () {
     expect((new HoldingValuator)->value(10, 80, null))->toBe([
+        'marketValue' => 800.0,
+        'cost' => 800.0,
+        'gain' => 0.0,
+        'gainPct' => 0.0,
+    ]);
+});
+
+/** Ni cours ni prix de revient : rien ne permet de dire ce que la ligne vaut. */
+it('laisse tout à null sans cours ni prix de revient', function () {
+    expect((new HoldingValuator)->value(10, null, null))->toBe([
         'marketValue' => null,
         'cost' => null,
         'gain' => null,

@@ -46,7 +46,11 @@ it('omits the position when the instrument is not held', function () {
     expect($detail->position)->toBeNull();
 });
 
-it('omits the position when no price is available', function () {
+/**
+ * Une position sans cours connu vaut son prix de revient : elle a donc une valeur de marché, et la
+ * fiche la montre au lieu de la taire. Le gain y est nul, seul honnête faute de cotation.
+ */
+it('keeps the position at its cost basis when no price is available', function () {
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
     $asset = Instrument::factory()->create();
@@ -54,5 +58,7 @@ it('omits the position when no price is available', function () {
 
     $detail = app(GetInstrumentDetail::class)($user->id, $asset->id);
 
-    expect($detail->position)->toBeNull();
+    expect($detail->position)->not->toBeNull()
+        ->and($detail->position->marketValue)->toBe(800.0)
+        ->and($detail->position->gain)->toBe(0.0);
 });

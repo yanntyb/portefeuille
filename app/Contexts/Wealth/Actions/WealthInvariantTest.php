@@ -529,3 +529,35 @@ it('dit gagnant le porteur qui a repris plus qu\'il n\'a mis', function () {
         ->and($overview->totalValue)->toBe(0.0)
         ->and($overview->totalGain)->toBe(200.0);
 });
+
+/**
+ * Le scénario qui a motivé de lire le coût sur les lignes plutôt que sur `totalCost` : un actif
+ * sans aucun cours — ajouté avant la première synchronisation, ou ticker délisté. Son apport était
+ * compté, sa contrepartie non, et l'écran inventait une perte du montant de l'achat.
+ */
+it('n\'invente aucune perte sur un actif dont aucun cours n\'est connu', function () {
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create(['name' => 'PEA']);
+    $stock = Instrument::factory()->create(['type' => InstrumentType::Stock]);
+
+    Transaction::factory()->deposit()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'date' => '2026-01-01', 'amount' => 1000,
+    ]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+        'date' => '2026-01-02', 'quantity' => 10, 'unit_price' => 100, 'fees' => 0,
+    ]);
+
+    $overview = app(GetWealthOverview::class)($user->id);
+    $classes = collect($overview->classes)->keyBy('key');
+
+    /** Les titres valent ce qu'ils ont coûté, la caisse est vide, et personne ne perd rien. */
+    expect($classes['equity']->value)->toBe(1000.0)
+        ->and($classes['equity']->invested)->toBe(1000.0)
+        ->and($classes['equity']->gain)->toBe(0.0)
+        ->and($classes['cash']->invested)->toBe(0.0)
+        ->and($classes['cash']->gain)->toBe(0.0)
+        ->and($overview->totalInvested)->toBe(1000.0)
+        ->and($overview->totalValue)->toBe(1000.0)
+        ->and($overview->totalGain)->toBe(0.0);
+});

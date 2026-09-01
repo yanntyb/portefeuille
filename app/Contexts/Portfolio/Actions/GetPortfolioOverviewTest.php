@@ -42,7 +42,12 @@ it('computes value, cost and gain for a single holding', function () {
         ->and($overview->holdings[0]->gainPct)->toBe(25.0);
 });
 
-it('excludes a holding without a known price from the totals', function () {
+/**
+ * Une position sans cours connu compte pour son prix de revient, et non pour rien : l'écarter du
+ * total faisait peser zéro un actif ajouté avant la première synchronisation des cours, ou un
+ * ticker délisté. Son gain reste nul, seul honnête faute de cotation.
+ */
+it('counts a holding without a known price at its cost basis', function () {
     $user = User::factory()->create();
     makeHolding($user, InstrumentType::Stock, close: 100, qty: 10, avgCost: 80); // valued
     $wallet = Wallet::factory()->for($user)->create();
@@ -57,12 +62,16 @@ it('excludes a holding without a known price from the totals', function () {
 
     $overview = app(GetPortfolioOverview::class)($user);
 
-    expect($overview->totalValue)->toBe(1000.0)
+    /** 1 000 € valorisés au cours, plus 5 × 90 € au prix de revient. */
+    expect($overview->totalValue)->toBe(1450.0)
+        ->and($overview->totalCost)->toBe(1250.0)
+        ->and($overview->totalGain)->toBe(200.0)
         ->and($overview->holdings)->toHaveCount(2);
 
     $bondLine = collect($overview->holdings)->firstWhere('type', InstrumentType::Bond);
     expect($bondLine->lastPrice)->toBeNull()
-        ->and($bondLine->marketValue)->toBeNull();
+        ->and($bondLine->marketValue)->toBe(450.0)
+        ->and($bondLine->gain)->toBe(0.0);
 });
 
 it('returns an empty overview when the user has no holdings', function () {
