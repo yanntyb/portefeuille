@@ -127,6 +127,7 @@ it('rend les mêmes listes vides sans aucun utilisateur', function () {
             'totalGain' => 0.0,
             'totalGainPct' => null,
             'totalRealizedGain' => 0.0,
+            'cash' => 0.0,
             'holdings' => [],
         ]);
     expect($equity['trends'])->toBe([]);

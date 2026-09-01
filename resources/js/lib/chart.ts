@@ -13,6 +13,8 @@ type ChartPalette = {
     commodity: string;
     realEstate: string;
     crypto: string;
+    /** Teinte neutre des liquidités : ne concurrence aucune exposition de marché. */
+    cash: string;
     /** Teintes catégorielles des courbes d'instruments, recyclées au-delà de la dixième. */
     series: string[];
     axisLabel: string;
@@ -40,6 +42,7 @@ function palette(): ChartPalette {
             commodity: '#d6e85e',
             realEstate: '#e0a75f',
             crypto: '#e879f9',
+            cash: '#a8a29e',
             series: [
                 '#8f93f0', '#2dd4bf', '#e0a75f', '#e879f9', '#f87171',
                 '#34d399', '#d6e85e', '#60a5fa', '#f472b6', '#a8a29e',
@@ -62,6 +65,7 @@ function palette(): ChartPalette {
             commodity: '#535e08',
             realEstate: '#b3701a',
             crypto: '#a21caf',
+            cash: '#78716c',
             series: [
                 '#5257d6', '#0d9488', '#b3701a', '#a21caf', '#c2321f',
                 '#00915d', '#535e08', '#2563eb', '#db2777', '#78716c',
@@ -768,7 +772,7 @@ export type WealthStackInput = {
 };
 
 /** Jetons de teinte que le serveur peut poser sur une classe d'actif : voir `ChartPalette`. */
-type ClassColorToken = 'value' | 'bond' | 'commodity' | 'crypto' | 'realEstate';
+type ClassColorToken = 'value' | 'bond' | 'commodity' | 'crypto' | 'realEstate' | 'cash';
 
 /**
  * Vrai pour un jeton que la palette sait résoudre. Un simple `Record<string, string>` accepterait
@@ -777,7 +781,7 @@ type ClassColorToken = 'value' | 'bond' | 'commodity' | 'crypto' | 'realEstate';
  */
 function isClassColorToken(token: string): token is ClassColorToken {
     return token === 'value' || token === 'bond' || token === 'commodity'
-        || token === 'crypto' || token === 'realEstate';
+        || token === 'crypto' || token === 'realEstate' || token === 'cash';
 }
 
 /**

@@ -23,6 +23,7 @@ const eur = (value: number | null): string => formatEur(value, 0);
             :invested="overview.totalCost"
             :gain="overview.totalGain"
             :realized-gain="overview.totalRealizedGain"
+            :origin-cash="overview.cash"
             :digits="0"
         />
     </section>

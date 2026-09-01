@@ -3,11 +3,13 @@ import { createApp } from 'vue';
 import InvestedGainMeta from '@/components/InvestedGainMeta.vue';
 
 /** Monte les deux repères sur un hôte neuf et rend leur DOM initial. */
-function mountMeta(realizedGain: number | null): HTMLElement {
+function mountMeta(realizedGain: number | null, originCash: number | null = null): HTMLElement {
     const host = document.createElement('div');
     document.body.append(host);
 
-    createApp(InvestedGainMeta, { invested: 1000, gain: 120, realizedGain }).mount(host);
+    createApp(InvestedGainMeta, {
+        invested: 1000, gain: 120, realizedGain, originCash,
+    }).mount(host);
 
     return host;
 }
@@ -25,5 +27,19 @@ describe('repères investi et gain', () => {
 
         expect(host.querySelector('[data-gain]')?.textContent).toContain('(latent)');
         expect(host.querySelector('[data-realized-gain]')?.textContent).toContain('(réalisé)');
+    });
+
+    it('annonce le cash qui reste à replacer', () => {
+        const host = mountMeta(104, 1285.5);
+
+        const text = host.querySelector('[data-origin-cash]')?.textContent?.replace(/\s+/g, ' ');
+        expect(text).toContain('à replacer');
+        expect(text).toContain('1 285');
+    });
+
+    it('tait le repère quand il n\'y a rien à replacer', () => {
+        const host = mountMeta(104, 0);
+
+        expect(host.querySelector('[data-origin-cash]')).toBeNull();
     });
 });

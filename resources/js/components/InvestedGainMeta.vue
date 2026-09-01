@@ -8,12 +8,20 @@ const props = withDefaults(defineProps<{
     gain: number | null;
     /** Gain déjà encaissé. Absent ou nul, la ligne garde ses deux repères habituels. */
     realizedGain?: number | null;
+    /**
+     * Cash de l'utilisateur qui n'appartient à aucune exposition : la divergence assumée entre le
+     * total d'une page d'exposition et la bande « Liquidités » du patrimoine.
+     */
+    originCash?: number | null;
     /** Décimales des montants : les totaux arrondissent, le détail d'une position non. */
     digits?: number;
-}>(), { realizedGain: null, digits: 2 });
+}>(), { realizedGain: null, originCash: null, digits: 2 });
 
 /** Sans vente, rien à ventiler : le gain porte quand même « (latent) », sans repère « réalisé ». */
 const hasRealized = computed<boolean>(() => props.realizedGain !== null && props.realizedGain !== 0);
+
+/** Absent ou nul, rien ne reste à replacer : le repère se tait plutôt que d'annoncer « 0 € ». */
+const hasOriginCash = computed<boolean>(() => props.originCash !== null && props.originCash !== 0);
 </script>
 
 <template>
@@ -43,6 +51,13 @@ const hasRealized = computed<boolean>(() => props.realizedGain !== null && props
                 </strong>
                 (réalisé)
             </span>
+        </span>
+        <span v-if="hasOriginCash" data-origin-cash class="whitespace-nowrap">
+            dont
+            <strong class="font-semibold text-foreground tabular-nums">
+                {{ eur(props.originCash, props.digits) }}
+            </strong>
+            à replacer
         </span>
     </p>
 </template>

@@ -52,4 +52,25 @@ describe('palette sombre', () => {
         expect(tops[1]).toBe('rgba(224,167,95,0.22)');
         expect(tops[2]).toBe('rgba(232,121,249,0.22)');
     });
+
+    it('teinte les Liquidités d\'une couleur neutre en thème sombre, distincte des Actions', () => {
+        const option = buildWealthStackOption({
+            labels: ['2026-01-05', '2026-01-12'],
+            classes: [
+                { label: 'Actions', values: [1000, 1100], color: 'value' },
+                { label: 'Liquidités', values: [200, 240], color: 'cash' },
+            ],
+            invested: [1400, 1400],
+            valueFormatter: (amount: number): string => `${amount} €`,
+            window: null,
+            description: 'Patrimoine total.',
+        });
+
+        const series = option.series as {
+            areaStyle: { color: { colorStops: { color: string }[] } };
+        }[];
+        const tops = series.map((serie) => serie.areaStyle.color.colorStops[0].color);
+
+        expect(new Set(tops).size).toBe(2);
+    });
 });

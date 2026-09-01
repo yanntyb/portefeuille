@@ -27,6 +27,11 @@ export interface PortfolioOverview {
     totalGainPct: number | null;
     /** Gain déjà encaissé sur l'exposition, ventes comprises sur les actifs soldés. */
     totalRealizedGain: number;
+    /**
+     * Le cash de l'utilisateur, toutes enveloppes confondues : jamais ventilé par exposition, il
+     * vaut le même montant sur chaque page d'exposition. C'est ce qui reste à replacer.
+     */
+    cash: number;
     holdings: HoldingLine[];
 }
 

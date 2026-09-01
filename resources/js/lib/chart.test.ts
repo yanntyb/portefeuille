@@ -766,6 +766,18 @@ describe('buildWealthStackOption', () => {
 
         expect(new Set(strokes).size).toBe(4);
     });
+
+    it('distingue la bande Liquidités de celle des Actions, plutôt que de retomber sur sa teinte', () => {
+        const option = buildWealthStackOption({
+            ...input,
+            classes: [...input.classes, { label: 'Liquidités', values: [50, 60], color: 'cash' }],
+        });
+
+        const strokes = (option.series as { lineStyle: { color: string } }[])
+            .map((one) => one.lineStyle.color);
+
+        expect(new Set(strokes).size).toBe(3);
+    });
 });
 
 /** Poche de `count` instruments sur la grille mensuelle, chacun pesant un dixième de plus. */

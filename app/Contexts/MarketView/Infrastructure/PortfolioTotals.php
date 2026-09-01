@@ -46,6 +46,7 @@ class PortfolioTotals implements PortfolioOverviewPort
             totalGain: $overview->totalGain,
             totalGainPct: $overview->totalGainPct,
             totalRealizedGain: $overview->totalRealizedGain,
+            cash: $overview->cash,
             holdings: array_map(
                 fn (HoldingLineData $line): HoldingRowData => new HoldingRowData(
                     assetId: $line->assetId,
