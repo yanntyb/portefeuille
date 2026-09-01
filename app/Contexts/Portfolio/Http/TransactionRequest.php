@@ -88,7 +88,13 @@ class TransactionRequest extends FormRequest
             /** Les plafonds collent aux colonnes : decimal(20,8), decimal(12,4), decimal(10,2). */
             'quantity' => [$isTrade ? 'required' : 'prohibited', 'numeric', 'gt:0', 'decimal:0,8', 'lte:999999999999.99999999'],
             'unitPrice' => [$isTrade ? 'required' : 'prohibited', 'numeric', 'gt:0', 'decimal:0,4', 'lte:99999999.9999'],
-            'fees' => ['nullable', 'numeric', 'min:0', 'decimal:0,2', 'lte:99999999.99'],
+            /**
+             * Des frais n'ont de sens que sur un ordre : eux seuls passent par un courtier. Le
+             * formulaire ne montre le champ que là, mais la règle n'était pas conditionnée, et un
+             * POST direct reposait donc des frais sur un versement — « Versement · frais 5,00 € »
+             * sous un montant qui ne les compte pas. Symétrique de `quantity` et `unitPrice`.
+             */
+            'fees' => [$isTrade ? 'nullable' : 'prohibited', 'numeric', 'min:0', 'decimal:0,2', 'lte:99999999.99'],
 
             /** Le plafond colle à la colonne : decimal(12,2). */
             'amount' => [$isTrade ? 'prohibited' : 'required', 'numeric', 'gt:0', 'decimal:0,2', 'lte:9999999999.99'],

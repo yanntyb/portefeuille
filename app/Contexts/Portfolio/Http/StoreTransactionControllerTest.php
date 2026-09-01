@@ -222,11 +222,39 @@ it('refuse un dividende saisi hors de la validation d\'un détachement', functio
         'assetId' => $instrument->id,
         'date' => '2026-04-01',
         'type' => 'dividend',
-        'fees' => '0',
         'amount' => '34.90',
     ])->assertSessionHasErrors([
         'type' => 'Un dividende se saisit en validant son détachement, sur la fiche de l\'actif.',
     ]);
 
     expect(Transaction::query()->where('type', 'dividend')->count())->toBe(0);
+});
+
+/**
+ * Des frais n'ont de sens que sur un ordre : eux seuls passent par un courtier. Le formulaire ne
+ * montre le champ que là, mais la règle n'était pas conditionnée au type et un POST direct
+ * reposait donc des frais sur un versement — « Versement · frais 5,00 € » sous un montant qui ne
+ * les compte pas.
+ */
+it('refuse des frais sur un mouvement d\'espèces', function () {
+    ['wallet' => $wallet] = portfolioFixture();
+
+    $this->post('/transactions', [
+        'walletId' => $wallet->id,
+        'date' => '2026-04-01',
+        'type' => 'deposit',
+        'amount' => '1000',
+        'fees' => '5',
+    ])->assertSessionHasErrors(['fees']);
+
+    expect(Transaction::query()->where('type', 'deposit')->where('fees', 5)->exists())->toBeFalse();
+});
+
+it('accepte des frais sur un ordre', function () {
+    ['wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
+
+    $this->post('/transactions', transactionPayload($wallet->id, $instrument->id, ['fees' => '5']))
+        ->assertSessionHasNoErrors();
+
+    expect((float) Transaction::query()->where('type', 'buy')->latest('id')->first()->fees)->toBe(5.0);
 });

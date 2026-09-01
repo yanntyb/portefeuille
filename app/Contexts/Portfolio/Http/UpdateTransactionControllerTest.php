@@ -194,7 +194,6 @@ it('laisse corriger un dividende déjà encaissé', function () {
         'assetId' => $instrument->id,
         'date' => '2026-04-01',
         'type' => 'dividend',
-        'fees' => '0',
         'amount' => '34.90',
     ])->assertSessionHasNoErrors();
 
@@ -211,7 +210,6 @@ it('refuse de basculer une ligne existante en dividende', function () {
         'assetId' => $instrument->id,
         'date' => '2026-04-01',
         'type' => 'dividend',
-        'fees' => '0',
         'amount' => '34.90',
     ])->assertSessionHasErrors(['type']);
 
@@ -236,7 +234,6 @@ it('refuse de corriger un versement déduit', function () {
         'walletId' => $wallet->id,
         'date' => '2026-04-01',
         'type' => 'deposit',
-        'fees' => '0',
         'amount' => '9999',
     ])->assertNotFound();
 
