@@ -5,6 +5,7 @@ namespace App\Contexts\Wealth\Infrastructure;
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
+use App\Contexts\Portfolio\Datas\HoldingLineData;
 use App\Contexts\Wealth\Services\InvestedCapital;
 
 /**
@@ -64,9 +65,34 @@ class PortfolioInvestedCapital
         foreach (AssetClass::cases() as $exposure) {
             $scoped = ($this->overview)($user, [$exposure]);
             $imputed[$exposure->value] = $scoped->netContributions;
-            $costs[$exposure->value] = $scoped->totalCost;
+            $costs[$exposure->value] = $this->costOf($scoped->holdings);
         }
 
-        return $this->capital->allocate($imputed, $costs, $whole->netContributions, $whole->cash);
+        return $this->capital->allocate($imputed, $costs, $whole->netContributions);
+    }
+
+    /**
+     * Le coût de revient des titres détenus, lu sur les lignes et non sur `totalCost`.
+     *
+     * `HoldingValuator::totals()` écarte délibérément du coût toute ligne dont le gain est
+     * inconnu — donc toute position dont l'actif n'a aucun cours —, pour que `totalGain` et
+     * `totalCost` parlent toujours du même périmètre. Ce compromis ne vaut pas ici : « le capital
+     * encore immobilisé en titres » est une question de prix de revient, pas de valorisation. Sans
+     * cette lecture, un actif sans cours laisserait son apport tomber aux liquidités, qui
+     * afficheraient une perte du montant de l'achat sur une caisse vide.
+     *
+     * @param  list<HoldingLineData>  $holdings
+     */
+    private function costOf(array $holdings): float
+    {
+        $cost = 0.0;
+
+        foreach ($holdings as $line) {
+            if ($line->avgCost !== null) {
+                $cost += $line->quantity * $line->avgCost;
+            }
+        }
+
+        return round($cost, 2);
     }
 }

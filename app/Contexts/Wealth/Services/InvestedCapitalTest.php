@@ -8,7 +8,6 @@ it('impute tout l\'apport à l\'exposition tant qu\'il y est immobilisé', funct
         imputedContributions: ['equity' => 1000.0],
         costOfHoldings: ['equity' => 1000.0],
         netContributions: 1000.0,
-        cash: 0.0,
     );
 
     expect($split)->toBe(['exposures' => ['equity' => 1000.0], 'cash' => 0.0]);
@@ -20,7 +19,6 @@ it('rend l\'apport aux liquidités dès que les titres sont vendus', function ()
         imputedContributions: ['equity' => 1000.0],
         costOfHoldings: ['equity' => 0.0],
         netContributions: 1000.0,
-        cash: 1200.0,
     );
 
     expect($split)->toBe(['exposures' => ['equity' => 0.0], 'cash' => 1000.0]);
@@ -36,7 +34,6 @@ it('ne recompte aucun apport quand le produit d\'une vente est réemployé', fun
         imputedContributions: ['equity' => 1000.0],
         costOfHoldings: ['equity' => 1200.0],
         netContributions: 1000.0,
-        cash: 0.0,
     );
 
     expect($split)->toBe(['exposures' => ['equity' => 1000.0], 'cash' => 0.0]);
@@ -47,7 +44,6 @@ it('garde à chaque exposition financée séparément le sien, et le reste aux l
         imputedContributions: ['equity' => 1000.0, 'crypto' => 500.0],
         costOfHoldings: ['equity' => 1000.0, 'crypto' => 500.0],
         netContributions: 1800.0,
-        cash: 300.0,
     );
 
     expect($split)->toBe(['exposures' => ['equity' => 1000.0, 'crypto' => 500.0], 'cash' => 300.0]);
@@ -65,7 +61,6 @@ it('déplace l\'apport vers l\'exposition qui a repris le capital', function () 
         imputedContributions: ['equity' => 1000.0, 'crypto' => 0.0],
         costOfHoldings: ['equity' => 0.0, 'crypto' => 1200.0],
         netContributions: 1000.0,
-        cash: 0.0,
     );
 
     expect($split)->toBe(['exposures' => ['equity' => 0.0, 'crypto' => 1000.0], 'cash' => 0.0]);
@@ -77,10 +72,39 @@ it('ne déplace que la part du capital réellement replacée', function () {
         imputedContributions: ['equity' => 1000.0, 'crypto' => 0.0],
         costOfHoldings: ['equity' => 0.0, 'crypto' => 600.0],
         netContributions: 1000.0,
-        cash: 600.0,
     );
 
     expect($split)->toBe(['exposures' => ['equity' => 0.0, 'crypto' => 600.0], 'cash' => 400.0]);
+});
+
+/**
+ * La moins-value réalisée. La caisse porte plus de capital qu'elle ne détient d'euros, et c'est
+ * ainsi que la perte s'affiche : « Investi 1 000, Gain −400 € » pour 600 € en caisse. La borne au
+ * solde annonçait « Investi 600, Gain 0 € » — 400 € apportés et perdus s'évaporaient de l'écran.
+ */
+it('porte aux liquidités la moins-value réellement encaissée', function () {
+    $split = (new InvestedCapital)->allocate(
+        imputedContributions: ['equity' => 1000.0],
+        costOfHoldings: ['equity' => 0.0],
+        netContributions: 1000.0,
+    );
+
+    expect($split)->toBe(['exposures' => ['equity' => 0.0], 'cash' => 1000.0]);
+});
+
+/** Une moins-value suivie d'un rachat partiel : la redistribution et la perte se croisent. */
+it('replace ce qui est racheté et laisse la perte à la caisse', function () {
+    /**
+     * Apport 1 000 → achat 1 000 → vente 600 → rachat 400 en crypto. La crypto reprend 400 € de
+     * capital ; les 600 € restants d'apport ne valent plus que 200 € en caisse.
+     */
+    $split = (new InvestedCapital)->allocate(
+        imputedContributions: ['equity' => 1000.0, 'crypto' => 0.0],
+        costOfHoldings: ['equity' => 0.0, 'crypto' => 400.0],
+        netContributions: 1000.0,
+    );
+
+    expect($split)->toBe(['exposures' => ['equity' => 0.0, 'crypto' => 400.0], 'cash' => 600.0]);
 });
 
 /** Deux expositions à financer ensemble se partagent le reliquat au prorata de ce qui leur manque. */
@@ -89,7 +113,6 @@ it('partage le reliquat au prorata du manque, sans laisser l\'ordre du registre 
         imputedContributions: ['equity' => 900.0, 'bond' => 0.0, 'crypto' => 0.0],
         costOfHoldings: ['equity' => 0.0, 'bond' => 300.0, 'crypto' => 600.0],
         netContributions: 900.0,
-        cash: 0.0,
     );
 
     expect($split)->toBe(['exposures' => ['equity' => 0.0, 'bond' => 300.0, 'crypto' => 600.0], 'cash' => 0.0]);
@@ -104,9 +127,8 @@ it('répartit les apports nets sans en perdre ni en inventer', function (
     array $imputed,
     array $costs,
     float $netContributions,
-    float $cash,
 ) {
-    $split = (new InvestedCapital)->allocate($imputed, $costs, $netContributions, $cash);
+    $split = (new InvestedCapital)->allocate($imputed, $costs, $netContributions);
 
     expect(round(array_sum($split['exposures']) + $split['cash'], 2))->toBe($netContributions);
 
@@ -114,15 +136,17 @@ it('répartit les apports nets sans en perdre ni en inventer', function (
         expect($invested)->toBeGreaterThanOrEqual(0.0);
     }
 
-    expect($split['cash'])->toBeGreaterThanOrEqual(0.0)
-        ->and($split['cash'])->toBeLessThanOrEqual($cash);
+    expect($split['cash'])->toBeGreaterThanOrEqual(0.0);
 })->with([
-    'apport 1 000, achat 1 000' => [['equity' => 1000.0], ['equity' => 1000.0], 1000.0, 0.0],
-    'vente 1 200, rien racheté' => [['equity' => 1000.0], ['equity' => 0.0], 1000.0, 1200.0],
-    'rachat 1 200 dans la même exposition' => [['equity' => 1000.0], ['equity' => 1200.0], 1000.0, 0.0],
-    'deux expositions financées séparément' => [['equity' => 1000.0, 'crypto' => 500.0], ['equity' => 1000.0, 'crypto' => 500.0], 1500.0, 0.0],
-    'arbitrage complet vers une autre exposition' => [['equity' => 1000.0, 'crypto' => 0.0], ['equity' => 0.0, 'crypto' => 1200.0], 1000.0, 0.0],
-    'arbitrage partiel, moitié laissée en caisse' => [['equity' => 1000.0, 'crypto' => 0.0], ['equity' => 0.0, 'crypto' => 600.0], 1000.0, 600.0],
-    'vente de la moitié' => [['equity' => 1000.0], ['equity' => 500.0], 1000.0, 600.0],
-    'apport 1 000, retrait 300' => [[], [], 700.0, 700.0],
+    'apport 1 000, achat 1 000' => [['equity' => 1000.0], ['equity' => 1000.0], 1000.0],
+    'vente 1 200, rien racheté' => [['equity' => 1000.0], ['equity' => 0.0], 1000.0],
+    'rachat 1 200 dans la même exposition' => [['equity' => 1000.0], ['equity' => 1200.0], 1000.0],
+    'deux expositions financées séparément' => [['equity' => 1000.0, 'crypto' => 500.0], ['equity' => 1000.0, 'crypto' => 500.0], 1500.0],
+    'arbitrage complet vers une autre exposition' => [['equity' => 1000.0, 'crypto' => 0.0], ['equity' => 0.0, 'crypto' => 1200.0], 1000.0],
+    'arbitrage partiel, moitié laissée en caisse' => [['equity' => 1000.0, 'crypto' => 0.0], ['equity' => 0.0, 'crypto' => 600.0], 1000.0],
+    'vente de la moitié' => [['equity' => 1000.0], ['equity' => 500.0], 1000.0],
+    'apport 1 000, retrait 300' => [[], [], 700.0],
+    'moins-value réalisée' => [['equity' => 1000.0], ['equity' => 0.0], 1000.0],
+    'moins-value puis rachat partiel' => [['equity' => 1000.0, 'crypto' => 0.0], ['equity' => 0.0, 'crypto' => 400.0], 1000.0],
+    'moins-value sur une position à moitié soldée' => [['equity' => 1000.0], ['equity' => 500.0], 1000.0],
 ]);

@@ -100,7 +100,7 @@ class PortfolioCash implements CashPort
 
         foreach (array_keys($labels) as $index) {
             $values[] = $points[$index]['balance'];
-            $invested[] = $this->capital->forCash($points[$index]['netContributions'], $costs[$index], $points[$index]['balance']);
+            $invested[] = $this->capital->forCashSeries($points[$index]['netContributions'], $costs[$index], $points[$index]['balance']);
         }
 
         return new ClassSeriesData(labels: $labels, value: $values, invested: $invested);

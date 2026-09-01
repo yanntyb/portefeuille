@@ -200,6 +200,51 @@ it('répartit les apports nets entre les classes sans en perdre ni en inventer',
         },
         1000.0,
     ],
+    /**
+     * La moins-value réalisée : 1 000 € apportés, 600 € en caisse. Sans le retrait de la borne au
+     * solde, l'investi retombait à 600 et la perte disparaissait de l'écran.
+     */
+    'moins-value réalisée' => [
+        function (User $user, Wallet $wallet): void {
+            $stock = Instrument::factory()->create(['type' => InstrumentType::Stock]);
+            Transaction::factory()->deposit()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'date' => '2026-01-01', 'amount' => 1000,
+            ]);
+            Transaction::factory()->buy()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+                'date' => '2026-01-02', 'quantity' => 10, 'unit_price' => 100, 'fees' => 0,
+            ]);
+            Transaction::factory()->sell()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+                'date' => '2026-01-03', 'quantity' => 10, 'unit_price' => 60, 'fees' => 0,
+            ]);
+        },
+        1000.0,
+    ],
+    /** La redistribution et la perte se croisent : 400 € replacés en crypto, la perte reste en caisse. */
+    'moins-value puis rachat partiel dans une autre exposition' => [
+        function (User $user, Wallet $wallet): void {
+            $stock = Instrument::factory()->create(['type' => InstrumentType::Stock]);
+            $coin = Instrument::factory()->create(['type' => InstrumentType::Crypto]);
+            Price::factory()->create(['asset_id' => $coin->id, 'date' => '2026-01-06', 'close' => 100.0]);
+            Transaction::factory()->deposit()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'date' => '2026-01-01', 'amount' => 1000,
+            ]);
+            Transaction::factory()->buy()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+                'date' => '2026-01-02', 'quantity' => 10, 'unit_price' => 100, 'fees' => 0,
+            ]);
+            Transaction::factory()->sell()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+                'date' => '2026-01-03', 'quantity' => 10, 'unit_price' => 60, 'fees' => 0,
+            ]);
+            Transaction::factory()->buy()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $coin->id,
+                'date' => '2026-01-04', 'quantity' => 4, 'unit_price' => 100, 'fees' => 0,
+            ]);
+        },
+        1000.0,
+    ],
     'deux expositions financées séparément' => [
         function (User $user, Wallet $wallet): void {
             $stock = Instrument::factory()->create(['type' => InstrumentType::Stock]);
@@ -325,4 +370,71 @@ it('ne déplace que la part du capital réellement replacée', function () {
         ->and($classes['cash']->value)->toBe(600.0)
         /** Les 200 € de plus-value dorment en caisse, sans qu'aucune classe n'invente de rendement. */
         ->and($classes['cash']->gain)->toBe(200.0);
+});
+
+/**
+ * La moins-value réalisée s'affiche là où l'argent se trouve. La borne au solde annonçait
+ * « Investi 600, Gain 0 € » pour 1 000 € sortis de la poche : 400 € apportés et perdus
+ * s'évaporaient de l'écran.
+ *
+ * Ce n'est pas un double comptage avec le réalisé de l'exposition : `GetWealthOverview` calcule
+ * `totalGain = totalValue − totalInvested` et porte le réalisé dans un champ séparé, jamais
+ * additionné. Le cas gagnant en est le miroir exact, ratifié depuis la tâche 10.
+ */
+it('porte aux liquidités la moins-value réellement encaissée', function () {
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create(['name' => 'PEA']);
+    $stock = Instrument::factory()->create(['type' => InstrumentType::Stock]);
+
+    Transaction::factory()->deposit()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'date' => '2026-01-01', 'amount' => 1000,
+    ]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+        'date' => '2026-01-02', 'quantity' => 10, 'unit_price' => 100, 'fees' => 0,
+    ]);
+    Transaction::factory()->sell()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+        'date' => '2026-01-03', 'quantity' => 10, 'unit_price' => 60, 'fees' => 0,
+    ]);
+
+    $overview = app(GetWealthOverview::class)($user->id);
+    $classes = collect($overview->classes)->keyBy('key');
+
+    expect($classes['cash']->value)->toBe(600.0)
+        ->and($classes['cash']->invested)->toBe(1000.0)
+        ->and($classes['cash']->gain)->toBe(-400.0)
+        ->and($classes['equity']->invested)->toBe(0.0)
+        /** Le réalisé de l'exposition dit la même perte, dans un champ que le total n'additionne pas. */
+        ->and($classes['equity']->realizedGain)->toBe(-400.0)
+        ->and($overview->totalInvested)->toBe(1000.0)
+        ->and($overview->totalValue)->toBe(600.0)
+        ->and($overview->totalGain)->toBe(-400.0);
+});
+
+/**
+ * Le cas que la borne au solde protégeait, et qui doit rester intact : un apport encore
+ * entièrement immobilisé en titres ne doit pas afficher « Investi 1 000, Gain −1 000 € » sur une
+ * caisse vide. C'est le plafonnement au coût qui s'en charge, pas une borne haute.
+ */
+it('ne met aucune perte aux liquidités tant que l\'apport est immobilisé en titres', function () {
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create(['name' => 'PEA']);
+    $stock = Instrument::factory()->create(['type' => InstrumentType::Stock]);
+    Price::factory()->create(['asset_id' => $stock->id, 'date' => '2026-01-06', 'close' => 100.0]);
+
+    Transaction::factory()->deposit()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'date' => '2026-01-01', 'amount' => 1000,
+    ]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+        'date' => '2026-01-02', 'quantity' => 10, 'unit_price' => 100, 'fees' => 0,
+    ]);
+
+    $classes = collect(app(GetWealthOverview::class)($user->id)->classes)->keyBy('key');
+
+    expect($classes['cash']->value)->toBe(0.0)
+        ->and($classes['cash']->invested)->toBe(0.0)
+        ->and($classes['cash']->gain)->toBe(0.0)
+        ->and($classes['equity']->invested)->toBe(1000.0);
 });

@@ -17,8 +17,8 @@ namespace App\Contexts\Wealth\Services;
  *    — l'apport reste imputé à l'exposition tant qu'il y est immobilisé, pas au-delà ;
  * 2. le reliquat — `apports nets − somme des investis` — se redistribue aux expositions dont le
  *    coût n'est pas encore financé, à hauteur de ce qui leur manque ;
- * 3. `investi(Liquidités) = borne(ce qui reste du reliquat, 0, solde)` — le capital rendu par une
- *    vente et pas replacé revient à la caisse, où il dort.
+ * 3. `investi(Liquidités) = ce qui reste du reliquat` — le capital rendu par une vente et pas
+ *    replacé revient à la caisse, où il dort.
  *
  * Le deuxième temps n'est pas un raffinement : sans lui, arbitrer une exposition contre une autre
  * fait disparaître l'apport du total. `CashLedger::netContributions()` est délibérément collant —
@@ -28,8 +28,26 @@ namespace App\Contexts\Wealth\Services;
  * crypto : 1 000 € d'apports nets s'évaporaient. La redistribution les rend à l'exposition qui
  * porte désormais le capital.
  *
- * Règle d'or que garde `WealthInvariantTest` : la somme des investis de toutes les classes fait
- * exactement les apports nets.
+ * Le troisième temps n'a **pas** de borne haute au solde. Elle a existé, pour un cas précis : un
+ * apport encore immobilisé en titres aurait affiché un gain négatif sur une caisse vide. C'est
+ * exactement ce dont le deuxième temps se charge désormais — le capital engagé est imputé à
+ * l'exposition qui le porte avant que rien ne tombe aux liquidités —, et ce qui reste après lui
+ * n'est plus du capital immobilisé : c'est de l'apport que le marché a consommé. La borne ne
+ * protégeait donc plus que d'une chose, faire disparaître une moins-value réalisée de l'écran :
+ * `apport 1 000 → achat 1 000 → vente 600` annonçait « Investi 600, Gain 0 € » pour 1 000 € sortis
+ * de la poche et 600 € en caisse. Sans elle, les liquidités portent « Investi 1 000, Gain −400 € »,
+ * la perte réellement encaissée, affichée là où l'argent se trouve.
+ *
+ * Ce n'est pas un double comptage avec le `realizedGain` de l'exposition : `GetWealthOverview`
+ * calcule `totalGain = totalValue − totalInvested` et porte le réalisé dans un champ séparé, qu'il
+ * n'additionne jamais. Le cas gagnant, ratifié depuis la tâche 10, est le miroir exact du cas
+ * perdant — une vente à 1 200 € met déjà `+200` en réalisé sur l'exposition ET `+200` en gain sur
+ * les liquidités.
+ *
+ * Règle d'or que garde `WealthInvariantTest`, désormais sans aucune exception : la somme des
+ * investis de toutes les classes fait exactement les apports nets. Elle est vraie par construction
+ * — `Σ min(imputé, coût) ≤ Σ imputé ≤ apports nets`, et la redistribution ne dépasse jamais le
+ * reliquat, si bien que la part des liquidités le solde exactement.
  *
  * Service pur, sans Eloquent ni port : `PortfolioAssetClass` et `PortfolioCash` le consomment
  * plutôt que de porter chacun sa formule — `PortfolioCash` la portait, et `Infrastructure/` n'est
@@ -46,7 +64,7 @@ class InvestedCapital
      * @param  array<string, float>  $costOfHoldings  coût de revient des titres détenus, par exposition
      * @return array{exposures: array<string, float>, cash: float}
      */
-    public function allocate(array $imputedContributions, array $costOfHoldings, float $netContributions, float $cash): array
+    public function allocate(array $imputedContributions, array $costOfHoldings, float $netContributions): array
     {
         $exposures = [];
 
@@ -58,7 +76,7 @@ class InvestedCapital
 
         return [
             'exposures' => $exposures,
-            'cash' => $this->forCash($netContributions, $this->sumOf($exposures), $cash),
+            'cash' => $this->forCash($netContributions, $this->sumOf($exposures)),
         ];
     }
 
@@ -75,13 +93,14 @@ class InvestedCapital
     /**
      * Ce que les liquidités portent d'apport : tout ce que les expositions n'immobilisent plus.
      *
-     * Borné à `[0, solde]` : un apport encore entièrement en titres ne doit pas rendre l'investi
-     * négatif sur une caisse vide, et la caisse ne peut pas porter plus de capital qu'elle ne
-     * détient d'euros — le surplus est de la plus-value, pas de l'apport.
+     * Aucune borne haute au solde — voir l'en-tête de la classe : la caisse peut porter plus de
+     * capital qu'elle ne détient d'euros, et c'est précisément ainsi qu'une moins-value réalisée
+     * s'affiche au lieu de s'évaporer. Le plancher à zéro reste, défensif : la somme des investis
+     * d'exposition ne peut pas dépasser les apports nets, mais rien ne gagne à le supposer.
      */
-    public function forCash(float $netContributions, float $exposuresInvested, float $cash): float
+    public function forCash(float $netContributions, float $exposuresInvested): float
     {
-        return round(min(max($netContributions - $exposuresInvested, 0.0), $cash), 2);
+        return round(max($netContributions - $exposuresInvested, 0.0), 2);
     }
 
     /**
@@ -133,6 +152,25 @@ class InvestedCapital
         }
 
         return $exposures;
+    }
+
+    /**
+     * La même part, pour la série du tableau de bord — et celle-là garde sa borne au solde.
+     *
+     * Deux raisons, toutes deux propres à la série. Elle ne redistribue rien : son coût de revient
+     * est un total, pas une répartition par exposition, donc le deuxième temps de la règle n'y a
+     * pas lieu et ne peut pas protéger le capital encore immobilisé. Et ce coût vient de
+     * `BuildEvolutionSeries`, piloté par les cours : il ne pose aucun point avant le premier cours
+     * connu, ni pour un actif qui n'en a aucun. Sans la borne, chacune de ces dates afficherait
+     * l'apport entier face à une caisse vide — un creux de plusieurs milliers d'euros sur la bande,
+     * pour un trou de données, pas pour une perte.
+     *
+     * Conséquence assumée : la bande sous-estime une moins-value réalisée, là où l'instantané la
+     * dit. C'est l'instantané qui fait foi ; la série reste une approximation, comme son coût.
+     */
+    public function forCashSeries(float $netContributions, float $costOfHoldings, float $balance): float
+    {
+        return round(min($this->forCash($netContributions, $costOfHoldings), $balance), 2);
     }
 
     /** @param  array<string, float>  $amounts */
