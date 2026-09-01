@@ -136,6 +136,12 @@ it('laisse le gain réalisé d\'une exposition muette aux seules cessions', func
  * effacé la ligne `Holding` et `positionFor()` n'aurait plus rien à rendre — `GetPortfolioPositions`
  * ne connaît que les positions encore ouvertes, contrairement à `GetRealizedGains` qui lit les
  * ventes elles-mêmes.
+ *
+ * Le détachement `Market\Dividend` est le vrai piège : sans lui, `IncomePort::assetHistoryFor()`
+ * rend un `totalReceived` nul qu'on ajoute ou non — le test passerait même si l'addition
+ * revenait. La transaction de dividende, elle, ne nourrit jamais `IncomePort` (qui ignore les
+ * transactions) ; elle est là pour montrer que le cash et le gain réalisé restent deux choses
+ * distinctes.
  */
 it('ne compte plus les dividendes en supplément du gain réalisé', function () {
     $asset = Instrument::factory()->create(['ticker' => 'ACME', 'asset_class' => AssetClass::Equity]);
@@ -153,9 +159,43 @@ it('ne compte plus les dividendes en supplément du gain réalisé', function ()
         'user_id' => $this->user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
         'date' => '2026-01-15', 'amount' => 50,
     ]);
+    /** Douze titres détenus à cette date : un détachement théorique de 24 € (2 € × 12) à ignorer. */
+    Dividend::factory()->create([
+        'asset_id' => $asset->id,
+        'ex_date' => '2026-01-20',
+        'amount_per_share' => 2.0,
+    ]);
 
     /** 200 € de plus-value, et rien de plus : le dividende est entré par le compte espèces. */
     expect(app(PortfolioTotals::class)->positionFor($this->user->id, $asset->id)->realizedGain)->toBe(200.0);
+});
+
+/**
+ * `overviewFor()` porte le gain réalisé d'un actif entièrement soldé — sa raison d'être, puisque
+ * `GetRealizedGains` lit les ventes elles-mêmes et non une ligne `Holding` qui n'existe plus.
+ * Un détachement théorique sur la période de détention ne doit pas non plus s'y ajouter.
+ */
+it('ignore le détachement théorique sur une position entièrement soldée', function () {
+    $asset = Instrument::factory()->create(['ticker' => 'ACME', 'asset_class' => AssetClass::Equity]);
+    $wallet = Wallet::factory()->for($this->user)->create(['name' => 'PEA']);
+
+    Transaction::factory()->buy()->create([
+        'user_id' => $this->user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'date' => '2026-01-01', 'quantity' => 10, 'unit_price' => 100, 'fees' => 0,
+    ]);
+    Transaction::factory()->sell()->create([
+        'user_id' => $this->user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'date' => '2026-02-01', 'quantity' => 10, 'unit_price' => 120, 'fees' => 0,
+    ]);
+    /** Dix titres détenus à cette date : un détachement théorique de 20 € (2 € × 10) à ignorer. */
+    Dividend::factory()->create([
+        'asset_id' => $asset->id,
+        'ex_date' => '2026-01-20',
+        'amount_per_share' => 2.0,
+    ]);
+
+    /** 200 € de plus-value de cession, et rien de plus, alors que la position n'existe plus. */
+    expect($this->overview->overviewFor($this->user->id, AssetClass::Equity)->totalRealizedGain)->toBe(200.0);
 });
 
 it('mesure l\'investi aux apports nets, pas au coût des titres', function () {
