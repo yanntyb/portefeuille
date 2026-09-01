@@ -194,5 +194,6 @@ it('sert les enveloppes de détention au tableau de bord', function () {
         ->assertJsonPath('props.accounts.0.marketValue', 1000)
         ->assertJsonPath('props.accounts.0.taxRegimeLabel', 'Exonéré après 5 ans, prélèvements sociaux 17,2 %')
         ->assertJsonPath('props.accounts.0.maturityYears', 5)
-        ->assertJsonPath('props.accounts.0.ineligibleAssetNames', []);
+        ->assertJsonPath('props.accounts.0.ineligibleAssetNames', [])
+        ->assertJsonPath('props.accounts.0.cashBalance', 0);
 });

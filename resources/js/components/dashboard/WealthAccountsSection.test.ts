@@ -27,6 +27,7 @@ const account = (overrides: Partial<WealthAccount> = {}): WealthAccount => ({
     taxRegimeLabel: 'Exonéré après 5 ans, prélèvements sociaux 17,2 %',
     ineligibleAssetNames: [],
     broker: 'IBKR',
+    cashBalance: 150,
     ...overrides,
 });
 
@@ -105,6 +106,14 @@ describe('section enveloppes du tableau de bord', () => {
         const oneYearThresholdText = oneYearThreshold.querySelector('[data-account-age]')?.textContent;
         expect(oneYearThresholdText).toContain('Seuil de 1 an franchi');
         expect(oneYearThresholdText).not.toContain('Seuil de 1 ans');
+    });
+
+    it('affiche le compte espèces de l\'enveloppe, y compris à zéro', async () => {
+        const withCash = await mountSection([account({ cashBalance: 700 })]);
+        expect(withCash.querySelector('[data-account-cash]')?.textContent).toContain('700');
+
+        const withoutCash = await mountSection([account({ cashBalance: 0 })]);
+        expect(withoutCash.querySelector('[data-account-cash]')?.textContent).toContain('0');
     });
 
     it('signale les actifs que l\'enveloppe n\'admet pas', async () => {

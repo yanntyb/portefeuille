@@ -40,6 +40,7 @@ class PortfolioAccounts implements AccountsPort
                 maturityYears: $line->maturityYears,
                 taxRegimeLabel: $line->taxRegimeLabel,
                 ineligibleAssetNames: $line->ineligibleAssetNames,
+                cashBalance: $line->cashBalance,
             ),
             ($this->breakdown)($user),
         );

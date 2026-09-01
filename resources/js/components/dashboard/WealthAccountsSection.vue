@@ -59,6 +59,10 @@ const maturity = (account: WealthAccount): string | null => {
                         {{ account.taxRegimeLabel }}
                     </span>
 
+                    <span data-account-cash class="text-xs text-subtle-foreground">
+                        Espèces : {{ eur(account.cashBalance, 0) }}
+                    </span>
+
                     <span
                         v-if="age(account)"
                         data-account-age

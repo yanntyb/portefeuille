@@ -120,4 +120,6 @@ export interface WealthAccount {
     taxRegimeLabel: string;
     /** Actifs que l'enveloppe n'admet pas. Vide dans le cas normal. */
     ineligibleAssetNames: string[];
+    /** Le compte espèces réel de l'enveloppe, à aujourd'hui. Jamais nul : `0` sans mouvement. */
+    cashBalance: number;
 }

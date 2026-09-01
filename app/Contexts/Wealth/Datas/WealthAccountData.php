@@ -11,6 +11,9 @@ use JsonSerializable;
  *
  * Les libellés arrivent déjà rendus : le patrimoine ne connaît pas `AccountType`, c'est le
  * travail de l'adaptateur de le traduire.
+ *
+ * `cashBalance` est le compte espèces réel de l'enveloppe, jamais `null` : une enveloppe sans
+ * mouvement affiche `0`, pas un tiret.
  */
 readonly class WealthAccountData implements JsonSerializable
 {
@@ -29,6 +32,7 @@ readonly class WealthAccountData implements JsonSerializable
         public ?int $maturityYears,
         public string $taxRegimeLabel,
         public array $ineligibleAssetNames,
+        public float $cashBalance,
     ) {}
 
     /** @return array<string, mixed> */
@@ -47,6 +51,7 @@ readonly class WealthAccountData implements JsonSerializable
             'maturityYears' => $this->maturityYears,
             'taxRegimeLabel' => $this->taxRegimeLabel,
             'ineligibleAssetNames' => $this->ineligibleAssetNames,
+            'cashBalance' => $this->cashBalance,
         ];
     }
 }

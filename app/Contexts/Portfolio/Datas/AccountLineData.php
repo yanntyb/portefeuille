@@ -14,6 +14,9 @@ use JsonSerializable;
  *
  * `ageInYears` est `null` quand l'enveloppe n'a pas de date d'ouverture connue : une ancienneté
  * fausse serait pire qu'absente.
+ *
+ * `cashBalance` est le compte espèces réel de l'enveloppe, lu à aujourd'hui — jamais `null` : une
+ * enveloppe sans aucun mouvement affiche `0`, pas un tiret.
  */
 readonly class AccountLineData implements JsonSerializable
 {
@@ -31,6 +34,7 @@ readonly class AccountLineData implements JsonSerializable
         public ?int $maturityYears,
         public string $taxRegimeLabel,
         public array $ineligibleAssetNames,
+        public float $cashBalance,
     ) {}
 
     /** @return array<string, mixed> */
@@ -49,6 +53,7 @@ readonly class AccountLineData implements JsonSerializable
             'maturityYears' => $this->maturityYears,
             'taxRegimeLabel' => $this->taxRegimeLabel,
             'ineligibleAssetNames' => $this->ineligibleAssetNames,
+            'cashBalance' => $this->cashBalance,
         ];
     }
 }

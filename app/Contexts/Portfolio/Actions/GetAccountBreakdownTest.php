@@ -7,6 +7,7 @@ use App\Contexts\Market\Models\Price;
 use App\Contexts\Portfolio\Actions\GetAccountBreakdown;
 use App\Contexts\Portfolio\Enums\AccountType;
 use App\Contexts\Portfolio\Models\Holding;
+use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 use Illuminate\Support\Carbon;
 
@@ -138,9 +139,37 @@ it('signale une position que l\'enveloppe n\'admet pas', function () {
         ->and($byWallet[$cto->id]->ineligibleAssetNames)->toBe([]);
 });
 
-it('ne rend aucune ligne sans position', function () {
+it('ne rend aucune ligne pour une enveloppe vide', function () {
     $user = User::factory()->create();
     Wallet::factory()->for($user)->cto()->create();
 
     expect(app(GetAccountBreakdown::class)($user))->toBe([]);
+});
+
+it('porte le solde d\'espèces de chaque enveloppe, à zéro sans mouvement', function () {
+    $user = User::factory()->create();
+    $cto = Wallet::factory()->for($user)->cto()->create();
+
+    holdIn($cto, InstrumentType::Stock, close: 100, qty: 10, avgCost: 80);
+
+    expect(app(GetAccountBreakdown::class)($user)[0]->cashBalance)->toBe(0.0);
+});
+
+it('affiche une enveloppe sans aucune position tant qu\'elle porte des espèces', function () {
+    $user = User::factory()->create();
+    $cashOnly = Wallet::factory()->for($user)->cto()->create();
+
+    Transaction::factory()->deposit()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $cashOnly->id,
+        'date' => '2026-01-01',
+        'amount' => 5000,
+    ]);
+
+    $lines = app(GetAccountBreakdown::class)($user);
+
+    expect($lines)->toHaveCount(1)
+        ->and($lines[0]->walletId)->toBe($cashOnly->id)
+        ->and($lines[0]->marketValue)->toBe(0.0)
+        ->and($lines[0]->cashBalance)->toBe(5000.0);
 });
