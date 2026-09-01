@@ -143,12 +143,11 @@ it('lets a withdrawal keep its own amount out of the balance it checks against',
     ];
 
     /**
-     * 1 000 déposés, 300 déjà retirés par cette même ligne : 700 restent réellement disponibles.
-     * Sans l'exclusion de soi-même, porter le retrait à 500 se comparerait aux 700 restants après
-     * son propre retrait déjà compté deux fois et serait acceptée à tort dans le mauvais sens, ou
-     * refusée à tort si le solde était compté sans elle du tout.
+     * 900 tombe entre les deux bornes : accepté si la ligne éditée est neutralisée (900 ≤ 1 000),
+     * refusé sinon (900 > 700, le solde sans exclure son propre retrait de 300). Un montant en
+     * dehors de cet intervalle — 500 passerait dans les deux mondes — ne prouverait rien.
      */
-    $this->put("/transactions/{$withdrawal->id}", $payload('500'))->assertSessionHasNoErrors();
+    $this->put("/transactions/{$withdrawal->id}", $payload('900'))->assertSessionHasNoErrors();
 
     $this->put("/transactions/{$withdrawal->id}", $payload('1500'))->assertSessionHasErrors('amount');
 });
