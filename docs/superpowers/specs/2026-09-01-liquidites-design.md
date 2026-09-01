@@ -245,9 +245,33 @@ est un contrat qui fixe les lignes du résumé et l'empilement des bandes.
 produit. En déclarer une origine ici les compterait deux fois — `WealthInvariantTest` garde cette
 règle.
 
-Son instantané : valeur = solde total ; investi = la part du solde encore étiquetée « apport » par
-le FIFO ; gain = le reste, c'est-à-dire les plus-values réalisées et dividendes pas encore
-replacés. Le gain apparaît là où l'argent dort, sans qu'aucune classe n'invente de rendement.
+Son instantané : valeur = solde total ; investi = **les apports nets moins le capital encore
+immobilisé dans les titres**, borné au solde ; gain = le reste, c'est-à-dire les plus-values
+réalisées et dividendes pas encore replacés. Le gain apparaît là où l'argent dort, sans qu'aucune
+classe n'invente de rendement.
+
+L'étiquette d'origine du FIFO ne convient pas ici, et c'est une correction de ce document : elle dit
+**d'où vient** un euro, pas s'il est du capital ou du gain. Le produit d'une vente est les deux à la
+fois — 1 200 € encaissés sur des titres payés 1 000 € sont 1 000 € de capital récupéré et 200 € de
+plus-value. Prendre `compositionAt()['deposits']` donnerait donc un investi nul et un gain de
+1 200 € sur cette classe.
+
+L'apport suit l'argent : tant qu'il est en titres, il est imputé à l'exposition ; dès que les titres
+sont vendus, le capital revient aux liquidités. D'où la formule, où le coût est celui des positions
+encore ouvertes :
+
+```
+investi(Liquidités) = borne(apports nets − coût de revient des titres détenus, 0, solde)
+```
+
+Elle se vérifie sur les quatre cas qui comptent :
+
+| Situation | Solde | Coût des titres | Investi | Gain |
+| --- | --- | --- | --- | --- |
+| Apport 1 000, achat 1 000 | 0 | 1 000 | 0 | 0 |
+| … puis vente 1 200 | 1 200 | 0 | 1 000 | 200 |
+| Vente de la moitié (600) | 600 | 500 | 500 | 100 |
+| Apport 1 000, retrait 300 | 700 | 0 | 700 | 0 |
 
 ## Interface
 
