@@ -83,9 +83,12 @@ vi.mock('@inertiajs/vue3', () => ({
  */
 const panelPayload: { current: CreatedInstrument | null } = { current: null };
 
+/** Même principe que `panelPayload`, côté `open` : un instrument déjà suivi qu'on retrouve. */
+const openPayload: { current: { id: number } | null } = { current: null };
+
 /**
  * Stub du panneau de recherche : ici on ne vérifie que la bascule et ce que le formulaire fait de
- * l'instrument créé. Un bouton suffit à simuler `created`.
+ * l'instrument créé ou retrouvé. Deux boutons suffisent à simuler `created` et `open`.
  */
 vi.mock('@/components/instruments/InstrumentSearchPanel.vue', () => ({
     default: {
@@ -96,6 +99,10 @@ vi.mock('@/components/instruments/InstrumentSearchPanel.vue', () => ({
                 h('button', {
                     'data-stub-create': '',
                     onClick: () => emit('created', panelPayload.current),
+                }),
+                h('button', {
+                    'data-stub-open': '',
+                    onClick: () => emit('open', openPayload.current),
                 }),
             ]),
     },
@@ -167,6 +174,15 @@ async function emitCreated(host: HTMLElement, instrument: CreatedInstrument): Pr
 
     await nextTick();
     await nextTick();
+    await nextTick();
+    await nextTick();
+}
+
+/** Même principe qu'`emitCreated`, pour `open` : le gestionnaire est synchrone, deux cycles suffisent. */
+async function emitOpen(host: HTMLElement, instrument: { id: number }): Promise<void> {
+    openPayload.current = instrument;
+    host.querySelector<HTMLElement>('[data-stub-open]')!.click();
+
     await nextTick();
     await nextTick();
 }
@@ -923,6 +939,48 @@ describe('ajout d\'un instrument depuis la saisie', () => {
         );
         /** La pièce qui pinne le correctif : jamais un identifiant que le catalogue périmé ignore. */
         expect(currentAssetId(host)).toBe('');
+    });
+
+    it('ne masque pas le message de création derrière l\'échec générique de chargement', async () => {
+        /**
+         * `optionsFailed` est posé une fois pour toutes par le montage et ne se réarme jamais : un
+         * premier chargement raté reste donc vrai même quand le rechargement qui suit une création
+         * échoue à son tour. Le message informatif doit gagner sur le générique, pas l'inverse.
+         */
+        vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, json: async () => ({}) })));
+
+        const host = await mountForm();
+
+        expect(host.querySelector('[data-form-error]')?.textContent?.trim())
+            .toBe('Les enveloppes et les instruments n\'ont pas pu être chargés.');
+
+        host.querySelector<HTMLElement>('[data-transaction-add-instrument]')!.click();
+        await nextTick();
+
+        await emitCreated(host, { id: 99, name: 'NVIDIA Corp.', ticker: 'NVDA', assetClass: 'equity', assetClassSlug: 'actions' });
+
+        expect(host.querySelector('[data-instrument-created-stale]')?.textContent?.trim()).toBe(
+            'L\'instrument a bien été créé, mais la liste n\'a pas pu être rechargée. Ferme et rouvre la saisie pour le sélectionner.',
+        );
+        /** Le message générique ne doit plus être celui qui s'affiche : la chaîne l'a court-circuité. */
+        expect(host.querySelector('[data-form-error]')).toBeNull();
+    });
+
+    it('sélectionne un instrument déjà suivi retrouvé par la recherche', async () => {
+        /**
+         * Contrairement au catalogue, il n'y a pas de fiche où naviguer depuis la saisie : la
+         * bonne réponse à un instrument déjà suivi est de le sélectionner, puisque c'est pour ça
+         * que le panneau a été ouvert. Son identifiant vient déjà du catalogue chargé.
+         */
+        const host = await mountForm();
+
+        host.querySelector<HTMLElement>('[data-transaction-add-instrument]')!.click();
+        await nextTick();
+
+        await emitOpen(host, { id: 7 });
+
+        expect(host.querySelector('[data-instrument-search-input]')).toBeNull();
+        expect(currentAssetId(host)).toBe('7');
     });
 
     it('désactive le lien pendant l\'envoi, comme le sélecteur d\'actif qu\'il accompagne', async () => {

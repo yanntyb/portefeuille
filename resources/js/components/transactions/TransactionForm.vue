@@ -144,6 +144,28 @@ const onInstrumentCreated = async (instrument: CreatedInstrument): Promise<void>
 };
 
 /**
+ * La recherche retombe sur un instrument déjà suivi : contrairement au catalogue, il n'y a pas de
+ * fiche où naviguer ici — la bonne réponse est de le sélectionner, puisque c'est pour ça que le
+ * panneau a été ouvert. Son identifiant vient déjà du catalogue servi par `/transactions/options`,
+ * aucun rechargement n'est donc nécessaire.
+ */
+const onInstrumentFound = (payload: { id: number }): void => {
+    searchingInstrument.value = false;
+
+    const known = (options.value?.instruments ?? []).some(
+        (instrument): boolean => instrument.id === payload.id,
+    );
+
+    /** Absent du catalogue chargé, l'identifiant ne doit pointer vers rien : le champ ne bouge pas. */
+    if (!known) {
+        return;
+    }
+
+    form.assetId = String(payload.id);
+    prefillUnitPrice();
+};
+
+/**
  * Établissement d'abord, régime ensuite — « IBKR - CTO » : c'est l'établissement qui situe le
  * compte, le régime le qualifie. Sans établissement, le nom du compte prend sa place, comme sur
  * les cartes d'enveloppes.
@@ -449,7 +471,7 @@ const serverUnreachable: Ref<boolean> = ref(false);
         v-if="searchingInstrument"
         @created="onInstrumentCreated"
         @cancel="searchingInstrument = false"
-        @open="searchingInstrument = false"
+        @open="onInstrumentFound"
     />
 
     <template v-else>
@@ -462,16 +484,18 @@ const serverUnreachable: Ref<boolean> = ref(false);
             Enregistrement impossible : le serveur est injoignable. Votre saisie est conservée.
         </p>
 
-        <p v-else-if="optionsFailed" data-form-error role="alert" class="text-sm text-destructive">
-            Les enveloppes et les instruments n'ont pas pu être chargés.
-        </p>
-
         <!--
-            Distinct du message ci-dessus : ici la création a réussi, seul le rechargement a
-            échoué. Dire « n'ont pas pu être chargés » laisserait croire que rien n'a eu lieu.
+            Avant le message générique qui suit, et non après : `optionsFailed` (posé une fois pour
+            toutes par le montage, jamais réarmé) et ce drapeau-ci peuvent être vrais ensemble si le
+            chargement initial avait déjà échoué. Le rendre après laisserait le message générique —
+            « n'ont pas pu être chargés » — masquer celui qui dit qu'une création a bien eu lieu.
         -->
         <p v-else-if="instrumentCreatedButStale" data-instrument-created-stale role="alert" class="text-sm text-destructive">
             L'instrument a bien été créé, mais la liste n'a pas pu être rechargée. Ferme et rouvre la saisie pour le sélectionner.
+        </p>
+
+        <p v-else-if="optionsFailed" data-form-error role="alert" class="text-sm text-destructive">
+            Les enveloppes et les instruments n'ont pas pu être chargés.
         </p>
 
         <!-- En premier : l'enveloppe est le cadre de l'opération, tout le reste s'y inscrit. -->
