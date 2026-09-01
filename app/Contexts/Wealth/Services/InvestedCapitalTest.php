@@ -107,6 +107,33 @@ it('replace ce qui est racheté et laisse la perte à la caisse', function () {
     expect($split)->toBe(['exposures' => ['equity' => 0.0, 'crypto' => 400.0], 'cash' => 600.0]);
 });
 
+/**
+ * Le retrait du produit d'une vente : les apports nets deviennent négatifs, et l'investi des
+ * liquidités avec eux. Le porteur a mis 1 000 € et repris 1 200 € ; « investi −200, valeur 0 »
+ * dit un gain de +200 €. Le plancher à zéro annonçait « investi 0 » — et, combiné au calcul
+ * d'alors, « −1 000 € » sur un porteur en réalité gagnant.
+ */
+it('rend un investi négatif quand le porteur a repris plus qu\'il n\'a mis', function () {
+    $split = (new InvestedCapital)->allocate(
+        imputedContributions: ['equity' => 1000.0],
+        costOfHoldings: ['equity' => 0.0],
+        netContributions: -200.0,
+    );
+
+    expect($split)->toBe(['exposures' => ['equity' => 0.0], 'cash' => -200.0]);
+});
+
+/** Vente partielle puis retrait de son produit : la moitié des titres reste, l'apport net aussi. */
+it('garde à l\'exposition ses titres quand seul le produit vendu est retiré', function () {
+    $split = (new InvestedCapital)->allocate(
+        imputedContributions: ['equity' => 1000.0],
+        costOfHoldings: ['equity' => 500.0],
+        netContributions: 400.0,
+    );
+
+    expect($split)->toBe(['exposures' => ['equity' => 500.0], 'cash' => -100.0]);
+});
+
 /** Deux expositions à financer ensemble se partagent le reliquat au prorata de ce qui leur manque. */
 it('partage le reliquat au prorata du manque, sans laisser l\'ordre du registre décider', function () {
     $split = (new InvestedCapital)->allocate(
@@ -136,7 +163,6 @@ it('répartit les apports nets sans en perdre ni en inventer', function (
         expect($invested)->toBeGreaterThanOrEqual(0.0);
     }
 
-    expect($split['cash'])->toBeGreaterThanOrEqual(0.0);
 })->with([
     'apport 1 000, achat 1 000' => [['equity' => 1000.0], ['equity' => 1000.0], 1000.0],
     'vente 1 200, rien racheté' => [['equity' => 1000.0], ['equity' => 0.0], 1000.0],
@@ -149,4 +175,6 @@ it('répartit les apports nets sans en perdre ni en inventer', function (
     'moins-value réalisée' => [['equity' => 1000.0], ['equity' => 0.0], 1000.0],
     'moins-value puis rachat partiel' => [['equity' => 1000.0, 'crypto' => 0.0], ['equity' => 0.0, 'crypto' => 400.0], 1000.0],
     'moins-value sur une position à moitié soldée' => [['equity' => 1000.0], ['equity' => 500.0], 1000.0],
+    'retrait du produit d\'une vente' => [['equity' => 1000.0], ['equity' => 0.0], -200.0],
+    'vente partielle puis retrait de son produit' => [['equity' => 1000.0], ['equity' => 500.0], 400.0],
 ]);

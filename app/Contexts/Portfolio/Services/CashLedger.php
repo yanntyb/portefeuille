@@ -130,6 +130,18 @@ class CashLedger
      * consommation FIFO se cloisonne par enveloppe, comme `compositionAt()` : un achat du CTO ne
      * doit jamais consommer l'apport versé sur le PEA.
      *
+     * Un retrait se retranche **en entier** du total, quelle que soit l'étiquette des crédits qu'il
+     * consomme. N'en retrancher que la part d'apport prise en FIFO — ce que faisait ce calcul —
+     * laissait un retrait payé par le produit d'une vente sans effet sur les apports nets :
+     * `apport 1 000 → achat 1 000 → vente 1 200 → retrait 1 200` annonçait 1 000 € d'apports pour
+     * une caisse vide, donc un gain de −1 000 €, quand le porteur a mis 1 000 € et repris 1 200 €.
+     * La spécification est sans condition — « apports nets = versements moins retraits » — et
+     * c'est le calcul qui s'en était écarté.
+     *
+     * Le total peut donc devenir négatif, et c'est le sens même de la situation : avoir repris plus
+     * qu'on n'a mis. `byExposure` et `compositionAt()` gardent leur imputation FIFO, qui répond à
+     * une autre question — d'où vient un euro, non combien il en reste dû.
+     *
      * @param  list<CashMovementData>  $movements
      * @return array{total: float, byExposure: array<string, float>}
      */
@@ -156,7 +168,7 @@ class CashLedger
             $creditsByWallet[$movement->walletId] = $credits;
 
             if ($movement->isWithdrawal) {
-                $total = round($total - $spent['deposits'], 2);
+                $total = round($total + $movement->delta, 2);
 
                 continue;
             }
@@ -211,11 +223,11 @@ class CashLedger
                     }
                 } else {
                     $credits = $creditsByWallet[$movement->walletId] ?? [];
-                    $spent = $this->consume($credits, -$movement->delta);
+                    $this->consume($credits, -$movement->delta);
                     $creditsByWallet[$movement->walletId] = $credits;
 
                     if ($movement->isWithdrawal) {
-                        $total = round($total - $spent['deposits'], 2);
+                        $total = round($total + $movement->delta, 2);
                     }
                 }
 

@@ -18,7 +18,8 @@ namespace App\Contexts\Wealth\Services;
  * 2. le reliquat — `apports nets − somme des investis` — se redistribue aux expositions dont le
  *    coût n'est pas encore financé, à hauteur de ce qui leur manque ;
  * 3. `investi(Liquidités) = ce qui reste du reliquat` — le capital rendu par une vente et pas
- *    replacé revient à la caisse, où il dort.
+ *    replacé revient à la caisse, où il dort. Sans plancher : des apports nets négatifs — avoir
+ *    repris plus qu'on n'a mis — donnent un investi négatif, qui est le sens de la situation.
  *
  * Le deuxième temps n'est pas un raffinement : sans lui, arbitrer une exposition contre une autre
  * fait disparaître l'apport du total. `CashLedger::netContributions()` est délibérément collant —
@@ -93,14 +94,19 @@ class InvestedCapital
     /**
      * Ce que les liquidités portent d'apport : tout ce que les expositions n'immobilisent plus.
      *
-     * Aucune borne haute au solde — voir l'en-tête de la classe : la caisse peut porter plus de
-     * capital qu'elle ne détient d'euros, et c'est précisément ainsi qu'une moins-value réalisée
-     * s'affiche au lieu de s'évaporer. Le plancher à zéro reste, défensif : la somme des investis
-     * d'exposition ne peut pas dépasser les apports nets, mais rien ne gagne à le supposer.
+     * Ni borne haute ni plancher — voir l'en-tête de la classe. Pas de borne haute au solde : la
+     * caisse peut porter plus de capital qu'elle ne détient d'euros, et c'est ainsi qu'une
+     * moins-value réalisée s'affiche au lieu de s'évaporer. Pas de plancher à zéro non plus :
+     * retirer le produit d'une vente rend les apports nets négatifs — le porteur a repris plus
+     * qu'il n'a mis —, et un investi de −200 € pour une caisse vide dit un gain de +200 €, ce qui
+     * est exact. Masquer ce signe annonçait « −1 000 € » sur un porteur en réalité gagnant.
+     *
+     * Sans borne d'aucun côté, l'invariant devient vrai par pure construction : la part des
+     * liquidités solde exactement ce que les expositions n'immobilisent pas.
      */
     public function forCash(float $netContributions, float $exposuresInvested): float
     {
-        return round(max($netContributions - $exposuresInvested, 0.0), 2);
+        return round($netContributions - $exposuresInvested, 2);
     }
 
     /**

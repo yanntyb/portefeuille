@@ -229,3 +229,44 @@ it('rend zéro avant le premier mouvement', function () {
             ['balance' => 1000.0, 'netContributions' => 1000.0],
         ]);
 });
+
+/**
+ * Un retrait se retranche en entier des apports nets, quelle que soit l'étiquette des crédits
+ * qu'il consomme. N'en retrancher que la part d'apport prise en FIFO laissait un retrait payé par
+ * le produit d'une vente sans effet sur le total : le porteur avait mis 1 000 € et repris 1 200 €,
+ * et l'écran annonçait 1 000 € d'apports pour une caisse vide, donc −1 000 € de gain.
+ */
+it('retranche en entier un retrait payé par le produit d\'une vente', function () {
+    $movements = [
+        cashMovement('2026-01-10', 1000.0, isDeposit: true),
+        cashMovement('2026-02-01', -1000.0, exposure: AssetClass::Equity),
+        cashMovement('2026-08-01', 1200.0, exposure: AssetClass::Equity),
+        cashMovement('2026-09-01', -1200.0, isWithdrawal: true),
+    ];
+
+    /** 1 000 versés, 1 200 repris : le porteur a sorti −200 € de sa poche, il est gagnant. */
+    expect((new CashLedger)->netContributions($movements)['total'])->toBe(-200.0);
+});
+
+it('retranche en entier le retrait du produit d\'une vente partielle', function () {
+    $movements = [
+        cashMovement('2026-01-10', 1000.0, isDeposit: true),
+        cashMovement('2026-02-01', -1000.0, exposure: AssetClass::Equity),
+        cashMovement('2026-08-01', 600.0, exposure: AssetClass::Equity),
+        cashMovement('2026-09-01', -600.0, isWithdrawal: true),
+    ];
+
+    expect((new CashLedger)->netContributions($movements)['total'])->toBe(400.0);
+});
+
+/** L'imputation FIFO n'est pas touchée : elle répond à d'où vient un euro, pas à combien il est dû. */
+it('laisse l\'imputation par exposition intacte malgré le retrait', function () {
+    $movements = [
+        cashMovement('2026-01-10', 1000.0, isDeposit: true),
+        cashMovement('2026-02-01', -1000.0, exposure: AssetClass::Equity),
+        cashMovement('2026-08-01', 1200.0, exposure: AssetClass::Equity),
+        cashMovement('2026-09-01', -1200.0, isWithdrawal: true),
+    ];
+
+    expect((new CashLedger)->netContributions($movements)['byExposure'])->toBe(['equity' => 1000.0]);
+});

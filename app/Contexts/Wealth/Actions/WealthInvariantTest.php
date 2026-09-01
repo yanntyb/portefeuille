@@ -90,7 +90,15 @@ it('répartit les apports nets entre les classes sans en perdre ni en inventer',
         ->and($overview->totalInvested)->toBe($netContributions);
 
     foreach ($overview->classes as $line) {
-        expect($line->invested)->toBeGreaterThanOrEqual(0.0);
+        /**
+         * Aucune exposition ne part en investi négatif : c'est le plafonnement au coût qui le
+         * garantit, un apport ne restant jamais imputé à des titres vendus. Les liquidités, elles,
+         * le peuvent — capital repris au-delà de ce qui a été mis, ou plus-value réalisée puis
+         * retirée —, et c'est le sens de la situation, pas une anomalie.
+         */
+        if ($line->key !== 'cash') {
+            expect($line->invested)->toBeGreaterThanOrEqual(0.0);
+        }
     }
 })->with([
     'apport 1 000, achat 1 000' => [
@@ -244,6 +252,53 @@ it('répartit les apports nets entre les classes sans en perdre ni en inventer',
             ]);
         },
         1000.0,
+    ],
+    /**
+     * Le retrait du produit d'une vente : 1 000 € mis, 1 200 € repris, donc −200 € d'apports nets.
+     * `netContributions()` n'en retranchait que la part d'apport prise en FIFO, et le tableau de
+     * bord annonçait −1 000 € sur un porteur en réalité gagnant de 200 €.
+     */
+    'retrait du produit d\'une vente' => [
+        function (User $user, Wallet $wallet): void {
+            $stock = Instrument::factory()->create(['type' => InstrumentType::Stock]);
+            Transaction::factory()->deposit()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'date' => '2026-01-01', 'amount' => 1000,
+            ]);
+            Transaction::factory()->buy()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+                'date' => '2026-01-02', 'quantity' => 10, 'unit_price' => 100, 'fees' => 0,
+            ]);
+            Transaction::factory()->sell()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+                'date' => '2026-01-03', 'quantity' => 10, 'unit_price' => 120, 'fees' => 0,
+            ]);
+            Transaction::factory()->withdrawal()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'date' => '2026-01-04', 'amount' => 1200,
+            ]);
+        },
+        -200.0,
+    ],
+    /** Vente partielle puis retrait de son produit : la moitié des titres reste en portefeuille. */
+    'vente partielle puis retrait de son produit' => [
+        function (User $user, Wallet $wallet): void {
+            $stock = Instrument::factory()->create(['type' => InstrumentType::Stock]);
+            Price::factory()->create(['asset_id' => $stock->id, 'date' => '2026-01-06', 'close' => 120.0]);
+            Transaction::factory()->deposit()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'date' => '2026-01-01', 'amount' => 1000,
+            ]);
+            Transaction::factory()->buy()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+                'date' => '2026-01-02', 'quantity' => 10, 'unit_price' => 100, 'fees' => 0,
+            ]);
+            Transaction::factory()->sell()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+                'date' => '2026-01-03', 'quantity' => 5, 'unit_price' => 120, 'fees' => 0,
+            ]);
+            Transaction::factory()->withdrawal()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'date' => '2026-01-04', 'amount' => 600,
+            ]);
+        },
+        400.0,
     ],
     'deux expositions financées séparément' => [
         function (User $user, Wallet $wallet): void {
@@ -437,4 +492,40 @@ it('ne met aucune perte aux liquidités tant que l\'apport est immobilisé en ti
         ->and($classes['cash']->invested)->toBe(0.0)
         ->and($classes['cash']->gain)->toBe(0.0)
         ->and($classes['equity']->invested)->toBe(1000.0);
+});
+
+/**
+ * Retirer le produit d'une vente laisse le porteur gagnant : 1 000 € mis, 1 200 € repris. L'écran
+ * annonçait −1 000 € — `netContributions()` ne retranchait d'un retrait que la part d'apport qu'il
+ * consommait en FIFO, et un retrait payé par une vente ne diminuait donc rien.
+ */
+it('dit gagnant le porteur qui a repris plus qu\'il n\'a mis', function () {
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create(['name' => 'PEA']);
+    $stock = Instrument::factory()->create(['type' => InstrumentType::Stock]);
+
+    Transaction::factory()->deposit()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'date' => '2026-01-01', 'amount' => 1000,
+    ]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+        'date' => '2026-01-02', 'quantity' => 10, 'unit_price' => 100, 'fees' => 0,
+    ]);
+    Transaction::factory()->sell()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+        'date' => '2026-01-03', 'quantity' => 10, 'unit_price' => 120, 'fees' => 0,
+    ]);
+    Transaction::factory()->withdrawal()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'date' => '2026-01-04', 'amount' => 1200,
+    ]);
+
+    $overview = app(GetWealthOverview::class)($user->id);
+    $classes = collect($overview->classes)->keyBy('key');
+
+    expect($classes['cash']->value)->toBe(0.0)
+        ->and($classes['cash']->invested)->toBe(-200.0)
+        ->and($classes['cash']->gain)->toBe(200.0)
+        ->and($overview->totalInvested)->toBe(-200.0)
+        ->and($overview->totalValue)->toBe(0.0)
+        ->and($overview->totalGain)->toBe(200.0);
 });
