@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\BackupUpCommand;
 use App\Contexts\Identity\Http\AuthenticateDefaultUser;
 use App\Contexts\Market\Console\SyncCommand;
 use App\Contexts\Market\Console\SyncDividendsCommand;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withCommands([
+        BackupUpCommand::class,
         SyncCommand::class,
         SyncDividendsCommand::class,
         SyncPricesCommand::class,
