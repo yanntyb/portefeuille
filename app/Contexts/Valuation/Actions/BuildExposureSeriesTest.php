@@ -39,3 +39,26 @@ it('ne mêle pas deux expositions sous le même nom de cache', function () {
 it('rend une série vide pour un utilisateur sans transaction', function () {
     expect(app(BuildExposureSeries::class)(0, [AssetClass::Equity])->labels)->toBe([]);
 });
+
+it('garde le cash sans actif malgré le filtre par classe', function () {
+    ['user' => $user] = cryptoFixture();
+
+    /**
+     * Un versement sans `asset_id`, sur une enveloppe distincte de celle qui détient le titre
+     * filtré : le cash est global à l'utilisateur, il doit traverser le filtre de classe même si
+     * aucune ligne ne porte l'exposition demandée.
+     */
+    Transaction::factory()->deposit()->create([
+        'user_id' => $user->id,
+        'wallet_id' => Wallet::factory()->for($user)->create()->id,
+        'date' => '2025-01-01',
+        'amount' => 500,
+    ]);
+
+    $series = app(BuildExposureSeries::class)($user->id, [AssetClass::Equity]);
+    $cash = $series->cash;
+
+    // Le versement du titre est financé par sa propre ligne déduite (achat -800, versement +800,
+    // net nul) ; seul le versement libre de 500 doit rester dans le cash de fin de série.
+    expect(end($cash))->toBe(500.0);
+});

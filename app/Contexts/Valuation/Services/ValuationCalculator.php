@@ -305,7 +305,6 @@ class ValuationCalculator
 
         $investedTimelines = $this->perAssetInvestedTimelines($transactions);
         $quantityTimelines = $this->perAssetQuantityTimelines($transactions);
-        $cashTimelines = $this->perAssetCashTimelines($transactions);
 
         /** @var array<int, list<array{date: string, value: float}>> $priceTimelines */
         $priceTimelines = [];
@@ -322,7 +321,6 @@ class ValuationCalculator
             $quantities = $this->forwardFill($quantityTimelines[$assetId] ?? [], $windowed->labels);
             $closes = $this->forwardFill($priceTimelines[$assetId] ?? [], $windowed->labels);
             $invested = $this->forwardFill($investedEntries, $windowed->labels);
-            $cash = $this->forwardFill($cashTimelines[$assetId] ?? [], $windowed->labels);
 
             $perAsset[] = new AssetSeriesData(
                 assetId: $assetId,
@@ -333,7 +331,6 @@ class ValuationCalculator
                     $closes,
                 ),
                 invested: array_map(fn (float $value): float => round($value, 2), $invested),
-                cash: array_map(fn (float $value): float => round($value, 2), $cash),
             );
         }
 
@@ -417,39 +414,6 @@ class ValuationCalculator
         }
 
         return $quantities;
-    }
-
-    /**
-     * Timelines de cash cumulé par asset (escalier sur les dates de transaction) : le produit
-     * d'une vente ou un dividende de cet actif, en cash. Une opération sans `asset_id` (versement,
-     * retrait) n'appartient à aucun actif et n'est pas ventilée ici — elle reste dans le seul total
-     * de `calculateDaily()`.
-     *
-     * @param  list<TransactionRecordData>  $transactions
-     * @return array<int, list<array{date: string, value: float}>>
-     */
-    private function perAssetCashTimelines(array $transactions): array
-    {
-        usort($transactions, fn (TransactionRecordData $a, TransactionRecordData $b) => ($a->date <=> $b->date)
-            ?: (($a->isSell ? 1 : 0) <=> ($b->isSell ? 1 : 0)));
-
-        /** @var array<int, list<array{date: string, value: float}>> $perAsset */
-        $perAsset = [];
-        $cash = [];
-
-        foreach ($transactions as $transaction) {
-            if ($transaction->assetId === null) {
-                continue;
-            }
-
-            $assetId = $transaction->assetId;
-            $day = $transaction->date->format('Y-m-d');
-            $cash[$assetId] = ($cash[$assetId] ?? 0.0) + $transaction->cashDelta;
-            $perAsset[$assetId] ??= [];
-            $perAsset[$assetId][] = ['date' => $day, 'value' => $cash[$assetId]];
-        }
-
-        return $perAsset;
     }
 
     /**

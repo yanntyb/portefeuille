@@ -55,11 +55,16 @@ class BuildPortfolioPerformances
     {
         $transactions = $this->transactions->forUser($userId);
 
+        /**
+         * Même raison que `BuildExposureSeries` : le cash est global à l'utilisateur, pas à une
+         * exposition. Un versement, un retrait ou un dividende sans `asset_id` passe le filtre
+         * quelle que soit la classe demandée.
+         */
         if ($classes !== null) {
             $kept = array_flip($this->directory->idsOfClasses($classes));
             $transactions = array_values(array_filter(
                 $transactions,
-                fn (TransactionRecordData $transaction): bool => isset($kept[$transaction->assetId]),
+                fn (TransactionRecordData $transaction): bool => $transaction->assetId === null || isset($kept[$transaction->assetId]),
             ));
         }
 
