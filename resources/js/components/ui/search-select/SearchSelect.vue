@@ -14,6 +14,7 @@ import {
 import { computed, nextTick, ref, useTemplateRef, watch } from "vue"
 import type { ComputedRef, Ref } from "vue"
 import type { SelectOption } from "@/components/ui/native-select"
+import { fold } from "@/lib/search"
 import { cn } from "@/lib/utils"
 
 /**
@@ -72,13 +73,6 @@ const open: Ref<boolean> = ref(false)
 const query: Ref<string> = ref("")
 const search: Ref<string> = ref("")
 const input = useTemplateRef("input")
-
-/**
- * Déplie un intitulé pour le comparer : accents retirés, casse ramenée au bas. `NFD` sépare la
- * lettre de son signe, la classe `\p{Diacritic}` enlève le signe.
- */
-const fold = (text: string): string =>
-  text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase()
 
 /** Ce que la liste montre : tout au repos, ce qui contient la frappe dès qu'on cherche. */
 const visible: ComputedRef<SelectOption[]> = computed((): SelectOption[] => {

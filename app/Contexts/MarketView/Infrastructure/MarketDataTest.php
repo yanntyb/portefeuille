@@ -153,3 +153,32 @@ it('returns an empty list for no exposure', function () {
 
     expect($this->market->idsOfClasses([$asset->id], []))->toBe([]);
 });
+
+it('lists only the instruments of the given exposure, ordered by name', function () {
+    Instrument::factory()->create(['name' => 'Zeta']);
+    Instrument::factory()->create(['name' => 'Alpha']);
+    Instrument::factory()->ofType(InstrumentType::Commodity)->create(['name' => 'Or']);
+
+    $summaries = $this->market->instrumentsOfClass(AssetClass::Equity);
+
+    expect(array_map(fn ($summary): string => $summary->name, $summaries))->toBe(['Alpha', 'Zeta']);
+});
+
+it('returns the latest close of several assets in a single map', function () {
+    $first = Instrument::factory()->create();
+    $second = Instrument::factory()->create();
+    $unpriced = Instrument::factory()->create();
+    Price::factory()->create(['asset_id' => $first->id, 'date' => '2026-06-01', 'close' => 90]);
+    Price::factory()->create(['asset_id' => $first->id, 'date' => '2026-07-01', 'close' => 120]);
+    Price::factory()->create(['asset_id' => $second->id, 'date' => '2026-07-01', 'close' => 50]);
+
+    $prices = $this->market->latestPricesFor([$first->id, $second->id, $unpriced->id]);
+
+    expect($prices[$first->id])->toBe(120.0)
+        ->and($prices[$second->id])->toBe(50.0)
+        ->and($prices)->not->toHaveKey($unpriced->id);
+});
+
+it('returns an empty price map for no asset', function () {
+    expect($this->market->latestPricesFor([]))->toBe([]);
+});

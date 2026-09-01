@@ -35,6 +35,37 @@ class MarketData implements MarketDataPort
             ->all();
     }
 
+    /** @return list<InstrumentSummaryData> */
+    public function instrumentsOfClass(AssetClass $class): array
+    {
+        return Instrument::query()
+            ->where('asset_class', $class->value)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Instrument $instrument) => new InstrumentSummaryData(
+                id: $instrument->id,
+                name: (string) $instrument->name,
+                ticker: $instrument->ticker,
+                isin: $instrument->isin,
+                type: $instrument->type,
+            ))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  list<int>  $assetIds
+     * @return array<int, float>
+     */
+    public function latestPricesFor(array $assetIds): array
+    {
+        if ($assetIds === []) {
+            return [];
+        }
+
+        return $this->prices->latestClosesForAssets($assetIds);
+    }
+
     public function findInstrument(int $id): ?InstrumentMetaData
     {
         $instrument = Instrument::query()->find($id);

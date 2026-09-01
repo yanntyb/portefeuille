@@ -2,6 +2,7 @@
 
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Http\StartSyncController;
+use App\Contexts\MarketView\Http\AssetClassCatalogController;
 use App\Contexts\MarketView\Http\AssetClassController;
 use App\Contexts\MarketView\Http\AssetController;
 use App\Contexts\Portfolio\Http\ConfirmDividendController;
@@ -51,6 +52,11 @@ foreach (AssetClass::cases() as $assetClass) {
     Route::get($assetClass->slug(), AssetClassController::class)
         ->defaults('exposure', $assetClass->value)
         ->name("classes.{$assetClass->value}");
+
+    /** Le catalogue de la poche : tous ses instruments, là où la page mère ne montre que les positions. */
+    Route::get($assetClass->slug().'/catalogue', AssetClassCatalogController::class)
+        ->defaults('exposure', $assetClass->value)
+        ->name("classes.{$assetClass->value}.catalog");
 }
 
 Route::get('/asset/{id}', AssetController::class)->name('assets.show');

@@ -50,7 +50,11 @@ const sectorBreakdown = aheadOfNetwork(() => props.sectorBreakdown, () => cached
 
         <EvolutionSection :series="evolutionSeries" />
 
-        <InstrumentsSection :holdings="overview.holdings" :trends="trends" />
+        <InstrumentsSection
+            :holdings="overview.holdings"
+            :trends="trends"
+            :catalog-href="`/${props.assetClass.slug}/catalogue`"
+        />
 
         <!-- Les secteurs vivent dans l'analyse : c'est une lecture de la poche, pas une section
              à part. -->

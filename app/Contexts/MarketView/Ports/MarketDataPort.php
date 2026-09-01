@@ -14,6 +14,23 @@ interface MarketDataPort
     /** @return list<InstrumentSummaryData> */
     public function listInstruments(): array;
 
+    /**
+     * Tous les instruments d'une exposition, détenus ou non, rangés par nom : le catalogue de la
+     * poche, là où `listInstruments()` ne connaît aucun partage.
+     *
+     * @return list<InstrumentSummaryData>
+     */
+    public function instrumentsOfClass(AssetClass $class): array;
+
+    /**
+     * Dernier cours connu de plusieurs actifs, indexé par actif. Un actif sans aucun cours est
+     * absent de la carte. Épargne au catalogue une requête par ligne.
+     *
+     * @param  list<int>  $assetIds
+     * @return array<int, float>
+     */
+    public function latestPricesFor(array $assetIds): array;
+
     public function findInstrument(int $id): ?InstrumentMetaData;
 
     public function latestPrice(int $id): ?float;
