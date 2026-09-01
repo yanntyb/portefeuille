@@ -22,8 +22,8 @@ Dedans :
 - une recherche d'instruments servie en JSON, base d'abord puis Yahoo ;
 - un écran de confirmation des métadonnées avant création — jamais de création à l'aveugle ;
 - la création elle-même, validée par un FormRequest, suivie d'un job de synchronisation ;
-- une modale unique montée à deux endroits : le catalogue d'une exposition, et le formulaire de
-  transaction ;
+- un panneau de recherche unique monté à deux endroits : le catalogue d'une exposition, et le
+  formulaire de transaction ;
 - cinq ans d'historique — cours, secteurs, dividendes — mis en file dès la création.
 
 Dehors, explicitement :
@@ -115,7 +115,7 @@ Un `q` vide rend une liste vide sans appeler Python.
 ### La création répond en JSON, pas par une redirection
 
 Les routes d'écriture de l'application répondent toutes par une redirection, que le client rend
-partielle. `POST /instruments` déroge, et la raison est le formulaire de transaction : la modale de
+partielle. `POST /instruments` déroge, et la raison est le formulaire de transaction : le panneau de
 recherche s'y ouvre par-dessus une saisie en cours, qui ne doit ni être perdue ni être rejouée. Le
 formulaire a besoin de l'`id` créé pour le sélectionner aussitôt — un identifiant qu'une
 redirection ne lui donnerait qu'au prix d'un flash ou d'un rechargement complet des options.
@@ -144,9 +144,11 @@ instrument créé sans exposition, ici l'utilisateur a vu la valeur et l'a valid
 
 `Market\Jobs\SyncInstrumentJob` prend un identifiant d'instrument et synchronise cinq ans
 d'historique — la profondeur d'`InstrumentCatalogSeeder`. Il enchaîne `SyncAssetPrices`,
-`SyncAssetSectors` et `SyncAssetDividends`, en filtrant chacune par le `supportsX()` du port
-correspondant, comme le fait déjà `SyncMarketData` : une crypto n'a pas de ventilation
-sectorielle, et lui en demander une est un aller-retour Python perdu.
+`SyncAssetSectors` et `SyncAssetDividends`, qui acceptent toutes trois un `?int $assetId`.
+
+Le job ne filtre rien lui-même : chacune de ces actions teste déjà le `supportsX()` de son port
+avant d'ouvrir un process Python. Une crypto n'a pas de ventilation sectorielle, et c'est
+`SyncAssetSectors` qui le sait — le job n'a pas à le redire.
 
 La fiche de l'instrument est donc atteignable immédiatement après création, mais vide — sans
 cours, sans variation, sans tendance — le temps que le job passe.
@@ -161,10 +163,16 @@ cache n'aurait aucun sens.
 `POST /instruments` est déjà en `passthrough` — `classifyRequest` y envoie toute méthode autre que
 `GET`.
 
-## La modale
+## Le panneau de recherche
 
-`resources/js/components/instruments/InstrumentSearchDialog.vue`, deux étapes dans une seule
-modale.
+`resources/js/components/instruments/InstrumentSearchPanel.vue`, deux étapes.
+
+**Un panneau, pas un dialogue.** Le composant ne porte aucun chrome de modale. La page catalogue
+l'enveloppe dans un `Dialog` ; le formulaire de transaction, lui, l'affiche **à la place** de ses
+champs, dans le `DialogContent` déjà ouvert. `TransactionDialog.vue` documente pourquoi : deux
+dialogues reka-ui superposés donnent deux verrous de défilement, deux pièges de focus et un
+`Échap` ambigu. La même raison qui a fait de la confirmation de suppression un volet et non un
+second dialogue vaut ici.
 
 **Étape 1 — recherche.** Un champ et une liste. La frappe est débouncée à 300 ms et chaque requête
 annule la précédente. Un résultat portant un `existingId` s'affiche marqué et ne mène pas à
@@ -195,7 +203,7 @@ Aucun instrument ne correspond.
 > Chercher « nvidia » chez Yahoo
 ```
 
-Le lien ouvre la modale déjà remplie du terme. L'ajout arrive au moment exact où le manque se
+Le lien ouvre le panneau, dans un `Dialog`, déjà rempli du terme. L'ajout arrive au moment exact où le manque se
 constate, et l'écran ne montre jamais deux recherches à la fois.
 
 **Le piège de l'exposition.** La page ne vaut que pour une classe d'actif. Un instrument créé dans
@@ -208,12 +216,12 @@ ratée. Donc :
 
 ### Le formulaire de transaction
 
-Sous le champ « Actif » de `TransactionForm.vue`, un lien ouvre la même modale. Au succès, le
+Sous le champ « Actif » de `TransactionForm.vue`, un lien montre le même panneau, à la place des champs. Au succès, le
 formulaire refetch `/transactions/options` puis pointe `form.assetId` sur l'instrument créé.
 
 Le refetch est nécessaire : la liste des instruments est servie par cette route, pas par les props
 de page, et `GetTransactionFormOptions` y joint le dernier cours de chacun. Rien du reste de la
-saisie n'est touché — la modale n'a jamais quitté la page.
+saisie n'est touché — le formulaire n'a jamais été démonté, seulement masqué.
 
 ## Tests
 
@@ -227,6 +235,6 @@ Co-localisés, en Pest, selon la convention du dépôt.
 | `StoreInstrumentControllerTest` | création par tableau littéral ; `asset_class` envoyée respectée ; `SyncInstrumentJob` en file (`Queue::fake`) |
 | `SyncInstrumentJobTest` | fenêtre de cinq ans ; `supportsX()` respectés — aucune demande de secteurs pour une crypto |
 | `swCache.test.ts` | `/instruments/recherche` classée `passthrough` |
-| `InstrumentSearchDialog.test.ts` | debounce ; requête précédente annulée ; résultat déjà en base non créable ; retour à l'étape 1 conservant le terme ; 422 affiché |
+| `InstrumentSearchPanel.test.ts` | debounce ; requête précédente annulée ; résultat déjà en base non créable ; retour à l'étape 1 conservant le terme ; 422 affiché |
 | `Catalog.test.ts` (nouveau — la page n'en a pas) | lien Yahoo présent dans l'état vide, terme repris ; exposition de la page pré-remplie |
 | `TransactionForm.test.ts` | après création, l'actif est sélectionné et les options rechargées |
