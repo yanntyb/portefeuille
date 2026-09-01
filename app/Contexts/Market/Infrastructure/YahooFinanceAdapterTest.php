@@ -366,3 +366,61 @@ it('lève une exception de feed quand le script échoue', function () {
         new DividendRequestData('CW8.PA', '2026-01-01', '2026-06-30'),
     ]))->toThrow(DividendFeedException::class, 'yfinance rate limited');
 });
+
+it('traduit les types Yahoo en types d\'instrument', function () {
+    $this->python->withResult(YahooScript::Search->path(), new PythonResult(status: 'ok', data: [
+        ['symbol' => 'AAPL', 'name' => 'Apple Inc.', 'exchange' => 'NasdaqGS', 'type' => 'Equity'],
+        ['symbol' => 'CW8.PA', 'name' => 'Amundi MSCI World', 'exchange' => 'Paris', 'type' => 'ETF'],
+        ['symbol' => 'BTC-EUR', 'name' => 'Bitcoin EUR', 'exchange' => 'CCC', 'type' => 'Cryptocurrency'],
+        ['symbol' => 'SI=F', 'name' => 'Silver', 'exchange' => 'NY Mercantile', 'type' => 'Future'],
+    ]));
+
+    $results = $this->adapter->searchInstruments('a');
+
+    expect($results)->toHaveCount(4)
+        ->and($results[0]->symbol)->toBe('AAPL')
+        ->and($results[0]->name)->toBe('Apple Inc.')
+        ->and($results[0]->exchange)->toBe('NasdaqGS')
+        ->and($results[0]->type)->toBe(InstrumentType::Stock)
+        ->and($results[1]->type)->toBe(InstrumentType::ETF)
+        ->and($results[2]->type)->toBe(InstrumentType::Crypto)
+        ->and($results[3]->type)->toBe(InstrumentType::Commodity);
+});
+
+it('garde un résultat dont le type Yahoo est inconnu, sans type', function () {
+    $this->python->withResult(YahooScript::Search->path(), new PythonResult(status: 'ok', data: [
+        ['symbol' => '^FCHI', 'name' => 'CAC 40', 'exchange' => 'Paris', 'type' => 'Index'],
+    ]));
+
+    $results = $this->adapter->searchInstruments('cac');
+
+    /** Le résultat s'affiche quand même : c'est l'écran de confirmation qui tranchera. */
+    expect($results)->toHaveCount(1)
+        ->and($results[0]->type)->toBeNull();
+});
+
+it('écarte un résultat sans symbole', function () {
+    $this->python->withResult(YahooScript::Search->path(), new PythonResult(status: 'ok', data: [
+        ['symbol' => '', 'name' => 'Sans symbole', 'exchange' => null, 'type' => 'Equity'],
+        ['symbol' => 'MSFT', 'name' => 'Microsoft', 'exchange' => 'NasdaqGS', 'type' => 'Equity'],
+    ]));
+
+    expect($this->adapter->searchInstruments('m'))->toHaveCount(1);
+});
+
+it('rend une liste vide quand le script échoue', function () {
+    $this->python->withResult(YahooScript::Search->path(), new PythonResult(status: 'error', error: 'boom'));
+
+    expect($this->adapter->searchInstruments('aapl'))->toBe([]);
+});
+
+it('rend une liste vide quand le process Python casse', function () {
+    expect(throwingAdapter()->searchInstruments('aapl'))->toBe([]);
+});
+
+it('passe la requête au script de recherche', function () {
+    $this->adapter->searchInstruments('lvmh');
+
+    expect($this->python->calls[0]['script'])->toBe(YahooScript::Search->path())
+        ->and($this->python->calls[0]['input'])->toBe(['query' => 'lvmh']);
+});

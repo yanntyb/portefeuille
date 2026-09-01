@@ -5,6 +5,7 @@ namespace App\Contexts\Market\Infrastructure;
 use App\Contexts\Market\Datas\DividendData;
 use App\Contexts\Market\Datas\DividendRequestData;
 use App\Contexts\Market\Datas\InstrumentData;
+use App\Contexts\Market\Datas\InstrumentSearchResultData;
 use App\Contexts\Market\Datas\PriceData;
 use App\Contexts\Market\Datas\PriceRequestData;
 use App\Contexts\Market\Datas\SectorAllocationData;
@@ -147,6 +148,54 @@ class YahooFinanceAdapter implements DividendFeedPort, InstrumentProviderPort, P
         } catch (\Exception) {
             return null;
         }
+    }
+
+    /** @return list<InstrumentSearchResultData> */
+    public function searchInstruments(string $query): array
+    {
+        try {
+            $search = $this->python->run(YahooScript::Search->path(), ['query' => $query]);
+
+            if (! $search->ok() || empty($search->data)) {
+                return [];
+            }
+
+            $results = [];
+
+            foreach ($search->data as $hit) {
+                $symbol = (string) ($hit['symbol'] ?? '');
+
+                if ($symbol === '') {
+                    continue;
+                }
+
+                $results[] = new InstrumentSearchResultData(
+                    symbol: $symbol,
+                    name: (string) ($hit['name'] ?? $symbol),
+                    exchange: $hit['exchange'] ?? null,
+                    type: $this->typeFromYahoo($hit['type'] ?? null),
+                );
+            }
+
+            return $results;
+        } catch (\Exception) {
+            return [];
+        }
+    }
+
+    /**
+     * Le `typeDisp` de Yahoo vers l'enum du domaine. Un libellé inconnu — un indice, un warrant —
+     * rend `null` plutôt que d'inventer un type : c'est l'écran de confirmation qui tranchera.
+     */
+    private function typeFromYahoo(?string $typeDisp): ?InstrumentType
+    {
+        return match (strtolower((string) $typeDisp)) {
+            'equity', 'stock' => InstrumentType::Stock,
+            'etf' => InstrumentType::ETF,
+            'cryptocurrency', 'crypto' => InstrumentType::Crypto,
+            'future', 'futures' => InstrumentType::Commodity,
+            default => null,
+        };
     }
 
     public function getSectorAllocations(string $symbol, InstrumentType $type): array
