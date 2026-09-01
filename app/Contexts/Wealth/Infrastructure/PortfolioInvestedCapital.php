@@ -1,0 +1,72 @@
+<?php
+
+namespace App\Contexts\Wealth\Infrastructure;
+
+use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
+use App\Contexts\Wealth\Services\InvestedCapital;
+
+/**
+ * La photo des apports nets répartis entre toutes les classes, lue une fois par utilisateur.
+ *
+ * L'investi d'une exposition ne se calcule pas d'elle seule : le reliquat qu'elle libère en vendant
+ * se replace dans une autre, et les liquidités portent ce que personne n'a repris
+ * (`InvestedCapital::allocate()`). Chaque classe a donc besoin de la photo globale, et c'est ce
+ * lecteur qui l'établit — sans lui, `PortfolioAssetClass` et `PortfolioCash` la referaient chacune
+ * de leur côté, cinq fois par tableau de bord.
+ *
+ * Lié en `scoped` comme `GetPortfolioOverview`, dont il consomme les lectures déjà mémoïsées : le
+ * portefeuille n'est ouvert qu'une fois, le découpage par exposition se fait en mémoire.
+ */
+class PortfolioInvestedCapital
+{
+    /** @var array<int, array{exposures: array<string, float>, cash: float}> */
+    private array $byUser = [];
+
+    public function __construct(
+        private GetPortfolioOverview $overview,
+        private InvestedCapital $capital,
+    ) {}
+
+    /** @return array{exposures: array<string, float>, cash: float} */
+    public function forUser(int $userId): array
+    {
+        return $this->byUser[$userId] ??= $this->allocate($userId);
+    }
+
+    /** Ce qu'une exposition immobilise d'apport, nul tant qu'elle ne détient rien. */
+    public function forExposure(int $userId, AssetClass $exposure): float
+    {
+        return $this->forUser($userId)['exposures'][$exposure->value] ?? 0.0;
+    }
+
+    /** Ce que les liquidités portent d'apport : tout ce qu'aucune exposition n'immobilise. */
+    public function forCash(int $userId): float
+    {
+        return $this->forUser($userId)['cash'];
+    }
+
+    /** @return array{exposures: array<string, float>, cash: float} */
+    private function allocate(int $userId): array
+    {
+        $user = User::query()->find($userId);
+
+        if ($user === null) {
+            return ['exposures' => [], 'cash' => 0.0];
+        }
+
+        $whole = ($this->overview)($user);
+
+        $imputed = [];
+        $costs = [];
+
+        foreach (AssetClass::cases() as $exposure) {
+            $scoped = ($this->overview)($user, [$exposure]);
+            $imputed[$exposure->value] = $scoped->netContributions;
+            $costs[$exposure->value] = $scoped->totalCost;
+        }
+
+        return $this->capital->allocate($imputed, $costs, $whole->netContributions, $whole->cash);
+    }
+}

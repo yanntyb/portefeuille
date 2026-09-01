@@ -10,11 +10,11 @@ use App\Contexts\Valuation\Actions\BuildEvolutionSeries;
 use App\Contexts\Wealth\Infrastructure\AssetClassRegistry;
 use App\Contexts\Wealth\Infrastructure\PortfolioAssetClass;
 use App\Contexts\Wealth\Infrastructure\PortfolioCash;
+use App\Contexts\Wealth\Infrastructure\PortfolioInvestedCapital;
 use App\Contexts\Wealth\Ports\AccountsPort;
 use App\Contexts\Wealth\Ports\AssetClassPort;
 use App\Contexts\Wealth\Ports\CashPort;
 use App\Contexts\Wealth\Ports\TransactionsPort;
-use App\Contexts\Wealth\Services\InvestedCapital;
 use App\Contexts\Wealth\Services\SeriesAligner;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
@@ -55,7 +55,7 @@ class WealthProvider extends ServiceProvider
                         $app->make(BuildEvolutionSeries::class),
                         $app->make(GetIncomeSummary::class),
                         $app->make(SeriesAligner::class),
-                        $app->make(InvestedCapital::class),
+                        $app->make(PortfolioInvestedCapital::class),
                     ),
                     AssetClass::cases(),
                 );

@@ -4,75 +4,125 @@ use App\Contexts\Wealth\Services\InvestedCapital;
 
 it('impute tout l\'apport à l\'exposition tant qu\'il y est immobilisé', function () {
     /** Apport 1 000, achat 1 000 : l'exposition porte les 1 000, la caisse rien. */
-    $capital = new InvestedCapital;
+    $split = (new InvestedCapital)->allocate(
+        imputedContributions: ['equity' => 1000.0],
+        costOfHoldings: ['equity' => 1000.0],
+        netContributions: 1000.0,
+        cash: 0.0,
+    );
 
-    $exposure = $capital->forExposure(imputedContributions: 1000.0, costOfHoldings: 1000.0);
-
-    expect($exposure)->toBe(1000.0)
-        ->and($capital->forCash(netContributions: 1000.0, exposuresInvested: $exposure, cash: 0.0))->toBe(0.0);
+    expect($split)->toBe(['exposures' => ['equity' => 1000.0], 'cash' => 0.0]);
 });
 
 it('rend l\'apport aux liquidités dès que les titres sont vendus', function () {
     /** … puis vente 1 200, rien racheté : plus aucun titre à immobiliser l'apport. */
-    $capital = new InvestedCapital;
+    $split = (new InvestedCapital)->allocate(
+        imputedContributions: ['equity' => 1000.0],
+        costOfHoldings: ['equity' => 0.0],
+        netContributions: 1000.0,
+        cash: 1200.0,
+    );
 
-    $exposure = $capital->forExposure(imputedContributions: 1000.0, costOfHoldings: 0.0);
-
-    expect($exposure)->toBe(0.0)
-        ->and($capital->forCash(netContributions: 1000.0, exposuresInvested: $exposure, cash: 1200.0))->toBe(1000.0);
+    expect($split)->toBe(['exposures' => ['equity' => 0.0], 'cash' => 1000.0]);
 });
 
 it('ne recompte aucun apport quand le produit d\'une vente est réemployé', function () {
     /**
-     * … puis rachat 1 200 : le coût des titres remonte à 1 200, mais l'apport imputé reste 1 000 —
-     * l'aller-retour n'a rien sorti de la poche du porteur. C'est le cas que `totalCost` faisait
-     * afficher « Investi 1 200, Gain 0 € ».
+     * … puis rachat 1 200 dans la même exposition : le coût des titres remonte à 1 200, mais
+     * l'apport imputé reste 1 000 — l'aller-retour n'a rien sorti de la poche du porteur. C'est le
+     * cas que `totalCost` faisait afficher « Investi 1 200, Gain 0 € ».
      */
-    $capital = new InvestedCapital;
+    $split = (new InvestedCapital)->allocate(
+        imputedContributions: ['equity' => 1000.0],
+        costOfHoldings: ['equity' => 1200.0],
+        netContributions: 1000.0,
+        cash: 0.0,
+    );
 
-    $exposure = $capital->forExposure(imputedContributions: 1000.0, costOfHoldings: 1200.0);
-
-    expect($exposure)->toBe(1000.0)
-        ->and($capital->forCash(netContributions: 1000.0, exposuresInvested: $exposure, cash: 0.0))->toBe(0.0);
+    expect($split)->toBe(['exposures' => ['equity' => 1000.0], 'cash' => 0.0]);
 });
 
 it('garde à chaque exposition financée séparément le sien, et le reste aux liquidités', function () {
-    $capital = new InvestedCapital;
+    $split = (new InvestedCapital)->allocate(
+        imputedContributions: ['equity' => 1000.0, 'crypto' => 500.0],
+        costOfHoldings: ['equity' => 1000.0, 'crypto' => 500.0],
+        netContributions: 1800.0,
+        cash: 300.0,
+    );
 
-    $equity = $capital->forExposure(imputedContributions: 1000.0, costOfHoldings: 1000.0);
-    $crypto = $capital->forExposure(imputedContributions: 500.0, costOfHoldings: 500.0);
-
-    expect($equity)->toBe(1000.0)
-        ->and($crypto)->toBe(500.0)
-        ->and($capital->forCash(netContributions: 1800.0, exposuresInvested: $equity + $crypto, cash: 300.0))->toBe(300.0);
+    expect($split)->toBe(['exposures' => ['equity' => 1000.0, 'crypto' => 500.0], 'cash' => 300.0]);
 });
 
 /**
- * L'invariant du chantier : la somme des investis de toutes les classes fait exactement les apports
- * nets, et aucune classe ne part en gain négatif faute d'avoir rendu son capital.
+ * L'arbitrage d'une exposition contre une autre. `CashLedger::netContributions()` est collant :
+ * l'achat de crypto payé par le produit de la vente d'actions n'impute aucun apport à la crypto,
+ * l'étiquette reste sur les actions. Le seul plafonnement au coût donnerait donc `min(1 000, 0)`
+ * aux actions et `min(0, 1 200)` à la crypto — 1 000 € d'apports nets évaporés. La redistribution
+ * les rend à l'exposition qui porte désormais le capital.
+ */
+it('déplace l\'apport vers l\'exposition qui a repris le capital', function () {
+    $split = (new InvestedCapital)->allocate(
+        imputedContributions: ['equity' => 1000.0, 'crypto' => 0.0],
+        costOfHoldings: ['equity' => 0.0, 'crypto' => 1200.0],
+        netContributions: 1000.0,
+        cash: 0.0,
+    );
+
+    expect($split)->toBe(['exposures' => ['equity' => 0.0, 'crypto' => 1000.0], 'cash' => 0.0]);
+});
+
+/** Un arbitrage partiel ne déplace que ce qui a été replacé ; le reste dort en caisse. */
+it('ne déplace que la part du capital réellement replacée', function () {
+    $split = (new InvestedCapital)->allocate(
+        imputedContributions: ['equity' => 1000.0, 'crypto' => 0.0],
+        costOfHoldings: ['equity' => 0.0, 'crypto' => 600.0],
+        netContributions: 1000.0,
+        cash: 600.0,
+    );
+
+    expect($split)->toBe(['exposures' => ['equity' => 0.0, 'crypto' => 600.0], 'cash' => 400.0]);
+});
+
+/** Deux expositions à financer ensemble se partagent le reliquat au prorata de ce qui leur manque. */
+it('partage le reliquat au prorata du manque, sans laisser l\'ordre du registre décider', function () {
+    $split = (new InvestedCapital)->allocate(
+        imputedContributions: ['equity' => 900.0, 'bond' => 0.0, 'crypto' => 0.0],
+        costOfHoldings: ['equity' => 0.0, 'bond' => 300.0, 'crypto' => 600.0],
+        netContributions: 900.0,
+        cash: 0.0,
+    );
+
+    expect($split)->toBe(['exposures' => ['equity' => 0.0, 'bond' => 300.0, 'crypto' => 600.0], 'cash' => 0.0]);
+});
+
+/**
+ * La règle d'or : la somme des investis de toutes les classes fait exactement les apports nets.
+ * C'est l'invariant qui a rattrapé l'arbitrage entre expositions ; qu'il ne puisse plus le laisser
+ * passer.
  */
 it('répartit les apports nets sans en perdre ni en inventer', function (
-    float $netContributions,
     array $imputed,
     array $costs,
+    float $netContributions,
     float $cash,
 ) {
-    $capital = new InvestedCapital;
+    $split = (new InvestedCapital)->allocate($imputed, $costs, $netContributions, $cash);
 
-    $exposures = 0.0;
+    expect(round(array_sum($split['exposures']) + $split['cash'], 2))->toBe($netContributions);
 
-    foreach ($imputed as $key => $contribution) {
-        $exposures = round($exposures + $capital->forExposure($contribution, $costs[$key]), 2);
+    foreach ($split['exposures'] as $invested) {
+        expect($invested)->toBeGreaterThanOrEqual(0.0);
     }
 
-    $total = round($exposures + $capital->forCash($netContributions, $exposures, $cash), 2);
-
-    expect($total)->toBe($netContributions);
+    expect($split['cash'])->toBeGreaterThanOrEqual(0.0)
+        ->and($split['cash'])->toBeLessThanOrEqual($cash);
 })->with([
-    'apport 1 000, achat 1 000' => [1000.0, ['equity' => 1000.0], ['equity' => 1000.0], 0.0],
-    'vente 1 200, rien racheté' => [1000.0, ['equity' => 1000.0], ['equity' => 0.0], 1200.0],
-    'rachat 1 200' => [1000.0, ['equity' => 1000.0], ['equity' => 1200.0], 0.0],
-    'deux expositions financées séparément' => [1500.0, ['equity' => 1000.0, 'crypto' => 500.0], ['equity' => 1000.0, 'crypto' => 500.0], 0.0],
-    'vente de la moitié' => [1000.0, ['equity' => 1000.0], ['equity' => 500.0], 600.0],
-    'apport 1 000, retrait 300' => [700.0, [], [], 700.0],
+    'apport 1 000, achat 1 000' => [['equity' => 1000.0], ['equity' => 1000.0], 1000.0, 0.0],
+    'vente 1 200, rien racheté' => [['equity' => 1000.0], ['equity' => 0.0], 1000.0, 1200.0],
+    'rachat 1 200 dans la même exposition' => [['equity' => 1000.0], ['equity' => 1200.0], 1000.0, 0.0],
+    'deux expositions financées séparément' => [['equity' => 1000.0, 'crypto' => 500.0], ['equity' => 1000.0, 'crypto' => 500.0], 1500.0, 0.0],
+    'arbitrage complet vers une autre exposition' => [['equity' => 1000.0, 'crypto' => 0.0], ['equity' => 0.0, 'crypto' => 1200.0], 1000.0, 0.0],
+    'arbitrage partiel, moitié laissée en caisse' => [['equity' => 1000.0, 'crypto' => 0.0], ['equity' => 0.0, 'crypto' => 600.0], 1000.0, 600.0],
+    'vente de la moitié' => [['equity' => 1000.0], ['equity' => 500.0], 1000.0, 600.0],
+    'apport 1 000, retrait 300' => [[], [], 700.0, 700.0],
 ]);

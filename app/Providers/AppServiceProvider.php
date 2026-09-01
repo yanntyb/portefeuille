@@ -39,6 +39,7 @@ use App\Contexts\Valuation\Infrastructure\PortfolioTransactionHistory;
 use App\Contexts\Valuation\ValuationProvider;
 use App\Contexts\Wealth\Infrastructure\CashClass;
 use App\Contexts\Wealth\Infrastructure\PortfolioAccounts;
+use App\Contexts\Wealth\Infrastructure\PortfolioInvestedCapital;
 use App\Contexts\Wealth\Infrastructure\PortfolioLedger;
 use App\Contexts\Wealth\Infrastructure\RealEstateClass;
 use App\Contexts\Wealth\WealthProvider;
@@ -121,6 +122,13 @@ class AppServiceProvider extends ServiceProvider
          * chaque transaction touchée, sur le même principe que `GetPortfolioOverview`.
          */
         $this->app->scoped(GetCashMovements::class);
+
+        /**
+         * Une répartition des apports nets par requête : le reliquat qu'une exposition libère en
+         * vendant se replace dans une autre, donc chaque classe a besoin de la photo globale et
+         * la referait sinon cinq fois par tableau de bord.
+         */
+        $this->app->scoped(PortfolioInvestedCapital::class);
 
         /** L'ordre décide de celui des lignes du tableau de bord et des bandes de son graphe. */
         WealthProvider::registers(

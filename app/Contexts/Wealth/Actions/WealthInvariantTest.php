@@ -83,7 +83,11 @@ it('répartit les apports nets entre les classes sans en perdre ni en inventer',
 
     $overview = app(GetWealthOverview::class)($user->id);
 
-    expect($overview->totalInvested)->toBe($netContributions);
+    /** La règle d'or, lue sur les lignes elles-mêmes et non sur le total qu'elles alimentent. */
+    $sum = round(array_sum(array_map(fn (AssetClassData $line): float => $line->invested, $overview->classes)), 2);
+
+    expect($sum)->toBe($netContributions)
+        ->and($overview->totalInvested)->toBe($netContributions);
 
     foreach ($overview->classes as $line) {
         expect($line->invested)->toBeGreaterThanOrEqual(0.0);
@@ -144,6 +148,58 @@ it('répartit les apports nets entre les classes sans en perdre ni en inventer',
         },
         1000.0,
     ],
+    /**
+     * L'arbitrage d'une exposition contre une autre : `netContributions` laisse l'étiquette sur les
+     * actions, mais le capital est passé en crypto. Sans la redistribution du reliquat, les
+     * 1 000 € d'apport disparaissaient du total.
+     */
+    'arbitrage complet vers une autre exposition' => [
+        function (User $user, Wallet $wallet): void {
+            $stock = Instrument::factory()->create(['type' => InstrumentType::Stock]);
+            $coin = Instrument::factory()->create(['type' => InstrumentType::Crypto]);
+            Price::factory()->create(['asset_id' => $coin->id, 'date' => '2026-01-06', 'close' => 100.0]);
+            Transaction::factory()->deposit()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'date' => '2026-01-01', 'amount' => 1000,
+            ]);
+            Transaction::factory()->buy()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+                'date' => '2026-01-02', 'quantity' => 10, 'unit_price' => 100, 'fees' => 0,
+            ]);
+            Transaction::factory()->sell()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+                'date' => '2026-01-03', 'quantity' => 10, 'unit_price' => 120, 'fees' => 0,
+            ]);
+            Transaction::factory()->buy()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $coin->id,
+                'date' => '2026-01-04', 'quantity' => 12, 'unit_price' => 100, 'fees' => 0,
+            ]);
+        },
+        1000.0,
+    ],
+    /** Le même arbitrage à moitié : 600 € replacés, 600 € laissés en caisse. */
+    'arbitrage partiel, le reste laissé en caisse' => [
+        function (User $user, Wallet $wallet): void {
+            $stock = Instrument::factory()->create(['type' => InstrumentType::Stock]);
+            $coin = Instrument::factory()->create(['type' => InstrumentType::Crypto]);
+            Price::factory()->create(['asset_id' => $coin->id, 'date' => '2026-01-06', 'close' => 100.0]);
+            Transaction::factory()->deposit()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'date' => '2026-01-01', 'amount' => 1000,
+            ]);
+            Transaction::factory()->buy()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+                'date' => '2026-01-02', 'quantity' => 10, 'unit_price' => 100, 'fees' => 0,
+            ]);
+            Transaction::factory()->sell()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+                'date' => '2026-01-03', 'quantity' => 10, 'unit_price' => 120, 'fees' => 0,
+            ]);
+            Transaction::factory()->buy()->create([
+                'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $coin->id,
+                'date' => '2026-01-04', 'quantity' => 6, 'unit_price' => 100, 'fees' => 0,
+            ]);
+        },
+        1000.0,
+    ],
     'deux expositions financées séparément' => [
         function (User $user, Wallet $wallet): void {
             $stock = Instrument::factory()->create(['type' => InstrumentType::Stock]);
@@ -199,4 +255,74 @@ it('ne recompte pas l\'apport quand le produit d\'une vente est réemployé', fu
     expect($equity->invested)->toBe(1000.0)
         ->and($equity->value)->toBe(1200.0)
         ->and($equity->gain)->toBe(200.0);
+});
+
+/**
+ * L'arbitrage d'une exposition contre une autre, sur ses chiffres et non sur le seul total :
+ * l'apport passe entièrement aux actions vers la crypto, qui porte désormais le capital, et rien
+ * ne dort en caisse.
+ */
+it('déplace l\'apport vers l\'exposition qui a repris le capital', function () {
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create(['name' => 'PEA']);
+    $stock = Instrument::factory()->create(['type' => InstrumentType::Stock]);
+    $coin = Instrument::factory()->create(['type' => InstrumentType::Crypto]);
+    Price::factory()->create(['asset_id' => $coin->id, 'date' => '2026-01-06', 'close' => 100.0]);
+
+    Transaction::factory()->deposit()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'date' => '2026-01-01', 'amount' => 1000,
+    ]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+        'date' => '2026-01-02', 'quantity' => 10, 'unit_price' => 100, 'fees' => 0,
+    ]);
+    Transaction::factory()->sell()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+        'date' => '2026-01-03', 'quantity' => 10, 'unit_price' => 120, 'fees' => 0,
+    ]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $coin->id,
+        'date' => '2026-01-04', 'quantity' => 12, 'unit_price' => 100, 'fees' => 0,
+    ]);
+
+    $classes = collect(app(GetWealthOverview::class)($user->id)->classes)->keyBy('key');
+
+    expect($classes['crypto']->invested)->toBe(1000.0)
+        ->and($classes['equity']->invested)->toBe(0.0)
+        ->and($classes['cash']->invested)->toBe(0.0)
+        ->and($classes['crypto']->gain)->toBe(200.0);
+});
+
+/** Le même arbitrage à moitié : 600 € replacés en crypto, 600 € laissés dormir en caisse. */
+it('ne déplace que la part du capital réellement replacée', function () {
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create(['name' => 'PEA']);
+    $stock = Instrument::factory()->create(['type' => InstrumentType::Stock]);
+    $coin = Instrument::factory()->create(['type' => InstrumentType::Crypto]);
+    Price::factory()->create(['asset_id' => $coin->id, 'date' => '2026-01-06', 'close' => 100.0]);
+
+    Transaction::factory()->deposit()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'date' => '2026-01-01', 'amount' => 1000,
+    ]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+        'date' => '2026-01-02', 'quantity' => 10, 'unit_price' => 100, 'fees' => 0,
+    ]);
+    Transaction::factory()->sell()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $stock->id,
+        'date' => '2026-01-03', 'quantity' => 10, 'unit_price' => 120, 'fees' => 0,
+    ]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $coin->id,
+        'date' => '2026-01-04', 'quantity' => 6, 'unit_price' => 100, 'fees' => 0,
+    ]);
+
+    $classes = collect(app(GetWealthOverview::class)($user->id)->classes)->keyBy('key');
+
+    expect($classes['crypto']->invested)->toBe(600.0)
+        ->and($classes['equity']->invested)->toBe(0.0)
+        ->and($classes['cash']->invested)->toBe(400.0)
+        ->and($classes['cash']->value)->toBe(600.0)
+        /** Les 200 € de plus-value dorment en caisse, sans qu'aucune classe n'invente de rendement. */
+        ->and($classes['cash']->gain)->toBe(200.0);
 });
