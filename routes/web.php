@@ -3,6 +3,7 @@
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Http\SearchInstrumentsController;
 use App\Contexts\Market\Http\StartSyncController;
+use App\Contexts\Market\Http\StoreInstrumentController;
 use App\Contexts\MarketView\Http\AssetClassCatalogController;
 use App\Contexts\MarketView\Http\AssetClassController;
 use App\Contexts\MarketView\Http\AssetController;
@@ -49,6 +50,8 @@ Route::post('/dividendes', ConfirmDividendController::class)->name('dividends.co
  * `/asset/{id}` par habitude du dépôt — un segment littéral ne se lit jamais comme un identifiant.
  */
 Route::get('/instruments/recherche', SearchInstrumentsController::class)->name('instruments.search');
+
+Route::post('/instruments', StoreInstrumentController::class)->name('instruments.store');
 
 /**
  * Une route par exposition, engendrée depuis l'enum : ajouter une classe d'actif n'est jamais
