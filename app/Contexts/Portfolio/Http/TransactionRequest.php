@@ -186,7 +186,7 @@ class TransactionRequest extends FormRequest
             return 0.0;
         }
 
-        $original = Transaction::query()->find($id);
+        $original = Transaction::query()->where('user_id', auth()->id())->find($id);
 
         if ($original === null || (int) $original->wallet_id !== $walletId || $original->date->format('Y-m-d') > $date) {
             return 0.0;

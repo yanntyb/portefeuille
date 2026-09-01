@@ -112,6 +112,58 @@ it('lets a sell keep its own quantity out of the stock it checks against', funct
     $this->put("/transactions/{$sell->id}", $payload('11'))->assertSessionHasErrors('quantity');
 });
 
+it('lets a withdrawal keep its own amount out of the balance it checks against', function () {
+    /**
+     * Un couple utilisateur/enveloppe nu, sans l'achat que `portfolioFixture()` y verse par
+     * ailleurs : le solde de l'enveloppe doit rester lisible d'un simple calcul, 1 000 déposés
+     * moins 300 déjà retirés.
+     */
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+
+    Transaction::factory()->deposit()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'date' => '2026-01-01',
+        'amount' => 1000,
+    ]);
+
+    $withdrawal = Transaction::factory()->withdrawal()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'date' => '2026-02-01',
+        'amount' => 300,
+    ]);
+
+    $payload = fn (string $amount): array => [
+        'walletId' => $wallet->id,
+        'date' => '2026-02-01',
+        'type' => 'withdrawal',
+        'amount' => $amount,
+    ];
+
+    /**
+     * 1 000 déposés, 300 déjà retirés par cette même ligne : 700 restent réellement disponibles.
+     * Sans l'exclusion de soi-même, porter le retrait à 500 se comparerait aux 700 restants après
+     * son propre retrait déjà compté deux fois et serait acceptée à tort dans le mauvais sens, ou
+     * refusée à tort si le solde était compté sans elle du tout.
+     */
+    $this->put("/transactions/{$withdrawal->id}", $payload('500'))->assertSessionHasNoErrors();
+
+    $this->put("/transactions/{$withdrawal->id}", $payload('1500'))->assertSessionHasErrors('amount');
+});
+
+it('never triggers the withdrawal cap when correcting a buy or a sell', function () {
+    ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
+    $transaction = Transaction::query()->where('user_id', $user->id)->where('type', 'buy')->sole();
+
+    $this->put("/transactions/{$transaction->id}", transactionPayload($wallet->id, $instrument->id, [
+        'quantity' => '10',
+        'unitPrice' => '80',
+        'fees' => '0',
+    ]))->assertSessionHasNoErrors();
+});
+
 it('never reaches the controller with a non numeric id', function () {
     ['user' => $user] = portfolioFixture();
     $before = Transaction::query()->where('user_id', $user->id)->where('type', 'buy')->sole()->quantity;
