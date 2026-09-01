@@ -901,11 +901,12 @@ describe('ajout d\'un instrument depuis la saisie', () => {
         expect((field(host, 'transaction-date') as HTMLInputElement).value).toBe('2026-05-01');
     });
 
-    it('signale l\'échec du rechargement des options après une création', async () => {
+    it('signale un instrument créé mais un catalogue resté périmé, sans y pointer l\'actif', async () => {
         /**
-         * Un catalogue resté périmé laisserait l'actif tout juste choisi absent de la liste, sans
-         * qu'un mot ne le dise : le drapeau d'échec doit se lever aussi sur une réponse non-ok, pas
-         * seulement sur une exception.
+         * Le message générique de `optionsFailed` laisserait croire que rien n'a eu lieu, alors
+         * que l'instrument existe déjà côté serveur : le message doit dire les deux moitiés. Et
+         * `form.assetId` ne doit surtout pas pointer vers un identifiant absent du catalogue périmé
+         * — un choix ultérieur dans la liste, visiblement vide, l'écraserait sans bruit.
          */
         const host = await mountForm();
 
@@ -917,8 +918,11 @@ describe('ajout d\'un instrument depuis la saisie', () => {
         await emitCreated(host, { id: 99, name: 'NVIDIA Corp.', ticker: 'NVDA', assetClass: 'equity', assetClassSlug: 'actions' });
 
         expect(host.querySelector('[data-instrument-search-input]')).toBeNull();
-        expect(host.querySelector('[data-form-error]')?.textContent?.trim())
-            .toBe('Les enveloppes et les instruments n\'ont pas pu être chargés.');
+        expect(host.querySelector('[data-instrument-created-stale]')?.textContent?.trim()).toBe(
+            'L\'instrument a bien été créé, mais la liste n\'a pas pu être rechargée. Ferme et rouvre la saisie pour le sélectionner.',
+        );
+        /** La pièce qui pinne le correctif : jamais un identifiant que le catalogue périmé ignore. */
+        expect(currentAssetId(host)).toBe('');
     });
 
     it('désactive le lien pendant l\'envoi, comme le sélecteur d\'actif qu\'il accompagne', async () => {

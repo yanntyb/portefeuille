@@ -99,31 +99,45 @@ onMounted(async (): Promise<void> => {
  */
 const searchingInstrument: Ref<boolean> = ref(false);
 
-/** Les options rechargées de la même route qu'à l'ouverture : c'est elle qui porte le catalogue. */
-const reloadOptions = async (): Promise<void> => {
+/**
+ * Les options rechargées de la même route qu'à l'ouverture : c'est elle qui porte le catalogue.
+ * Renvoie si le rechargement a abouti, et ne pose pas `optionsFailed` : appelée seulement depuis
+ * `onInstrumentCreated`, un échec ici ne veut pas dire la même chose qu'au montage — l'instrument
+ * existe déjà côté serveur, c'est à l'appelant de le dire dans ces mots-là.
+ */
+const reloadOptions = async (): Promise<boolean> => {
     try {
         const response = await fetch('/transactions/options', { headers: { Accept: 'application/json' } });
 
         if (!response.ok) {
-            /**
-             * Sans ce drapeau, un catalogue resté périmé après la création laisserait l'actif tout
-             * juste choisi absent d'`instrumentOptions`, sans que rien ne le dise.
-             */
-            optionsFailed.value = true;
-
-            return;
+            return false;
         }
 
         options.value = (await response.json()) as FormOptions;
+
+        return true;
     } catch {
-        optionsFailed.value = true;
+        return false;
     }
 };
 
+/**
+ * Le catalogue rechargé n'a pas rejoint l'instrument tout juste créé : `form.assetId` reste tel
+ * quel plutôt que de pointer vers un identifiant absent d'`instrumentOptions` — un champ que le
+ * lecteur voit et peut corriger vaut mieux qu'une valeur cachée qu'un choix ultérieur écraserait
+ * sans bruit.
+ */
+const instrumentCreatedButStale: Ref<boolean> = ref(false);
+
 const onInstrumentCreated = async (instrument: CreatedInstrument): Promise<void> => {
     searchingInstrument.value = false;
+    instrumentCreatedButStale.value = false;
 
-    await reloadOptions();
+    if (!(await reloadOptions())) {
+        instrumentCreatedButStale.value = true;
+
+        return;
+    }
 
     form.assetId = String(instrument.id);
     prefillUnitPrice();
@@ -450,6 +464,14 @@ const serverUnreachable: Ref<boolean> = ref(false);
 
         <p v-else-if="optionsFailed" data-form-error role="alert" class="text-sm text-destructive">
             Les enveloppes et les instruments n'ont pas pu être chargés.
+        </p>
+
+        <!--
+            Distinct du message ci-dessus : ici la création a réussi, seul le rechargement a
+            échoué. Dire « n'ont pas pu être chargés » laisserait croire que rien n'a eu lieu.
+        -->
+        <p v-else-if="instrumentCreatedButStale" data-instrument-created-stale role="alert" class="text-sm text-destructive">
+            L'instrument a bien été créé, mais la liste n'a pas pu être rechargée. Ferme et rouvre la saisie pour le sélectionner.
         </p>
 
         <!-- En premier : l'enveloppe est le cadre de l'opération, tout le reste s'y inscrit. -->
