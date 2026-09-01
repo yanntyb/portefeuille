@@ -1,5 +1,6 @@
 <?php
 
+use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
 use App\Contexts\Valuation\Infrastructure\MemoizedTransactionHistory;
 use App\Contexts\Valuation\Ports\TransactionHistoryPort;
@@ -18,10 +19,12 @@ function countingTransactionHistory(int &$calls): TransactionHistoryPort
             return [new TransactionRecordData(
                 date: Carbon::parse('2026-01-01'),
                 assetId: $userId,
+                type: TransactionType::Buy,
                 isSell: false,
                 quantity: 1.0,
                 unitPrice: 10.0,
                 fees: 0.0,
+                cashDelta: -10.0,
             )];
         }
     };

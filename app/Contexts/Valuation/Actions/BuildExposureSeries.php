@@ -65,10 +65,10 @@ class BuildExposureSeries
             return ValuationSeriesData::empty();
         }
 
-        $assetIds = array_values(array_unique(array_map(
-            fn (TransactionRecordData $transaction): int => $transaction->assetId,
+        $assetIds = array_values(array_unique(array_filter(array_map(
+            fn (TransactionRecordData $transaction): ?int => $transaction->assetId,
             $transactions,
-        )));
+        ), fn (?int $assetId): bool => $assetId !== null)));
 
         return $this->calculator->calculateDaily(
             $transactions,

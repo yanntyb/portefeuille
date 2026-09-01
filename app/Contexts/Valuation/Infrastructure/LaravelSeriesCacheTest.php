@@ -3,6 +3,7 @@
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
+use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 use App\Contexts\Valuation\Infrastructure\LaravelSeriesCache;
@@ -95,6 +96,36 @@ it('recalcule quand une transaction change d\'enveloppe sans rien changer d\'aut
      * dans l'empreinte, la série resterait celle d'avant le déménagement.
      */
     $transaction->update(['wallet_id' => $elsewhere->id]);
+
+    rememberSerie($this->user->id, $calls);
+
+    expect($calls)->toBe(2);
+});
+
+it('périme la série quand un achat devient une vente', function () {
+    $calls = 0;
+    $transaction = buyFor($this);
+    rememberSerie($this->user->id, $calls);
+
+    /**
+     * Ni la cardinalité ni les sommes de quantité, de prix ou d'actif ne bougent : sans le
+     * comptage des ventes dans l'empreinte, la série périmée serait servie.
+     */
+    $transaction->update(['type' => TransactionType::Sell]);
+
+    rememberSerie($this->user->id, $calls);
+
+    expect($calls)->toBe(2);
+});
+
+it('périme la série quand le montant d\'un versement change', function () {
+    $calls = 0;
+    $deposit = Transaction::factory()->deposit()->create([
+        'user_id' => $this->user->id, 'wallet_id' => $this->wallet->id, 'date' => '2026-01-01', 'amount' => 1000,
+    ]);
+    rememberSerie($this->user->id, $calls);
+
+    $deposit->update(['amount' => 1500]);
 
     rememberSerie($this->user->id, $calls);
 

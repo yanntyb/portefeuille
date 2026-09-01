@@ -67,10 +67,10 @@ class BuildPortfolioPerformances
             return [];
         }
 
-        $assetIds = array_values(array_unique(array_map(
-            fn (TransactionRecordData $transaction) => $transaction->assetId,
+        $assetIds = array_values(array_unique(array_filter(array_map(
+            fn (TransactionRecordData $transaction): ?int => $transaction->assetId,
             $transactions,
-        )));
+        ), fn (?int $assetId): bool => $assetId !== null)));
 
         $prices = $this->prices->forAssetsSince($assetIds, $transactions[0]->date);
         $daily = $this->calculator->calculateDaily($transactions, $prices);

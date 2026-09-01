@@ -2,6 +2,7 @@
 
 namespace App\Contexts\Valuation\Services;
 
+use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Valuation\Datas\AssetSeriesData;
 use App\Contexts\Valuation\Datas\EvolutionSeriesData;
 use App\Contexts\Valuation\Datas\PerformanceData;
@@ -33,32 +34,46 @@ class ValuationCalculator
         $quantities = [];
         /** @var list<array{date: string, value: float}> $investedSeries */
         $investedSeries = [];
+        /** @var list<array{date: string, value: float}> $cashSeries */
+        $cashSeries = [];
         $buyQty = [];
         $buyCost = [];
         $totalInvested = 0.0;
+        $totalCash = 0.0;
 
         foreach ($transactions as $transaction) {
             $day = $transaction->date->format('Y-m-d');
-            $assetId = $transaction->assetId;
-            $quantities[$assetId] ??= [];
 
-            $previous = end($quantities[$assetId]);
-            $previousQty = $previous === false ? 0.0 : $previous['value'];
-            $delta = $transaction->isSell ? -$transaction->quantity : $transaction->quantity;
-            $quantities[$assetId][] = ['date' => $day, 'value' => $previousQty + $delta];
+            /**
+             * Seuls les achats et les ventes font varier une quantité détenue et l'investi : un
+             * dividende porte un `asset_id` mais aucune quantité, et le ferait varier à tort s'il
+             * entrait dans cette timeline. Les cinq types alimentent en revanche tous le cash.
+             */
+            if ($transaction->type === TransactionType::Buy || $transaction->type === TransactionType::Sell) {
+                $assetId = $transaction->assetId;
+                $quantities[$assetId] ??= [];
 
-            if ($transaction->isSell) {
-                $qty = $buyQty[$assetId] ?? 0.0;
-                $cost = $buyCost[$assetId] ?? 0.0;
-                $pru = $qty > 0.0 ? $cost / $qty : 0.0;
-                $totalInvested -= $transaction->quantity * $pru - $transaction->fees;
-            } else {
-                $buyQty[$assetId] = ($buyQty[$assetId] ?? 0.0) + $transaction->quantity;
-                $buyCost[$assetId] = ($buyCost[$assetId] ?? 0.0) + $transaction->quantity * $transaction->unitPrice + $transaction->fees;
-                $totalInvested += $transaction->quantity * $transaction->unitPrice + $transaction->fees;
+                $previous = end($quantities[$assetId]);
+                $previousQty = $previous === false ? 0.0 : $previous['value'];
+                $delta = $transaction->isSell ? -$transaction->quantity : $transaction->quantity;
+                $quantities[$assetId][] = ['date' => $day, 'value' => $previousQty + $delta];
+
+                if ($transaction->isSell) {
+                    $qty = $buyQty[$assetId] ?? 0.0;
+                    $cost = $buyCost[$assetId] ?? 0.0;
+                    $pru = $qty > 0.0 ? $cost / $qty : 0.0;
+                    $totalInvested -= $transaction->quantity * $pru - $transaction->fees;
+                } else {
+                    $buyQty[$assetId] = ($buyQty[$assetId] ?? 0.0) + $transaction->quantity;
+                    $buyCost[$assetId] = ($buyCost[$assetId] ?? 0.0) + $transaction->quantity * $transaction->unitPrice + $transaction->fees;
+                    $totalInvested += $transaction->quantity * $transaction->unitPrice + $transaction->fees;
+                }
+
+                $investedSeries[] = ['date' => $day, 'value' => $totalInvested];
             }
 
-            $investedSeries[] = ['date' => $day, 'value' => $totalInvested];
+            $totalCash += $transaction->cashDelta;
+            $cashSeries[] = ['date' => $day, 'value' => $totalCash];
         }
 
         $days = collect($prices)->map(fn (PriceRecordData $p) => $p->date)->unique()->sort()->values()->all();
@@ -74,6 +89,7 @@ class ValuationCalculator
         $valuations = [];
         $invested = [];
         $unitPrices = [];
+        $cash = [];
         $lastClose = [];
         $primaryAsset = $assetIds[0] ?? null;
 
@@ -94,9 +110,10 @@ class ValuationCalculator
             $valuations[] = round($value, 2);
             $invested[] = round($this->valueAtDate($investedSeries, $day), 2);
             $unitPrices[] = round($primaryAsset === null ? 0.0 : ($lastClose[$primaryAsset] ?? 0.0), 2);
+            $cash[] = round($this->valueAtDate($cashSeries, $day), 2);
         }
 
-        return new ValuationSeriesData($labels, $valuations, $invested, $unitPrices);
+        return new ValuationSeriesData($labels, $valuations, $invested, $unitPrices, $cash);
     }
 
     /** @param  ?int  $months  Profondeur de la fenêtre depuis le dernier point, null pour tout l'historique. */
@@ -114,6 +131,7 @@ class ValuationCalculator
         $valuations = [];
         $invested = [];
         $prices = [];
+        $cash = [];
 
         foreach ($series->labels as $i => $label) {
             if ($cutoff !== null && $label < $cutoff) {
@@ -123,6 +141,7 @@ class ValuationCalculator
             $valuations[] = $series->valuations[$i];
             $invested[] = $series->invested[$i];
             $prices[] = $series->prices[$i];
+            $cash[] = $series->cash[$i] ?? 0.0;
         }
 
         /** @var array<string, int> $lastIndexByBucket */
@@ -139,6 +158,7 @@ class ValuationCalculator
             array_map(fn (int $i): float => $valuations[$i], $keep),
             array_map(fn (int $i): float => $invested[$i], $keep),
             array_map(fn (int $i): float => $prices[$i], $keep),
+            array_map(fn (int $i): float => $cash[$i], $keep),
         );
     }
 
@@ -285,6 +305,7 @@ class ValuationCalculator
 
         $investedTimelines = $this->perAssetInvestedTimelines($transactions);
         $quantityTimelines = $this->perAssetQuantityTimelines($transactions);
+        $cashTimelines = $this->perAssetCashTimelines($transactions);
 
         /** @var array<int, list<array{date: string, value: float}>> $priceTimelines */
         $priceTimelines = [];
@@ -301,6 +322,7 @@ class ValuationCalculator
             $quantities = $this->forwardFill($quantityTimelines[$assetId] ?? [], $windowed->labels);
             $closes = $this->forwardFill($priceTimelines[$assetId] ?? [], $windowed->labels);
             $invested = $this->forwardFill($investedEntries, $windowed->labels);
+            $cash = $this->forwardFill($cashTimelines[$assetId] ?? [], $windowed->labels);
 
             $perAsset[] = new AssetSeriesData(
                 assetId: $assetId,
@@ -311,6 +333,7 @@ class ValuationCalculator
                     $closes,
                 ),
                 invested: array_map(fn (float $value): float => round($value, 2), $invested),
+                cash: array_map(fn (float $value): float => round($value, 2), $cash),
             );
         }
 
@@ -319,7 +342,9 @@ class ValuationCalculator
 
     /**
      * Timelines d'investi cumulé par asset (fonction en escalier sur les dates de
-     * transaction), clé = assetId dans l'ordre d'apparition.
+     * transaction), clé = assetId dans l'ordre d'apparition. N'y entrent que les achats et les
+     * ventes : un dividende porte un `asset_id` sans quantité, et fausserait l'investi s'il y
+     * entrait.
      *
      * @param  list<TransactionRecordData>  $transactions
      * @return array<int, list<array{date: string, value: float}>>
@@ -336,6 +361,10 @@ class ValuationCalculator
         $invested = [];
 
         foreach ($transactions as $transaction) {
+            if ($transaction->type !== TransactionType::Buy && $transaction->type !== TransactionType::Sell) {
+                continue;
+            }
+
             $day = $transaction->date->format('Y-m-d');
             $assetId = $transaction->assetId;
             $invested[$assetId] ??= 0.0;
@@ -359,7 +388,8 @@ class ValuationCalculator
     }
 
     /**
-     * Timelines de quantité cumulée par asset (escalier sur les dates de transaction).
+     * Timelines de quantité cumulée par asset (escalier sur les dates de transaction). N'y
+     * entrent que les achats et les ventes, pour la même raison que `perAssetInvestedTimelines`.
      *
      * @param  list<TransactionRecordData>  $transactions
      * @return array<int, list<array{date: string, value: float}>>
@@ -373,6 +403,10 @@ class ValuationCalculator
         $quantities = [];
 
         foreach ($transactions as $transaction) {
+            if ($transaction->type !== TransactionType::Buy && $transaction->type !== TransactionType::Sell) {
+                continue;
+            }
+
             $day = $transaction->date->format('Y-m-d');
             $assetId = $transaction->assetId;
             $quantities[$assetId] ??= [];
@@ -383,6 +417,39 @@ class ValuationCalculator
         }
 
         return $quantities;
+    }
+
+    /**
+     * Timelines de cash cumulé par asset (escalier sur les dates de transaction) : le produit
+     * d'une vente ou un dividende de cet actif, en cash. Une opération sans `asset_id` (versement,
+     * retrait) n'appartient à aucun actif et n'est pas ventilée ici — elle reste dans le seul total
+     * de `calculateDaily()`.
+     *
+     * @param  list<TransactionRecordData>  $transactions
+     * @return array<int, list<array{date: string, value: float}>>
+     */
+    private function perAssetCashTimelines(array $transactions): array
+    {
+        usort($transactions, fn (TransactionRecordData $a, TransactionRecordData $b) => ($a->date <=> $b->date)
+            ?: (($a->isSell ? 1 : 0) <=> ($b->isSell ? 1 : 0)));
+
+        /** @var array<int, list<array{date: string, value: float}>> $perAsset */
+        $perAsset = [];
+        $cash = [];
+
+        foreach ($transactions as $transaction) {
+            if ($transaction->assetId === null) {
+                continue;
+            }
+
+            $assetId = $transaction->assetId;
+            $day = $transaction->date->format('Y-m-d');
+            $cash[$assetId] = ($cash[$assetId] ?? 0.0) + $transaction->cashDelta;
+            $perAsset[$assetId] ??= [];
+            $perAsset[$assetId][] = ['date' => $day, 'value' => $cash[$assetId]];
+        }
+
+        return $perAsset;
     }
 
     /**
