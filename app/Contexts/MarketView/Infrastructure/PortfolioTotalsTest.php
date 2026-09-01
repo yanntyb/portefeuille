@@ -32,29 +32,51 @@ it('rend le total et les lignes d\'une seule exposition', function () {
 
 /**
  * `PortfolioSummaryData` est la jumelle de `Portfolio\PortfolioOverviewData` : `cash` doit s'y
- * retrouver à l'identique, sans quoi la page d'exposition ne peut jamais annoncer ce qui reste à
- * replacer. Le cash n'est pas ventilé par exposition — il vaut donc le même montant, quelle que
- * soit l'exposition demandée.
+ * retrouver, sans quoi la page d'exposition ne peut jamais annoncer ce qui reste à replacer.
  *
- * `portfolioFixture()` pose déjà un achat de 800 € (10 titres à 80 €) : le versement de 1 500 €
- * laisse donc 700 € non replacés.
+ * Mais c'est le cash **d'origine** de l'exposition demandée, pas le solde entier : celui-ci
+ * s'affichait sur les quatre pages à la fois, si bien que le même euro se lisait quatre fois, à
+ * côté d'un « Investi » et d'un « Gain » qui, eux, étaient scopés.
  */
-it('reporte le cash de l\'utilisateur, non ventilé par exposition', function () {
-    ['user' => $user, 'wallet' => $wallet] = portfolioFixture();
+it('ne reporte à chaque exposition que le cash issu de ses propres ventes', function () {
+    ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
+    $coin = Instrument::factory()->create(['name' => 'Bitcoin', 'type' => InstrumentType::Crypto]);
 
     Transaction::factory()->deposit()->create([
-        'user_id' => $user->id,
-        'wallet_id' => $wallet->id,
-        'date' => '2026-01-01',
-        'amount' => 1500,
-        'auto' => false,
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'date' => '2026-01-01',
+        'amount' => 5000, 'auto' => false,
+    ]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $coin->id,
+        'date' => '2026-01-02', 'quantity' => 2, 'unit_price' => 100, 'fees' => 0,
+    ]);
+    /** Chaque exposition solde une partie de sa position : deux crédits, deux étiquettes. */
+    Transaction::factory()->sell()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $instrument->id,
+        'date' => '2026-03-01', 'quantity' => 4, 'unit_price' => 100, 'fees' => 0,
+    ]);
+    Transaction::factory()->sell()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $coin->id,
+        'date' => '2026-03-02', 'quantity' => 1, 'unit_price' => 150, 'fees' => 0,
     ]);
 
     $equity = $this->overview->overviewFor($user->id, AssetClass::Equity);
     $crypto = $this->overview->overviewFor($user->id, AssetClass::Crypto);
 
-    expect($equity->cash)->toBe(700.0)
-        ->and($crypto->cash)->toBe(700.0);
+    expect($equity->cash)->toBe(400.0)
+        ->and($crypto->cash)->toBe(150.0);
+});
+
+/** Sans vente ni dividende, une exposition n'a produit aucun cash : le repère doit rester absent. */
+it('ne reporte aucun cash à une exposition qui n\'a rien vendu', function () {
+    ['user' => $user, 'wallet' => $wallet] = portfolioFixture();
+
+    Transaction::factory()->deposit()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'date' => '2026-01-01',
+        'amount' => 1500, 'auto' => false,
+    ]);
+
+    expect($this->overview->overviewFor($user->id, AssetClass::Equity)->cash)->toBe(0.0);
 });
 
 it('ne montre pas les actifs des autres expositions', function () {

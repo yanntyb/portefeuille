@@ -16,8 +16,10 @@ readonly class PortfolioOverviewData implements JsonSerializable
      * poche (`CashLedger::netContributions()`), et non le coût des titres. Racheter avec le produit
      * d'une vente ne crée aucun apport nouveau, quand `$totalCost` l'aurait compté une seconde fois
      * — c'est la mesure destinée à remplacer « Investi » côté écran. `$cash` est le solde
-     * d'espèces de l'utilisateur, toutes enveloppes confondues ; il n'est pas ventilé par
-     * exposition, une somme en compte n'appartenant à aucune classe d'actif.
+     * d'espèces de l'utilisateur, toutes enveloppes confondues, ou — quand une exposition est
+     * demandée — le seul cash **d'origine** de celle-ci : le produit de ses ventes et de ses
+     * dividendes pas encore replacé, que le FIFO d'imputation de `CashLedger` sait dire. Le solde
+     * n'appartient à aucune classe d'actif, mais son origine, elle, se lit.
      *
      * @param  list<HoldingLineData>  $holdings
      */

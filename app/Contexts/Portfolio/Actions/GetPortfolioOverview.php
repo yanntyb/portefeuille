@@ -123,7 +123,7 @@ class GetPortfolioOverview
             totalGainPct: $totals['totalGainPct'],
             totalRealizedGain: $realizedGain,
             netContributions: $this->netContributionsFor($contributions, $classes),
-            cash: $this->cashBalance($movements),
+            cash: $this->cashBalance($movements, $classes),
             holdings: $lines,
         );
     }
@@ -152,16 +152,34 @@ class GetPortfolioOverview
     }
 
     /**
-     * Le solde d'espèces de l'utilisateur, toutes enveloppes confondues : la somme des soldes que
-     * rend `CashLedger::balanceAt()` pour chaque enveloppe qui a vu au moins un mouvement. Le cash
-     * n'est pas ventilé par exposition — une somme en compte n'appartient à aucune classe d'actif —
-     * donc `$classes` ne le filtre jamais.
+     * Sans `$classes`, le solde d'espèces de l'utilisateur, toutes enveloppes confondues : la
+     * somme des soldes que rend `CashLedger::balanceAt()` pour chaque enveloppe qui a vu au moins
+     * un mouvement.
+     *
+     * Avec, le cash **d'origine** de ces expositions — ce que leurs ventes et leurs dividendes ont
+     * rapporté sans être encore replacé, que `CashLedger::compositionAt()` sait dire par son FIFO
+     * d'imputation. Le solde entier s'affichait autrefois sur les quatre pages d'exposition à la
+     * fois : le même euro se lisait quatre fois, à côté d'un « Investi » et d'un « Gain » qui,
+     * eux, étaient scopés.
      *
      * @param  list<CashMovementData>  $movements
+     * @param  ?list<AssetClass>  $classes
      */
-    private function cashBalance(array $movements): float
+    private function cashBalance(array $movements, ?array $classes): float
     {
         $today = now()->format('Y-m-d');
+
+        if ($classes !== null) {
+            $composition = $this->cashLedger->compositionAt($movements, $today);
+
+            $scoped = 0.0;
+
+            foreach ($classes as $class) {
+                $scoped += $composition['exposures'][$class->value] ?? 0.0;
+            }
+
+            return round($scoped, 2);
+        }
 
         $walletIds = array_unique(array_map(fn (CashMovementData $movement): int => $movement->walletId, $movements));
 
