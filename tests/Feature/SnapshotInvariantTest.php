@@ -105,7 +105,18 @@ use Illuminate\Support\Carbon;
  * retombe de 13 à 0 : c'était le double comptage des dividendes théoriques d'`IncomePort` corrigé en
  * tâche 8, sans lien avec les liquidités elles-mêmes — voir `task-8-report.md`.
  */
-const SNAPSHOT_VERSION = 'dbc2d74d78445c1ad52cd7d1e6916545498bb9d9';
+/**
+ * Modifié une vingt-quatrième fois (revue finale du chantier liquidités) : « Investi » cesse d'être
+ * le coût de revient des titres détenus et devient les apports nets imputés à l'exposition, aucune
+ * clé n'entrant ni ne sortant du JSON. Sur la fixture, l'investi des Actions tombe de 1 380 à 800 €
+ * et celui de la Crypto de 300 à 0 € — leurs achats ont été financés par le produit d'une vente,
+ * qui n'a rien sorti de la poche du porteur —, leurs gains montant d'autant. `gainPct` de la Crypto
+ * passe à `null` faute de mise à laquelle rapporter le gain, ce que `AssetClassData::gainPctOf()`
+ * impose déjà. Les totaux du tableau de bord suivent : investi 30 413,33 → 29 533,33 €, gain
+ * 48 303,27 → 49 183,27 €. Rien d'autre ne bouge — le retrait de `ValuationSeriesData::$cash` est
+ * invisible ici, cette série n'entrant pas dans l'instantané hors-ligne.
+ */
+const SNAPSHOT_VERSION = 'ef844a87b2710adf5052a5f8d4052ff6298b1f02';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe
