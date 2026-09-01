@@ -51,6 +51,11 @@ Route::post('/dividendes', ConfirmDividendController::class)->name('dividends.co
  */
 Route::get('/instruments/recherche', SearchInstrumentsController::class)->name('instruments.search');
 
+/**
+ * JSON et non redirection, seule dérogation parmi les routes d'écriture : le formulaire de
+ * transaction ouvre son panneau de recherche par-dessus une saisie en cours, qu'il ne doit ni
+ * perdre ni rejouer, et a besoin de l'`id` fraîchement créé pour la sélectionner tout de suite.
+ */
 Route::post('/instruments', StoreInstrumentController::class)->name('instruments.store');
 
 /**

@@ -1,5 +1,6 @@
 <?php
 
+use App\Contexts\Identity\Http\AuthenticateDefaultUser;
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
@@ -86,4 +87,21 @@ it('accepte un ISIN et le stocke', function () {
     $this->postJson('/instruments', instrumentPayload(['isin' => 'US67066G1040']))->assertCreated();
 
     expect(Instrument::query()->firstOrFail()->isin)->toBe('US67066G1040');
+});
+
+it('refuse d\'écrire sur une base sans utilisateur connecté', function () {
+    Bus::fake();
+
+    /**
+     * Le `beforeEach` a bien créé un utilisateur, donc le middleware d'auto-connexion en
+     * trouverait un ; c'est la déconnexion explicite qui met `authorize()` à l'épreuve.
+     */
+    auth()->logout();
+
+    $this->withoutMiddleware(AuthenticateDefaultUser::class)
+        ->postJson('/instruments', instrumentPayload())
+        ->assertForbidden();
+
+    expect(Instrument::query()->count())->toBe(0);
+    Bus::assertNotDispatched(SyncInstrumentJob::class);
 });
