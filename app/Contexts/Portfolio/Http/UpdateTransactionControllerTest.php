@@ -217,3 +217,28 @@ it('refuse de basculer une ligne existante en dividende', function () {
 
     expect($transaction->fresh()->type->value)->toBe('buy');
 });
+
+/**
+ * Une ligne déduite est la conséquence d'un achat, jamais une saisie : `RecomputeCashDeposits`
+ * efface toutes les lignes `auto` de l'enveloppe et les rejoue à chaque écriture. La correction
+ * était donc enregistrée puis détruite par l'observateur dans la même requête, et la réponse ne
+ * disait rien. Le front bride l'accès, la route ne l'était pas.
+ */
+it('refuse de corriger un versement déduit', function () {
+    ['user' => $user, 'wallet' => $wallet] = portfolioFixture();
+    $deposit = Transaction::query()
+        ->where('user_id', $user->id)
+        ->where('type', 'deposit')
+        ->where('auto', true)
+        ->firstOrFail();
+
+    $this->put("/transactions/{$deposit->id}", [
+        'walletId' => $wallet->id,
+        'date' => '2026-04-01',
+        'type' => 'deposit',
+        'fees' => '0',
+        'amount' => '9999',
+    ])->assertNotFound();
+
+    expect((float) $deposit->fresh()->amount)->not->toBe(9999.0);
+});

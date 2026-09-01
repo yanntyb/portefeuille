@@ -26,6 +26,18 @@ class UpdateTransactionController
             abort(404);
         }
 
+        /**
+         * Une ligne déduite ne se corrige pas : `RecomputeCashDeposits` efface toutes les lignes
+         * `auto` de l'enveloppe et les rejoue à chaque écriture, si bien que la correction était
+         * enregistrée puis détruite par l'observateur dans la même requête — 302 sans un mot. Le
+         * front bride déjà l'accès ; la route ne l'était pas.
+         *
+         * 404 et non 403, comme la ligne d'un autre : le code ne dit pas ce qui existe.
+         */
+        if ($transaction->auto) {
+            abort(404);
+        }
+
         ($this->update)($transaction, TransactionInputData::fromValidated($request->validated()));
 
         return back();
