@@ -90,3 +90,26 @@ it('rend un type nul quand le fournisseur n\'a pas su le traduire', function () 
         ->assertJsonPath('0.type', null)
         ->assertJsonPath('0.typeLabel', null);
 });
+
+it('déduplique le fournisseur même quand l\'instrument connu est hors du plafond des dix lignes affichées', function () {
+    foreach (range(1, 10) as $index) {
+        Instrument::factory()->create([
+            'name' => sprintf('Corp %02d', $index),
+            'ticker' => sprintf('CORP%02d', $index),
+        ]);
+    }
+
+    /** Onzième par ordre alphabétique : hors des dix lignes que `LOCAL_LIMIT` affiche. */
+    Instrument::factory()->create(['name' => 'Zebra Corp', 'ticker' => 'ZCORP']);
+
+    fakeProvider([
+        new InstrumentSearchResultData(symbol: 'ZCORP', name: 'Zebra Corp', exchange: 'NYSE', type: InstrumentType::Stock),
+    ]);
+
+    $response = $this->getJson('/instruments/recherche?q=corp')->assertOk()->assertJsonCount(10);
+
+    $duplicate = collect($response->json())
+        ->first(fn (array $row): bool => $row['symbol'] === 'ZCORP' && $row['existingId'] === null);
+
+    expect($duplicate)->toBeNull();
+});

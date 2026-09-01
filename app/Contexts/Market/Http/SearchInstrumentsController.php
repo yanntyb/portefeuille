@@ -6,6 +6,7 @@ use App\Contexts\Market\Datas\InstrumentSearchResultData;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Ports\InstrumentProviderPort;
 use Illuminate\Contracts\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -34,11 +35,20 @@ class SearchInstrumentsController
             return response()->json([]);
         }
 
-        $local = Instrument::query()
+        /**
+         * Une fabrique et non une requête déjà construite : elle sert deux fois, une fois pour
+         * les lignes affichées (plafonnées) et une fois pour les tickers connus (non plafonnés).
+         * Partager un seul `Builder` entre les deux y ajouterait le `limit()` de la première.
+         *
+         * @return EloquentBuilder<Instrument>
+         */
+        $matching = fn (): EloquentBuilder => Instrument::query()
             ->where(function (Builder $builder) use ($query): void {
                 $builder->where('name', 'like', '%'.$query.'%')
                     ->orWhere('ticker', 'like', '%'.$query.'%');
-            })
+            });
+
+        $local = $matching()
             ->orderBy('name')
             ->limit(self::LOCAL_LIMIT)
             ->get();
@@ -51,7 +61,13 @@ class SearchInstrumentsController
             existingId: $instrument->id,
         ))->all();
 
-        $known = $local->pluck('ticker')
+        /**
+         * Sur toute la correspondance, pas seulement les dix lignes affichées : un ticker connu
+         * mais hors du plafond d'affichage doit quand même bloquer sa recréation par le
+         * fournisseur — la recherche locale est la seule protection contre les doublons.
+         */
+        $known = $matching()
+            ->pluck('ticker')
             ->filter()
             ->map(fn (string $ticker): string => strtolower($ticker))
             ->all();
