@@ -75,6 +75,14 @@ export const syncedAtLabel = (timestamp: number | null): string =>
     timestamp === null ? 'Données hors-ligne' : `Données du ${frDayTime(timestamp)}`;
 
 /**
+ * Une quantité de titres, à la française. Huit décimales au plus — la colonne en porte autant, une
+ * fraction de bitcoin en a besoin — et aucune de trop : `String(2.5)` rendait « 2.5 » au milieu
+ * d'une phrase par ailleurs francisée.
+ */
+export const frQuantity = (value: number): string =>
+    value.toLocaleString('fr-FR', { maximumFractionDigits: 8 });
+
+/**
  * La date du jour au format que le serveur attend (`Y-m-d`), construite **en local**.
  *
  * `new Date().toISOString().slice(0, 10)` serait en UTC : passé 22 h à Paris — 23 h l'hiver — il

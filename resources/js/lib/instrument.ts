@@ -1,4 +1,4 @@
-import { frDate } from '@/lib/format';
+import { eur, frDate, frQuantity } from '@/lib/format';
 
 export interface InstrumentPosition {
     quantity: number;
@@ -53,6 +53,20 @@ export interface NamedTransactionLine extends TransactionLine {
     assetId: number | null;
     assetName: string | null;
 }
+
+/**
+ * De quelle opération il s'agit, en une phrase — ce que le volet de confirmation d'une suppression
+ * récapitule.
+ *
+ * Une ligne sans quantité se nomme par son type et son montant : un versement n'a pas d'actif, et
+ * un dividende en a un mais aucune quantité, si bien que « Dividende de 0 Air Liquide » s'affichait
+ * là où « Dividende 34,90 € » dit le fait. La quantité, quand elle existe, est formatée comme le
+ * reste de l'écran — « de 2.5 » y traînait une écriture anglaise.
+ */
+export const transactionLabelOf = (line: NamedTransactionLine): string =>
+    line.assetName === null || line.quantity === 0
+        ? `${line.typeLabel} ${eur(line.total)} du ${frDate(line.date)}`
+        : `${line.typeLabel} de ${frQuantity(line.quantity)} ${line.assetName} du ${frDate(line.date)}`;
 
 /**
  * Le sens de trésorerie d'une ligne, miroir de `Portfolio\Services\TransactionFlow::cashDelta()` :

@@ -3,7 +3,9 @@ import {
     heroMeta,
     heroValueOf,
     investedOf,
+    transactionLabelOf,
     transactionYears,
+    type NamedTransactionLine,
     type Instrument,
     type InstrumentPosition,
     type TransactionLine,
@@ -137,5 +139,37 @@ describe('transactionYears', () => {
 
     it('ne rend aucun groupe sans transaction', () => {
         expect(transactionYears([])).toEqual([]);
+    });
+});
+
+describe('transactionLabelOf', () => {
+    /** `toLocaleString` sépare par des espaces insécables : les normaliser garde le test lisible. */
+    const plain = (value: string): string => value.replace(/[\s\u202f\u00a0]/g, ' ');
+
+    const named = (overrides: Partial<NamedTransactionLine> = {}): NamedTransactionLine => ({
+        ...line(),
+        assetId: 7,
+        assetName: 'Air Liquide',
+        ...overrides,
+    });
+
+    it('nomme un ordre par sa quantité, formatée à la française', () => {
+        expect(plain(transactionLabelOf(named({ quantity: 2.5 }))))
+            .toBe('Achat de 2,5 Air Liquide du 12/03/2026');
+    });
+
+    /**
+     * Un dividende porte un nom d'actif mais aucune quantité : « Dividende de 0 Air Liquide »
+     * s'affichait là où « Dividende 34,90 € » dit le fait.
+     */
+    it('nomme par le type et le montant une ligne sans quantité', () => {
+        expect(plain(transactionLabelOf(named({ type: 'dividend', typeLabel: 'Dividende', quantity: 0, total: 34.9 }))))
+            .toBe('Dividende 34,90 € du 12/03/2026');
+    });
+
+    it('nomme de même un mouvement d\'espèces, qui n\'a pas d\'actif', () => {
+        expect(plain(transactionLabelOf(named({
+            type: 'deposit', typeLabel: 'Versement', assetId: null, assetName: null, quantity: 0, total: 1000,
+        })))).toBe('Versement 1 000,00 € du 12/03/2026');
     });
 });

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { NativeSelect, type SelectOption } from '@/components/ui/native-select';
 import { SearchSelect } from '@/components/ui/search-select';
 import SegmentedControl, { type Segment } from '@/components/ui/SegmentedControl.vue';
-import { eur, frDate } from '@/lib/format';
+import { eur, frDate, frQuantity } from '@/lib/format';
 import { refreshableKeys } from '@/lib/inertiaRefresh';
 import {
     isAssetType,
@@ -190,14 +190,10 @@ const oversold: ComputedRef<boolean> = computed((): boolean => {
         && wanted > heldQuantity.value;
 });
 
-/** Autant de décimales que la saisie en demande, sans les zéros que personne ne lit. */
-const quantityLabel = (value: number): string =>
-    value.toLocaleString('fr-FR', { maximumFractionDigits: 8 });
-
 /** Le plafond, sous le champ, dès que l'enveloppe et l'actif sont connus et qu'on vend. */
 const quantityHint: ComputedRef<string | undefined> = computed((): string | undefined =>
     form.type === 'sell' && heldQuantity.value !== null
-        ? `Maximum : ${quantityLabel(heldQuantity.value)} titre(s) détenu(s)`
+        ? `Maximum : ${frQuantity(heldQuantity.value)} titre(s) détenu(s)`
         : undefined,
 );
 
@@ -208,7 +204,7 @@ const quantityError: ComputedRef<string | null> = computed((): string | null => 
     }
 
     return oversold.value && heldQuantity.value !== null
-        ? `Vous ne détenez que ${quantityLabel(heldQuantity.value)} titre(s) dans cette enveloppe.`
+        ? `Vous ne détenez que ${frQuantity(heldQuantity.value)} titre(s) dans cette enveloppe.`
         : null;
 });
 
