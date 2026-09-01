@@ -30,7 +30,11 @@ it('names the asset of each line without reopening a query per line', function (
      * Un achat non couvert par aucun dépôt fait déduire un versement du même jour
      * (`RecomputeCashDeposits`) : deux lignes désormais, la ligne d'espèces sans actif comprise.
      */
-    $line = collect($this->ledger->transactionsFor($this->user->id))->firstWhere('id', $buy->id);
+    $lines = collect($this->ledger->transactionsFor($this->user->id));
+
+    expect($lines)->toHaveCount(2);
+
+    $line = $lines->firstWhere('id', $buy->id);
 
     expect($line->walletId)->toBe($this->wallet->id)
         ->and($line->assetId)->toBe($this->asset->id)

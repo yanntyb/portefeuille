@@ -212,4 +212,12 @@ describe('correction depuis la liste', () => {
         await click(pencils[0]);
         expect(edited).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
     });
+
+    it('n\'offre aucun crayon sur une ligne déduite, en variante « bare » aussi', async () => {
+        const { host } = mountEditable([line({ auto: true })], 'bare');
+
+        await click(host.querySelector('[data-transaction-year]'));
+
+        expect(host.querySelector('[data-transaction-edit]')).toBeNull();
+    });
 });

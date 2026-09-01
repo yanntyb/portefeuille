@@ -14,6 +14,7 @@ vi.mock('@inertiajs/vue3', () => ({
 const { default: WealthTransactionsSection } = await import(
     '@/components/dashboard/WealthTransactionsSection.vue'
 );
+const { useTransactionDialogStore } = await import('@/stores/transactionDialog');
 
 const line = (overrides: Partial<WealthTransactionLine> = {}): WealthTransactionLine => ({
     id: 1,
@@ -106,6 +107,38 @@ describe('section transactions du tableau de bord', () => {
         return nextTick().then(() => {
             expect(host.textContent).toContain('Aucune transaction pour l\'instant.');
         });
+    });
+});
+
+describe('confirmation de suppression', () => {
+    it('nomme un versement saisi par son type et son montant, sans quantité ni nom fantôme', async () => {
+        const deposit = line({
+            id: 9,
+            type: 'deposit',
+            typeLabel: 'Versement',
+            isSell: false,
+            assetId: null,
+            assetName: null,
+            quantity: 0,
+            unitPrice: 0,
+            fees: 0,
+            total: 1000,
+            auto: false,
+        });
+
+        const host = mountSection([deposit]);
+
+        await click(host.querySelector('[data-section-toggle]'));
+        await click(host.querySelector('[data-transaction-year]'));
+        await click(host.querySelector('[data-transaction-row]'));
+        await click(host.querySelector('[data-transaction-delete]'));
+
+        /**
+         * `assetName` est nul sur un mouvement d'espèces : composer le libellé avec malgré tout
+         * rendrait « Versement de 0 null du … », ce qu'un utilisateur lirait littéralement.
+         */
+        expect(useTransactionDialogStore().deleting?.label?.replace(/[\s ]/g, ' '))
+            .toBe('Versement 1 000,00 € du 04/03/2026');
     });
 });
 

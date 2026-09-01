@@ -3,7 +3,7 @@ import { Deferred } from '@inertiajs/vue3';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
 import AddTransactionButton from '@/components/transactions/AddTransactionButton.vue';
 import TransactionYearList from '@/components/transactions/TransactionYearList.vue';
-import { frDate } from '@/lib/format';
+import { eur, frDate } from '@/lib/format';
 import type { WealthTransactionLine } from '@/lib/wealth';
 import { useTransactionDialogStore } from '@/stores/transactionDialog';
 
@@ -11,9 +11,19 @@ const props = defineProps<{ transactions?: WealthTransactionLine[] | null }>();
 
 const dialog = useTransactionDialogStore();
 
-/** Ce que le volet de confirmation récapitule : de quelle opération il s'agit, en une phrase. */
-const labelOf = (line: WealthTransactionLine): string =>
-    `${line.typeLabel} de ${line.quantity} ${line.assetName} du ${frDate(line.date)}`;
+/**
+ * Ce que le volet de confirmation récapitule : de quelle opération il s'agit, en une phrase.
+ *
+ * Un versement ou un retrait n'a pas d'actif : `assetName` y est `null`, et une quantité de 0 n'y
+ * dit rien. La phrase se recompose alors sur le type et le montant, sans nom ni quantité fantôme.
+ */
+const labelOf = (line: WealthTransactionLine): string => {
+    if (line.assetName === null) {
+        return `${line.typeLabel} ${eur(line.total)} du ${frDate(line.date)}`;
+    }
+
+    return `${line.typeLabel} de ${line.quantity} ${line.assetName} du ${frDate(line.date)}`;
+};
 </script>
 
 <template>
