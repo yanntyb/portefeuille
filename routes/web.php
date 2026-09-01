@@ -1,6 +1,7 @@
 <?php
 
 use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\Market\Http\SearchInstrumentsController;
 use App\Contexts\Market\Http\StartSyncController;
 use App\Contexts\MarketView\Http\AssetClassCatalogController;
 use App\Contexts\MarketView\Http\AssetClassController;
@@ -42,6 +43,12 @@ Route::delete('/transactions/{id}', DeleteTransactionController::class)
 
 /** Encaissement d'un détachement attendu : il devient une transaction de dividende. */
 Route::post('/dividendes', ConfirmDividendController::class)->name('dividends.confirm');
+
+/**
+ * La recherche d'un instrument : JSON, jamais mise en cache par le worker. Déclarée avant
+ * `/asset/{id}` par habitude du dépôt — un segment littéral ne se lit jamais comme un identifiant.
+ */
+Route::get('/instruments/recherche', SearchInstrumentsController::class)->name('instruments.search');
 
 /**
  * Une route par exposition, engendrée depuis l'enum : ajouter une classe d'actif n'est jamais

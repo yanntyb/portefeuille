@@ -75,6 +75,18 @@ describe('classifyRequest', () => {
          */
         expect(classifyRequest(shape, 'https://argent.test')).toBe('passthrough');
     });
+
+    it('laisse passer la recherche d\'instruments sans la mettre en cache', () => {
+        const shape = {
+            method: 'GET',
+            url: 'https://argent.test/instruments/recherche?q=apple',
+            mode: 'cors',
+            inertia: false,
+            partialData: null,
+        };
+
+        expect(classifyRequest(shape, 'https://argent.test')).toBe('passthrough');
+    });
 });
 
 describe('cacheKeyFor', () => {

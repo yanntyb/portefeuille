@@ -25,6 +25,12 @@ const SNAPSHOT_PATH = '/instantane';
  */
 const TRANSACTION_OPTIONS_PATH = '/transactions/options';
 
+/**
+ * La recherche d'un instrument, interrogée à chaque frappe. Même raison que l'instantané et les
+ * listes du formulaire : une réponse mise en cache figerait la liste sur le premier résultat tapé.
+ */
+const INSTRUMENT_SEARCH_PATH = '/instruments/recherche';
+
 export type SwRequestKind = 'passthrough' | 'asset' | 'inertia' | 'navigation' | 'other';
 
 /** Ce que le worker retient d'une requête pour décider quoi en faire. */
@@ -68,7 +74,11 @@ export function classifyRequest(request: RequestShape, workerOrigin: string): Sw
         return 'passthrough';
     }
 
-    if (url.pathname === SNAPSHOT_PATH || url.pathname === TRANSACTION_OPTIONS_PATH) {
+    if (
+        url.pathname === SNAPSHOT_PATH
+        || url.pathname === TRANSACTION_OPTIONS_PATH
+        || url.pathname === INSTRUMENT_SEARCH_PATH
+    ) {
         return 'passthrough';
     }
 
