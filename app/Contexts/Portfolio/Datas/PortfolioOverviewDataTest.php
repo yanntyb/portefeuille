@@ -13,6 +13,8 @@ it('serializes an overview to the expected json shape', function () {
         totalGain: 200.0,
         totalGainPct: 25.0,
         totalRealizedGain: 40.0,
+        netContributions: 900.0,
+        cash: 150.0,
         holdings: [new HoldingLineData(
             assetId: 7,
             assetName: 'ACME',
@@ -34,6 +36,8 @@ it('serializes an overview to the expected json shape', function () {
     $json = $overview->jsonSerialize();
 
     expect($json['totalValue'])->toBe(1000.0)
+        ->and($json['netContributions'])->toBe(900.0)
+        ->and($json['cash'])->toBe(150.0)
         ->and($json['holdings'][0]['assetId'])->toBe(7)
         ->and($json['holdings'][0]['assetName'])->toBe('ACME')
         ->and($json['holdings'][0]['type'])->toBe('stock')
@@ -49,5 +53,7 @@ it('builds an empty overview', function () {
     expect($overview->totalValue)->toBe(0.0)
         ->and($overview->totalCost)->toBe(0.0)
         ->and($overview->totalGain)->toBe(0.0)
+        ->and($overview->netContributions)->toBe(0.0)
+        ->and($overview->cash)->toBe(0.0)
         ->and($overview->holdings)->toBe([]);
 });

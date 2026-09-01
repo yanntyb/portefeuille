@@ -10,7 +10,6 @@ use App\Contexts\MarketView\Datas\ContributionLineData;
 use App\Contexts\MarketView\Datas\HoldingRowData;
 use App\Contexts\MarketView\Datas\PortfolioSummaryData;
 use App\Contexts\MarketView\Datas\PositionData;
-use App\Contexts\MarketView\Ports\IncomePort;
 use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
 use App\Contexts\Portfolio\Actions\GetPortfolioAnalysis;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
@@ -29,7 +28,6 @@ class PortfolioTotals implements PortfolioOverviewPort
         private GetPortfolioOverview $overview,
         private GetPortfolioPositions $positions,
         private GetPortfolioAnalysis $analysis,
-        private IncomePort $income,
     ) {}
 
     public function overviewFor(int $userId, AssetClass $exposure): PortfolioSummaryData
@@ -47,7 +45,7 @@ class PortfolioTotals implements PortfolioOverviewPort
             totalCost: $overview->totalCost,
             totalGain: $overview->totalGain,
             totalGainPct: $overview->totalGainPct,
-            totalRealizedGain: round($overview->totalRealizedGain + $this->income->summaryFor($userId, $exposure)->totalReceived, 2),
+            totalRealizedGain: $overview->totalRealizedGain,
             holdings: array_map(
                 fn (HoldingLineData $line): HoldingRowData => new HoldingRowData(
                     assetId: $line->assetId,
@@ -71,9 +69,13 @@ class PortfolioTotals implements PortfolioOverviewPort
     }
 
     /**
-     * Le réalisé d'une position ajoute son revenu encaissé à ses plus-values de cession, comme le
-     * total de l'exposition : les deux compteurs portent le même libellé, ils doivent compter la
-     * même chose, sans quoi la somme des positions ne ferait plus le total de la page.
+     * Le réalisé d'une position ne compte plus le détachement théorique d'`IncomePort` : depuis que
+     * le compte espèces de l'enveloppe existe, un dividende réellement perçu y entre déjà comme
+     * mouvement de cash. L'additionner ici, en plus, le compterait deux fois — une fois dans le
+     * solde, une fois en supplément du gain — sans qu'aucun cours ne baisse en retour côté titres
+     * pour compenser (le détachement fait bien décrocher le cours à l'ex-date, mais côté cash, pas
+     * ici). Ce compteur ne porte donc plus que les plus-values de cession, comme le total de
+     * l'exposition rendu par `overviewFor()`.
      */
     public function positionFor(int $userId, int $assetId): ?PositionData
     {
@@ -85,7 +87,7 @@ class PortfolioTotals implements PortfolioOverviewPort
             marketValue: $position->marketValue,
             gain: $position->gain,
             gainPct: $position->gainPct,
-            realizedGain: round($position->realizedGain + $this->income->assetHistoryFor($userId, $assetId)->totalReceived, 2),
+            realizedGain: $position->realizedGain,
         );
     }
 

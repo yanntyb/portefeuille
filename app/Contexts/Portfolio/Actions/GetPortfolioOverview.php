@@ -5,9 +5,11 @@ namespace App\Contexts\Portfolio\Actions;
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Contracts\PriceRepositoryContract;
 use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\Portfolio\Datas\CashMovementData;
 use App\Contexts\Portfolio\Datas\HoldingLineData;
 use App\Contexts\Portfolio\Datas\PortfolioOverviewData;
 use App\Contexts\Portfolio\Models\Holding;
+use App\Contexts\Portfolio\Services\CashLedger;
 use App\Contexts\Portfolio\Services\HoldingValuator;
 
 class GetPortfolioOverview
@@ -25,6 +27,8 @@ class GetPortfolioOverview
         private PriceRepositoryContract $prices,
         private HoldingValuator $valuator,
         private GetRealizedGains $realizedGains,
+        private GetCashMovements $cashMovements,
+        private CashLedger $cashLedger,
     ) {}
 
     /**
@@ -45,7 +49,7 @@ class GetPortfolioOverview
             ));
         }
 
-        return $this->summarize($lines, $this->realizedGains->totalFor($user->id, $classes));
+        return $this->summarize($lines, $this->realizedGains->totalFor($user->id, $classes), $user->id, $classes);
     }
 
     /**
@@ -100,13 +104,17 @@ class GetPortfolioOverview
      * tous deux par ici, sur les lignes déjà retenues par `__invoke()`.
      *
      * Le gain réalisé arrive de côté : il se lit sur les ventes, pas sur les lignes, un actif
-     * soldé n'ayant plus de position à totaliser.
+     * soldé n'ayant plus de position à totaliser. Les apports nets et le cash arrivent de même,
+     * lus sur les mouvements d'espèces plutôt que sur les positions.
      *
      * @param  list<HoldingLineData>  $lines
+     * @param  ?list<AssetClass>  $classes
      */
-    private function summarize(array $lines, float $realizedGain): PortfolioOverviewData
+    private function summarize(array $lines, float $realizedGain, int $userId, ?array $classes): PortfolioOverviewData
     {
         $totals = $this->valuator->totals($lines);
+        $movements = ($this->cashMovements)($userId);
+        $contributions = $this->cashLedger->netContributions($movements);
 
         return new PortfolioOverviewData(
             totalValue: $totals['totalValue'],
@@ -114,7 +122,55 @@ class GetPortfolioOverview
             totalGain: $totals['totalGain'],
             totalGainPct: $totals['totalGainPct'],
             totalRealizedGain: $realizedGain,
+            netContributions: $this->netContributionsFor($contributions, $classes),
+            cash: $this->cashBalance($movements),
             holdings: $lines,
         );
+    }
+
+    /**
+     * Sans `$classes`, l'apport total, toutes expositions confondues. Avec, la part imputée aux
+     * achats de ces expositions par `CashLedger::netContributions()` — un rachat financé par une
+     * vente n'y figure pas, il n'a consommé aucun apport.
+     *
+     * @param  array{total: float, byExposure: array<string, float>}  $contributions
+     * @param  ?list<AssetClass>  $classes
+     */
+    private function netContributionsFor(array $contributions, ?array $classes): float
+    {
+        if ($classes === null) {
+            return $contributions['total'];
+        }
+
+        $sum = 0.0;
+
+        foreach ($classes as $class) {
+            $sum += $contributions['byExposure'][$class->value] ?? 0.0;
+        }
+
+        return round($sum, 2);
+    }
+
+    /**
+     * Le solde d'espèces de l'utilisateur, toutes enveloppes confondues : la somme des soldes que
+     * rend `CashLedger::balanceAt()` pour chaque enveloppe qui a vu au moins un mouvement. Le cash
+     * n'est pas ventilé par exposition — une somme en compte n'appartient à aucune classe d'actif —
+     * donc `$classes` ne le filtre jamais.
+     *
+     * @param  list<CashMovementData>  $movements
+     */
+    private function cashBalance(array $movements): float
+    {
+        $today = now()->format('Y-m-d');
+
+        $walletIds = array_unique(array_map(fn (CashMovementData $movement): int => $movement->walletId, $movements));
+
+        $total = 0.0;
+
+        foreach ($walletIds as $walletId) {
+            $total += $this->cashLedger->balanceAt($movements, $walletId, $today);
+        }
+
+        return round($total, 2);
     }
 }

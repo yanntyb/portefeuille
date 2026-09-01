@@ -1,13 +1,20 @@
 <?php
 
+use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Dividend;
+use App\Contexts\Market\Models\Instrument;
+use App\Contexts\MarketView\Infrastructure\PortfolioTotals;
 use App\Contexts\MarketView\Ports\PortfolioOverviewPort;
+use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Enums\AccountType;
+use App\Contexts\Portfolio\Models\Transaction;
+use App\Contexts\Portfolio\Models\Wallet;
 use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
+    $this->user = User::factory()->create();
     $this->overview = app(PortfolioOverviewPort::class);
 });
 
@@ -94,7 +101,13 @@ it('partage la lecture mémoïsée du portefeuille entre deux expositions', func
     expect($queries->filter(fn (string $query): bool => str_contains($query, '"holdings"')))->toBeEmpty();
 });
 
-it('ajoute le dividende encaissé au gain réalisé, au total comme à la position', function () {
+/**
+ * Le détachement (`Market\Dividend`, théorique, dérivé des positions détenues à l'ex-date) n'entre
+ * dans aucun solde : seule une transaction de dividende réellement saisie alimente le cash. Compter
+ * ce détachement en plus du gain réalisé le compterait donc en pure perte, sans qu'aucun mouvement
+ * d'espèces n'y corresponde.
+ */
+it('ne compte pas le détachement théorique dans le gain réalisé, au total comme à la position', function () {
     ['user' => $user, 'instrument' => $instrument] = portfolioFixture();
 
     /** Dix titres détenus depuis le 1er janvier 2026, un détachement de 2 € par titre après. */
@@ -107,17 +120,64 @@ it('ajoute le dividende encaissé au gain réalisé, au total comme à la positi
     $summary = $this->overview->overviewFor($user->id, AssetClass::Equity);
     $position = $this->overview->positionFor($user->id, $instrument->id);
 
-    /**
-     * Aucune vente dans le jeu : le réalisé vaut donc les 20 € encaissés, ni plus ni moins. Le
-     * gain latent les rate — dernier cours et prix payé sont bruts — et rien d'autre ne les
-     * ramenait dans le patrimoine.
-     */
-    expect($summary->totalRealizedGain)->toBe(20.0)
-        ->and($position->realizedGain)->toBe(20.0);
+    /** Aucune vente dans le jeu : le réalisé est donc nul, le détachement n'étant plus additionné. */
+    expect($summary->totalRealizedGain)->toBe(0.0)
+        ->and($position->realizedGain)->toBe(0.0);
 });
 
 it('laisse le gain réalisé d\'une exposition muette aux seules cessions', function () {
     ['user' => $user] = cryptoFixture();
 
     expect($this->overview->overviewFor($user->id, AssetClass::Crypto)->totalRealizedGain)->toBe(0.0);
+});
+
+/**
+ * Douze achetés, dix vendus : deux restent détenus, faute de quoi la vente soldant tout aurait
+ * effacé la ligne `Holding` et `positionFor()` n'aurait plus rien à rendre — `GetPortfolioPositions`
+ * ne connaît que les positions encore ouvertes, contrairement à `GetRealizedGains` qui lit les
+ * ventes elles-mêmes.
+ */
+it('ne compte plus les dividendes en supplément du gain réalisé', function () {
+    $asset = Instrument::factory()->create(['ticker' => 'ACME', 'asset_class' => AssetClass::Equity]);
+    $wallet = Wallet::factory()->for($this->user)->create(['name' => 'PEA']);
+
+    Transaction::factory()->buy()->create([
+        'user_id' => $this->user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'date' => '2026-01-01', 'quantity' => 12, 'unit_price' => 100, 'fees' => 0,
+    ]);
+    Transaction::factory()->sell()->create([
+        'user_id' => $this->user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'date' => '2026-02-01', 'quantity' => 10, 'unit_price' => 120, 'fees' => 0,
+    ]);
+    Transaction::factory()->dividend()->create([
+        'user_id' => $this->user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'date' => '2026-01-15', 'amount' => 50,
+    ]);
+
+    /** 200 € de plus-value, et rien de plus : le dividende est entré par le compte espèces. */
+    expect(app(PortfolioTotals::class)->positionFor($this->user->id, $asset->id)->realizedGain)->toBe(200.0);
+});
+
+it('mesure l\'investi aux apports nets, pas au coût des titres', function () {
+    $asset = Instrument::factory()->create(['ticker' => 'ACME', 'asset_class' => AssetClass::Equity]);
+    $wallet = Wallet::factory()->for($this->user)->create(['name' => 'PEA']);
+
+    Transaction::factory()->buy()->create([
+        'user_id' => $this->user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'date' => '2026-01-01', 'quantity' => 10, 'unit_price' => 100, 'fees' => 0,
+    ]);
+    Transaction::factory()->sell()->create([
+        'user_id' => $this->user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'date' => '2026-02-01', 'quantity' => 10, 'unit_price' => 120, 'fees' => 0,
+    ]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $this->user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'date' => '2026-03-01', 'quantity' => 10, 'unit_price' => 110, 'fees' => 0,
+    ]);
+
+    /**
+     * 1 000 € sortis de la poche, une seule fois : le rachat est financé par la vente, il ne
+     * crée aucun apport. L'ancien « coût des titres » aurait dit 1 100 €.
+     */
+    expect(app(GetPortfolioOverview::class)($this->user, null)->netContributions)->toBe(1000.0);
 });

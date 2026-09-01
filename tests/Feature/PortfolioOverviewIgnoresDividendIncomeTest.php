@@ -12,9 +12,12 @@ use App\Contexts\Portfolio\Models\Wallet;
 
 /**
  * La spec des dividendes encaissés promet qu'aucun chiffre déjà affiché ne change de valeur : ni
- * le coût de revient, ni le gain. C'est vrai aujourd'hui par construction — `GetPortfolioOverview`
- * ne lit jamais la table des dividendes —, mais rien ne le garde. Ce test tombera le jour où
- * quelqu'un « améliorera » le gain en y mêlant le revenu perçu.
+ * le coût de revient, ni le gain, ni — depuis que `GetPortfolioOverview` les porte — les apports
+ * nets et le solde de cash. C'est vrai aujourd'hui par construction : `GetPortfolioOverview` ne lit
+ * jamais la table des dividendes détachés (`Market\Dividend`), seulement les positions et, pour le
+ * cash et les apports, les transactions de dividende réellement saisies — deux choses distinctes
+ * qui n'existent pas dans ce jeu de test. Rien ne le garde autrement. Ce test tombera le jour où
+ * quelqu'un « améliorera » le gain, les apports ou le cash en y mêlant ce détachement théorique.
  */
 it('rend un gain et un coût de revient identiques avec ou sans détachement en base', function () {
     $user = User::factory()->create();
@@ -58,6 +61,8 @@ it('rend un gain et un coût de revient identiques avec ou sans détachement en 
     expect($withDividends->totalCost)->toBe($withoutDividends->totalCost)
         ->and($withDividends->totalGain)->toBe($withoutDividends->totalGain)
         ->and($withDividends->totalGainPct)->toBe($withoutDividends->totalGainPct)
+        ->and($withDividends->netContributions)->toBe($withoutDividends->netContributions)
+        ->and($withDividends->cash)->toBe($withoutDividends->cash)
         ->and($withDividends->holdings[0]->avgCost)->toBe($withoutDividends->holdings[0]->avgCost)
         ->and($withDividends->holdings[0]->gain)->toBe($withoutDividends->holdings[0]->gain);
 });
