@@ -81,5 +81,5 @@ it('derives one class per exposure, then the hand-written ones', function () {
         app(AssetClassRegistry::class)->all(),
     );
 
-    expect($keys)->toBe(['equity', 'bond', 'commodity', 'crypto', 'realEstate']);
+    expect($keys)->toBe(['equity', 'bond', 'commodity', 'crypto', 'realEstate', 'cash']);
 });

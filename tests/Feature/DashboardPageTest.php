@@ -32,12 +32,13 @@ it('additionne les titres et l\'immobilier dans le grand chiffre', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
-            ->has('overview.classes', 5)
+            ->has('overview.classes', 6)
             ->where('overview.classes.0.key', 'equity')
             ->where('overview.classes.1.key', 'bond')
             ->where('overview.classes.2.key', 'commodity')
             ->where('overview.classes.3.key', 'crypto')
             ->where('overview.classes.4.key', 'realEstate')
+            ->where('overview.classes.5.key', 'cash')
             ->where('overview.totalValue', fn (float $total): bool => $total > 0.0)
         );
 });
@@ -121,7 +122,7 @@ it('compte la crypto comme sa propre classe, séparée des titres', function () 
         ->get('/')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->has('overview.classes', 5)
+            ->has('overview.classes', 6)
             ->where('overview.classes.3.key', 'crypto')
             ->where('overview.classes.3.label', 'Crypto')
             ->where('overview.classes.3.href', '/crypto')

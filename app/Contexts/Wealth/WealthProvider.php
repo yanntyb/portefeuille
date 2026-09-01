@@ -9,8 +9,10 @@ use App\Contexts\Portfolio\Actions\GetSectorBreakdown;
 use App\Contexts\Valuation\Actions\BuildEvolutionSeries;
 use App\Contexts\Wealth\Infrastructure\AssetClassRegistry;
 use App\Contexts\Wealth\Infrastructure\PortfolioAssetClass;
+use App\Contexts\Wealth\Infrastructure\PortfolioCash;
 use App\Contexts\Wealth\Ports\AccountsPort;
 use App\Contexts\Wealth\Ports\AssetClassPort;
+use App\Contexts\Wealth\Ports\CashPort;
 use App\Contexts\Wealth\Ports\TransactionsPort;
 use App\Contexts\Wealth\Services\SeriesAligner;
 use Illuminate\Contracts\Foundation\Application;
@@ -34,6 +36,12 @@ class WealthProvider extends ServiceProvider
     {
         $app->bind(TransactionsPort::class, $transactions);
         $app->bind(AccountsPort::class, $accounts);
+
+        /**
+         * Interne à `CashClass` : aucun autre appelant ne le consomme, contrairement aux deux
+         * ports ci-dessus, donc pas de paramètre dédié — le fixer ici suffit.
+         */
+        $app->bind(CashPort::class, PortfolioCash::class);
 
         $app->scoped(
             AssetClassRegistry::class,
