@@ -900,4 +900,32 @@ describe('ajout d\'un instrument depuis la saisie', () => {
         /** La date tapée avant l'ouverture n'a pas été perdue : le formulaire n'a jamais démonté. */
         expect((field(host, 'transaction-date') as HTMLInputElement).value).toBe('2026-05-01');
     });
+
+    it('signale l\'échec du rechargement des options après une création', async () => {
+        /**
+         * Un catalogue resté périmé laisserait l'actif tout juste choisi absent de la liste, sans
+         * qu'un mot ne le dise : le drapeau d'échec doit se lever aussi sur une réponse non-ok, pas
+         * seulement sur une exception.
+         */
+        const host = await mountForm();
+
+        host.querySelector<HTMLElement>('[data-transaction-add-instrument]')!.click();
+        await nextTick();
+
+        vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, json: async () => ({}) })));
+
+        await emitCreated(host, { id: 99, name: 'NVIDIA Corp.', ticker: 'NVDA', assetClass: 'equity', assetClassSlug: 'actions' });
+
+        expect(host.querySelector('[data-instrument-search-input]')).toBeNull();
+        expect(host.querySelector('[data-form-error]')?.textContent?.trim())
+            .toBe('Les enveloppes et les instruments n\'ont pas pu être chargés.');
+    });
+
+    it('désactive le lien pendant l\'envoi, comme le sélecteur d\'actif qu\'il accompagne', async () => {
+        processing.value = true;
+
+        const host = await mountForm();
+
+        expect((host.querySelector('[data-transaction-add-instrument]') as HTMLButtonElement).disabled).toBe(true);
+    });
 });

@@ -104,9 +104,17 @@ const reloadOptions = async (): Promise<void> => {
     try {
         const response = await fetch('/transactions/options', { headers: { Accept: 'application/json' } });
 
-        if (response.ok) {
-            options.value = (await response.json()) as FormOptions;
+        if (!response.ok) {
+            /**
+             * Sans ce drapeau, un catalogue resté périmé après la création laisserait l'actif tout
+             * juste choisi absent d'`instrumentOptions`, sans que rien ne le dise.
+             */
+            optionsFailed.value = true;
+
+            return;
         }
+
+        options.value = (await response.json()) as FormOptions;
     } catch {
         optionsFailed.value = true;
     }
@@ -500,7 +508,8 @@ const serverUnreachable: Ref<boolean> = ref(false);
                 <button
                     type="button"
                     data-transaction-add-instrument
-                    class="self-start text-sm text-muted-foreground underline"
+                    class="self-start text-sm text-muted-foreground underline disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="blocked"
                     @click="searchingInstrument = true"
                 >
                     L'actif n'est pas dans la liste ?
