@@ -6,10 +6,12 @@ use App\Contexts\Income\Datas\IncomeReceiptData;
 use App\Contexts\Income\Enums\IncomeSource;
 use App\Contexts\Income\Ports\IncomeSourcePort;
 use App\Contexts\Income\Services\RollingWindow;
+use App\Contexts\Income\Sources\Dividend\Datas\ConfirmedDividendData;
 use App\Contexts\Income\Sources\Dividend\Datas\DividendReceiptData;
 use App\Contexts\Income\Sources\Dividend\Datas\PositionSnapshotData;
 use App\Contexts\Income\Sources\Dividend\Ports\DividendHistoryPort;
 use App\Contexts\Income\Sources\Dividend\Ports\PositionHistoryPort;
+use App\Contexts\Income\Sources\Dividend\Services\ConfirmedDividendSubstitution;
 use App\Contexts\Income\Sources\Dividend\Services\DividendCalculator;
 use App\Contexts\Income\Sources\Dividend\Services\DividendProjector;
 use Illuminate\Support\Carbon;
@@ -22,6 +24,7 @@ class DividendIncomeSource implements IncomeSourcePort
         private DividendCalculator $calculator,
         private DividendProjector $projector,
         private RollingWindow $window,
+        private ConfirmedDividendSubstitution $substitution,
     ) {}
 
     public function source(): IncomeSource
@@ -30,8 +33,8 @@ class DividendIncomeSource implements IncomeSourcePort
     }
 
     /**
-     * Un détachement encaissé sort de la dérivation : c'est la transaction qui compte à sa place,
-     * jamais les deux — la clé de dédoublonnage est `(assetId, walletId, exDate)`.
+     * Un détachement encaissé sort de la dérivation : `ConfirmedDividendSubstitution` le
+     * remplace par sa transaction, jamais les deux.
      *
      * @return list<IncomeReceiptData>
      */
@@ -49,48 +52,20 @@ class DividendIncomeSource implements IncomeSourcePort
             $this->dividends->forAssets($assetIds),
         );
 
-        /** @var array<string, true> $confirmedKeys */
-        $confirmedKeys = [];
-
-        foreach ($confirmed as $dividend) {
-            $confirmedKeys[$this->key($dividend->assetId, $dividend->walletId, $dividend->exDate)] = true;
-        }
-
-        $derived = array_values(array_filter(
-            $derived,
-            fn (DividendReceiptData $receipt): bool => ! isset($confirmedKeys[$this->key($receipt->assetId, $receipt->walletId, $receipt->exDate)]),
-        ));
+        $receipts = $this->substitution->apply($derived, $confirmed);
 
         $names = $this->dividends->namesFor(array_unique([
             ...$assetIds,
-            ...array_map(fn ($dividend): int => $dividend->assetId, $confirmed),
+            ...array_map(fn (ConfirmedDividendData $dividend): int => $dividend->assetId, $confirmed),
         ]));
 
-        $receipts = array_map(fn (DividendReceiptData $receipt): IncomeReceiptData => new IncomeReceiptData(
+        return array_map(fn (DividendReceiptData $receipt): IncomeReceiptData => new IncomeReceiptData(
             source: IncomeSource::Dividend,
             date: Carbon::parse($receipt->exDate),
             amount: $receipt->amount,
             assetId: $receipt->assetId,
             label: $names[$receipt->assetId] ?? null,
-        ), $derived);
-
-        foreach ($confirmed as $dividend) {
-            $receipts[] = new IncomeReceiptData(
-                source: IncomeSource::Dividend,
-                date: Carbon::parse($dividend->exDate),
-                amount: $dividend->amount,
-                assetId: $dividend->assetId,
-                label: $names[$dividend->assetId] ?? null,
-            );
-        }
-
-        return $receipts;
-    }
-
-    /** Clé de dédoublonnage entre un reçu dérivé et une transaction de dividende encaissée. */
-    private function key(int $assetId, int $walletId, string $exDate): string
-    {
-        return "{$assetId}|{$walletId}|{$exDate}";
+        ), $receipts);
     }
 
     /**

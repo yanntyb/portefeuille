@@ -4,11 +4,13 @@ namespace App\Contexts\Income\Sources\Dividend\Actions;
 
 use App\Contexts\Income\Services\RollingWindow;
 use App\Contexts\Income\Sources\Dividend\Datas\AssetDividendHistoryData;
+use App\Contexts\Income\Sources\Dividend\Datas\ConfirmedDividendData;
 use App\Contexts\Income\Sources\Dividend\Datas\DividendRecordData;
 use App\Contexts\Income\Sources\Dividend\Datas\PositionRecordData;
 use App\Contexts\Income\Sources\Dividend\Datas\PositionSnapshotData;
 use App\Contexts\Income\Sources\Dividend\Ports\DividendHistoryPort;
 use App\Contexts\Income\Sources\Dividend\Ports\PositionHistoryPort;
+use App\Contexts\Income\Sources\Dividend\Services\ConfirmedDividendSubstitution;
 use App\Contexts\Income\Sources\Dividend\Services\DividendCalculator;
 use App\Contexts\Income\Sources\Dividend\Services\DividendProjector;
 use Illuminate\Support\Carbon;
@@ -21,6 +23,7 @@ class GetAssetDividendHistory
         private DividendCalculator $calculator,
         private DividendProjector $projector,
         private RollingWindow $window,
+        private ConfirmedDividendSubstitution $substitution,
     ) {}
 
     /**
@@ -28,6 +31,10 @@ class GetAssetDividendHistory
      *
      * Vit dans le dossier de la source dividende et non dans le noyau : « par instrument » n'a
      * pas de sens pour un revenu qui ne porte sur aucun titre.
+     *
+     * Un détachement encaissé y est lu depuis sa transaction, jamais recalculé — même règle et
+     * même site (`ConfirmedDividendSubstitution`) que `DividendIncomeSource`, sans quoi la fiche
+     * d'un actif et le tableau de bord des revenus diraient deux montants pour le même fait.
      */
     public function __invoke(int $userId, int $assetId): AssetDividendHistoryData
     {
@@ -37,7 +44,14 @@ class GetAssetDividendHistory
         ));
 
         $dividends = $this->dividends->forAssets([$assetId]);
-        $receipts = $this->calculator->receipts($movements, $dividends);
+        $derived = $this->calculator->receipts($movements, $dividends);
+
+        $confirmed = array_values(array_filter(
+            $this->positions->confirmedDividendsFor($userId),
+            fn (ConfirmedDividendData $dividend): bool => $dividend->assetId === $assetId,
+        ));
+
+        $receipts = $this->substitution->apply($derived, $confirmed);
 
         $since = $this->window->slidingDays(Carbon::now());
         $position = $this->positions->positionFor($userId, $assetId);

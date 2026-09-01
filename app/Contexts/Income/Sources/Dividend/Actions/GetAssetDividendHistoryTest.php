@@ -4,6 +4,7 @@ use App\Contexts\Identity\Models\User;
 use App\Contexts\Income\Sources\Dividend\Actions\GetAssetDividendHistory;
 use App\Contexts\Market\Models\Dividend;
 use App\Contexts\Market\Models\Instrument;
+use App\Contexts\Portfolio\Actions\ConfirmDividend;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
@@ -165,6 +166,23 @@ it('sérialise l\'estimation pour la page', function () {
     $payload = json_decode(json_encode(app(GetAssetDividendHistory::class)($user->id, $instrument->id)), true);
 
     expect($payload['estimatedAnnual'])->toEqual(8.0);
+});
+
+it('rend le montant net confirmé, jamais le brut calculé, une fois le dividende encaissé', function () {
+    // 8 € bruts calculés (10 titres × 0,80 €) ; 6,50 € nets réellement reçus et validés.
+    $this->travelTo('2026-08-19 10:00:00');
+    ['user' => $user, 'instrument' => $instrument] = heldWithDividends();
+    $walletId = Wallet::query()->where('user_id', $user->id)->value('id');
+
+    app(ConfirmDividend::class)($user->id, $walletId, $instrument->id, '2026-03-05', 6.50);
+
+    $history = app(GetAssetDividendHistory::class)($user->id, $instrument->id);
+
+    expect($history->receipts)->toHaveCount(2)
+        ->and($history->receipts[0]->exDate)->toBe('2026-03-05')
+        ->and($history->receipts[0]->amount)->toBe(6.5)
+        ->and($history->totalReceived)->toBe(11.5)
+        ->and($history->last12Months)->toBe(6.5);
 });
 
 it('estime le revenu d\'un titre acheté après son dernier détachement', function () {
