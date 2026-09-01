@@ -118,6 +118,29 @@ it('périme la série quand un achat devient une vente', function () {
     expect($calls)->toBe(2);
 });
 
+/**
+ * L'empreinte ne comptait que les ventes : un retrait basculé en versement — même montant, même
+ * date, même enveloppe, et aucune ligne déduite de part et d'autre — ne bougeait aucun agrégat,
+ * et pourtant le signe du mouvement s'inverse.
+ */
+it('périme la série quand un retrait devient un versement', function () {
+    $calls = 0;
+    Transaction::factory()->deposit()->create([
+        'user_id' => $this->user->id, 'wallet_id' => $this->wallet->id, 'date' => '2026-01-01', 'amount' => 1000,
+    ]);
+    /** Le solde couvre le retrait, et le couvrira encore après la bascule : rien ne se déduit. */
+    $withdrawal = Transaction::factory()->withdrawal()->create([
+        'user_id' => $this->user->id, 'wallet_id' => $this->wallet->id, 'date' => '2026-02-01', 'amount' => 200,
+    ]);
+    rememberSerie($this->user->id, $calls);
+
+    $withdrawal->update(['type' => TransactionType::Deposit]);
+
+    rememberSerie($this->user->id, $calls);
+
+    expect($calls)->toBe(2);
+});
+
 it('périme la série quand le montant d\'un versement change', function () {
     $calls = 0;
     $deposit = Transaction::factory()->deposit()->create([
