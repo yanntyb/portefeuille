@@ -3,6 +3,7 @@
 namespace App\Contexts\Wealth\Infrastructure;
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Portfolio\Actions\GetCashMovements;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Datas\CashMovementData;
@@ -13,6 +14,7 @@ use App\Contexts\Valuation\Enums\ValuationGranularity;
 use App\Contexts\Wealth\Datas\ClassSeriesData;
 use App\Contexts\Wealth\Datas\ClassSnapshotData;
 use App\Contexts\Wealth\Ports\CashPort;
+use App\Contexts\Wealth\Services\InvestedCapital;
 use App\Contexts\Wealth\Services\SeriesAligner;
 
 /**
@@ -27,17 +29,21 @@ class PortfolioCash implements CashPort
         private CashLedger $ledger,
         private BuildEvolutionSeries $evolution,
         private SeriesAligner $aligner,
+        private InvestedCapital $capital,
     ) {}
 
     /**
-     * `value` est le solde toutes enveloppes confondues. `invested` suit l'argent : tant qu'un
-     * apport est en titres, il est imputé à l'exposition (`totalCost`) ; dès que les titres sont
-     * vendus, le capital revient aux liquidités. L'étiquette d'origine du FIFO
-     * (`CashLedger::compositionAt()`) ne convient pas ici — elle dit d'où vient un euro, pas s'il
+     * `value` est le solde toutes enveloppes confondues. `invested` est tout ce que les expositions
+     * n'immobilisent plus : l'apport suit l'argent, imputé à l'exposition tant qu'il est en titres,
+     * rendu aux liquidités dès qu'elles sont vendues. L'étiquette d'origine du FIFO
+     * (`CashLedger::compositionAt()`) ne conviendrait pas — elle dit d'où vient un euro, pas s'il
      * est capital ou gain, et le produit d'une vente est les deux à la fois.
      *
-     * Bornée à `[0, cash]` : un apport encore entièrement immobilisé en titres ne doit pas rendre
-     * l'investi négatif sur un compte espèces vide.
+     * Les investis d'exposition se relisent un par un plutôt que de se déduire de `totalCost` : ce
+     * sont exactement ceux que `PortfolioAssetClass` déclare, et l'invariant du chantier — la somme
+     * des investis de toutes les classes fait les apports nets — ne tient qu'à ce prix.
+     * `GetPortfolioOverview` est liée en `scoped` et mémoïse ses lignes : les quatre lectures
+     * supplémentaires ne rouvrent pas le portefeuille.
      */
     public function snapshotFor(int $userId): ClassSnapshotData
     {
@@ -49,9 +55,19 @@ class PortfolioCash implements CashPort
 
         $overview = ($this->overview)($user);
 
+        $exposuresInvested = 0.0;
+
+        foreach (AssetClass::cases() as $exposure) {
+            $scoped = ($this->overview)($user, [$exposure]);
+            $exposuresInvested = round(
+                $exposuresInvested + $this->capital->forExposure($scoped->netContributions, $scoped->totalCost),
+                2,
+            );
+        }
+
         return new ClassSnapshotData(
             value: $overview->cash,
-            invested: $this->investedOf($overview->netContributions, $overview->totalCost, $overview->cash),
+            invested: $this->capital->forCash($overview->netContributions, $exposuresInvested, $overview->cash),
         );
     }
 
@@ -104,7 +120,7 @@ class PortfolioCash implements CashPort
             $netContributions = $this->ledger->netContributions($upToDate)['total'];
 
             $values[] = $balance;
-            $invested[] = $this->investedOf($netContributions, $costs[$index], $balance);
+            $invested[] = $this->capital->forCash($netContributions, $costs[$index], $balance);
         }
 
         return new ClassSeriesData(labels: $labels, value: $values, invested: $invested);
@@ -117,13 +133,5 @@ class PortfolioCash implements CashPort
             fn (CashMovementData $movement): float => $movement->date <= $date ? $movement->delta : 0.0,
             $movements,
         )), 2);
-    }
-
-    /**
-     * `investi(Liquidités) = borne(apports nets − coût de revient des titres détenus, 0, solde)`.
-     */
-    private function investedOf(float $netContributions, float $costOfHoldings, float $cash): float
-    {
-        return round(min(max($netContributions - $costOfHoldings, 0.0), $cash), 2);
     }
 }

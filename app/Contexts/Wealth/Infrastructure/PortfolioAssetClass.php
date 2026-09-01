@@ -17,6 +17,7 @@ use App\Contexts\Wealth\Datas\ClassSectorData;
 use App\Contexts\Wealth\Datas\ClassSeriesData;
 use App\Contexts\Wealth\Datas\ClassSnapshotData;
 use App\Contexts\Wealth\Ports\AssetClassPort;
+use App\Contexts\Wealth\Services\InvestedCapital;
 use App\Contexts\Wealth\Services\SeriesAligner;
 
 /**
@@ -36,6 +37,7 @@ class PortfolioAssetClass implements AssetClassPort
         private BuildEvolutionSeries $evolution,
         private GetIncomeSummary $income,
         private SeriesAligner $aligner,
+        private InvestedCapital $capital,
     ) {}
 
     public function key(): string
@@ -70,6 +72,11 @@ class PortfolioAssetClass implements AssetClassPort
      * se retrouvait donc nulle part : le gain latent le rate aussi, puisqu'il compare le dernier
      * cours au prix réellement payé, tous deux bruts. Seules les séries d'évolution portent des
      * cours ajustés, et elles ne servent pas ce compteur.
+     *
+     * L'investi n'est plus `totalCost` : celui-ci est le coût des titres détenus, donc il remonte
+     * à chaque rachat financé par une vente et affichait « Investi 1 200, Gain 0 € » sur un
+     * aller-retour qui n'avait sorti que 1 000 € de la poche. `InvestedCapital::forExposure()`
+     * porte la règle, `netContributions` l'apport que `CashLedger` impute à cette exposition.
      */
     public function snapshotFor(int $userId): ClassSnapshotData
     {
@@ -83,7 +90,7 @@ class PortfolioAssetClass implements AssetClassPort
 
         return new ClassSnapshotData(
             value: $overview->totalValue,
-            invested: $overview->totalCost,
+            invested: $this->capital->forExposure($overview->netContributions, $overview->totalCost),
             realized: round($overview->totalRealizedGain + $this->receivedIncomeFor($userId), 2),
         );
     }
