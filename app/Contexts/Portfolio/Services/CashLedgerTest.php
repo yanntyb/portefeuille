@@ -182,3 +182,50 @@ it('ne fait jamais imputer l\'apport d\'une enveloppe à l\'achat d\'une autre �
     expect((new CashLedger)->netContributions($movements))
         ->toBe(['total' => 500.0, 'byExposure' => ['crypto' => 500.0]]);
 });
+
+/**
+ * `timeline()` remplace un `netContributions()` complet par point de série — quadratique sur le
+ * chemin du tableau de bord. Le test compare le balayage unique au calcul point par point qu'il
+ * remplace : c'est la preuve de non-régression, pas une valeur recopiée à la main.
+ */
+it('rend point par point ce que le calcul complet rendrait à chaque date', function () {
+    $movements = [
+        cashMovement('2026-01-10', 1000.0, walletId: 1, isDeposit: true),
+        cashMovement('2026-02-01', -1000.0, walletId: 1, exposure: AssetClass::Equity),
+        cashMovement('2026-03-01', 500.0, walletId: 2, isDeposit: true),
+        cashMovement('2026-03-01', -200.0, walletId: 2, isWithdrawal: true),
+        cashMovement('2026-08-01', 1285.5, walletId: 1, exposure: AssetClass::Equity),
+        cashMovement('2026-08-15', -1200.0, walletId: 1, exposure: AssetClass::Crypto),
+    ];
+
+    $dates = ['2026-01-10', '2026-02-01', '2026-03-01', '2026-08-01', '2026-08-15', '2026-12-31'];
+    $ledger = new CashLedger;
+
+    $expected = array_map(function (string $date) use ($ledger, $movements): array {
+        $upToDate = array_values(array_filter(
+            $movements,
+            fn (CashMovementData $movement): bool => $movement->date <= $date,
+        ));
+
+        return [
+            'balance' => round(
+                $ledger->balanceAt($upToDate, 1, $date) + $ledger->balanceAt($upToDate, 2, $date),
+                2,
+            ),
+            'netContributions' => $ledger->netContributions($upToDate)['total'],
+        ];
+    }, $dates);
+
+    expect($ledger->timeline($movements, $dates))->toBe($expected);
+});
+
+/** Une date antérieure à tout mouvement ne porte ni solde ni apport, sans décaler le curseur. */
+it('rend zéro avant le premier mouvement', function () {
+    $movements = [cashMovement('2026-06-01', 1000.0, isDeposit: true)];
+
+    expect((new CashLedger)->timeline($movements, ['2026-01-01', '2026-06-01']))
+        ->toBe([
+            ['balance' => 0.0, 'netContributions' => 0.0],
+            ['balance' => 1000.0, 'netContributions' => 1000.0],
+        ]);
+});

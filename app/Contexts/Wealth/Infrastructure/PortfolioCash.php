@@ -107,31 +107,16 @@ class PortfolioCash implements CashPort
             ),
         );
 
+        $points = $this->ledger->timeline($movements, $labels);
+
         $values = [];
         $invested = [];
 
-        foreach ($labels as $index => $date) {
-            $upToDate = array_values(array_filter(
-                $movements,
-                fn (CashMovementData $movement): bool => $movement->date <= $date,
-            ));
-
-            $balance = $this->balanceAt($upToDate, $date);
-            $netContributions = $this->ledger->netContributions($upToDate)['total'];
-
-            $values[] = $balance;
-            $invested[] = $this->capital->forCash($netContributions, $costs[$index], $balance);
+        foreach (array_keys($labels) as $index) {
+            $values[] = $points[$index]['balance'];
+            $invested[] = $this->capital->forCash($points[$index]['netContributions'], $costs[$index], $points[$index]['balance']);
         }
 
         return new ClassSeriesData(labels: $labels, value: $values, invested: $invested);
-    }
-
-    /** @param  list<CashMovementData>  $movements */
-    private function balanceAt(array $movements, string $date): float
-    {
-        return round(array_sum(array_map(
-            fn (CashMovementData $movement): float => $movement->date <= $date ? $movement->delta : 0.0,
-            $movements,
-        )), 2);
     }
 }
