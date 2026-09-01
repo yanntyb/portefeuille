@@ -5,19 +5,15 @@ namespace App\Contexts\Valuation\Infrastructure;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Transaction;
-use App\Contexts\Portfolio\Services\TransactionFlow;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
 use App\Contexts\Valuation\Ports\TransactionHistoryPort;
 
 class PortfolioTransactionHistory implements TransactionHistoryPort
 {
-    public function __construct(private TransactionFlow $flow) {}
-
     /**
      * Toutes les transactions de l'utilisateur, versements et retraits compris : un mouvement
-     * d'espèces sans actif ne détient aucune position, mais alimente quand même la série de
-     * liquidités. Le calcul du sens du mouvement (`cashDelta`) se fait ici plutôt que dans
-     * `ValuationCalculator`, qui n'a pas le droit d'importer un service de `Portfolio`.
+     * d'espèces sans actif ne détient aucune position, mais il traverse le filtre par exposition
+     * de `BuildExposureSeries`, qui ne doit écarter que ce qui appartient à une autre classe.
      *
      * La jointure sur `assets` porte l'exposition de l'actif concerné ; `leftJoin` et non `join`,
      * puisqu'un versement ou un retrait n'a pas d'`asset_id`.
@@ -47,7 +43,6 @@ class PortfolioTransactionHistory implements TransactionHistoryPort
                     quantity: $quantity ?? 0.0,
                     unitPrice: $unitPrice ?? 0.0,
                     fees: $fees,
-                    cashDelta: $this->flow->cashDelta($transaction->type, $quantity, $unitPrice, $fees, $amount),
                     amount: $amount,
                     exposure: $exposure === null ? null : AssetClass::from($exposure),
                 );

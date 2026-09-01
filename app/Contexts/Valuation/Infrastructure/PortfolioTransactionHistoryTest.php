@@ -34,16 +34,15 @@ it('maps a user transactions to records ordered by date', function () {
     expect($records)->toHaveCount(3)
         ->and($records[0]->date->format('Y-m-d'))->toBe('2025-12-31')
         ->and($deposit->assetId)->toBeNull()
-        ->and($deposit->cashDelta)->toBe(2000.0)
+        ->and($deposit->amount)->toBe(2000.0)
         ->and($buy->isSell)->toBeFalse()
         ->and($buy->quantity)->toBe(10.0)
         ->and($buy->unitPrice)->toBe(100.0)
         ->and($buy->fees)->toBe(2.0)
-        ->and($buy->cashDelta)->toBe(-1002.0)
         ->and($buy->exposure)->toBe(AssetClass::Equity)
         ->and($sell->isSell)->toBeTrue()
         ->and($sell->assetId)->toBe($asset->id)
-        ->and($sell->cashDelta)->toBe(600.0);
+        ->and($sell->quantity)->toBe(4.0);
 });
 
 it('inclut les versements et retraits, qui n\'ont pas d\'actif', function () {
@@ -63,8 +62,7 @@ it('inclut les versements et retraits, qui n\'ont pas d\'actif', function () {
         ->and($records[0]->assetId)->toBeNull()
         ->and($records[0]->type)->toBe(TransactionType::Deposit)
         ->and($records[0]->amount)->toBe(1000.0)
-        ->and($records[0]->cashDelta)->toBe(1000.0)
         ->and($records[0]->exposure)->toBeNull()
         ->and($records[1]->type)->toBe(TransactionType::Withdrawal)
-        ->and($records[1]->cashDelta)->toBe(-300.0);
+        ->and($records[1]->amount)->toBe(300.0);
 });

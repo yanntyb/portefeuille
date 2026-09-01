@@ -40,14 +40,16 @@ it('rend une série vide pour un utilisateur sans transaction', function () {
     expect(app(BuildExposureSeries::class)(0, [AssetClass::Equity])->labels)->toBe([]);
 });
 
-it('garde le cash sans actif malgré le filtre par classe', function () {
+/**
+ * Le filtre par classe laisse passer les mouvements sans `asset_id` : c'est ce que veut la série
+ * de valorisation, qui n'en tire aucune position ni aucun investi. La série de liquidités, elle,
+ * n'est plus ici — elle se lit sur `PortfolioCash::seriesFor()`.
+ */
+it('laisse un mouvement d\'espèces traverser le filtre sans troubler la série', function () {
     ['user' => $user] = cryptoFixture();
 
-    /**
-     * Un versement sans `asset_id`, sur une enveloppe distincte de celle qui détient le titre
-     * filtré : le cash est global à l'utilisateur, il doit traverser le filtre de classe même si
-     * aucune ligne ne porte l'exposition demandée.
-     */
+    $before = app(BuildExposureSeries::class)($user->id, [AssetClass::Crypto]);
+
     Transaction::factory()->deposit()->create([
         'user_id' => $user->id,
         'wallet_id' => Wallet::factory()->for($user)->create()->id,
@@ -55,10 +57,9 @@ it('garde le cash sans actif malgré le filtre par classe', function () {
         'amount' => 500,
     ]);
 
-    $series = app(BuildExposureSeries::class)($user->id, [AssetClass::Equity]);
-    $cash = $series->cash;
+    $after = app(BuildExposureSeries::class)($user->id, [AssetClass::Crypto]);
 
-    // Le versement du titre est financé par sa propre ligne déduite (achat -800, versement +800,
-    // net nul) ; seul le versement libre de 500 doit rester dans le cash de fin de série.
-    expect(end($cash))->toBe(500.0);
+    expect($after->labels)->toBe($before->labels)
+        ->and($after->valuations)->toBe($before->valuations)
+        ->and($after->invested)->toBe($before->invested);
 });

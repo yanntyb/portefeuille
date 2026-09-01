@@ -1,7 +1,6 @@
 <?php
 
 use App\Contexts\Portfolio\Enums\TransactionType;
-use App\Contexts\Portfolio\Services\TransactionFlow;
 use App\Contexts\Valuation\Datas\EvolutionSeriesData;
 use App\Contexts\Valuation\Datas\PriceRecordData;
 use App\Contexts\Valuation\Datas\PriceRecordData as P;
@@ -23,7 +22,6 @@ function tx(string $date, int $assetId, bool $isSell, float $qty, float $price, 
         quantity: $qty,
         unitPrice: $price,
         fees: $fees,
-        cashDelta: (new TransactionFlow)->cashDelta($type, $qty, $price, $fees, null),
     );
 }
 
@@ -38,7 +36,6 @@ function deposit(string $date, float $amount): TransactionRecordData
         quantity: 0.0,
         unitPrice: 0.0,
         fees: 0.0,
-        cashDelta: (new TransactionFlow)->cashDelta(TransactionType::Deposit, null, null, 0.0, $amount),
         amount: $amount,
     );
 }
@@ -98,28 +95,6 @@ it('orders same-day buys before sells regardless of input order', function () {
         ->and($buyFirst->invested)->toBe([600.0]);
 });
 
-it('garde le produit d\'une vente en liquidités', function () {
-    // Le versement finance l'achat, exactement comme le ferait la ligne déduite automatique
-    // d'une base réelle : sans lui, le solde de cash n'aurait jamais de sens à suivre.
-    $series = (new ValuationCalculator)->calculateDaily(
-        [
-            deposit('2026-01-01', 1000),
-            tx('2026-01-01', 1, false, 10, 100),
-            tx('2026-02-01', 1, true, 10, 120),
-        ],
-        [
-            new PriceRecordData(1, '2026-01-01', 100),
-            new PriceRecordData(1, '2026-02-01', 120),
-            new PriceRecordData(1, '2026-02-02', 120),
-        ],
-    );
-
-    $last = count($series->labels) - 1;
-
-    expect($series->valuations[$last])->toBe(0.0)
-        ->and($series->cash[$last])->toBe(1200.0);
-});
-
 it('exposes the unit price aligned with the valuation labels', function () {
     $transactions = [
         new TransactionRecordData(
@@ -130,7 +105,6 @@ it('exposes the unit price aligned with the valuation labels', function () {
             quantity: 10.0,
             unitPrice: 100.0,
             fees: 0.0,
-            cashDelta: -1000.0,
         ),
     ];
     $prices = [
@@ -156,7 +130,6 @@ it('calculateDaily returns one point per price day without downsampling', functi
             quantity: 10.0,
             unitPrice: 100.0,
             fees: 0.0,
-            cashDelta: -1000.0,
         ),
     ];
     $prices = [];

@@ -34,12 +34,9 @@ class ValuationCalculator
         $quantities = [];
         /** @var list<array{date: string, value: float}> $investedSeries */
         $investedSeries = [];
-        /** @var list<array{date: string, value: float}> $cashSeries */
-        $cashSeries = [];
         $buyQty = [];
         $buyCost = [];
         $totalInvested = 0.0;
-        $totalCash = 0.0;
 
         foreach ($transactions as $transaction) {
             $day = $transaction->date->format('Y-m-d');
@@ -47,7 +44,8 @@ class ValuationCalculator
             /**
              * Seuls les achats et les ventes font varier une quantité détenue et l'investi : un
              * dividende porte un `asset_id` mais aucune quantité, et le ferait varier à tort s'il
-             * entrait dans cette timeline. Les cinq types alimentent en revanche tous le cash.
+             * entrait dans cette timeline. Les trois types d'espèces la traversent sans rien y
+             * changer — la série de liquidités, elle, se lit sur `PortfolioCash::seriesFor()`.
              */
             if ($transaction->type === TransactionType::Buy || $transaction->type === TransactionType::Sell) {
                 $assetId = $transaction->assetId;
@@ -71,9 +69,6 @@ class ValuationCalculator
 
                 $investedSeries[] = ['date' => $day, 'value' => $totalInvested];
             }
-
-            $totalCash += $transaction->cashDelta;
-            $cashSeries[] = ['date' => $day, 'value' => $totalCash];
         }
 
         $days = collect($prices)->map(fn (PriceRecordData $p) => $p->date)->unique()->sort()->values()->all();
@@ -89,7 +84,6 @@ class ValuationCalculator
         $valuations = [];
         $invested = [];
         $unitPrices = [];
-        $cash = [];
         $lastClose = [];
         $primaryAsset = $assetIds[0] ?? null;
 
@@ -110,10 +104,9 @@ class ValuationCalculator
             $valuations[] = round($value, 2);
             $invested[] = round($this->valueAtDate($investedSeries, $day), 2);
             $unitPrices[] = round($primaryAsset === null ? 0.0 : ($lastClose[$primaryAsset] ?? 0.0), 2);
-            $cash[] = round($this->valueAtDate($cashSeries, $day), 2);
         }
 
-        return new ValuationSeriesData($labels, $valuations, $invested, $unitPrices, $cash);
+        return new ValuationSeriesData($labels, $valuations, $invested, $unitPrices);
     }
 
     /** @param  ?int  $months  Profondeur de la fenêtre depuis le dernier point, null pour tout l'historique. */
@@ -131,7 +124,6 @@ class ValuationCalculator
         $valuations = [];
         $invested = [];
         $prices = [];
-        $cash = [];
 
         foreach ($series->labels as $i => $label) {
             if ($cutoff !== null && $label < $cutoff) {
@@ -141,7 +133,6 @@ class ValuationCalculator
             $valuations[] = $series->valuations[$i];
             $invested[] = $series->invested[$i];
             $prices[] = $series->prices[$i];
-            $cash[] = $series->cash[$i] ?? 0.0;
         }
 
         /** @var array<string, int> $lastIndexByBucket */
@@ -158,7 +149,6 @@ class ValuationCalculator
             array_map(fn (int $i): float => $valuations[$i], $keep),
             array_map(fn (int $i): float => $invested[$i], $keep),
             array_map(fn (int $i): float => $prices[$i], $keep),
-            array_map(fn (int $i): float => $cash[$i], $keep),
         );
     }
 

@@ -8,7 +8,6 @@ it('serializes to the expected json shape', function () {
         valuations: [1000.0, 1200.0],
         invested: [1000.0, 1000.0],
         prices: [100.0, 120.0],
-        cash: [0.0, 200.0],
     );
 
     expect($series->jsonSerialize())->toBe([
@@ -16,7 +15,6 @@ it('serializes to the expected json shape', function () {
         'valuations' => [1000.0, 1200.0],
         'invested' => [1000.0, 1000.0],
         'prices' => [100.0, 120.0],
-        'cash' => [0.0, 200.0],
     ]);
 });
 
@@ -26,6 +24,5 @@ it('builds an empty series', function () {
     expect($series->labels)->toBe([])
         ->and($series->valuations)->toBe([])
         ->and($series->invested)->toBe([])
-        ->and($series->prices)->toBe([])
-        ->and($series->cash)->toBe([]);
+        ->and($series->prices)->toBe([]);
 });

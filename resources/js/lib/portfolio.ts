@@ -28,8 +28,9 @@ export interface PortfolioOverview {
     /** Gain déjà encaissé sur l'exposition, ventes comprises sur les actifs soldés. */
     totalRealizedGain: number;
     /**
-     * Le cash de l'utilisateur, toutes enveloppes confondues : jamais ventilé par exposition, il
-     * vaut le même montant sur chaque page d'exposition. C'est ce qui reste à replacer.
+     * Ce qui reste à replacer. Au tableau de bord, le solde d'espèces de l'utilisateur, toutes
+     * enveloppes confondues ; sur une page d'exposition, le seul cash **d'origine** de celle-ci —
+     * le produit de ses ventes et de ses dividendes pas encore replacé.
      */
     cash: number;
     holdings: HoldingLine[];

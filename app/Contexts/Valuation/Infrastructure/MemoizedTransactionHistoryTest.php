@@ -24,7 +24,6 @@ function countingTransactionHistory(int &$calls): TransactionHistoryPort
                 quantity: 1.0,
                 unitPrice: 10.0,
                 fees: 0.0,
-                cashDelta: -10.0,
             )];
         }
     };
