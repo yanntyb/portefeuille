@@ -268,6 +268,102 @@ describe('champs', () => {
     });
 });
 
+describe('filtre des couples détenus', () => {
+    const chooseWallet = async (host: HTMLElement, id: string): Promise<void> => {
+        const wallet = field(host, 'transaction-wallet') as HTMLSelectElement;
+        wallet.value = id;
+        wallet.dispatchEvent(new Event('change', { bubbles: true }));
+        await nextTick();
+    };
+
+    const chooseAsset = async (host: HTMLElement, id: string): Promise<void> => {
+        await openAssets(host);
+        (host.querySelector(`[data-search-select-option="${id}"]`) as HTMLElement).click();
+        await nextTick();
+        await nextTick();
+    };
+
+    const sell = async (host: HTMLElement): Promise<void> => {
+        (host.querySelector('[data-segment="sell"]') as HTMLElement).click();
+        await nextTick();
+    };
+
+    const walletLabels = (host: HTMLElement): (string | undefined)[] =>
+        [...(field(host, 'transaction-wallet') as HTMLSelectElement).options]
+            .map((option) => option.textContent?.trim());
+
+    const assetLabels = async (host: HTMLElement): Promise<string[]> => {
+        await openAssets(host);
+
+        return [...host.querySelectorAll('[data-search-select-option]')]
+            .map((option) => option.textContent?.trim() ?? '');
+    };
+
+    it('ne propose à la vente que les enveloppes qui détiennent l\'actif', async () => {
+        const host = await mountForm();
+        await chooseAsset(host, '7');
+        await sell(host);
+
+        /** Le PEA ne détient pas ACME : le proposer ferait saisir une vente que le serveur refuse. */
+        expect(walletLabels(host)).toEqual(['Choisir une enveloppe', 'IBKR - CTO']);
+    });
+
+    it('ne propose à la vente que les titres de l\'enveloppe choisie', async () => {
+        const host = await mountForm();
+        await chooseWallet(host, '3');
+        await sell(host);
+
+        expect(await assetLabels(host)).toEqual(['ACME · ACM']);
+    });
+
+    it('le dit quand l\'enveloppe choisie ne détient rien', async () => {
+        const host = await mountForm();
+        await chooseWallet(host, '4');
+        await sell(host);
+        await openAssets(host);
+
+        expect(host.querySelector('[data-search-select-empty]')?.textContent?.trim())
+            .toBe('Aucun titre détenu dans cette enveloppe');
+    });
+
+    it('le dit quand aucune enveloppe ne détient l\'actif choisi', async () => {
+        const host = await mountForm();
+        await chooseAsset(host, '9');
+        await sell(host);
+
+        expect(walletLabels(host)).toEqual(['Aucune enveloppe ne détient cet actif']);
+    });
+
+    it('ne filtre pas un achat', async () => {
+        const host = await mountForm();
+        await chooseWallet(host, '4');
+
+        /** Une première acquisition part d'une enveloppe qui ne détient rien : rien à restreindre. */
+        expect(await assetLabels(host)).toEqual(['ACME · ACM', 'Sans cours']);
+    });
+
+    it('garde la ligne corrigée dans les deux listes, même soldée', async () => {
+        const dialog = useTransactionDialogStore();
+        dialog.openEdit({
+            id: 42,
+            walletId: 4,
+            assetId: 9,
+            type: 'sell',
+            date: '2026-02-01',
+            quantity: 4,
+            unitPrice: 90,
+            fees: 0,
+            amount: 360,
+        } as never);
+
+        const host = await mountForm();
+
+        /** La projection efface une position soldée ; la valeur choisie reste offerte malgré tout. */
+        expect(walletLabels(host)).toEqual(['Choisir une enveloppe', 'PEA - PEA']);
+        expect(await assetLabels(host)).toEqual(['Sans cours']);
+    });
+});
+
 describe('plafond d\'une vente', () => {
     /** Enveloppe et actif choisis, sens porté à la vente : le stock détenu devient un plafond. */
     async function sellFrom(host: HTMLElement, quantity: string): Promise<void> {

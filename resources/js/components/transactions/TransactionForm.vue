@@ -96,18 +96,56 @@ onMounted(async (): Promise<void> => {
  * compte, le régime le qualifie. Sans établissement, le nom du compte prend sa place, comme sur
  * les cartes d'enveloppes.
  */
+/**
+ * Une vente ne porte que sur un couple réellement détenu : les deux listes se restreignent l'une
+ * l'autre à ce que la projection connaît. L'achat, lui, reste libre — c'est par lui qu'une position
+ * s'ouvre, et filtrer y rendrait toute première acquisition impossible.
+ */
+const restrictedToHeld: ComputedRef<boolean> = computed((): boolean => form.type === 'sell');
+
+const holds = (walletId: string, assetId: string): boolean =>
+    (options.value?.held ?? []).some(
+        (stock): boolean => String(stock.walletId) === walletId && String(stock.assetId) === assetId,
+    );
+
 const walletOptions: ComputedRef<SelectOption[]> = computed((): SelectOption[] =>
-    (options.value?.wallets ?? []).map((wallet): SelectOption => ({
-        value: String(wallet.id),
-        label: `${wallet.broker ?? wallet.name} - ${wallet.accountTypeLabel}`,
-    })),
+    (options.value?.wallets ?? [])
+        /**
+         * La valeur choisie reste offerte : retirée de la liste, un `<select>` n'afficherait rien —
+         * et c'est aussi ce qui garde ses deux champs à la correction d'une vente soldante, que
+         * `ProjectHolding` a effacée de la projection en ramenant la quantité à zéro.
+         */
+        .filter((wallet): boolean =>
+            !restrictedToHeld.value || form.assetId === '' || String(wallet.id) === form.walletId
+            || holds(String(wallet.id), form.assetId))
+        .map((wallet): SelectOption => ({
+            value: String(wallet.id),
+            label: `${wallet.broker ?? wallet.name} - ${wallet.accountTypeLabel}`,
+        })),
 );
 
 const instrumentOptions: ComputedRef<SelectOption[]> = computed((): SelectOption[] =>
-    (options.value?.instruments ?? []).map((instrument): SelectOption => ({
-        value: String(instrument.id),
-        label: instrument.ticker === null ? instrument.name : `${instrument.name} · ${instrument.ticker}`,
-    })),
+    (options.value?.instruments ?? [])
+        .filter((instrument): boolean =>
+            !restrictedToHeld.value || form.walletId === '' || String(instrument.id) === form.assetId
+            || holds(form.walletId, String(instrument.id)))
+        .map((instrument): SelectOption => ({
+            value: String(instrument.id),
+            label: instrument.ticker === null ? instrument.name : `${instrument.name} · ${instrument.ticker}`,
+        })),
+);
+
+/** Ce que dit un sélecteur vidé par le filtre : sans un mot, la liste semblerait ne pas s'être chargée. */
+const walletPlaceholder: ComputedRef<string> = computed((): string =>
+    restrictedToHeld.value && walletOptions.value.length === 0
+        ? 'Aucune enveloppe ne détient cet actif'
+        : 'Choisir une enveloppe',
+);
+
+const instrumentEmpty: ComputedRef<string> = computed((): string =>
+    restrictedToHeld.value && form.walletId !== ''
+        ? 'Aucun titre détenu dans cette enveloppe'
+        : 'Aucun instrument',
 );
 
 /**
@@ -369,7 +407,7 @@ const serverUnreachable: Ref<boolean> = ref(false);
                     id="transaction-wallet"
                     v-model="form.walletId"
                     :options="walletOptions"
-                    placeholder="Choisir une enveloppe"
+                    :placeholder="walletPlaceholder"
                     :invalid="invalid"
                     :disabled="blocked"
                     :aria-describedby="describedBy"
@@ -404,7 +442,7 @@ const serverUnreachable: Ref<boolean> = ref(false);
                         v-model="form.assetId"
                         :options="instrumentOptions"
                         placeholder="Choisir un actif"
-                        empty="Aucun instrument"
+                        :empty="instrumentEmpty"
                         :invalid="invalid"
                         :disabled="blocked"
                         :aria-describedby="describedBy"
