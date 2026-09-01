@@ -95,6 +95,26 @@ export const transactionTotal = (draft: TransactionDraft): number | null => {
 };
 
 /**
+ * Le mouvement d'espèces de la ligne saisie, signé, miroir de `TransactionFlow::cashDelta` :
+ * positif quand l'argent entre sur le compte, négatif quand il en sort.
+ *
+ * Zéro — et non `null` — dès que la ligne n'est pas chiffrée : l'unique appelant en fait un terme
+ * de solde, et un terme manquant ne doit pas le déplacer.
+ */
+export const cashDeltaOf = (draft: TransactionDraft): number => {
+    const magnitude = isTradeType(draft.type)
+        ? transactionTotal(draft) ?? 0
+        : parseDecimalInput(draft.amount) ?? 0;
+
+    if (magnitude === 0) {
+        /** Sans ce retour, un retrait sans montant rendrait `-0`, qui n'est pas `0`. */
+        return 0;
+    }
+
+    return draft.type === 'buy' || draft.type === 'withdrawal' ? -magnitude : magnitude;
+};
+
+/**
  * Un formulaire vierge. La date du jour et un achat : ce que l'on saisit le plus souvent, et les
  * deux seuls champs qu'on peut pré-remplir sans rien inventer.
  *

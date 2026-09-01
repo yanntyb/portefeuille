@@ -11,17 +11,27 @@ use App\Contexts\Portfolio\Datas\TransactionFormOptionsData;
 use App\Contexts\Portfolio\Datas\WalletOptionData;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Wallet;
+use App\Contexts\Portfolio\Services\CashLedger;
 
 class GetTransactionFormOptions
 {
     public function __construct(
         private InstrumentRepositoryContract $instruments,
         private PriceRepositoryContract $prices,
+        private GetCashMovements $cashMovements,
+        private CashLedger $ledger,
     ) {}
 
     public function __invoke(int $userId): TransactionFormOptionsData
     {
         $instruments = $this->instruments->findAll();
+
+        /**
+         * Les mouvements une seule fois, le solde de chaque enveloppe ensuite : les relire par
+         * enveloppe rouvrirait un N+1 sur tout l'historique.
+         */
+        $movements = ($this->cashMovements)($userId);
+        $today = now()->format('Y-m-d');
 
         /**
          * Les derniers cours en une requête : un instrument chargeant le sien rouvrirait un N+1 sur
@@ -42,6 +52,12 @@ class GetTransactionFormOptions
                     broker: $wallet->broker,
                     accountType: $wallet->account_type->value,
                     accountTypeLabel: $wallet->account_type->getLabel(),
+                    /**
+                     * Le plafond d'un retrait pendant la frappe, au solde du jour. Le formulaire
+                     * s'en sert comme il se sert de `held` pour plafonner une vente ; c'est
+                     * `TransactionRequest` qui juge, en recomptant à la date saisie.
+                     */
+                    cashBalance: $this->ledger->balanceAt($movements, $wallet->id, $today),
                 ))
                 ->values()
                 ->all(),

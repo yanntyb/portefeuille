@@ -1,6 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp, nextTick, ref, type Ref } from 'vue';
+import { eur } from '@/lib/format';
 
 /** `useOnline` doit être pilotable : le blocage hors-ligne est la moitié de ce qu'on vérifie. */
 const { online } = await vi.hoisted(async () => ({ online: (await import('vue')).ref(true) }));
@@ -70,8 +71,8 @@ const { default: TransactionForm } = await import('@/components/transactions/Tra
 
 const options = {
     wallets: [
-        { id: 3, name: 'Compte-titres', broker: 'IBKR', accountType: 'cto', accountTypeLabel: 'CTO' },
-        { id: 4, name: 'PEA', broker: null, accountType: 'pea', accountTypeLabel: 'PEA' },
+        { id: 3, name: 'Compte-titres', broker: 'IBKR', accountType: 'cto', accountTypeLabel: 'CTO', cashBalance: 1500 },
+        { id: 4, name: 'PEA', broker: null, accountType: 'pea', accountTypeLabel: 'PEA', cashBalance: 0 },
     ],
     instruments: [
         { id: 7, name: 'ACME', ticker: 'ACM', lastPrice: 120 },
@@ -401,6 +402,144 @@ describe('mouvements d\'espèces', () => {
         expect(host.querySelector('#transaction-quantity')).not.toBeNull();
         expect(host.querySelector('#transaction-unit-price')).not.toBeNull();
         expect(host.querySelector('#transaction-amount')).toBeNull();
+    });
+});
+
+describe('plafond d\'un retrait', () => {
+    /** Enveloppe choisie, sens porté au retrait : le solde d'espèces devient un plafond. */
+    async function withdrawFrom(host: HTMLElement, walletId: string, amount: string): Promise<void> {
+        const wallet = field(host, 'transaction-wallet') as HTMLSelectElement;
+        wallet.value = walletId;
+        wallet.dispatchEvent(new Event('change', { bubbles: true }));
+        await nextTick();
+
+        (host.querySelector('[data-segment="withdrawal"]') as HTMLElement).click();
+        await nextTick();
+
+        const input = field(host, 'transaction-amount') as HTMLInputElement;
+        input.value = amount;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        await nextTick();
+    }
+
+    const hint = (host: HTMLElement): string | undefined =>
+        host.querySelector('#transaction-amount-hint')?.textContent?.trim();
+
+    const submitButton = (host: HTMLElement): HTMLButtonElement =>
+        host.querySelector('[data-transaction-submit]') as HTMLButtonElement;
+
+    it('annonce ce que l\'enveloppe détient en espèces', async () => {
+        const host = await mountForm();
+        await withdrawFrom(host, '3', '200');
+
+        expect(hint(host)).toBe(`Maximum : ${eur(1500)} en espèces`);
+        expect(submitButton(host).disabled).toBe(false);
+    });
+
+    it('n\'annonce rien tant qu\'aucune enveloppe n\'est choisie', async () => {
+        const host = await mountForm();
+
+        (host.querySelector('[data-segment="withdrawal"]') as HTMLElement).click();
+        await nextTick();
+
+        /** Pas de plafond à annoncer, et surtout pas un plafond de zéro : l'unité, comme partout. */
+        expect(hint(host)).toBe('En euros');
+    });
+
+    it('ne plafonne pas un versement', async () => {
+        const host = await mountForm();
+        await withdrawFrom(host, '3', '200');
+
+        (host.querySelector('[data-segment="deposit"]') as HTMLElement).click();
+        await nextTick();
+
+        /** On verse ce qu'on veut : seul un retrait est borné par la caisse. */
+        expect(hint(host)).toBe('En euros');
+    });
+
+    it('refuse un retrait au-delà du solde, dans les mots du serveur', async () => {
+        const host = await mountForm();
+        await withdrawFrom(host, '3', '1600');
+
+        expect(host.querySelector('#transaction-amount-error')?.textContent?.trim())
+            .toBe(`Cette enveloppe ne détient que ${eur(1500)} en espèces.`);
+        expect(submitButton(host).disabled).toBe(true);
+
+        (host.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+        await nextTick();
+
+        expect(post).not.toHaveBeenCalled();
+    });
+
+    it('laisse passer un retrait de toute la caisse', async () => {
+        const host = await mountForm();
+        await withdrawFrom(host, '3', '1500');
+
+        expect(host.querySelector('#transaction-amount-error')).toBeNull();
+        expect(submitButton(host).disabled).toBe(false);
+    });
+
+    it('refuse tout retrait sur une enveloppe vide', async () => {
+        const host = await mountForm();
+        await withdrawFrom(host, '4', '10');
+
+        /** L'erreur prend la place de la précision : le plafond est zéro, et il est dépassé. */
+        expect(host.querySelector('#transaction-amount-error')?.textContent?.trim())
+            .toBe(`Cette enveloppe ne détient que ${eur(0)} en espèces.`);
+        expect(submitButton(host).disabled).toBe(true);
+    });
+
+    it('rend à une correction de retrait ses propres espèces', async () => {
+        const dialog = useTransactionDialogStore();
+        dialog.openEdit({
+            id: 42,
+            walletId: 3,
+            date: '2026-03-04',
+            isSell: false,
+            typeLabel: 'Retrait',
+            type: 'withdrawal',
+            quantity: 0,
+            unitPrice: 0,
+            fees: 0,
+            total: 300,
+            auto: false,
+        });
+
+        const host = await mountForm();
+
+        /**
+         * Le solde servi a déjà sorti ces 300 € ; le serveur les rend en retranchant la ligne
+         * éditée de son propre solde. Porter le retrait de 300 à 1 800 doit donc rester possible.
+         */
+        expect(hint(host)).toBe(`Maximum : ${eur(1800)} en espèces`);
+    });
+
+    it('ne rend rien à une correction déplacée vers une autre enveloppe', async () => {
+        const dialog = useTransactionDialogStore();
+        dialog.openEdit({
+            id: 42,
+            walletId: 3,
+            date: '2026-03-04',
+            isSell: false,
+            typeLabel: 'Retrait',
+            type: 'withdrawal',
+            quantity: 0,
+            unitPrice: 0,
+            fees: 0,
+            total: 300,
+            auto: false,
+        });
+
+        const host = await mountForm();
+
+        const wallet = field(host, 'transaction-wallet') as HTMLSelectElement;
+        wallet.value = '4';
+        wallet.dispatchEvent(new Event('change', { bubbles: true }));
+        await nextTick();
+
+        /** Le PEA n'a jamais porté ces 300 € : son solde reste le sien, et il ne les couvre pas. */
+        expect(host.querySelector('#transaction-amount-error')?.textContent?.trim())
+            .toBe(`Cette enveloppe ne détient que ${eur(0)} en espèces.`);
     });
 });
 

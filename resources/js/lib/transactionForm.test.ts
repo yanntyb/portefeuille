@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { NamedTransactionLine } from '@/lib/instrument';
 import {
+    cashDeltaOf,
     draftFromLine,
     emptyDraft,
     parseDecimalInput,
@@ -58,6 +59,28 @@ describe('transactionTotal', () => {
     it('ne rend rien tant que la quantité ou le prix n\'est pas un nombre', () => {
         expect(transactionTotal(draft({ quantity: '' }))).toBeNull();
         expect(transactionTotal(draft({ unitPrice: 'abc' }))).toBeNull();
+    });
+});
+
+describe('cashDeltaOf', () => {
+    it('sort de la caisse ce qu\'un achat coûte, frais compris', () => {
+        expect(cashDeltaOf(draft({ type: 'buy' }))).toBe(-601.5);
+    });
+
+    it('rentre en caisse ce qu\'une vente rapporte, frais déduits', () => {
+        expect(cashDeltaOf(draft({ type: 'sell' }))).toBe(598.5);
+    });
+
+    it('rentre un versement et un dividende, sort un retrait', () => {
+        expect(cashDeltaOf(draft({ type: 'deposit', amount: '300' }))).toBe(300);
+        expect(cashDeltaOf(draft({ type: 'dividend', amount: '34,9' }))).toBe(34.9);
+        expect(cashDeltaOf(draft({ type: 'withdrawal', amount: '300' }))).toBe(-300);
+    });
+
+    it('compte zéro tant que la ligne n\'est pas chiffrée', () => {
+        /** Miroir de `TransactionFlow::cashDelta` : un delta manquant ne bouge pas un solde. */
+        expect(cashDeltaOf(draft({ type: 'withdrawal', amount: '' }))).toBe(0);
+        expect(cashDeltaOf(draft({ type: 'buy', quantity: '' }))).toBe(0);
     });
 });
 

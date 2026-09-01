@@ -77,7 +77,7 @@ it('keeps the key order of its payload', function () {
     $body = $this->getJson('/transactions/options')->json();
 
     expect(array_keys($body))->toBe(['wallets', 'instruments', 'held', 'types'])
-        ->and(array_keys($body['wallets'][0]))->toBe(['id', 'name', 'broker', 'accountType', 'accountTypeLabel'])
+        ->and(array_keys($body['wallets'][0]))->toBe(['id', 'name', 'broker', 'accountType', 'accountTypeLabel', 'cashBalance'])
         ->and(array_keys($body['instruments'][0]))
         ->toBe(['id', 'name', 'ticker', 'assetClass', 'assetClassLabel', 'lastPrice'])
         ->and(array_keys($body['held'][0]))->toBe(['walletId', 'assetId', 'quantity']);

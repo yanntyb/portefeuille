@@ -12,6 +12,7 @@ import SegmentedControl, { type Segment } from '@/components/ui/SegmentedControl
 import { eur, frDate, frQuantity } from '@/lib/format';
 import { refreshableKeys } from '@/lib/inertiaRefresh';
 import {
+    cashDeltaOf,
     isAssetType,
     isTradeType,
     parseDecimalInput,
@@ -25,7 +26,14 @@ import { useTransactionDialogStore } from '@/stores/transactionDialog';
 
 /** Ce que sert `/transactions/options`. */
 type FormOptions = {
-    wallets: { id: number; name: string; broker: string | null; accountType: string; accountTypeLabel: string }[];
+    wallets: {
+        id: number;
+        name: string;
+        broker: string | null;
+        accountType: string;
+        accountTypeLabel: string;
+        cashBalance: number;
+    }[];
     instruments: { id: number; name: string; ticker: string | null; lastPrice: number | null }[];
     held: { walletId: number; assetId: number; quantity: number }[];
     types: { value: string; label: string }[];
@@ -208,6 +216,64 @@ const quantityError: ComputedRef<string | null> = computed((): string | null => 
         : null;
 });
 
+/**
+ * Ce que l'enveloppe choisie porte en espèces, et `null` tant qu'aucune n'est choisie — il n'y a
+ * alors pas de plafond à annoncer, pas un plafond de zéro.
+ *
+ * Le solde servi est celui d'aujourd'hui, ligne éditée comprise ; le serveur, lui, la retranche de
+ * son propre solde. On la rend donc, tant que la correction reste dans son enveloppe d'origine :
+ * porter un retrait de 300 à 500 se compare à une caisse qui n'a pas déjà sorti ces 300 €, comme
+ * pour le `balanceOfEditedTransaction` de `TransactionRequest`.
+ */
+const cashBalance: ComputedRef<number | null> = computed((): number | null => {
+    if (form.walletId === '') {
+        return null;
+    }
+
+    const wallet = options.value?.wallets.find((candidate): boolean => String(candidate.id) === form.walletId);
+
+    if (wallet === undefined) {
+        return null;
+    }
+
+    if (!isEditing.value || opened.walletId !== form.walletId) {
+        return wallet.cashBalance;
+    }
+
+    return wallet.cashBalance - cashDeltaOf(opened);
+});
+
+/**
+ * On ne retire pas plus que la caisse ne porte : le solde d'une enveloppe n'est négatif à aucune
+ * date, et un retrait à découvert ferait déduire un versement pour le combler — l'application
+ * inventerait un apport que le porteur n'a pas fait. Le serveur le refuse déjà, à la date saisie ;
+ * on le dit ici avant l'envoi, dans les mêmes mots.
+ */
+const overdrawn: ComputedRef<boolean> = computed((): boolean => {
+    const wanted = parseDecimalInput(form.amount);
+
+    return form.type === 'withdrawal' && wanted !== null && cashBalance.value !== null
+        && wanted > cashBalance.value;
+});
+
+/** Le plafond, sous le champ, dès que l'enveloppe est connue et qu'on retire. */
+const amountHint: ComputedRef<string | undefined> = computed((): string | undefined =>
+    form.type === 'withdrawal' && cashBalance.value !== null
+        ? `Maximum : ${eur(cashBalance.value)} en espèces`
+        : 'En euros',
+);
+
+/** Le message du serveur d'abord : lui seul compte à la date saisie, et après une saisie concurrente. */
+const amountError: ComputedRef<string | null> = computed((): string | null => {
+    if (form.errors.amount) {
+        return form.errors.amount;
+    }
+
+    return overdrawn.value && cashBalance.value !== null
+        ? `Cette enveloppe ne détient que ${eur(cashBalance.value)} en espèces.`
+        : null;
+});
+
 /** Ce que le volet de confirmation récapitule ; la date s'y lit en français, pas en ISO. */
 const deletionLabel: ComputedRef<string> = computed(
     (): string => `${typeLabelOf(form.type)} du ${frDate(form.date)}`,
@@ -233,7 +299,7 @@ const onInstrumentChange = (): void => {
 };
 
 const submit = (): void => {
-    if (blocked.value || oversold.value) {
+    if (blocked.value || oversold.value || overdrawn.value) {
         return;
     }
 
@@ -436,7 +502,7 @@ const serverUnreachable: Ref<boolean> = ref(false);
             Versement, retrait et dividende portent un montant saisi, sans quantité, prix ni frais :
             « montant seul » — le serveur les interdit d'ailleurs par une règle `prohibited`.
         -->
-        <FormField v-else id="transaction-amount" label="Montant" hint="En euros" :error="form.errors.amount">
+        <FormField v-else id="transaction-amount" label="Montant" :hint="amountHint" :error="amountError">
             <template #default="{ describedBy, invalid }">
                 <Input
                     id="transaction-amount"
@@ -476,8 +542,11 @@ const serverUnreachable: Ref<boolean> = ref(false);
                 Annuler
             </Button>
 
-            <!-- Une vente au-delà du stock ne part pas : le serveur la refuserait, et le dit déjà. -->
-            <Button type="submit" data-transaction-submit :disabled="blocked || oversold">
+            <!--
+                Une vente au-delà du stock, un retrait au-delà de la caisse : le serveur les
+                refuserait, et le dit déjà sous le champ.
+            -->
+            <Button type="submit" data-transaction-submit :disabled="blocked || oversold || overdrawn">
                 {{ form.processing ? 'Enregistrement…' : 'Enregistrer' }}
             </Button>
         </DialogFooter>
