@@ -162,7 +162,6 @@ it('répartit les apports nets sans en perdre ni en inventer', function (
     foreach ($split['exposures'] as $invested) {
         expect($invested)->toBeGreaterThanOrEqual(0.0);
     }
-
 })->with([
     'apport 1 000, achat 1 000' => [['equity' => 1000.0], ['equity' => 1000.0], 1000.0],
     'vente 1 200, rien racheté' => [['equity' => 1000.0], ['equity' => 0.0], 1000.0],

@@ -187,6 +187,12 @@ it('ne fait jamais imputer l\'apport d\'une enveloppe à l\'achat d\'une autre �
  * `timeline()` remplace un `netContributions()` complet par point de série — quadratique sur le
  * chemin du tableau de bord. Le test compare le balayage unique au calcul point par point qu'il
  * remplace : c'est la preuve de non-régression, pas une valeur recopiée à la main.
+ *
+ * Le jeu porte les DEUX sortes de retrait, sans quoi il ne discriminerait rien : celui du PEA
+ * consomme un versement, celui du CTO consomme le reliquat d'une vente. Sur le premier, l'ancienne
+ * règle — ne retrancher que la part d'apport prise en FIFO — et la nouvelle donnent le même
+ * chiffre ; seul le second les sépare. `timeline()` rejoue cette règle pour son propre compte,
+ * elle doit donc être exercée ici comme dans `netContributions()`.
  */
 it('rend point par point ce que le calcul complet rendrait à chaque date', function () {
     $movements = [
@@ -196,9 +202,11 @@ it('rend point par point ce que le calcul complet rendrait à chaque date', func
         cashMovement('2026-03-01', -200.0, walletId: 2, isWithdrawal: true),
         cashMovement('2026-08-01', 1285.5, walletId: 1, exposure: AssetClass::Equity),
         cashMovement('2026-08-15', -1200.0, walletId: 1, exposure: AssetClass::Crypto),
+        /** Le reliquat de la vente, retiré : aucun apport à consommer, et pourtant 85,50 € sortis. */
+        cashMovement('2026-09-01', -85.5, walletId: 1, isWithdrawal: true),
     ];
 
-    $dates = ['2026-01-10', '2026-02-01', '2026-03-01', '2026-08-01', '2026-08-15', '2026-12-31'];
+    $dates = ['2026-01-10', '2026-02-01', '2026-03-01', '2026-08-01', '2026-08-15', '2026-09-01', '2026-12-31'];
     $ledger = new CashLedger;
 
     $expected = array_map(function (string $date) use ($ledger, $movements): array {

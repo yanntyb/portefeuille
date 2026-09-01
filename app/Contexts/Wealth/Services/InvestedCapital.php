@@ -46,9 +46,14 @@ namespace App\Contexts\Wealth\Services;
  * les liquidités.
  *
  * Règle d'or que garde `WealthInvariantTest`, désormais sans aucune exception : la somme des
- * investis de toutes les classes fait exactement les apports nets. Elle est vraie par construction
- * — `Σ min(imputé, coût) ≤ Σ imputé ≤ apports nets`, et la redistribution ne dépasse jamais le
- * reliquat, si bien que la part des liquidités le solde exactement.
+ * investis de toutes les classes fait exactement les apports nets. Elle est vraie par construction,
+ * et pour une seule raison : la part des liquidités est posée comme `apports nets − Σ investis
+ * d'exposition`, sans borne d'aucun côté, donc la somme se referme quels que soient les nombres.
+ *
+ * Elle ne s'appuie surtout pas sur `Σ imputé ≤ apports nets`, qui a cessé d'être vrai depuis que
+ * `byExposure` n'est plus diminué par les retraits : retirer le produit d'une vente peut rendre les
+ * apports nets négatifs en laissant l'imputation intacte. C'est bien l'absence de plancher qui
+ * sauve l'invariant dans ce cas, pas une inégalité entre les termes.
  *
  * Service pur, sans Eloquent ni port : `PortfolioAssetClass` et `PortfolioCash` le consomment
  * plutôt que de porter chacun sa formule — `PortfolioCash` la portait, et `Infrastructure/` n'est

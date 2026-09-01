@@ -10,8 +10,9 @@ use App\Contexts\Market\Enums\AssetClass;
  *
  * `exposure` n'est portée que par un crédit issu du marché — vente ou dividende. Un versement
  * n'expose à rien : c'est un apport, et `isDeposit` le dit. `isWithdrawal` marque le débit inverse :
- * un retrait retranche des apports nets ce qu'il prend à un apport, sans jamais l'imputer à une
- * exposition.
+ * un retrait se retranche **en entier** des apports nets, quelle que soit l'étiquette des crédits
+ * qu'il consomme, et sans jamais s'imputer à une exposition. N'en retrancher que la part prise à un
+ * apport laissait un retrait payé par le produit d'une vente sans effet sur le total.
  */
 readonly class CashMovementData
 {
