@@ -185,6 +185,19 @@ describe('payloadOf', () => {
         expect(payload).not.toHaveProperty('unitPrice');
     });
 
+    /**
+     * Les frais partaient quel que soit le type, alors que le champ n'est montré que pour un
+     * ordre : un versement gardait donc ceux du dernier achat saisi, et s'affichait
+     * « Versement · frais 5,00 € » sous un montant qui ne les compte pas.
+     */
+    it('omet les frais sur les types qui n\'en portent pas', () => {
+        expect(payloadOf(draft({ type: 'deposit', amount: '1000', fees: '5' }))).not.toHaveProperty('fees');
+        expect(payloadOf(draft({ type: 'withdrawal', amount: '1000', fees: '5' }))).not.toHaveProperty('fees');
+        expect(payloadOf(draft({ type: 'dividend', amount: '1000', fees: '5' }))).not.toHaveProperty('fees');
+        expect(payloadOf(draft({ type: 'buy', fees: '5' })).fees).toBe('5');
+        expect(payloadOf(draft({ type: 'sell', fees: '5' })).fees).toBe('5');
+    });
+
     it('omet quantité et prix sur un dividende, mais garde l\'actif et le montant', () => {
         const payload = payloadOf(draft({ type: 'dividend', assetId: '7', amount: '42,5' }));
 

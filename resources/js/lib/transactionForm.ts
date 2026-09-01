@@ -26,9 +26,9 @@ export type TransactionDraft = {
 
 /**
  * Ce que le serveur reçoit : les clés camelCase du fil, les montants normalisés. `assetId`,
- * `quantity`, `unitPrice` et `amount` sont **absents**, pas vides, quand le type saisi ne les
- * autorise pas : un `numeric` conditionné par `prohibited` s'évalue quand même sur une clé présente,
- * fût-elle une chaîne vide, et la rejetterait sans le vouloir.
+ * `quantity`, `unitPrice`, `fees` et `amount` sont **absents**, pas vides, quand le type saisi ne
+ * les autorise pas : un `numeric` conditionné par `prohibited` s'évalue quand même sur une clé
+ * présente, fût-elle une chaîne vide, et la rejetterait sans le vouloir.
  */
 export type TransactionPayload = {
     walletId: string;
@@ -37,7 +37,7 @@ export type TransactionPayload = {
     assetId?: string;
     quantity?: string;
     unitPrice?: string;
-    fees: string;
+    fees?: string;
     amount?: string;
 };
 
@@ -165,8 +165,13 @@ export const payloadOf = (draft: TransactionDraft): TransactionPayload => {
         type: draft.type,
         ...(isAssetType(draft.type) ? { assetId: draft.assetId } : {}),
         ...(trade ? { quantity: normalize(draft.quantity), unitPrice: normalize(draft.unitPrice) } : {}),
-        /** Un champ de frais vidé vaut zéro, ce que le serveur accepte comme absence. */
-        fees: draft.fees.trim() === '' ? '0' : normalize(draft.fees),
+        /**
+         * Les frais ne partent que pour un ordre, seul type dont le formulaire montre le champ.
+         * Ils partaient jusque-là quel que soit le type, si bien qu'un versement gardait les frais
+         * du dernier achat saisi et s'affichait « Versement · frais 5,00 € » sous un montant qui
+         * ne les compte pas. Un champ de frais vidé vaut zéro, ce que le serveur lit comme absence.
+         */
+        ...(trade ? { fees: draft.fees.trim() === '' ? '0' : normalize(draft.fees) } : {}),
         ...(trade ? {} : { amount: normalize(draft.amount) }),
     };
 };
