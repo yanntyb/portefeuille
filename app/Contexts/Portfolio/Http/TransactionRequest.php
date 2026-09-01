@@ -3,8 +3,12 @@
 namespace App\Contexts\Portfolio\Http;
 
 use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\Portfolio\Actions\GetCashMovements;
 use App\Contexts\Portfolio\Actions\GetPositionStock;
 use App\Contexts\Portfolio\Enums\TransactionType;
+use App\Contexts\Portfolio\Models\Transaction;
+use App\Contexts\Portfolio\Services\CashLedger;
+use App\Contexts\Portfolio\Services\TransactionFlow;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -33,6 +37,14 @@ class TransactionRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
+        /**
+         * `assetId`, `quantity` et `unitPrice` n'ont de sens que pour un achat ou une vente ;
+         * `amount` n'en a que pour un mouvement d'espèces. Un dividende garde un actif — il
+         * expose au marché — mais ni quantité ni prix : c'est un montant reçu, pas un échange.
+         */
+        $isTrade = in_array($this->input('type'), [TransactionType::Buy->value, TransactionType::Sell->value], true);
+        $isDividend = $this->input('type') === TransactionType::Dividend->value;
+
         return [
             /**
              * Pas de date future : `CalculateRealizedGain` ne retient que les achats antérieurs à
@@ -52,14 +64,21 @@ class TransactionRequest extends FormRequest
              * filtre sur le type réplique le scope global `market` du modèle `Instrument` : sans
              * lui, une ligne hors marché serait sélectionnable.
              */
-            'assetId' => ['required', 'integer', Rule::exists('assets', 'id')->whereIn('type', InstrumentType::values())],
+            'assetId' => [
+                $isTrade || $isDividend ? 'required' : 'prohibited',
+                'integer',
+                Rule::exists('assets', 'id')->whereIn('type', InstrumentType::values()),
+            ],
 
             'type' => ['required', Rule::enum(TransactionType::class)],
 
             /** Les plafonds collent aux colonnes : decimal(20,8), decimal(12,4), decimal(10,2). */
-            'quantity' => ['required', 'numeric', 'gt:0', 'decimal:0,8', 'lte:999999999999.99999999'],
-            'unitPrice' => ['required', 'numeric', 'gt:0', 'decimal:0,4', 'lte:99999999.9999'],
+            'quantity' => [$isTrade ? 'required' : 'prohibited', 'numeric', 'gt:0', 'decimal:0,8', 'lte:999999999999.99999999'],
+            'unitPrice' => [$isTrade ? 'required' : 'prohibited', 'numeric', 'gt:0', 'decimal:0,4', 'lte:99999999.9999'],
             'fees' => ['nullable', 'numeric', 'min:0', 'decimal:0,2', 'lte:99999999.99'],
+
+            /** Le plafond colle à la colonne : decimal(12,2). */
+            'amount' => [$isTrade ? 'prohibited' : 'required', 'numeric', 'gt:0', 'decimal:0,2', 'lte:9999999999.99'],
         ];
     }
 
@@ -85,29 +104,61 @@ class TransactionRequest extends FormRequest
      */
     public function after(): array
     {
-        return [function (Validator $validator): void {
-            if ($validator->errors()->isNotEmpty()) {
-                return;
-            }
+        return [
+            function (Validator $validator): void {
+                if ($validator->errors()->isNotEmpty()) {
+                    return;
+                }
 
-            if ($this->enum('type', TransactionType::class) !== TransactionType::Sell) {
-                return;
-            }
+                if ($this->enum('type', TransactionType::class) !== TransactionType::Sell) {
+                    return;
+                }
 
-            $held = app(GetPositionStock::class)(
-                (int) auth()->id(),
-                $this->integer('assetId'),
-                $this->integer('walletId'),
-                $this->editedTransactionId(),
-            )['quantity'];
+                $held = app(GetPositionStock::class)(
+                    (int) auth()->id(),
+                    $this->integer('assetId'),
+                    $this->integer('walletId'),
+                    $this->editedTransactionId(),
+                )['quantity'];
 
-            if ((float) $this->input('quantity') > $held) {
-                $validator->errors()->add(
-                    'quantity',
-                    sprintf('Vous ne détenez que %s titre(s) dans cette enveloppe.', rtrim(rtrim(number_format($held, 8, ',', ' '), '0'), ',')),
-                );
-            }
-        }];
+                if ((float) $this->input('quantity') > $held) {
+                    $validator->errors()->add(
+                        'quantity',
+                        sprintf('Vous ne détenez que %s titre(s) dans cette enveloppe.', rtrim(rtrim(number_format($held, 8, ',', ' '), '0'), ',')),
+                    );
+                }
+            },
+            /**
+             * On ne retire pas plus que le compte espèces ne porte : le solde d'une enveloppe n'est
+             * négatif à aucune date, et un retrait à découvert ferait déduire un versement pour le
+             * combler — l'application inventerait un apport que le porteur n'a pas fait.
+             */
+            function (Validator $validator): void {
+                if ($validator->errors()->isNotEmpty()) {
+                    return;
+                }
+
+                if ($this->enum('type', TransactionType::class) !== TransactionType::Withdrawal) {
+                    return;
+                }
+
+                $walletId = $this->integer('walletId');
+                $date = $this->input('date');
+
+                $balance = app(CashLedger::class)->balanceAt(
+                    app(GetCashMovements::class)((int) auth()->id()),
+                    $walletId,
+                    $date,
+                ) - $this->balanceOfEditedTransaction($walletId, $date);
+
+                if ((float) $this->input('amount') > $balance) {
+                    $validator->errors()->add(
+                        'amount',
+                        sprintf('Cette enveloppe ne détient que %s € en espèces.', number_format($balance, 2, ',', ' ')),
+                    );
+                }
+            },
+        ];
     }
 
     /**
@@ -119,5 +170,34 @@ class TransactionRequest extends FormRequest
         $id = $this->route('id');
 
         return $id === null ? null : (int) $id;
+    }
+
+    /**
+     * Ce que la ligne en cours de correction pesait déjà dans le solde de sa propre enveloppe, à
+     * retrancher pour que porter un retrait de 300 à 500 ne se compare pas à un solde dont ses
+     * propres 300 sont déjà déduits. Nul dès que la ligne n'existe pas, a changé d'enveloppe, ou
+     * est postérieure à la date saisie — `CashLedger::balanceAt()` ne l'aurait alors pas comptée.
+     */
+    private function balanceOfEditedTransaction(int $walletId, string $date): float
+    {
+        $id = $this->editedTransactionId();
+
+        if ($id === null) {
+            return 0.0;
+        }
+
+        $original = Transaction::query()->find($id);
+
+        if ($original === null || (int) $original->wallet_id !== $walletId || $original->date->format('Y-m-d') > $date) {
+            return 0.0;
+        }
+
+        return app(TransactionFlow::class)->cashDelta(
+            $original->type,
+            $original->quantity !== null ? (float) $original->quantity : null,
+            $original->unit_price !== null ? (float) $original->unit_price : null,
+            (float) $original->fees,
+            $original->amount !== null ? (float) $original->amount : null,
+        );
     }
 }

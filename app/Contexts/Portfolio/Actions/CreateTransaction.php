@@ -27,6 +27,7 @@ class CreateTransaction
             'quantity' => $input->quantity,
             'unit_price' => $input->unitPrice,
             'fees' => $input->fees,
+            'amount' => $input->amount,
         ]);
     }
 }

@@ -5,6 +5,7 @@ use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
+use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
@@ -132,6 +133,65 @@ it('records a crypto buy in a share savings plan', function () {
      */
     $this->post('/transactions', transactionPayload($pea->id, $bitcoin->id))
         ->assertSessionHasNoErrors();
+});
+
+describe('mouvements d\'espèces', function () {
+    beforeEach(function () {
+        ['user' => $this->user, 'wallet' => $this->wallet, 'instrument' => $this->asset] = portfolioFixture();
+    });
+
+    it('enregistre un versement sans actif ni quantité', function () {
+        $this->actingAs($this->user)
+            ->post('/transactions', [
+                'walletId' => $this->wallet->id,
+                'date' => '2026-03-01',
+                'type' => 'deposit',
+                'amount' => 1000,
+            ])
+            ->assertRedirect();
+
+        expect(Transaction::query()->where('type', TransactionType::Deposit)->where('auto', false)->count())->toBe(1);
+    });
+
+    it('refuse un versement sans montant', function () {
+        $this->actingAs($this->user)
+            ->post('/transactions', [
+                'walletId' => $this->wallet->id,
+                'date' => '2026-03-01',
+                'type' => 'deposit',
+            ])
+            ->assertSessionHasErrors('amount');
+    });
+
+    it('refuse un achat sans quantité', function () {
+        $this->actingAs($this->user)
+            ->post('/transactions', [
+                'walletId' => $this->wallet->id,
+                'assetId' => $this->asset->id,
+                'date' => '2026-03-01',
+                'type' => 'buy',
+                'unitPrice' => 100,
+            ])
+            ->assertSessionHasErrors('quantity');
+    });
+
+    it('refuse un retrait supérieur au solde de l\'enveloppe', function () {
+        Transaction::factory()->deposit()->create([
+            'user_id' => $this->user->id,
+            'wallet_id' => $this->wallet->id,
+            'date' => '2026-01-01',
+            'amount' => 500,
+        ]);
+
+        $this->actingAs($this->user)
+            ->post('/transactions', [
+                'walletId' => $this->wallet->id,
+                'date' => '2026-03-01',
+                'type' => 'withdrawal',
+                'amount' => 800,
+            ])
+            ->assertSessionHasErrors('amount');
+    });
 });
 
 it('refuses to write anything on a database with no user', function () {
