@@ -11,7 +11,14 @@ import { SearchSelect } from '@/components/ui/search-select';
 import SegmentedControl, { type Segment } from '@/components/ui/SegmentedControl.vue';
 import { eur, frDate } from '@/lib/format';
 import { refreshableKeys } from '@/lib/inertiaRefresh';
-import { parseDecimalInput, payloadOf, transactionTotal, type TransactionDraft } from '@/lib/transactionForm';
+import {
+    isAssetType,
+    isTradeType,
+    parseDecimalInput,
+    payloadOf,
+    transactionTotal,
+    type TransactionDraft,
+} from '@/lib/transactionForm';
 import { useNetworkStore } from '@/stores/network';
 import { useSnapshotStore } from '@/stores/snapshot';
 import { useTransactionDialogStore } from '@/stores/transactionDialog';
@@ -94,16 +101,35 @@ const instrumentOptions: ComputedRef<SelectOption[]> = computed((): SelectOption
     })),
 );
 
+const typeOptions = [
+    { value: 'buy', label: 'Achat' },
+    { value: 'sell', label: 'Vente' },
+    { value: 'deposit', label: 'Versement' },
+    { value: 'withdrawal', label: 'Retrait' },
+    { value: 'dividend', label: 'Dividende' },
+];
+
 const typeSegments: ComputedRef<Segment[]> = computed((): Segment[] =>
-    (options.value?.types ?? [
-        { value: 'buy', label: 'Achat' },
-        { value: 'sell', label: 'Vente' },
-    ]).map((type): Segment => ({ value: type.value, label: type.label })),
+    (options.value?.types ?? typeOptions).map((type): Segment => ({ value: type.value, label: type.label })),
 );
+
+/** Le libellé français du type saisi, pour le volet de confirmation d'une suppression. */
+const typeLabelOf = (type: string): string =>
+    typeSegments.value.find((segment): boolean => segment.value === type)?.label ?? type;
 
 const isEditing: ComputedRef<boolean> = computed((): boolean => dialog.editingId !== null);
 
-/** Le total vivant : le contrôle de cohérence le plus utile pendant une première saisie. */
+/**
+ * Un ordre échange une quantité d'actif contre un prix ; les trois autres types portent un montant
+ * saisi directement. Un dividende garde tout de même son actif — il expose au marché — mais pas de
+ * quantité ni de prix, ce n'est pas un échange.
+ */
+const isTrade: ComputedRef<boolean> = computed((): boolean => isTradeType(form.type));
+
+/** Versement et retrait n'ont pas d'actif ; les trois autres types en portent un. */
+const assetApplicable: ComputedRef<boolean> = computed((): boolean => isAssetType(form.type));
+
+/** Le total vivant : le contrôle de cohérence le plus utile pendant une première saisie d'ordre. */
 const total: ComputedRef<number | null> = computed((): number | null => transactionTotal(form.data()));
 
 const blocked: ComputedRef<boolean> = computed((): boolean => !network.isOnline || form.processing);
@@ -173,7 +199,7 @@ const quantityError: ComputedRef<string | null> = computed((): string | null => 
 
 /** Ce que le volet de confirmation récapitule ; la date s'y lit en français, pas en ISO. */
 const deletionLabel: ComputedRef<string> = computed(
-    (): string => `${form.type === 'sell' ? 'Vente' : 'Achat'} du ${frDate(form.date)}`,
+    (): string => `${typeLabelOf(form.type)} du ${frDate(form.date)}`,
 );
 
 /**
@@ -270,35 +296,41 @@ const serverUnreachable: Ref<boolean> = ref(false);
         </FormField>
 
         <!--
-            Instrument imposé par la page : sur une fiche d'actif, un sélecteur modifiable
-            laisserait enregistrer une opération qui n'apparaîtrait pas sur la page qu'on regarde.
+            Versement et retrait n'ont pas d'actif : le serveur l'interdit par une règle
+            `prohibited`, le champ n'a donc rien à faire ici pour ces deux types.
         -->
-        <div v-if="dialog.lockedAssetName !== null" class="flex flex-col gap-1.5">
-            <span class="text-sm leading-none font-medium">Actif</span>
-            <p data-transaction-asset-locked class="text-sm text-muted-foreground">
-                {{ dialog.lockedAssetName }}
-            </p>
-        </div>
+        <template v-if="assetApplicable">
+            <!--
+                Instrument imposé par la page : sur une fiche d'actif, un sélecteur modifiable
+                laisserait enregistrer une opération qui n'apparaîtrait pas sur la page qu'on regarde.
+            -->
+            <div v-if="dialog.lockedAssetName !== null" class="flex flex-col gap-1.5">
+                <span class="text-sm leading-none font-medium">Actif</span>
+                <p data-transaction-asset-locked class="text-sm text-muted-foreground">
+                    {{ dialog.lockedAssetName }}
+                </p>
+            </div>
 
-        <FormField v-else id="transaction-asset" label="Actif" :error="form.errors.assetId">
-            <template #default="{ describedBy, invalid }">
-                <!--
-                    Le seul champ cherchable du formulaire : le catalogue est la seule liste qui
-                    grossit sans limite, et le ticker se tape plus vite qu'il ne se déroule.
-                -->
-                <SearchSelect
-                    id="transaction-asset"
-                    v-model="form.assetId"
-                    :options="instrumentOptions"
-                    placeholder="Choisir un actif"
-                    empty="Aucun instrument"
-                    :invalid="invalid"
-                    :disabled="blocked"
-                    :aria-describedby="describedBy"
-                    @change="onInstrumentChange()"
-                />
-            </template>
-        </FormField>
+            <FormField v-else id="transaction-asset" label="Actif" :error="form.errors.assetId">
+                <template #default="{ describedBy, invalid }">
+                    <!--
+                        Le seul champ cherchable du formulaire : le catalogue est la seule liste qui
+                        grossit sans limite, et le ticker se tape plus vite qu'il ne se déroule.
+                    -->
+                    <SearchSelect
+                        id="transaction-asset"
+                        v-model="form.assetId"
+                        :options="instrumentOptions"
+                        placeholder="Choisir un actif"
+                        empty="Aucun instrument"
+                        :invalid="invalid"
+                        :disabled="blocked"
+                        :aria-describedby="describedBy"
+                        @change="onInstrumentChange()"
+                    />
+                </template>
+            </FormField>
+        </template>
 
         <div class="flex flex-col gap-1.5">
             <span class="text-sm leading-none font-medium">Sens</span>
@@ -332,16 +364,72 @@ const serverUnreachable: Ref<boolean> = ref(false);
             une virgule, qui rend un champ numérique invalide et vide sa valeur sans un mot.
             `inputmode="decimal"` appelle quand même le pavé numérique sur mobile.
         -->
-        <FormField
-            id="transaction-quantity"
-            label="Quantité"
-            :hint="quantityHint"
-            :error="quantityError"
-        >
+        <template v-if="isTrade">
+            <FormField
+                id="transaction-quantity"
+                label="Quantité"
+                :hint="quantityHint"
+                :error="quantityError"
+            >
+                <template #default="{ describedBy, invalid }">
+                    <Input
+                        id="transaction-quantity"
+                        v-model="form.quantity"
+                        type="text"
+                        inputmode="decimal"
+                        autocomplete="off"
+                        :disabled="blocked"
+                        :aria-invalid="invalid || undefined"
+                        :aria-describedby="describedBy"
+                    />
+                </template>
+            </FormField>
+
+            <FormField
+                id="transaction-unit-price"
+                label="Prix unitaire"
+                hint="En euros"
+                :error="form.errors.unitPrice"
+            >
+                <template #default="{ describedBy, invalid }">
+                    <Input
+                        id="transaction-unit-price"
+                        v-model="form.unitPrice"
+                        type="text"
+                        inputmode="decimal"
+                        autocomplete="off"
+                        :disabled="blocked"
+                        :aria-invalid="invalid || undefined"
+                        :aria-describedby="describedBy"
+                    />
+                </template>
+            </FormField>
+
+            <FormField id="transaction-fees" label="Frais" hint="En euros" :error="form.errors.fees">
+                <template #default="{ describedBy, invalid }">
+                    <Input
+                        id="transaction-fees"
+                        v-model="form.fees"
+                        type="text"
+                        inputmode="decimal"
+                        autocomplete="off"
+                        :disabled="blocked"
+                        :aria-invalid="invalid || undefined"
+                        :aria-describedby="describedBy"
+                    />
+                </template>
+            </FormField>
+        </template>
+
+        <!--
+            Versement, retrait et dividende portent un montant saisi, sans quantité, prix ni frais :
+            « montant seul » — le serveur les interdit d'ailleurs par une règle `prohibited`.
+        -->
+        <FormField v-else id="transaction-amount" label="Montant" hint="En euros" :error="form.errors.amount">
             <template #default="{ describedBy, invalid }">
                 <Input
-                    id="transaction-quantity"
-                    v-model="form.quantity"
+                    id="transaction-amount"
+                    v-model="form.amount"
                     type="text"
                     inputmode="decimal"
                     autocomplete="off"
@@ -352,42 +440,8 @@ const serverUnreachable: Ref<boolean> = ref(false);
             </template>
         </FormField>
 
-        <FormField
-            id="transaction-unit-price"
-            label="Prix unitaire"
-            hint="En euros"
-            :error="form.errors.unitPrice"
-        >
-            <template #default="{ describedBy, invalid }">
-                <Input
-                    id="transaction-unit-price"
-                    v-model="form.unitPrice"
-                    type="text"
-                    inputmode="decimal"
-                    autocomplete="off"
-                    :disabled="blocked"
-                    :aria-invalid="invalid || undefined"
-                    :aria-describedby="describedBy"
-                />
-            </template>
-        </FormField>
-
-        <FormField id="transaction-fees" label="Frais" hint="En euros" :error="form.errors.fees">
-            <template #default="{ describedBy, invalid }">
-                <Input
-                    id="transaction-fees"
-                    v-model="form.fees"
-                    type="text"
-                    inputmode="decimal"
-                    autocomplete="off"
-                    :disabled="blocked"
-                    :aria-invalid="invalid || undefined"
-                    :aria-describedby="describedBy"
-                />
-            </template>
-        </FormField>
-
-        <p class="flex items-baseline justify-between border-t border-border pt-3 text-sm">
+        <!-- Propre à un ordre : le montant d'un mouvement d'espèces est déjà ce qu'on vient de saisir. -->
+        <p v-if="isTrade" class="flex items-baseline justify-between border-t border-border pt-3 text-sm">
             <span class="text-muted-foreground">
                 {{ form.type === 'sell' ? 'Montant perçu' : 'Montant investi' }}
             </span>

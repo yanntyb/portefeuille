@@ -23,10 +23,12 @@ const line = (overrides: Partial<WealthTransactionLine> = {}): WealthTransaction
     assetName: 'Bitcoin',
     isSell: false,
     typeLabel: 'Achat',
+    type: 'buy',
     quantity: 2,
     unitPrice: 300,
     fees: 1.5,
     total: 600,
+    auto: false,
     ...overrides,
 });
 

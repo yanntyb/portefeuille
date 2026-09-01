@@ -88,10 +88,15 @@ it('supprime une transaction après confirmation', function () {
 
     $this->actingAs($user);
 
+    /**
+     * L'achat de la fixture n'est couvert par aucun dépôt : un versement déduit s'y ajoute, sans
+     * bouton de correction — on cible donc la ligne de l'achat par son identifiant, pas la première
+     * ligne venue.
+     */
     visit('/')
         ->click('[data-section="wealth-transactions"] [data-section-toggle]')
         ->click('[data-transaction-year="2026"]')
-        ->click('[data-transaction-row]')
+        ->click("[data-transaction-row][data-transaction-id=\"{$transaction->id}\"]")
         ->click('[data-transaction-delete]')
         /** Un vrai dialogue modal, jamais un `confirm()` natif. */
         ->assertVisible('[data-transaction-confirm-delete]')
@@ -113,7 +118,7 @@ it('renonce à une suppression sans rien effacer', function () {
     visit('/')
         ->click('[data-section="wealth-transactions"] [data-section-toggle]')
         ->click('[data-transaction-year="2026"]')
-        ->click('[data-transaction-row]')
+        ->click("[data-transaction-row][data-transaction-id=\"{$transaction->id}\"]")
         ->click('[data-transaction-delete]')
         ->assertVisible('[data-transaction-confirm-delete]')
         ->press('Annuler')
@@ -125,13 +130,19 @@ it('renonce à une suppression sans rien effacer', function () {
 
 it('ferme la modale au retour arrière, sans quitter la page ni la replier', function () {
     ['user' => $user] = portfolioFixture();
+    $transaction = Transaction::query()->where('user_id', $user->id)->where('type', 'buy')->sole();
 
     $this->actingAs($user);
 
+    /**
+     * L'achat de la fixture n'est pas seul dans la liste : un versement déduit du même jour
+     * s'y ajoute. On cible la ligne de l'achat par son identifiant, pour ne pas résoudre deux
+     * lignes sur un sélecteur générique.
+     */
     visit('/')
         ->click('[data-section="wealth-transactions"] [data-section-toggle]')
         ->click('[data-transaction-year="2026"]')
-        ->assertVisible('[data-transaction-row]')
+        ->assertVisible("[data-transaction-row][data-transaction-id=\"{$transaction->id}\"]")
         ->click('[data-section="wealth-transactions"] [data-transaction-add]')
         ->assertVisible('[data-transaction-dialog]')
         ->back()
@@ -142,7 +153,7 @@ it('ferme la modale au retour arrière, sans quitter la page ni la replier', fun
          * puisqu'il restaure avec `preserveState: false`.
          */
         ->assertUrlIs(url('/'))
-        ->assertVisible('[data-transaction-row]')
+        ->assertVisible("[data-transaction-row][data-transaction-id=\"{$transaction->id}\"]")
         ->assertNoJavaScriptErrors();
 });
 

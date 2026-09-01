@@ -12,10 +12,12 @@ const line: NamedTransactionLine = {
     assetName: 'Bitcoin',
     isSell: true,
     typeLabel: 'Vente',
+    type: 'sell',
     quantity: 2,
     unitPrice: 300,
     fees: 1.5,
     total: 598.5,
+    auto: false,
 };
 
 beforeEach((): void => {
@@ -63,6 +65,7 @@ describe('ouverture en correction', () => {
             quantity: '2',
             unitPrice: '300',
             fees: '1.5',
+            amount: '',
         });
     });
 

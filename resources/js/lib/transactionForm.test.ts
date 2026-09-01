@@ -78,6 +78,7 @@ describe('emptyDraft', () => {
             quantity: '',
             unitPrice: '',
             fees: '0',
+            amount: '',
         });
     });
 
@@ -95,10 +96,12 @@ describe('draftFromLine', () => {
         assetName: 'Bitcoin',
         isSell: true,
         typeLabel: 'Vente',
+        type: 'sell',
         quantity: 2,
         unitPrice: 300,
         fees: 1.5,
         total: 598.5,
+        auto: false,
     };
 
     it('reprend l\'enveloppe, l\'actif, le sens et les montants de la ligne', () => {
@@ -110,6 +113,7 @@ describe('draftFromLine', () => {
             quantity: '2',
             unitPrice: '300',
             fees: '1.5',
+            amount: '',
         });
     });
 
@@ -119,6 +123,31 @@ describe('draftFromLine', () => {
         /** La fiche d'un actif impose le sien : elle le passe en surcharge. */
         expect(draftFromLine(bare).assetId).toBe('');
         expect(draftFromLine(bare, { assetId: '9' }).assetId).toBe('9');
+    });
+
+    it('reprend le montant d\'un mouvement d\'espèces, quantité et prix laissés vides', () => {
+        const deposit: NamedTransactionLine = {
+            ...line,
+            assetId: null,
+            assetName: null,
+            isSell: false,
+            typeLabel: 'Versement',
+            type: 'deposit',
+            quantity: 0,
+            unitPrice: 0,
+            total: 1000,
+        };
+
+        expect(draftFromLine(deposit)).toEqual({
+            walletId: '3',
+            assetId: '',
+            date: '2026-03-04',
+            type: 'deposit',
+            quantity: '',
+            unitPrice: '',
+            fees: '1.5',
+            amount: '1000',
+        });
     });
 });
 
@@ -139,5 +168,32 @@ describe('payloadOf', () => {
     it('ne touche ni à la date, ni au sens, ni aux identifiants', () => {
         expect(payloadOf(draft({ date: '2026-01-02', type: 'sell' })))
             .toMatchObject({ date: '2026-01-02', type: 'sell', walletId: '3', assetId: '7' });
+    });
+
+    it('omet quantité, prix et actif sur un versement, même s\'ils traînent encore', () => {
+        /**
+         * Un champ en trop est rejeté par une règle `prohibited` côté serveur — mais seulement s'il
+         * est réellement absent : une clé présente, même vide, resterait évaluée par le `numeric`
+         * qui l'accompagne et rejetterait la ligne. Basculer de type ne doit donc laisser passer
+         * aucune saisie antérieure, même si le formulaire ne l'a pas effacée lui-même.
+         */
+        const payload = payloadOf(draft({ type: 'deposit', amount: '1 000,50' }));
+
+        expect(payload).toMatchObject({ type: 'deposit', amount: '1000.5' });
+        expect(payload).not.toHaveProperty('assetId');
+        expect(payload).not.toHaveProperty('quantity');
+        expect(payload).not.toHaveProperty('unitPrice');
+    });
+
+    it('omet quantité et prix sur un dividende, mais garde l\'actif et le montant', () => {
+        const payload = payloadOf(draft({ type: 'dividend', assetId: '7', amount: '42,5' }));
+
+        expect(payload).toMatchObject({ type: 'dividend', assetId: '7', amount: '42.5' });
+        expect(payload).not.toHaveProperty('quantity');
+        expect(payload).not.toHaveProperty('unitPrice');
+    });
+
+    it('omet le montant sur un ordre', () => {
+        expect(payloadOf(draft({ type: 'buy', amount: '99' }))).not.toHaveProperty('amount');
     });
 });

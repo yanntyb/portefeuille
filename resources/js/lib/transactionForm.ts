@@ -1,4 +1,4 @@
-import type { TransactionLine } from '@/lib/instrument';
+import type { TransactionKind, TransactionLine } from '@/lib/instrument';
 import { isoToday } from '@/lib/format';
 
 /**
@@ -7,27 +7,45 @@ import { isoToday } from '@/lib/format';
  * Tous les champs sont des chaînes, y compris les montants. Deux raisons : un `<input>` rend une
  * chaîne, et surtout le serveur reste seul juge de la validité — coercer côté client ferait taire
  * une saisie fautive au lieu de la faire dire.
+ *
+ * Les cinq types se partagent la même forme, jamais tous ses champs à la fois : `assetId`,
+ * `quantity` et `unitPrice` ne valent que pour un ordre, `amount` que pour un mouvement d'espèces
+ * — un dividende porte les deux, actif et montant. `payloadOf` fait le tri avant l'envoi, le
+ * serveur refusant par `prohibited` tout champ que le type saisi n'autorise pas.
  */
 export type TransactionDraft = {
     walletId: string;
     assetId: string;
     date: string;
-    type: 'buy' | 'sell';
+    type: TransactionKind;
     quantity: string;
     unitPrice: string;
     fees: string;
+    amount: string;
 };
 
-/** Ce que le serveur reçoit : les clés camelCase du fil, les montants normalisés. */
+/**
+ * Ce que le serveur reçoit : les clés camelCase du fil, les montants normalisés. `assetId`,
+ * `quantity`, `unitPrice` et `amount` sont **absents**, pas vides, quand le type saisi ne les
+ * autorise pas : un `numeric` conditionné par `prohibited` s'évalue quand même sur une clé présente,
+ * fût-elle une chaîne vide, et la rejetterait sans le vouloir.
+ */
 export type TransactionPayload = {
     walletId: string;
-    assetId: string;
     date: string;
-    type: 'buy' | 'sell';
-    quantity: string;
-    unitPrice: string;
+    type: TransactionKind;
+    assetId?: string;
+    quantity?: string;
+    unitPrice?: string;
     fees: string;
+    amount?: string;
 };
+
+/** Un ordre porte quantité et prix ; un mouvement d'espèces (dividende compris) porte un montant. */
+export const isTradeType = (type: TransactionKind): boolean => type === 'buy' || type === 'sell';
+
+/** Actif requis : un ordre l'échange, un dividende l'expose — seuls versement et retrait s'en passent. */
+export const isAssetType = (type: TransactionKind): boolean => type !== 'deposit' && type !== 'withdrawal';
 
 /**
  * Lit un décimal saisi à la française. Rend `null` sur tout ce qui n'est pas un nombre — y compris
@@ -91,6 +109,7 @@ export const emptyDraft = (overrides: Partial<TransactionDraft> = {}): Transacti
     quantity: '',
     unitPrice: '',
     fees: '0',
+    amount: '',
     ...overrides,
 });
 
@@ -99,26 +118,37 @@ export const emptyDraft = (overrides: Partial<TransactionDraft> = {}): Transacti
  * l'enveloppe repartirait du vide et une simple correction de quantité déplacerait la ligne.
  *
  * `assetId` n'est présent que sur les lignes qui nomment leur actif ; sur la fiche d'un actif, il
- * est imposé par la page et passé en `overrides`.
+ * est imposé par la page et passé en `overrides`. `total` est toujours positif (contrat de
+ * `TransactionFlow`) : sur un mouvement d'espèces, c'est directement le montant à reprendre.
  */
 export const draftFromLine = (
-    line: TransactionLine & { assetId?: number },
+    line: TransactionLine & { assetId?: number | null },
     overrides: Partial<TransactionDraft> = {},
-): TransactionDraft => ({
-    walletId: String(line.walletId),
-    assetId: line.assetId === undefined ? '' : String(line.assetId),
-    date: line.date,
-    type: line.isSell ? 'sell' : 'buy',
-    quantity: String(line.quantity),
-    unitPrice: String(line.unitPrice),
-    fees: String(line.fees),
-    ...overrides,
-});
+): TransactionDraft => {
+    const trade = isTradeType(line.type);
+
+    return {
+        walletId: String(line.walletId),
+        assetId: line.assetId === undefined || line.assetId === null ? '' : String(line.assetId),
+        date: line.date,
+        type: line.type,
+        quantity: trade ? String(line.quantity) : '',
+        unitPrice: trade ? String(line.unitPrice) : '',
+        fees: String(line.fees),
+        amount: trade ? '' : String(line.total),
+        ...overrides,
+    };
+};
 
 /**
  * Normalise les montants juste avant l'envoi : le serveur attend un point décimal, le lecteur a
  * tapé une virgule. Un champ que `parseDecimalInput` refuse part **tel quel**, pour que le message
  * d'erreur porte sur ce qui a réellement été saisi.
+ *
+ * Chaque champ que le type saisi n'autorise pas est **omis**, pas vidé : une clé présente, fût-elle
+ * une chaîne vide, reste évaluée par les règles `numeric` qui accompagnent le `prohibited` du
+ * serveur, et une chaîne vide n'est pas un nombre — elle rejetterait la ligne au lieu de la laisser
+ * passer.
  */
 export const payloadOf = (draft: TransactionDraft): TransactionPayload => {
     const normalize = (raw: string): string => {
@@ -127,14 +157,16 @@ export const payloadOf = (draft: TransactionDraft): TransactionPayload => {
         return value === null ? raw : String(value);
     };
 
+    const trade = isTradeType(draft.type);
+
     return {
         walletId: draft.walletId,
-        assetId: draft.assetId,
         date: draft.date,
         type: draft.type,
-        quantity: normalize(draft.quantity),
-        unitPrice: normalize(draft.unitPrice),
+        ...(isAssetType(draft.type) ? { assetId: draft.assetId } : {}),
+        ...(trade ? { quantity: normalize(draft.quantity), unitPrice: normalize(draft.unitPrice) } : {}),
         /** Un champ de frais vidé vaut zéro, ce que le serveur accepte comme absence. */
         fees: draft.fees.trim() === '' ? '0' : normalize(draft.fees),
+        ...(trade ? {} : { amount: normalize(draft.amount) }),
     };
 };

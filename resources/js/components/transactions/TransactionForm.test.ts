@@ -81,6 +81,9 @@ const options = {
     types: [
         { value: 'buy', label: 'Achat' },
         { value: 'sell', label: 'Vente' },
+        { value: 'deposit', label: 'Versement' },
+        { value: 'withdrawal', label: 'Retrait' },
+        { value: 'dividend', label: 'Dividende' },
     ],
 };
 
@@ -298,10 +301,12 @@ describe('plafond d\'une vente', () => {
             date: '2026-03-04',
             isSell: true,
             typeLabel: 'Vente',
+            type: 'sell',
             quantity: 4,
             unitPrice: 300,
             fees: 0,
             total: 1200,
+            auto: false,
         });
 
         const host = await mountForm();
@@ -311,6 +316,67 @@ describe('plafond d\'une vente', () => {
          * éditée. Porter la vente de 4 à 14 doit donc rester possible.
          */
         expect(hint(host)).toBe('Maximum : 14 titre(s) détenu(s)');
+    });
+});
+
+describe('mouvements d\'espèces', () => {
+    it('remplace actif, quantité et prix par un montant sur un versement', async () => {
+        const host = await mountForm();
+
+        (host.querySelector('[data-segment="deposit"]') as HTMLElement).click();
+        await nextTick();
+
+        expect(host.querySelector('#transaction-asset')).toBeNull();
+        expect(host.querySelector('#transaction-quantity')).toBeNull();
+        expect(host.querySelector('#transaction-unit-price')).toBeNull();
+        expect(field(host, 'transaction-amount')).not.toBeNull();
+        /** Un seul montant à annoncer : le total vivant, propre aux ordres, disparaît. */
+        expect(host.querySelector('[data-transaction-total]')).toBeNull();
+    });
+
+    it('saisit un montant à la virgule, au pavé décimal', async () => {
+        const host = await mountForm();
+
+        (host.querySelector('[data-segment="withdrawal"]') as HTMLElement).click();
+        await nextTick();
+
+        const amount = field(host, 'transaction-amount') as HTMLInputElement;
+
+        /** `type="number"` viderait la valeur dès qu'on tape la virgule du clavier français. */
+        expect(amount.getAttribute('type')).toBe('text');
+        expect(amount.getAttribute('inputmode')).toBe('decimal');
+
+        amount.value = '1 234,56';
+        amount.dispatchEvent(new Event('input', { bubbles: true }));
+        await nextTick();
+
+        expect(amount.value).toBe('1 234,56');
+    });
+
+    it('garde l\'actif mais efface quantité et prix sur un dividende', async () => {
+        const host = await mountForm();
+
+        (host.querySelector('[data-segment="dividend"]') as HTMLElement).click();
+        await nextTick();
+
+        expect(host.querySelector('#transaction-asset')).not.toBeNull();
+        expect(host.querySelector('#transaction-quantity')).toBeNull();
+        expect(host.querySelector('#transaction-unit-price')).toBeNull();
+        expect(field(host, 'transaction-amount')).not.toBeNull();
+    });
+
+    it('efface le montant et rend l\'actif, la quantité et le prix sur un ordre', async () => {
+        const host = await mountForm();
+
+        (host.querySelector('[data-segment="deposit"]') as HTMLElement).click();
+        await nextTick();
+        (host.querySelector('[data-segment="buy"]') as HTMLElement).click();
+        await nextTick();
+
+        expect(host.querySelector('#transaction-asset')).not.toBeNull();
+        expect(host.querySelector('#transaction-quantity')).not.toBeNull();
+        expect(host.querySelector('#transaction-unit-price')).not.toBeNull();
+        expect(host.querySelector('#transaction-amount')).toBeNull();
     });
 });
 
@@ -367,10 +433,12 @@ describe('total vivant', () => {
             date: '2026-03-04',
             isSell: false,
             typeLabel: 'Achat',
+            type: 'buy',
             quantity: 2,
             unitPrice: 300,
             fees: 1.5,
             total: 601.5,
+            auto: false,
         });
 
         const host = await mountForm();
@@ -404,10 +472,12 @@ describe('envoi', () => {
             date: '2026-03-04',
             isSell: true,
             typeLabel: 'Vente',
+            type: 'sell',
             quantity: 2,
             unitPrice: 300,
             fees: 0,
             total: 600,
+            auto: false,
         });
 
         const host = await mountForm();

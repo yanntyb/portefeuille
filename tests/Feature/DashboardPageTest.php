@@ -93,7 +93,7 @@ it('diffère les transactions et les nomme par leur actif', function () {
         ->assertInertia(fn (Assert $page) => $page->missing('transactions'));
 
     /** Le groupe `transactions` n'arrive qu'à la requête partielle que déclenche le dépli. */
-    $this->actingAs($user)
+    $response = $this->actingAs($user)
         ->get('/', [
             'X-Inertia' => 'true',
             'X-Inertia-Version' => Inertia::getVersion(),
@@ -102,9 +102,12 @@ it('diffère les transactions et les nomme par leur actif', function () {
         ])
         ->assertOk()
         ->assertJsonStructure(['props' => ['transactions' => [
-            ['date', 'assetId', 'assetName', 'isSell', 'typeLabel', 'quantity', 'unitPrice', 'fees', 'total'],
-        ]]])
-        ->assertJsonPath('props.transactions.0.assetName', 'ACME');
+            ['date', 'assetId', 'assetName', 'isSell', 'typeLabel', 'type', 'quantity', 'unitPrice', 'fees', 'total', 'auto'],
+        ]]]);
+
+    /** L'achat de la fixture n'est couvert par aucun dépôt : un versement déduit s'y ajoute. */
+    $buy = collect($response->json('props.transactions'))->firstWhere('type', 'buy');
+    expect($buy['assetName'])->toBe('ACME');
 });
 
 it('compte la crypto comme sa propre classe, séparée des titres', function () {

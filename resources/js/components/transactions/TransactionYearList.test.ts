@@ -11,10 +11,12 @@ const line = (overrides: Partial<NamedTransactionLine> = {}): NamedTransactionLi
     assetName: 'Bitcoin',
     isSell: false,
     typeLabel: 'Achat',
+    type: 'buy',
     quantity: 2,
     unitPrice: 300,
     fees: 1.5,
     total: 600,
+    auto: false,
     ...overrides,
 });
 
@@ -61,10 +63,11 @@ describe('liste des transactions par année', () => {
         expect(host.querySelector('[data-transaction-row]')).toBeNull();
     });
 
-    it('somme l\'année en flux investi : les ventes en sortent', () => {
-        const host = mountList([line(), line({ isSell: true, total: 200 })], 'named');
+    it('somme l\'année en flux de trésorerie : un achat en sort, une vente y entre', () => {
+        const host = mountList([line(), line({ isSell: true, type: 'sell', typeLabel: 'Vente', total: 200 })], 'named');
 
-        expect(host.querySelector('[data-transaction-year-net]')?.textContent).toContain('400,00');
+        /** -600 (achat) + 200 (vente) : le seul flux qui reste juste une fois les espèces présentes. */
+        expect(host.querySelector('[data-transaction-year-net]')?.textContent).toContain('-400,00');
     });
 
     it('nomme l\'actif et cache le détail sous la ligne, variante « named »', async () => {
@@ -100,6 +103,35 @@ describe('liste des transactions par année', () => {
         const host = mountList([], 'named');
 
         expect(host.textContent).toContain('Rien à montrer.');
+    });
+});
+
+describe('mouvements d\'espèces', () => {
+    it('affiche un versement, un retrait et un dividende avec leur libellé et leur montant signé', async () => {
+        const host = mountList([
+            line({ id: 1, type: 'deposit', typeLabel: 'Versement', assetId: null, assetName: null, quantity: 0, unitPrice: 0, fees: 0, total: 1000 }),
+            line({ id: 2, type: 'withdrawal', typeLabel: 'Retrait', assetId: null, assetName: null, quantity: 0, unitPrice: 0, fees: 0, total: 200 }),
+            line({ id: 3, type: 'dividend', typeLabel: 'Dividende', quantity: 0, unitPrice: 0, fees: 0, total: 42.5 }),
+        ], 'named');
+
+        await click(host.querySelector('[data-transaction-year]'));
+
+        const rows = [...host.querySelectorAll('[data-transaction-row]')];
+
+        expect(rows.map((row) => row.textContent)).toEqual([
+            expect.stringContaining('Versement'),
+            expect.stringContaining('Retrait'),
+            expect.stringContaining('Dividende'),
+        ]);
+
+        const amounts = [...host.querySelectorAll('[data-transaction-amount]')]
+            .map((el) => el.textContent?.replace(/[\s ]/g, ''));
+
+        /** Le sens de `TransactionFlow::cashDelta()` : versement et dividende entrent, retrait sort. */
+        expect(amounts).toEqual(['+1000,00€', '-200,00€', '+42,50€']);
+
+        /** Un versement ou un retrait n'a pas d'actif : la colonne reste vide, pas de « null ». */
+        expect(rows[0].querySelector('[data-transaction-asset]')?.textContent?.trim()).toBe('');
     });
 });
 
@@ -143,6 +175,22 @@ describe('correction depuis la liste', () => {
 
         expect(detail?.textContent).toContain("l'unité");
         expect(detail?.textContent).toContain('frais');
+    });
+
+    it('dit qu\'un versement déduit n\'a pas été saisi, et n\'offre aucune correction', async () => {
+        const { host } = mountEditable(
+            [line({ type: 'deposit', typeLabel: 'Versement', auto: true, quantity: 0, unitPrice: 0, total: 1000 })],
+            'named',
+        );
+
+        await click(host.querySelector('[data-transaction-year]'));
+        await click(host.querySelector('[data-transaction-row]'));
+
+        const detail = host.querySelector('[data-transaction-detail]');
+
+        expect(detail?.textContent).toContain('Versement déduit');
+        expect(host.querySelector('[data-transaction-edit]')).toBeNull();
+        expect(host.querySelector('[data-transaction-delete]')).toBeNull();
     });
 
     it('pose un crayon par ligne en variante « bare », sans toucher au détail', async () => {

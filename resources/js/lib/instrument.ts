@@ -14,6 +14,9 @@ export interface InstrumentPosition {
 export const investedOf = (position: InstrumentPosition): number | null =>
     position.avgCost === null ? null : position.avgCost * position.quantity;
 
+/** Les cinq natures d'opération, jumelles de `Portfolio\Enums\TransactionType` côté serveur. */
+export type TransactionKind = 'buy' | 'sell' | 'deposit' | 'withdrawal' | 'dividend';
+
 export interface TransactionLine {
     id: number;
     /**
@@ -24,21 +27,38 @@ export interface TransactionLine {
     date: string;
     isSell: boolean;
     typeLabel: string;
+    /** Distingue les cinq natures d'opération ; `isSell` reste pour ne trancher qu'achat/vente. */
+    type: TransactionKind;
     quantity: number;
     unitPrice: number;
     fees: number;
     total: number;
+    /**
+     * Une ligne déduite par le système plutôt que saisie — un versement qui finance un achat non
+     * couvert, réécrit à chaque correction. Le journal le dit et n'offre aucune correction dessus :
+     * elle serait de toute façon reconstruite à la prochaine reprojection.
+     */
+    auto: boolean;
 }
 
 /**
  * Une opération qui nomme son actif : la ligne de la fiche, augmentée de ce qu'elle porte — hors
  * de sa fiche, une quantité ne dit pas de quoi elle est la quantité. Le tableau de bord et les
  * pages d'exposition mélangent plusieurs actifs, donc en dépendent tous les deux.
+ *
+ * Nullables : un versement ou un retrait n'a pas d'actif, et le tableau de bord les affiche quand
+ * même — seule cette variante peut les porter, la page d'exposition restant scopée à une classe.
  */
 export interface NamedTransactionLine extends TransactionLine {
-    assetId: number;
-    assetName: string;
+    assetId: number | null;
+    assetName: string | null;
 }
+
+/**
+ * Le sens de trésorerie d'une ligne, miroir de `Portfolio\Services\TransactionFlow::cashDelta()` :
+ * un achat et un retrait sortent de l'enveloppe, une vente, un versement et un dividende y entrent.
+ */
+export const cashSignOf = (type: TransactionKind): 1 | -1 => (type === 'buy' || type === 'withdrawal' ? -1 : 1);
 
 /**
  * Le groupe est paramétré par sa ligne : le tableau de bord y passe des lignes qui nomment leur
@@ -46,7 +66,12 @@ export interface NamedTransactionLine extends TransactionLine {
  */
 export interface TransactionYear<Line extends TransactionLine = TransactionLine> {
     year: string;
-    /** Flux investi de l'année : les achats en positif, les ventes en négatif. */
+    /**
+     * Flux de trésorerie de l'année : achat et retrait en négatif, vente, versement et dividende en
+     * positif. C'est le seul sens qui reste juste une fois les espèces présentes — un achat financé
+     * par un virement du même montant y solde à zéro, alors qu'un « flux investi » qui compterait
+     * les deux en positif doublerait le mouvement.
+     */
     net: number;
     lines: Line[];
 }
@@ -64,7 +89,7 @@ export const transactionYears = <Line extends TransactionLine>(lines: Line[]): T
         .sort(([left], [right]) => right.localeCompare(left))
         .map(([year, yearLines]) => ({
             year,
-            net: yearLines.reduce((net, line) => net + (line.isSell ? -line.total : line.total), 0),
+            net: yearLines.reduce((net, line) => net + cashSignOf(line.type) * line.total, 0),
             lines: yearLines,
         }));
 };

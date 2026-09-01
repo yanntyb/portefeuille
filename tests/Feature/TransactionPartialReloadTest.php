@@ -52,8 +52,11 @@ it('resolves a deferred group when the partial names it', function () {
      */
     $lines = partialVisit('/', 'Dashboard', 'transactions')->json('props.transactions');
 
-    expect($lines)->toHaveCount(1)
-        ->and($lines[0]['id'])->toBe(Transaction::query()->where('type', 'buy')->sole()->id);
+    /** L'achat de la fixture n'est couvert par aucun dépôt : un versement déduit s'y ajoute. */
+    expect($lines)->toHaveCount(2);
+
+    $buy = collect($lines)->firstWhere('type', 'buy');
+    expect($buy['id'])->toBe(Transaction::query()->where('type', 'buy')->sole()->id);
 });
 
 it('rends the fresh line right after a write, in one round trip', function () {
@@ -63,7 +66,8 @@ it('rends the fresh line right after a write, in one round trip', function () {
 
     $props = partialVisit('/', 'Dashboard', 'overview,transactions')->json('props');
 
-    expect($props['transactions'])->toHaveCount(2);
+    /** Chaque achat non couvert déduit son propre versement : deux achats, quatre lignes. */
+    expect($props['transactions'])->toHaveCount(4);
 });
 
 it('keeps the same guarantee on an exposure page and on an asset page', function () {

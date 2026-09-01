@@ -4,6 +4,7 @@ import { ChevronRight, Pencil, Trash2 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { eur, frDayMonth, signedEur } from '@/lib/format';
 import {
+    cashSignOf,
     transactionYears,
     type NamedTransactionLine,
     type TransactionLine,
@@ -52,8 +53,26 @@ const gridColumns = computed<string>(() => {
 /** Doit suivre le nombre de pistes, sinon les lignes cessent de s'aligner sur le groupe. */
 const rowSpan = computed<string>(() => (!isNamed.value && props.editable ? 'col-span-5' : 'col-span-4'));
 
-/** L'actif ne se lit que sur les lignes qui le portent : la variante `bare` n'en a aucun. */
-const assetNameOf = (line: TransactionLine): string => (line as NamedTransactionLine).assetName;
+/**
+ * L'actif ne se lit que sur les lignes qui le portent : la variante `bare` n'en a aucun, et en
+ * variante `named` un versement ou un retrait n'en porte pas non plus.
+ */
+const assetNameOf = (line: TransactionLine): string | null => (line as NamedTransactionLine).assetName ?? null;
+
+/** Seuls un achat et une vente échangent une quantité contre un prix. */
+const isTrade = (line: TransactionLine): boolean => line.type === 'buy' || line.type === 'sell';
+
+/**
+ * Ce que la ligne annonce dans le lecteur d'écran : l'actif quand la variante le nomme, le sens de
+ * l'opération, puis la quantité pour un ordre ou le montant signé pour un mouvement d'espèces —
+ * une quantité de zéro n'y dirait rien.
+ */
+const rowAriaLabel = (line: TransactionLine): string => {
+    const asset = isNamed.value ? assetNameOf(line) : null;
+    const detail = isTrade(line) ? String(line.quantity) : signedEur(amountOf(line));
+
+    return asset === null ? `${line.typeLabel} ${detail}` : `${asset} ${line.typeLabel} ${detail}`;
+};
 
 /**
  * Toutes les années démarrent repliées : la section suit un graphe, et un historique déroulé
@@ -91,8 +110,11 @@ const toggleLine = (key: string): void => {
  * modale de correction, pour ne pas doubler les icônes sur la page la plus dense.
  */
 
-/** Le flux investi de la ligne : un achat entre en positif, une vente en sort. */
-const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total : line.total);
+/**
+ * Le flux de trésorerie de la ligne, miroir de `Portfolio\Services\TransactionFlow::cashDelta()` :
+ * un achat et un retrait en sortent, une vente, un versement et un dividende y entrent.
+ */
+const amountOf = (line: TransactionLine): number => cashSignOf(line.type) * line.total;
 </script>
 
 <template>
@@ -137,53 +159,55 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                         :is="isNamed ? 'button' : 'div'"
                         :type="isNamed ? 'button' : undefined"
                         data-transaction-row
+                        :data-transaction-id="line.id"
                         :class="[rowSpan, 'grid grid-cols-subgrid items-center gap-x-3 py-2 text-left text-sm']"
                         :aria-expanded="isNamed ? openLine === `${group.year}-${index}` : undefined"
-                        :aria-label="
-                            isNamed
-                                ? `${assetNameOf(line)} ${line.typeLabel} ${line.quantity}`
-                                : `${line.typeLabel} ${line.quantity}`
-                        "
+                        :aria-label="rowAriaLabel(line)"
                         @click="isNamed ? toggleLine(`${group.year}-${index}`) : undefined"
                     >
                         <span class="text-muted-foreground">{{ frDayMonth(line.date) }}</span>
 
+                        <!-- Vide sur un versement ou un retrait : ils n'ont pas d'actif à nommer. -->
                         <span v-if="isNamed" data-transaction-asset class="truncate font-medium">
                             {{ assetNameOf(line) }}
                         </span>
 
                         <!--
-                            Le sens se lit sur la seule quantité : teinter aussi le montant
-                            doublerait le signal, et deux colonnes colorées par ligne feraient de
-                            la liste un damier illisible.
+                            Le sens se lit sur la seule quantité, teinter aussi le montant
+                            doublerait le signal. Un mouvement d'espèces n'a pas de quantité : son
+                            libellé de type y tient sa place, sans couleur.
                         -->
                         <span
                             data-transaction-quantity
                             class="text-right"
-                            :class="line.isSell ? 'text-loss' : 'text-gain'"
+                            :class="isTrade(line) ? (line.isSell ? 'text-loss' : 'text-gain') : 'text-muted-foreground'"
                         >
-                            {{ line.quantity }}
+                            {{ isTrade(line) ? line.quantity : line.typeLabel }}
                         </span>
 
                         <!--
                             Colonne souple entre la quantité et le montant : prix unitaire puis
                             frais s'y suivent contre la quantité, pour que la ligne se lise d'un
                             trait — quantité × prix - frais. Colonne toujours présente, même sans
-                            frais, sinon le montant remonterait d'une colonne.
+                            frais, sinon le montant remonterait d'une colonne. Un mouvement
+                            d'espèces n'a ni prix ni frais : son libellé de type y tient lieu.
                         -->
                         <span
                             v-if="!isNamed"
                             class="flex items-center gap-1 text-xs text-muted-foreground"
                         >
-                            <span data-transaction-detail>×{{ eur(line.unitPrice) }}</span>
-                            <!--
-                                L'opérateur suit le sens : les frais alourdissent ce qu'un achat
-                                coûte et grèvent ce qu'une vente rapporte. Un « - » partout
-                                mentirait sur la moitié des lignes.
-                            -->
-                            <span v-if="line.fees" data-transaction-fees>
-                                {{ line.isSell ? '-' : '+' }} frais {{ eur(line.fees) }}
-                            </span>
+                            <template v-if="isTrade(line)">
+                                <span data-transaction-detail>×{{ eur(line.unitPrice) }}</span>
+                                <!--
+                                    L'opérateur suit le sens : les frais alourdissent ce qu'un achat
+                                    coûte et grèvent ce qu'une vente rapporte. Un « - » partout
+                                    mentirait sur la moitié des lignes.
+                                -->
+                                <span v-if="line.fees" data-transaction-fees>
+                                    {{ line.isSell ? '-' : '+' }} frais {{ eur(line.fees) }}
+                                </span>
+                            </template>
+                            <span v-else data-transaction-detail>{{ line.typeLabel }}</span>
                         </span>
 
                         <span data-transaction-amount class="text-right font-medium">
@@ -193,9 +217,11 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                         <!--
                             La ligne est un `<div>` en variante `bare` : un bouton peut y vivre. En
                             `named` elle est un `<button>`, et les actions vivent dans le détail.
+                            Aucun bouton sur une ligne déduite : elle serait réécrite à la prochaine
+                            correction, la corriger à la main n'a pas de sens.
                         -->
                         <Button
-                            v-if="!isNamed && props.editable"
+                            v-if="!isNamed && props.editable && !line.auto"
                             type="button"
                             variant="ghost"
                             size="icon-xs"
@@ -218,7 +244,16 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                         data-transaction-detail
                         class="col-span-4 flex items-center gap-3 pb-2 text-xs text-muted-foreground"
                     >
-                        <span>
+                        <!--
+                            Une ligne déduite se dit pour ce qu'elle est : `RecomputeCashDeposits`
+                            la réécrit à chaque correction d'achat, la corriger à la main n'aurait
+                            aucun effet durable — elle serait remplacée à la prochaine reprojection.
+                        -->
+                        <span v-if="line.auto" data-transaction-auto>
+                            Versement déduit — recalculé automatiquement, non modifiable
+                        </span>
+
+                        <span v-else-if="isTrade(line)">
                             {{ eur(line.unitPrice) }} l'unité<template
                                 v-if="line.fees"
                             >
@@ -226,7 +261,15 @@ const amountOf = (line: TransactionLine): number => (line.isSell ? -line.total :
                             >
                         </span>
 
-                        <span v-if="props.editable" class="ml-auto flex items-center gap-1">
+                        <span v-else>
+                            {{ line.typeLabel }}<template
+                                v-if="line.fees"
+                            >
+                                · frais {{ eur(line.fees) }}</template
+                            >
+                        </span>
+
+                        <span v-if="props.editable && !line.auto" class="ml-auto flex items-center gap-1">
                             <Button
                                 type="button"
                                 variant="ghost"

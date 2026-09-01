@@ -79,10 +79,12 @@ const line = (overrides: Partial<TransactionLine> = {}): TransactionLine => ({
     date: '2026-03-12',
     isSell: false,
     typeLabel: 'Achat',
+    type: 'buy',
     quantity: 3,
     unitPrice: 82.5,
     fees: 2.5,
     total: 247.5,
+    auto: false,
     ...overrides,
 });
 
@@ -109,13 +111,28 @@ describe('transactionYears', () => {
         expect(years[1].lines.map((entry) => entry.date)).toEqual(['2025-06-04']);
     });
 
-    it('compte une vente en négatif dans le flux investi de l\'année', () => {
+    it('compte un achat en négatif et une vente en positif, dans le flux de trésorerie de l\'année', () => {
         const years = transactionYears([
             line({ date: '2026-03-12', total: 250 }),
-            line({ date: '2026-02-03', total: 180, isSell: true, typeLabel: 'Vente' }),
+            line({ date: '2026-02-03', total: 180, isSell: true, type: 'sell', typeLabel: 'Vente' }),
         ]);
 
-        expect(years[0].net).toBe(70);
+        expect(years[0].net).toBe(-70);
+    });
+
+    it('fait entrer un versement et un dividende, sortir un retrait, dans le même flux', () => {
+        const years = transactionYears([
+            line({ date: '2026-03-01', total: 1000, type: 'deposit', typeLabel: 'Versement' }),
+            line({ date: '2026-03-02', total: 200, type: 'withdrawal', typeLabel: 'Retrait' }),
+            line({ date: '2026-03-03', total: 42.5, type: 'dividend', typeLabel: 'Dividende' }),
+        ]);
+
+        /**
+         * Un achat financé par un virement du même montant solde à zéro dans ce flux : c'est le
+         * seul qui reste juste une fois les espèces présentes, un « flux investi » doublerait le
+         * mouvement en comptant les deux en positif.
+         */
+        expect(years[0].net).toBe(1000 - 200 + 42.5);
     });
 
     it('ne rend aucun groupe sans transaction', () => {

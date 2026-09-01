@@ -26,6 +26,7 @@ class PortfolioTransactions implements TransactionsPort
                 $quantity = (float) $transaction->quantity;
                 $unitPrice = (float) $transaction->unit_price;
                 $fees = (float) $transaction->fees;
+                $amount = $transaction->amount === null ? null : (float) $transaction->amount;
                 $isSell = $transaction->type === TransactionType::Sell;
 
                 return new TransactionLineData(
@@ -34,10 +35,12 @@ class PortfolioTransactions implements TransactionsPort
                     date: $transaction->date->format('Y-m-d'),
                     isSell: $isSell,
                     typeLabel: $transaction->type->getLabel(),
+                    type: $transaction->type->value,
                     quantity: $quantity,
                     unitPrice: $unitPrice,
                     fees: $fees,
-                    total: $this->flow->of($quantity, $unitPrice, $fees, $isSell),
+                    total: $this->flow->of($transaction->type, $quantity, $unitPrice, $fees, $amount),
+                    auto: (bool) $transaction->auto,
                 );
             })
             ->values()
@@ -68,6 +71,7 @@ class PortfolioTransactions implements TransactionsPort
                 $quantity = (float) $transaction->quantity;
                 $unitPrice = (float) $transaction->unit_price;
                 $fees = (float) $transaction->fees;
+                $amount = $transaction->amount === null ? null : (float) $transaction->amount;
                 $isSell = $transaction->type === TransactionType::Sell;
 
                 return new ClassTransactionLineData(
@@ -78,10 +82,12 @@ class PortfolioTransactions implements TransactionsPort
                     assetName: (string) $transaction->getAttribute('asset_name'),
                     isSell: $isSell,
                     typeLabel: $transaction->type->getLabel(),
+                    type: $transaction->type->value,
                     quantity: $quantity,
                     unitPrice: $unitPrice,
                     fees: $fees,
-                    total: $this->flow->of($quantity, $unitPrice, $fees, $isSell),
+                    total: $this->flow->of($transaction->type, $quantity, $unitPrice, $fees, $amount),
+                    auto: (bool) $transaction->auto,
                 );
             })
             ->values()

@@ -146,14 +146,14 @@ it('affiche les frais sur la ligne de transaction, sans clic', function () {
         ->assertScript("document.querySelectorAll('[data-transaction-row]').length", 2)
         ->assertScript("document.querySelectorAll('[data-transaction-fees]').length", 1)
         /**
-         * Le montant de la ligne est le flux réel : 10 × 80 € sortis du compte, plus 3,50 € de
-         * frais. La ligne voisine, sans frais, en reste à son montant brut — deux valeurs
-         * distinctes, donc un montant qui ignorerait les frais tomberait.
+         * Le montant de la ligne est le flux de trésorerie réel, négatif sur un achat : 10 × 80 €
+         * sortis du compte, plus 3,50 € de frais. La ligne voisine, sans frais, en reste à son
+         * montant brut — deux valeurs distinctes, donc un montant qui ignorerait les frais tomberait.
          */
         ->assertScript(
             "Array.from(document.querySelectorAll('[data-transaction-amount]'))"
             .'  .map(cell => cell.textContent.replace(/\\s+/g, \' \').trim()).join(\'|\')',
-            '+300,00 €|+803,50 €',
+            '-300,00 €|-803,50 €',
         )
         /**
          * Les montants des deux lignes commencent à la même abscisse, alors qu'une seule porte des

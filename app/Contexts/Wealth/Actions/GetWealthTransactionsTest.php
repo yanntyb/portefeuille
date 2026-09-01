@@ -21,7 +21,8 @@ it('réunit les opérations de tous les actifs, la plus récente en tête', func
         'date' => '2026-03-04',
     ]);
 
-    $lines = app(GetWealthTransactions::class)($user->id);
+    /** Les versements déduits par les achats s'intercalent : on ne trie ici que les achats. */
+    $lines = collect(app(GetWealthTransactions::class)($user->id))->where('type', 'buy')->values();
 
     expect($lines)->toHaveCount(2)
         /** L'identifiant et l'enveloppe ouvrent l'édition depuis la liste. */
@@ -43,7 +44,7 @@ it('ne rend que les opérations de l\'utilisateur demandé', function () {
     ['user' => $user] = portfolioFixture();
     portfolioFixture(['name' => 'Globex', 'ticker' => 'GBX']);
 
-    $lines = app(GetWealthTransactions::class)($user->id);
+    $lines = collect(app(GetWealthTransactions::class)($user->id))->where('type', 'buy')->values();
 
     expect($lines)->toHaveCount(1)
         ->and($lines[0]->assetName)->toBe('ACME');
@@ -69,12 +70,17 @@ it('marque la vente et lui garde son montant en positif', function () {
         ->and($lines[0]->total)->toBe(360.0);
 });
 
-it('saute l\'opération qui ne porte aucun actif', function () {
+it('garde les opérations qui ne portent aucun actif, comme mouvements d\'espèces', function () {
     ['user' => $user] = portfolioFixture();
 
     Transaction::query()->where('user_id', $user->id)->update(['asset_id' => null]);
 
-    expect(app(GetWealthTransactions::class)($user->id))->toBe([]);
+    $lines = app(GetWealthTransactions::class)($user->id);
+
+    /** `leftJoin` et non `join` : un versement ou un retrait sans actif ne disparaît plus. */
+    expect($lines)->toHaveCount(2)
+        ->and(collect($lines)->pluck('assetId')->unique()->all())->toBe([null])
+        ->and(collect($lines)->pluck('assetName')->unique()->all())->toBe([null]);
 });
 
 it('ne rend rien à un utilisateur sans opération', function () {
