@@ -27,9 +27,13 @@ class CashClass implements AssetClassPort
         return 'Liquidités';
     }
 
-    public function href(): string
+    /**
+     * Aucune page ne détaille les liquidités : ce que chaque enveloppe tient en espèces se lit
+     * déjà sur le tableau de bord même. Un lien vers `/` y renvoyait la page sur elle-même.
+     */
+    public function href(): ?string
     {
-        return '/';
+        return null;
     }
 
     public function color(): string

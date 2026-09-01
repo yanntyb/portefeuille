@@ -20,10 +20,15 @@ const lines = computed<AssetClassWeight[]>(() => assetClassWeights(props.overvie
     <section data-section="wealth-classes" class="flex shrink-0 flex-col">
         <ul v-if="lines.length" class="flex flex-col gap-1 px-3">
             <li v-for="entry in lines" :key="entry.line.key" data-wealth-class>
-                <Link
-                    :href="entry.line.href"
-                    prefetch
-                    class="flex flex-col gap-2 rounded-md px-3 py-2.5 text-sm hover:bg-muted"
+                <!--
+                    Sans page dédiée — les liquidités — la ligne reste une ligne : ni lien, ni survol,
+                    ni chevron, qui promettraient un ailleurs où il n'y a rien à ouvrir.
+                -->
+                <component
+                    :is="entry.line.href === null ? 'div' : Link"
+                    v-bind="entry.line.href === null ? {} : { href: entry.line.href, prefetch: true }"
+                    class="flex flex-col gap-2 rounded-md px-3 py-2.5 text-sm"
+                    :class="entry.line.href === null ? '' : 'hover:bg-muted'"
                 >
                     <span class="flex items-center justify-between gap-3">
                         <span class="font-medium">{{ entry.line.label }}</span>
@@ -34,7 +39,10 @@ const lines = computed<AssetClassWeight[]>(() => assetClassWeights(props.overvie
                                     · <span data-wealth-share>{{ sharePct(entry.share) }}</span>
                                 </span>
                             </span>
-                            <ChevronRight class="size-4 text-muted-foreground" />
+                            <ChevronRight
+                                v-if="entry.line.href !== null"
+                                class="size-4 text-muted-foreground"
+                            />
                         </span>
                     </span>
 
@@ -46,7 +54,7 @@ const lines = computed<AssetClassWeight[]>(() => assetClassWeights(props.overvie
                             :style="{ width: entry.barWidth }"
                         ></span>
                     </span>
-                </Link>
+                </component>
             </li>
         </ul>
 

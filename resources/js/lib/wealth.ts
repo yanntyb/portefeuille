@@ -8,7 +8,8 @@ import type { NamedTransactionLine } from '@/lib/instrument';
 export interface AssetClass {
     key: string;
     label: string;
-    href: string;
+    /** `null` pour une classe sans page dédiée : sa ligne se lit alors sans être cliquable. */
+    href: string | null;
     color: string;
     value: number;
     invested: number;

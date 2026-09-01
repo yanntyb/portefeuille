@@ -14,6 +14,14 @@ beforeEach(function () {
     $this->asset = Instrument::factory()->create(['ticker' => 'ACME']);
 });
 
+/**
+ * Aucune page ne détaille les liquidités : leur ligne du tableau de bord se lit sans être
+ * cliquable, là où un `href` de `/` renvoyait la page sur elle-même.
+ */
+it('n\'annonce aucune page à détailler', function () {
+    expect(app(CashClass::class)->href())->toBeNull();
+});
+
 it('vaut le solde d\'espèces de toutes les enveloppes', function () {
     $cto = Wallet::factory()->for($this->user)->create(['name' => 'CTO']);
 

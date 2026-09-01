@@ -20,8 +20,11 @@ interface AssetClassPort
 
     public function label(): string;
 
-    /** La page qui détaille la classe, vers laquelle le tableau de bord renvoie. */
-    public function href(): string;
+    /**
+     * La page qui détaille la classe, vers laquelle le tableau de bord renvoie, et `null` pour une
+     * classe qui n'en a pas : sa ligne se lit alors sans être cliquable.
+     */
+    public function href(): ?string;
 
     /**
      * Jeton de teinte de la classe, résolu par thème côté front. Porté par la classe et non déduit

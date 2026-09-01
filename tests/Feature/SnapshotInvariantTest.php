@@ -116,7 +116,12 @@ use Illuminate\Support\Carbon;
  * 48 303,27 → 49 183,27 €. Rien d'autre ne bouge — le retrait de `ValuationSeriesData::$cash` est
  * invisible ici, cette série n'entrant pas dans l'instantané hors-ligne.
  */
-const SNAPSHOT_VERSION = 'ef844a87b2710adf5052a5f8d4052ff6298b1f02';
+/**
+ * Modifié une vingt-cinquième fois : le `href` d'une classe d'actif devient nullable, et les
+ * liquidités rendent `null` au lieu de `/` — aucune page ne les détaille, leur ligne du tableau
+ * de bord cesse d'être cliquable. Seule cette valeur bouge dans le JSON.
+ */
+const SNAPSHOT_VERSION = '0793921efb54058673a55e2384e070dcde1502f0';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

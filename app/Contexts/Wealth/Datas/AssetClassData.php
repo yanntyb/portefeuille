@@ -11,7 +11,7 @@ readonly class AssetClassData implements JsonSerializable
     public function __construct(
         public string $key,
         public string $label,
-        public string $href,
+        public ?string $href,
         public string $color,
         public float $value,
         public float $invested,
