@@ -2,6 +2,7 @@
 
 namespace App\Contexts\Income\Sources\Dividend\Infrastructure;
 
+use App\Contexts\Income\Sources\Dividend\Datas\ConfirmedDividendData;
 use App\Contexts\Income\Sources\Dividend\Datas\PositionRecordData;
 use App\Contexts\Income\Sources\Dividend\Datas\PositionSnapshotData;
 use App\Contexts\Income\Sources\Dividend\Ports\PositionHistoryPort;
@@ -24,6 +25,7 @@ class PortfolioPositionHistory implements PositionHistoryPort
             ->get()
             ->map(fn (Transaction $transaction): PositionRecordData => new PositionRecordData(
                 assetId: (int) $transaction->asset_id,
+                walletId: (int) $transaction->wallet_id,
                 date: $transaction->date,
                 isSell: $transaction->type === TransactionType::Sell,
                 quantity: (float) $transaction->quantity,
@@ -62,5 +64,22 @@ class PortfolioPositionHistory implements PositionHistoryPort
             ),
             ($this->positions)($userId),
         );
+    }
+
+    /** @return list<ConfirmedDividendData> */
+    public function confirmedDividendsFor(int $userId): array
+    {
+        return Transaction::query()
+            ->where('user_id', $userId)
+            ->where('type', TransactionType::Dividend)
+            ->get()
+            ->map(fn (Transaction $transaction): ConfirmedDividendData => new ConfirmedDividendData(
+                assetId: (int) $transaction->asset_id,
+                walletId: (int) $transaction->wallet_id,
+                exDate: $transaction->date->format('Y-m-d'),
+                amount: (float) $transaction->amount,
+            ))
+            ->values()
+            ->all();
     }
 }

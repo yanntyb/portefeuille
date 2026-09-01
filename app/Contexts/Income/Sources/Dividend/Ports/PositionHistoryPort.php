@@ -2,6 +2,7 @@
 
 namespace App\Contexts\Income\Sources\Dividend\Ports;
 
+use App\Contexts\Income\Sources\Dividend\Datas\ConfirmedDividendData;
 use App\Contexts\Income\Sources\Dividend\Datas\PositionRecordData;
 use App\Contexts\Income\Sources\Dividend\Datas\PositionSnapshotData;
 
@@ -34,4 +35,12 @@ interface PositionHistoryPort
      * @return array<int, PositionSnapshotData>
      */
     public function positionsFor(int $userId): array;
+
+    /**
+     * Détachements déjà encaissés par une transaction de dividende : ils sortent de la
+     * dérivation, `DividendIncomeSource` lisant la transaction à leur place.
+     *
+     * @return list<ConfirmedDividendData>
+     */
+    public function confirmedDividendsFor(int $userId): array;
 }

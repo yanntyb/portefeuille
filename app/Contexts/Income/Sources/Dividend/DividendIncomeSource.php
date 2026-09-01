@@ -29,29 +29,68 @@ class DividendIncomeSource implements IncomeSourcePort
         return IncomeSource::Dividend;
     }
 
-    /** @return list<IncomeReceiptData> */
+    /**
+     * Un détachement encaissé sort de la dérivation : c'est la transaction qui compte à sa place,
+     * jamais les deux — la clé de dédoublonnage est `(assetId, walletId, exDate)`.
+     *
+     * @return list<IncomeReceiptData>
+     */
     public function receiptsFor(int $userId): array
     {
         $assetIds = $this->positions->assetIdsFor($userId);
+        $confirmed = $this->positions->confirmedDividendsFor($userId);
 
-        if ($assetIds === []) {
+        if ($assetIds === [] && $confirmed === []) {
             return [];
         }
 
-        $receipts = $this->calculator->receipts(
+        $derived = $assetIds === [] ? [] : $this->calculator->receipts(
             $this->positions->transactionsFor($userId),
             $this->dividends->forAssets($assetIds),
         );
 
-        $names = $this->dividends->namesFor($assetIds);
+        /** @var array<string, true> $confirmedKeys */
+        $confirmedKeys = [];
 
-        return array_map(fn (DividendReceiptData $receipt): IncomeReceiptData => new IncomeReceiptData(
+        foreach ($confirmed as $dividend) {
+            $confirmedKeys[$this->key($dividend->assetId, $dividend->walletId, $dividend->exDate)] = true;
+        }
+
+        $derived = array_values(array_filter(
+            $derived,
+            fn (DividendReceiptData $receipt): bool => ! isset($confirmedKeys[$this->key($receipt->assetId, $receipt->walletId, $receipt->exDate)]),
+        ));
+
+        $names = $this->dividends->namesFor(array_unique([
+            ...$assetIds,
+            ...array_map(fn ($dividend): int => $dividend->assetId, $confirmed),
+        ]));
+
+        $receipts = array_map(fn (DividendReceiptData $receipt): IncomeReceiptData => new IncomeReceiptData(
             source: IncomeSource::Dividend,
             date: Carbon::parse($receipt->exDate),
             amount: $receipt->amount,
             assetId: $receipt->assetId,
             label: $names[$receipt->assetId] ?? null,
-        ), $receipts);
+        ), $derived);
+
+        foreach ($confirmed as $dividend) {
+            $receipts[] = new IncomeReceiptData(
+                source: IncomeSource::Dividend,
+                date: Carbon::parse($dividend->exDate),
+                amount: $dividend->amount,
+                assetId: $dividend->assetId,
+                label: $names[$dividend->assetId] ?? null,
+            );
+        }
+
+        return $receipts;
+    }
+
+    /** Clé de dédoublonnage entre un reçu dérivé et une transaction de dividende encaissée. */
+    private function key(int $assetId, int $walletId, string $exDate): string
+    {
+        return "{$assetId}|{$walletId}|{$exDate}";
     }
 
     /**

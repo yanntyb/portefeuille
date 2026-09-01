@@ -7,6 +7,20 @@ use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 
+it('rend le portefeuille des transactions avec l\'enveloppe qui les porte', function () {
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $instrument = Instrument::factory()->create();
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $instrument->id,
+        'date' => '2026-01-10', 'quantity' => 10, 'unit_price' => 80,
+    ]);
+
+    $records = app(PositionHistoryPort::class)->transactionsFor($user->id);
+
+    expect($records[0]->walletId)->toBe($wallet->id);
+});
+
 it('rend les mouvements de l\'utilisateur, sens compris', function () {
     $user = User::factory()->create();
     $wallet = Wallet::factory()->for($user)->create();
@@ -109,4 +123,34 @@ it('ne rend que les positions de l\'utilisateur demandé', function () {
     ]);
 
     expect(app(PositionHistoryPort::class)->positionsFor($user->id))->toBe([]);
+});
+
+it('rend les dividendes encaissés en transaction, enveloppe et actif compris', function () {
+    $user = User::factory()->create();
+    $wallet = Wallet::factory()->for($user)->create();
+    $instrument = Instrument::factory()->create();
+    Transaction::factory()->dividend()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $instrument->id,
+        'date' => '2026-02-01', 'fees' => 0, 'amount' => 34.90,
+    ]);
+
+    $confirmed = app(PositionHistoryPort::class)->confirmedDividendsFor($user->id);
+
+    expect($confirmed)->toHaveCount(1)
+        ->and($confirmed[0]->assetId)->toBe($instrument->id)
+        ->and($confirmed[0]->walletId)->toBe($wallet->id)
+        ->and($confirmed[0]->exDate)->toBe('2026-02-01')
+        ->and($confirmed[0]->amount)->toBe(34.90);
+});
+
+it('ne rend que les dividendes encaissés de l\'utilisateur demandé', function () {
+    $other = User::factory()->create();
+    Transaction::factory()->dividend()->create([
+        'user_id' => $other->id, 'wallet_id' => Wallet::factory()->for($other), 'asset_id' => Instrument::factory(),
+        'date' => '2026-02-01', 'fees' => 0, 'amount' => 10.0,
+    ]);
+
+    $user = User::factory()->create();
+
+    expect(app(PositionHistoryPort::class)->confirmedDividendsFor($user->id))->toBe([]);
 });

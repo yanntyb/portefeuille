@@ -5,14 +5,14 @@ use App\Contexts\Income\Sources\Dividend\Datas\PositionRecordData;
 use App\Contexts\Income\Sources\Dividend\Services\DividendCalculator;
 use Illuminate\Support\Carbon;
 
-function boughtOn(string $date, float $quantity, int $assetId = 1): PositionRecordData
+function boughtOn(string $date, float $quantity, int $assetId = 1, int $walletId = 1): PositionRecordData
 {
-    return new PositionRecordData($assetId, Carbon::parse($date), false, $quantity);
+    return new PositionRecordData($assetId, $walletId, Carbon::parse($date), false, $quantity);
 }
 
-function soldOn(string $date, float $quantity, int $assetId = 1): PositionRecordData
+function soldOn(string $date, float $quantity, int $assetId = 1, int $walletId = 1): PositionRecordData
 {
-    return new PositionRecordData($assetId, Carbon::parse($date), true, $quantity);
+    return new PositionRecordData($assetId, $walletId, Carbon::parse($date), true, $quantity);
 }
 
 function detachment(string $date, float $amountPerShare, int $assetId = 1): DividendRecordData
@@ -93,6 +93,25 @@ it('ne mélange pas les actifs', function () {
     expect($receipts)->toHaveCount(1)
         ->and($receipts[0]->assetId)->toBe(2)
         ->and($receipts[0]->amount)->toBe(50.0);
+});
+
+it('rend un reçu par enveloppe détentrice, jamais un montant agrégé', function () {
+    $receipts = (new DividendCalculator)->receipts(
+        [boughtOn('2026-01-10', 10.0, walletId: 1), boughtOn('2026-01-15', 5.0, walletId: 2)],
+        [detachment('2026-03-05', 0.5)],
+    );
+
+    expect($receipts)->toHaveCount(2);
+
+    $byWallet = [];
+    foreach ($receipts as $receipt) {
+        $byWallet[$receipt->walletId] = $receipt;
+    }
+
+    expect($byWallet[1]->quantity)->toBe(10.0)
+        ->and($byWallet[1]->amount)->toBe(5.0)
+        ->and($byWallet[2]->quantity)->toBe(5.0)
+        ->and($byWallet[2]->amount)->toBe(2.5);
 });
 
 it('ignore un détachement sur un actif jamais acheté', function () {

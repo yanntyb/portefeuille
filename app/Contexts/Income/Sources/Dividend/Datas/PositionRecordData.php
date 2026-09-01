@@ -9,6 +9,7 @@ readonly class PositionRecordData
 {
     public function __construct(
         public int $assetId,
+        public int $walletId,
         public Carbon $date,
         public bool $isSell,
         public float $quantity,

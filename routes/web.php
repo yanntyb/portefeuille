@@ -4,6 +4,7 @@ use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Http\StartSyncController;
 use App\Contexts\MarketView\Http\AssetClassController;
 use App\Contexts\MarketView\Http\AssetController;
+use App\Contexts\Portfolio\Http\ConfirmDividendController;
 use App\Contexts\Portfolio\Http\DeleteTransactionController;
 use App\Contexts\Portfolio\Http\StoreTransactionController;
 use App\Contexts\Portfolio\Http\TransactionOptionsController;
@@ -37,6 +38,9 @@ Route::put('/transactions/{id}', UpdateTransactionController::class)
 Route::delete('/transactions/{id}', DeleteTransactionController::class)
     ->whereNumber('id')
     ->name('transactions.destroy');
+
+/** Encaissement d'un détachement attendu : il devient une transaction de dividende. */
+Route::post('/dividendes', ConfirmDividendController::class)->name('dividends.confirm');
 
 /**
  * Une route par exposition, engendrée depuis l'enum : ajouter une classe d'actif n'est jamais

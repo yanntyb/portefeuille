@@ -12,6 +12,7 @@ readonly class DividendReceiptData implements JsonSerializable
 {
     public function __construct(
         public int $assetId,
+        public int $walletId,
         public string $exDate,
         public float $quantity,
         public float $amountPerShare,
@@ -23,6 +24,7 @@ readonly class DividendReceiptData implements JsonSerializable
     {
         return [
             'assetId' => $this->assetId,
+            'walletId' => $this->walletId,
             'exDate' => $this->exDate,
             'quantity' => $this->quantity,
             'amountPerShare' => $this->amountPerShare,
