@@ -20,12 +20,14 @@ paths:
 
 `TransactionFlow` est le seul site du montant d'une ligne : achat majoré de ses frais, vente minorée des siens, toujours rendu positif. Les adaptateurs de transactions (`MarketView\Infrastructure\PortfolioTransactions`, `Wealth\Infrastructure\PortfolioLedger`) l'appellent au lieu de refaire `quantité × prix` ; le solde d'une année, somme des montants, en hérite côté front.
 
+`TransactionFlow` est aussi le seul site du SIGNE d'un mouvement : `cashDelta()` rend l'effet de la ligne sur la trésorerie de l'enveloppe — un achat ou un retrait négatifs, une vente, un versement ou un dividende positifs. `GetCashMovements` et le contrôle de survente le lui demandent plutôt que de retester `TransactionType` au cas par cas.
+
 `Valuation\Services\ValuationCalculator` tient son propre PRU pour ses ventes : les frais y entrent aussi, sans quoi son investi et son coût diraient deux montants différents.
 
 ## AccountType est le seul site des règles d'enveloppe
 `Portfolio\Enums\AccountType` porte tout ce que dit une enveloppe de détention : libellé, régime d'imposition, maturité, expositions admises. Les règles sont déclaratives — affichées, jamais appliquées à un calcul. L'application n'estime aucun impôt.
 
-Le plafond de versement en est délibérément absent : `TransactionType` n'a que `Buy`/`Sell`, aucun mouvement d'espèces, donc aucun montant versé n'est calculable, et un plafond sans son solde ne renseigne sur rien. Un cumul de flux nets serait faux — réinvestir le produit d'une vente ne consomme pas de plafond.
+Le plafond de versement en est délibérément absent, mais plus pour la raison d'origine : depuis le chantier liquidités, `Deposit` existe et `CashLedger::netContributions()` calcule un montant versé. Le plafond porte cependant sur les VERSEMENTS BRUTS CUMULÉS (chaque versement compte, jamais nettés par les retraits), alors que `netContributions` rend un flux net — retirer puis reverser la même somme ne libère pas de plafond dans la réalité, mais le ferait dans ce calcul. Cette lecture brute-vs-nette n'a pas été tranchée, donc le plafond reste hors périmètre : l'absence n'est plus faute de donnée, mais faute de décision.
 
 Une position se lit par actif ET par enveloppe : `holdings_projection` a pour clé primaire `(asset_id, wallet_id)`, et `HoldingLineData` porte `walletId`. Tout regroupement côté front doit donc clé sur les deux — `instrumentList.ts` le faisait sur `assetId` seul et confondait les deux lignes d'un titre tenu dans deux comptes.
 
@@ -37,3 +39,10 @@ Une position se lit par actif ET par enveloppe : `holdings_projection` a pour cl
 Survente refusée à la saisie, mais pour une raison précise : `ProjectHolding` SUPPRIME la ligne de position dès que la quantité tombe à zéro ou moins, si bien qu'une survente effacerait la position au lieu de la mettre en défaut. Le contrôle est volontairement aveugle aux dates, comme la projection : une vente datée avant son achat passe.
 
 `AccountType` ne bloque aucune écriture — les règles d'enveloppe sont déclaratives. Un achat de crypto dans un PEA se saisit, et un test le fige.
+
+## Les versements déduits se réécrivent en grappe, jamais à la main
+`RecomputeCashDeposits`, appelée par l'observateur des transactions, écrit les lignes `Deposit` déduites (`auto = true`) : le versement manquant que `CashLedger::missingDeposits()` calcule pour qu'un achat reste finançable. Même raison que `RecomputeRealizedGains` : une ligne déduite est la conséquence d'un achat, donc tout achat corrigé, déplacé ou supprimé la rend fausse ; on efface toutes les lignes `auto` de l'enveloppe et on les rejoue depuis les seules lignes saisies (`auto = false`), plutôt que de corriger une ligne déduite en place.
+
+Les lignes saisies (`auto = false`) ne sont jamais touchées par ce mécanisme : saisir après coup un vrai virement fait disparaître de lui-même le versement déduit qu'il couvrait, sans intervention manuelle.
+
+Invariant qui gouverne tout le calcul : le solde d'espèces d'une enveloppe n'est négatif à aucune date de son historique. C'est ce que `missingDeposits()` garantit en déduisant des versements, jamais l'inverse (on ne réduit jamais un achat pour faire tenir un solde).

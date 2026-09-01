@@ -93,8 +93,19 @@ use Illuminate\Support\Carbon;
  * en mémoire sous `RefreshDatabase`, séquence remise à zéro à chaque test), mais réordonner les
  * créations de `portfolioFixture()`, `cryptoFixture()` ou `seedSnapshotFixture()` déplacera le
  * hash pour une raison étrangère à la forme du JSON. `.ai/rules/tests.md` le consigne.
+ * Modifié une vingt-troisième fois (chantier liquidités, tâches 1 à 13) : le solde d'espèces par
+ * enveloppe entre dans le blob. Une classe `cash` (« Liquidités ») s'ajoute en dernier aux classes
+ * de patrimoine du tableau de bord et de la page classes, avec sa propre série de tendance ; chaque
+ * enveloppe du tableau de bord gagne `cashBalance` ; chaque aperçu et position d'exposition gagne
+ * `cash` ; chaque ligne d'opération (dashboard, exposition, actif) gagne `type` (le nom de
+ * `TransactionType`) et `auto` (vrai pour un versement déduit par `RecomputeCashDeposits`, jamais
+ * pour une ligne saisie). Le journal du portefeuille de test gagne aussi une ligne : le versement de
+ * 800 € déduit pour financer l'achat ACME, seule opération de la fixture à ne porter aucun actif
+ * (`assetId` et `assetName` à `null`). Enfin `totalRealizedGain` (classe Actions et position ACME)
+ * retombe de 13 à 0 : c'était le double comptage des dividendes théoriques d'`IncomePort` corrigé en
+ * tâche 8, sans lien avec les liquidités elles-mêmes — voir `task-8-report.md`.
  */
-const SNAPSHOT_VERSION = 'b5de58da13e641dc12f77aaa84198d5feb2d52b9';
+const SNAPSHOT_VERSION = 'dbc2d74d78445c1ad52cd7d1e6916545498bb9d9';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe
