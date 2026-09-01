@@ -54,14 +54,17 @@ it('tells what each wallet holds of each asset, and nobody else\'s', function ()
         ->and((float) $held[0]['quantity'])->toBe(10.0);
 });
 
-it('names the two directions of an operation from the enum', function () {
+it('names every kind of operation from the enum', function () {
     portfolioFixture();
 
-    /** Le front ne recode pas « Achat » et « Vente » : la liste des opérations les tient d'ici. */
+    /** Le front ne recode aucun libellé : la liste des opérations les tient toutes d'ici. */
     expect($this->getJson('/transactions/options')->json('types'))
         ->toBe([
             ['value' => 'buy', 'label' => 'Achat'],
             ['value' => 'sell', 'label' => 'Vente'],
+            ['value' => 'deposit', 'label' => 'Versement'],
+            ['value' => 'withdrawal', 'label' => 'Retrait'],
+            ['value' => 'dividend', 'label' => 'Dividende'],
         ]);
 });
 
@@ -86,6 +89,9 @@ it('rends empty lists rather than failing on a database with no user', function 
             'types' => [
                 ['value' => 'buy', 'label' => 'Achat'],
                 ['value' => 'sell', 'label' => 'Vente'],
+                ['value' => 'deposit', 'label' => 'Versement'],
+                ['value' => 'withdrawal', 'label' => 'Retrait'],
+                ['value' => 'dividend', 'label' => 'Dividende'],
             ],
         ]);
 });

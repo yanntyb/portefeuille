@@ -42,7 +42,8 @@ it('ignores a smuggled owner and a smuggled realized gain', function () {
         'realized_gain' => 9999,
     ]))->assertRedirect();
 
-    $transaction = Transaction::query()->latest('id')->first();
+    /** `latest('id')` seul attraperait le versement déduit que l'observateur écrit derrière. */
+    $transaction = Transaction::query()->where('type', 'buy')->latest('id')->first();
 
     /** `$guarded = ['id']` laisserait tout passer : c'est la Data d'entrée qui borne l'écriture. */
     expect($transaction->user_id)->toBe($user->id)

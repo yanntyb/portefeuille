@@ -83,3 +83,23 @@ it('reprojects the old and new wallet when a transaction moves', function () {
     expect(Holding::query()->where('wallet_id', $this->wallet->id)->exists())->toBeFalse()
         ->and(Holding::query()->where('wallet_id', $otherWallet->id)->where('asset_id', $this->asset->id)->exists())->toBeTrue();
 });
+
+it('moves the deduced deposit from the old wallet to the new one when a buy changes wallet', function () {
+    $otherWallet = Wallet::factory()->for($this->user)->create();
+    $buy = makeTx($this, 'buy', 10, 80);
+
+    /** L'achat n'est pas financé : l'observateur écrit un versement déduit dans l'enveloppe de départ. */
+    expect(Transaction::query()->where('wallet_id', $this->wallet->id)->where('type', 'deposit')->where('auto', true)->exists())
+        ->toBeTrue();
+
+    $buy->update(['wallet_id' => $otherWallet->id]);
+
+    /**
+     * Le versement déduit périmé disparaît de l'enveloppe de départ, qui n'a plus rien à financer,
+     * et un versement déduit correct apparaît dans l'enveloppe d'arrivée, qui hérite de l'achat.
+     */
+    expect(Transaction::query()->where('wallet_id', $this->wallet->id)->where('type', 'deposit')->where('auto', true)->exists())
+        ->toBeFalse()
+        ->and((float) Transaction::query()->where('wallet_id', $otherWallet->id)->where('type', 'deposit')->where('auto', true)->sole()->amount)
+        ->toBe(800.0);
+});
