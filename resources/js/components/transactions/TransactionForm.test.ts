@@ -1,6 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createApp, nextTick, ref, type Ref } from 'vue';
+import { createApp, h, nextTick, ref, type Ref } from 'vue';
+import type { CreatedInstrument } from '@/components/instruments/InstrumentSearchPanel.vue';
 import { eur } from '@/lib/format';
 
 /** `useOnline` doit être pilotable : le blocage hors-ligne est la moitié de ce qu'on vérifie. */
@@ -18,6 +19,12 @@ const processing: Ref<boolean> = ref(false);
 const errors: Ref<Record<string, string>> = ref({});
 
 /**
+ * Le formulaire construit par le composant courant, capturé pour lire un de ses champs depuis un
+ * test : la fabrique ne renvoie qu'un `Proxy` sans état exposé autrement.
+ */
+let latestForm: Record<string, string> | null = null;
+
+/**
  * `useForm` parle au routeur d'Inertia, absent d'un montage nu. Le double garde la réactivité des
  * champs — c'est lui que `v-model` écrit — et rend l'envoi observable.
  */
@@ -25,7 +32,7 @@ vi.mock('@inertiajs/vue3', () => ({
     useForm: (initial: Record<string, string>) => {
         const state = ref({ ...initial });
 
-        return new Proxy(
+        const form = new Proxy(
             {},
             {
                 get(_, key: string) {
@@ -62,8 +69,36 @@ vi.mock('@inertiajs/vue3', () => ({
                 },
             },
         );
+
+        latestForm = form as Record<string, string>;
+
+        return form;
     },
     usePage: () => ({ props: { overview: {}, transactions: [] } }),
+}));
+
+/**
+ * La charge que le prochain clic sur le stub émettra : posée par `emitCreated` avant de cliquer,
+ * plutôt que fixée d'avance — la Task 5 teste le vrai panneau pour son propre compte.
+ */
+const panelPayload: { current: CreatedInstrument | null } = { current: null };
+
+/**
+ * Stub du panneau de recherche : ici on ne vérifie que la bascule et ce que le formulaire fait de
+ * l'instrument créé. Un bouton suffit à simuler `created`.
+ */
+vi.mock('@/components/instruments/InstrumentSearchPanel.vue', () => ({
+    default: {
+        emits: ['created', 'cancel', 'open'],
+        setup: (_props: unknown, { emit }: { emit: (event: string, payload?: unknown) => void }) => () =>
+            h('div', [
+                h('input', { 'data-instrument-search-input': '' }),
+                h('button', {
+                    'data-stub-create': '',
+                    onClick: () => emit('created', panelPayload.current),
+                }),
+            ]),
+    },
 }));
 
 const { useTransactionDialogStore } = await import('@/stores/transactionDialog');
@@ -110,6 +145,27 @@ async function openAssets(host: HTMLElement): Promise<void> {
     field(host, 'transaction-asset')
         .dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
 
+    await nextTick();
+    await nextTick();
+    await nextTick();
+}
+
+/**
+ * L'actif retenu par le formulaire. Le champ affiché est un libellé, pas l'identifiant : ce n'est
+ * lisible que depuis le double `useForm`, seule fenêtre du test sur `form.assetId`.
+ */
+const currentAssetId = (_host: HTMLElement): string => latestForm?.assetId ?? '';
+
+/**
+ * Pose la charge que le stub émettra, clique son bouton, puis laisse le temps à la chaîne
+ * d'`await` du formulaire d'aboutir : masquer le panneau est synchrone, mais recharger
+ * `/transactions/options` ne l'est pas.
+ */
+async function emitCreated(host: HTMLElement, instrument: CreatedInstrument): Promise<void> {
+    panelPayload.current = instrument;
+    host.querySelector<HTMLElement>('[data-stub-create]')!.click();
+
+    await nextTick();
     await nextTick();
     await nextTick();
     await nextTick();
@@ -223,6 +279,8 @@ describe('champs', () => {
         /** Un sélecteur modifiable laisserait saisir une opération invisible sur cette page. */
         expect(host.querySelector('[data-transaction-asset-locked]')?.textContent?.trim()).toBe('ACME');
         expect(host.querySelector('#transaction-asset')).toBeNull();
+        /** Changer d'actif n'aurait pas de sens : c'est précisément lui que la page impose. */
+        expect(host.querySelector('[data-transaction-add-instrument]')).toBeNull();
     });
 
     it('pré-remplit le prix du cours d\'un actif imposé par la page', async () => {
@@ -799,5 +857,47 @@ describe('envoi', () => {
         await nextTick();
 
         expect(post).not.toHaveBeenCalled();
+    });
+});
+
+describe('ajout d\'un instrument depuis la saisie', () => {
+    it('bascule vers la recherche d\'instrument et sélectionne celui qui vient d\'être créé', async () => {
+        /**
+         * Le panneau est un composant à part, testé chez lui : ici on ne vérifie que la bascule et
+         * ce que le formulaire fait de l'instrument créé.
+         */
+        const host = await mountForm();
+
+        /** La saisie en cours avant l'ouverture du panneau : c'est elle dont on prouve la survie. */
+        const date = field(host, 'transaction-date') as HTMLInputElement;
+        date.value = '2026-05-01';
+        date.dispatchEvent(new Event('input', { bubbles: true }));
+        await nextTick();
+
+        host.querySelector<HTMLElement>('[data-transaction-add-instrument]')!.click();
+        await nextTick();
+
+        /** Les champs cèdent la place, ils ne s'empilent pas sous un second dialogue. */
+        expect(host.querySelector('[data-instrument-search-input]')).not.toBeNull();
+        expect(host.querySelector('#transaction-date')).toBeNull();
+
+        /** Le double sert un catalogue élargi au second appel : celui qui suit la création. */
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () => ({
+                ok: true,
+                json: async () => ({
+                    ...options,
+                    instruments: [...options.instruments, { id: 99, name: 'NVIDIA Corp.', ticker: 'NVDA', lastPrice: null }],
+                }),
+            })),
+        );
+
+        await emitCreated(host, { id: 99, name: 'NVIDIA Corp.', ticker: 'NVDA', assetClass: 'equity', assetClassSlug: 'actions' });
+
+        expect(host.querySelector('[data-instrument-search-input]')).toBeNull();
+        expect(currentAssetId(host)).toBe('99');
+        /** La date tapée avant l'ouverture n'a pas été perdue : le formulaire n'a jamais démonté. */
+        expect((field(host, 'transaction-date') as HTMLInputElement).value).toBe('2026-05-01');
     });
 });

@@ -2,6 +2,7 @@
 import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
+import InstrumentSearchPanel, { type CreatedInstrument } from '@/components/instruments/InstrumentSearchPanel.vue';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
 import { FormField } from '@/components/ui/field';
@@ -90,6 +91,35 @@ onMounted(async (): Promise<void> => {
         optionsFailed.value = true;
     }
 });
+
+/**
+ * Le panneau remplace les champs, il ne s'ouvre pas par-dessus : un second `Dialog` sous celui de
+ * `TransactionDialog` donnerait deux verrous de défilement et un `Échap` ambigu. Le formulaire
+ * n'est pas démonté, seulement masqué — la saisie en cours survit.
+ */
+const searchingInstrument: Ref<boolean> = ref(false);
+
+/** Les options rechargées de la même route qu'à l'ouverture : c'est elle qui porte le catalogue. */
+const reloadOptions = async (): Promise<void> => {
+    try {
+        const response = await fetch('/transactions/options', { headers: { Accept: 'application/json' } });
+
+        if (response.ok) {
+            options.value = (await response.json()) as FormOptions;
+        }
+    } catch {
+        optionsFailed.value = true;
+    }
+};
+
+const onInstrumentCreated = async (instrument: CreatedInstrument): Promise<void> => {
+    searchingInstrument.value = false;
+
+    await reloadOptions();
+
+    form.assetId = String(instrument.id);
+    prefillUnitPrice();
+};
 
 /**
  * Établissement d'abord, régime ensuite — « IBKR - CTO » : c'est l'établissement qui situe le
@@ -387,6 +417,20 @@ const serverUnreachable: Ref<boolean> = ref(false);
 </script>
 
 <template>
+    <!--
+        Le panneau prend la place des champs, il ne s'ouvre pas par-dessus : un second `Dialog` sous
+        celui de `TransactionDialog` donnerait deux verrous de défilement et un `Échap` ambigu — la
+        même raison que le volet de confirmation d'une suppression, plus bas, n'est pas une modale.
+        Le composant reste monté, seul son gabarit change : la saisie en cours n'est pas perdue.
+    -->
+    <InstrumentSearchPanel
+        v-if="searchingInstrument"
+        @created="onInstrumentCreated"
+        @cancel="searchingInstrument = false"
+        @open="searchingInstrument = false"
+    />
+
+    <template v-else>
     <form class="flex flex-col gap-4" @submit.prevent="submit()">
         <p v-if="!network.isOnline" data-offline-notice class="text-sm text-muted-foreground">
             Hors-ligne : la saisie est indisponible.
@@ -431,25 +475,37 @@ const serverUnreachable: Ref<boolean> = ref(false);
                 </p>
             </div>
 
-            <FormField v-else id="transaction-asset" label="Actif" :error="form.errors.assetId">
-                <template #default="{ describedBy, invalid }">
-                    <!--
-                        Le seul champ cherchable du formulaire : le catalogue est la seule liste qui
-                        grossit sans limite, et le ticker se tape plus vite qu'il ne se déroule.
-                    -->
-                    <SearchSelect
-                        id="transaction-asset"
-                        v-model="form.assetId"
-                        :options="instrumentOptions"
-                        placeholder="Choisir un actif"
-                        :empty="instrumentEmpty"
-                        :invalid="invalid"
-                        :disabled="blocked"
-                        :aria-describedby="describedBy"
-                        @change="prefillUnitPrice()"
-                    />
-                </template>
-            </FormField>
+            <template v-else>
+                <FormField id="transaction-asset" label="Actif" :error="form.errors.assetId">
+                    <template #default="{ describedBy, invalid }">
+                        <!--
+                            Le seul champ cherchable du formulaire : le catalogue est la seule liste qui
+                            grossit sans limite, et le ticker se tape plus vite qu'il ne se déroule.
+                        -->
+                        <SearchSelect
+                            id="transaction-asset"
+                            v-model="form.assetId"
+                            :options="instrumentOptions"
+                            placeholder="Choisir un actif"
+                            :empty="instrumentEmpty"
+                            :invalid="invalid"
+                            :disabled="blocked"
+                            :aria-describedby="describedBy"
+                            @change="prefillUnitPrice()"
+                        />
+                    </template>
+                </FormField>
+
+                <!-- Absent quand l'actif est imposé par la page : en changer n'aurait pas de sens. -->
+                <button
+                    type="button"
+                    data-transaction-add-instrument
+                    class="self-start text-sm text-muted-foreground underline"
+                    @click="searchingInstrument = true"
+                >
+                    L'actif n'est pas dans la liste ?
+                </button>
+            </template>
         </template>
 
         <div class="flex flex-col gap-1.5">
@@ -594,4 +650,5 @@ const serverUnreachable: Ref<boolean> = ref(false);
             </Button>
         </DialogFooter>
     </form>
+    </template>
 </template>
