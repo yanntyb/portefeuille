@@ -176,3 +176,44 @@ it('never reaches the controller with a non numeric id', function () {
 
     expect(Transaction::query()->where('user_id', $user->id)->where('type', 'buy')->sole()->quantity)->toBe($before);
 });
+
+/**
+ * Le type `dividend` est refusé à la saisie, jamais à la correction : une ligne déjà encaissée a
+ * été écrite par la validation d'un détachement, donc par le bon chemin, et doit rester corrigible
+ * comme n'importe quelle autre.
+ */
+it('laisse corriger un dividende déjà encaissé', function () {
+    ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
+    $dividend = Transaction::factory()->dividend()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $instrument->id,
+        'date' => '2026-04-01', 'amount' => 50,
+    ]);
+
+    $this->put("/transactions/{$dividend->id}", [
+        'walletId' => $wallet->id,
+        'assetId' => $instrument->id,
+        'date' => '2026-04-01',
+        'type' => 'dividend',
+        'fees' => '0',
+        'amount' => '34.90',
+    ])->assertSessionHasNoErrors();
+
+    expect((float) $dividend->fresh()->amount)->toBe(34.9);
+});
+
+/** Rien ne doit pouvoir basculer un achat en dividende : ce serait la saisie refusée, déguisée. */
+it('refuse de basculer une ligne existante en dividende', function () {
+    ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
+    $transaction = Transaction::query()->where('user_id', $user->id)->where('type', 'buy')->sole();
+
+    $this->put("/transactions/{$transaction->id}", [
+        'walletId' => $wallet->id,
+        'assetId' => $instrument->id,
+        'date' => '2026-04-01',
+        'type' => 'dividend',
+        'fees' => '0',
+        'amount' => '34.90',
+    ])->assertSessionHasErrors(['type']);
+
+    expect($transaction->fresh()->type->value)->toBe('buy');
+});

@@ -1,11 +1,16 @@
 import { largestOf, relativeBarWidth } from '@/lib/bars';
 import { frDayMonth, signedEur } from '@/lib/format';
 
+/**
+ * `quantity` et `amountPerShare` sont nulles quand elles ne sont pas connues : un dividende
+ * confirmé dont le détachement dérivé a disparu n'a personne pour les dire, et zéro se lirait
+ * comme un fait mesuré. `amount` est toujours connu — c'est ce qui a été encaissé.
+ */
 export interface DividendReceipt {
     assetId: number;
     exDate: string;
-    quantity: number;
-    amountPerShare: number;
+    quantity: number | null;
+    amountPerShare: number | null;
     amount: number;
 }
 

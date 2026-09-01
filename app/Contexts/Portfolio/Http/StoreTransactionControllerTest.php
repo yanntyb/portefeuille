@@ -208,3 +208,25 @@ it('refuses to write anything on a database with no user', function () {
         ->post('/transactions', transactionPayload($wallet->id, $instrument->id))
         ->assertForbidden();
 });
+
+/**
+ * Le formulaire générique ne connaît ni l'ex-date, ni l'enveloppe qui détenait le titre ce
+ * jour-là, ni le garde anti-doublon de `ConfirmDividend` : une date libre faisait compter le brut
+ * dérivé **et** le net saisi, et rien n'empêchait deux lignes de même clé.
+ */
+it('refuse un dividende saisi hors de la validation d\'un détachement', function () {
+    ['wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
+
+    $this->post('/transactions', [
+        'walletId' => $wallet->id,
+        'assetId' => $instrument->id,
+        'date' => '2026-04-01',
+        'type' => 'dividend',
+        'fees' => '0',
+        'amount' => '34.90',
+    ])->assertSessionHasErrors([
+        'type' => 'Un dividende se saisit en validant son détachement, sur la fiche de l\'actif.',
+    ]);
+
+    expect(Transaction::query()->where('type', 'dividend')->count())->toBe(0);
+});

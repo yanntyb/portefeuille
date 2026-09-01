@@ -70,7 +70,20 @@ class TransactionRequest extends FormRequest
                 Rule::exists('assets', 'id')->whereIn('type', InstrumentType::values()),
             ],
 
-            'type' => ['required', Rule::enum(TransactionType::class)],
+            /**
+             * Un dividende ne se saisit pas ici : seule la validation d'un détachement connaît
+             * l'ex-date, l'enveloppe qui détenait le titre ce jour-là et le garde anti-doublon de
+             * `ConfirmDividend`. Passer par ce formulaire ouvrait les trois trous d'un coup — une
+             * date libre faisait compter le brut dérivé **et** le net saisi.
+             *
+             * Refusé à la création seulement : une ligne déjà encaissée reste corrigible et
+             * supprimable, elle a été écrite par le bon chemin.
+             */
+            'type' => [
+                'required',
+                Rule::enum(TransactionType::class),
+                ...($this->editsADividend() ? [] : [Rule::notIn([TransactionType::Dividend->value])]),
+            ],
 
             /** Les plafonds collent aux colonnes : decimal(20,8), decimal(12,4), decimal(10,2). */
             'quantity' => [$isTrade ? 'required' : 'prohibited', 'numeric', 'gt:0', 'decimal:0,8', 'lte:999999999999.99999999'],
@@ -80,6 +93,32 @@ class TransactionRequest extends FormRequest
             /** Le plafond colle à la colonne : decimal(12,2). */
             'amount' => [$isTrade ? 'prohibited' : 'required', 'numeric', 'gt:0', 'decimal:0,2', 'lte:9999999999.99'],
         ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'type.not_in' => 'Un dividende se saisit en validant son détachement, sur la fiche de l\'actif.',
+        ];
+    }
+
+    /**
+     * La ligne corrigée est-elle déjà un dividende ? C'est la seule façon d'en voir un traverser ce
+     * formulaire : rien ne doit pouvoir basculer un achat en dividende, ni en créer un de toutes
+     * pièces.
+     */
+    private function editsADividend(): bool
+    {
+        $id = $this->editedTransactionId();
+
+        if ($id === null) {
+            return false;
+        }
+
+        $original = Transaction::query()->where('user_id', auth()->id())->find($id);
+
+        return $original !== null && $original->type === TransactionType::Dividend;
     }
 
     /** Un champ laissé vide par le formulaire vaut absent, pas chaîne vide. */

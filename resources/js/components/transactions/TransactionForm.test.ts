@@ -83,7 +83,6 @@ const options = {
         { value: 'sell', label: 'Vente' },
         { value: 'deposit', label: 'Versement' },
         { value: 'withdrawal', label: 'Retrait' },
-        { value: 'dividend', label: 'Dividende' },
     ],
 };
 
@@ -353,12 +352,37 @@ describe('mouvements d\'espèces', () => {
         expect(amount.value).toBe('1 234,56');
     });
 
-    it('garde l\'actif mais efface quantité et prix sur un dividende', async () => {
+    /**
+     * Un dividende ne se saisit qu'en validant son détachement : seul ce chemin connaît l'ex-date,
+     * l'enveloppe qui détenait le titre ce jour-là, et le garde anti-doublon.
+     */
+    it('ne propose pas de saisir un dividende', async () => {
         const host = await mountForm();
 
-        (host.querySelector('[data-segment="dividend"]') as HTMLElement).click();
-        await nextTick();
+        expect(host.querySelector('[data-segment="dividend"]')).toBeNull();
+    });
 
+    it('garde l\'actif mais efface quantité et prix en corrigeant un dividende', async () => {
+        const dialog = useTransactionDialogStore();
+        dialog.openEdit({
+            id: 51,
+            walletId: 3,
+            assetId: 7,
+            date: '2026-03-04',
+            isSell: false,
+            typeLabel: 'Dividende',
+            type: 'dividend',
+            quantity: 0,
+            unitPrice: 0,
+            fees: 0,
+            total: 34.9,
+            auto: false,
+        });
+
+        const host = await mountForm();
+
+        /** La pastille revient pour la ligne corrigée, sans quoi aucun type ne serait sélectionné. */
+        expect(host.querySelector('[data-segment="dividend"]')).not.toBeNull();
         expect(host.querySelector('#transaction-asset')).not.toBeNull();
         expect(host.querySelector('#transaction-quantity')).toBeNull();
         expect(host.querySelector('#transaction-unit-price')).toBeNull();

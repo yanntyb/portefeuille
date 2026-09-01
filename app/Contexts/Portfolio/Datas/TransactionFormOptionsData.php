@@ -33,12 +33,21 @@ readonly class TransactionFormOptionsData implements JsonSerializable
             'wallets' => $this->wallets,
             'instruments' => $this->instruments,
             'held' => $this->held,
+            /**
+             * `Dividend` en est absent : un dividende ne se saisit qu'en validant son détachement,
+             * seul chemin qui connaisse l'ex-date, l'enveloppe détentrice et le garde anti-doublon.
+             * `TransactionRequest` le refuse aussi côté serveur — cette liste ne fait que ne pas le
+             * proposer.
+             */
             'types' => array_map(
                 fn (TransactionType $type): array => [
                     'value' => $type->value,
                     'label' => $type->getLabel(),
                 ],
-                TransactionType::cases(),
+                array_values(array_filter(
+                    TransactionType::cases(),
+                    fn (TransactionType $type): bool => $type !== TransactionType::Dividend,
+                )),
             ),
         ];
     }

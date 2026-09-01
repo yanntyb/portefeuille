@@ -74,9 +74,16 @@ const perShare = (value: number): string => eur(value, 3);
                             versé. Il tenait sous un pli, mais c'est justement ce produit qui
                             explique pourquoi deux versements d'un même titre diffèrent.
                         -->
-                        <span data-dividend-quantity class="text-right">{{ receipt.quantity }}</span>
+                        <!--
+                            Un tiret, jamais un zéro, quand la quantité est inconnue : un dividende
+                            confirmé dont le détachement dérivé a disparu n'a personne pour la dire,
+                            et « 0 ×0 € » se lirait comme un fait mesuré à côté d'un montant réel.
+                        -->
+                        <span data-dividend-quantity class="text-right">
+                            {{ receipt.quantity === null ? '—' : receipt.quantity }}
+                        </span>
                         <span data-dividend-per-share class="text-xs text-muted-foreground">
-                            ×{{ perShare(receipt.amountPerShare) }}
+                            {{ receipt.amountPerShare === null ? '' : `×${perShare(receipt.amountPerShare)}` }}
                         </span>
                         <span data-dividend-amount class="text-right font-medium">
                             {{ eur(receipt.amount) }}

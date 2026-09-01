@@ -101,17 +101,32 @@ const instrumentOptions: ComputedRef<SelectOption[]> = computed((): SelectOption
     })),
 );
 
+/**
+ * Le repli tant que le serveur n'a pas répondu. « Dividende » n'y est pas, comme il n'est pas dans
+ * `TransactionFormOptionsData` : un dividende ne se saisit qu'en validant son détachement, seul
+ * chemin qui connaisse l'ex-date, l'enveloppe détentrice et le garde anti-doublon.
+ */
 const typeOptions = [
     { value: 'buy', label: 'Achat' },
     { value: 'sell', label: 'Vente' },
     { value: 'deposit', label: 'Versement' },
     { value: 'withdrawal', label: 'Retrait' },
-    { value: 'dividend', label: 'Dividende' },
 ];
 
-const typeSegments: ComputedRef<Segment[]> = computed((): Segment[] =>
-    (options.value?.types ?? typeOptions).map((type): Segment => ({ value: type.value, label: type.label })),
-);
+/**
+ * La pastille « Dividende » ne revient que pour corriger une ligne déjà encaissée : elle existe,
+ * elle reste modifiable et supprimable, et sans son segment le contrôle n'afficherait aucun type
+ * sélectionné.
+ */
+const typeSegments: ComputedRef<Segment[]> = computed((): Segment[] => {
+    const offered = (options.value?.types ?? typeOptions).map((type): Segment => ({ value: type.value, label: type.label }));
+
+    if (form.type !== 'dividend' || offered.some((segment): boolean => segment.value === 'dividend')) {
+        return offered;
+    }
+
+    return [...offered, { value: 'dividend', label: 'Dividende' }];
+});
 
 /** Le libellé français du type saisi, pour le volet de confirmation d'une suppression. */
 const typeLabelOf = (type: string): string =>

@@ -18,8 +18,13 @@ class ConfirmedDividendSubstitution
     /**
      * Écarte tout reçu calculé dont il existe une transaction confirmée, et la substitue à sa
      * place — jamais les deux. La quantité et le montant par action d'un reçu substitué sont
-     * repris du calcul quand il existait, faute de quoi une transaction ne les porte pas ;
-     * `amount`, lui, vient toujours de la transaction, jamais recalculé.
+     * repris du calcul quand il existait ; `amount`, lui, vient toujours de la transaction, jamais
+     * recalculé.
+     *
+     * Sans dérivé retrouvé — le détachement a disparu du catalogue, ou la position a été réécrite —
+     * les deux sortent à `null` et non à zéro : « 0 titre × 0 € » se lit comme un fait mesuré, et
+     * la fiche affichait ce zéro à côté d'un montant bien réel. `null` dit l'inconnu, la vue le
+     * rend par un tiret.
      *
      * @param  list<DividendReceiptData>  $receipts
      * @param  list<ConfirmedDividendData>  $confirmed
@@ -50,14 +55,14 @@ class ConfirmedDividendSubstitution
 
         foreach ($confirmed as $dividend) {
             $derived = $derivedByKey[$this->key($dividend->assetId, $dividend->walletId, $dividend->exDate)] ?? null;
-            $quantity = $derived?->quantity ?? 0.0;
+            $quantity = $derived?->quantity;
 
             $merged[] = new DividendReceiptData(
                 assetId: $dividend->assetId,
                 walletId: $dividend->walletId,
                 exDate: $dividend->exDate,
                 quantity: $quantity,
-                amountPerShare: $quantity > 0.0 ? round($dividend->amount / $quantity, 6) : 0.0,
+                amountPerShare: $quantity !== null && $quantity > 0.0 ? round($dividend->amount / $quantity, 6) : null,
                 amount: $dividend->amount,
             );
         }

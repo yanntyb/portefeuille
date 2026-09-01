@@ -9,11 +9,11 @@ const receipts: DividendReceipt[] = [
 ];
 
 /** Monte la section, la déplie puis déplie l'année : les lignes vivent sous deux plis. */
-async function mountSection(): Promise<HTMLElement> {
+async function mountSection(lines: DividendReceipt[] = receipts): Promise<HTMLElement> {
     const host = document.createElement('div');
     document.body.append(host);
 
-    createApp(DividendsSection, { dividends: { receipts } })
+    createApp(DividendsSection, { dividends: { receipts: lines } })
         .use(createPinia())
         .mount(host);
 
@@ -35,6 +35,22 @@ describe('lignes de dividende', () => {
         expect(row?.querySelector('[data-dividend-quantity]')?.textContent?.trim()).toBe('100');
         expect(row?.querySelector('[data-dividend-per-share]')?.textContent).toContain('0,515');
         expect(row?.querySelector('[data-dividend-amount]')?.textContent).toContain('51,50');
+    });
+
+    /**
+     * Un dividende confirmé dont le détachement dérivé a disparu n'a personne pour dire sa
+     * quantité : « 0 ×0 € » se lirait comme un fait mesuré à côté d'un montant bien réel.
+     */
+    it('rend un tiret plutôt qu\'un zéro quand la quantité est inconnue', async () => {
+        const host = await mountSection([
+            { assetId: 1, exDate: '2026-03-12', amount: 34.9, quantity: null, amountPerShare: null },
+        ]);
+
+        const row = host.querySelector('[data-dividend-row]');
+
+        expect(row?.querySelector('[data-dividend-quantity]')?.textContent?.trim()).toBe('—');
+        expect(row?.querySelector('[data-dividend-per-share]')?.textContent?.trim()).toBe('');
+        expect(row?.querySelector('[data-dividend-amount]')?.textContent).toContain('34,90');
     });
 
     it('aligne ses lignes sur les pistes du groupe, comme les transactions', async () => {

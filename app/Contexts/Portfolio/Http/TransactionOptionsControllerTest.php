@@ -54,6 +54,10 @@ it('tells what each wallet holds of each asset, and nobody else\'s', function ()
         ->and((float) $held[0]['quantity'])->toBe(10.0);
 });
 
+/**
+ * « Dividende » n'y figure pas : il ne se saisit qu'en validant son détachement, seul chemin qui
+ * connaisse l'ex-date, l'enveloppe détentrice et le garde anti-doublon.
+ */
 it('names every kind of operation from the enum', function () {
     portfolioFixture();
 
@@ -64,7 +68,6 @@ it('names every kind of operation from the enum', function () {
             ['value' => 'sell', 'label' => 'Vente'],
             ['value' => 'deposit', 'label' => 'Versement'],
             ['value' => 'withdrawal', 'label' => 'Retrait'],
-            ['value' => 'dividend', 'label' => 'Dividende'],
         ]);
 });
 
@@ -91,7 +94,6 @@ it('rends empty lists rather than failing on a database with no user', function 
                 ['value' => 'sell', 'label' => 'Vente'],
                 ['value' => 'deposit', 'label' => 'Versement'],
                 ['value' => 'withdrawal', 'label' => 'Retrait'],
-                ['value' => 'dividend', 'label' => 'Dividende'],
             ],
         ]);
 });
