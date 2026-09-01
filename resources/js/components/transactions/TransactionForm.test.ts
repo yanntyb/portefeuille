@@ -224,6 +224,48 @@ describe('champs', () => {
         expect(host.querySelector('[data-transaction-asset-locked]')?.textContent?.trim()).toBe('ACME');
         expect(host.querySelector('#transaction-asset')).toBeNull();
     });
+
+    it('pré-remplit le prix du cours d\'un actif imposé par la page', async () => {
+        const dialog = useTransactionDialogStore();
+        dialog.openCreate({ id: 7, name: 'ACME' });
+
+        const host = await mountForm();
+
+        /** L'actif est déjà choisi : aucun changement ne sera émis, le catalogue seul l'apporte. */
+        expect((field(host, 'transaction-unit-price') as HTMLInputElement).value).toBe('120');
+    });
+
+    it('laisse vide le prix d\'un actif imposé sans cours connu', async () => {
+        const dialog = useTransactionDialogStore();
+        dialog.openCreate({ id: 9, name: 'Sans cours' });
+
+        const host = await mountForm();
+
+        expect((field(host, 'transaction-unit-price') as HTMLInputElement).value).toBe('');
+    });
+
+    it('ne réécrit pas le prix d\'une correction sur un actif imposé', async () => {
+        const dialog = useTransactionDialogStore();
+        dialog.openEdit(
+            {
+                id: 42,
+                walletId: 3,
+                assetId: 7,
+                type: 'buy',
+                date: '2026-02-01',
+                quantity: 4,
+                unitPrice: 90,
+                fees: 0,
+                amount: 360,
+            } as never,
+            { id: 7, name: 'ACME' },
+        );
+
+        const host = await mountForm();
+
+        /** Une correction porte le prix payé ce jour-là ; le cours du jour n'a rien à y faire. */
+        expect((field(host, 'transaction-unit-price') as HTMLInputElement).value).toBe('90');
+    });
 });
 
 describe('plafond d\'une vente', () => {

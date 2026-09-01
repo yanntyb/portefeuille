@@ -85,6 +85,7 @@ onMounted(async (): Promise<void> => {
         }
 
         options.value = (await response.json()) as FormOptions;
+        prefillUnitPrice();
     } catch {
         optionsFailed.value = true;
     }
@@ -283,8 +284,12 @@ const deletionLabel: ComputedRef<string> = computed(
  * Le cours connu pré-remplit le prix unitaire — la valeur la plus souvent juste pour un ordre saisi
  * le jour même — mais seulement sur un champ encore vide : on ne réécrit pas une saisie en cours,
  * et on ne touche jamais à une correction.
+ *
+ * Appelé au choix d'un actif **et** à l'arrivée du catalogue : ouverte depuis une fiche d'actif, la
+ * modale a déjà son `assetId` et n'émettra jamais de changement, et même au choix libre le
+ * catalogue peut n'être pas encore là.
  */
-const onInstrumentChange = (): void => {
+const prefillUnitPrice = (): void => {
     if (isEditing.value || form.unitPrice !== '') {
         return;
     }
@@ -403,7 +408,7 @@ const serverUnreachable: Ref<boolean> = ref(false);
                         :invalid="invalid"
                         :disabled="blocked"
                         :aria-describedby="describedBy"
-                        @change="onInstrumentChange()"
+                        @change="prefillUnitPrice()"
                     />
                 </template>
             </FormField>
