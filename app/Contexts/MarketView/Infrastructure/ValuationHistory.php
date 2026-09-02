@@ -19,18 +19,29 @@ use App\Contexts\Valuation\Datas\PerformanceData;
 use App\Contexts\Valuation\Enums\ValuationGranularity;
 use App\Contexts\Valuation\Enums\ValuationRange;
 use App\Contexts\Valuation\Services\Drawdown;
+use App\Contexts\Valuation\Services\ValuationCalculator;
+use Illuminate\Support\Carbon;
 
 /**
  * Le partage par exposition est passé aux actions telles quelles, jamais refait ici : les
  * performances filtrent avant leur cache, l'évolution après le sien — refiltrer de ce côté
  * rendrait l'un des deux caches incohérent.
  *
- * `drawdownFor()` fait exception au remappage pur : elle enchaîne une action (`BuildExposureSeries`)
- * et un calculateur (`Valuation\Services\Drawdown`) du contexte propriétaire, sans jamais écrire
- * la formule elle-même — la composition reste ici, le calcul reste chez `Valuation`.
+ * `drawdownFor()` et `assetSeriesFor()` font exception au remappage pur : elles enchaînent une
+ * action et un calculateur du contexte propriétaire (`Valuation\Services\Drawdown`,
+ * `Valuation\Services\ValuationCalculator`) sans jamais écrire la formule elles-mêmes — la
+ * composition reste ici, le calcul reste chez `Valuation`.
  */
 class ValuationHistory implements ValuationPort
 {
+    /**
+     * Amplitude sous laquelle la série d'un actif garde son pas quotidien. Le pas hebdomadaire ne
+     * retient qu'un point par semaine ISO : une position ouverte l'avant-veille y tombait à un
+     * seul point, qu'ECharts peint sans ligne — un graphe vide en apparence. Un trimestre de pas
+     * quotidien reste sous la centaine de points, la semaine reprend au-delà.
+     */
+    private const DAILY_STEP_MAX_DAYS = 92;
+
     public function __construct(
         private BuildPortfolioPerformances $performances,
         private BuildEvolutionSeries $evolution,
@@ -38,6 +49,7 @@ class ValuationHistory implements ValuationPort
         private BuildAssetValuationSeries $assetSeries,
         private BuildExposureSeries $exposureSeries,
         private Drawdown $drawdown,
+        private ValuationCalculator $calculator,
     ) {}
 
     /** @return list<PerformanceLineData> */
@@ -80,15 +92,21 @@ class ValuationHistory implements ValuationPort
         );
     }
 
-    /** Même profondeur et même pas que l'évolution d'une exposition, pour la même raison. */
+    /**
+     * Même profondeur que l'évolution d'une exposition. Le pas, lui, se choisit sur l'amplitude
+     * réelle de l'historique : la série est demandée au jour, puis ramenée à la semaine seulement
+     * si elle est assez longue pour que la semaine lui laisse une courbe.
+     */
     public function assetSeriesFor(int $userId, int $assetId): AssetValuationData
     {
-        $series = ($this->assetSeries)(
+        $daily = ($this->assetSeries)(
             $userId,
             $assetId,
             ValuationRange::Max,
-            ValuationGranularity::Week,
+            ValuationGranularity::Day,
         );
+
+        $series = $this->calculator->windowAndAggregate($daily, null, $this->stepFor($daily->labels));
 
         return new AssetValuationData(
             labels: $series->labels,
@@ -109,6 +127,24 @@ class ValuationHistory implements ValuationPort
             troughLabel: $drawdown->troughLabel,
             currentDepth: $drawdown->currentDepth,
         );
+    }
+
+    /**
+     * Pas de la série tracée, déduit de son amplitude.
+     *
+     * @param  list<string>  $labels  Jours croissants, au format `Y-m-d`.
+     */
+    private function stepFor(array $labels): ValuationGranularity
+    {
+        if ($labels === []) {
+            return ValuationGranularity::Day;
+        }
+
+        $span = Carbon::parse($labels[0])->diffInDays(Carbon::parse($labels[count($labels) - 1]));
+
+        return $span > self::DAILY_STEP_MAX_DAYS
+            ? ValuationGranularity::Week
+            : ValuationGranularity::Day;
     }
 
     private function performanceLine(PerformanceData $performance): PerformanceLineData
