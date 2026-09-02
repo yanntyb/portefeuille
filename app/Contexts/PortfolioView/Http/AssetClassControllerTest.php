@@ -1,17 +1,24 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Market\Models\SectorAllocation;
+use App\Contexts\Portfolio\Enums\AccountType;
+use App\Contexts\Portfolio\Models\Holding;
+use App\Contexts\Portfolio\Models\Transaction;
+use App\Contexts\Portfolio\Models\Wallet;
 use App\Contexts\PortfolioView\Datas\AnalysisData;
 use App\Contexts\PortfolioView\Datas\AssetLineData;
 use App\Contexts\PortfolioView\Datas\AssetValuationData;
+use App\Contexts\PortfolioView\Datas\ClassSliceData;
 use App\Contexts\PortfolioView\Datas\DrawdownData;
 use App\Contexts\PortfolioView\Datas\EvolutionData;
+use App\Contexts\PortfolioView\Datas\ExposureSeriesData;
 use App\Contexts\PortfolioView\Datas\HoldingRowData;
 use App\Contexts\PortfolioView\Datas\PerformanceLineData;
 use App\Contexts\PortfolioView\Datas\PortfolioSummaryData;
@@ -20,10 +27,6 @@ use App\Contexts\PortfolioView\Datas\SectorSliceData;
 use App\Contexts\PortfolioView\Ports\PortfolioOverviewPort;
 use App\Contexts\PortfolioView\Ports\SectorBreakdownPort;
 use App\Contexts\PortfolioView\Ports\ValuationPort;
-use App\Contexts\Portfolio\Enums\AccountType;
-use App\Contexts\Portfolio\Models\Holding;
-use App\Contexts\Portfolio\Models\Transaction;
-use App\Contexts\Portfolio\Models\Wallet;
 use App\Http\Middleware\HandleInertiaRequests;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -32,7 +35,7 @@ function fakeValuationPort(): ValuationPort
 {
     return new class implements ValuationPort
     {
-        public function performancesFor(int $userId, AssetClass $exposure): array
+        public function performancesFor(int $userId, HoldingScope $scope): array
         {
             return [new PerformanceLineData('1M', 'Un mois', '2026-07-29', 900.0, 0.0, 100.0, 11.1)];
         }
@@ -52,7 +55,12 @@ function fakeValuationPort(): ValuationPort
             return AssetValuationData::empty();
         }
 
-        public function drawdownFor(int $userId, AssetClass $exposure): DrawdownData
+        public function seriesFor(int $userId, HoldingScope $scope): ExposureSeriesData
+        {
+            return new ExposureSeriesData(['2026-08-01'], [1000.0], [800.0]);
+        }
+
+        public function drawdownFor(int $userId, HoldingScope $scope): DrawdownData
         {
             return DrawdownData::empty();
         }
@@ -64,15 +72,21 @@ function fakeOverviewPort(): PortfolioOverviewPort
 {
     return new class implements PortfolioOverviewPort
     {
-        public function overviewFor(int $userId, AssetClass $exposure): PortfolioSummaryData
+        public function overviewFor(int $userId, HoldingScope $scope): PortfolioSummaryData
         {
             return new PortfolioSummaryData(1000.0, 800.0, 200.0, 25.0, 0.0, 0.0, [
                 new HoldingRowData(
-                    1, 'ACME', 'ACM', InstrumentType::Stock, $exposure,
+                    1, 'ACME', 'ACM', InstrumentType::Stock, $scope->classes[0] ?? AssetClass::Equity,
                     1, 'Compte-titres', AccountType::Cto,
                     10.0, 80.0, 100.0, 1000.0, 200.0, 25.0,
                 ),
             ]);
+        }
+
+        /** @return list<ClassSliceData> */
+        public function classBreakdownFor(int $userId, HoldingScope $scope): array
+        {
+            return [new ClassSliceData('equity', 'Actions', 1000.0, 100.0)];
         }
 
         public function positionFor(int $userId, int $assetId): ?PositionData
@@ -80,7 +94,7 @@ function fakeOverviewPort(): PortfolioOverviewPort
             return null;
         }
 
-        public function analysisFor(int $userId, AssetClass $exposure): AnalysisData
+        public function analysisFor(int $userId, HoldingScope $scope): AnalysisData
         {
             return AnalysisData::empty();
         }
@@ -168,7 +182,7 @@ it('offers sectors on equity alone', function () {
 it('sert la section secteur par son seul port', function () {
     app()->instance(SectorBreakdownPort::class, new class implements SectorBreakdownPort
     {
-        public function breakdownFor(int $userId): array
+        public function breakdownFor(int $userId, HoldingScope $scope): array
         {
             return [new SectorSliceData('Technologie', 200.0, 100.0, '#000000')];
         }
@@ -271,12 +285,12 @@ it('diffère l’analyse de la classe et la charge à la demande', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('AssetClass/Index')
-            ->missing('classAnalysis')
+            ->missing('basketAnalysis')
             ->loadDeferredProps('analyse', fn (Assert $reload) => $reload
-                ->has('classAnalysis.instruments.0.label')
-                ->has('classAnalysis.correlations')
-                ->has('classAnalysis.maxDrawdown')
-                ->has('classAnalysis.high52wGapPct')
+                ->has('basketAnalysis.instruments.0.label')
+                ->has('basketAnalysis.correlations')
+                ->has('basketAnalysis.maxDrawdown')
+                ->has('basketAnalysis.high52wGapPct')
                 ->missing('performances')
             )
         );

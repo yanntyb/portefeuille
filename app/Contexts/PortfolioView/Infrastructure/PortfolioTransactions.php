@@ -2,13 +2,14 @@
 
 namespace App\Contexts\PortfolioView\Infrastructure;
 
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
-use App\Contexts\PortfolioView\Datas\ClassTransactionLineData;
-use App\Contexts\PortfolioView\Datas\TransactionLineData;
-use App\Contexts\PortfolioView\Ports\TransactionsPort;
 use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Services\TransactionFlow;
+use App\Contexts\PortfolioView\Datas\ClassTransactionLineData;
+use App\Contexts\PortfolioView\Datas\TransactionLineData;
+use App\Contexts\PortfolioView\Ports\TransactionsPort;
 
 class PortfolioTransactions implements TransactionsPort
 {
@@ -50,19 +51,25 @@ class PortfolioTransactions implements TransactionsPort
     /**
      * La jointure sert deux fins : nommer l'actif en une requête — une ligne chargeant le sien
      * rouvrirait un N+1 sur tout l'historique — et porter le partage par exposition, qui se lit sur
-     * `assets.asset_class` et nulle part ailleurs.
+     * `assets.asset_class` et nulle part ailleurs. L'enveloppe, elle, se lit sur
+     * `transactions.wallet_id`.
      *
      * `asset_id` est nullable en base ; une opération sans actif n'appartient à aucune exposition
-     * et ne prend pas de ligne.
+     * et ne prend pas de ligne. Le journal d'une enveloppe suit la même règle que celui d'une
+     * poche : c'est une liste d'opérations sur des actifs, pas un relevé de compte.
      *
      * @return list<ClassTransactionLineData>
      */
-    public function transactionsForClass(int $userId, AssetClass $exposure): array
+    public function transactionsForScope(int $userId, HoldingScope $scope): array
     {
         return Transaction::query()
             ->join('assets', 'assets.id', '=', 'transactions.asset_id')
             ->where('transactions.user_id', $userId)
-            ->where('assets.asset_class', $exposure->value)
+            ->when($scope->classes !== null, fn ($query) => $query->whereIn(
+                'assets.asset_class',
+                array_map(fn (AssetClass $class): string => $class->value, $scope->classes),
+            ))
+            ->when($scope->walletId !== null, fn ($query) => $query->where('transactions.wallet_id', $scope->walletId))
             ->orderByDesc('transactions.date')
             ->orderByDesc('transactions.id')
             ->select('transactions.*', 'assets.name as asset_name')

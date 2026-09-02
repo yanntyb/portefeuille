@@ -2,10 +2,11 @@
 
 namespace App\Contexts\PortfolioView\Actions;
 
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\PortfolioView\Datas\HoldingSnapshotData;
 use App\Contexts\PortfolioView\Datas\InstrumentDetailData;
-use App\Contexts\PortfolioView\Ports\ClassAnalysisPort;
+use App\Contexts\PortfolioView\Ports\BasketAnalysisPort;
 use App\Contexts\PortfolioView\Ports\HoldingsPort;
 use App\Contexts\PortfolioView\Ports\IncomePort;
 use App\Contexts\PortfolioView\Ports\InstrumentAnalysisPort;
@@ -36,7 +37,7 @@ class BuildPortfolioViewSnapshot
         private SectorBreakdownPort $sectors,
         private IncomePort $income,
         private InstrumentAnalysisPort $analysis,
-        private ClassAnalysisPort $classAnalysis,
+        private BasketAnalysisPort $basketAnalysis,
         private TransactionsPort $transactions,
     ) {}
 
@@ -71,17 +72,19 @@ class BuildPortfolioViewSnapshot
      */
     private function listFor(int $userId, AssetClass $exposure): array
     {
+        $scope = HoldingScope::ofClasses([$exposure]);
+
         $page = [
-            'overview' => $this->overview->overviewFor($userId, $exposure),
+            'overview' => $this->overview->overviewFor($userId, $scope),
             'trends' => ($this->getTrends)($userId, [$exposure]),
             'evolutionSeries' => $this->valuation->evolutionFor($userId, $exposure),
-            'performances' => $this->valuation->performancesFor($userId, $exposure),
-            'classAnalysis' => $this->classAnalysis->forClass($userId, $exposure),
-            'transactions' => $this->transactions->transactionsForClass($userId, $exposure),
+            'performances' => $this->valuation->performancesFor($userId, $scope),
+            'basketAnalysis' => $this->basketAnalysis->analysisFor($userId, $scope),
+            'transactions' => $this->transactions->transactionsForScope($userId, $scope),
         ];
 
         if ($exposure->hasSectors()) {
-            $page['sectorBreakdown'] = $this->sectors->breakdownFor($userId);
+            $page['sectorBreakdown'] = $this->sectors->breakdownFor($userId, HoldingScope::all());
         }
 
         return $page;

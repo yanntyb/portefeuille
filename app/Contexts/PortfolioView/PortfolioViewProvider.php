@@ -2,7 +2,8 @@
 
 namespace App\Contexts\PortfolioView;
 
-use App\Contexts\PortfolioView\Ports\ClassAnalysisPort;
+use App\Contexts\PortfolioView\Ports\AccountsPort;
+use App\Contexts\PortfolioView\Ports\BasketAnalysisPort;
 use App\Contexts\PortfolioView\Ports\HoldingsPort;
 use App\Contexts\PortfolioView\Ports\IncomePort;
 use App\Contexts\PortfolioView\Ports\InstrumentAnalysisPort;
@@ -25,7 +26,8 @@ class PortfolioViewProvider extends ServiceProvider
      * @param  class-string<PortfolioOverviewPort>  $portfolioOverview
      * @param  class-string<ValuationPort>  $valuation
      * @param  class-string<InstrumentAnalysisPort>  $instrumentAnalysis
-     * @param  class-string<ClassAnalysisPort>  $classAnalysis
+     * @param  class-string<BasketAnalysisPort>  $basketAnalysis
+     * @param  class-string<AccountsPort>  $accounts
      */
     public static function registers(
         Application $app,
@@ -37,7 +39,8 @@ class PortfolioViewProvider extends ServiceProvider
         string $portfolioOverview,
         string $valuation,
         string $instrumentAnalysis,
-        string $classAnalysis,
+        string $basketAnalysis,
+        string $accounts,
     ): void {
         $app->bind(MarketDataPort::class, $marketData);
         $app->bind(HoldingsPort::class, $holdings);
@@ -47,6 +50,7 @@ class PortfolioViewProvider extends ServiceProvider
         $app->bind(PortfolioOverviewPort::class, $portfolioOverview);
         $app->bind(ValuationPort::class, $valuation);
         $app->bind(InstrumentAnalysisPort::class, $instrumentAnalysis);
-        $app->bind(ClassAnalysisPort::class, $classAnalysis);
+        $app->bind(BasketAnalysisPort::class, $basketAnalysis);
+        $app->bind(AccountsPort::class, $accounts);
     }
 }

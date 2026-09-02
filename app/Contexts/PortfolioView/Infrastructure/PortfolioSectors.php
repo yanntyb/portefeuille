@@ -3,17 +3,18 @@
 namespace App\Contexts\PortfolioView\Infrastructure;
 
 use App\Contexts\Identity\Models\User;
-use App\Contexts\PortfolioView\Datas\SectorSliceData;
-use App\Contexts\PortfolioView\Ports\SectorBreakdownPort;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Portfolio\Actions\GetSectorBreakdown;
 use App\Contexts\Portfolio\Datas\AllocationSliceData;
+use App\Contexts\PortfolioView\Datas\SectorSliceData;
+use App\Contexts\PortfolioView\Ports\SectorBreakdownPort;
 
 class PortfolioSectors implements SectorBreakdownPort
 {
     public function __construct(private GetSectorBreakdown $breakdown) {}
 
     /** @return list<SectorSliceData> */
-    public function breakdownFor(int $userId): array
+    public function breakdownFor(int $userId, HoldingScope $scope): array
     {
         $user = User::query()->find($userId);
 
@@ -28,7 +29,7 @@ class PortfolioSectors implements SectorBreakdownPort
                 pct: $slice->pct,
                 color: $slice->color,
             ),
-            ($this->breakdown)($user),
+            ($this->breakdown)($user, $scope),
         );
     }
 }

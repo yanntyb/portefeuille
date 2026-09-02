@@ -11,6 +11,7 @@ use App\Contexts\Portfolio\Actions\GetPortfolioPositions;
 use App\Contexts\Portfolio\Datas\ContributionData;
 use App\Contexts\Portfolio\Datas\HoldingLineData;
 use App\Contexts\PortfolioView\Datas\AnalysisData;
+use App\Contexts\PortfolioView\Datas\ClassSliceData;
 use App\Contexts\PortfolioView\Datas\ConcentrationData;
 use App\Contexts\PortfolioView\Datas\ContributionLineData;
 use App\Contexts\PortfolioView\Datas\HoldingRowData;
@@ -31,7 +32,7 @@ class PortfolioTotals implements PortfolioOverviewPort
         private GetPortfolioAnalysis $analysis,
     ) {}
 
-    public function overviewFor(int $userId, AssetClass $exposure): PortfolioSummaryData
+    public function overviewFor(int $userId, HoldingScope $scope): PortfolioSummaryData
     {
         $user = User::query()->find($userId);
 
@@ -39,7 +40,7 @@ class PortfolioTotals implements PortfolioOverviewPort
             return PortfolioSummaryData::empty();
         }
 
-        $overview = ($this->overview)($user, HoldingScope::ofClasses([$exposure]));
+        $overview = ($this->overview)($user, $scope);
 
         return new PortfolioSummaryData(
             totalValue: $overview->totalValue,
@@ -93,7 +94,54 @@ class PortfolioTotals implements PortfolioOverviewPort
         );
     }
 
-    public function analysisFor(int $userId, AssetClass $exposure): AnalysisData
+    /**
+     * Le regroupement se fait en mémoire sur les lignes déjà lues : l'aperçu est mémoïsé par
+     * utilisateur, une requête par classe paierait deux fois le même portefeuille.
+     *
+     * @return list<ClassSliceData>
+     */
+    public function classBreakdownFor(int $userId, HoldingScope $scope): array
+    {
+        $lines = $this->overviewFor($userId, $scope)->holdings;
+
+        /** @var array<string, float> $byClass */
+        $byClass = [];
+        $total = 0.0;
+
+        foreach ($lines as $line) {
+            $value = $line->marketValue ?? 0.0;
+            $byClass[$line->assetClass->value] = ($byClass[$line->assetClass->value] ?? 0.0) + $value;
+            $total += $value;
+        }
+
+        /**
+         * Un périmètre sans valeur ne se ventile pas : diviser par zéro donnerait des parts
+         * infinies, et une part de zéro pour cent sur chaque classe n'apprendrait rien.
+         */
+        if ($total <= 0.0) {
+            return [];
+        }
+
+        $slices = array_map(
+            fn (string $class, float $value): ClassSliceData => new ClassSliceData(
+                key: $class,
+                label: AssetClass::from($class)->getLabel(),
+                value: $value,
+                share: $value / $total * 100,
+            ),
+            array_keys($byClass),
+            array_values($byClass),
+        );
+
+        usort(
+            $slices,
+            fn (ClassSliceData $left, ClassSliceData $right): int => $right->value <=> $left->value,
+        );
+
+        return $slices;
+    }
+
+    public function analysisFor(int $userId, HoldingScope $scope): AnalysisData
     {
         $user = User::query()->find($userId);
 
@@ -101,7 +149,7 @@ class PortfolioTotals implements PortfolioOverviewPort
             return AnalysisData::empty();
         }
 
-        $analysis = ($this->analysis)($user, HoldingScope::ofClasses([$exposure]));
+        $analysis = ($this->analysis)($user, $scope);
 
         return new AnalysisData(
             concentration: new ConcentrationData(

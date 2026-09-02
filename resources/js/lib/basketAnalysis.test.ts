@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { correlationGrid, basketRows } from '@/lib/classAnalysis';
-import type { ClassAnalysis } from '@/lib/classAnalysis';
+import { correlationGrid, basketRows } from '@/lib/basketAnalysis';
+import type { BasketAnalysis } from '@/lib/basketAnalysis';
 
-const analysis = (overrides: Partial<ClassAnalysis> = {}): ClassAnalysis => ({
+const analysis = (overrides: Partial<BasketAnalysis> = {}): BasketAnalysis => ({
     maxDrawdown: 31.4,
     high52wGapPct: -12.5,
     instruments: [

@@ -1,12 +1,13 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
-use App\Contexts\PortfolioView\Ports\ValuationPort;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
+use App\Contexts\PortfolioView\Ports\ValuationPort;
 use Illuminate\Support\Carbon;
 
 beforeEach(function () {
@@ -16,7 +17,7 @@ beforeEach(function () {
 it('rend les performances glissantes d\'une exposition', function () {
     ['user' => $user] = portfolioFixture();
 
-    $performances = $this->valuation->performancesFor($user->id, AssetClass::Equity);
+    $performances = $this->valuation->performancesFor($user->id, HoldingScope::ofClasses([AssetClass::Equity]));
 
     expect($performances)->not->toBeEmpty();
     expect($performances[0]->key)->toBeString()
@@ -25,7 +26,7 @@ it('rend les performances glissantes d\'une exposition', function () {
 });
 
 it('rend des performances vides pour un utilisateur sans transaction', function () {
-    expect($this->valuation->performancesFor(999, AssetClass::Equity))->toBe([]);
+    expect($this->valuation->performancesFor(999, HoldingScope::ofClasses([AssetClass::Equity])))->toBe([]);
 });
 
 /**

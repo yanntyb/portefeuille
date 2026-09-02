@@ -9,7 +9,7 @@ import InstrumentsSection from '@/components/instruments/InstrumentsSection.vue'
 import TransactionsSection from '@/components/instruments/TransactionsSection.vue';
 import ValuationSection from '@/components/instruments/ValuationSection.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
-import type { ClassAnalysis } from '@/lib/classAnalysis';
+import type { BasketAnalysis } from '@/lib/basketAnalysis';
 import type { CatalogTrend } from '@/lib/catalog';
 import type { NamedTransactionLine } from '@/lib/instrument';
 import type { Performance } from '@/lib/performance';
@@ -23,7 +23,7 @@ const props = defineProps<{
     trends?: CatalogTrend[];
     evolutionSeries?: EvolutionSeries;
     performances?: Performance[];
-    classAnalysis?: ClassAnalysis;
+    basketAnalysis?: BasketAnalysis;
     transactions?: NamedTransactionLine[];
     /** Absente des expositions sans secteur : le serveur ne l'envoie pas. */
     sectorBreakdown?: SectorSlice[];
@@ -37,7 +37,7 @@ const cached = () => snapshot.classList(props.assetClass.key);
 const trends = aheadOfNetwork(() => props.trends, () => cached()?.trends);
 const evolutionSeries = aheadOfNetwork(() => props.evolutionSeries, () => cached()?.evolutionSeries);
 const performances = aheadOfNetwork(() => props.performances, () => cached()?.performances);
-const classAnalysis = aheadOfNetwork(() => props.classAnalysis, () => cached()?.classAnalysis);
+const basketAnalysis = aheadOfNetwork(() => props.basketAnalysis, () => cached()?.basketAnalysis);
 const transactions = aheadOfNetwork(() => props.transactions, () => cached()?.transactions);
 const sectorBreakdown = aheadOfNetwork(() => props.sectorBreakdown, () => cached()?.sectorBreakdown);
 </script>
@@ -59,7 +59,7 @@ const sectorBreakdown = aheadOfNetwork(() => props.sectorBreakdown, () => cached
         <!-- Les secteurs vivent dans l'analyse : c'est une lecture de la poche, pas une section
              à part. -->
         <AnalysisSection
-            :analysis="classAnalysis"
+            :analysis="basketAnalysis"
             :performances="performances"
             :has-sectors="props.assetClass.hasSectors"
             :slices="sectorBreakdown"

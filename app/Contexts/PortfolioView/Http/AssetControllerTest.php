@@ -1,5 +1,6 @@
 <?php
 
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
@@ -9,6 +10,7 @@ use App\Contexts\PortfolioView\Datas\DividendHistoryData;
 use App\Contexts\PortfolioView\Datas\DividendLineData;
 use App\Contexts\PortfolioView\Datas\DrawdownData;
 use App\Contexts\PortfolioView\Datas\EvolutionData;
+use App\Contexts\PortfolioView\Datas\ExposureSeriesData;
 use App\Contexts\PortfolioView\Datas\IncomeOverviewData;
 use App\Contexts\PortfolioView\Datas\PerformanceLineData;
 use App\Contexts\PortfolioView\Ports\IncomePort;
@@ -69,7 +71,7 @@ it('answers 404 on an unknown asset', function () {
 it('sert les performances, la valorisation et les détachements par leurs seuls ports', function () {
     app()->instance(ValuationPort::class, new class implements ValuationPort
     {
-        public function performancesFor(int $userId, AssetClass $exposure): array
+        public function performancesFor(int $userId, HoldingScope $scope): array
         {
             return [];
         }
@@ -89,7 +91,12 @@ it('sert les performances, la valorisation et les détachements par leurs seuls 
             return new AssetValuationData(['2026-08-01'], [100.0], [80.0], [10.0]);
         }
 
-        public function drawdownFor(int $userId, AssetClass $exposure): DrawdownData
+        public function seriesFor(int $userId, HoldingScope $scope): ExposureSeriesData
+        {
+            return new ExposureSeriesData(['2026-08-01'], [1000.0], [800.0]);
+        }
+
+        public function drawdownFor(int $userId, HoldingScope $scope): DrawdownData
         {
             return DrawdownData::empty();
         }

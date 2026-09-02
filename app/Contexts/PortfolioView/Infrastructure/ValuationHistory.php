@@ -8,6 +8,7 @@ use App\Contexts\PortfolioView\Datas\AssetLineData;
 use App\Contexts\PortfolioView\Datas\AssetValuationData;
 use App\Contexts\PortfolioView\Datas\DrawdownData;
 use App\Contexts\PortfolioView\Datas\EvolutionData;
+use App\Contexts\PortfolioView\Datas\ExposureSeriesData;
 use App\Contexts\PortfolioView\Datas\PerformanceLineData;
 use App\Contexts\PortfolioView\Ports\ValuationPort;
 use App\Contexts\Valuation\Actions\BuildAssetPerformances;
@@ -54,11 +55,11 @@ class ValuationHistory implements ValuationPort
     ) {}
 
     /** @return list<PerformanceLineData> */
-    public function performancesFor(int $userId, AssetClass $exposure): array
+    public function performancesFor(int $userId, HoldingScope $scope): array
     {
         return array_map(
             $this->performanceLine(...),
-            ($this->performances)($userId, HoldingScope::ofClasses([$exposure])),
+            ($this->performances)($userId, $scope),
         );
     }
 
@@ -117,9 +118,21 @@ class ValuationHistory implements ValuationPort
         );
     }
 
-    public function drawdownFor(int $userId, AssetClass $exposure): DrawdownData
+    /** La valeur du périmètre en bloc, telle que la trace le graphe d'une enveloppe. */
+    public function seriesFor(int $userId, HoldingScope $scope): ExposureSeriesData
     {
-        $series = ($this->exposureSeries)($userId, HoldingScope::ofClasses([$exposure]));
+        $series = ($this->exposureSeries)($userId, $scope);
+
+        return new ExposureSeriesData(
+            labels: $series->labels,
+            value: $series->valuations,
+            invested: $series->invested,
+        );
+    }
+
+    public function drawdownFor(int $userId, HoldingScope $scope): DrawdownData
+    {
+        $series = ($this->exposureSeries)($userId, $scope);
         $drawdown = $this->drawdown->of($series->labels, $series->valuations);
 
         return new DrawdownData(

@@ -1,13 +1,14 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\Sector;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Market\Models\SectorAllocation;
-use App\Contexts\PortfolioView\Ports\SectorBreakdownPort;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Wallet;
+use App\Contexts\PortfolioView\Ports\SectorBreakdownPort;
 
 beforeEach(function () {
     $this->sectors = app(SectorBreakdownPort::class);
@@ -26,7 +27,7 @@ it('rend la répartition sectorielle du portefeuille en parts libellées', funct
         'asset_id' => $instrument->id, 'sector' => Sector::Technology, 'weight' => 1,
     ]);
 
-    $slices = $this->sectors->breakdownFor($user->id);
+    $slices = $this->sectors->breakdownFor($user->id, HoldingScope::all());
 
     expect($slices)->toHaveCount(1);
     expect($slices[0]->label)->toBe('Technologie');
@@ -36,5 +37,5 @@ it('rend la répartition sectorielle du portefeuille en parts libellées', funct
 });
 
 it('rend une répartition vide pour un utilisateur inconnu', function () {
-    expect($this->sectors->breakdownFor(999))->toBe([]);
+    expect($this->sectors->breakdownFor(999, HoldingScope::all()))->toBe([]);
 });

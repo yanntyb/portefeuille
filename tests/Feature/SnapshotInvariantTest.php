@@ -128,7 +128,13 @@ use Illuminate\Support\Carbon;
  * dans l'ordre de `PortfolioSummaryData` — `marketValue, cost, gain, gainPct, realizedGain` — et
  * rien d'autre ne bouge.
  */
-const SNAPSHOT_VERSION = '8c86fa929c7ef6a696935cd72362b0469c3768f6';
+/**
+ * Modifié une vingt-septième fois : la prop `classAnalysis` devient `basketAnalysis`. La lecture ne
+ * décrit plus une classe d'actif mais un panier de positions, quelle qu'en soit la découpe — c'est
+ * la même composition qui sert désormais une exposition et une enveloppe. Seul le nom de la clé
+ * bouge, son contenu est identique.
+ */
+const SNAPSHOT_VERSION = '1a1819d320b5325d1568eabee8d8e845ea6a0b20';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

@@ -22,7 +22,7 @@ beforeEach(function () {
 it('rend le total et les lignes d\'une seule exposition', function () {
     ['user' => $user] = portfolioFixture();
 
-    $summary = $this->overview->overviewFor($user->id, AssetClass::Equity);
+    $summary = $this->overview->overviewFor($user->id, HoldingScope::ofClasses([AssetClass::Equity]));
 
     expect($summary->totalValue)->toBe(1000.0)
         ->and($summary->totalCost)->toBe(800.0)
@@ -61,8 +61,8 @@ it('ne reporte à chaque exposition que le cash issu de ses propres ventes', fun
         'date' => '2026-03-02', 'quantity' => 1, 'unit_price' => 150, 'fees' => 0,
     ]);
 
-    $equity = $this->overview->overviewFor($user->id, AssetClass::Equity);
-    $crypto = $this->overview->overviewFor($user->id, AssetClass::Crypto);
+    $equity = $this->overview->overviewFor($user->id, HoldingScope::ofClasses([AssetClass::Equity]));
+    $crypto = $this->overview->overviewFor($user->id, HoldingScope::ofClasses([AssetClass::Crypto]));
 
     expect($equity->cash)->toBe(400.0)
         ->and($crypto->cash)->toBe(150.0);
@@ -77,14 +77,14 @@ it('ne reporte aucun cash à une exposition qui n\'a rien vendu', function () {
         'amount' => 1500, 'auto' => false,
     ]);
 
-    expect($this->overview->overviewFor($user->id, AssetClass::Equity)->cash)->toBe(0.0);
+    expect($this->overview->overviewFor($user->id, HoldingScope::ofClasses([AssetClass::Equity]))->cash)->toBe(0.0);
 });
 
 it('ne montre pas les actifs des autres expositions', function () {
     ['user' => $user] = cryptoFixture();
 
-    $equity = $this->overview->overviewFor($user->id, AssetClass::Equity);
-    $crypto = $this->overview->overviewFor($user->id, AssetClass::Crypto);
+    $equity = $this->overview->overviewFor($user->id, HoldingScope::ofClasses([AssetClass::Equity]));
+    $crypto = $this->overview->overviewFor($user->id, HoldingScope::ofClasses([AssetClass::Crypto]));
 
     expect($equity->holdings)->toHaveCount(1)
         ->and($equity->holdings[0]->assetClass)->toBe(AssetClass::Equity)
@@ -93,7 +93,7 @@ it('ne montre pas les actifs des autres expositions', function () {
 });
 
 it('rend un total vide pour un utilisateur inconnu', function () {
-    $summary = $this->overview->overviewFor(999, AssetClass::Equity);
+    $summary = $this->overview->overviewFor(999, HoldingScope::ofClasses([AssetClass::Equity]));
 
     // gainPct est nul, et non zéro, sur un coût nul : « 0 % » mentirait sur une mise inconnue.
     expect($summary->totalValue)->toBe(0.0)
@@ -112,7 +112,7 @@ it('rend un total vide pour un utilisateur inconnu', function () {
 it('rend les dix-sept clés que le tableau du front attend, dans l\'ordre', function () {
     ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
 
-    $line = $this->overview->overviewFor($user->id, AssetClass::Equity)->holdings[0];
+    $line = $this->overview->overviewFor($user->id, HoldingScope::ofClasses([AssetClass::Equity]))->holdings[0];
 
     expect($line->jsonSerialize())->toBe([
         'assetId' => $instrument->id,
@@ -141,10 +141,10 @@ it('rend les dix-sept clés que le tableau du front attend, dans l\'ordre', func
  */
 it('partage la lecture mémoïsée du portefeuille entre deux expositions', function () {
     ['user' => $user] = cryptoFixture();
-    $this->overview->overviewFor($user->id, AssetClass::Equity);
+    $this->overview->overviewFor($user->id, HoldingScope::ofClasses([AssetClass::Equity]));
 
     DB::enableQueryLog();
-    $this->overview->overviewFor($user->id, AssetClass::Crypto);
+    $this->overview->overviewFor($user->id, HoldingScope::ofClasses([AssetClass::Crypto]));
     $queries = collect(DB::getQueryLog())->pluck('query');
     DB::disableQueryLog();
 
@@ -167,7 +167,7 @@ it('ne compte pas le détachement théorique dans le gain réalisé, au total co
         'amount_per_share' => 2.0,
     ]);
 
-    $summary = $this->overview->overviewFor($user->id, AssetClass::Equity);
+    $summary = $this->overview->overviewFor($user->id, HoldingScope::ofClasses([AssetClass::Equity]));
     $position = $this->overview->positionFor($user->id, $instrument->id);
 
     /** Aucune vente dans le jeu : le réalisé est donc nul, le détachement n'étant plus additionné. */
@@ -178,7 +178,7 @@ it('ne compte pas le détachement théorique dans le gain réalisé, au total co
 it('laisse le gain réalisé d\'une exposition muette aux seules cessions', function () {
     ['user' => $user] = cryptoFixture();
 
-    expect($this->overview->overviewFor($user->id, AssetClass::Crypto)->totalRealizedGain)->toBe(0.0);
+    expect($this->overview->overviewFor($user->id, HoldingScope::ofClasses([AssetClass::Crypto]))->totalRealizedGain)->toBe(0.0);
 });
 
 /**
@@ -245,7 +245,7 @@ it('ignore le détachement théorique sur une position entièrement soldée', fu
     ]);
 
     /** 200 € de plus-value de cession, et rien de plus, alors que la position n'existe plus. */
-    expect($this->overview->overviewFor($this->user->id, AssetClass::Equity)->totalRealizedGain)->toBe(200.0);
+    expect($this->overview->overviewFor($this->user->id, HoldingScope::ofClasses([AssetClass::Equity]))->totalRealizedGain)->toBe(200.0);
 });
 
 it('mesure l\'investi aux apports nets, pas au coût des titres', function () {

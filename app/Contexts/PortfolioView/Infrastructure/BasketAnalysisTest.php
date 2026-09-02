@@ -1,18 +1,19 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
-use App\Contexts\PortfolioView\Infrastructure\ClassAnalysis;
-use App\Contexts\PortfolioView\Ports\ClassAnalysisPort;
+use App\Contexts\PortfolioView\Infrastructure\BasketAnalysis;
+use App\Contexts\PortfolioView\Ports\BasketAnalysisPort;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 use Illuminate\Support\Carbon;
 
 beforeEach(function () {
-    $this->analysis = app(ClassAnalysisPort::class);
+    $this->analysis = app(BasketAnalysisPort::class);
     $this->user = User::factory()->create();
     $this->wallet = Wallet::factory()->for($this->user)->create();
 });
@@ -68,7 +69,7 @@ it('range les instruments du plus lourd au plus léger', function () {
     classInstrument('PETIT', [10.0, 12.0], quantity: 1);
     classInstrument('GROS', [100.0, 120.0], quantity: 10);
 
-    $data = $this->analysis->forClass($this->user->id, AssetClass::Equity);
+    $data = $this->analysis->analysisFor($this->user->id, HoldingScope::ofClasses([AssetClass::Equity]));
 
     expect(array_map(fn ($line) => $line->label, $data->instruments))->toBe(['GROS', 'PETIT']);
 });
@@ -77,7 +78,7 @@ it('rend une matrice carrée, symétrique et parfaite sur sa diagonale', functio
     classInstrument('AAA', array_map(fn (int $day): float => 100.0 + $day, range(0, 59)));
     classInstrument('BBB', array_map(fn (int $day): float => 50.0 + $day / 2, range(0, 59)));
 
-    $data = $this->analysis->forClass($this->user->id, AssetClass::Equity);
+    $data = $this->analysis->analysisFor($this->user->id, HoldingScope::ofClasses([AssetClass::Equity]));
 
     expect($data->correlations)->toHaveCount(2)
         ->and($data->correlations[0])->toHaveCount(2)
@@ -91,10 +92,10 @@ it('ne garde que les huit plus gros poids de la classe', function () {
         classInstrument('I'.$rank, [100.0, 110.0], quantity: $rank);
     }
 
-    $data = $this->analysis->forClass($this->user->id, AssetClass::Equity);
+    $data = $this->analysis->analysisFor($this->user->id, HoldingScope::ofClasses([AssetClass::Equity]));
 
-    expect($data->instruments)->toHaveCount(ClassAnalysis::MAX_INSTRUMENTS)
-        ->and($data->correlations)->toHaveCount(ClassAnalysis::MAX_INSTRUMENTS)
+    expect($data->instruments)->toHaveCount(BasketAnalysis::MAX_INSTRUMENTS)
+        ->and($data->correlations)->toHaveCount(BasketAnalysis::MAX_INSTRUMENTS)
         ->and(array_map(fn ($line) => $line->label, $data->instruments))
         ->not->toContain('I1');
 });
@@ -102,14 +103,14 @@ it('ne garde que les huit plus gros poids de la classe', function () {
 it('mesure la chute maximale de la poche', function () {
     classInstrument('AAA', [100.0, 120.0, 90.0]);
 
-    expect($this->analysis->forClass($this->user->id, AssetClass::Equity)->maxDrawdown)
+    expect($this->analysis->analysisFor($this->user->id, HoldingScope::ofClasses([AssetClass::Equity]))->maxDrawdown)
         ->toBe(25.0);
 });
 
 it('situe la poche sous son plus-haut', function () {
     classInstrument('AAA', [100.0, 120.0, 90.0]);
 
-    expect($this->analysis->forClass($this->user->id, AssetClass::Equity)->high52wGapPct)
+    expect($this->analysis->analysisFor($this->user->id, HoldingScope::ofClasses([AssetClass::Equity]))->high52wGapPct)
         ->toBe(-25.0);
 });
 
@@ -129,7 +130,7 @@ it('mesure la distance au plus-haut sur la valorisation, allégements compris', 
         'unit_price' => 100.0,
     ]);
 
-    expect($this->analysis->forClass($this->user->id, AssetClass::Equity)->high52wGapPct)
+    expect($this->analysis->analysisFor($this->user->id, HoldingScope::ofClasses([AssetClass::Equity]))->high52wGapPct)
         ->toBe(-50.0);
 });
 
@@ -138,7 +139,7 @@ it('pèse chaque instrument dans l’indice selon sa place dans la poche', funct
     classInstrument('GROS', [100.0, 80.0], quantity: 37.5);
     classInstrument('PETIT', [100.0, 100.0], quantity: 10);
 
-    expect($this->analysis->forClass($this->user->id, AssetClass::Equity)->maxDrawdown)
+    expect($this->analysis->analysisFor($this->user->id, HoldingScope::ofClasses([AssetClass::Equity]))->maxDrawdown)
         ->toBe(15.0);
 });
 
@@ -146,13 +147,13 @@ it('ignore les instruments des autres expositions', function () {
     classInstrument('ACTION', [100.0, 120.0]);
     classInstrument('BITCOIN', [1000.0, 900.0], assetClass: AssetClass::Crypto);
 
-    $data = $this->analysis->forClass($this->user->id, AssetClass::Equity);
+    $data = $this->analysis->analysisFor($this->user->id, HoldingScope::ofClasses([AssetClass::Equity]));
 
     expect(array_map(fn ($line) => $line->label, $data->instruments))->toBe(['ACTION']);
 });
 
 it('rend une analyse vide sur une exposition que rien ne peuple', function () {
-    $data = $this->analysis->forClass($this->user->id, AssetClass::Bond);
+    $data = $this->analysis->analysisFor($this->user->id, HoldingScope::ofClasses([AssetClass::Bond]));
 
     expect($data->instruments)->toBe([])
         ->and($data->correlations)->toBe([])

@@ -7,13 +7,13 @@ import CorrelationInfoDialog from '@/components/CorrelationInfoDialog.vue';
 import PerformanceBars from '@/components/PerformanceBars.vue';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
 import SectorsBlock from '@/components/instruments/SectorsBlock.vue';
-import { basketRows, correlationGrid, type ClassAnalysis, type CorrelationRow } from '@/lib/classAnalysis';
+import { basketRows, correlationGrid, type BasketAnalysis, type CorrelationRow } from '@/lib/basketAnalysis';
 import type { AnalysisRow as Row } from '@/lib/instrumentAnalysis';
 import type { Performance } from '@/lib/performance';
 import type { SectorSlice } from '@/lib/sector';
 
 const props = defineProps<{
-    analysis?: ClassAnalysis | null;
+    analysis?: BasketAnalysis | null;
     performances?: Performance[] | null;
     /**
      * Le bloc sectoriel se décide sur la classe, jamais sur la valeur : `aheadOfNetwork` rend
@@ -114,7 +114,7 @@ const hasPerformances = computed<boolean>(() => (props.performances?.length ?? 0
             </template>
         </template>
 
-        <Deferred v-else data="classAnalysis">
+        <Deferred v-else data="basketAnalysis">
             <template #fallback>
                 <div class="flex flex-col gap-2">
                     <div v-for="n in 6" :key="n" class="h-6 w-full animate-pulse rounded-md bg-muted"></div>

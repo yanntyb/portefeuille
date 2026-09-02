@@ -4,14 +4,13 @@ namespace App\Contexts\PortfolioView\Infrastructure;
 
 use App\Contexts\Market\Contracts\PriceRepositoryContract;
 use App\Contexts\Market\Datas\HoldingScope;
-use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Services\BasketIndex;
 use App\Contexts\Market\Services\Correlation;
 use App\Contexts\Market\Services\FiftyTwoWeekRange;
 use App\Contexts\PortfolioView\Datas\AnalysisInstrumentData;
-use App\Contexts\PortfolioView\Datas\ClassAnalysisData;
+use App\Contexts\PortfolioView\Datas\BasketAnalysisData;
 use App\Contexts\PortfolioView\Datas\HoldingRowData;
-use App\Contexts\PortfolioView\Ports\ClassAnalysisPort;
+use App\Contexts\PortfolioView\Ports\BasketAnalysisPort;
 use App\Contexts\PortfolioView\Ports\PortfolioOverviewPort;
 use App\Contexts\PortfolioView\Services\CorrelationWindow;
 use App\Contexts\PortfolioView\Services\PriceHistoryWindow;
@@ -19,7 +18,7 @@ use App\Contexts\Valuation\Actions\BuildExposureSeries;
 use App\Contexts\Valuation\Services\Drawdown;
 
 /**
- * Compose l'analyse d'une exposition : le portefeuille dit ce qu'elle porte et à quel poids, le
+ * Compose l'analyse d'un panier de positions — une exposition, une enveloppe : le portefeuille dit ce qu'elle porte et à quel poids, le
  * dépôt de cours fournit la matière, les calculateurs des contextes propriétaires font les
  * formules. Cet adaptateur choisit les instruments et les fenêtres, il n'écrit aucun calcul.
  *
@@ -34,7 +33,7 @@ use App\Contexts\Valuation\Services\Drawdown;
  * cette question-là compte les allégements et les apports. Deux repères posés côte à côte sur la
  * même série se contrediraient moins, mais l'un des deux mentirait.
  */
-class ClassAnalysis implements ClassAnalysisPort
+class BasketAnalysis implements BasketAnalysisPort
 {
     /** Au-delà, la matrice ne se lit plus : huit colonnes tiennent encore sur un téléphone. */
     public const MAX_INSTRUMENTS = 8;
@@ -49,20 +48,20 @@ class ClassAnalysis implements ClassAnalysisPort
         private BuildExposureSeries $exposureSeries,
     ) {}
 
-    public function forClass(int $userId, AssetClass $exposure): ClassAnalysisData
+    public function analysisFor(int $userId, HoldingScope $scope): BasketAnalysisData
     {
-        $holdings = $this->overview->overviewFor($userId, $exposure)->holdings;
+        $holdings = $this->overview->overviewFor($userId, $scope)->holdings;
         $weights = $this->heaviestWeights($holdings);
 
         if ($weights === []) {
-            return ClassAnalysisData::empty();
+            return BasketAnalysisData::empty();
         }
 
         $closesByAsset = $this->closesByAsset(array_keys($weights));
         $index = $this->basket->of($closesByAsset, $weights);
-        $valuations = ($this->exposureSeries)($userId, HoldingScope::ofClasses([$exposure]))->valuations;
+        $valuations = ($this->exposureSeries)($userId, $scope)->valuations;
 
-        return new ClassAnalysisData(
+        return new BasketAnalysisData(
             maxDrawdown: $this->drawdown->of($index->labels, $index->values)->maxDepth,
             high52wGapPct: $this->fiftyTwoWeeks->of($valuations)?->gapPct,
             instruments: $this->instrumentsOf($holdings, array_keys($weights)),
@@ -71,8 +70,9 @@ class ClassAnalysis implements ClassAnalysisPort
     }
 
     /**
-     * Les lignes de l'exposition, du plus gros poids au plus petit, plafonnées. Les enveloppes se
-     * confondent : une même valeur détenue sur deux comptes est une seule ligne de la matrice.
+     * Les lignes du panier, du plus gros poids au plus petit, plafonnées. Sur une exposition, les
+     * enveloppes se confondent : une même valeur détenue sur deux comptes est une seule ligne de
+     * la matrice. Sur une enveloppe, c'est le périmètre qui a déjà écarté les autres comptes.
      *
      * @param  list<HoldingRowData>  $holdings
      * @return array<int, float> Valeur de marché par actif, dans l'ordre d'affichage.

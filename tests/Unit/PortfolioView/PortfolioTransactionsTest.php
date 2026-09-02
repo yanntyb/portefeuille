@@ -1,12 +1,13 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Models\Instrument;
-use App\Contexts\PortfolioView\Infrastructure\PortfolioTransactions;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 use App\Contexts\Portfolio\Services\TransactionFlow;
+use App\Contexts\PortfolioView\Infrastructure\PortfolioTransactions;
 
 beforeEach(function () {
     $this->adapter = new PortfolioTransactions(new TransactionFlow);
@@ -43,7 +44,7 @@ it('returns the transactions of a whole exposure, each line naming its asset', f
     $buy = Transaction::factory()->buy()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $equity->id, 'date' => '2026-01-01', 'quantity' => 10, 'unit_price' => 80, 'fees' => 1]);
     Transaction::factory()->buy()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $crypto->id, 'date' => '2026-03-01']);
 
-    $lines = $this->adapter->transactionsForClass($user->id, AssetClass::Equity);
+    $lines = $this->adapter->transactionsForScope($user->id, HoldingScope::ofClasses([AssetClass::Equity]));
 
     /** Une opération d'une autre exposition n'a rien à faire sur la page : la jointure la coupe. */
     expect($lines)->toHaveCount(1);
@@ -65,7 +66,7 @@ it('orders the exposure history newest first and excludes other users', function
     Transaction::factory()->sell()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id, 'date' => '2026-03-01']);
     Transaction::factory()->buy()->create(['user_id' => $other->id, 'wallet_id' => $otherWallet->id, 'asset_id' => $asset->id, 'date' => '2026-06-01']);
 
-    $lines = $this->adapter->transactionsForClass($user->id, AssetClass::Equity);
+    $lines = $this->adapter->transactionsForScope($user->id, HoldingScope::ofClasses([AssetClass::Equity]));
 
     expect(array_map(fn ($line) => $line->date, $lines))->toBe(['2026-03-01', '2025-01-02']);
 });

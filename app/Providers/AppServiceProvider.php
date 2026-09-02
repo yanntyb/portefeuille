@@ -20,10 +20,11 @@ use App\Contexts\Portfolio\Actions\GetCashMovements;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Actions\GetPortfolioPositions;
 use App\Contexts\Portfolio\Actions\GetRealizedGains;
-use App\Contexts\PortfolioView\Infrastructure\ClassAnalysis;
+use App\Contexts\PortfolioView\Infrastructure\BasketAnalysis;
 use App\Contexts\PortfolioView\Infrastructure\IncomeTotals;
 use App\Contexts\PortfolioView\Infrastructure\InstrumentAnalysis;
 use App\Contexts\PortfolioView\Infrastructure\MarketData;
+use App\Contexts\PortfolioView\Infrastructure\PortfolioAccounts as PortfolioViewAccounts;
 use App\Contexts\PortfolioView\Infrastructure\PortfolioHoldings;
 use App\Contexts\PortfolioView\Infrastructure\PortfolioSectors;
 use App\Contexts\PortfolioView\Infrastructure\PortfolioTotals;
@@ -94,7 +95,8 @@ class AppServiceProvider extends ServiceProvider
             portfolioOverview: PortfolioTotals::class,
             valuation: ValuationHistory::class,
             instrumentAnalysis: InstrumentAnalysis::class,
-            classAnalysis: ClassAnalysis::class,
+            basketAnalysis: BasketAnalysis::class,
+            accounts: PortfolioViewAccounts::class,
         );
 
         IncomeProvider::registers(

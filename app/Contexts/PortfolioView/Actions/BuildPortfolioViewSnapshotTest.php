@@ -5,9 +5,9 @@ use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
-use App\Contexts\PortfolioView\Actions\BuildPortfolioViewSnapshot;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Wallet;
+use App\Contexts\PortfolioView\Actions\BuildPortfolioViewSnapshot;
 use Illuminate\Support\Facades\DB;
 
 it('porte la page liste et une fiche par position détenue', function () {
@@ -16,7 +16,7 @@ it('porte la page liste et une fiche par position détenue', function () {
     $snapshot = app(BuildPortfolioViewSnapshot::class)($user->id);
 
     expect($snapshot['classes']['equity'])->toHaveKeys([
-        'overview', 'trends', 'evolutionSeries', 'performances', 'classAnalysis', 'sectorBreakdown',
+        'overview', 'trends', 'evolutionSeries', 'performances', 'basketAnalysis', 'sectorBreakdown',
     ])
         ->and($snapshot['assets'])->toHaveKey($instrument->id)
         ->and($snapshot['assets'][$instrument->id])->toHaveKeys([
@@ -118,7 +118,7 @@ it('rend les mêmes listes vides sans aucun utilisateur', function () {
     $equity = $snapshot['classes']['equity'];
 
     expect(array_keys($equity))
-        ->toBe(['overview', 'trends', 'evolutionSeries', 'performances', 'classAnalysis', 'transactions', 'sectorBreakdown']);
+        ->toBe(['overview', 'trends', 'evolutionSeries', 'performances', 'basketAnalysis', 'transactions', 'sectorBreakdown']);
     // gainPct est nul, et non zéro, sur un coût nul : « 0 % » mentirait sur une mise inconnue.
     expect($equity['overview']->jsonSerialize())
         ->toBe([
@@ -137,5 +137,5 @@ it('rend les mêmes listes vides sans aucun utilisateur', function () {
         ->and($equity['sectorBreakdown'])->toBe([]);
 
     expect(array_keys($snapshot['classes']['crypto']))
-        ->toBe(['overview', 'trends', 'evolutionSeries', 'performances', 'classAnalysis', 'transactions']);
+        ->toBe(['overview', 'trends', 'evolutionSeries', 'performances', 'basketAnalysis', 'transactions']);
 });

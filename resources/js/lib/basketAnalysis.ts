@@ -10,7 +10,7 @@ export interface AnalysisInstrument {
  * L'analyse d'une exposition entière. `maxDrawdown` est un pourcentage positif — le signe se pose
  * à l'affichage — quand `high52wGapPct` arrive déjà négatif ou nul.
  */
-export interface ClassAnalysis {
+export interface BasketAnalysis {
     maxDrawdown: number | null;
     high52wGapPct: number | null;
     instruments: AnalysisInstrument[];
@@ -43,7 +43,7 @@ const drawdown = (value: number | null): string =>
  * chute maximale raconte des années. Un repère absent garde sa ligne et rend un tiret — la ligne
  * dit ce que la page sait mesurer, son absence ne doit pas se lire comme un oubli.
  */
-export const basketRows = (analysis: ClassAnalysis): AnalysisRow[] => [
+export const basketRows = (analysis: BasketAnalysis): AnalysisRow[] => [
     {
         indicator: 'classHigh52wGap',
         label: 'Sous le plus-haut',
@@ -90,7 +90,7 @@ const correlationLabel = (value: number | null): string =>
     value === null ? '—' : value.toFixed(2).replace('.', ',');
 
 /** La matrice en lignes prêtes à rendre, chacune libellée par son instrument. */
-export const correlationGrid = (analysis: ClassAnalysis): CorrelationRow[] =>
+export const correlationGrid = (analysis: BasketAnalysis): CorrelationRow[] =>
     analysis.instruments.map((instrument, line) => ({
         label: instrument.label,
         cells: analysis.instruments.map((_, column) => {

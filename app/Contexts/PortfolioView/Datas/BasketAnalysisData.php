@@ -18,7 +18,7 @@ use JsonSerializable;
  * L'ordre des clés de `jsonSerialize()` est un contrat : le hash de l'instantané hors-ligne en
  * dépend, et un ordre différent le ferait retélécharger à tous les clients.
  */
-readonly class ClassAnalysisData implements JsonSerializable
+readonly class BasketAnalysisData implements JsonSerializable
 {
     /**
      * @param  list<AnalysisInstrumentData>  $instruments
