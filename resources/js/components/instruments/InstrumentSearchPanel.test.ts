@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createApp, nextTick, reactive } from 'vue';
+import { createApp, h, nextTick, reactive } from 'vue';
 
 type PostOptions = {
     onSuccess?: (body: unknown) => void;
@@ -344,5 +344,30 @@ describe('panneau de recherche d\'instruments', () => {
 
         expect(host.querySelector('[data-instrument-error]')?.textContent).toContain("L'instrument n'a pas pu être créé.");
         expect(events.created).toEqual([]);
+    });
+});
+
+describe('panneau sans champ de recherche propre', () => {
+    it('n\'affiche aucun champ et suit le terme reçu de la page', async () => {
+        const fetchMock = vi.fn(async (url: unknown) => jsonResponse([yahooHit()]));
+        vi.stubGlobal('fetch', fetchMock);
+
+        const host = document.createElement('div');
+        document.body.append(host);
+
+        const props = reactive({ initialTerm: 'nvi', showSearchInput: false });
+        createApp({ render: () => h(InstrumentSearchPanel, props) }).mount(host);
+
+        /** Le catalogue porte déjà son filtre : deux champs demanderaient lequel cherche. */
+        expect(host.querySelector('[data-instrument-search-input]')).toBeNull();
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+
+        props.initialTerm = 'nvidia';
+        await nextTick();
+        await vi.advanceTimersByTimeAsync(300);
+        await nextTick();
+
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+        expect(String(fetchMock.mock.calls[1][0])).toContain('/instruments/recherche?q=nvidia');
     });
 });

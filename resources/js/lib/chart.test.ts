@@ -114,6 +114,30 @@ describe('buildValueVsInvestedOption — axes', () => {
         expect(label).not.toBe('');
     });
 
+    it('affine la précision quand les deux bornes tombent dans le même arrondi', () => {
+        // Une position ouverte du jour : valeur et investi tiennent dans le même euro, et l'axe
+        // portait deux fois « 50 € » — une échelle qui ne dit plus rien.
+        const option = buildValueVsInvestedOption({
+            labels: monthlyLabels(2),
+            value: [50, 50],
+            invested: [50.21, 50.21],
+            valueFormatter: (value: number, digits = 0): string => eur(value, digits),
+            window: null,
+            description: 'Valeur de la position comparée au montant investi.',
+        });
+        const extent = { min: 50, max: 50.21 };
+
+        expect(yAxisLabel(option, 50, extent)).not.toBe(yAxisLabel(option, 50.21, extent));
+    });
+
+    it('garde la précision du formateur dès qu\'elle sépare déjà les deux bornes', () => {
+        const option = valueVsInvested(36);
+        const extent = { min: 900, max: 1350 };
+
+        expect(yAxisLabel(option, 900, extent).replace(/[\xa0\u202f]/g, ' ')).toBe('900 €');
+        expect(yAxisLabel(option, 1350, extent).replace(/[\xa0\u202f]/g, ' ')).toBe('1 350 €');
+    });
+
     it('pose un axe temporel, pour que la graduation suive l\'amplitude visible', () => {
         expect((valueVsInvested(36).xAxis as { type: string }).type).toBe('time');
     });
@@ -262,6 +286,13 @@ describe('axisGutter', () => {
 
         expect(shared).toBe(axisGutter([position]));
         expect(shared).toBeGreaterThan(axisGutter([price]));
+    });
+
+    it('réserve la place de la décimale que l\'axe ajoutera sur une amplitude serrée', () => {
+        const negotiable = { values: [50, 50.21], valueFormatter: (value: number, digits = 0): string => eur(value, digits) };
+        const rounded = { values: [50, 50.21], valueFormatter: (value: number): string => eur(value, 0) };
+
+        expect(axisGutter([negotiable])).toBeGreaterThan(axisGutter([rounded]));
     });
 
     it('vaut celle d\'une série seule quand on ne lui en donne qu\'une', () => {
@@ -479,6 +510,26 @@ describe('buildValueVsInvestedOption — infobulle', () => {
         expect(html).toContain('900 €');
         expect(html).toContain('Gain');
         expect(html).toContain('200 €');
+    });
+
+    it('lit les montants au centime, là où l\'axe se contente de l\'euro', () => {
+        // Position ouverte du jour : à l'euro près, les trois lignes se contredisaient — « Valeur
+        // 50 € », « Investi 50 € » et pourtant une perte de « − 0 € ».
+        const labels = monthlyLabels(2);
+        const option = buildValueVsInvestedOption({
+            labels,
+            value: [50, 50],
+            invested: [50.21, 50.21],
+            valueFormatter: (value: number, digits = 0): string => eur(value, digits),
+            window: null,
+            description: 'Valeur de la position comparée au montant investi.',
+        });
+
+        const html = tooltipHtml(option, 1).replace(/[\xa0\u202f]/g, ' ');
+
+        expect(html).toContain('50,00 €');
+        expect(html).toContain('50,21 €');
+        expect(html).toContain('\u2212 0,21 €');
     });
 
     it('associe chaque montant à son libellé : une inversion valeur/investi romprait ce couplage', () => {

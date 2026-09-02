@@ -57,7 +57,12 @@ const marks = computed<DividendMark[]>(
     () => dividendMarks(props.valuation?.labels ?? [], props.dividends),
 );
 
-const amountFormatter = (amount: number): string => eur(amount, 0);
+/**
+ * À l'euro près par défaut, mais la précision reste négociable : sur une position de quelques
+ * jours, les deux bornes de l'axe tiennent dans le même euro et le graphe demande la décimale qui
+ * les sépare.
+ */
+const amountFormatter = (amount: number, digits = 0): string => eur(amount, digits);
 
 /**
  * Une seule gouttière pour les deux séries : mesurée séparément, la valeur d'une position à cinq

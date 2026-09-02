@@ -1,5 +1,5 @@
 import { createPinia } from 'pinia';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp, h, nextTick, type VNode } from 'vue';
 import type { CreatedInstrument } from '@/components/instruments/InstrumentSearchPanel.vue';
 import type { CatalogLine } from '@/lib/catalog';
@@ -85,14 +85,22 @@ const filter = async (host: HTMLElement, term: string): Promise<void> => {
     await nextTick();
 };
 
-/** Ouvre le volet d'ajout depuis le lien Yahoo de l'état vide du filtre. */
-const openDialog = async (host: HTMLElement, term: string): Promise<void> => {
+/**
+ * Amène le panneau d'ajout : filtrer sur un terme absent du catalogue suffit, la page l'ouvre
+ * elle-même une fois la frappe retombée.
+ */
+const openPanel = async (host: HTMLElement, term: string): Promise<void> => {
     await filter(host, term);
-    host.querySelector<HTMLButtonElement>('[data-catalog-yahoo]')!.click();
+    vi.advanceTimersByTime(500);
     await nextTick();
 };
 
+beforeEach(() => {
+    vi.useFakeTimers();
+});
+
 afterEach(() => {
+    vi.useRealTimers();
     reload.mockClear();
     visit.mockClear();
     panelPayload.current = null;
@@ -100,28 +108,28 @@ afterEach(() => {
 });
 
 describe('catalogue d\'une exposition', () => {
-    it('propose de chercher chez Yahoo quand le filtre ne trouve rien', async () => {
+    it('cherche chez Yahoo dans la page, sans modale ni bouton', async () => {
         const host = mountCatalog();
 
+        await openPanel(host, 'nvidia');
+
+        /** Le panneau est un frère de la liste dans la section, pas un `DialogContent` téléporté. */
+        expect(host.querySelector('[data-catalog-yahoo-panel] [data-panel-stub]')).not.toBeNull();
         expect(host.querySelector('[data-catalog-yahoo]')).toBeNull();
-
-        await filter(host, 'nvidia');
-
-        expect(host.querySelector('[data-catalog-yahoo]')?.textContent).toContain('nvidia');
     });
 
     it('ne propose rien tant que le filtre est vide', async () => {
         const host = mountCatalog();
 
-        await filter(host, '');
+        await openPanel(host, '');
 
-        expect(host.querySelector('[data-catalog-yahoo]')).toBeNull();
+        expect(host.querySelector('[data-catalog-yahoo-panel]')).toBeNull();
     });
 
     it('pré-remplit le panneau de l\'exposition de la page', async () => {
         const host = mountCatalog();
 
-        await openDialog(host, 'nvidia');
+        await openPanel(host, 'nvidia');
 
         expect(document.querySelector('[data-panel-stub]')?.getAttribute('data-panel-exposure')).toBe('equity');
     });
@@ -129,7 +137,7 @@ describe('catalogue d\'une exposition', () => {
     it('recharge le catalogue en place et vide le filtre quand l\'instrument reste dans l\'exposition de la page', async () => {
         const host = mountCatalog();
 
-        await openDialog(host, 'nvidia');
+        await openPanel(host, 'nvidia');
 
         /** Même exposition (`equity`) que la page : la nouvelle ligne doit apparaître ici, sans quitter la page. */
         panelPayload.current = { id: 31, name: 'NVIDIA Corp.', ticker: 'NVDA', assetClass: 'equity', assetClassSlug: 'actions' };
@@ -144,7 +152,7 @@ describe('catalogue d\'une exposition', () => {
     it('quitte vers le catalogue de l\'autre exposition, sans recharger celui-ci, quand l\'instrument en change', async () => {
         const host = mountCatalog();
 
-        await openDialog(host, 'nvidia');
+        await openPanel(host, 'nvidia');
 
         /**
          * Exposition différente (`crypto`) de celle de la page (`equity`) : rechargée ici, la ligne
@@ -166,12 +174,7 @@ describe('ouverture automatique du panneau Yahoo', () => {
         await nextTick();
     };
 
-    afterEach(() => {
-        vi.useRealTimers();
-    });
-
     it('ouvre le panneau tout seul quand le filtre ne trouve rien', async () => {
-        vi.useFakeTimers();
         const host = mountCatalog();
 
         await filter(host, 'nvidia');
@@ -184,7 +187,6 @@ describe('ouverture automatique du panneau Yahoo', () => {
     });
 
     it('n\'ouvre rien tant que le filtre trouve des lignes', async () => {
-        vi.useFakeTimers();
         const host = mountCatalog();
 
         await filter(host, 'app');
@@ -194,7 +196,6 @@ describe('ouverture automatique du panneau Yahoo', () => {
     });
 
     it('ne rouvre pas le panneau du terme qu\'on vient de fermer, mais rouvre pour le suivant', async () => {
-        vi.useFakeTimers();
         const host = mountCatalog();
 
         await filter(host, 'nvidia');

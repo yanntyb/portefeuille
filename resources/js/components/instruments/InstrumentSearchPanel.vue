@@ -7,11 +7,14 @@ import { Input } from '@/components/ui/input';
 /**
  * La recherche d'un instrument, en deux étapes, sans chrome de modale.
  *
- * Sans chrome pour une raison précise : la page catalogue l'enveloppe dans un `Dialog`, mais le
- * formulaire de transaction l'affiche **à la place** de ses champs, dans le `DialogContent` déjà
- * ouvert. Deux dialogues reka-ui superposés donneraient deux verrous de défilement, deux pièges de
- * focus et un `Échap` ambigu — c'est déjà la raison pour laquelle la confirmation de suppression
- * de `TransactionDialog` est un volet et non un second dialogue.
+ * Sans chrome pour une raison précise : la page catalogue l'affiche à même la page, sous sa liste
+ * filtrée, tandis que le formulaire de transaction l'affiche **à la place** de ses champs, dans le
+ * `DialogContent` déjà ouvert. Deux dialogues reka-ui superposés donneraient deux verrous de
+ * défilement, deux pièges de focus et un `Échap` ambigu — c'est déjà la raison pour laquelle la
+ * confirmation de suppression de `TransactionDialog` est un volet et non un second dialogue.
+ *
+ * `showSearchInput` à faux quand le terme vient d'ailleurs : le catalogue a déjà son filtre, deux
+ * champs de recherche à l'écran demanderaient lequel des deux cherche.
  */
 type SearchResult = {
     symbol: string;
@@ -30,9 +33,10 @@ export type CreatedInstrument = {
     assetClassSlug: string;
 };
 
-const props = withDefaults(defineProps<{ initialTerm?: string; exposure?: string | null }>(), {
+const props = withDefaults(defineProps<{ initialTerm?: string; exposure?: string | null; showSearchInput?: boolean }>(), {
     initialTerm: '',
     exposure: null,
+    showSearchInput: true,
 });
 
 const emit = defineEmits<{
@@ -136,13 +140,24 @@ const search = async (value: string): Promise<void> => {
 
 /**
  * Le terme pré-rempli par la page catalogue cherche dès le montage, hors du débounce : sans quoi
- * la loupe « Chercher « nvidia » chez Yahoo » ouvre un panneau qui affiche « Aucun instrument ne
- * porte ce nom » avant même d'avoir interrogé qui que ce soit — le débounce n'a de sens que pour
- * étaler des frappes, pas pour retarder une valeur déjà connue au montage.
+ * le panneau qui s'ouvre afficherait « Aucun instrument ne porte ce nom » avant même d'avoir
+ * interrogé qui que ce soit — le débounce n'a de sens que pour étaler des frappes, pas pour
+ * retarder une valeur déjà connue au montage.
  */
 if (props.initialTerm.trim() !== '') {
     void search(props.initialTerm);
 }
+
+/**
+ * Sans champ propre, le terme vient d'ailleurs — le filtre de la page catalogue, qui affiche ce
+ * panneau sous sa liste plutôt qu'en modale. Le recopier ici plutôt que lire `props` partout garde
+ * un seul chemin de recherche : le débounce ci-dessous, et lui seul.
+ */
+watch((): string => props.initialTerm, (value: string): void => {
+    if (!props.showSearchInput) {
+        term.value = value;
+    }
+});
 
 /** Débouncé : la frappe ne doit pas ouvrir un process Python par lettre. */
 watch(term, (value: string): void => {
@@ -221,6 +236,7 @@ const submit = async (): Promise<void> => {
     <div class="flex flex-col gap-4">
         <template v-if="chosen === null">
             <Input
+                v-if="props.showSearchInput"
                 v-model="term"
                 data-instrument-search-input
                 type="search"

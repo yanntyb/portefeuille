@@ -128,7 +128,39 @@ function tooltipRow(color: string, label: string, value: string): string {
         + '</div>';
 }
 
-type ValueFormatter = (value: number) => string;
+/**
+ * Formateur d'étiquette. Le second paramètre est une demande de précision, pas une obligation :
+ * les axes s'en servent pour séparer deux bornes qui tombent dans le même arrondi, et un formateur
+ * qui l'ignore reste valable — l'axe gardera alors ses étiquettes arrondies.
+ */
+type ValueFormatter = (value: number, digits?: number) => string;
+
+/**
+ * Précision des montants d'une infobulle. Un axe s'arrondit — il donne une échelle, et trois
+ * chiffres de trop l'encombrent. Une infobulle, elle, est la lecture exacte du point survolé : à
+ * l'euro près, une position ouverte du jour y affichait « Valeur 50 € », « Investi 50 € » et une
+ * perte de « − 0 € », trois lignes qui se contredisaient sous un gain pourtant affiché en tête.
+ */
+const TOOLTIP_DIGITS = 2;
+
+/** Précisions essayées pour séparer deux bornes confondues, de la plus grossière à la plus fine. */
+const REFINED_DIGITS = [1, 2, 3, 4, 5, 6, 7, 8];
+
+/**
+ * Précision qui distingue les deux bornes d'un axe, `undefined` si celle du formateur suffit déjà
+ * — ou si aucune n'y parviendra. Les montants d'un portefeuille s'affichent à l'euro près : sur
+ * une position ouverte du jour, minimum et maximum tiennent dans le même euro et l'axe portait
+ * deux fois la même étiquette, ne disant plus rien de son échelle.
+ */
+function distinguishingDigits(min: number, max: number, valueFormatter: ValueFormatter): number | undefined {
+    if (!Number.isFinite(min) || !Number.isFinite(max) || valueFormatter(min) !== valueFormatter(max)) {
+        return undefined;
+    }
+
+    return REFINED_DIGITS.find(
+        (digits: number): boolean => valueFormatter(min, digits) !== valueFormatter(max, digits),
+    );
+}
 
 const MONTH_LABEL = new Intl.DateTimeFormat('fr-FR', { month: 'short' });
 const DAY_MONTH_LABEL = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
@@ -211,8 +243,10 @@ function yAxisGutter(values: number[], valueFormatter: ValueFormatter): number {
     }
 
     const bounds = [Math.min(...finite), Math.max(...finite)];
+    /** La même précision que celle des étiquettes, sans quoi la décimale ajoutée serait coupée. */
+    const digits = distinguishingDigits(bounds[0], bounds[1], valueFormatter);
     const widest = Math.max(...[...bounds, bounds[1] * 1.1].map(
-        (value: number): number => labelWidth(valueFormatter(value)),
+        (value: number): number => labelWidth(valueFormatter(value, digits)),
     ));
 
     return Math.ceil(widest) + AXIS_LABEL_MARGIN;
@@ -310,7 +344,9 @@ function chartFrame({ valueFormatter, values, bottom, description, gutter }: Cha
             axisLabel: {
                 color: colors.axisLabel,
                 formatter: (value: number): string => (
-                    isAxisExtreme(value, extent) ? valueFormatter(value) : ''
+                    isAxisExtreme(value, extent)
+                        ? valueFormatter(value, distinguishingDigits(extent.min, extent.max, valueFormatter))
+                        : ''
                 ),
             },
             /** Deux étiquettes chiffrées suffisent à donner l'échelle : les lignes de fond en plus font cage. */
@@ -554,12 +590,12 @@ function valueVsInvestedTooltip(
                 .join('');
 
             return tooltipTitle(labels[index] ?? '')
-                + tooltipRow(colors.value, 'Valeur', valueFormatter(totalValue))
-                + tooltipRow(colors.invested, 'Investi', valueFormatter(totalInvested))
+                + tooltipRow(colors.value, 'Valeur', valueFormatter(totalValue, TOOLTIP_DIGITS))
+                + tooltipRow(colors.invested, 'Investi', valueFormatter(totalInvested, TOOLTIP_DIGITS))
                 + tooltipRow(
                     gain >= 0 ? colors.gain : colors.loss,
                     gain >= 0 ? 'Gain' : 'Perte',
-                    `${gain >= 0 ? '+' : '−'} ${valueFormatter(Math.abs(gain))}`,
+                    `${gain >= 0 ? '+' : '−'} ${valueFormatter(Math.abs(gain), TOOLTIP_DIGITS)}`,
                 )
                 + dividendRows;
         },
