@@ -87,6 +87,13 @@ export interface WealthSeries {
     invested: number[];
 }
 
+/** Une seule classe d'actif dans le temps, sur sa propre grille de labels. */
+export interface ClassSeries {
+    labels: string[];
+    value: number[];
+    invested: number[];
+}
+
 export interface IncomeOrigin {
     label: string;
     amount: number;
@@ -123,4 +130,13 @@ export interface WealthAccount {
     ineligibleAssetNames: string[];
     /** Le compte espèces réel de l'enveloppe, à aujourd'hui. Jamais nul : `0` sans mouvement. */
     cashBalance: number;
+}
+
+/** Une classe d'actif dans une enveloppe : ce qu'elle y vaut, et la part qu'elle y pèse. */
+export interface WalletClassSlice {
+    key: string;
+    label: string;
+    value: number;
+    /** Part de l'enveloppe, en pourcentage. */
+    share: number;
 }

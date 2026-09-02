@@ -15,6 +15,7 @@ use App\Contexts\Portfolio\Http\UpdateTransactionController;
 use App\Contexts\RealEstate\Http\PropertiesController;
 use App\Contexts\RealEstate\Http\PropertyDetailController;
 use App\Contexts\Wealth\Http\DashboardController;
+use App\Contexts\Wealth\Http\WalletController;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/pwa.php';
@@ -73,6 +74,15 @@ foreach (AssetClass::cases() as $assetClass) {
         ->defaults('exposure', $assetClass->value)
         ->name("classes.{$assetClass->value}.catalog");
 }
+
+/**
+ * La page d'une enveloppe de détention. Une adresse par ligne de `wallets` et non par cas de
+ * `AccountType` : trois PEA distincts ont trois anciennetés et trois comptes espèces, un seul
+ * chiffre ne saurait les dire.
+ */
+Route::get('/enveloppes/{id}', WalletController::class)
+    ->whereNumber('id')
+    ->name('wallets.show');
 
 Route::get('/asset/{id}', AssetController::class)->name('assets.show');
 Route::get('/properties', PropertiesController::class)->name('properties.index');
