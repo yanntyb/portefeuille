@@ -1,6 +1,7 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
@@ -116,8 +117,8 @@ it('keeps only the holdings of the requested classes', function () {
     makeHolding($user, InstrumentType::Stock, close: 100, qty: 6, avgCost: 50);   // 600
     makeHolding($user, InstrumentType::Crypto, close: 100, qty: 4, avgCost: 50);  // 400
 
-    $securities = app(GetPortfolioOverview::class)($user, [AssetClass::Equity, AssetClass::Bond, AssetClass::Commodity]);
-    $crypto = app(GetPortfolioOverview::class)($user, [AssetClass::Crypto]);
+    $securities = app(GetPortfolioOverview::class)($user, HoldingScope::ofClasses([AssetClass::Equity, AssetClass::Bond, AssetClass::Commodity]));
+    $crypto = app(GetPortfolioOverview::class)($user, HoldingScope::ofClasses([AssetClass::Crypto]));
 
     expect($securities->totalValue)->toBe(600.0)
         ->and($securities->holdings)->toHaveCount(1)
@@ -146,7 +147,7 @@ it('keeps only the holdings of the exposures it is given', function () {
         'quantity' => 4, 'avg_cost' => 40.0,
     ]);
 
-    $overview = app(GetPortfolioOverview::class)($user, [AssetClass::Commodity]);
+    $overview = app(GetPortfolioOverview::class)($user, HoldingScope::ofClasses([AssetClass::Commodity]));
 
     expect($overview->holdings)->toHaveCount(1)
         ->and($overview->holdings[0]->assetId)->toBe($gold->id)
@@ -166,12 +167,12 @@ it('reads the holdings once, however many exposures ask for them', function () {
     ]);
 
     $overview = app(GetPortfolioOverview::class);
-    $overview($user, [AssetClass::Equity]);
+    $overview($user, HoldingScope::ofClasses([AssetClass::Equity]));
 
     DB::enableQueryLog();
 
     foreach (AssetClass::cases() as $class) {
-        $overview($user, [$class]);
+        $overview($user, HoldingScope::ofClasses([$class]));
     }
 
     expect(DB::getQueryLog())->toBeEmpty();

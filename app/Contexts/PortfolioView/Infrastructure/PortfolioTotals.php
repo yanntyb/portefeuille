@@ -3,7 +3,13 @@
 namespace App\Contexts\PortfolioView\Infrastructure;
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\Portfolio\Actions\GetPortfolioAnalysis;
+use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
+use App\Contexts\Portfolio\Actions\GetPortfolioPositions;
+use App\Contexts\Portfolio\Datas\ContributionData;
+use App\Contexts\Portfolio\Datas\HoldingLineData;
 use App\Contexts\PortfolioView\Datas\AnalysisData;
 use App\Contexts\PortfolioView\Datas\ConcentrationData;
 use App\Contexts\PortfolioView\Datas\ContributionLineData;
@@ -11,11 +17,6 @@ use App\Contexts\PortfolioView\Datas\HoldingRowData;
 use App\Contexts\PortfolioView\Datas\PortfolioSummaryData;
 use App\Contexts\PortfolioView\Datas\PositionData;
 use App\Contexts\PortfolioView\Ports\PortfolioOverviewPort;
-use App\Contexts\Portfolio\Actions\GetPortfolioAnalysis;
-use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
-use App\Contexts\Portfolio\Actions\GetPortfolioPositions;
-use App\Contexts\Portfolio\Datas\ContributionData;
-use App\Contexts\Portfolio\Datas\HoldingLineData;
 
 /**
  * Les trois actions sont injectées, jamais résolues ni construites ici : elles sont liées en
@@ -38,7 +39,7 @@ class PortfolioTotals implements PortfolioOverviewPort
             return PortfolioSummaryData::empty();
         }
 
-        $overview = ($this->overview)($user, [$exposure]);
+        $overview = ($this->overview)($user, HoldingScope::ofClasses([$exposure]));
 
         return new PortfolioSummaryData(
             totalValue: $overview->totalValue,
@@ -100,7 +101,7 @@ class PortfolioTotals implements PortfolioOverviewPort
             return AnalysisData::empty();
         }
 
-        $analysis = ($this->analysis)($user, [$exposure]);
+        $analysis = ($this->analysis)($user, HoldingScope::ofClasses([$exposure]));
 
         return new AnalysisData(
             concentration: new ConcentrationData(

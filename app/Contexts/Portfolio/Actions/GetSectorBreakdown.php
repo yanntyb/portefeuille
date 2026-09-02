@@ -5,6 +5,7 @@ namespace App\Contexts\Portfolio\Actions;
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Contracts\PriceRepositoryContract;
 use App\Contexts\Market\Contracts\SectorRepositoryContract;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\Sector;
 use App\Contexts\Market\Models\SectorAllocation;
@@ -25,23 +26,26 @@ class GetSectorBreakdown
      * Break the portfolio market value down by sector. Assets without any known
      * sector fall into Sector::Other.
      *
-     * Sans `$classes`, tout le portefeuille ; avec, les seules expositions demandées, les parts
-     * étant alors celles de ce sous-ensemble — le partage se lit dans `AssetClass`, comme partout.
+     * Sans périmètre, tout le portefeuille ; avec, les seules lignes qu'il admet, les parts étant
+     * alors celles de ce sous-ensemble — le partage se lit dans `AssetClass`, comme partout, et
+     * l'enveloppe dans `holdings.wallet_id`.
      *
-     * @param  ?list<AssetClass>  $classes
      * @return list<AllocationSliceData>
      */
-    public function __invoke(User $user, ?array $classes = null): array
+    public function __invoke(User $user, ?HoldingScope $scope = null): array
     {
+        $scope ??= HoldingScope::all();
+
         $holdings = Holding::query()
             ->where('user_id', $user->id)
-            ->when($classes !== null, fn ($query) => $query->whereHas(
+            ->when($scope->classes !== null, fn ($query) => $query->whereHas(
                 'asset',
                 fn ($assets) => $assets->whereIn(
                     'asset_class',
-                    array_map(fn (AssetClass $class): string => $class->value, $classes),
+                    array_map(fn (AssetClass $class): string => $class->value, $scope->classes),
                 ),
             ))
+            ->when($scope->walletId !== null, fn ($query) => $query->where('wallet_id', $scope->walletId))
             ->get();
 
         $lastPrices = $this->prices->latestClosesForAssets(

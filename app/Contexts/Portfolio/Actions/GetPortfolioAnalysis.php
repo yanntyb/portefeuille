@@ -3,7 +3,7 @@
 namespace App\Contexts\Portfolio\Actions;
 
 use App\Contexts\Identity\Models\User;
-use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Portfolio\Datas\HoldingLineData;
 use App\Contexts\Portfolio\Datas\PortfolioAnalysisData;
 use App\Contexts\Portfolio\Services\Concentration;
@@ -29,10 +29,9 @@ class GetPortfolioAnalysis
         private PerformanceContribution $contribution,
     ) {}
 
-    /** @param  ?list<AssetClass>  $classes */
-    public function __invoke(User $user, ?array $classes = null): PortfolioAnalysisData
+    public function __invoke(User $user, ?HoldingScope $scope = null): PortfolioAnalysisData
     {
-        $overview = ($this->overview)($user, $classes);
+        $overview = ($this->overview)($user, $scope);
 
         if ($overview->holdings === []) {
             return PortfolioAnalysisData::empty();

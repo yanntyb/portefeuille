@@ -2,6 +2,7 @@
 
 namespace App\Contexts\Portfolio\Actions;
 
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Transaction;
@@ -21,7 +22,7 @@ class GetRealizedGains
      * `scoped` : une lecture sert les quatre expositions d'une page, sur le modèle de
      * `GetPortfolioOverview`.
      *
-     * @var array<int, list<array{assetId: int, assetClass: AssetClass, amount: float}>>
+     * @var array<int, list<array{assetId: int, assetClass: AssetClass, walletId: int, amount: float}>>
      */
     private array $salesByUser = [];
 
@@ -42,20 +43,17 @@ class GetRealizedGains
     }
 
     /**
-     * Le gain réalisé d'une ou plusieurs expositions, ou du portefeuille entier sans `$classes`.
-     *
-     * @param  ?list<AssetClass>  $classes
+     * Le gain réalisé d'un périmètre : une ou plusieurs expositions, une enveloppe, ou le
+     * portefeuille entier. Il se lit sur les ventes, jamais sur les positions — un actif soldé
+     * n'a plus de ligne `Holding`, et son aller-retour disparaîtrait du bilan de l'enveloppe qui
+     * l'a porté.
      */
-    public function totalFor(int $userId, ?array $classes): float
+    public function totalFor(int $userId, HoldingScope $scope): float
     {
-        $kept = $classes === null
-            ? null
-            : array_flip(array_map(fn (AssetClass $class): string => $class->value, $classes));
-
         $total = 0.0;
 
         foreach ($this->readSales($userId) as $sale) {
-            if ($kept === null || isset($kept[$sale['assetClass']->value])) {
+            if ($scope->admits($sale['assetClass']) && $scope->admitsWallet($sale['walletId'])) {
                 $total += $sale['amount'];
             }
         }
@@ -67,7 +65,7 @@ class GetRealizedGains
      * Toutes les ventes de l'utilisateur, exposition comprise : le découpage par classe se fait
      * en mémoire sur ce résultat mémoïsé, comme celui des lignes du portefeuille.
      *
-     * @return list<array{assetId: int, assetClass: AssetClass, amount: float}>
+     * @return list<array{assetId: int, assetClass: AssetClass, walletId: int, amount: float}>
      */
     private function readSales(int $userId): array
     {
@@ -77,10 +75,11 @@ class GetRealizedGains
             ->where('transactions.user_id', $userId)
             ->where('transactions.type', TransactionType::Sell)
             ->whereNotNull('transactions.realized_gain')
-            ->get(['transactions.asset_id', 'transactions.realized_gain', 'assets.asset_class'])
+            ->get(['transactions.asset_id', 'transactions.wallet_id', 'transactions.realized_gain', 'assets.asset_class'])
             ->map(fn (Transaction $sale): array => [
                 'assetId' => (int) $sale->asset_id,
                 'assetClass' => AssetClass::from((string) $sale->getAttributes()['asset_class']),
+                'walletId' => (int) $sale->wallet_id,
                 'amount' => (float) $sale->realized_gain,
             ])
             ->values()

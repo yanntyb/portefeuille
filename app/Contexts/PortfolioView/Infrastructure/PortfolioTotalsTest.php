@@ -1,16 +1,17 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Dividend;
 use App\Contexts\Market\Models\Instrument;
-use App\Contexts\PortfolioView\Infrastructure\PortfolioTotals;
-use App\Contexts\PortfolioView\Ports\PortfolioOverviewPort;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Enums\AccountType;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
+use App\Contexts\PortfolioView\Infrastructure\PortfolioTotals;
+use App\Contexts\PortfolioView\Ports\PortfolioOverviewPort;
 use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
@@ -268,5 +269,5 @@ it('mesure l\'investi aux apports nets, pas au coût des titres', function () {
      * 1 000 € sortis de la poche, une seule fois : le rachat est financé par la vente, il ne
      * crée aucun apport. L'ancien « coût des titres » aurait dit 1 100 €.
      */
-    expect(app(GetPortfolioOverview::class)($this->user, null)->netContributions)->toBe(1000.0);
+    expect(app(GetPortfolioOverview::class)($this->user, HoldingScope::all())->netContributions)->toBe(1000.0);
 });

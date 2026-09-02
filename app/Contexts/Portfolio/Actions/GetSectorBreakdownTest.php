@@ -1,6 +1,7 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
@@ -148,7 +149,7 @@ it('restricts the breakdown to the requested exposures', function () {
     $coin = holdingWorth($user, 500.0, InstrumentType::Crypto);
     withSectorWeights($coin, [Sector::FinancialServices->value => 1.0]);
 
-    $equityOnly = app(GetSectorBreakdown::class)($user, [AssetClass::Equity]);
+    $equityOnly = app(GetSectorBreakdown::class)($user, HoldingScope::ofClasses([AssetClass::Equity]));
 
     // La part se calcule sur l'exposition retenue, pas sur le portefeuille entier : la ligne
     // actions pèse 100 % des actions, même si elle ne fait que deux tiers du portefeuille.
@@ -157,5 +158,5 @@ it('restricts the breakdown to the requested exposures', function () {
         ->and($equityOnly[0]->value)->toBe(1000.0)
         ->and($equityOnly[0]->pct)->toBe(100.0);
 
-    expect(app(GetSectorBreakdown::class)($user, null))->toHaveCount(2);
+    expect(app(GetSectorBreakdown::class)($user, HoldingScope::all()))->toHaveCount(2);
 });

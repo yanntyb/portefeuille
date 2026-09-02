@@ -3,6 +3,7 @@
 namespace App\Contexts\Wealth\Infrastructure;
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Datas\HoldingLineData;
@@ -63,7 +64,7 @@ class PortfolioInvestedCapital
         $costs = [];
 
         foreach (AssetClass::cases() as $exposure) {
-            $scoped = ($this->overview)($user, [$exposure]);
+            $scoped = ($this->overview)($user, HoldingScope::ofClasses([$exposure]));
             $imputed[$exposure->value] = $scoped->netContributions;
             $costs[$exposure->value] = $this->costOf($scoped->holdings);
         }

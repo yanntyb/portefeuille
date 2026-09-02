@@ -2,6 +2,7 @@
 
 namespace App\Contexts\Wealth\Infrastructure;
 
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Valuation\Actions\BuildExposureSeries;
 use App\Contexts\Wealth\Datas\ClassSeriesData;
 use App\Contexts\Wealth\Ports\ValuationPort;
@@ -20,7 +21,7 @@ class WalletValuation implements ValuationPort
 
     public function seriesForWallet(int $userId, int $walletId): ClassSeriesData
     {
-        $series = ($this->series)($userId, null, $walletId);
+        $series = ($this->series)($userId, HoldingScope::ofWallet($walletId));
 
         return new ClassSeriesData(
             labels: $series->labels,

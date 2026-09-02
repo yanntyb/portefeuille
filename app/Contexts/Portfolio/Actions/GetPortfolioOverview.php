@@ -4,6 +4,7 @@ namespace App\Contexts\Portfolio\Actions;
 
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Contracts\PriceRepositoryContract;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Portfolio\Datas\CashMovementData;
 use App\Contexts\Portfolio\Datas\HoldingLineData;
@@ -32,24 +33,23 @@ class GetPortfolioOverview
     ) {}
 
     /**
-     * Sans `$classes`, tout le portefeuille. Avec, une ou plusieurs expositions : chacune a sa
-     * page et sa ligne au patrimoine, et le partage se lit dans `AssetClass`, nulle part ailleurs.
-     *
-     * @param  ?list<AssetClass>  $classes
+     * Sans périmètre, tout le portefeuille. Avec, une ou plusieurs expositions — chacune a sa page
+     * et sa ligne au patrimoine, et le partage se lit dans `AssetClass`, nulle part ailleurs — ou
+     * une enveloppe, pour la page qui la montre.
      */
-    public function __invoke(User $user, ?array $classes = null): PortfolioOverviewData
+    public function __invoke(User $user, ?HoldingScope $scope = null): PortfolioOverviewData
     {
+        $scope ??= HoldingScope::all();
+
         $lines = $this->linesByUser[$user->id] ??= $this->readLines($user);
 
-        if ($classes !== null) {
-            $kept = array_flip(array_map(fn (AssetClass $class): string => $class->value, $classes));
-            $lines = array_values(array_filter(
-                $lines,
-                fn (HoldingLineData $line): bool => isset($kept[$line->assetClass->value]),
-            ));
-        }
+        $lines = array_values(array_filter(
+            $lines,
+            fn (HoldingLineData $line): bool => $scope->admits($line->assetClass)
+                && $scope->admitsWallet($line->walletId),
+        ));
 
-        return $this->summarize($lines, $this->realizedGains->totalFor($user->id, $classes), $user->id, $classes);
+        return $this->summarize($lines, $this->realizedGains->totalFor($user->id, $scope), $user->id, $scope);
     }
 
     /**
@@ -108,9 +108,8 @@ class GetPortfolioOverview
      * lus sur les mouvements d'espèces plutôt que sur les positions.
      *
      * @param  list<HoldingLineData>  $lines
-     * @param  ?list<AssetClass>  $classes
      */
-    private function summarize(array $lines, float $realizedGain, int $userId, ?array $classes): PortfolioOverviewData
+    private function summarize(array $lines, float $realizedGain, int $userId, HoldingScope $scope): PortfolioOverviewData
     {
         $totals = $this->valuator->totals($lines);
         $movements = ($this->cashMovements)($userId);
@@ -122,8 +121,8 @@ class GetPortfolioOverview
             totalGain: $totals['totalGain'],
             totalGainPct: $totals['totalGainPct'],
             totalRealizedGain: $realizedGain,
-            netContributions: $this->netContributionsFor($contributions, $classes),
-            cash: $this->cashBalance($movements, $classes),
+            netContributions: $this->netContributionsFor($contributions, $scope->classes),
+            cash: $this->cashBalance($movements, $scope),
             holdings: $lines,
         );
     }
@@ -132,6 +131,10 @@ class GetPortfolioOverview
      * Sans `$classes`, l'apport total, toutes expositions confondues. Avec, la part imputée aux
      * achats de ces expositions par `CashLedger::netContributions()` — un rachat financé par une
      * vente n'y figure pas, il n'a consommé aucun apport.
+     *
+     * L'apport ne se découpe pas par enveloppe : un périmètre qui n'en nomme qu'une lit donc
+     * l'apport entier. Aucun appelant ne lit ce champ dans ce cas — `InvestedCapital` raisonne par
+     * exposition — et l'imputation par compte serait un autre travail que le FIFO par exposition.
      *
      * @param  array{total: float, byExposure: array<string, float>}  $contributions
      * @param  ?list<AssetClass>  $classes
@@ -162,23 +165,29 @@ class GetPortfolioOverview
      * fois : le même euro se lisait quatre fois, à côté d'un « Investi » et d'un « Gain » qui,
      * eux, étaient scopés.
      *
+     * D'une enveloppe, en revanche, c'est le solde réel du compte : les espèces y sont tenues, et
+     * la page de l'enveloppe les annonce comme telles.
+     *
      * @param  list<CashMovementData>  $movements
-     * @param  ?list<AssetClass>  $classes
      */
-    private function cashBalance(array $movements, ?array $classes): float
+    private function cashBalance(array $movements, HoldingScope $scope): float
     {
         $today = now()->format('Y-m-d');
 
-        if ($classes !== null) {
+        if ($scope->classes !== null) {
             $composition = $this->cashLedger->compositionAt($movements, $today);
 
             $scoped = 0.0;
 
-            foreach ($classes as $class) {
+            foreach ($scope->classes as $class) {
                 $scoped += $composition['exposures'][$class->value] ?? 0.0;
             }
 
             return round($scoped, 2);
+        }
+
+        if ($scope->walletId !== null) {
+            return $this->cashLedger->balanceAt($movements, $scope->walletId, $today);
         }
 
         $walletIds = array_unique(array_map(fn (CashMovementData $movement): int => $movement->walletId, $movements));

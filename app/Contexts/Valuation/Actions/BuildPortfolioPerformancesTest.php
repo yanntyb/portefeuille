@@ -1,6 +1,7 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
@@ -67,11 +68,45 @@ it('measures each asset class on its own, without mixing their caches', function
     Price::factory()->create(['asset_id' => $stock->id, 'date' => '2026-07-01', 'close' => 200]);
     Price::factory()->create(['asset_id' => $bitcoin->id, 'date' => '2026-07-01', 'close' => 75]);
 
-    $securities = app(BuildPortfolioPerformances::class)($user->id, [AssetClass::Equity, AssetClass::Bond, AssetClass::Commodity]);
-    $crypto = app(BuildPortfolioPerformances::class)($user->id, [AssetClass::Crypto]);
+    $securities = app(BuildPortfolioPerformances::class)($user->id, HoldingScope::ofClasses([AssetClass::Equity, AssetClass::Bond, AssetClass::Commodity]));
+    $crypto = app(BuildPortfolioPerformances::class)($user->id, HoldingScope::ofClasses([AssetClass::Crypto]));
 
     $maxOf = fn (array $performances): float => collect($performances)->firstWhere('key', 'MAX')->pct;
 
     expect($maxOf($securities))->toBe(100.0)
         ->and($maxOf($crypto))->toBe(-25.0);
+});
+
+/**
+ * L'enveloppe se mesure comme une exposition, sur son seul journal. La preuve porte sur un achat
+ * du compte voisin, pas sur un versement : sans `asset_id`, un versement ne pèse ni sur les actifs
+ * valorisés ni sur la date de départ des fenêtres, et un filtre inerte laisserait passer le test.
+ */
+it('mesure une enveloppe sans laisser passer l\'achat de sa voisine', function () {
+    $user = User::factory()->create();
+    $mine = Wallet::factory()->for($user)->create(['name' => 'Premier compte']);
+    $theirs = Wallet::factory()->for($user)->create(['name' => 'Second compte']);
+    $doubler = Instrument::factory()->ofType(InstrumentType::Stock)->create();
+    $loser = Instrument::factory()->ofType(InstrumentType::Stock)->create();
+
+    foreach ([$doubler, $loser] as $asset) {
+        Price::factory()->create(['asset_id' => $asset->id, 'date' => '2026-01-01', 'close' => 100]);
+    }
+
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $mine->id, 'asset_id' => $doubler->id,
+        'quantity' => 10, 'unit_price' => 100, 'date' => '2026-01-01',
+    ]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $theirs->id, 'asset_id' => $loser->id,
+        'quantity' => 10, 'unit_price' => 100, 'date' => '2026-01-01',
+    ]);
+
+    Price::factory()->create(['asset_id' => $doubler->id, 'date' => '2026-07-01', 'close' => 200]);
+    Price::factory()->create(['asset_id' => $loser->id, 'date' => '2026-07-01', 'close' => 75]);
+
+    $maxOf = fn (array $performances): float => collect($performances)->firstWhere('key', 'MAX')->pct;
+
+    expect($maxOf(app(BuildPortfolioPerformances::class)($user->id, HoldingScope::ofWallet($mine->id))))->toBe(100.0)
+        ->and($maxOf(app(BuildPortfolioPerformances::class)($user->id, HoldingScope::ofWallet($theirs->id))))->toBe(-25.0);
 });

@@ -1,6 +1,7 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
@@ -78,9 +79,9 @@ it('restricts the total to the requested exposures', function () {
 
     $action = app(GetRealizedGains::class);
 
-    expect($action->totalFor($user->id, [AssetClass::Equity]))->toBe(200.0)
-        ->and($action->totalFor($user->id, [AssetClass::Crypto]))->toBe(200.0)
-        ->and($action->totalFor($user->id, null))->toBe(400.0);
+    expect($action->totalFor($user->id, HoldingScope::ofClasses([AssetClass::Equity])))->toBe(200.0)
+        ->and($action->totalFor($user->id, HoldingScope::ofClasses([AssetClass::Crypto])))->toBe(200.0)
+        ->and($action->totalFor($user->id, HoldingScope::all()))->toBe(400.0);
 });
 
 it('ignores the transactions of another user', function () {
@@ -110,5 +111,5 @@ it('reports nothing on a portfolio without a single sale', function () {
     ]);
 
     expect(app(GetRealizedGains::class)($user->id))->toBe([])
-        ->and(app(GetRealizedGains::class)->totalFor($user->id, null))->toBe(0.0);
+        ->and(app(GetRealizedGains::class)->totalFor($user->id, HoldingScope::all()))->toBe(0.0);
 });

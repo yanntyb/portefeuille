@@ -5,6 +5,7 @@ namespace App\Contexts\Wealth\Infrastructure;
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Income\Actions\GetIncomeSummary;
 use App\Contexts\Income\Enums\IncomeSource;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\Sector;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
@@ -86,7 +87,7 @@ class PortfolioAssetClass implements AssetClassPort
             return ClassSnapshotData::empty();
         }
 
-        $overview = ($this->overview)($user, [$this->exposure]);
+        $overview = ($this->overview)($user, HoldingScope::ofClasses([$this->exposure]));
 
         return new ClassSnapshotData(
             value: $overview->totalValue,
@@ -113,7 +114,7 @@ class PortfolioAssetClass implements AssetClassPort
                 label: $slice->label === Sector::Other->getLabel() ? $this->label() : $slice->label,
                 value: $slice->value,
             ),
-            ($this->sectors)($user, [$this->exposure]),
+            ($this->sectors)($user, HoldingScope::ofClasses([$this->exposure])),
         );
     }
 

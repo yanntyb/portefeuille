@@ -2,6 +2,7 @@
 
 namespace App\Contexts\PortfolioView\Infrastructure;
 
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\PortfolioView\Datas\AssetLineData;
 use App\Contexts\PortfolioView\Datas\AssetValuationData;
@@ -57,7 +58,7 @@ class ValuationHistory implements ValuationPort
     {
         return array_map(
             $this->performanceLine(...),
-            ($this->performances)($userId, [$exposure]),
+            ($this->performances)($userId, HoldingScope::ofClasses([$exposure])),
         );
     }
 
@@ -118,7 +119,7 @@ class ValuationHistory implements ValuationPort
 
     public function drawdownFor(int $userId, AssetClass $exposure): DrawdownData
     {
-        $series = ($this->exposureSeries)($userId, [$exposure]);
+        $series = ($this->exposureSeries)($userId, HoldingScope::ofClasses([$exposure]));
         $drawdown = $this->drawdown->of($series->labels, $series->valuations);
 
         return new DrawdownData(

@@ -3,6 +3,7 @@
 namespace App\Contexts\PortfolioView\Infrastructure;
 
 use App\Contexts\Market\Contracts\PriceRepositoryContract;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Services\BasketIndex;
 use App\Contexts\Market\Services\Correlation;
@@ -59,7 +60,7 @@ class ClassAnalysis implements ClassAnalysisPort
 
         $closesByAsset = $this->closesByAsset(array_keys($weights));
         $index = $this->basket->of($closesByAsset, $weights);
-        $valuations = ($this->exposureSeries)($userId, [$exposure])->valuations;
+        $valuations = ($this->exposureSeries)($userId, HoldingScope::ofClasses([$exposure]))->valuations;
 
         return new ClassAnalysisData(
             maxDrawdown: $this->drawdown->of($index->labels, $index->values)->maxDepth,

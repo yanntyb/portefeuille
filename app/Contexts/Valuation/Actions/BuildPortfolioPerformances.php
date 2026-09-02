@@ -2,13 +2,13 @@
 
 namespace App\Contexts\Valuation\Actions;
 
-use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Valuation\Datas\PerformanceData;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
-use App\Contexts\Valuation\Ports\InstrumentDirectoryPort;
 use App\Contexts\Valuation\Ports\PriceHistoryPort;
 use App\Contexts\Valuation\Ports\SeriesCachePort;
 use App\Contexts\Valuation\Ports\TransactionHistoryPort;
+use App\Contexts\Valuation\Services\ScopedTransactions;
 use App\Contexts\Valuation\Services\ValuationCalculator;
 
 class BuildPortfolioPerformances
@@ -18,55 +18,36 @@ class BuildPortfolioPerformances
         private PriceHistoryPort $prices,
         private ValuationCalculator $calculator,
         private SeriesCachePort $cache,
-        private InstrumentDirectoryPort $directory,
+        private ScopedTransactions $scoped,
     ) {}
 
     /**
-     * Sans `$classes`, tout le portefeuille. Avec, une ou plusieurs expositions.
+     * Sans périmètre, tout le portefeuille. Avec, une ou plusieurs expositions, une enveloppe, ou
+     * les deux.
      *
-     * @param  ?list<AssetClass>  $classes
      * @return list<PerformanceData>
      */
-    public function __invoke(int $userId, ?array $classes = null): array
+    public function __invoke(int $userId, ?HoldingScope $scope = null): array
     {
+        $scope ??= HoldingScope::all();
+
         /**
-         * Le filtre entre dans le nom retenu : une performance glissante agrège les transactions
-         * avant d'en tirer ses fenêtres, elle ne se découpe donc pas après coup comme une série
-         * par actif. Deux classes sous un même nom se serviraient le résultat l'une de l'autre.
+         * Le périmètre entre dans le nom retenu : une performance glissante agrège les
+         * transactions avant d'en tirer ses fenêtres, elle ne se découpe donc pas après coup comme
+         * une série par actif. Deux périmètres sous un même nom se serviraient le résultat l'un de
+         * l'autre.
          */
         return $this->cache->remember(
-            $classes === null ? 'performances' : 'performances.'.$this->nameOf($classes),
+            'performances'.$scope->cacheKey(),
             $userId,
-            fn (): array => $this->build($userId, $classes),
+            fn (): array => $this->build($userId, $scope),
         );
     }
 
-    /** @param  list<AssetClass>  $classes */
-    private function nameOf(array $classes): string
+    /** @return list<PerformanceData> */
+    private function build(int $userId, HoldingScope $scope): array
     {
-        return implode('-', array_map(fn (AssetClass $class): string => $class->value, $classes));
-    }
-
-    /**
-     * @param  ?list<AssetClass>  $classes
-     * @return list<PerformanceData>
-     */
-    private function build(int $userId, ?array $classes): array
-    {
-        $transactions = $this->transactions->forUser($userId);
-
-        /**
-         * Même raison que `BuildExposureSeries` : le cash est global à l'utilisateur, pas à une
-         * exposition. Un versement, un retrait ou un dividende sans `asset_id` passe le filtre
-         * quelle que soit la classe demandée.
-         */
-        if ($classes !== null) {
-            $kept = array_flip($this->directory->idsOfClasses($classes));
-            $transactions = array_values(array_filter(
-                $transactions,
-                fn (TransactionRecordData $transaction): bool => $transaction->assetId === null || isset($kept[$transaction->assetId]),
-            ));
-        }
+        $transactions = $this->scoped->within($this->transactions->forUser($userId), $scope);
 
         if ($transactions === []) {
             return [];
