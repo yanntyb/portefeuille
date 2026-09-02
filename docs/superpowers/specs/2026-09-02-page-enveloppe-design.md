@@ -62,6 +62,10 @@ reste différé, un groupe par section.
 | `evolution` | différée | `evolution` |
 | `transactions` | différée | `transactions` |
 
+Le contrôleur n'appelle pas les ports directement : une action mince par section — `GetWalletAccount`,
+`GetWalletPositions`, `GetWalletBreakdown`, `GetWalletSeries`, `GetWalletTransactions` — comme
+`GetWealthAccounts` enveloppe déjà `AccountsPort` pour le tableau de bord.
+
 `abort(404)` quand `accountFor()` rend `null` : le port ne distingue pas le wallet inexistant du
 wallet d'un autre utilisateur, et la page n'a pas à le faire non plus — une page vide renseignerait
 sur l'existence du compte.
@@ -89,13 +93,14 @@ l'historique complet de l'utilisateur.
 
 ### La jumelle `WealthHoldingData`
 
-Troisième jumelle de `Portfolio\HoldingLineData`, après `MarketView\HoldingRowData`. Treize clés
-pour onze propriétés, `typeLabel` et `assetClassLabel` se dérivant de leur enum au moment de
-sérialiser — exactement le piège que `.ai/rules/market-view.md` signale.
+Troisième jumelle de `Portfolio\HoldingLineData`, après `MarketView\HoldingRowData`. Dix-sept
+clés pour quatorze propriétés : `typeLabel`, `assetClassLabel` et `accountTypeLabel` se dérivent de
+leur enum au moment de sérialiser — exactement le piège que `.ai/rules/market-view.md` signale.
 
 Le prix se justifie par ce qu'il achète : le front réutilise `InstrumentsSection` et
 `InstrumentList` tels quels, avec leurs étincelles, leur tri et leur lien vers `/asset/{id}`.
-`WealthInvariantTest` gagne une assertion de parité des clés pour que la triplette ne dérive pas.
+Un `WealthHoldingDataTest` posé à côté de la Data affirme la parité des clés des trois jumelles,
+pour que la triplette ne dérive pas.
 
 Alternative écartée : une ligne de position maigre et un composant de liste dédié. Moins de PHP,
 mais la sparkline et le lien vers la fiche seraient à réécrire.
@@ -148,8 +153,9 @@ réutilisent `HoldingLine` de `lib/portfolio` — le bénéfice de la jumelle.
 
 - `InstrumentsSection` : `catalogHref` devient optionnelle et la loupe disparaît quand elle manque.
   Une enveloppe n'a pas de catalogue.
-- `TransactionsSection` : la clé de pli, aujourd'hui `"class-transactions"` en dur, passe en prop.
-  Sans ça, le pli d'une enveloppe partagerait son état persistant avec celui d'une exposition.
+- `TransactionsSection` : la valeur `"class-transactions"`, aujourd'hui en dur, passe en prop
+  facultative. L'état du pli est un `ref` local, rien n'est partagé entre pages ; c'est le
+  `data-section` qui doit nommer sa page, pour les tests comme pour la lecture du DOM.
 - `WealthAccountsSection` : chaque carte devient un `<Link prefetch>` vers sa page.
 
 ## Tests
@@ -163,7 +169,7 @@ TDD, une tranche par commit.
 - **`PortfolioAccountsTest`** — `accountFor` trouvé puis autre utilisateur, `positionsFor` ne rend
   que le wallet demandé, `breakdownFor` rend parts et libellés justes.
 - **`PortfolioLedgerTest`** — `transactionsForWallet` scope au wallet, plus récente en tête.
-- **`WealthInvariantTest`** — parité des clés `HoldingLineData` / `HoldingRowData` /
+- **`WealthHoldingDataTest`** — parité des clés `HoldingLineData` / `HoldingRowData` /
   `WealthHoldingData`.
 - **Vitest** — `WalletHeaderSection.test.ts` : alerte d'éligibilité, seuil franchi ou non,
   ancienneté absente quand la date d'ouverture manque. `Show.test.ts` : fil d'Ariane, et absence de
