@@ -7,13 +7,14 @@ use App\Contexts\Wealth\Actions\GetWalletBreakdown;
 use App\Contexts\Wealth\Actions\GetWalletPositions;
 use App\Contexts\Wealth\Actions\GetWalletSeries;
 use App\Contexts\Wealth\Actions\GetWalletTransactions;
+use App\Contexts\Wealth\Datas\ClassSeriesData;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
  * La page d'une enveloppe de détention. Calquée sur `MarketView\Http\AssetClassController` :
  * l'en-tête synchrone pour qu'il ne saute pas à l'arrivée, chaque autre section derrière son propre
- * groupe différé, qui ne part qu'au dépli pour les sections repliées.
+ * groupe différé, pour ne pas retarder le premier rendu de la page.
  *
  * L'instantané hors-ligne ne porte pas cette page : ses sections différées afficheront leur état
  * « indisponible hors-ligne », c'est assumé.
@@ -46,8 +47,13 @@ class WalletController
             'account' => $account,
             'positions' => Inertia::defer(fn (): array => ($this->getPositions)($userId, $id), 'positions'),
             'breakdown' => Inertia::defer(fn (): array => ($this->getBreakdown)($userId, $id), 'repartition'),
-            'evolution' => Inertia::defer(fn () => ($this->getSeries)($userId, $id), 'evolution'),
-            /** Repliée à l'arrivée : l'historique du compte ne se charge que pour qui le déplie. */
+            'evolution' => Inertia::defer(fn (): ClassSeriesData => ($this->getSeries)($userId, $id), 'evolution'),
+            /**
+             * Différée comme les groupes voisins : Inertia résout tous les groupes différés dès
+             * le remplacement du composant, repliée ou non — seule la section attend le dépli
+             * pour afficher ce qui est déjà arrivé. La déférer sert seulement à ne pas retarder
+             * le premier rendu de la page derrière le journal complet du compte.
+             */
             'transactions' => Inertia::defer(fn (): array => ($this->getTransactions)($userId, $id), 'transactions'),
         ]);
     }
