@@ -3,6 +3,7 @@
 namespace App\Contexts\Portfolio\Actions;
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Portfolio\Datas\AccountLineData;
 use App\Contexts\Portfolio\Datas\CashMovementData;
 use App\Contexts\Portfolio\Datas\HoldingLineData;
@@ -26,7 +27,8 @@ use App\Contexts\Portfolio\Services\HoldingValuator;
  * sur ce même jeu : une lecture par enveloppe rouvrirait un N+1 sur l'instantané.
  *
  * Elle ne calcule aucune valorisation : les totaux passent par `HoldingValuator`, seul site du
- * gain du contexte.
+ * gain du contexte, et le gain réalisé par `GetRealizedGains` — mémoïsée en `scoped` elle aussi,
+ * une lecture des ventes servant toutes les enveloppes de la requête.
  */
 class GetAccountBreakdown
 {
@@ -35,6 +37,7 @@ class GetAccountBreakdown
         private HoldingValuator $valuator,
         private GetCashMovements $cashMovements,
         private CashLedger $cashLedger,
+        private GetRealizedGains $realizedGains,
     ) {}
 
     /** @return list<AccountLineData> */
@@ -101,8 +104,10 @@ class GetAccountBreakdown
                 broker: $wallet?->broker,
                 accountType: $accountType,
                 marketValue: $totals['totalValue'],
+                cost: $totals['totalCost'],
                 gain: $totals['totalGain'],
                 gainPct: $totals['totalGainPct'],
+                realizedGain: $this->realizedGains->totalFor($user->id, HoldingScope::ofWallet($walletId)),
                 // diffInYears() rend un float depuis Carbon 3 ; on tronque, on n'arrondit pas.
                 ageInYears: $opened === null ? null : (int) $opened->diffInYears(now()),
                 maturityYears: $accountType->maturityYears(),

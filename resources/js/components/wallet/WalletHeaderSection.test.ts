@@ -10,8 +10,10 @@ const account = (overrides: Partial<WealthAccount> = {}): WealthAccount => ({
     accountType: 'pea',
     accountTypeLabel: 'PEA',
     marketValue: 1000,
+    cost: 800,
     gain: 200,
     gainPct: 25,
+    realizedGain: 0,
     ageInYears: 7,
     maturityYears: 5,
     taxRegimeLabel: 'Exonéré après 5 ans, prélèvements sociaux 17,2 %',
@@ -88,5 +90,23 @@ describe('en-tête de la page d\'une enveloppe', () => {
 
     it('n\'alerte pas quand tout est éligible', () => {
         expect(mountHeader(account()).querySelector('[data-wallet-alert]')).toBeNull();
+    });
+
+    /** Les deux repères de l'en-tête : le coût de revient, puis le gain latent. */
+    it('affiche l\'investi et le gain latent sous le grand chiffre', () => {
+        const host = mountHeader(account());
+
+        // Même normalisation des espaces que la valeur du grand chiffre, pour la même raison.
+        expect(text(host, '[data-wallet-meta]')).toContain(eur(800, 0).replace(/\s+/g, ' ').trim());
+        expect(text(host, '[data-wallet-meta] [data-gain]')).toContain('(latent)');
+    });
+
+    /** Sans vente, rien à ventiler : le repère « réalisé » se tait plutôt que d'annoncer 0 €. */
+    it('ne montre le gain réalisé que lorsqu\'il y en a un', () => {
+        expect(mountHeader(account()).querySelector('[data-realized-gain]')).toBeNull();
+
+        const withSales = mountHeader(account({ realizedGain: 400 }));
+
+        expect(text(withSales, '[data-realized-gain]')).toContain('(réalisé)');
     });
 });

@@ -119,8 +119,13 @@ export interface WealthAccount {
     accountType: string;
     accountTypeLabel: string;
     marketValue: number;
+    /** Coût de revient des positions du compte : le « Investi » de son en-tête. */
+    cost: number;
+    /** Gain latent, celui des positions encore ouvertes. */
     gain: number;
     gainPct: number | null;
+    /** Gain déjà encaissé par les ventes du compte, positions soldées comprises. */
+    realizedGain: number;
     /** Ancienneté en années ; `null` quand la date d'ouverture est inconnue. */
     ageInYears: number | null;
     /** Années de détention avant le régime favorable ; `null` quand l'enveloppe n'en a pas. */

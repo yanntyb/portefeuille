@@ -121,7 +121,14 @@ use Illuminate\Support\Carbon;
  * liquidités rendent `null` au lieu de `/` — aucune page ne les détaille, leur ligne du tableau
  * de bord cesse d'être cliquable. Seule cette valeur bouge dans le JSON.
  */
-const SNAPSHOT_VERSION = '0793921efb54058673a55e2384e070dcde1502f0';
+/**
+ * Modifié une vingt-sixième fois : chaque enveloppe du tableau de bord gagne `cost` (le coût de
+ * revient de ses positions) et `realizedGain` (le gain encaissé par ses ventes), les deux repères
+ * que sa page affiche désormais sous son grand chiffre. Deux clés de plus par ligne d'`accounts`,
+ * dans l'ordre de `PortfolioSummaryData` — `marketValue, cost, gain, gainPct, realizedGain` — et
+ * rien d'autre ne bouge.
+ */
+const SNAPSHOT_VERSION = '8c86fa929c7ef6a696935cd72362b0469c3768f6';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

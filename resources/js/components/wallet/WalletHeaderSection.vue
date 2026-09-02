@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import HeroFigures from '@/components/HeroFigures.vue';
+import InvestedGainMeta from '@/components/InvestedGainMeta.vue';
 import { eur, pct } from '@/lib/format';
 import type { HeroMetaEntry } from '@/lib/instrument';
 import { walletMaturityLabel, years, type WealthAccount } from '@/lib/wealth';
@@ -33,7 +34,22 @@ const entries = computed<HeroMetaEntry[]>(() => [
             :gain-label="pct(props.account.gainPct)"
             :digits="0"
             :entries="entries"
-        />
+        >
+            <!--
+                Les deux repères qui suivent partout le grand chiffre, ici sous lui comme sur une
+                page d'exposition. Pas d'`origin-cash` : les espèces de l'enveloppe se lisent déjà
+                dans ses repères, un second affichage ferait doublon.
+            -->
+            <template #beneath-value>
+                <InvestedGainMeta
+                    data-wallet-meta
+                    :invested="props.account.cost"
+                    :gain="props.account.gain"
+                    :realized-gain="props.account.realizedGain"
+                    :digits="0"
+                />
+            </template>
+        </HeroFigures>
 
         <p data-wallet-regime class="text-xs text-muted-foreground">{{ props.account.taxRegimeLabel }}</p>
 

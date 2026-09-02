@@ -17,6 +17,11 @@ use JsonSerializable;
  *
  * `cashBalance` est le compte espèces réel de l'enveloppe, lu à aujourd'hui — jamais `null` : une
  * enveloppe sans aucun mouvement affiche `0`, pas un tiret.
+ *
+ * `cost` est le coût de revient des positions du compte, `realizedGain` le gain déjà encaissé par
+ * ses ventes — lu sur les transactions, un actif soldé n'ayant plus de position à totaliser. Les
+ * deux se lisent l'un sous l'autre avec `gain`, qui est le gain latent : ordre et vocabulaire de
+ * `PortfolioSummaryData`, pour que les deux échelles se lisent pareil.
  */
 readonly class AccountLineData implements JsonSerializable
 {
@@ -28,8 +33,10 @@ readonly class AccountLineData implements JsonSerializable
         public ?string $broker,
         public AccountType $accountType,
         public float $marketValue,
+        public float $cost,
         public float $gain,
         public ?float $gainPct,
+        public float $realizedGain,
         public ?int $ageInYears,
         public ?int $maturityYears,
         public string $taxRegimeLabel,
@@ -47,8 +54,10 @@ readonly class AccountLineData implements JsonSerializable
             'accountType' => $this->accountType->value,
             'accountTypeLabel' => $this->accountType->getLabel(),
             'marketValue' => $this->marketValue,
+            'cost' => $this->cost,
             'gain' => $this->gain,
             'gainPct' => $this->gainPct,
+            'realizedGain' => $this->realizedGain,
             'ageInYears' => $this->ageInYears,
             'maturityYears' => $this->maturityYears,
             'taxRegimeLabel' => $this->taxRegimeLabel,

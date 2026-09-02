@@ -173,3 +173,40 @@ it('affiche une enveloppe sans aucune position tant qu\'elle porte des espèces'
         ->and($lines[0]->marketValue)->toBe(0.0)
         ->and($lines[0]->cashBalance)->toBe(5000.0);
 });
+
+/**
+ * Le coût de revient et le gain déjà encaissé de chaque enveloppe, les deux repères qui suivent
+ * partout le grand chiffre. Le réalisé se lit sur les ventes du compte, jamais sur ses positions :
+ * un actif soldé n'a plus de ligne `Holding`, et son aller-retour disparaîtrait du bilan.
+ */
+it('porte le coût de revient et le gain réalisé de chaque enveloppe', function () {
+    $user = User::factory()->create();
+    $pea = Wallet::factory()->for($user)->pea()->create();
+    $cto = Wallet::factory()->for($user)->cto()->create();
+
+    holdIn($pea, InstrumentType::Stock, close: 100, qty: 10, avgCost: 80);
+    holdIn($cto, InstrumentType::Stock, close: 50, qty: 4, avgCost: 50);
+
+    /**
+     * L'aller-retour porte sur un second titre, entièrement soldé : sa position a disparu, et son
+     * gain ne se lit donc plus que sur les ventes. `TransactionObserver` pose `realized_gain` —
+     * dix titres achetés à 80, revendus à 120.
+     */
+    $soldOut = Instrument::factory()->ofType(InstrumentType::Stock)->create();
+
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $pea->id, 'asset_id' => $soldOut->id,
+        'quantity' => 10, 'unit_price' => 80, 'date' => '2026-01-01',
+    ]);
+    Transaction::factory()->sell()->create([
+        'user_id' => $user->id, 'wallet_id' => $pea->id, 'asset_id' => $soldOut->id,
+        'quantity' => 10, 'unit_price' => 120, 'date' => '2026-02-01',
+    ]);
+
+    $lines = collect(app(GetAccountBreakdown::class)($user))->keyBy('walletId');
+
+    expect($lines[$pea->id]->cost)->toBe(800.0)
+        ->and($lines[$pea->id]->realizedGain)->toBe(400.0)
+        ->and($lines[$cto->id]->cost)->toBe(200.0)
+        ->and($lines[$cto->id]->realizedGain)->toBe(0.0);
+});
