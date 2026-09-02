@@ -1,13 +1,19 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createApp, nextTick } from 'vue';
+import { createApp, h, nextTick, type VNode } from 'vue';
 import type { WealthAccount } from '@/lib/wealth';
 
 /**
  * `Deferred` demande un routeur monté ; la section ne le rend que sans données, et les tests lui en
- * donnent toujours. Un composant vide suffit donc à satisfaire l'import.
+ * donnent toujours. Un composant vide suffit donc à satisfaire l'import. `Link` se réduit à
+ * l'ancrage qu'il rend, sur le modèle d'`InstrumentsSection.test.ts`.
  */
 vi.mock('@inertiajs/vue3', () => ({
     Deferred: { setup: () => () => null },
+    Link: {
+        props: { href: { type: String, required: true } },
+        setup: (props: { href: string }, { slots, attrs }: { slots: Record<string, () => VNode[]>; attrs: Record<string, unknown> }) =>
+            () => h('a', { ...attrs, href: props.href }, slots.default?.()),
+    },
 }));
 
 const { default: WealthAccountsSection } = await import(
@@ -126,5 +132,12 @@ describe('section enveloppes du tableau de bord', () => {
         const host = await mountSection([]);
 
         expect(host.textContent).toContain('Aucune enveloppe détenue pour le moment.');
+    });
+
+    it('mène à la page de l\'enveloppe', async () => {
+        const host = await mountSection([account({ walletId: 42 })]);
+        const link = host.querySelector<HTMLAnchorElement>('[data-account-card] a, a[data-account-card]');
+
+        expect(link?.getAttribute('href')).toBe('/enveloppes/42');
     });
 });
