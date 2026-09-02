@@ -2,43 +2,40 @@
 
 namespace App\Contexts\PortfolioView\Actions;
 
+use App\Contexts\Market\Contracts\PriceRepositoryContract;
 use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\Market\Models\Instrument;
+use App\Contexts\Portfolio\Actions\GetPortfolioPositions;
 use App\Contexts\PortfolioView\Datas\CatalogLineData;
-use App\Contexts\PortfolioView\Datas\HoldingSnapshotData;
 use App\Contexts\PortfolioView\Datas\InstrumentSummaryData;
-use App\Contexts\PortfolioView\Ports\HoldingsPort;
-use App\Contexts\PortfolioView\Ports\MarketDataPort;
 
 class GetClassCatalog
 {
     public function __construct(
-        private MarketDataPort $market,
-        private HoldingsPort $holdings,
+        private PriceRepositoryContract $prices,
+        private GetPortfolioPositions $positions,
     ) {}
 
     /**
-     * Le catalogue d'une exposition : tous ses instruments, dans l'ordre alphabétique que rend le
-     * port. Les détenus ne remontent pas en tête — c'est un ordre de recherche, pas de portefeuille.
+     * Le catalogue d'une exposition : tous ses instruments, dans l'ordre alphabétique. Les détenus
+     * ne remontent pas en tête — c'est un ordre de recherche, pas de portefeuille.
      *
      * @return list<CatalogLineData>
      */
     public function __invoke(int $userId, AssetClass $class): array
     {
-        $instruments = $this->market->instrumentsOfClass($class);
-
+        $instruments = $this->instrumentsOf($class);
         $assetIds = array_map(
             fn (InstrumentSummaryData $instrument): int => $instrument->id,
             $instruments,
         );
-
-        $prices = $this->market->latestPricesFor($assetIds);
+        $prices = $assetIds === [] ? [] : $this->prices->latestClosesForAssets($assetIds);
 
         /** @var array<int, float> $quantities une position par actif, toutes enveloppes confondues */
         $quantities = [];
 
-        foreach ($this->holdings->holdingsFor($userId) as $holding) {
-            /** @var HoldingSnapshotData $holding */
-            $quantities[$holding->assetId] = $holding->quantity;
+        foreach (($this->positions)($userId) as $position) {
+            $quantities[$position->assetId] = $position->quantity;
         }
 
         return array_map(
@@ -49,6 +46,24 @@ class GetClassCatalog
             ),
             $instruments,
         );
+    }
+
+    /** @return list<InstrumentSummaryData> */
+    private function instrumentsOf(AssetClass $class): array
+    {
+        return Instrument::query()
+            ->where('asset_class', $class->value)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Instrument $instrument): InstrumentSummaryData => new InstrumentSummaryData(
+                id: $instrument->id,
+                name: (string) $instrument->name,
+                ticker: $instrument->ticker,
+                isin: $instrument->isin,
+                type: $instrument->type,
+            ))
+            ->values()
+            ->all();
     }
 
     private function toLine(

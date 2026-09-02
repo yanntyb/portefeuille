@@ -2,11 +2,12 @@
 
 namespace App\Contexts\PortfolioView\Actions;
 
+use App\Contexts\Market\Contracts\PriceRepositoryContract;
 use App\Contexts\Market\Enums\AssetClass;
-use App\Contexts\PortfolioView\Datas\HoldingSnapshotData;
+use App\Contexts\Market\Models\Instrument;
+use App\Contexts\Portfolio\Actions\GetPortfolioPositions;
+use App\Contexts\Portfolio\Datas\PositionLineData;
 use App\Contexts\PortfolioView\Datas\HoldingTrendData;
-use App\Contexts\PortfolioView\Ports\HoldingsPort;
-use App\Contexts\PortfolioView\Ports\MarketDataPort;
 use App\Contexts\PortfolioView\Services\SparklineReducer;
 use Illuminate\Support\Carbon;
 
@@ -16,8 +17,8 @@ class GetHoldingTrends
     private const MAX_POINTS = 24;
 
     public function __construct(
-        private MarketDataPort $market,
-        private HoldingsPort $holdings,
+        private PriceRepositoryContract $prices,
+        private GetPortfolioPositions $positions,
         private SparklineReducer $sparkline,
     ) {}
 
@@ -34,22 +35,42 @@ class GetHoldingTrends
      */
     public function __invoke(int $userId, ?array $classes = null): array
     {
-        $assetIds = array_map(
-            fn (HoldingSnapshotData $snapshot): int => $snapshot->assetId,
-            $this->holdings->holdingsFor($userId),
-        );
+        $assetIds = array_values(array_map(
+            fn (PositionLineData $position): int => $position->assetId,
+            ($this->positions)($userId),
+        ));
 
         if ($classes !== null) {
-            $kept = array_flip($this->market->idsOfClasses($assetIds, $classes));
+            $kept = array_flip($this->idsOfClasses($assetIds, $classes));
             $assetIds = array_values(array_filter($assetIds, fn (int $id): bool => isset($kept[$id])));
         }
 
-        $closes = $this->market->closeSeriesSince($assetIds, Carbon::createFromTimestamp(0));
+        $closes = $this->prices->closesForAssetsSince($assetIds, Carbon::createFromTimestamp(0));
 
         return array_map(
             fn (int $assetId): HoldingTrendData => $this->toTrend($assetId, $closes[$assetId] ?? []),
             $assetIds,
         );
+    }
+
+    /**
+     * @param  list<int>  $assetIds
+     * @param  list<AssetClass>  $classes
+     * @return list<int>
+     */
+    private function idsOfClasses(array $assetIds, array $classes): array
+    {
+        if ($assetIds === [] || $classes === []) {
+            return [];
+        }
+
+        return Instrument::query()
+            ->whereIn('id', $assetIds)
+            ->whereIn('asset_class', array_map(fn (AssetClass $class): string => $class->value, $classes))
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->values()
+            ->all();
     }
 
     /** @param list<float> $close */

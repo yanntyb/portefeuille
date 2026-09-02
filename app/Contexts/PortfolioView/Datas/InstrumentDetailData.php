@@ -4,6 +4,8 @@ namespace App\Contexts\PortfolioView\Datas;
 
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\Portfolio\Datas\PositionLineData;
+use App\Contexts\Portfolio\Datas\TransactionLineData;
 use JsonSerializable;
 
 readonly class InstrumentDetailData implements JsonSerializable
@@ -21,7 +23,7 @@ readonly class InstrumentDetailData implements JsonSerializable
         public AssetClass $assetClass,
         public ?float $lastPrice,
         public ?string $lastPriceDate,
-        public ?PositionData $position,
+        public ?PositionLineData $position,
         public array $transactions,
         public array $sectors,
     ) {}
