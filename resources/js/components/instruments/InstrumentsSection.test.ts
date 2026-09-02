@@ -16,11 +16,11 @@ const { default: InstrumentsSection } = await import('@/components/instruments/I
 
 const holdings: HoldingLine[] = [];
 
-function mountSection(): HTMLElement {
+function mountSection(props: Record<string, unknown> = {}): HTMLElement {
     const host = document.createElement('div');
     document.body.append(host);
 
-    createApp(InstrumentsSection, { holdings, trends: [], catalogHref: '/actions/catalogue' }).mount(host);
+    createApp(InstrumentsSection, { holdings, trends: [], catalogHref: '/actions/catalogue', ...props }).mount(host);
 
     return host;
 }
@@ -39,5 +39,10 @@ describe('en-tête de la section des instruments', () => {
 
         expect(host.querySelector('[data-section-toggle] [data-catalog-link]')).toBeNull();
         expect(host.querySelector('[data-catalog-link]')).not.toBeNull();
+    });
+
+    /** Une enveloppe n'a pas de catalogue : sans adresse, la loupe n'a nulle part à mener. */
+    it('n\'affiche aucune loupe quand aucun catalogue n\'est donné', () => {
+        expect(mountSection({ catalogHref: undefined }).querySelector('[data-catalog-link]')).toBeNull();
     });
 });

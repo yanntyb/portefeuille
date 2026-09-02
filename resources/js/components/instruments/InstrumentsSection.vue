@@ -12,8 +12,11 @@ import type { HoldingLine } from '@/lib/portfolio';
 const props = defineProps<{
     holdings: HoldingLine[];
     trends?: CatalogTrend[] | null;
-    /** Le catalogue de la poche : la section ne montre que les positions, la loupe mène au reste. */
-    catalogHref: string;
+    /**
+     * Le catalogue de la poche : la section ne montre que les positions, la loupe mène au reste.
+     * Absente sur la page d'une enveloppe, qui n'a pas de catalogue — la loupe disparaît alors.
+     */
+    catalogHref?: string;
 }>();
 
 const page = usePage();
@@ -28,6 +31,7 @@ const rows = computed<InstrumentRow[]>(() => holdingRows(props.holdings, props.t
     <CollapsibleSection section="instruments" title="Instruments" aria-label="Instruments">
         <template #aside>
             <Link
+                v-if="props.catalogHref"
                 :href="props.catalogHref"
                 prefetch
                 data-catalog-link
