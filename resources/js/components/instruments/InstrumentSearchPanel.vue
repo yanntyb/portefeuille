@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useHttp } from '@inertiajs/vue3';
 import { onBeforeUnmount, ref, watch } from 'vue';
 import type { Ref } from 'vue';
 import { Input } from '@/components/ui/input';
@@ -66,10 +67,30 @@ const results: Ref<SearchResult[]> = ref([]);
 const searching: Ref<boolean> = ref(false);
 const failed: Ref<boolean> = ref(false);
 const chosen: Ref<SearchResult | null> = ref(null);
-const submitting: Ref<boolean> = ref(false);
-const errors: Ref<Record<string, string>> = ref({});
 
-const draft = ref({ name: '', ticker: '', isin: '', type: 'stock', assetClass: 'equity' });
+/**
+ * `useHttp` et non `fetch` : seul lui porte le jeton anti-contrefaçon, lu du cookie `XSRF-TOKEN` et
+ * posé en en-tête `X-XSRF-TOKEN` par le client XHR — même client que `SyncButton.vue`, qui poste
+ * déjà `/synchronisation` ainsi. Un `fetch` nu s'en passe : il n'échoue qu'hors des tests, où
+ * `PreventRequestForgery` s'efface devant `runningUnitTests()`, ce qui masquait le 419 jusqu'ici.
+ *
+ * La recherche, elle, reste en `fetch` : une lecture ne porte pas ce jeton.
+ */
+type InstrumentDraft = { name: string; ticker: string; isin: string; type: string; assetClass: string };
+
+const form = useHttp<InstrumentDraft, CreatedInstrument>({
+    name: '',
+    ticker: '',
+    isin: '',
+    type: 'stock',
+    assetClass: 'equity',
+});
+
+/** Une chaîne vide n'est pas un ISIN absent : le serveur veut `null`, le champ veut du texte. */
+form.transform((data): Record<string, unknown> => ({ ...data, isin: data.isin === '' ? null : data.isin }));
+
+/** Distinct de `form.errors` : un 500 ou une coupure réseau n'ont pas de message par champ. */
+const globalError: Ref<string | null> = ref(null);
 
 let timer: ReturnType<typeof setTimeout> | null = null;
 let inFlight: AbortController | null = null;
@@ -113,6 +134,16 @@ const search = async (value: string): Promise<void> => {
     }
 };
 
+/**
+ * Le terme pré-rempli par la page catalogue cherche dès le montage, hors du débounce : sans quoi
+ * la loupe « Chercher « nvidia » chez Yahoo » ouvre un panneau qui affiche « Aucun instrument ne
+ * porte ce nom » avant même d'avoir interrogé qui que ce soit — le débounce n'a de sens que pour
+ * étaler des frappes, pas pour retarder une valeur déjà connue au montage.
+ */
+if (props.initialTerm.trim() !== '') {
+    void search(props.initialTerm);
+}
+
 /** Débouncé : la frappe ne doit pas ouvrir un process Python par lettre. */
 watch(term, (value: string): void => {
     if (timer !== null) {
@@ -140,68 +171,37 @@ const choose = (result: SearchResult): void => {
     const type = result.type ?? 'stock';
 
     chosen.value = result;
-    errors.value = {};
-    draft.value = {
-        name: result.name,
-        ticker: result.symbol,
-        isin: '',
-        type,
-        /** L'exposition de la page prime : un instrument créé ailleurs disparaîtrait au retour. */
-        assetClass: props.exposure ?? defaultClassFor(type),
-    };
+    globalError.value = null;
+    form.clearErrors();
+    form.name = result.name;
+    form.ticker = result.symbol;
+    form.isin = '';
+    form.type = type;
+    /** L'exposition de la page prime : un instrument créé ailleurs disparaîtrait au retour. */
+    form.assetClass = props.exposure ?? defaultClassFor(type);
 };
 
 const back = (): void => {
     chosen.value = null;
-    errors.value = {};
+    globalError.value = null;
+    form.clearErrors();
 };
 
 const submit = async (): Promise<void> => {
-    if (submitting.value) {
-        return;
-    }
-
-    submitting.value = true;
-    errors.value = {};
+    globalError.value = null;
 
     try {
-        const response = await fetch('/instruments', {
-            method: 'POST',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
+        await form.post('/instruments', {
+            onSuccess: (instrument): void => emit('created', instrument),
+            onHttpException: (): void => {
+                globalError.value = "L'instrument n'a pas pu être créé.";
             },
-            body: JSON.stringify({
-                name: draft.value.name,
-                ticker: draft.value.ticker,
-                isin: draft.value.isin === '' ? null : draft.value.isin,
-                type: draft.value.type,
-                assetClass: draft.value.assetClass,
-            }),
+            onNetworkError: (): void => {
+                globalError.value = "L'instrument n'a pas pu être créé.";
+            },
         });
-
-        if (response.status === 422) {
-            const body = (await response.json()) as { errors?: Record<string, string[]> };
-
-            errors.value = Object.fromEntries(
-                Object.entries(body.errors ?? {}).map(([field, messages]): [string, string] => [field, messages[0]]),
-            );
-
-            return;
-        }
-
-        if (!response.ok) {
-            errors.value = { global: "L'instrument n'a pas pu être créé." };
-
-            return;
-        }
-
-        emit('created', (await response.json()) as CreatedInstrument);
     } catch {
-        errors.value = { global: "L'instrument n'a pas pu être créé." };
-    } finally {
-        submitting.value = false;
+        /** `onHttpException`/`onNetworkError` ont déjà posé le message ; le rejet ne doit pas remonter. */
     }
 };
 </script>
@@ -224,7 +224,12 @@ const submit = async (): Promise<void> => {
             </p>
 
             <ul v-else-if="results.length" class="flex flex-col">
-                <li v-for="result in results" :key="result.symbol" data-instrument-result class="border-b border-separator last:border-b-0">
+                <li
+                    v-for="result in results"
+                    :key="result.existingId ?? result.symbol"
+                    data-instrument-result
+                    class="border-b border-separator last:border-b-0"
+                >
                     <button type="button" class="flex w-full items-center gap-3 px-3 py-3 text-left hover:bg-muted" @click="choose(result)">
                         <span class="flex min-w-0 flex-1 flex-col gap-1">
                             <span class="truncate font-semibold">
@@ -255,39 +260,44 @@ const submit = async (): Promise<void> => {
         <form v-else data-instrument-confirm class="flex flex-col gap-4" @submit.prevent="submit()">
             <label class="flex flex-col gap-1.5 text-sm font-medium">
                 Nom
-                <Input v-model="draft.name" data-instrument-name type="text" />
+                <Input v-model="form.name" data-instrument-name type="text" />
             </label>
 
             <label class="flex flex-col gap-1.5 text-sm font-medium">
                 Ticker
-                <Input v-model="draft.ticker" data-instrument-ticker type="text" />
+                <Input v-model="form.ticker" data-instrument-ticker type="text" />
             </label>
 
             <label class="flex flex-col gap-1.5 text-sm font-medium">
                 ISIN
-                <Input v-model="draft.isin" data-instrument-isin type="text" />
+                <Input v-model="form.isin" data-instrument-isin type="text" />
             </label>
 
             <label class="flex flex-col gap-1.5 text-sm font-medium">
                 Type
-                <select v-model="draft.type" data-instrument-type class="rounded-md border border-input bg-background px-3 py-2 font-normal">
+                <select v-model="form.type" data-instrument-type class="rounded-md border border-input bg-background px-3 py-2 font-normal">
                     <option v-for="option in TYPES" :key="option.value" :value="option.value">{{ option.label }}</option>
                 </select>
             </label>
 
             <label class="flex flex-col gap-1.5 text-sm font-medium">
                 Exposition
-                <select v-model="draft.assetClass" data-instrument-asset-class class="rounded-md border border-input bg-background px-3 py-2 font-normal">
+                <select v-model="form.assetClass" data-instrument-asset-class class="rounded-md border border-input bg-background px-3 py-2 font-normal">
                     <option v-for="option in ASSET_CLASSES" :key="option.value" :value="option.value">{{ option.label }}</option>
                 </select>
             </label>
 
-            <p v-if="Object.keys(errors).length" data-instrument-error class="text-xs text-destructive">
-                {{ Object.values(errors).join(' ') }}
+            <p
+                v-if="globalError !== null || Object.keys(form.errors).length"
+                data-instrument-error
+                role="alert"
+                class="text-xs text-destructive"
+            >
+                {{ globalError ?? Object.values(form.errors).join(' ') }}
             </p>
 
             <div class="flex items-center gap-3">
-                <button type="submit" :disabled="submitting" class="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+                <button type="submit" :disabled="form.processing" class="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
                     Ajouter
                 </button>
                 <button type="button" data-instrument-back class="text-sm text-muted-foreground" @click="back()">Retour</button>
