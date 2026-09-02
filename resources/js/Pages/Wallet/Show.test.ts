@@ -148,6 +148,25 @@ describe('page d\'une enveloppe', () => {
     });
 
     /**
+     * L'enveloppe se lit comme une exposition : en bloc, ou instrument par instrument. La bascule
+     * n'apparaît qu'à partir de deux titres, faute de quoi le détail redirait le total.
+     */
+    it('offre la bascule valeur/détail sur une enveloppe qui tient plusieurs titres', () => {
+        const evolution = {
+            labels: ['2026-01-01', '2026-01-08'],
+            perAsset: [
+                { assetId: 1, name: 'Apple', value: [600, 700], invested: [500, 500] },
+                { assetId: 2, name: 'Amazon', value: [300, 350], invested: [300, 300] },
+            ],
+        };
+
+        const host = mountPage({ evolution });
+
+        expect(host.querySelector('[data-section="wallet-evolution"] [data-segment="total"]')?.textContent?.trim()).toBe('Valeur');
+        expect(host.querySelector('[data-section="wallet-evolution"] [data-segment="detail"]')?.textContent?.trim()).toBe('Détail');
+    });
+
+    /**
      * Une enveloppe ne sert aucune tendance : sans `trends`, le squelette des étincelles attendrait
      * une prop jamais servie et tournerait indéfiniment (`isDeferredPending` reste vrai pour toujours).
      */

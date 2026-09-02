@@ -3,11 +3,9 @@
 namespace App\Contexts\PortfolioView\Ports;
 
 use App\Contexts\Market\Datas\HoldingScope;
-use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\PortfolioView\Datas\AssetValuationData;
 use App\Contexts\PortfolioView\Datas\DrawdownData;
 use App\Contexts\PortfolioView\Datas\EvolutionData;
-use App\Contexts\PortfolioView\Datas\ExposureSeriesData;
 use App\Contexts\PortfolioView\Datas\PerformanceLineData;
 
 /**
@@ -24,15 +22,11 @@ interface ValuationPort
     public function performancesFor(int $userId, HoldingScope $scope): array;
 
     /**
-     * L'évolution détaillée par actif. Elle prend une exposition et non un périmètre, à dessein :
-     * `BuildEvolutionSeries` filtre ses séries par actif APRÈS son cache, et ne sait donc pas
-     * découper une enveloppe — une signature qui l'accepterait mentirait. Une enveloppe lit
-     * `seriesFor()`, qui la rend en bloc.
+     * L'évolution détaillée par actif du périmètre : une exposition comme une enveloppe, puisque
+     * `BuildEvolutionSeries` découpe une enveloppe avant son cache. Le total se somme côté page,
+     * la valorisation ne portant pas les espèces.
      */
-    public function evolutionFor(int $userId, AssetClass $exposure): EvolutionData;
-
-    /** La valeur d'un périmètre dans le temps, comparée à ce qui y a été mis. */
-    public function seriesFor(int $userId, HoldingScope $scope): ExposureSeriesData;
+    public function evolutionFor(int $userId, HoldingScope $scope): EvolutionData;
 
     /** @return list<PerformanceLineData> */
     public function assetPerformancesFor(int $userId, int $assetId): array;

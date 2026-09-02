@@ -47,7 +47,7 @@ class AssetClassController
             /** Un groupe par section : chaque squelette se remplit à son rythme. */
             'trends' => Inertia::defer(fn () => ($this->getTrends)($userId, [$exposure]), 'tendances'),
             'evolutionSeries' => Inertia::defer(
-                fn () => $this->valuation->evolutionFor($userId, $exposure), 'evolution',
+                fn () => $this->valuation->evolutionFor($userId, $scope), 'evolution',
             ),
             'performances' => Inertia::defer(
                 fn () => $this->valuation->performancesFor($userId, $scope), 'performances',

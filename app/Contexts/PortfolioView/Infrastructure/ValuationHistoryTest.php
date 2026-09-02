@@ -30,15 +30,15 @@ it('rend des performances vides pour un utilisateur sans transaction', function 
 });
 
 /**
- * `BuildEvolutionSeries` filtre APRÈS son cache : la grille d'abscisses reste celle du portefeuille
- * entier, seule la liste par actif se réduit à l'exposition demandée. L'adaptateur est un pur
- * remappage et ne doit surtout pas refiltrer.
+ * `BuildEvolutionSeries` filtre une exposition APRÈS son cache : la grille d'abscisses reste celle
+ * du portefeuille entier, seule la liste par actif se réduit à l'exposition demandée. L'adaptateur
+ * est un pur remappage et ne doit surtout pas refiltrer.
  */
 it('ne garde que les actifs de l\'exposition, sur l\'abscisse de tout le portefeuille', function () {
     ['user' => $user] = cryptoFixture();
 
-    $equity = $this->valuation->evolutionFor($user->id, AssetClass::Equity);
-    $crypto = $this->valuation->evolutionFor($user->id, AssetClass::Crypto);
+    $equity = $this->valuation->evolutionFor($user->id, HoldingScope::ofClasses([AssetClass::Equity]));
+    $crypto = $this->valuation->evolutionFor($user->id, HoldingScope::ofClasses([AssetClass::Crypto]));
 
     expect($equity->labels)->toBe($crypto->labels);
     expect(collect($equity->perAsset)->pluck('name'))->toContain('ACME');
@@ -48,7 +48,7 @@ it('ne garde que les actifs de l\'exposition, sur l\'abscisse de tout le portefe
 it('rend les clés que le graphe attend', function () {
     ['user' => $user] = portfolioFixture();
 
-    $series = $this->valuation->evolutionFor($user->id, AssetClass::Equity);
+    $series = $this->valuation->evolutionFor($user->id, HoldingScope::ofClasses([AssetClass::Equity]));
 
     expect(array_keys($series->jsonSerialize()))->toBe(['labels', 'perAsset']);
     expect(array_keys($series->perAsset[0]->jsonSerialize()))
@@ -56,7 +56,7 @@ it('rend les clés que le graphe attend', function () {
 });
 
 it('rend une évolution vide pour un utilisateur sans transaction', function () {
-    $series = $this->valuation->evolutionFor(999, AssetClass::Equity);
+    $series = $this->valuation->evolutionFor(999, HoldingScope::ofClasses([AssetClass::Equity]));
 
     expect($series->labels)->toBe([])
         ->and($series->perAsset)->toBe([]);

@@ -8,9 +8,17 @@ import type { EvolutionSeries } from '@/lib/portfolio';
 /** Les deux lectures d'une poche : ce qu'elle vaut en bloc, ou ce que vaut chacun de ses titres. */
 type Mode = 'total' | 'detail';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     series?: EvolutionSeries | null;
-}>();
+    /** Ce que la page nomme sa section, son groupe différé et sa courbe : exposition par défaut, enveloppe sinon. */
+    section?: string;
+    deferKey?: string;
+    totalDescription?: string;
+}>(), {
+    section: 'evolution',
+    deferKey: 'evolutionSeries',
+    totalDescription: 'Valeur du portefeuille comparée au montant investi.',
+});
 
 const mode = ref<Mode>('total');
 
@@ -36,11 +44,11 @@ const detailed = computed<AssetSeries[]>(() => (mode.value === 'detail' ? perAss
 
 const description = computed<string>(() => (mode.value === 'detail'
     ? 'Valeur de chaque instrument de la poche, empilée : le sommet vaut le total.'
-    : 'Valeur du portefeuille comparée au montant investi.'));
+    : props.totalDescription));
 </script>
 
 <template>
-    <section data-section="evolution" class="flex shrink-0 flex-col gap-4">
+    <section :data-section="props.section" class="flex shrink-0 flex-col gap-4">
         <div v-if="hasDetail" class="px-6">
             <SegmentedControl
                 v-model="mode"
@@ -50,8 +58,8 @@ const description = computed<string>(() => (mode.value === 'detail'
         </div>
 
         <ValueVsInvestedChart
-            defer-key="evolutionSeries"
-            :loaded="props.series !== null"
+            :defer-key="props.deferKey"
+            :loaded="props.series !== null && props.series !== undefined"
             :labels="labels"
             :value="value"
             :invested="invested"

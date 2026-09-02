@@ -5,23 +5,23 @@ import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
 import AnalysisSection from '@/components/instruments/AnalysisSection.vue';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
+import EvolutionSection from '@/components/instruments/EvolutionSection.vue';
 import InstrumentsSection from '@/components/instruments/InstrumentsSection.vue';
 import SectorBreakdownList from '@/components/SectorBreakdownList.vue';
 import TransactionDialog from '@/components/transactions/TransactionDialog.vue';
 import TransactionsSection from '@/components/instruments/TransactionsSection.vue';
-import WalletEvolutionSection from '@/components/wallet/WalletEvolutionSection.vue';
 import WalletHeaderSection from '@/components/wallet/WalletHeaderSection.vue';
 import type { BasketAnalysis } from '@/lib/basketAnalysis';
 import type { Performance } from '@/lib/performance';
-import type { HoldingLine } from '@/lib/portfolio';
+import type { EvolutionSeries, HoldingLine } from '@/lib/portfolio';
 import type { SectorBreakdownRow, SectorSlice } from '@/lib/sector';
-import type { ClassSeries, WalletClassSlice, WealthAccount, WealthTransactionLine } from '@/lib/wealth';
+import type { WalletClassSlice, WealthAccount, WealthTransactionLine } from '@/lib/wealth';
 
 const props = defineProps<{
     account: WealthAccount;
     positions?: HoldingLine[];
     breakdown?: WalletClassSlice[];
-    evolution?: ClassSeries;
+    evolution?: EvolutionSeries;
     performances?: Performance[];
     basketAnalysis?: BasketAnalysis;
     sectorBreakdown?: SectorSlice[];
@@ -65,7 +65,12 @@ const positionsLoaded = computed<boolean>(() => props.positions !== undefined &&
         <WalletHeaderSection :account="props.account" />
 
         <!-- La courbe suit immédiatement la valeur qu'elle raconte ; le reste vient ensuite. -->
-        <WalletEvolutionSection :series="props.evolution" />
+        <EvolutionSection
+            :series="props.evolution"
+            section="wallet-evolution"
+            defer-key="evolution"
+            total-description="Valeur de l'enveloppe dans le temps, comparée au montant investi."
+        />
 
         <!-- Une enveloppe ne sert pas de tendances : sans `[]`, le squelette attendrait une prop jamais servie, indéfiniment. -->
         <InstrumentsSection

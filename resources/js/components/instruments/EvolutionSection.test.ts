@@ -36,11 +36,11 @@ const series = (count: number): EvolutionSeries => ({
     })),
 });
 
-function mountSection(count: number): HTMLElement {
+function mountSection(count: number, extra: Record<string, unknown> = {}): HTMLElement {
     const host = document.createElement('div');
     document.body.append(host);
 
-    const app = createApp(EvolutionSection, { series: series(count) });
+    const app = createApp(EvolutionSection, { series: series(count), ...extra });
     app.use(createPinia());
     app.mount(host);
 
@@ -119,5 +119,29 @@ describe('bascule entre total et détail', () => {
         await settle(host);
 
         expect(host.querySelector('[data-segment="detail"]')).toBeNull();
+    });
+});
+
+/**
+ * La même section sert l'exposition et l'enveloppe : sans ces trois noms, la page enveloppe
+ * aurait besoin d'un composant jumeau pour son seul `data-section` et son seul groupe différé.
+ */
+describe('section partagée entre exposition et enveloppe', () => {
+    it('porte le nom de section que la page lui donne', () => {
+        const host = mountSection(3, { section: 'wallet-evolution' });
+
+        expect(host.querySelector('[data-section="wallet-evolution"]')).not.toBeNull();
+        expect(host.querySelector('[data-section="evolution"]')).toBeNull();
+    });
+
+    it('ouvre sur la description que la page lui donne, et garde la sienne au détail', async () => {
+        const host = mountSection(3, { totalDescription: "Valeur de l'enveloppe dans le temps, comparée au montant investi." });
+        await settle(host);
+
+        expect(JSON.stringify(lastPainted())).toContain("Valeur de l'enveloppe dans le temps");
+
+        await choose(host, 'detail');
+
+        expect(JSON.stringify(lastPainted())).toContain('Valeur de chaque instrument de la poche');
     });
 });

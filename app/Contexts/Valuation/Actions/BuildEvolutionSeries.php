@@ -2,7 +2,7 @@
 
 namespace App\Contexts\Valuation\Actions;
 
-use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Valuation\Datas\AssetSeriesData;
 use App\Contexts\Valuation\Datas\EvolutionSeriesData;
 use App\Contexts\Valuation\Datas\TransactionRecordData;
@@ -11,6 +11,7 @@ use App\Contexts\Valuation\Ports\InstrumentDirectoryPort;
 use App\Contexts\Valuation\Ports\PriceHistoryPort;
 use App\Contexts\Valuation\Ports\SeriesCachePort;
 use App\Contexts\Valuation\Ports\TransactionHistoryPort;
+use App\Contexts\Valuation\Services\ScopedTransactions;
 use App\Contexts\Valuation\Services\ValuationCalculator;
 
 class BuildEvolutionSeries
@@ -21,23 +22,41 @@ class BuildEvolutionSeries
         private InstrumentDirectoryPort $directory,
         private ValuationCalculator $calculator,
         private SeriesCachePort $cache,
+        private ScopedTransactions $scoped,
     ) {}
 
     /**
      * @param  ?int  $months  Profondeur de la fenêtre depuis aujourd'hui, null pour tout l'historique.
-     * @param  ?list<AssetClass>  $classes  Expositions à garder, null pour tout le portefeuille.
+     * @param  ?HoldingScope  $scope  Périmètre à garder, null pour tout le portefeuille.
      */
     public function __invoke(
         int $userId,
         ?int $months = null,
         ValuationGranularity $granularity = ValuationGranularity::Month,
-        ?array $classes = null,
+        ?HoldingScope $scope = null,
     ): EvolutionSeriesData {
+        $scope ??= HoldingScope::all();
+
+        /**
+         * Une enveloppe se découpe avant le cache, une exposition après, et les deux régimes ne
+         * sont pas interchangeables : la série par actif porte de quoi retrouver la classe d'un
+         * actif, jamais l'enveloppe qui le tient — un même titre acheté dans deux enveloppes n'a
+         * qu'une ligne, et la filtrer après coup rendrait les quantités des deux. Le périmètre
+         * entre donc dans le nom retenu, comme pour `BuildExposureSeries`.
+         */
+        if ($scope->walletId !== null) {
+            return $this->cache->remember(
+                sprintf('evolution.%s.%s%s', $months ?? 'tout', $granularity->value, $scope->cacheKey()),
+                $userId,
+                fn (): EvolutionSeriesData => $this->build($userId, $months, $granularity, $scope),
+            );
+        }
+
         /** La fenêtre et le pas font partie du résultat : ils font donc partie du nom retenu. */
         $series = $this->cache->remember(
             sprintf('evolution.%s.%s', $months ?? 'tout', $granularity->value),
             $userId,
-            fn (): EvolutionSeriesData => $this->build($userId, $months, $granularity),
+            fn (): EvolutionSeriesData => $this->build($userId, $months, $granularity, HoldingScope::all()),
         );
 
         /**
@@ -46,13 +65,12 @@ class BuildEvolutionSeries
          * Crypto. La grille de labels reste celle de tout le portefeuille — deux pages qui
          * partagent une abscisse se comparent.
          */
-        return $classes === null ? $series : $this->onlyClasses($series, $classes);
+        return $scope->classes === null ? $series : $this->onlyClasses($series, $scope);
     }
 
-    /** @param  list<AssetClass>  $classes */
-    private function onlyClasses(EvolutionSeriesData $series, array $classes): EvolutionSeriesData
+    private function onlyClasses(EvolutionSeriesData $series, HoldingScope $scope): EvolutionSeriesData
     {
-        $kept = array_flip($this->directory->idsOfClasses($classes));
+        $kept = array_flip($this->directory->idsOfClasses($scope->classes ?? []));
 
         return new EvolutionSeriesData(
             labels: $series->labels,
@@ -67,8 +85,9 @@ class BuildEvolutionSeries
         int $userId,
         ?int $months,
         ValuationGranularity $granularity,
+        HoldingScope $scope,
     ): EvolutionSeriesData {
-        $transactions = $this->transactions->forUser($userId);
+        $transactions = $this->scoped->within($this->transactions->forUser($userId), $scope);
 
         if ($transactions === []) {
             return EvolutionSeriesData::empty();

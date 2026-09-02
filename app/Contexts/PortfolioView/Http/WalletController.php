@@ -4,7 +4,7 @@ namespace App\Contexts\PortfolioView\Http;
 
 use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\PortfolioView\Datas\BasketAnalysisData;
-use App\Contexts\PortfolioView\Datas\ExposureSeriesData;
+use App\Contexts\PortfolioView\Datas\EvolutionData;
 use App\Contexts\PortfolioView\Ports\AccountsPort;
 use App\Contexts\PortfolioView\Ports\BasketAnalysisPort;
 use App\Contexts\PortfolioView\Ports\PortfolioOverviewPort;
@@ -60,7 +60,7 @@ class WalletController
                 fn (): array => $this->overview->classBreakdownFor($userId, $scope), 'repartition',
             ),
             'evolution' => Inertia::defer(
-                fn (): ExposureSeriesData => $this->valuation->seriesFor($userId, $scope), 'evolution',
+                fn (): EvolutionData => $this->valuation->evolutionFor($userId, $scope), 'evolution',
             ),
             'performances' => Inertia::defer(
                 fn (): array => $this->valuation->performancesFor($userId, $scope), 'performances',

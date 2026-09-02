@@ -10,7 +10,6 @@ use App\Contexts\PortfolioView\Datas\DividendHistoryData;
 use App\Contexts\PortfolioView\Datas\DividendLineData;
 use App\Contexts\PortfolioView\Datas\DrawdownData;
 use App\Contexts\PortfolioView\Datas\EvolutionData;
-use App\Contexts\PortfolioView\Datas\ExposureSeriesData;
 use App\Contexts\PortfolioView\Datas\IncomeOverviewData;
 use App\Contexts\PortfolioView\Datas\PerformanceLineData;
 use App\Contexts\PortfolioView\Ports\IncomePort;
@@ -76,7 +75,7 @@ it('sert les performances, la valorisation et les détachements par leurs seuls 
             return [];
         }
 
-        public function evolutionFor(int $userId, AssetClass $exposure): EvolutionData
+        public function evolutionFor(int $userId, HoldingScope $scope): EvolutionData
         {
             return new EvolutionData([], []);
         }
@@ -89,11 +88,6 @@ it('sert les performances, la valorisation et les détachements par leurs seuls 
         public function assetSeriesFor(int $userId, int $assetId): AssetValuationData
         {
             return new AssetValuationData(['2026-08-01'], [100.0], [80.0], [10.0]);
-        }
-
-        public function seriesFor(int $userId, HoldingScope $scope): ExposureSeriesData
-        {
-            return new ExposureSeriesData(['2026-08-01'], [1000.0], [800.0]);
         }
 
         public function drawdownFor(int $userId, HoldingScope $scope): DrawdownData

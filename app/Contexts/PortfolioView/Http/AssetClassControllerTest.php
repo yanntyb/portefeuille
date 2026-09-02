@@ -18,7 +18,6 @@ use App\Contexts\PortfolioView\Datas\AssetValuationData;
 use App\Contexts\PortfolioView\Datas\ClassSliceData;
 use App\Contexts\PortfolioView\Datas\DrawdownData;
 use App\Contexts\PortfolioView\Datas\EvolutionData;
-use App\Contexts\PortfolioView\Datas\ExposureSeriesData;
 use App\Contexts\PortfolioView\Datas\HoldingRowData;
 use App\Contexts\PortfolioView\Datas\PerformanceLineData;
 use App\Contexts\PortfolioView\Datas\PortfolioSummaryData;
@@ -40,7 +39,7 @@ function fakeValuationPort(): ValuationPort
             return [new PerformanceLineData('1M', 'Un mois', '2026-07-29', 900.0, 0.0, 100.0, 11.1)];
         }
 
-        public function evolutionFor(int $userId, AssetClass $exposure): EvolutionData
+        public function evolutionFor(int $userId, HoldingScope $scope): EvolutionData
         {
             return new EvolutionData(['2026-08-01'], [new AssetLineData(1, 'ACME', [1000.0], [800.0])]);
         }
@@ -53,11 +52,6 @@ function fakeValuationPort(): ValuationPort
         public function assetSeriesFor(int $userId, int $assetId): AssetValuationData
         {
             return AssetValuationData::empty();
-        }
-
-        public function seriesFor(int $userId, HoldingScope $scope): ExposureSeriesData
-        {
-            return new ExposureSeriesData(['2026-08-01'], [1000.0], [800.0]);
         }
 
         public function drawdownFor(int $userId, HoldingScope $scope): DrawdownData

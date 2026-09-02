@@ -77,7 +77,7 @@ class BuildPortfolioViewSnapshot
         $page = [
             'overview' => $this->overview->overviewFor($userId, $scope),
             'trends' => ($this->getTrends)($userId, [$exposure]),
-            'evolutionSeries' => $this->valuation->evolutionFor($userId, $exposure),
+            'evolutionSeries' => $this->valuation->evolutionFor($userId, $scope),
             'performances' => $this->valuation->performancesFor($userId, $scope),
             'basketAnalysis' => $this->basketAnalysis->analysisFor($userId, $scope),
             'transactions' => $this->transactions->transactionsForScope($userId, $scope),

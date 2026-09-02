@@ -121,7 +121,7 @@ class PortfolioAssetClass implements AssetClassPort
     public function seriesFor(int $userId): ClassSeriesData
     {
         /** Historique complet au pas hebdomadaire, comme le graphe du tableau de bord l'utilisait déjà. */
-        $series = ($this->evolution)($userId, null, ValuationGranularity::Week, [$this->exposure]);
+        $series = ($this->evolution)($userId, null, ValuationGranularity::Week, HoldingScope::ofClasses([$this->exposure]));
         $length = count($series->labels);
 
         return new ClassSeriesData(

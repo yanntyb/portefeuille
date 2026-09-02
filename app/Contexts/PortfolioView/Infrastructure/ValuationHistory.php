@@ -3,12 +3,10 @@
 namespace App\Contexts\PortfolioView\Infrastructure;
 
 use App\Contexts\Market\Datas\HoldingScope;
-use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\PortfolioView\Datas\AssetLineData;
 use App\Contexts\PortfolioView\Datas\AssetValuationData;
 use App\Contexts\PortfolioView\Datas\DrawdownData;
 use App\Contexts\PortfolioView\Datas\EvolutionData;
-use App\Contexts\PortfolioView\Datas\ExposureSeriesData;
 use App\Contexts\PortfolioView\Datas\PerformanceLineData;
 use App\Contexts\PortfolioView\Ports\ValuationPort;
 use App\Contexts\Valuation\Actions\BuildAssetPerformances;
@@ -25,9 +23,9 @@ use App\Contexts\Valuation\Services\ValuationCalculator;
 use Illuminate\Support\Carbon;
 
 /**
- * Le partage par exposition est passé aux actions telles quelles, jamais refait ici : les
- * performances filtrent avant leur cache, l'évolution après le sien — refiltrer de ce côté
- * rendrait l'un des deux caches incohérent.
+ * Le périmètre est passé aux actions tel quel, jamais refait ici : les performances filtrent
+ * avant leur cache, l'évolution avant ou après le sien selon qu'une enveloppe la découpe —
+ * refiltrer de ce côté rendrait l'un de ces caches incohérent.
  *
  * `drawdownFor()` et `assetSeriesFor()` font exception au remappage pur : elles enchaînent une
  * action et un calculateur du contexte propriétaire (`Valuation\Services\Drawdown`,
@@ -67,9 +65,9 @@ class ValuationHistory implements ValuationPort
      * Historique complet au pas hebdomadaire : la fenêtre visible est choisie côté client par le
      * zoom du graphe, ce qui est une décision de cette page et non de la valorisation.
      */
-    public function evolutionFor(int $userId, AssetClass $exposure): EvolutionData
+    public function evolutionFor(int $userId, HoldingScope $scope): EvolutionData
     {
-        $series = ($this->evolution)($userId, null, ValuationGranularity::Week, [$exposure]);
+        $series = ($this->evolution)($userId, null, ValuationGranularity::Week, $scope);
 
         return new EvolutionData(
             labels: $series->labels,
@@ -115,18 +113,6 @@ class ValuationHistory implements ValuationPort
             valuations: $series->valuations,
             invested: $series->invested,
             prices: $series->prices,
-        );
-    }
-
-    /** La valeur du périmètre en bloc, telle que la trace le graphe d'une enveloppe. */
-    public function seriesFor(int $userId, HoldingScope $scope): ExposureSeriesData
-    {
-        $series = ($this->exposureSeries)($userId, $scope);
-
-        return new ExposureSeriesData(
-            labels: $series->labels,
-            value: $series->valuations,
-            invested: $series->invested,
         );
     }
 

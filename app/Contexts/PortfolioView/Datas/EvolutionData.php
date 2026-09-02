@@ -5,10 +5,11 @@ namespace App\Contexts\PortfolioView\Datas;
 use JsonSerializable;
 
 /**
- * L'évolution d'une exposition : une abscisse commune, et une courbe par actif détenu.
+ * L'évolution d'un périmètre : une abscisse commune, et une courbe par actif détenu.
  *
- * L'abscisse reste celle de tout le portefeuille, y compris quand les courbes se limitent à une
- * exposition — c'est ce que produit `BuildEvolutionSeries`, qui filtre après son cache.
+ * Pour une exposition, l'abscisse reste celle de tout le portefeuille — `BuildEvolutionSeries` y
+ * filtre après son cache. Pour une enveloppe, elle est celle de l'enveloppe seule, qui se découpe
+ * avant.
  */
 readonly class EvolutionData implements JsonSerializable
 {

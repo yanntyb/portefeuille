@@ -83,11 +83,11 @@ it('résout les positions, la série et le journal quand leur groupe est demand�
         ->assertJsonPath('props.positions.0.assetId', $instrument->id)
         /**
          * Seul groupe non exercé ailleurs dans ce fichier : sans lui, une inversion d'arguments
-         * sur le chemin de la série (`ValuationPort::seriesFor()`) ne serait détectée par aucun test bout en
-         * bout. Une fermeture et non un index fixe : l'ordre des labels n'est pas ce qui est
-         * affirmé ici, seulement que la dernière valorisation vaut bien 1000 €.
+         * sur le chemin de la série (`ValuationPort::evolutionFor()`) ne serait détectée par aucun
+         * test bout en bout. Une fermeture et non un index fixe : l'ordre des labels n'est pas ce
+         * qui est affirmé ici, seulement que le titre détenu vaut bien 1000 € en dernier point.
          */
-        ->assertJsonPath('props.evolution.value', fn (array $value): bool => (float) end($value) === 1000.0)
+        ->assertJsonPath('props.evolution.perAsset.0.value', fn (array $value): bool => (float) end($value) === 1000.0)
         ->assertJsonPath('props.transactions.0.walletId', $wallet->id);
 });
 
