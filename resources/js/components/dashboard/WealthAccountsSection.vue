@@ -4,7 +4,7 @@ import { Deferred } from '@inertiajs/vue3';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
 import GainPill from '@/components/GainPill.vue';
 import { eur, pct } from '@/lib/format';
-import type { WealthAccount } from '@/lib/wealth';
+import { walletMaturityLabel, years, type WealthAccount } from '@/lib/wealth';
 
 const props = defineProps<{ accounts?: WealthAccount[] | null }>();
 
@@ -12,22 +12,9 @@ const rows = computed<WealthAccount[]>(() => props.accounts ?? []);
 
 const hasAccounts = computed<boolean>(() => rows.value.length > 0);
 
-/** Accord du singulier : « 1 an », jamais « 1 ans ». */
-const years = (n: number): string => (n === 1 ? '1 an' : `${n} ans`);
-
 /** L'ancienneté ne s'affiche pas sans date d'ouverture : un compte « 0 an » mentirait. */
 const age = (account: WealthAccount): string | null =>
     account.ageInYears === null ? null : years(account.ageInYears);
-
-const maturity = (account: WealthAccount): string | null => {
-    if (account.maturityYears === null || account.ageInYears === null) {
-        return null;
-    }
-
-    return account.ageInYears >= account.maturityYears
-        ? `Seuil de ${years(account.maturityYears)} franchi`
-        : `Seuil de ${years(account.maturityYears)} dans ${years(account.maturityYears - account.ageInYears)}`;
-};
 </script>
 
 <template>
@@ -68,7 +55,7 @@ const maturity = (account: WealthAccount): string | null => {
                         data-account-age
                         class="text-xs text-subtle-foreground"
                     >
-                        Ouverte depuis {{ age(account) }}<template v-if="maturity(account)"> · {{ maturity(account) }}</template>
+                        Ouverte depuis {{ age(account) }}<template v-if="walletMaturityLabel(account)"> · {{ walletMaturityLabel(account) }}</template>
                     </span>
 
                     <span

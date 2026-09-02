@@ -10,15 +10,17 @@ const props = withDefaults(defineProps<{
     gain: number | null;
     /** Texte de la pastille, ou `null` quand il n'y a pas de gain à afficher. */
     gainLabel: string | null;
+    /** Décimales du grand chiffre : deux pour un cours, zéro pour un total qui se lit rond ailleurs. */
+    digits?: number;
     /** Vide quand l'appelant pose ses repères ailleurs, plus bas dans la page. */
     entries?: HeroMetaEntry[];
-}>(), { entries: () => [] });
+}>(), { digits: 2, entries: () => [] });
 </script>
 
 <template>
     <div class="flex min-w-0 flex-col gap-1.5">
         <div class="flex flex-wrap items-baseline gap-3">
-            <p data-hero-value class="text-4xl font-bold tracking-[-0.02em] tabular-nums">{{ eur(props.value) }}</p>
+            <p data-hero-value class="text-4xl font-bold tracking-[-0.02em] tabular-nums">{{ eur(props.value, props.digits) }}</p>
 
             <GainPill v-if="props.gainLabel !== null" data-hero-gain-pct :value="props.gain" :label="props.gainLabel" />
         </div>

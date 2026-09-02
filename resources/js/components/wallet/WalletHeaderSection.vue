@@ -3,24 +3,9 @@ import { computed } from 'vue';
 import HeroFigures from '@/components/HeroFigures.vue';
 import { eur, pct } from '@/lib/format';
 import type { HeroMetaEntry } from '@/lib/instrument';
-import type { WealthAccount } from '@/lib/wealth';
+import { walletMaturityLabel, years, type WealthAccount } from '@/lib/wealth';
 
 const props = defineProps<{ account: WealthAccount }>();
-
-/** Accord du singulier : « 1 an », jamais « 1 ans ». Même règle que la carte du tableau de bord. */
-const years = (n: number): string => (n === 1 ? '1 an' : `${n} ans`);
-
-const maturity = computed<string | null>(() => {
-    const { ageInYears, maturityYears } = props.account;
-
-    if (maturityYears === null || ageInYears === null) {
-        return null;
-    }
-
-    return ageInYears >= maturityYears
-        ? `Seuil de ${years(maturityYears)} franchi`
-        : `Seuil de ${years(maturityYears)} dans ${years(maturityYears - ageInYears)}`;
-});
 
 /** L'ancienneté ne s'affiche pas sans date d'ouverture : un compte « 0 an » mentirait. */
 const age = computed<string | null>(() => {
@@ -29,8 +14,9 @@ const age = computed<string | null>(() => {
     }
 
     const opened = `Ouverte depuis ${years(props.account.ageInYears)}`;
+    const maturity = walletMaturityLabel(props.account);
 
-    return maturity.value === null ? opened : `${opened} · ${maturity.value}`;
+    return maturity === null ? opened : `${opened} · ${maturity}`;
 });
 
 /** Repère unique, rendu par `HeroMetaList` : un second affichage ferait doublon à l'écran. */
@@ -45,6 +31,7 @@ const entries = computed<HeroMetaEntry[]>(() => [
             :value="props.account.marketValue"
             :gain="props.account.gain"
             :gain-label="pct(props.account.gainPct)"
+            :digits="0"
             :entries="entries"
         />
 

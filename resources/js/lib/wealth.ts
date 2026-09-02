@@ -132,6 +132,29 @@ export interface WealthAccount {
     cashBalance: number;
 }
 
+/**
+ * Accord du singulier : « 1 an », jamais « 1 ans ». Partagée par la carte repliée du tableau de
+ * bord et l'en-tête déplié d'une enveloppe — les deux disent la même ancienneté.
+ */
+export const years = (n: number): string => (n === 1 ? '1 an' : `${n} ans`);
+
+/**
+ * Le seuil fiscal d'une enveloppe, franchi ou encore à venir ; `null` sans ancienneté connue, ou
+ * sans seuil à atteindre. Même règle partagée que `years` : deux écrans qui lisent le même compte
+ * ne peuvent pas dire deux choses différentes.
+ */
+export const walletMaturityLabel = (account: Pick<WealthAccount, 'ageInYears' | 'maturityYears'>): string | null => {
+    const { ageInYears, maturityYears } = account;
+
+    if (maturityYears === null || ageInYears === null) {
+        return null;
+    }
+
+    return ageInYears >= maturityYears
+        ? `Seuil de ${years(maturityYears)} franchi`
+        : `Seuil de ${years(maturityYears)} dans ${years(maturityYears - ageInYears)}`;
+};
+
 /** Une classe d'actif dans une enveloppe : ce qu'elle y vaut, et la part qu'elle y pèse. */
 export interface WalletClassSlice {
     key: string;

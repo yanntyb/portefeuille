@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createApp } from 'vue';
+import { eur, pct } from '@/lib/format';
 import type { WealthAccount } from '@/lib/wealth';
 import WalletHeaderSection from '@/components/wallet/WalletHeaderSection.vue';
 
@@ -33,6 +34,25 @@ const text = (host: HTMLElement, selector: string): string | undefined =>
     host.querySelector(selector)?.textContent?.replace(/\s+/g, ' ').trim();
 
 describe('en-tête de la page d\'une enveloppe', () => {
+    /**
+     * `eur(1000, 0)` est exactement la formule de la carte repliée du tableau de bord
+     * (`WealthAccountsSection.vue`) : deux écrans qui lisent le même compte doivent dire le
+     * même nombre, sans décimale ajoutée par le composant partagé `HeroFigures`.
+     */
+    it('affiche la valeur exactement comme la carte repliée du tableau de bord', () => {
+        const host = mountHeader(account());
+
+        // Même normalisation des espaces que `text()` : `eur()` sépare les milliers d'une espace
+        // insécable fine, que le DOM et la comparaison doivent lire de la même façon.
+        expect(text(host, '[data-hero-value]')).toBe(eur(1000, 0).replace(/\s+/g, ' ').trim());
+    });
+
+    it('porte la pastille de gain', () => {
+        const host = mountHeader(account());
+
+        expect(text(host, '[data-hero-gain-pct]')).toBe(pct(25));
+    });
+
     it('affiche le régime fiscal et le solde d\'espèces', () => {
         const host = mountHeader(account());
 
