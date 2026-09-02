@@ -11,9 +11,17 @@ import { useTransactionDialogStore } from '@/stores/transactionDialog';
  * `CollapsibleSection`, dont la bascule de dépli est une couche **sœur** : le clic n'ouvre donc pas
  * la section, et le bouton reste visible section repliée.
  *
- * `assetId` n'est passé que par la fiche d'un actif : la modale y impose l'instrument.
+ * La page peut imposer un cadre à la saisie : `assetId` n'est passé que par la fiche d'un actif, où
+ * la modale impose l'instrument, et `walletId` que par la page d'une enveloppe, où elle impose
+ * l'enveloppe. Chaque couple ne vaut que complet — sans nom, la modale n'aurait rien à afficher à
+ * la place du sélecteur qu'elle retire.
  */
-const props = defineProps<{ assetId?: number; assetName?: string }>();
+const props = defineProps<{
+    assetId?: number;
+    assetName?: string;
+    walletId?: number;
+    walletName?: string;
+}>();
 
 const dialog = useTransactionDialogStore();
 const network = useNetworkStore();
@@ -25,13 +33,15 @@ const label: ComputedRef<string> = computed((): string =>
 );
 
 const open = (): void => {
-    if (props.assetId !== undefined && props.assetName !== undefined) {
-        dialog.openCreate({ id: props.assetId, name: props.assetName });
+    const asset = props.assetId !== undefined && props.assetName !== undefined
+        ? { id: props.assetId, name: props.assetName }
+        : undefined;
 
-        return;
-    }
+    const wallet = props.walletId !== undefined && props.walletName !== undefined
+        ? { id: props.walletId, name: props.walletName }
+        : undefined;
 
-    dialog.openCreate();
+    dialog.openCreate(asset, wallet);
 };
 </script>
 

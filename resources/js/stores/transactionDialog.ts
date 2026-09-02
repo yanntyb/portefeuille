@@ -36,6 +36,10 @@ export const useTransactionDialogStore = defineStore('transactionDialog', () => 
     const lockedAssetId: Ref<number | null> = ref(null);
     const lockedAssetName: Ref<string | null> = ref(null);
 
+    /** Enveloppe imposée par le contexte : sur la page d'une enveloppe, on ne saisit que dedans. */
+    const lockedWalletId: Ref<number | null> = ref(null);
+    const lockedWalletName: Ref<string | null> = ref(null);
+
     /**
      * Remonte à chaque ouverture, pour servir de `key` au formulaire.
      *
@@ -45,13 +49,23 @@ export const useTransactionDialogStore = defineStore('transactionDialog', () => 
      */
     const formKey: Ref<number> = ref(0);
 
-    function openCreate(asset?: { id: number; name: string }): void {
+    /**
+     * Les deux contextes qu'une page peut imposer sont indépendants : une fiche d'actif nomme
+     * l'instrument, la page d'une enveloppe nomme l'enveloppe. Aucune page ne les combine
+     * aujourd'hui, mais rien ici ne l'interdit.
+     */
+    function openCreate(asset?: { id: number; name: string }, wallet?: { id: number; name: string }): void {
         lockedAssetId.value = asset?.id ?? null;
         lockedAssetName.value = asset?.name ?? null;
+        lockedWalletId.value = wallet?.id ?? null;
+        lockedWalletName.value = wallet?.name ?? null;
         editingId.value = null;
         deleting.value = null;
         deleteCameFromForm.value = false;
-        draft.value = emptyDraft(asset === undefined ? {} : { assetId: String(asset.id) });
+        draft.value = emptyDraft({
+            ...(asset === undefined ? {} : { assetId: String(asset.id) }),
+            ...(wallet === undefined ? {} : { walletId: String(wallet.id) }),
+        });
         formKey.value += 1;
         mode.value = 'create';
         pushModalEntry();
@@ -118,6 +132,8 @@ export const useTransactionDialogStore = defineStore('transactionDialog', () => 
         deleteCameFromForm.value = false;
         lockedAssetId.value = null;
         lockedAssetName.value = null;
+        lockedWalletId.value = null;
+        lockedWalletName.value = null;
         draft.value = emptyDraft();
     }
 
@@ -128,6 +144,8 @@ export const useTransactionDialogStore = defineStore('transactionDialog', () => 
         deleting,
         lockedAssetId,
         lockedAssetName,
+        lockedWalletId,
+        lockedWalletName,
         formKey,
         openCreate,
         openEdit,

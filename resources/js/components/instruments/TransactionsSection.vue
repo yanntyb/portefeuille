@@ -16,6 +16,13 @@ const props = withDefaults(
          */
         section?: string;
         emptyLabel?: string;
+        /**
+         * L'enveloppe de la page, quand il y en a une : la saisie ouverte depuis ici la reprend
+         * telle quelle. La même section sert une page de classe, qui n'en a pas — les deux props
+         * y restent indéfinis et la modale repart d'un sélecteur.
+         */
+        walletId?: number;
+        walletName?: string;
     }>(),
     { transactions: null, section: 'class-transactions', emptyLabel: 'Aucune transaction sur cette classe.' },
 );
@@ -31,7 +38,7 @@ const dialog = useTransactionDialogStore();
     -->
     <CollapsibleSection :section="props.section" title="Transactions">
         <template #aside>
-            <AddTransactionButton />
+            <AddTransactionButton :wallet-id="props.walletId" :wallet-name="props.walletName" />
         </template>
 
         <TransactionYearList

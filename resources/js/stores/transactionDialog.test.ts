@@ -47,6 +47,27 @@ describe('ouverture en création', () => {
         expect(dialog.lockedAssetName).toBe('Bitcoin');
         expect(dialog.draft.assetId).toBe('7');
     });
+
+    it('impose l\'enveloppe quand la page en a une', () => {
+        const dialog = useTransactionDialogStore();
+
+        dialog.openCreate(undefined, { id: 3, name: 'IBKR (CTO)' });
+
+        /** Sur la page d'une enveloppe, saisir ailleurs serait invisible ici. */
+        expect(dialog.lockedWalletId).toBe(3);
+        expect(dialog.lockedWalletName).toBe('IBKR (CTO)');
+        expect(dialog.draft.walletId).toBe('3');
+        expect(dialog.lockedAssetId).toBeNull();
+    });
+
+    it('impose les deux cadres à la fois quand la page les nomme tous deux', () => {
+        const dialog = useTransactionDialogStore();
+
+        dialog.openCreate({ id: 7, name: 'Bitcoin' }, { id: 3, name: 'IBKR (CTO)' });
+
+        expect(dialog.draft.assetId).toBe('7');
+        expect(dialog.draft.walletId).toBe('3');
+    });
 });
 
 describe('ouverture en correction', () => {
@@ -142,6 +163,18 @@ describe('fermeture', () => {
         expect(dialog.lockedAssetId).toBeNull();
         expect(dialog.lockedAssetName).toBeNull();
         expect(dialog.draft.quantity).toBe('');
+    });
+
+    it('relâche l\'enveloppe imposée', () => {
+        const dialog = useTransactionDialogStore();
+
+        dialog.openCreate(undefined, { id: 3, name: 'IBKR (CTO)' });
+        dialog.close();
+
+        /** Sans cette remise à zéro, la modale d'une autre page garderait l'enveloppe précédente. */
+        expect(dialog.lockedWalletId).toBeNull();
+        expect(dialog.lockedWalletName).toBeNull();
+        expect(dialog.draft.walletId).toBe('');
     });
 });
 

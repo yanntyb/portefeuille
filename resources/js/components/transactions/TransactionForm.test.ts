@@ -303,6 +303,19 @@ describe('champs', () => {
         expect(host.querySelector('[data-transaction-add-instrument]')).toBeNull();
     });
 
+    it('affiche l\'enveloppe en clair, sans sélecteur, quand la page l\'impose', async () => {
+        const dialog = useTransactionDialogStore();
+        dialog.openCreate(undefined, { id: 3, name: 'IBKR (CTO)' });
+
+        const host = await mountForm();
+
+        /** Un sélecteur modifiable laisserait saisir une opération invisible sur cette page. */
+        expect(host.querySelector('[data-transaction-wallet-locked]')?.textContent?.trim()).toBe('IBKR (CTO)');
+        expect(host.querySelector('#transaction-wallet')).toBeNull();
+        /** Le champ retiré reste envoyé : c'est le brouillon, pas le sélecteur, qui porte la valeur. */
+        expect(latestForm?.walletId).toBe('3');
+    });
+
     it('pré-remplit le prix du cours d\'un actif imposé par la page', async () => {
         const dialog = useTransactionDialogStore();
         dialog.openCreate({ id: 7, name: 'ACME' });

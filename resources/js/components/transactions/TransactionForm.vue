@@ -523,7 +523,18 @@ const serverUnreachable: Ref<boolean> = ref(false);
         </p>
 
         <!-- En premier : l'enveloppe est le cadre de l'opération, tout le reste s'y inscrit. -->
-        <FormField id="transaction-wallet" label="Enveloppe" :error="form.errors.walletId">
+        <!--
+            Enveloppe imposée par la page : sur la page d'une enveloppe, un sélecteur modifiable
+            laisserait enregistrer une opération qui n'apparaîtrait pas sur la page qu'on regarde.
+        -->
+        <div v-if="dialog.lockedWalletName !== null" class="flex flex-col gap-1.5">
+            <span class="text-sm leading-none font-medium">Enveloppe</span>
+            <p data-transaction-wallet-locked class="text-sm text-muted-foreground">
+                {{ dialog.lockedWalletName }}
+            </p>
+        </div>
+
+        <FormField v-else id="transaction-wallet" label="Enveloppe" :error="form.errors.walletId">
             <template #default="{ describedBy, invalid }">
                 <NativeSelect
                     id="transaction-wallet"

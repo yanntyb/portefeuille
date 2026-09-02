@@ -1,6 +1,7 @@
-import { createPinia } from 'pinia';
+import { createPinia, setActivePinia } from 'pinia';
 import { describe, expect, it, vi } from 'vitest';
 import { createApp, h, nextTick, type VNode } from 'vue';
+import { useTransactionDialogStore } from '@/stores/transactionDialog';
 import type { HoldingLine } from '@/lib/portfolio';
 import type { WealthAccount } from '@/lib/wealth';
 
@@ -11,13 +12,36 @@ import type { WealthAccount } from '@/lib/wealth';
 vi.mock('@inertiajs/vue3', () => ({
     Head: { setup: () => () => null },
     Deferred: { setup: () => () => null },
-    usePage: () => ({ rescuedProps: [] }),
+    usePage: () => ({ rescuedProps: [], props: { overview: {}, transactions: [] } }),
+    /**
+     * La modale de saisie se monte dès qu'on ouvre le formulaire depuis la section transactions :
+     * `useForm` parle au routeur, absent d'un montage nu, et son double suffit ici — la page ne
+     * teste que le cadre imposé à la saisie, jamais l'envoi.
+     */
+    useForm: (initial: Record<string, string>) => ({
+        ...initial,
+        errors: {},
+        processing: false,
+        data: () => ({ ...initial }),
+        transform: () => undefined,
+        post: () => undefined,
+        put: () => undefined,
+    }),
     Link: {
         props: { href: { type: String, required: true } },
         setup: (props: { href: string }, { slots, attrs }: { slots: Record<string, () => VNode[]>; attrs: Record<string, unknown> }) =>
             () => h('a', { ...attrs, href: props.href }, slots.default?.()),
     },
 }));
+
+/**
+ * Le formulaire de saisie va chercher ses enveloppes et son catalogue au montage : sans ce double,
+ * l'appel part vers le réseau et échoue en dehors de tout test.
+ */
+vi.stubGlobal('fetch', vi.fn(async () => ({
+    ok: true,
+    json: async () => ({ wallets: [], instruments: [], held: [], types: [] }),
+})));
 
 const { default: Show } = await import('@/Pages/Wallet/Show.vue');
 
@@ -67,7 +91,12 @@ function mountPage(props: Record<string, unknown> = {}): HTMLElement {
     const host = document.createElement('div');
     document.body.append(host);
 
-    createApp(Show, { account, positions: [], breakdown: [], transactions: [], ...props }).use(createPinia()).mount(host);
+    const pinia = createPinia();
+
+    createApp(Show, { account, positions: [], breakdown: [], transactions: [], ...props }).use(pinia).mount(host);
+
+    /** Pour qu'un test lise le même store que la page montée, sans le recréer à vide. */
+    setActivePinia(pinia);
 
     return host;
 }
@@ -87,6 +116,23 @@ describe('page d\'une enveloppe', () => {
 
         expect(labels).toContain('Tableau de bord');
         expect(labels).toContain('IBKR (PEA)');
+    });
+
+    /**
+     * La page connaît son enveloppe : la redemander dans un sélecteur laisserait ranger la ligne
+     * ailleurs, où elle serait invisible depuis la page qui vient de l'ouvrir.
+     */
+    it('impose son enveloppe à la saisie ouverte depuis la section transactions', () => {
+        const host = mountPage();
+
+        host.querySelector<HTMLButtonElement>('[data-section="wallet-transactions"] [data-transaction-add]')?.click();
+
+        const dialog = useTransactionDialogStore();
+
+        expect(dialog.mode).toBe('create');
+        expect(dialog.lockedWalletId).toBe(1);
+        expect(dialog.lockedWalletName).toBe('IBKR (PEA)');
+        expect(dialog.draft.walletId).toBe('1');
     });
 
     it('n\'offre pas de catalogue depuis une enveloppe', () => {

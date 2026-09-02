@@ -115,10 +115,13 @@ const positionsLoaded = computed<boolean>(() => props.positions !== undefined &&
             :slices="props.sectorBreakdown ?? null"
         />
 
+        <!-- Le « + » de la section hérite de l'enveloppe : la saisie ouverte d'ici n'a pas à la redemander. -->
         <TransactionsSection
             :transactions="props.transactions"
             section="wallet-transactions"
             empty-label="Aucune transaction sur cette enveloppe."
+            :wallet-id="props.account.walletId"
+            :wallet-name="title"
         />
     </AppPage>
 
