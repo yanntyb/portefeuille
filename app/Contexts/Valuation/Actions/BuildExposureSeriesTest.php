@@ -1,6 +1,9 @@
 <?php
 
 use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\Market\Models\Instrument;
+use App\Contexts\Market\Models\Price;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 use App\Contexts\Valuation\Actions\BuildExposureSeries;
@@ -80,11 +83,29 @@ it('ne retient que les transactions de l\'enveloppe demandée', function () {
         ->and($theirs->labels)->toBe([]);
 });
 
-it('n\'attribue pas à une enveloppe le versement fait sur une autre', function () {
+/**
+ * Le versement seul ne prouve rien : sans `asset_id`, il ne pèse ni sur les actifs à valoriser
+ * ni sur la date de départ de la série, filtre ou pas — un filtre inerte laisserait ce test
+ * passer quand même. L'achat du voisin, lui, ferait bouger la série s'il fuyait : c'est donc
+ * lui qui porte la preuve que l'enveloppe surveillée reste étanche à ce que fait sa voisine.
+ */
+it('ne laisse ni l\'achat ni le versement du voisin passer dans la série filtrée', function () {
     ['user' => $user, 'wallet' => $wallet] = portfolioFixture();
     $other = Wallet::factory()->for($user)->create(['name' => 'Second compte']);
 
     $before = app(BuildExposureSeries::class)($user->id, null, $wallet->id);
+
+    $neighborStock = Instrument::factory()->ofType(InstrumentType::Stock)->create(['name' => 'Voisin', 'ticker' => 'VOI']);
+    Price::factory()->create(['asset_id' => $neighborStock->id, 'date' => now(), 'close' => 50]);
+
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $other->id,
+        'asset_id' => $neighborStock->id,
+        'quantity' => 10,
+        'unit_price' => 50,
+        'date' => '2026-01-01',
+    ]);
 
     Transaction::factory()->deposit()->create([
         'user_id' => $user->id,
@@ -93,10 +114,22 @@ it('n\'attribue pas à une enveloppe le versement fait sur une autre', function 
         'amount' => 500,
     ]);
 
-    $after = app(BuildExposureSeries::class)($user->id, null, $wallet->id);
+    /**
+     * `BuildExposureSeries` mémoïse ses lectures en scoped (`TransactionHistoryPort`,
+     * `SeriesCachePort`) : sans ce reset, les deux appels suivants reserviraient les
+     * transactions et le nom de cache lus avant l'achat du voisin, et le test comparerait une
+     * série à elle-même au lieu de vérifier l'étanchéité réelle du filtre.
+     */
+    $this->app->forgetScopedInstances();
 
-    expect($after->labels)->toBe($before->labels)
-        ->and($after->valuations)->toBe($before->valuations);
+    $whole = app(BuildExposureSeries::class)($user->id);
+    $filtered = app(BuildExposureSeries::class)($user->id, null, $wallet->id);
+    $wholeValuations = $whole->valuations;
+    $beforeValuations = $before->valuations;
+
+    expect($filtered->valuations)->toBe($before->valuations)
+        ->and($filtered->labels)->toBe($before->labels)
+        ->and(end($wholeValuations))->not->toBe(end($beforeValuations));
 });
 
 it('ne mêle pas deux enveloppes sous le même nom de cache', function () {
