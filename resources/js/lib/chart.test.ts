@@ -575,6 +575,27 @@ describe('buildValueVsInvestedOption — infobulle', () => {
         expect(html).not.toContain('+');
     });
 
+    it('ne nomme pas « Perte » un résidu flottant que l\'infobulle lit à zéro', () => {
+        // Valeur et investi identiques : la soustraction laisse un résidu négatif de l'ordre de
+        // 1e-14, qui affichait « Perte − 0,00 € » en rouge sur une position à l'équilibre.
+        const labels = monthlyLabels(2);
+        const option = buildValueVsInvestedOption({
+            labels,
+            value: [0.3, 0.3],
+            invested: [0.1 + 0.2, 0.1 + 0.2],
+            valueFormatter: (value: number, digits = 0): string => eur(value, digits),
+            window: null,
+            description: 'Position à l\'équilibre.',
+        });
+
+        const html = tooltipHtml(option, 1).replace(/[\xa0\u202f]/g, ' ');
+
+        expect(html).toContain('Gain');
+        expect(html).not.toContain('Perte');
+        expect(html).toContain('+ 0,00 €');
+        expect(html).not.toContain('\u2212');
+    });
+
     it('lit l\'index survolé tel quel : un décalage dataIndex + 1 ferait déborder le dernier point', () => {
         // Historique de 36 mois (index 0 à 35) : au dernier point, dataIndex + 1 sortirait du tableau.
         const html = tooltipHtml(valueVsInvested(36), 35).replace(/[\xa0\u202f]/g, ' ');

@@ -1,17 +1,41 @@
+/**
+ * La valeur telle qu'elle sera lue, une fois arrondie à la précision d'affichage. Le signe et la
+ * couleur s'en déduisent, jamais de la valeur brute : une somme de flux qui s'annulent — un achat
+ * financé par un versement du même montant — laisse un résidu flottant de l'ordre de 1e-14, qui
+ * rendrait « -0,00 € » ou du rouge sur un total que le lecteur voit à zéro.
+ *
+ * Le `+ 0` final n'est pas décoratif : `Number('-0.00')` vaut `-0`, qu'`Intl` signe encore.
+ */
+export const displayValue = (value: number, digits = 2): number => Number(value.toFixed(digits)) + 0;
+
 export const eur = (value: number | null, digits = 2): string =>
     value === null
         ? '—'
         : value.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: digits });
 
 /** Keeps the sign visible on gains so a positive amount never reads like a plain balance. */
-export const signedEur = (value: number | null, digits = 2): string =>
-    value === null ? '—' : value > 0 ? `+${eur(value, digits)}` : eur(value, digits);
+export const signedEur = (value: number | null, digits = 2): string => {
+    if (value === null) {
+        return '—';
+    }
+
+    const shown = displayValue(value, digits);
+
+    return shown > 0 ? `+${eur(shown, digits)}` : eur(shown, digits);
+};
 
 const oneDecimal = (value: number): string =>
     value.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-export const pct = (value: number | null): string =>
-    value === null ? '—' : `${value >= 0 ? '+' : ''}${oneDecimal(value)} %`;
+export const pct = (value: number | null): string => {
+    if (value === null) {
+        return '—';
+    }
+
+    const shown = displayValue(value, 1);
+
+    return `${shown >= 0 ? '+' : ''}${oneDecimal(shown)} %`;
+};
 
 /** Part d'un tout, une décimale, jamais de signe ajouté : « 42,1 % ». */
 export const sharePct = (value: number | null): string => (value === null ? '—' : `${oneDecimal(value)} %`);
@@ -47,7 +71,11 @@ export const frLongDate = (value: string): string =>
     frDateFormat(value, { day: 'numeric', month: 'long', year: 'numeric' });
 
 export const gainClass = (value: number | null): string =>
-    value === null || value === 0 ? 'text-muted-foreground' : value > 0 ? 'text-gain' : 'text-loss';
+    value === null || displayValue(value) === 0
+        ? 'text-muted-foreground'
+        : value > 0
+          ? 'text-gain'
+          : 'text-loss';
 
 /**
  * Heure au format français courant (« 11h », « 23h30 ») plutôt que le « 11:00 » que rendrait

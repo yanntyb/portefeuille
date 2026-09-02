@@ -70,6 +70,21 @@ describe('liste des transactions par année', () => {
         expect(host.querySelector('[data-transaction-year-net]')?.textContent).toContain('-400,00');
     });
 
+    it('ne signe pas une année qui solde à zéro, résidu flottant compris', () => {
+        // Un achat financé par un versement du même montant : la somme des flux ne tombe pas sur
+        // un zéro exact mais sur un résidu, qui rendait « -0,00 € » ou « +0,00 € » selon son signe.
+        const host = mountList([
+            line({ total: 0.1 }),
+            line({ total: 0.2 }),
+            line({ type: 'deposit', typeLabel: 'Versement', total: 0.3 }),
+        ], 'named');
+
+        const net = host.querySelector('[data-transaction-year-net]')?.textContent?.trim();
+        expect(net).toContain('0,00');
+        expect(net).not.toContain('-');
+        expect(net).not.toContain('+');
+    });
+
     it('nomme l\'actif et cache le détail sous la ligne, variante « named »', async () => {
         const host = mountList([line()], 'named');
 

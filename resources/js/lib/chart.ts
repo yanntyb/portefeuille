@@ -2,6 +2,7 @@ import type { LineSeriesOption } from 'echarts/charts';
 import type { TooltipComponentOption } from 'echarts/components';
 import type { ChartOption } from './echarts';
 import type { DividendMark } from './income';
+import { displayValue } from './format';
 import { useThemeStore } from '@/stores/theme';
 
 type ChartPalette = {
@@ -589,13 +590,21 @@ function valueVsInvestedTooltip(
                 ))
                 .join('');
 
+            /**
+             * Le gain tel que l'infobulle le montrera : une valeur égale à l'investi laisse une
+             * soustraction flottante négative (−4e-17), qui étiquetait « Perte − 0,00 € » en rouge
+             * une position pourtant à l'équilibre. Couleur, libellé et signe se décident donc sur
+             * l'arrondi affiché, pas sur la soustraction brute.
+             */
+            const shownGain = displayValue(gain, TOOLTIP_DIGITS);
+
             return tooltipTitle(labels[index] ?? '')
                 + tooltipRow(colors.value, 'Valeur', valueFormatter(totalValue, TOOLTIP_DIGITS))
                 + tooltipRow(colors.invested, 'Investi', valueFormatter(totalInvested, TOOLTIP_DIGITS))
                 + tooltipRow(
-                    gain >= 0 ? colors.gain : colors.loss,
-                    gain >= 0 ? 'Gain' : 'Perte',
-                    `${gain >= 0 ? '+' : '−'} ${valueFormatter(Math.abs(gain), TOOLTIP_DIGITS)}`,
+                    shownGain >= 0 ? colors.gain : colors.loss,
+                    shownGain >= 0 ? 'Gain' : 'Perte',
+                    `${shownGain >= 0 ? '+' : '−'} ${valueFormatter(Math.abs(shownGain), TOOLTIP_DIGITS)}`,
                 )
                 + dividendRows;
         },
@@ -891,14 +900,17 @@ function wealthStackTooltip(
                     : tooltipRow(classColor(one.color), one.label, valueFormatter(one.values[index] ?? 0))))
                 .join('');
 
+            /** Même arrondi d'affichage que l'infobulle de valeur : un résidu ne fait pas une perte. */
+            const shownGain = displayValue(gain, TOOLTIP_DIGITS);
+
             return tooltipTitle(labels[index] ?? '')
                 + tooltipRow(colors.value, 'Patrimoine', valueFormatter(totalValue))
                 + rows
                 + tooltipRow(colors.invested, 'Investi', valueFormatter(totalInvested))
                 + tooltipRow(
-                    gain >= 0 ? colors.gain : colors.loss,
-                    gain >= 0 ? 'Gain' : 'Perte',
-                    `${gain >= 0 ? '+' : '−'} ${valueFormatter(Math.abs(gain))}`,
+                    shownGain >= 0 ? colors.gain : colors.loss,
+                    shownGain >= 0 ? 'Gain' : 'Perte',
+                    `${shownGain >= 0 ? '+' : '−'} ${valueFormatter(Math.abs(shownGain))}`,
                 );
         },
     };

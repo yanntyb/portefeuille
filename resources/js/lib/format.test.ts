@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { eur, fractionPct, frDate, frDayMonth, frLongDate, frMonthYear, gainClass, isoToday, pct, sharePct, signedEur, syncedAtLabel } from '@/lib/format';
+import { displayValue, eur, fractionPct, frDate, frDayMonth, frLongDate, frMonthYear, gainClass, isoToday, pct, sharePct, signedEur, syncedAtLabel } from '@/lib/format';
 
 /**
  * `Intl` en fr-FR pose des espaces fines insécables (U+202F) entre les milliers et avant l'euro,
@@ -21,6 +21,19 @@ describe('eur', () => {
     });
 });
 
+describe('displayValue', () => {
+    it('arrondit à la précision demandée', () => {
+        expect(displayValue(1.005, 2)).toBe(1);
+        expect(displayValue(1.006, 2)).toBe(1.01);
+        expect(displayValue(-0.04, 1)).toBe(0);
+    });
+
+    it('rend un zéro non signé, jamais le -0 que Intl signerait encore', () => {
+        expect(Object.is(displayValue(-1e-14), 0)).toBe(true);
+        expect(Object.is(displayValue(-0.004), 0)).toBe(true);
+    });
+});
+
 describe('signedEur', () => {
     it('montre le signe sur un gain pour qu\'il ne se lise pas comme un solde', () => {
         expect(normalizeSpaces(signedEur(200))).toBe('+200,00 €');
@@ -32,6 +45,11 @@ describe('signedEur', () => {
 
     it('ne signe pas un montant nul', () => {
         expect(normalizeSpaces(signedEur(0))).toBe('0,00 €');
+    });
+
+    it('ne signe pas un résidu flottant que l\'affichage lit comme zéro', () => {
+        expect(normalizeSpaces(signedEur(-1e-14))).toBe('0,00 €');
+        expect(normalizeSpaces(signedEur(1e-14))).toBe('0,00 €');
     });
 
     it('rend un tiret quand la valeur est absente', () => {
@@ -50,6 +68,11 @@ describe('pct', () => {
 
     it('traite zéro comme positif, le signe rassurant sur la lecture', () => {
         expect(normalizeSpaces(pct(0))).toBe('+0,0 %');
+    });
+
+    it('signe en positif ce qui s\'affiche à zéro, résidu flottant compris', () => {
+        expect(normalizeSpaces(pct(-1e-14))).toBe('+0,0 %');
+        expect(normalizeSpaces(pct(-0.04))).toBe('+0,0 %');
     });
 
     it('rend un tiret quand la valeur est absente', () => {
@@ -109,6 +132,12 @@ describe('gainClass', () => {
         expect(gainClass(-10)).toBe('text-loss');
         expect(gainClass(0)).toBe('text-muted-foreground');
         expect(gainClass(null)).toBe('text-muted-foreground');
+    });
+
+    it('laisse en sourdine ce qui s\'affiche à zéro, et teinte dès la première décimale lue', () => {
+        expect(gainClass(-1e-14)).toBe('text-muted-foreground');
+        expect(gainClass(-0.004)).toBe('text-muted-foreground');
+        expect(gainClass(-0.02)).toBe('text-loss');
     });
 });
 
