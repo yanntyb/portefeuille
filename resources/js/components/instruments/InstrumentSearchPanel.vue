@@ -188,6 +188,17 @@ const back = (): void => {
 };
 
 const submit = async (): Promise<void> => {
+    /**
+     * Garde synchrone, comme `blocked` dans `TransactionForm.vue` et `busy` dans `SyncButton.vue` :
+     * `:disabled="form.processing"` protège la souris, pas un double appel synchrone de `submit()`
+     * dans le même tick. La création n'a pas de garde-fou d'idempotence côté serveur — l'index
+     * unique sur `assets.ticker` est volontairement différé — un double envoi créerait donc deux
+     * lignes que rien ne rejetterait.
+     */
+    if (form.processing) {
+        return;
+    }
+
     globalError.value = null;
 
     try {

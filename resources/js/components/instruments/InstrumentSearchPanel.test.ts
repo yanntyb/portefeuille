@@ -260,6 +260,39 @@ describe('panneau de recherche d\'instruments', () => {
         ]);
     });
 
+    it('ignore un second appel de `submit()` pendant que le premier est en cours', async () => {
+        /**
+         * `:disabled="form.processing"` protège la souris, pas un double appel synchrone dans le
+         * même tick (double Entrée, ou un test qui déclenche deux fois avant tout rendu). La
+         * création n'a pas de garde-fou d'idempotence côté serveur — l'index unique sur
+         * `assets.ticker` est volontairement différé — un double envoi créerait donc deux lignes
+         * que rien ne rejetterait.
+         */
+        vi.stubGlobal('fetch', vi.fn(async () => jsonResponse([yahooHit()])));
+
+        const postSpy = vi.fn(async (): Promise<unknown> => undefined);
+        postImpl = postSpy;
+
+        const { host } = mountPanel();
+
+        await type(host, 'nvda');
+        await vi.advanceTimersByTimeAsync(300);
+        await nextTick();
+        host.querySelector<HTMLElement>('[data-instrument-result] button')!.click();
+        await nextTick();
+
+        const form = host.querySelector<HTMLFormElement>('[data-instrument-confirm]')!;
+
+        /** Les deux déclenchements tombent dans le même tick, avant que le premier n'ait résolu. */
+        form.dispatchEvent(new Event('submit'));
+        form.dispatchEvent(new Event('submit'));
+
+        await vi.advanceTimersByTimeAsync(0);
+        await nextTick();
+
+        expect(postSpy).toHaveBeenCalledTimes(1);
+    });
+
     it('affiche les erreurs de validation du serveur', async () => {
         vi.stubGlobal('fetch', vi.fn(async () => jsonResponse([yahooHit()])));
 
