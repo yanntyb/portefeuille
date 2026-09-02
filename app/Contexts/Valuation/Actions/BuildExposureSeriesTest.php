@@ -63,3 +63,50 @@ it('laisse un mouvement d\'espèces traverser le filtre sans troubler la série'
         ->and($after->valuations)->toBe($before->valuations)
         ->and($after->invested)->toBe($before->invested);
 });
+
+/**
+ * Le filtre par enveloppe est plus franc que celui par classe : le cash étant tenu par wallet, un
+ * versement sur le compte voisin n'a rien à faire dans la série de celui-ci.
+ */
+it('ne retient que les transactions de l\'enveloppe demandée', function () {
+    ['user' => $user, 'wallet' => $wallet] = portfolioFixture();
+    $other = Wallet::factory()->for($user)->create(['name' => 'Second compte']);
+
+    $mine = app(BuildExposureSeries::class)($user->id, null, $wallet->id);
+    $theirs = app(BuildExposureSeries::class)($user->id, null, $other->id);
+    $valuations = $mine->valuations;
+
+    expect(end($valuations))->toBe(1000.0)
+        ->and($theirs->labels)->toBe([]);
+});
+
+it('n\'attribue pas à une enveloppe le versement fait sur une autre', function () {
+    ['user' => $user, 'wallet' => $wallet] = portfolioFixture();
+    $other = Wallet::factory()->for($user)->create(['name' => 'Second compte']);
+
+    $before = app(BuildExposureSeries::class)($user->id, null, $wallet->id);
+
+    Transaction::factory()->deposit()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $other->id,
+        'date' => '2025-01-01',
+        'amount' => 500,
+    ]);
+
+    $after = app(BuildExposureSeries::class)($user->id, null, $wallet->id);
+
+    expect($after->labels)->toBe($before->labels)
+        ->and($after->valuations)->toBe($before->valuations);
+});
+
+it('ne mêle pas deux enveloppes sous le même nom de cache', function () {
+    ['user' => $user, 'wallet' => $wallet] = portfolioFixture();
+    $other = Wallet::factory()->for($user)->create(['name' => 'Second compte']);
+
+    $whole = app(BuildExposureSeries::class)($user->id);
+    $one = app(BuildExposureSeries::class)($user->id, null, $wallet->id);
+    $none = app(BuildExposureSeries::class)($user->id, null, $other->id);
+
+    expect($whole->valuations)->toBe($one->valuations)
+        ->and($none->valuations)->toBe([]);
+});
