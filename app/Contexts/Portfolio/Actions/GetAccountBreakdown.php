@@ -40,9 +40,14 @@ class GetAccountBreakdown
         private GetRealizedGains $realizedGains,
     ) {}
 
-    /** @return list<AccountLineData> */
-    public function __invoke(User $user): array
+    /**
+     * @return list<AccountLineData>
+     *
+     * Seule l'enveloppe du périmètre filtre : une ligne par compte n'a pas de classe.
+     */
+    public function __invoke(User $user, ?HoldingScope $scope = null): array
     {
+        $scope ??= HoldingScope::all();
         $lines = ($this->overview)($user)->holdings;
 
         /** @var array<int, list<HoldingLineData>> $byWallet */
@@ -62,10 +67,13 @@ class GetAccountBreakdown
             $cashBalances[$walletId] = $this->cashLedger->balanceAt($movements, $walletId, $today);
         }
 
-        $walletIds = array_unique([
-            ...array_keys($byWallet),
-            ...array_keys(array_filter($cashBalances, fn (float $balance): bool => $balance !== 0.0)),
-        ]);
+        $walletIds = array_values(array_filter(
+            array_unique([
+                ...array_keys($byWallet),
+                ...array_keys(array_filter($cashBalances, fn (float $balance): bool => $balance !== 0.0)),
+            ]),
+            fn (int $walletId): bool => $scope->admitsWallet($walletId),
+        ));
 
         if ($walletIds === []) {
             return [];

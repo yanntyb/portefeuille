@@ -1,6 +1,7 @@
 <?php
 
 use App\Contexts\Identity\Models\User;
+use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
@@ -209,4 +210,18 @@ it('porte le coût de revient et le gain réalisé de chaque enveloppe', functio
         ->and($lines[$pea->id]->realizedGain)->toBe(400.0)
         ->and($lines[$cto->id]->cost)->toBe(200.0)
         ->and($lines[$cto->id]->realizedGain)->toBe(0.0);
+});
+
+it('ne rend que l\'enveloppe du périmètre quand il en porte une', function () {
+    $user = User::factory()->create();
+    $pea = Wallet::factory()->for($user)->pea()->create();
+    $cto = Wallet::factory()->for($user)->cto()->create();
+    holdIn($pea, InstrumentType::Stock, close: 100, qty: 10, avgCost: 80);
+    holdIn($cto, InstrumentType::Stock, close: 50, qty: 4, avgCost: 50);
+
+    $lines = app(GetAccountBreakdown::class)($user, HoldingScope::ofWallet($cto->id));
+
+    expect($lines)->toHaveCount(1)
+        ->and($lines[0]->walletId)->toBe($cto->id)
+        ->and(app(GetAccountBreakdown::class)($user, HoldingScope::ofWallet(999999)))->toBe([]);
 });
