@@ -87,7 +87,7 @@ describe('page d\'une enveloppe', () => {
     it('monte les cinq sections de la page', () => {
         const host = mountPage();
 
-        for (const section of ['wallet-header', 'wallet-evolution', 'instruments', 'wallet-breakdown', 'class-transactions']) {
+        for (const section of ['wallet-header', 'wallet-evolution', 'instruments', 'wallet-breakdown', 'wallet-transactions']) {
             expect(host.querySelector(`[data-section="${section}"]`), section).not.toBeNull();
         }
     });
@@ -104,5 +104,33 @@ describe('page d\'une enveloppe', () => {
 
         expect(host.querySelector('[data-instrument-row]')).not.toBeNull();
         expect(host.querySelector('[data-instrument-trend] .animate-pulse')).toBeNull();
+    });
+
+    /**
+     * `positions` différée non arrivée : sans `loaded`, `InstrumentsSection` afficherait « Aucune
+     * position pour le moment » avant même d'avoir la réponse — la page affirmerait à tort qu'une
+     * enveloppe ne tient rien. `Deferred` est mocké à vide, donc rien ne doit apparaître ici tant
+     * que la prop n'est pas arrivée.
+     */
+    it('n\'affirme pas l\'absence de position tant qu\'elles ne sont pas arrivées', async () => {
+        const host = mountPage({ positions: undefined });
+
+        host.querySelector<HTMLElement>('[data-section="instruments"] [data-section-toggle]')?.click();
+        await nextTick();
+
+        expect(host.querySelector('[data-instrument-empty]')).toBeNull();
+    });
+
+    /**
+     * Même piège que les positions, pour la ventilation : sans distinguer l'attente de l'arrivée,
+     * une ventilation vide et une ventilation pas encore arrivée rendent le même bloc blanc.
+     */
+    it('n\'affiche pas une ventilation vide tant qu\'elle n\'est pas arrivée', async () => {
+        const host = mountPage({ breakdown: undefined });
+
+        host.querySelector<HTMLElement>('[data-section="wallet-breakdown"] [data-section-toggle]')?.click();
+        await nextTick();
+
+        expect(host.querySelector('[data-section="wallet-breakdown"] ul')).toBeNull();
     });
 });

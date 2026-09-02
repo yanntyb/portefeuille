@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import { Deferred, Head } from '@inertiajs/vue3';
 import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
@@ -37,6 +37,19 @@ const breakdownRows = computed<SectorBreakdownRow[]>(() =>
         amount: slice.value,
     })),
 );
+
+/**
+ * Vrai dès que la prop différée est arrivée, même vide. Sans cette distinction, une ventilation
+ * pas encore arrivée et une enveloppe qui ne tient rien rendent le même bloc vide — hors-ligne
+ * comme pendant le chargement.
+ */
+const breakdownLoaded = computed<boolean>(() => props.breakdown !== undefined && props.breakdown !== null);
+
+/**
+ * Même logique que `breakdownLoaded`, mais pour les positions : c'est le cas le plus grave,
+ * `InstrumentsSection` affirmant sinon qu'une enveloppe ne tient rien avant d'avoir la réponse.
+ */
+const positionsLoaded = computed<boolean>(() => props.positions !== undefined && props.positions !== null);
 </script>
 
 <template>
@@ -49,15 +62,38 @@ const breakdownRows = computed<SectorBreakdownRow[]>(() =>
         <WalletEvolutionSection :series="props.evolution" />
 
         <!-- Une enveloppe ne sert pas de tendances : sans `[]`, le squelette attendrait une prop jamais servie, indéfiniment. -->
-        <InstrumentsSection :holdings="props.positions ?? []" :trends="[]" />
+        <InstrumentsSection
+            :holdings="props.positions ?? []"
+            :trends="[]"
+            defer-key="positions"
+            :loaded="positionsLoaded"
+        />
 
         <CollapsibleSection section="wallet-breakdown" title="Répartition">
-            <SectorBreakdownList :rows="breakdownRows" />
+            <template v-if="breakdownLoaded">
+                <SectorBreakdownList :rows="breakdownRows" />
+            </template>
+
+            <Deferred v-else data="breakdown">
+                <template #fallback>
+                    <div class="flex flex-col gap-2">
+                        <div v-for="n in 3" :key="n" class="h-8 w-full animate-pulse rounded-md bg-muted"></div>
+                    </div>
+                </template>
+
+                <template #rescue>
+                    <p class="py-8 text-center text-sm text-muted-foreground">
+                        Données indisponibles hors-ligne.
+                    </p>
+                </template>
+
+                <span />
+            </Deferred>
         </CollapsibleSection>
 
         <TransactionsSection
             :transactions="props.transactions"
-            section="class-transactions"
+            section="wallet-transactions"
             empty-label="Aucune transaction sur cette enveloppe."
         />
     </AppPage>

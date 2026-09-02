@@ -1,10 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createApp, h, type VNode } from 'vue';
+import { createApp, h, nextTick, type VNode } from 'vue';
 import type { HoldingLine } from '@/lib/portfolio';
 
-/** `usePage` sert les props rescapées ; `Link` se réduit à l'ancrage qu'il rend. */
+/**
+ * `usePage` sert les props rescapées ; `Link` se réduit à l'ancrage qu'il rend. `Deferred` demande
+ * un routeur monté ; le composant ne le rend que sans positions, et les tests lui en donnent le
+ * cas échéant — un composant vide suffit donc à satisfaire l'import.
+ */
 vi.mock('@inertiajs/vue3', () => ({
     usePage: () => ({ rescuedProps: [] }),
+    Deferred: { setup: () => () => null },
     Link: {
         props: { href: { type: String, required: true } },
         setup: (props: { href: string }, { slots, attrs }: { slots: Record<string, () => VNode[]>; attrs: Record<string, unknown> }) =>
@@ -44,5 +49,31 @@ describe('en-tête de la section des instruments', () => {
     /** Une enveloppe n'a pas de catalogue : sans adresse, la loupe n'a nulle part à mener. */
     it('n\'affiche aucune loupe quand aucun catalogue n\'est donné', () => {
         expect(mountSection({ catalogHref: undefined }).querySelector('[data-catalog-link]')).toBeNull();
+    });
+});
+
+describe('positions différées', () => {
+    /**
+     * `loaded` distingue « pas encore arrivé » d'« arrivé et vide » : sans lui, la section
+     * affirmerait l'absence de position avant même d'avoir reçu la réponse (voir la page d'une
+     * enveloppe, qui sert `positions` en différé).
+     */
+    it('n\'affirme pas l\'absence de position tant que loaded vaut faux', async () => {
+        const host = mountSection({ loaded: false, deferKey: 'positions' });
+
+        host.querySelector<HTMLElement>('[data-section-toggle]')?.click();
+        await nextTick();
+
+        expect(host.querySelector('[data-instrument-empty]')).toBeNull();
+    });
+
+    /** `loaded` vaut vrai par défaut : la page d'exposition, qui sert `overview` en synchrone, n'a rien à passer. */
+    it('affiche la liste par défaut, sans que loaded soit fourni', async () => {
+        const host = mountSection();
+
+        host.querySelector<HTMLElement>('[data-section-toggle]')?.click();
+        await nextTick();
+
+        expect(host.querySelector('[data-instrument-empty]')).not.toBeNull();
     });
 });
