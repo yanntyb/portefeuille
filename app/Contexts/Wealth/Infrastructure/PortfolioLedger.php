@@ -20,22 +20,13 @@ class PortfolioLedger implements TransactionsPort
     }
 
     /** @return list<WealthTransactionLineData> */
-    public function transactionsForWallet(int $userId, int $walletId): array
-    {
-        return $this->read($userId, $walletId);
-    }
-
     /**
      * La jointure nomme l'actif en une requête : une ligne par opération, chacune chargeant son
      * actif rouvrirait un N+1 sur tout l'historique.
      *
      * `leftJoin` et non `join` : un versement ou un retrait n'a pas d'`asset_id`, et le tableau de
-     * bord doit quand même les afficher — c'est le seul des trois journaux à le faire, les deux
-     * jumelles de `PortfolioView` restant scopées à un actif ou une exposition.
-     *
-     * `$walletId` non nul ajoute le seul filtre qui distingue le journal d'une enveloppe de celui
-     * du patrimoine ; le `user_id` reste posé dans les deux cas, sans quoi l'identifiant d'une
-     * enveloppe d'autrui suffirait à lire son historique.
+     * bord doit quand même les afficher — c'est le seul des journaux à le faire, ceux de
+     * `PortfolioView` restant scopés à un actif ou à un périmètre de positions.
      *
      * @return list<WealthTransactionLineData>
      */

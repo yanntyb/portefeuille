@@ -5,12 +5,15 @@ namespace App\Contexts\PortfolioView\Datas;
 use JsonSerializable;
 
 /**
- * Une opération d'une exposition, tous ses actifs confondus. Jumelle
+ * Une opération d'un périmètre de positions — une exposition, une enveloppe. Jumelle
  * `Wealth\Datas\WealthTransactionLineData` — mêmes clés, même ordre : les deux alimentent le même
  * composant côté page, et l'instantané hors-ligne se versionne sur le JSON rendu.
  *
- * Filtrée par classe d'actif (`assets.asset_class`), elle ne porte donc jamais de ligne sans actif :
- * `assetId`/`assetName` restent non nullables ici, à la différence de la jumelle du patrimoine.
+ * `assetId`/`assetName` sont nullables, et c'est le périmètre qui décide si le cas se présente :
+ * filtrée par classe (`assets.asset_class`), la liste ne porte aucune ligne sans actif — un
+ * versement n'appartient à aucune exposition ; filtrée par enveloppe, elle porte les versements et
+ * retraits du compte, qui lui appartiennent bel et bien. Même asymétrie que
+ * `Valuation\Services\ScopedTransactions`, pour la même raison.
  *
  * `type` distingue les cinq natures d'opération, `isSell` restant pour ne rien casser côté
  * consommateurs qui ne lisaient que le sens d'un ordre. `auto` dit qu'une ligne a été déduite par le
@@ -22,8 +25,8 @@ readonly class ClassTransactionLineData implements JsonSerializable
         public int $id,
         public int $walletId,
         public string $date,
-        public int $assetId,
-        public string $assetName,
+        public ?int $assetId,
+        public ?string $assetName,
         public bool $isSell,
         public string $typeLabel,
         public string $type,

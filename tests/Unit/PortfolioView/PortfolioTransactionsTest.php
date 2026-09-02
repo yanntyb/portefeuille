@@ -7,6 +7,7 @@ use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 use App\Contexts\Portfolio\Services\TransactionFlow;
+use App\Contexts\PortfolioView\Datas\ClassTransactionLineData;
 use App\Contexts\PortfolioView\Infrastructure\PortfolioTransactions;
 
 beforeEach(function () {
@@ -79,4 +80,47 @@ it('excludes other users and other assets', function () {
     Transaction::factory()->buy()->create(['user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $otherAsset->id]);
 
     expect($this->adapter->transactionsFor($user->id, $asset->id))->toBeEmpty();
+});
+
+it('ne rend que les opérations de l\'enveloppe demandée, la plus récente en tête', function () {
+    ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
+    $other = Wallet::factory()->for($user)->create(['name' => 'Second compte']);
+
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $wallet->id,
+        'asset_id' => $instrument->id,
+        'quantity' => 5,
+        'unit_price' => 90,
+        'date' => '2026-03-01',
+    ]);
+
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $other->id,
+        'asset_id' => $instrument->id,
+        'quantity' => 1,
+        'unit_price' => 95,
+        'date' => '2026-04-01',
+    ]);
+
+    $lines = $this->adapter->transactionsForScope($user->id, HoldingScope::ofWallet($wallet->id));
+
+    /**
+     * L'achat de la fixture et celui ajouté ici sont chacun non couverts par un dépôt : deux
+     * versements déduits par `RecomputeCashDeposits` s'ajoutent aux deux achats, quatre lignes.
+     * C'est là toute l'asymétrie du périmètre : un versement n'a pas d'actif, donc aucune
+     * exposition ne le montre, mais il appartient bien à l'enveloppe qui l'a reçu.
+     */
+    expect($lines)->toHaveCount(4)
+        ->and($lines[0]->date)->toBe('2026-03-01')
+        ->and(array_unique(array_map(fn (ClassTransactionLineData $line): int => $line->walletId, $lines)))->toBe([$wallet->id])
+        ->and(array_filter($lines, fn (ClassTransactionLineData $line): bool => $line->assetId === null))->not->toBeEmpty();
+});
+
+it('ne rend rien pour l\'enveloppe d\'un autre porteur', function () {
+    ['user' => $user] = portfolioFixture();
+    ['wallet' => $foreign] = portfolioFixture();
+
+    expect($this->adapter->transactionsForScope($user->id, HoldingScope::ofWallet($foreign->id)))->toBe([]);
 });

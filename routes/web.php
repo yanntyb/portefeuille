@@ -12,10 +12,10 @@ use App\Contexts\Portfolio\Http\UpdateTransactionController;
 use App\Contexts\PortfolioView\Http\AssetClassCatalogController;
 use App\Contexts\PortfolioView\Http\AssetClassController;
 use App\Contexts\PortfolioView\Http\AssetController;
+use App\Contexts\PortfolioView\Http\WalletController;
 use App\Contexts\RealEstate\Http\PropertiesController;
 use App\Contexts\RealEstate\Http\PropertyDetailController;
 use App\Contexts\Wealth\Http\DashboardController;
-use App\Contexts\Wealth\Http\WalletController;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/pwa.php';

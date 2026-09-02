@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { Deferred, Head } from '@inertiajs/vue3';
 import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
+import AnalysisSection from '@/components/instruments/AnalysisSection.vue';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
 import InstrumentsSection from '@/components/instruments/InstrumentsSection.vue';
 import SectorBreakdownList from '@/components/SectorBreakdownList.vue';
@@ -10,8 +11,10 @@ import TransactionDialog from '@/components/transactions/TransactionDialog.vue';
 import TransactionsSection from '@/components/instruments/TransactionsSection.vue';
 import WalletEvolutionSection from '@/components/wallet/WalletEvolutionSection.vue';
 import WalletHeaderSection from '@/components/wallet/WalletHeaderSection.vue';
+import type { BasketAnalysis } from '@/lib/basketAnalysis';
+import type { Performance } from '@/lib/performance';
 import type { HoldingLine } from '@/lib/portfolio';
-import type { SectorBreakdownRow } from '@/lib/sector';
+import type { SectorBreakdownRow, SectorSlice } from '@/lib/sector';
 import type { ClassSeries, WalletClassSlice, WealthAccount, WealthTransactionLine } from '@/lib/wealth';
 
 const props = defineProps<{
@@ -19,6 +22,9 @@ const props = defineProps<{
     positions?: HoldingLine[];
     breakdown?: WalletClassSlice[];
     evolution?: ClassSeries;
+    performances?: Performance[];
+    basketAnalysis?: BasketAnalysis;
+    sectorBreakdown?: SectorSlice[];
     transactions?: WealthTransactionLine[];
 }>();
 
@@ -90,6 +96,24 @@ const positionsLoaded = computed<boolean>(() => props.positions !== undefined &&
                 <span />
             </Deferred>
         </CollapsibleSection>
+
+        <!--
+            La même section que sur une page d'exposition : une enveloppe et une poche sont deux
+            découpes du même portefeuille, et leur analyse est la même lecture. `has-sectors` est
+            toujours vrai — une enveloppe mêle les classes, et le bloc a son propre état vide.
+        -->
+        <!--
+            `?? null` sur les deux props différées, et ce n'est pas cosmétique : la section
+            distingue `null` (« pas encore arrivé », squelette) de `[]` (« rien à montrer », état
+            vide), et une prop Inertia non arrivée vaut `undefined`, qu'elle lirait comme arrivée.
+            Les pages d'exposition passent par `aheadOfNetwork`, qui rend déjà `null`.
+        -->
+        <AnalysisSection
+            :analysis="props.basketAnalysis"
+            :performances="props.performances ?? null"
+            :has-sectors="true"
+            :slices="props.sectorBreakdown ?? null"
+        />
 
         <TransactionsSection
             :transactions="props.transactions"

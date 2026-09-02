@@ -5,7 +5,7 @@ import type { HoldingLine } from '@/lib/portfolio';
 import type { WealthAccount } from '@/lib/wealth';
 
 /**
- * La page monte cinq sections dont deux dépendent d'Inertia : `Head` et `Deferred` n'ont rien à
+ * La page monte six sections dont deux dépendent d'Inertia : `Head` et `Deferred` n'ont rien à
  * rendre ici, `Link` se réduit à son ancrage, `usePage` sert les props rescapées.
  */
 vi.mock('@inertiajs/vue3', () => ({
@@ -72,6 +72,13 @@ function mountPage(props: Record<string, unknown> = {}): HTMLElement {
     return host;
 }
 
+/** La section Analyse s'ouvre au clic : repliée, son contenu n'est pas monté du tout. */
+async function openAnalysis(host: HTMLElement): Promise<void> {
+    host.querySelector<HTMLButtonElement>('[data-section="analysis"] [data-section-toggle]')?.click();
+
+    await nextTick();
+}
+
 describe('page d\'une enveloppe', () => {
     it('nomme l\'enveloppe dans son fil d\'Ariane, courtier puis type', () => {
         const labels = [...mountPage().querySelectorAll('[data-bottom-bar] a, [data-bottom-bar] span')]
@@ -86,10 +93,10 @@ describe('page d\'une enveloppe', () => {
         expect(mountPage().querySelector('[data-catalog-link]')).toBeNull();
     });
 
-    it('monte les cinq sections de la page', () => {
+    it('monte les six sections de la page', () => {
         const host = mountPage();
 
-        for (const section of ['wallet-header', 'wallet-evolution', 'instruments', 'wallet-breakdown', 'wallet-transactions']) {
+        for (const section of ['wallet-header', 'wallet-evolution', 'instruments', 'wallet-breakdown', 'analysis', 'wallet-transactions']) {
             expect(host.querySelector(`[data-section="${section}"]`), section).not.toBeNull();
         }
     });
@@ -134,5 +141,29 @@ describe('page d\'une enveloppe', () => {
         await nextTick();
 
         expect(host.querySelector('[data-section="wallet-breakdown"] ul')).toBeNull();
+    });
+
+    /**
+     * L'analyse est la même section que sur une page d'exposition, et elle distingue « pas encore
+     * arrivé » de « rien à montrer ». Une prop Inertia non arrivée vaut `undefined` : sans le
+     * `?? null` de la page, la section annoncerait qu'il n'y a rien à mesurer avant même d'avoir
+     * demandé.
+     */
+    it('n\'affirme pas l\'absence de performances tant qu\'elles ne sont pas arrivées', async () => {
+        const host = mountPage();
+        await openAnalysis(host);
+
+        expect(host.querySelector('[data-perf-help]')).not.toBeNull();
+        expect(host.textContent).not.toContain('Pas encore de performance à mesurer');
+        expect(host.textContent).not.toContain('Pas encore de données sectorielles');
+    });
+
+    /** Arrivées vides, en revanche, les deux blocs disent bien qu'il n'y a rien. */
+    it('dit l\'absence de performances et de secteurs quand les deux sont arrivés vides', async () => {
+        const host = mountPage({ performances: [], sectorBreakdown: [] });
+        await openAnalysis(host);
+
+        expect(host.textContent).toContain('Pas encore de performance à mesurer');
+        expect(host.textContent).toContain('Pas encore de données sectorielles');
     });
 });

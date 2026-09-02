@@ -54,16 +54,17 @@ class PortfolioTransactions implements TransactionsPort
      * `assets.asset_class` et nulle part ailleurs. L'enveloppe, elle, se lit sur
      * `transactions.wallet_id`.
      *
-     * `asset_id` est nullable en base ; une opération sans actif n'appartient à aucune exposition
-     * et ne prend pas de ligne. Le journal d'une enveloppe suit la même règle que celui d'une
-     * poche : c'est une liste d'opérations sur des actifs, pas un relevé de compte.
+     * `leftJoin` et non `join`, et c'est le périmètre qui trie : le filtre par classe porte sur
+     * `assets.asset_class`, qu'une ligne sans actif ne satisfait jamais — un versement n'appartient
+     * à aucune exposition ; le filtre par enveloppe, lui, garde les versements et retraits du
+     * compte, qui lui appartiennent. Même asymétrie que `Valuation\Services\ScopedTransactions`.
      *
      * @return list<ClassTransactionLineData>
      */
     public function transactionsForScope(int $userId, HoldingScope $scope): array
     {
         return Transaction::query()
-            ->join('assets', 'assets.id', '=', 'transactions.asset_id')
+            ->leftJoin('assets', 'assets.id', '=', 'transactions.asset_id')
             ->where('transactions.user_id', $userId)
             ->when($scope->classes !== null, fn ($query) => $query->whereIn(
                 'assets.asset_class',
@@ -81,12 +82,14 @@ class PortfolioTransactions implements TransactionsPort
                 $amount = $transaction->amount === null ? null : (float) $transaction->amount;
                 $isSell = $transaction->type === TransactionType::Sell;
 
+                $assetName = $transaction->getAttribute('asset_name');
+
                 return new ClassTransactionLineData(
                     id: $transaction->id,
                     walletId: $transaction->wallet_id,
                     date: $transaction->date->format('Y-m-d'),
-                    assetId: (int) $transaction->asset_id,
-                    assetName: (string) $transaction->getAttribute('asset_name'),
+                    assetId: $transaction->asset_id === null ? null : (int) $transaction->asset_id,
+                    assetName: $assetName === null ? null : (string) $assetName,
                     isSell: $isSell,
                     typeLabel: $transaction->type->getLabel(),
                     type: $transaction->type->value,

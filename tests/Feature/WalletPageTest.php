@@ -1,5 +1,9 @@
 <?php
 
+use App\Contexts\Market\Models\Instrument;
+use App\Contexts\Market\Models\Price;
+use App\Contexts\Portfolio\Models\Holding;
+use App\Contexts\Portfolio\Models\Wallet;
 use App\Http\Middleware\HandleInertiaRequests;
 
 it('sert la page de l\'enveloppe avec son en-tête', function () {
@@ -16,18 +20,53 @@ it('sert la page de l\'enveloppe avec son en-tête', function () {
         );
 });
 
-it('sert les positions, la ventilation, la série et le journal en props différées', function () {
+it('sert chaque section en prop différée, un groupe par section', function () {
     ['user' => $user, 'wallet' => $wallet] = portfolioFixture();
 
     $response = $this->actingAs($user)->get("/enveloppes/{$wallet->id}");
 
     $deferred = $response->viewData('page')['deferredProps'];
 
-    expect($deferred)->toHaveKeys(['positions', 'repartition', 'evolution', 'transactions'])
+    /** Un groupe par section, comme sur une page d'exposition : chaque squelette à son rythme. */
+    expect($deferred)->toHaveKeys(['positions', 'repartition', 'evolution', 'performances', 'analyse', 'secteurs', 'transactions'])
         ->and($deferred['positions'])->toBe(['positions'])
         ->and($deferred['repartition'])->toBe(['breakdown'])
         ->and($deferred['evolution'])->toBe(['evolution'])
+        ->and($deferred['performances'])->toBe(['performances'])
+        ->and($deferred['analyse'])->toBe(['basketAnalysis'])
+        ->and($deferred['secteurs'])->toBe(['sectorBreakdown'])
         ->and($deferred['transactions'])->toBe(['transactions']);
+});
+
+/**
+ * L'analyse et les performances de l'enveloppe passent par les mêmes ports qu'une exposition, au
+ * périmètre près : ce test épingle qu'elles sont bien scopées au compte, et non calculées sur le
+ * portefeuille entier — l'enveloppe voisine tient un titre que la matrice ne doit pas nommer.
+ */
+it('sert une analyse et des performances scopées à l\'enveloppe', function () {
+    ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
+    $other = Wallet::factory()->for($user)->create(['name' => 'Second compte']);
+    $neighbor = Instrument::factory()->create(['name' => 'Voisin', 'ticker' => 'VOI']);
+    Price::factory()->create(['asset_id' => $neighbor->id, 'date' => now(), 'close' => 50]);
+    Holding::factory()->create([
+        'user_id' => $user->id, 'wallet_id' => $other->id, 'asset_id' => $neighbor->id,
+        'quantity' => 10, 'avg_cost' => 50,
+    ]);
+
+    $response = $this->actingAs($user)
+        ->get("/enveloppes/{$wallet->id}", [
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => app(HandleInertiaRequests::class)->version(request()),
+            'X-Inertia-Partial-Component' => 'Wallet/Show',
+            'X-Inertia-Partial-Data' => 'basketAnalysis,performances,breakdown',
+        ])
+        ->assertOk();
+
+    $tickers = array_column($response->json('props.basketAnalysis.instruments'), 'label');
+
+    expect($tickers)->toBe([$instrument->ticker])
+        ->and($response->json('props.performances'))->not->toBeNull()
+        ->and(array_column($response->json('props.breakdown'), 'key'))->toBe(['equity']);
 });
 
 it('résout les positions, la série et le journal quand leur groupe est demandé', function () {
@@ -44,7 +83,7 @@ it('résout les positions, la série et le journal quand leur groupe est demand�
         ->assertJsonPath('props.positions.0.assetId', $instrument->id)
         /**
          * Seul groupe non exercé ailleurs dans ce fichier : sans lui, une inversion d'arguments
-         * sur le chemin de la série (`GetWalletSeries`) ne serait détectée par aucun test bout en
+         * sur le chemin de la série (`ValuationPort::seriesFor()`) ne serait détectée par aucun test bout en
          * bout. Une fermeture et non un index fixe : l'ordre des labels n'est pas ce qui est
          * affirmé ici, seulement que la dernière valorisation vaut bien 1000 €.
          */

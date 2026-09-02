@@ -6,7 +6,6 @@ use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 use App\Contexts\Portfolio\Services\TransactionFlow;
-use App\Contexts\Wealth\Datas\WealthTransactionLineData;
 use App\Contexts\Wealth\Infrastructure\PortfolioLedger;
 
 beforeEach(function () {
@@ -121,44 +120,4 @@ it('marks a sell and keeps its amount positive', function () {
     expect($lines[0]->isSell)->toBeTrue()
         ->and($lines[0]->typeLabel)->toBe('Vente')
         ->and($lines[0]->total)->toBe(358.0);
-});
-
-it('ne rend que les opérations de l\'enveloppe demandée, la plus récente en tête', function () {
-    ['user' => $user, 'wallet' => $wallet, 'instrument' => $instrument] = portfolioFixture();
-    $other = Wallet::factory()->for($user)->create(['name' => 'Second compte']);
-
-    Transaction::factory()->buy()->create([
-        'user_id' => $user->id,
-        'wallet_id' => $wallet->id,
-        'asset_id' => $instrument->id,
-        'quantity' => 5,
-        'unit_price' => 90,
-        'date' => '2026-03-01',
-    ]);
-
-    Transaction::factory()->buy()->create([
-        'user_id' => $user->id,
-        'wallet_id' => $other->id,
-        'asset_id' => $instrument->id,
-        'quantity' => 1,
-        'unit_price' => 95,
-        'date' => '2026-04-01',
-    ]);
-
-    $lines = app(PortfolioLedger::class)->transactionsForWallet($user->id, $wallet->id);
-
-    /**
-     * L'achat de la fixture et celui ajouté ici sont chacun non couverts par un dépôt : deux
-     * versements déduits par `RecomputeCashDeposits` s'ajoutent aux deux achats, quatre lignes.
-     */
-    expect($lines)->toHaveCount(4)
-        ->and($lines[0]->date)->toBe('2026-03-01')
-        ->and(array_unique(array_map(fn (WealthTransactionLineData $line): int => $line->walletId, $lines)))->toBe([$wallet->id]);
-});
-
-it('ne rend rien pour l\'enveloppe d\'un autre porteur', function () {
-    ['user' => $user] = portfolioFixture();
-    ['wallet' => $foreign] = portfolioFixture();
-
-    expect(app(PortfolioLedger::class)->transactionsForWallet($user->id, $foreign->id))->toBe([]);
 });
