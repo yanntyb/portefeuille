@@ -19,6 +19,12 @@ readonly class TransactionRecordData
     public function __construct(
         public Carbon $date,
         public ?int $assetId,
+        /**
+         * L'enveloppe qui tient l'opération. Non nullable, versements compris : une transaction
+         * appartient toujours à un compte, c'est ce qui permet à `BuildExposureSeries` de filtrer
+         * une série par enveloppe sans laisser échapper le cash.
+         */
+        public int $walletId,
         public TransactionType $type,
         public bool $isSell,
         public float $quantity,

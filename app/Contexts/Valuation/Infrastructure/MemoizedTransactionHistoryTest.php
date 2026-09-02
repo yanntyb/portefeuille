@@ -19,6 +19,7 @@ function countingTransactionHistory(int &$calls): TransactionHistoryPort
             return [new TransactionRecordData(
                 date: Carbon::parse('2026-01-01'),
                 assetId: $userId,
+                walletId: 1,
                 type: TransactionType::Buy,
                 isSell: false,
                 quantity: 1.0,

@@ -6,6 +6,7 @@ use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Portfolio\Enums\TransactionType;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
+use App\Contexts\Valuation\Infrastructure\PortfolioTransactionHistory;
 use App\Contexts\Valuation\Ports\TransactionHistoryPort;
 
 it('maps a user transactions to records ordered by date', function () {
@@ -65,4 +66,39 @@ it('inclut les versements et retraits, qui n\'ont pas d\'actif', function () {
         ->and($records[0]->exposure)->toBeNull()
         ->and($records[1]->type)->toBe(TransactionType::Withdrawal)
         ->and($records[1]->amount)->toBe(300.0);
+});
+
+it('porte l\'enveloppe de chaque transaction', function () {
+    ['user' => $user, 'wallet' => $wallet] = portfolioFixture();
+
+    $records = app(PortfolioTransactionHistory::class)->forUser($user->id);
+
+    expect($records)->not->toBeEmpty()
+        ->and($records[0]->walletId)->toBe($wallet->id);
+});
+
+it('porte l\'enveloppe d\'un versement, qui n\'a pourtant aucun actif', function () {
+    ['user' => $user] = portfolioFixture();
+    $other = Wallet::factory()->for($user)->create(['name' => 'Second compte']);
+
+    Transaction::factory()->deposit()->create([
+        'user_id' => $user->id,
+        'wallet_id' => $other->id,
+        'date' => '2026-02-01',
+        'amount' => 500,
+    ]);
+
+    $records = app(PortfolioTransactionHistory::class)->forUser($user->id);
+    /**
+     * L'achat de `portfolioFixture()` n'est couvert par aucun versement saisi : `RecomputeCashDeposits`
+     * lui déduit donc automatiquement un versement dans SON enveloppe, qui porte lui aussi un
+     * `assetId` nul. Filtrer sur la date isole le versement de ce test, sans le confondre avec
+     * cette ligne déduite.
+     */
+    $deposit = array_values(array_filter(
+        $records,
+        fn ($record): bool => $record->assetId === null && $record->date->format('Y-m-d') === '2026-02-01',
+    ))[0];
+
+    expect($deposit->walletId)->toBe($other->id);
 });

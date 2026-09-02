@@ -10,13 +10,14 @@ use App\Contexts\Valuation\Enums\ValuationGranularity;
 use App\Contexts\Valuation\Services\ValuationCalculator;
 use Illuminate\Support\Carbon;
 
-function tx(string $date, int $assetId, bool $isSell, float $qty, float $price, float $fees = 0.0): TransactionRecordData
+function tx(string $date, int $assetId, bool $isSell, float $qty, float $price, float $fees = 0.0, int $walletId = 1): TransactionRecordData
 {
     $type = $isSell ? TransactionType::Sell : TransactionType::Buy;
 
     return new TransactionRecordData(
         date: Carbon::parse($date),
         assetId: $assetId,
+        walletId: $walletId,
         type: $type,
         isSell: $isSell,
         quantity: $qty,
@@ -31,6 +32,7 @@ function deposit(string $date, float $amount): TransactionRecordData
     return new TransactionRecordData(
         date: Carbon::parse($date),
         assetId: null,
+        walletId: 1,
         type: TransactionType::Deposit,
         isSell: false,
         quantity: 0.0,
@@ -100,6 +102,7 @@ it('exposes the unit price aligned with the valuation labels', function () {
         new TransactionRecordData(
             date: Carbon::parse('2026-01-01'),
             assetId: 1,
+            walletId: 1,
             type: TransactionType::Buy,
             isSell: false,
             quantity: 10.0,
@@ -125,6 +128,7 @@ it('calculateDaily returns one point per price day without downsampling', functi
         new TransactionRecordData(
             date: Carbon::parse('2026-01-01'),
             assetId: 1,
+            walletId: 1,
             type: TransactionType::Buy,
             isSell: false,
             quantity: 10.0,

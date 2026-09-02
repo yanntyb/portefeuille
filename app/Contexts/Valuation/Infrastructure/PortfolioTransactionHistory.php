@@ -38,6 +38,7 @@ class PortfolioTransactionHistory implements TransactionHistoryPort
                 return new TransactionRecordData(
                     date: $transaction->date,
                     assetId: $transaction->asset_id === null ? null : (int) $transaction->asset_id,
+                    walletId: (int) $transaction->wallet_id,
                     type: $transaction->type,
                     isSell: $transaction->type === TransactionType::Sell,
                     quantity: $quantity ?? 0.0,
