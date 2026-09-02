@@ -7,10 +7,23 @@ use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Services\TransactionFlow;
 use App\Contexts\Wealth\Datas\WealthTransactionLineData;
 use App\Contexts\Wealth\Ports\TransactionsPort;
+use Illuminate\Database\Eloquent\Builder;
 
 class PortfolioLedger implements TransactionsPort
 {
     public function __construct(private TransactionFlow $flow) {}
+
+    /** @return list<WealthTransactionLineData> */
+    public function transactionsFor(int $userId): array
+    {
+        return $this->read($userId, null);
+    }
+
+    /** @return list<WealthTransactionLineData> */
+    public function transactionsForWallet(int $userId, int $walletId): array
+    {
+        return $this->read($userId, $walletId);
+    }
 
     /**
      * La jointure nomme l'actif en une requête : une ligne par opération, chacune chargeant son
@@ -20,13 +33,18 @@ class PortfolioLedger implements TransactionsPort
      * bord doit quand même les afficher — c'est le seul des trois journaux à le faire, les deux
      * jumelles de `MarketView` restant scopées à un actif ou une exposition.
      *
+     * `$walletId` non nul ajoute le seul filtre qui distingue le journal d'une enveloppe de celui
+     * du patrimoine ; le `user_id` reste posé dans les deux cas, sans quoi l'identifiant d'une
+     * enveloppe d'autrui suffirait à lire son historique.
+     *
      * @return list<WealthTransactionLineData>
      */
-    public function transactionsFor(int $userId): array
+    private function read(int $userId, ?int $walletId): array
     {
         return Transaction::query()
             ->leftJoin('assets', 'assets.id', '=', 'transactions.asset_id')
             ->where('transactions.user_id', $userId)
+            ->when($walletId !== null, fn (Builder $query): Builder => $query->where('transactions.wallet_id', $walletId))
             ->orderByDesc('transactions.date')
             ->orderByDesc('transactions.id')
             ->select('transactions.*', 'assets.name as asset_name')
