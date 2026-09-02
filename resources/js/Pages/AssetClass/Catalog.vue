@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import type { Ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppBottomBar from '@/components/AppBottomBar.vue';
@@ -26,6 +26,51 @@ const lines = computed<CatalogLine[]>(() => filterCatalog(props.catalog, term.va
  */
 const adding: Ref<boolean> = ref(false);
 
+/**
+ * Le terme dont l'ouverture automatique a déjà été refusée. Sans lui, fermer le panneau le
+ * rouvrirait aussitôt : le filtre ne rend toujours rien, c'est la condition même d'ouverture.
+ */
+const dismissed: Ref<string | null> = ref(null);
+
+/**
+ * Débouncé, et le délai n'est pas cosmétique : le filtre local est synchrone, donc la première
+ * lettre d'un nom absent du catalogue rendrait déjà zéro ligne et ouvrirait le panneau au milieu
+ * de la frappe. On attend que la frappe se pose avant d'aller chez Yahoo.
+ */
+const AUTO_OPEN_DELAY_MS = 400;
+
+let timer: ReturnType<typeof setTimeout> | null = null;
+
+watch([term, lines], (): void => {
+    if (timer !== null) {
+        clearTimeout(timer);
+        timer = null;
+    }
+
+    if (adding.value || term.value.trim() === '' || lines.value.length > 0) {
+        return;
+    }
+
+    timer = setTimeout((): void => {
+        if (term.value.trim() !== dismissed.value) {
+            adding.value = true;
+        }
+    }, AUTO_OPEN_DELAY_MS);
+});
+
+/** Fermeture par le bouton, par Échap ou par le fond : toutes retiennent le terme refusé. */
+watch(adding, (open: boolean): void => {
+    if (!open) {
+        dismissed.value = term.value.trim();
+    }
+});
+
+onBeforeUnmount((): void => {
+    if (timer !== null) {
+        clearTimeout(timer);
+    }
+});
+
 const onCreated = (instrument: CreatedInstrument): void => {
     adding.value = false;
 
@@ -40,6 +85,7 @@ const onCreated = (instrument: CreatedInstrument): void => {
     }
 
     term.value = '';
+    dismissed.value = null;
     router.reload({ only: ['catalog'] });
 };
 </script>

@@ -34,13 +34,15 @@ vi.mock('@/components/instruments/InstrumentSearchPanel.vue', () => ({
         props: { initialTerm: { type: String, default: '' }, exposure: { type: String, default: null } },
         emits: ['created', 'cancel', 'open'],
         setup(props: { exposure: string | null }, { emit }: { emit: (event: string, payload?: unknown) => void }) {
-            return () =>
+            return () => [
                 h('button', {
                     type: 'button',
                     'data-panel-stub': '',
                     'data-panel-exposure': props.exposure ?? '',
                     onClick: () => emit('created', panelPayload.current),
-                });
+                }),
+                h('button', { type: 'button', 'data-panel-cancel': '', onClick: () => emit('cancel') }),
+            ];
         },
     },
 }));
@@ -154,5 +156,65 @@ describe('catalogue d\'une exposition', () => {
 
         expect(visit).toHaveBeenCalledWith('/crypto/catalogue');
         expect(reload).not.toHaveBeenCalled();
+    });
+});
+
+describe('ouverture automatique du panneau Yahoo', () => {
+    /** Le filtre local est synchrone, l'ouverture est débouncée : les tests avancent l'horloge eux-mêmes. */
+    const settle = async (): Promise<void> => {
+        vi.advanceTimersByTime(500);
+        await nextTick();
+    };
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it('ouvre le panneau tout seul quand le filtre ne trouve rien', async () => {
+        vi.useFakeTimers();
+        const host = mountCatalog();
+
+        await filter(host, 'nvidia');
+
+        expect(document.querySelector('[data-panel-stub]')).toBeNull();
+
+        await settle();
+
+        expect(document.querySelector('[data-panel-stub]')).not.toBeNull();
+    });
+
+    it('n\'ouvre rien tant que le filtre trouve des lignes', async () => {
+        vi.useFakeTimers();
+        const host = mountCatalog();
+
+        await filter(host, 'app');
+        await settle();
+
+        expect(document.querySelector('[data-panel-stub]')).toBeNull();
+    });
+
+    it('ne rouvre pas le panneau du terme qu\'on vient de fermer, mais rouvre pour le suivant', async () => {
+        vi.useFakeTimers();
+        const host = mountCatalog();
+
+        await filter(host, 'nvidia');
+        await settle();
+
+        document.querySelector<HTMLButtonElement>('[data-panel-cancel]')!.click();
+        /** Deux temps : la fermeture se propage au DOM avant que l'horloge n'avance. */
+        await nextTick();
+        await settle();
+
+        expect(document.querySelector('[data-panel-stub]')).toBeNull();
+
+        await filter(host, 'nvidia ');
+        await settle();
+
+        expect(document.querySelector('[data-panel-stub]')).toBeNull();
+
+        await filter(host, 'tesla');
+        await settle();
+
+        expect(document.querySelector('[data-panel-stub]')).not.toBeNull();
     });
 });
