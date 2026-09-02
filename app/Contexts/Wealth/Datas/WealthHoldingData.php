@@ -9,7 +9,7 @@ use JsonSerializable;
 
 /**
  * Une position tenue dans une enveloppe. Troisième jumelle de `Portfolio\HoldingLineData`, après
- * `MarketView\HoldingRowData`, et elle en reproduit le JSON clé pour clé : la page de l'enveloppe
+ * `PortfolioView\HoldingRowData`, et elle en reproduit le JSON clé pour clé : la page de l'enveloppe
  * réutilise `InstrumentsSection` et `InstrumentList`, qui lisent le type `HoldingLine` du front
  * sans savoir quel contexte l'a servi. `WealthHoldingDataTest` garde cette parité.
  *

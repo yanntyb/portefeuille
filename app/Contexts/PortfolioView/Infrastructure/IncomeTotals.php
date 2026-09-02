@@ -1,0 +1,93 @@
+<?php
+
+namespace App\Contexts\PortfolioView\Infrastructure;
+
+use App\Contexts\Income\Actions\GetAnnualIncome;
+use App\Contexts\Income\Actions\GetIncomeSummary;
+use App\Contexts\Income\Datas\AnnualIncomeData;
+use App\Contexts\Income\Enums\IncomeSource;
+use App\Contexts\Income\Sources\Dividend\Actions\GetAssetDividendHistory;
+use App\Contexts\Income\Sources\Dividend\Datas\DividendReceiptData;
+use App\Contexts\Market\Enums\AssetClass;
+use App\Contexts\PortfolioView\Datas\DividendHistoryData;
+use App\Contexts\PortfolioView\Datas\DividendLineData;
+use App\Contexts\PortfolioView\Datas\IncomeOverviewData;
+use App\Contexts\PortfolioView\Datas\IncomeYearData;
+use App\Contexts\PortfolioView\Ports\IncomePort;
+
+/**
+ * L'origine du revenu se déduit de l'exposition, ici et non dans la page : c'est la même règle que
+ * `BuildPortfolioViewSnapshot` applique à son gate de dividendes.
+ */
+class IncomeTotals implements IncomePort
+{
+    public function __construct(
+        private GetIncomeSummary $summary,
+        private GetAnnualIncome $annual,
+        private GetAssetDividendHistory $assetHistory,
+    ) {}
+
+    public function supportsExposure(AssetClass $exposure): bool
+    {
+        return IncomeSource::forAssetClass($exposure) !== null;
+    }
+
+    public function summaryFor(int $userId, AssetClass $exposure): IncomeOverviewData
+    {
+        $source = IncomeSource::forAssetClass($exposure);
+
+        if ($source === null) {
+            return IncomeOverviewData::empty();
+        }
+
+        $summary = ($this->summary)($userId, $source);
+
+        return new IncomeOverviewData(
+            totalReceived: $summary->totalReceived,
+            last12Months: $summary->last12Months,
+            estimatedAnnual: $summary->estimatedAnnual,
+            bySource: $summary->bySource,
+        );
+    }
+
+    /** @return list<IncomeYearData> */
+    public function annualFor(int $userId, AssetClass $exposure): array
+    {
+        $source = IncomeSource::forAssetClass($exposure);
+
+        if ($source === null) {
+            return [];
+        }
+
+        return array_map(
+            fn (AnnualIncomeData $year): IncomeYearData => new IncomeYearData(
+                year: $year->year,
+                total: $year->total,
+                bySource: $year->bySource,
+            ),
+            ($this->annual)($userId, $source),
+        );
+    }
+
+    public function assetHistoryFor(int $userId, int $assetId): DividendHistoryData
+    {
+        $history = ($this->assetHistory)($userId, $assetId);
+
+        return new DividendHistoryData(
+            receipts: array_map(
+                fn (DividendReceiptData $receipt): DividendLineData => new DividendLineData(
+                    assetId: $receipt->assetId,
+                    exDate: $receipt->exDate,
+                    quantity: $receipt->quantity,
+                    amountPerShare: $receipt->amountPerShare,
+                    amount: $receipt->amount,
+                ),
+                $history->receipts,
+            ),
+            totalReceived: $history->totalReceived,
+            last12Months: $history->last12Months,
+            estimatedAnnual: $history->estimatedAnnual,
+            yieldOnCost: $history->yieldOnCost,
+        );
+    }
+}

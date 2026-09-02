@@ -31,7 +31,7 @@ class PortfolioLedger implements TransactionsPort
      *
      * `leftJoin` et non `join` : un versement ou un retrait n'a pas d'`asset_id`, et le tableau de
      * bord doit quand même les afficher — c'est le seul des trois journaux à le faire, les deux
-     * jumelles de `MarketView` restant scopées à un actif ou une exposition.
+     * jumelles de `PortfolioView` restant scopées à un actif ou une exposition.
      *
      * `$walletId` non nul ajoute le seul filtre qui distingue le journal d'une enveloppe de celui
      * du patrimoine ; le `user_id` reste posé dans les deux cas, sans quoi l'identifiant d'une

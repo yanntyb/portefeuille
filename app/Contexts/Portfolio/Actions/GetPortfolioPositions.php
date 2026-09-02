@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 
 /**
  * La position de chaque actif, enveloppes confondues et valorisée. Exposée par `Portfolio` parce
- * que `MarketView` et `Income` en avaient tous deux besoin et l'avaient tous deux réimplémentée.
+ * que `PortfolioView` et `Income` en avaient tous deux besoin et l'avaient tous deux réimplémentée.
  */
 class GetPortfolioPositions
 {

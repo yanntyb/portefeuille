@@ -16,20 +16,20 @@ use App\Contexts\Market\Infrastructure\EloquentPriceRepository;
 use App\Contexts\Market\Infrastructure\EloquentSectorRepository;
 use App\Contexts\Market\Infrastructure\YahooFinanceAdapter;
 use App\Contexts\Market\MarketProvider;
-use App\Contexts\MarketView\Infrastructure\ClassAnalysis;
-use App\Contexts\MarketView\Infrastructure\IncomeTotals;
-use App\Contexts\MarketView\Infrastructure\InstrumentAnalysis;
-use App\Contexts\MarketView\Infrastructure\MarketData;
-use App\Contexts\MarketView\Infrastructure\PortfolioHoldings;
-use App\Contexts\MarketView\Infrastructure\PortfolioSectors;
-use App\Contexts\MarketView\Infrastructure\PortfolioTotals;
-use App\Contexts\MarketView\Infrastructure\PortfolioTransactions;
-use App\Contexts\MarketView\Infrastructure\ValuationHistory;
-use App\Contexts\MarketView\MarketViewProvider;
 use App\Contexts\Portfolio\Actions\GetCashMovements;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Actions\GetPortfolioPositions;
 use App\Contexts\Portfolio\Actions\GetRealizedGains;
+use App\Contexts\PortfolioView\Infrastructure\ClassAnalysis;
+use App\Contexts\PortfolioView\Infrastructure\IncomeTotals;
+use App\Contexts\PortfolioView\Infrastructure\InstrumentAnalysis;
+use App\Contexts\PortfolioView\Infrastructure\MarketData;
+use App\Contexts\PortfolioView\Infrastructure\PortfolioHoldings;
+use App\Contexts\PortfolioView\Infrastructure\PortfolioSectors;
+use App\Contexts\PortfolioView\Infrastructure\PortfolioTotals;
+use App\Contexts\PortfolioView\Infrastructure\PortfolioTransactions;
+use App\Contexts\PortfolioView\Infrastructure\ValuationHistory;
+use App\Contexts\PortfolioView\PortfolioViewProvider;
 use App\Contexts\RealEstate\Infrastructure\LaravelRealEstateCache;
 use App\Contexts\RealEstate\RealEstateProvider;
 use App\Contexts\Valuation\Infrastructure\LaravelSeriesCache;
@@ -84,7 +84,7 @@ class AppServiceProvider extends ServiceProvider
             cache: LaravelRealEstateCache::class,
         );
 
-        MarketViewProvider::registers(
+        PortfolioViewProvider::registers(
             app: $this->app,
             marketData: MarketData::class,
             holdings: PortfolioHoldings::class,
@@ -109,7 +109,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(GetPortfolioOverview::class);
 
         /**
-         * Une lecture des positions par requête : `MarketView` et `Income` l'appellent chacun une
+         * Une lecture des positions par requête : `PortfolioView` et `Income` l'appellent chacun une
          * fois par position détenue en construisant l'instantané, sur le même principe que
          * `GetPortfolioOverview`.
          */

@@ -10,7 +10,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * Le filet du chantier de simplification : l'instantané hors-ligne réunit les quatre contextes —
- * `dashboard` (Wealth), `classes` et `assets` (MarketView), `properties` (RealEstate, fiches et
+ * `dashboard` (Wealth), `classes` et `assets` (PortfolioView), `properties` (RealEstate, fiches et
  * échéanciers compris). Un hash inchangé prouve que les cinq pages rendent le même JSON, ordre des
  * clés compris.
  *

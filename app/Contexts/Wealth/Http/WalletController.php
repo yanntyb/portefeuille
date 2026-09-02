@@ -12,7 +12,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * La page d'une enveloppe de détention. Calquée sur `MarketView\Http\AssetClassController` :
+ * La page d'une enveloppe de détention. Calquée sur `PortfolioView\Http\AssetClassController` :
  * l'en-tête synchrone pour qu'il ne saute pas à l'arrivée, chaque autre section derrière son propre
  * groupe différé, pour ne pas retarder le premier rendu de la page.
  *

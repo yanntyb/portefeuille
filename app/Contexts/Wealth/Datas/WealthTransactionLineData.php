@@ -5,7 +5,7 @@ namespace App\Contexts\Wealth\Datas;
 use JsonSerializable;
 
 /**
- * Une opération du patrimoine, tous actifs confondus. Jumelle `MarketView\TransactionLineData` et
+ * Une opération du patrimoine, tous actifs confondus. Jumelle `PortfolioView\TransactionLineData` et
  * lui ajoute l'actif : la fiche n'a pas à le nommer, le tableau de bord si.
  *
  * `assetId`/`assetName` sont nullables ici, à la différence de `ClassTransactionLineData` : un

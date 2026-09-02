@@ -6,7 +6,7 @@ use App\Contexts\Portfolio\Datas\HoldingLineData;
 
 /**
  * La valorisation d'une position et son gain, à la ligne comme au total. Seul site de cette
- * formule : `MarketView` et `Wealth` la demandent plutôt que de la refaire.
+ * formule : `PortfolioView` et `Wealth` la demandent plutôt que de la refaire.
  */
 class HoldingValuator
 {

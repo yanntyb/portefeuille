@@ -6,7 +6,7 @@ paths:
 # Portfolio
 
 ## HoldingValuator est le site unique du gain ; gainPct est null sur coût nul
-`Portfolio\Services\HoldingValuator` est le seul endroit qui calcule la valorisation d'une position et son gain — à la ligne (`value()`) comme au total (`totals()`). `MarketView` et `Wealth` le demandent plutôt que de refaire la formule.
+`Portfolio\Services\HoldingValuator` est le seul endroit qui calcule la valorisation d'une position et son gain — à la ligne (`value()`) comme au total (`totals()`). `PortfolioView` et `Wealth` le demandent plutôt que de refaire la formule.
 
 `gainPct` (donc `pct()`) rend `null`, jamais `0.0`, quand le coût est nul : un gain sans mise à laquelle le rapporter n'a pas de pourcentage, et « 0 % » mentirait. Vrai à la ligne comme au total.
 
@@ -18,7 +18,7 @@ paths:
 ## Les frais entrent une fois dans le coût, jamais deux
 `CostBasis` ajoute les frais d'achat au coût : le PRU projeté sur une position est frais inclus, donc l'investi, le gain et le pourcentage de la fiche le sont aussi. `CalculateRealizedGain` n'en compte pas deux fois — les frais d'achat sont déjà dans le PRU, seuls ceux de la vente se soustraient encore.
 
-`TransactionFlow` est le seul site du montant d'une ligne : achat majoré de ses frais, vente minorée des siens, toujours rendu positif. Les adaptateurs de transactions (`MarketView\Infrastructure\PortfolioTransactions`, `Wealth\Infrastructure\PortfolioLedger`) l'appellent au lieu de refaire `quantité × prix` ; le solde d'une année, somme des montants, en hérite côté front.
+`TransactionFlow` est le seul site du montant d'une ligne : achat majoré de ses frais, vente minorée des siens, toujours rendu positif. Les adaptateurs de transactions (`PortfolioView\Infrastructure\PortfolioTransactions`, `Wealth\Infrastructure\PortfolioLedger`) l'appellent au lieu de refaire `quantité × prix` ; le solde d'une année, somme des montants, en hérite côté front.
 
 `TransactionFlow` est aussi le seul site du SIGNE d'un mouvement : `cashDelta()` rend l'effet de la ligne sur la trésorerie de l'enveloppe — un achat ou un retrait négatifs, une vente, un versement ou un dividende positifs. `GetCashMovements` et le contrôle de survente le lui demandent plutôt que de retester `TransactionType` au cas par cas.
 

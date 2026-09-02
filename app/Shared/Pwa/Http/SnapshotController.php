@@ -2,7 +2,7 @@
 
 namespace App\Shared\Pwa\Http;
 
-use App\Contexts\MarketView\Actions\BuildMarketViewSnapshot;
+use App\Contexts\PortfolioView\Actions\BuildPortfolioViewSnapshot;
 use App\Contexts\RealEstate\Actions\BuildRealEstateSnapshot;
 use App\Contexts\Wealth\Actions\BuildWealthSnapshot;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +19,7 @@ class SnapshotController
 {
     public function __construct(
         private BuildWealthSnapshot $wealth,
-        private BuildMarketViewSnapshot $marketView,
+        private BuildPortfolioViewSnapshot $portfolioView,
         private BuildRealEstateSnapshot $realEstate,
     ) {}
 
@@ -27,7 +27,7 @@ class SnapshotController
     {
         $userId = auth()->id() ?? 0;
 
-        $market = ($this->marketView)($userId);
+        $market = ($this->portfolioView)($userId);
 
         $body = [
             'dashboard' => ($this->wealth)($userId),
