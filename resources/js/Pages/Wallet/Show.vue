@@ -48,7 +48,8 @@ const breakdownRows = computed<SectorBreakdownRow[]>(() =>
         <!-- La courbe suit immédiatement la valeur qu'elle raconte ; le reste vient ensuite. -->
         <WalletEvolutionSection :series="props.evolution" />
 
-        <InstrumentsSection :holdings="props.positions ?? []" />
+        <!-- Une enveloppe ne sert pas de tendances : sans `[]`, le squelette attendrait une prop jamais servie, indéfiniment. -->
+        <InstrumentsSection :holdings="props.positions ?? []" :trends="[]" />
 
         <CollapsibleSection section="wallet-breakdown" title="Répartition">
             <SectorBreakdownList :rows="breakdownRows" />

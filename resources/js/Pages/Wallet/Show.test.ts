@@ -1,6 +1,7 @@
 import { createPinia } from 'pinia';
 import { describe, expect, it, vi } from 'vitest';
-import { createApp, h, type VNode } from 'vue';
+import { createApp, h, nextTick, type VNode } from 'vue';
+import type { HoldingLine } from '@/lib/portfolio';
 import type { WealthAccount } from '@/lib/wealth';
 
 /**
@@ -36,15 +37,35 @@ const account: WealthAccount = {
     cashBalance: 150,
 };
 
+const position: HoldingLine = {
+    assetId: 1,
+    assetName: 'Apple',
+    ticker: 'AAPL',
+    type: 'stock',
+    typeLabel: 'Action',
+    assetClass: 'equity',
+    assetClassLabel: 'Actions',
+    walletId: 1,
+    walletName: 'PEA',
+    accountType: 'pea',
+    accountTypeLabel: 'PEA',
+    quantity: 3,
+    avgCost: 100,
+    lastPrice: 200,
+    marketValue: 600,
+    gain: 300,
+    gainPct: 100,
+};
+
 /**
  * Pinia est nécessaire : le bouton d'ajout de `TransactionsSection`, la bascule de thème de
  * `AppBottomBar` et `TransactionDialog` lisent tous un store, actif ou fermé.
  */
-function mountPage(): HTMLElement {
+function mountPage(props: Record<string, unknown> = {}): HTMLElement {
     const host = document.createElement('div');
     document.body.append(host);
 
-    createApp(Show, { account, positions: [], breakdown: [], transactions: [] }).use(createPinia()).mount(host);
+    createApp(Show, { account, positions: [], breakdown: [], transactions: [], ...props }).use(createPinia()).mount(host);
 
     return host;
 }
@@ -69,5 +90,19 @@ describe('page d\'une enveloppe', () => {
         for (const section of ['wallet-header', 'wallet-evolution', 'instruments', 'wallet-breakdown', 'class-transactions']) {
             expect(host.querySelector(`[data-section="${section}"]`), section).not.toBeNull();
         }
+    });
+
+    /**
+     * Une enveloppe ne sert aucune tendance : sans `trends`, le squelette des étincelles attendrait
+     * une prop jamais servie et tournerait indéfiniment (`isDeferredPending` reste vrai pour toujours).
+     */
+    it('ne laisse pas le squelette des étincelles tourner sans fin, faute de tendances à attendre', async () => {
+        const host = mountPage({ positions: [position] });
+
+        host.querySelector<HTMLElement>('[data-section="instruments"] [data-section-toggle]')?.click();
+        await nextTick();
+
+        expect(host.querySelector('[data-instrument-row]')).not.toBeNull();
+        expect(host.querySelector('[data-instrument-trend] .animate-pulse')).toBeNull();
     });
 });
