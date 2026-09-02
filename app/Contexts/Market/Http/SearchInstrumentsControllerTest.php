@@ -38,6 +38,14 @@ function fakeProvider(array $results = []): object
     return $provider;
 }
 
+it('refuse un terme de plus de 100 caractères', function () {
+    $provider = fakeProvider();
+
+    $this->getJson('/instruments/recherche?q='.str_repeat('a', 101))->assertStatus(422);
+
+    expect($provider->queries)->toBe([]);
+});
+
 it('rend une liste vide sans appeler le fournisseur quand la requête est vide', function () {
     $provider = fakeProvider([new InstrumentSearchResultData(symbol: 'AAPL', name: 'Apple')]);
 

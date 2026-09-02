@@ -6,7 +6,7 @@ import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
 import CatalogList from '@/components/instruments/CatalogList.vue';
 import InstrumentSearchPanel, { type CreatedInstrument } from '@/components/instruments/InstrumentSearchPanel.vue';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { filterCatalog, type CatalogLine } from '@/lib/catalog';
 
@@ -82,6 +82,7 @@ const onCreated = (instrument: CreatedInstrument): void => {
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Ajouter un instrument</DialogTitle>
+                    <DialogDescription>La recherche par nom ou par ticker, en base ou chez Yahoo.</DialogDescription>
                 </DialogHeader>
 
                 <InstrumentSearchPanel

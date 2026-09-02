@@ -129,6 +129,20 @@ const reloadOptions = async (): Promise<boolean> => {
  */
 const instrumentCreatedButStale: Ref<boolean> = ref(false);
 
+/**
+ * L'identifiant retrouvé par la recherche ne correspond à rien dans le catalogue chargé — voir
+ * `onInstrumentFound`. Distinct d'`instrumentCreatedButStale` : ici rien n'a été créé, la ligne
+ * existe déjà côté serveur, mais ce chargement-ci de `/transactions/options` ne la porte pas.
+ */
+const instrumentNotFound: Ref<boolean> = ref(false);
+
+/** Rouvrir la recherche efface les messages de la tentative précédente, réussie ou non. */
+const openInstrumentSearch = (): void => {
+    instrumentCreatedButStale.value = false;
+    instrumentNotFound.value = false;
+    searchingInstrument.value = true;
+};
+
 const onInstrumentCreated = async (instrument: CreatedInstrument): Promise<void> => {
     searchingInstrument.value = false;
     instrumentCreatedButStale.value = false;
@@ -156,7 +170,13 @@ const onInstrumentFound = (payload: { id: number }): void => {
         (instrument): boolean => instrument.id === payload.id,
     );
 
-    /** Absent du catalogue chargé, l'identifiant ne doit pointer vers rien : le champ ne bouge pas. */
+    /**
+     * Absent du catalogue chargé, l'identifiant ne doit pointer vers rien : le champ ne bouge pas.
+     * Le panneau se ferme quand même — y rester n'offrirait pas d'autre issue qu'Annuler — mais la
+     * saisie qui reparaît porte l'explication, sur le modèle d'`instrumentCreatedButStale`.
+     */
+    instrumentNotFound.value = !known;
+
     if (!known) {
         return;
     }
@@ -491,7 +511,11 @@ const serverUnreachable: Ref<boolean> = ref(false);
             « n'ont pas pu être chargés » — masquer celui qui dit qu'une création a bien eu lieu.
         -->
         <p v-else-if="instrumentCreatedButStale" data-instrument-created-stale role="alert" class="text-sm text-destructive">
-            L'instrument a bien été créé, mais la liste n'a pas pu être rechargée. Ferme et rouvre la saisie pour le sélectionner.
+            L'instrument a bien été créé, mais la liste n'a pas pu être rechargée. Fermez et rouvrez la saisie pour le sélectionner.
+        </p>
+
+        <p v-else-if="instrumentNotFound" data-instrument-not-found role="alert" class="text-sm text-destructive">
+            Cet instrument n'a pas été retrouvé dans le catalogue chargé. Fermez et rouvrez la saisie pour réessayer.
         </p>
 
         <p v-else-if="optionsFailed" data-form-error role="alert" class="text-sm text-destructive">
@@ -556,7 +580,7 @@ const serverUnreachable: Ref<boolean> = ref(false);
                     data-transaction-add-instrument
                     class="self-start text-sm text-muted-foreground underline disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
                     :disabled="blocked"
-                    @click="searchingInstrument = true"
+                    @click="openInstrumentSearch()"
                 >
                     L'actif n'est pas dans la liste ?
                 </button>

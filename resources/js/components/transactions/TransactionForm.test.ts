@@ -88,7 +88,7 @@ const openPayload: { current: { id: number } | null } = { current: null };
 
 /**
  * Stub du panneau de recherche : ici on ne vérifie que la bascule et ce que le formulaire fait de
- * l'instrument créé ou retrouvé. Deux boutons suffisent à simuler `created` et `open`.
+ * l'instrument créé ou retrouvé. Trois boutons suffisent à simuler `created`, `open` et `cancel`.
  */
 vi.mock('@/components/instruments/InstrumentSearchPanel.vue', () => ({
     default: {
@@ -103,6 +103,10 @@ vi.mock('@/components/instruments/InstrumentSearchPanel.vue', () => ({
                 h('button', {
                     'data-stub-open': '',
                     onClick: () => emit('open', openPayload.current),
+                }),
+                h('button', {
+                    'data-stub-cancel': '',
+                    onClick: () => emit('cancel'),
                 }),
             ]),
     },
@@ -935,7 +939,7 @@ describe('ajout d\'un instrument depuis la saisie', () => {
 
         expect(host.querySelector('[data-instrument-search-input]')).toBeNull();
         expect(host.querySelector('[data-instrument-created-stale]')?.textContent?.trim()).toBe(
-            'L\'instrument a bien été créé, mais la liste n\'a pas pu être rechargée. Ferme et rouvre la saisie pour le sélectionner.',
+            'L\'instrument a bien été créé, mais la liste n\'a pas pu être rechargée. Fermez et rouvrez la saisie pour le sélectionner.',
         );
         /** La pièce qui pinne le correctif : jamais un identifiant que le catalogue périmé ignore. */
         expect(currentAssetId(host)).toBe('');
@@ -960,7 +964,7 @@ describe('ajout d\'un instrument depuis la saisie', () => {
         await emitCreated(host, { id: 99, name: 'NVIDIA Corp.', ticker: 'NVDA', assetClass: 'equity', assetClassSlug: 'actions' });
 
         expect(host.querySelector('[data-instrument-created-stale]')?.textContent?.trim()).toBe(
-            'L\'instrument a bien été créé, mais la liste n\'a pas pu être rechargée. Ferme et rouvre la saisie pour le sélectionner.',
+            'L\'instrument a bien été créé, mais la liste n\'a pas pu être rechargée. Fermez et rouvrez la saisie pour le sélectionner.',
         );
         /** Le message générique ne doit plus être celui qui s'affiche : la chaîne l'a court-circuité. */
         expect(host.querySelector('[data-form-error]')).toBeNull();
@@ -981,6 +985,47 @@ describe('ajout d\'un instrument depuis la saisie', () => {
 
         expect(host.querySelector('[data-instrument-search-input]')).toBeNull();
         expect(currentAssetId(host)).toBe('7');
+    });
+
+    it('signale un instrument retrouvé mais absent du catalogue chargé, sans y pointer l\'actif', async () => {
+        /**
+         * Un identifiant qu'`options.instruments` ignore ne doit pointer vers rien — le champ ne
+         * bouge pas. Mais fermer le panneau sans un mot laisserait croire que le clic n'a rien
+         * fait : le message explique, sur le modèle d'`instrumentCreatedButStale`.
+         */
+        const host = await mountForm();
+
+        host.querySelector<HTMLElement>('[data-transaction-add-instrument]')!.click();
+        await nextTick();
+
+        await emitOpen(host, { id: 42 });
+
+        expect(host.querySelector('[data-instrument-search-input]')).toBeNull();
+        expect(host.querySelector('[data-instrument-not-found]')?.textContent?.trim()).toBe(
+            'Cet instrument n\'a pas été retrouvé dans le catalogue chargé. Fermez et rouvrez la saisie pour réessayer.',
+        );
+        expect(currentAssetId(host)).toBe('');
+    });
+
+    it('efface le message d\'instrument introuvable en rouvrant la recherche', async () => {
+        const host = await mountForm();
+
+        host.querySelector<HTMLElement>('[data-transaction-add-instrument]')!.click();
+        await nextTick();
+        await emitOpen(host, { id: 42 });
+
+        expect(host.querySelector('[data-instrument-not-found]')).not.toBeNull();
+
+        /**
+         * Rouvrir puis annuler sans rien choisir : si le message n'était que masqué par le panneau
+         * rouvert (et non effacé), il réapparaîtrait ici au retour à la saisie.
+         */
+        host.querySelector<HTMLElement>('[data-transaction-add-instrument]')!.click();
+        await nextTick();
+        host.querySelector<HTMLElement>('[data-stub-cancel]')!.click();
+        await nextTick();
+
+        expect(host.querySelector('[data-instrument-not-found]')).toBeNull();
     });
 
     it('désactive le lien pendant l\'envoi, comme le sélecteur d\'actif qu\'il accompagne', async () => {

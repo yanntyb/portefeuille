@@ -28,6 +28,12 @@ class SearchInstrumentsController
 
     public function __invoke(Request $request): JsonResponse
     {
+        /**
+         * Bornée : sans elle, un terme démesuré atteindrait quand même le `LIKE` ci-dessous et le
+         * process Python du fournisseur, pour une frappe qui ne peut pas être volontaire.
+         */
+        $request->validate(['q' => ['nullable', 'string', 'max:100']]);
+
         $query = trim((string) $request->query('q', ''));
 
         /** Rien à chercher : pas de requête SQL, et surtout pas de process Python. */
