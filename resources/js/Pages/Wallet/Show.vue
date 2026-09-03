@@ -34,12 +34,6 @@ const title = computed<string>(() => `${props.account.broker ?? props.account.wa
 const breakdownRows = computed<SectorBreakdownRow[] | null>(() =>
     props.breakdown === undefined ? null : rowsFromShares(props.breakdown),
 );
-
-/**
- * Vrai dès que la prop différée est arrivée, même vide. Sans cette distinction, `InstrumentsSection`
- * affirmerait qu'une enveloppe ne tient rien avant même d'avoir eu la réponse.
- */
-const positionsLoaded = computed<boolean>(() => props.positions !== undefined && props.positions !== null);
 </script>
 
 <template>
@@ -58,10 +52,9 @@ const positionsLoaded = computed<boolean>(() => props.positions !== undefined &&
 
         <!-- Une enveloppe ne sert pas de tendances : sans `[]`, le squelette attendrait une prop jamais servie, indéfiniment. -->
         <InstrumentsSection
-            :holdings="props.positions ?? []"
+            :holdings="props.positions ?? null"
             :trends="[]"
             defer-key="positions"
-            :loaded="positionsLoaded"
         />
 
         <SectorsSection
@@ -78,12 +71,7 @@ const positionsLoaded = computed<boolean>(() => props.positions !== undefined &&
             découpes du même portefeuille, et leur analyse est la même lecture. `has-sectors` est
             toujours vrai — une enveloppe mêle les classes, et le bloc a son propre état vide.
         -->
-        <!--
-            `?? null` sur les deux props différées, et ce n'est pas cosmétique : la section
-            distingue `null` (« pas encore arrivé », squelette) de `[]` (« rien à montrer », état
-            vide), et une prop Inertia non arrivée vaut `undefined`, qu'elle lirait comme arrivée.
-            Les pages d'exposition passent par `aheadOfNetwork`, qui rend déjà `null`.
-        -->
+        <!-- `?? null` : une prop Inertia non arrivée vaut `undefined`, et la section lit `null` comme « pas encore ». -->
         <AnalysisSection
             :analysis="props.basketAnalysis"
             :performances="props.performances ?? null"

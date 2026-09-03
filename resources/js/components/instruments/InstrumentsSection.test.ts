@@ -54,12 +54,12 @@ describe('en-tête de la section des instruments', () => {
 
 describe('positions différées', () => {
     /**
-     * `loaded` distingue « pas encore arrivé » d'« arrivé et vide » : sans lui, la section
-     * affirmerait l'absence de position avant même d'avoir reçu la réponse (voir la page d'une
-     * enveloppe, qui sert `positions` en différé).
+     * `holdings` à `null` distingue « pas encore arrivé » d'« arrivé et vide » : sans cette
+     * distinction, la section affirmerait l'absence de position avant même d'avoir reçu la
+     * réponse (voir la page d'une enveloppe, qui sert `positions` en différé).
      */
-    it('n\'affirme pas l\'absence de position tant que loaded vaut faux', async () => {
-        const host = mountSection({ loaded: false, deferKey: 'positions' });
+    it('n\'affirme pas l\'absence de position tant que holdings vaut null', async () => {
+        const host = mountSection({ holdings: null, deferKey: 'positions' });
 
         host.querySelector<HTMLElement>('[data-section-toggle]')?.click();
         await nextTick();
@@ -67,13 +67,23 @@ describe('positions différées', () => {
         expect(host.querySelector('[data-instrument-empty]')).toBeNull();
     });
 
-    /** `loaded` vaut vrai par défaut : la page d'exposition, qui sert `overview` en synchrone, n'a rien à passer. */
-    it('affiche la liste par défaut, sans que loaded soit fourni', async () => {
+    /** `holdings` vaut un tableau par défaut : la page d'exposition, qui sert `overview` en synchrone, n'a rien à passer. */
+    it('affiche la liste par défaut, sans que holdings soit fourni', async () => {
         const host = mountSection();
 
         host.querySelector<HTMLElement>('[data-section-toggle]')?.click();
         await nextTick();
 
         expect(host.querySelector('[data-instrument-empty]')).not.toBeNull();
+    });
+
+    it('n\'affirme pas l\'absence de position tant qu\'elles ne sont pas arrivées', async () => {
+        const host = mountSection({ holdings: null });
+
+        host.querySelector<HTMLElement>('[data-section-toggle]')?.click();
+        await nextTick();
+
+        expect(host.querySelector('[data-instrument-empty]')).toBeNull();
+        expect(host.querySelector('[data-instrument-row]')).toBeNull();
     });
 });
