@@ -6,8 +6,8 @@ import TransactionDialog from '@/components/transactions/TransactionDialog.vue';
 import AnalysisSection from '@/components/instruments/AnalysisSection.vue';
 import EvolutionSection from '@/components/instruments/EvolutionSection.vue';
 import InstrumentsSection from '@/components/instruments/InstrumentsSection.vue';
+import PortfolioSummarySection from '@/components/PortfolioSummarySection.vue';
 import TransactionsSection from '@/components/transactions/TransactionsSection.vue';
-import ValuationSection from '@/components/instruments/ValuationSection.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
 import type { BasketAnalysis } from '@/lib/basketAnalysis';
 import type { CatalogTrend } from '@/lib/catalog';
@@ -46,7 +46,17 @@ const sectorBreakdown = aheadOfNetwork(() => props.sectorBreakdown, () => cached
     <Head :title="props.assetClass.label" />
 
     <AppPage>
-        <ValuationSection v-if="overview.holdings.length" :overview="overview" />
+        <PortfolioSummarySection
+            v-if="overview.holdings.length"
+            prefix="portfolio"
+            section="valuation"
+            :total-value="overview.totalValue"
+            :total-gain="overview.totalGain"
+            :total-gain-pct="overview.totalGainPct"
+            :invested="overview.totalCost"
+            :realized-gain="overview.totalRealizedGain"
+            :origin-cash="overview.cash"
+        />
 
         <EvolutionSection :series="evolutionSeries" />
 

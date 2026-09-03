@@ -7,7 +7,7 @@ import WealthEvolutionSection from '@/components/dashboard/WealthEvolutionSectio
 import WealthIncomeSection from '@/components/dashboard/WealthIncomeSection.vue';
 import WealthAccountsSection from '@/components/dashboard/WealthAccountsSection.vue';
 import WealthSectorsSection from '@/components/dashboard/WealthSectorsSection.vue';
-import WealthSummarySection from '@/components/dashboard/WealthSummarySection.vue';
+import PortfolioSummarySection from '@/components/PortfolioSummarySection.vue';
 import TransactionDialog from '@/components/transactions/TransactionDialog.vue';
 import TransactionsSection from '@/components/transactions/TransactionsSection.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
@@ -40,7 +40,15 @@ const accounts = aheadOfNetwork(() => props.accounts, () => snapshot.dashboard?.
     <Head title="Tableau de bord" />
 
     <AppPage>
-        <WealthSummarySection :overview="props.overview" />
+        <PortfolioSummarySection
+            prefix="wealth"
+            section="wealth-summary"
+            :total-value="props.overview.totalValue"
+            :total-gain="props.overview.totalGain"
+            :total-gain-pct="props.overview.totalGainPct"
+            :invested="props.overview.totalInvested"
+            :realized-gain="props.overview.totalRealizedGain"
+        />
 
         <!-- La courbe suit immédiatement la valeur qu'elle raconte ; la répartition vient ensuite. -->
         <WealthEvolutionSection :series="series" />
