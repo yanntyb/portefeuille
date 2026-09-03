@@ -15,8 +15,8 @@ use App\Contexts\Wealth\Services\InvestedCapital;
  * L'investi d'une exposition ne se calcule pas d'elle seule : le reliquat qu'elle libère en vendant
  * se replace dans une autre, et les liquidités portent ce que personne n'a repris
  * (`InvestedCapital::allocate()`). Chaque classe a donc besoin de la photo globale, et c'est ce
- * lecteur qui l'établit — sans lui, `PortfolioAssetClass` et `PortfolioCash` la referaient chacune
- * de leur côté, cinq fois par tableau de bord.
+ * lecteur qui l'établit — sans lui, `PortfolioAssetClass` et `CashClass` la referaient chacune de
+ * leur côté, cinq fois par tableau de bord.
  *
  * Lié en `scoped` comme `GetPortfolioOverview`, dont il consomme les lectures déjà mémoïsées : le
  * portefeuille n'est ouvert qu'une fois, le découpage par exposition se fait en mémoire.

@@ -55,9 +55,8 @@ namespace App\Contexts\Wealth\Services;
  * apports nets négatifs en laissant l'imputation intacte. C'est bien l'absence de plancher qui
  * sauve l'invariant dans ce cas, pas une inégalité entre les termes.
  *
- * Service pur, sans Eloquent ni port : `PortfolioAssetClass` et `PortfolioCash` le consomment
- * plutôt que de porter chacun sa formule — `PortfolioCash` la portait, et `Infrastructure/` n'est
- * pas le lieu d'une règle métier.
+ * Service pur, sans Eloquent ni port : `PortfolioAssetClass` et `CashClass` le consomment plutôt
+ * que de porter chacun sa formule, et `Infrastructure/` n'est pas le lieu d'une règle métier.
  */
 class InvestedCapital
 {

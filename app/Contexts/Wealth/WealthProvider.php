@@ -9,12 +9,8 @@ use App\Contexts\Portfolio\Actions\GetSectorBreakdown;
 use App\Contexts\Valuation\Actions\BuildEvolutionSeries;
 use App\Contexts\Wealth\Infrastructure\AssetClassRegistry;
 use App\Contexts\Wealth\Infrastructure\PortfolioAssetClass;
-use App\Contexts\Wealth\Infrastructure\PortfolioCash;
 use App\Contexts\Wealth\Infrastructure\PortfolioInvestedCapital;
-use App\Contexts\Wealth\Ports\AccountsPort;
 use App\Contexts\Wealth\Ports\AssetClassPort;
-use App\Contexts\Wealth\Ports\CashPort;
-use App\Contexts\Wealth\Ports\TransactionsPort;
 use App\Contexts\Wealth\Services\SeriesAligner;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
@@ -30,20 +26,9 @@ class WealthProvider extends ServiceProvider
      * le registre qui instancie, et non un `tag()` de noms de classes.
      *
      * @param  list<class-string<AssetClassPort>>  $extra  classes écrites à la main
-     * @param  class-string<TransactionsPort>  $transactions
-     * @param  class-string<AccountsPort>  $accounts
      */
-    public static function registers(Application $app, array $extra, string $transactions, string $accounts): void
+    public static function registers(Application $app, array $extra): void
     {
-        $app->bind(TransactionsPort::class, $transactions);
-        $app->bind(AccountsPort::class, $accounts);
-
-        /**
-         * Interne à `CashClass` : aucun autre appelant ne le consomme, contrairement aux deux
-         * ports ci-dessus, donc pas de paramètre dédié — le fixer ici suffit.
-         */
-        $app->bind(CashPort::class, PortfolioCash::class);
-
         $app->scoped(
             AssetClassRegistry::class,
             function (Application $app) use ($extra): AssetClassRegistry {

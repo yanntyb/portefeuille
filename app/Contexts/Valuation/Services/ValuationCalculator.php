@@ -45,7 +45,7 @@ class ValuationCalculator
              * Seuls les achats et les ventes font varier une quantité détenue et l'investi : un
              * dividende porte un `asset_id` mais aucune quantité, et le ferait varier à tort s'il
              * entrait dans cette timeline. Les trois types d'espèces la traversent sans rien y
-             * changer — la série de liquidités, elle, se lit sur `PortfolioCash::seriesFor()`.
+             * changer — la série de liquidités, elle, se lit sur `CashClass::seriesFor()`.
              */
             if ($transaction->type === TransactionType::Buy || $transaction->type === TransactionType::Sell) {
                 $assetId = $transaction->assetId;

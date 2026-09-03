@@ -47,7 +47,7 @@ it('rend une série vide pour un utilisateur sans transaction', function () {
 /**
  * Le filtre par classe laisse passer les mouvements sans `asset_id` : c'est ce que veut la série
  * de valorisation, qui n'en tire aucune position ni aucun investi. La série de liquidités, elle,
- * n'est plus ici — elle se lit sur `PortfolioCash::seriesFor()`.
+ * n'est plus ici — elle se lit sur `CashClass::seriesFor()`.
  */
 it('laisse un mouvement d\'espèces traverser le filtre sans troubler la série', function () {
     ['user' => $user] = cryptoFixture();
