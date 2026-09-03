@@ -2,65 +2,18 @@
 
 namespace App\Contexts\PortfolioView\Http;
 
-use App\Contexts\PortfolioView\Actions\GetInstrumentDetail;
-use App\Contexts\PortfolioView\Ports\IncomePort;
-use App\Contexts\PortfolioView\Ports\InstrumentAnalysisPort;
-use App\Contexts\PortfolioView\Ports\MarketDataPort;
-use App\Contexts\PortfolioView\Ports\ValuationPort;
-use App\Contexts\PortfolioView\Services\PriceHistoryWindow;
-use Inertia\Inertia;
+use App\Contexts\PortfolioView\Pages\AssetPage;
 use Inertia\Response;
 
-/**
- * La fiche d'un actif, quelle que soit son exposition. Une seule adresse par actif : deux
- * contrôleurs se renvoyaient autrefois 404 l'un l'autre pour éviter qu'un même actif réponde à
- * deux fils d'Ariane contradictoires. Le fil se déduit maintenant de l'exposition portée par
- * l'actif lui-même.
- */
+/** La fiche d'un actif, partagée par toutes les expositions ; le fil d'Ariane se déduit de `assetClass`. */
 class AssetController
 {
-    public function __construct(
-        private GetInstrumentDetail $getDetail,
-        private MarketDataPort $market,
-        private ValuationPort $valuation,
-        private IncomePort $income,
-        private InstrumentAnalysisPort $analysis,
-    ) {}
+    public function __construct(private AssetPage $page) {}
 
     public function __invoke(int $id): Response
     {
-        $userId = auth()->id() ?? 0;
+        $page = $this->page->for(auth()->id() ?? 0, $id) ?? abort(404);
 
-        $detail = ($this->getDetail)($userId, $id);
-
-        if ($detail === null) {
-            abort(404);
-        }
-
-        $props = [
-            'instrument' => $detail,
-            'performances' => $this->valuation->assetPerformancesFor($userId, $id),
-            'priceHistory' => Inertia::defer(
-                fn () => $this->market->priceHistory($id, PriceHistoryWindow::since())
-            ),
-            'valuation' => Inertia::defer(fn () => $this->valuation->assetSeriesFor($userId, $id)),
-            /**
-             * Différée comme l'historique de cours, qu'elle relit : cinq ans de barres pour une
-             * moyenne longue, un RSI et une amplitude vraie. Sans position, la section n'a rien à
-             * dire — pas de prix de revient, pas de poids — et une fois la prop résolue, elle vaut
-             * `null` plutôt qu'une analyse vide.
-             */
-            'analysis' => Inertia::defer(fn () => $this->analysis->forAsset($userId, $id)),
-        ];
-
-        /**
-         * Non différée : la visibilité de la section dépend de la donnée elle-même, et un
-         * squelette qui disparaît sur chaque actif capitalisant coûterait plus qu'il ne rapporte.
-         */
-        if ($this->income->supportsExposure($detail->assetClass)) {
-            $props['dividends'] = $this->income->assetHistoryFor($userId, $id);
-        }
-
-        return Inertia::render('Asset/Show', $props);
+        return $page->render('Asset/Show');
     }
 }
