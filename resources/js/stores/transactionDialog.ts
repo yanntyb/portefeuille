@@ -71,7 +71,7 @@ export const useTransactionDialogStore = defineStore('transactionDialog', () => 
         pushModalEntry();
     }
 
-    function openEdit(line: TransactionLine & { assetId?: number | null }, asset?: { id: number; name: string }): void {
+    function openEdit(line: TransactionLine, asset?: { id: number; name: string }): void {
         lockedAssetId.value = asset?.id ?? null;
         lockedAssetName.value = asset?.name ?? null;
         editingId.value = line.id;

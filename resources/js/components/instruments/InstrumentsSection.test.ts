@@ -65,6 +65,7 @@ describe('positions différées', () => {
         await nextTick();
 
         expect(host.querySelector('[data-instrument-empty]')).toBeNull();
+        expect(host.querySelector('[data-instrument-row]')).toBeNull();
     });
 
     /** `holdings` par défaut est le tableau vide du harnais de test, pas une valeur posée par le composant : positions arrivées, aucune ligne. */
@@ -75,15 +76,5 @@ describe('positions différées', () => {
         await nextTick();
 
         expect(host.querySelector('[data-instrument-empty]')).not.toBeNull();
-    });
-
-    it('n\'affirme pas l\'absence de position tant qu\'elles ne sont pas arrivées', async () => {
-        const host = mountSection({ holdings: null });
-
-        host.querySelector<HTMLElement>('[data-section-toggle]')?.click();
-        await nextTick();
-
-        expect(host.querySelector('[data-instrument-empty]')).toBeNull();
-        expect(host.querySelector('[data-instrument-row]')).toBeNull();
     });
 });

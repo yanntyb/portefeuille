@@ -137,19 +137,19 @@ export const emptyDraft = (overrides: Partial<TransactionDraft> = {}): Transacti
  * Le formulaire d'une ligne existante. `id` dit laquelle corriger, `walletId` dit où : sans lui,
  * l'enveloppe repartirait du vide et une simple correction de quantité déplacerait la ligne.
  *
- * `assetId` n'est présent que sur les lignes qui nomment leur actif ; sur la fiche d'un actif, il
+ * `assetId` est nul sur un mouvement d'espèces, qui n'a pas d'actif ; sur la fiche d'un actif, il
  * est imposé par la page et passé en `overrides`. `total` est toujours positif (contrat de
  * `TransactionFlow`) : sur un mouvement d'espèces, c'est directement le montant à reprendre.
  */
 export const draftFromLine = (
-    line: TransactionLine & { assetId?: number | null },
+    line: TransactionLine,
     overrides: Partial<TransactionDraft> = {},
 ): TransactionDraft => {
     const trade = isTradeType(line.type);
 
     return {
         walletId: String(line.walletId),
-        assetId: line.assetId === undefined || line.assetId === null ? '' : String(line.assetId),
+        assetId: line.assetId === null ? '' : String(line.assetId),
         date: line.date,
         type: line.type,
         quantity: trade ? String(line.quantity) : '',

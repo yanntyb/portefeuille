@@ -251,7 +251,7 @@ construction.
 
 ## Front
 
-Quatre chantiers mécaniques, aucun changement de rendu.
+Quatre chantiers mécaniques ; trois changements de rendu, tous voulus, nommés ci-dessous.
 
 **`components/DeferredBlock.vue`.** Enveloppe `<Deferred :data>` ; `#fallback` rend un squelette
 de `lines` lignes (défaut 3), surchargeable par un slot `#fallback` pour `ChartSkeleton` ;
@@ -267,13 +267,15 @@ fusionnent en `components/transactions/TransactionsSection.vue`, props `lines`, 
 **Un résumé.** `instruments/ValuationSection` et `dashboard/WealthSummarySection` deviennent
 `components/PortfolioSummarySection.vue`, props : les chiffres affichés, pas l'objet entier. Le
 `const eur = (v) => formatEur(v, 0)` redéfini dans trois composants disparaît au profit de l'appel
-direct.
+direct. La pastille de gain se cache quand le pourcentage est nul, sur l'exposition comme au
+tableau de bord — un gain sans mise n'a pas de pourcentage.
 
 **Une ventilation.** Les quatre `map` vers `SectorBreakdownRow` (`instrument/SectorsSection`,
 `instruments/SectorsBlock`, `dashboard/WealthSectorsSection`, `Wallet/Show` inline) deviennent un
 `SectorsSection.vue` qui reçoit des `SectorBreakdownRow[]`, et des convertisseurs nommés dans
-`lib/sector.ts` (`rowsFromWeights`, `rowsFromSlices`), testés là. Le squelette du bloc sectoriel de
-l'analyse devient trois lignes, comme partout.
+`lib/sector.ts` (`rowsFromWeights`, `rowsFromSlices`, `rowsFromShares`), testés là. Le squelette du
+bloc sectoriel de l'analyse devient trois lignes, comme partout. Une enveloppe sans position dit
+« Aucune position dans cette enveloppe. » au lieu d'une liste vide.
 
 **Dialecte unique du chargement.** `null` = pas encore arrivé, vide = rien à montrer. La prop
 `loaded` disparaît d'`InstrumentsSection` ; `ValueVsInvestedChart` la garde, un objet présent
