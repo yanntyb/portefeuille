@@ -134,7 +134,14 @@ use Illuminate\Support\Carbon;
  * la même composition qui sert désormais une exposition et une enveloppe. Seul le nom de la clé
  * bouge, son contenu est identique.
  */
-const SNAPSHOT_VERSION = '1a1819d320b5325d1568eabee8d8e845ea6a0b20';
+/**
+ * Modifié une vingt-huitième fois : fin du jumelage. Les pages rendent les Datas de Portfolio,
+ * Valuation et Income telles quelles, donc trois clés entrent dans le blob (`overview.netContributions`
+ * sur chaque exposition, `instrument.position.assetId`, `instrument.transactions[].assetId` et
+ * `assetName`) ; chaque exposition porte aussi `assetClass`, et l'ordre des clés d'une fiche suit
+ * désormais sync puis différé. Aucun chiffre n'a bougé.
+ */
+const SNAPSHOT_VERSION = '57c78a28d7ca7237489f2515eae628ac57d3ecfd';
 
 /**
  * Retire récursivement les clés `isin` du corps de l'instantané : seul champ non déterministe

@@ -118,7 +118,7 @@ it('rend les mêmes listes vides sans aucun utilisateur', function () {
     $equity = $snapshot['classes']['equity'];
 
     expect(array_keys($equity))
-        ->toBe(['overview', 'trends', 'evolutionSeries', 'performances', 'basketAnalysis', 'transactions', 'sectorBreakdown']);
+        ->toBe(['assetClass', 'overview', 'trends', 'evolutionSeries', 'performances', 'basketAnalysis', 'transactions', 'sectorBreakdown']);
     // gainPct est nul, et non zéro, sur un coût nul : « 0 % » mentirait sur une mise inconnue.
     expect($equity['overview']->jsonSerialize())
         ->toBe([
@@ -127,6 +127,7 @@ it('rend les mêmes listes vides sans aucun utilisateur', function () {
             'totalGain' => 0.0,
             'totalGainPct' => null,
             'totalRealizedGain' => 0.0,
+            'netContributions' => 0.0,
             'cash' => 0.0,
             'holdings' => [],
         ]);
@@ -137,5 +138,5 @@ it('rend les mêmes listes vides sans aucun utilisateur', function () {
         ->and($equity['sectorBreakdown'])->toBe([]);
 
     expect(array_keys($snapshot['classes']['crypto']))
-        ->toBe(['overview', 'trends', 'evolutionSeries', 'performances', 'basketAnalysis', 'transactions']);
+        ->toBe(['assetClass', 'overview', 'trends', 'evolutionSeries', 'performances', 'basketAnalysis', 'transactions']);
 });
