@@ -6,11 +6,11 @@ import CorrelationInfoDialog from '@/components/CorrelationInfoDialog.vue';
 import DeferredBlock from '@/components/DeferredBlock.vue';
 import PerformanceBars from '@/components/PerformanceBars.vue';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
-import SectorsBlock from '@/components/instruments/SectorsBlock.vue';
+import SectorsSection from '@/components/SectorsSection.vue';
 import { basketRows, correlationGrid, type BasketAnalysis, type CorrelationRow } from '@/lib/basketAnalysis';
 import type { AnalysisRow as Row } from '@/lib/instrumentAnalysis';
 import type { Performance } from '@/lib/performance';
-import type { SectorSlice } from '@/lib/sector';
+import { rowsFromSlices, type SectorBreakdownRow, type SectorSlice } from '@/lib/sector';
 
 const props = defineProps<{
     analysis?: BasketAnalysis | null;
@@ -35,6 +35,11 @@ const hasMatrix = computed<boolean>(() => grid.value.length > 1);
 const isEmpty = computed<boolean>(() => grid.value.length === 0);
 
 const hasPerformances = computed<boolean>(() => (props.performances?.length ?? 0) > 0);
+
+/** `undefined` comme `null` valent « pas encore arrivé » : une prop Inertia non servie vaut `undefined`. */
+const sectorRows = computed<SectorBreakdownRow[] | null>(() =>
+    props.slices === null || props.slices === undefined ? null : rowsFromSlices(props.slices),
+);
 </script>
 
 <template>
@@ -142,6 +147,6 @@ const hasPerformances = computed<boolean>(() => (props.performances?.length ?? 0
         </div>
 
         <!-- La lecture la plus fine ferme la section : les secteurs que traverse la poche. -->
-        <SectorsBlock v-if="props.hasSectors" :slices="props.slices" />
+        <SectorsSection v-if="props.hasSectors" variant="block" defer-key="sectorBreakdown" :rows="sectorRows" />
     </CollapsibleSection>
 </template>

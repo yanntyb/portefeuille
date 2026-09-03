@@ -4,11 +4,9 @@ import { Head } from '@inertiajs/vue3';
 import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
 import AnalysisSection from '@/components/instruments/AnalysisSection.vue';
-import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
-import DeferredBlock from '@/components/DeferredBlock.vue';
 import EvolutionSection from '@/components/instruments/EvolutionSection.vue';
 import InstrumentsSection from '@/components/instruments/InstrumentsSection.vue';
-import SectorBreakdownList from '@/components/SectorBreakdownList.vue';
+import SectorsSection from '@/components/SectorsSection.vue';
 import TransactionDialog from '@/components/transactions/TransactionDialog.vue';
 import TransactionsSection from '@/components/transactions/TransactionsSection.vue';
 import WalletHeaderSection from '@/components/wallet/WalletHeaderSection.vue';
@@ -16,7 +14,7 @@ import type { BasketAnalysis } from '@/lib/basketAnalysis';
 import type { TransactionLine } from '@/lib/instrument';
 import type { Performance } from '@/lib/performance';
 import type { EvolutionSeries, HoldingLine } from '@/lib/portfolio';
-import type { SectorBreakdownRow, SectorSlice } from '@/lib/sector';
+import { rowsFromShares, type SectorBreakdownRow, type SectorSlice } from '@/lib/sector';
 import type { WalletClassSlice, WealthAccount } from '@/lib/wealth';
 
 const props = defineProps<{
@@ -33,29 +31,13 @@ const props = defineProps<{
 /** Le courtier titre la page quand il est connu ; le nom du portefeuille sinon. */
 const title = computed<string>(() => `${props.account.broker ?? props.account.walletName} (${props.account.accountTypeLabel})`);
 
-/**
- * `SectorBreakdownList` lit des `SectorBreakdownRow` : la ventilation d'une enveloppe s'y coule
- * sans composant neuf, seuls les noms de champs changent. Les parts viennent du serveur, rien
- * n'est recalculé ici.
- */
-const breakdownRows = computed<SectorBreakdownRow[]>(() =>
-    (props.breakdown ?? []).map((slice) => ({
-        label: slice.label,
-        share: slice.share,
-        amount: slice.value,
-    })),
+const breakdownRows = computed<SectorBreakdownRow[] | null>(() =>
+    props.breakdown === undefined ? null : rowsFromShares(props.breakdown),
 );
 
 /**
- * Vrai dès que la prop différée est arrivée, même vide. Sans cette distinction, une ventilation
- * pas encore arrivée et une enveloppe qui ne tient rien rendent le même bloc vide — hors-ligne
- * comme pendant le chargement.
- */
-const breakdownLoaded = computed<boolean>(() => props.breakdown !== undefined && props.breakdown !== null);
-
-/**
- * Même logique que `breakdownLoaded`, mais pour les positions : c'est le cas le plus grave,
- * `InstrumentsSection` affirmant sinon qu'une enveloppe ne tient rien avant d'avoir la réponse.
+ * Vrai dès que la prop différée est arrivée, même vide. Sans cette distinction, `InstrumentsSection`
+ * affirmerait qu'une enveloppe ne tient rien avant même d'avoir eu la réponse.
  */
 const positionsLoaded = computed<boolean>(() => props.positions !== undefined && props.positions !== null);
 </script>
@@ -82,13 +64,14 @@ const positionsLoaded = computed<boolean>(() => props.positions !== undefined &&
             :loaded="positionsLoaded"
         />
 
-        <CollapsibleSection section="wallet-breakdown" title="Répartition">
-            <template v-if="breakdownLoaded">
-                <SectorBreakdownList :rows="breakdownRows" />
-            </template>
-
-            <DeferredBlock v-else data="breakdown" />
-        </CollapsibleSection>
+        <SectorsSection
+            section="wallet-breakdown"
+            title="Répartition"
+            defer-key="breakdown"
+            :rows="breakdownRows"
+            collapsible
+            empty-label="Aucune position dans cette enveloppe."
+        />
 
         <!--
             La même section que sur une page d'exposition : une enveloppe et une poche sont deux

@@ -15,6 +15,24 @@ export interface SectorBreakdownRow {
     amount: number | null;
 }
 
+import type { SectorWeight } from '@/lib/instrument';
+
+/** Les secteurs d'un instrument, des poids entre 0 et 1 : seule une position détenue a une valeur à répartir. */
+export const rowsFromWeights = (sectors: SectorWeight[], marketValue: number | null): SectorBreakdownRow[] =>
+    sectors.map((sector: SectorWeight): SectorBreakdownRow => ({
+        label: sector.label,
+        share: sector.weight * 100,
+        amount: marketValue === null ? null : marketValue * sector.weight,
+    }));
+
+/** Une tranche déjà pesée par le serveur, en pourcentage (`pct`) : portefeuille entier ou patrimoine. */
+export const rowsFromSlices = (slices: { label: string; value: number; pct: number }[]): SectorBreakdownRow[] =>
+    slices.map((slice): SectorBreakdownRow => ({ label: slice.label, share: slice.pct, amount: slice.value }));
+
+/** Une tranche déjà pesée par le serveur, en part (`share`) : la répartition d'une enveloppe. */
+export const rowsFromShares = (slices: { label: string; value: number; share: number }[]): SectorBreakdownRow[] =>
+    slices.map((slice): SectorBreakdownRow => ({ label: slice.label, share: slice.share, amount: slice.value }));
+
 /** Au-delà de six, la liste sectorielle cesse de se lire d'un coup d'œil. */
 const COLLAPSED_COUNT = 6;
 

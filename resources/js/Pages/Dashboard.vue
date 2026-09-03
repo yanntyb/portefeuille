@@ -1,17 +1,19 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
 import WealthClassesSection from '@/components/dashboard/WealthClassesSection.vue';
 import WealthEvolutionSection from '@/components/dashboard/WealthEvolutionSection.vue';
 import WealthIncomeSection from '@/components/dashboard/WealthIncomeSection.vue';
 import WealthAccountsSection from '@/components/dashboard/WealthAccountsSection.vue';
-import WealthSectorsSection from '@/components/dashboard/WealthSectorsSection.vue';
 import PortfolioSummarySection from '@/components/PortfolioSummarySection.vue';
+import SectorsSection from '@/components/SectorsSection.vue';
 import TransactionDialog from '@/components/transactions/TransactionDialog.vue';
 import TransactionsSection from '@/components/transactions/TransactionsSection.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
 import type { TransactionLine } from '@/lib/instrument';
+import { rowsFromSlices, type SectorBreakdownRow } from '@/lib/sector';
 import type { SyncState } from '@/lib/sync';
 import type { WealthAccount, WealthIncome, WealthOverview, WealthSector, WealthSeries } from '@/lib/wealth';
 import { useSnapshotStore } from '@/stores/snapshot';
@@ -34,6 +36,8 @@ const income = aheadOfNetwork(() => props.income, () => snapshot.dashboard?.inco
 const sectors = aheadOfNetwork(() => props.sectors, () => snapshot.dashboard?.sectors);
 const transactions = aheadOfNetwork(() => props.transactions, () => snapshot.dashboard?.transactions);
 const accounts = aheadOfNetwork(() => props.accounts, () => snapshot.dashboard?.accounts);
+
+const sectorRows = computed<SectorBreakdownRow[] | null>(() => (sectors.value === null ? null : rowsFromSlices(sectors.value)));
 </script>
 
 <template>
@@ -66,7 +70,7 @@ const accounts = aheadOfNetwork(() => props.accounts, () => snapshot.dashboard?.
         <WealthAccountsSection :accounts="accounts" />
 
         <!-- La lecture la plus fine ferme la page : les secteurs qui traversent les classes. -->
-        <WealthSectorsSection :sectors="sectors" />
+        <SectorsSection section="wealth-sectors" defer-key="sectors" :rows="sectorRows" />
     </AppPage>
 
     <!-- Barre sans fil d'Ariane : le tableau de bord est la racine, son fil n'aurait qu'un seul cran. -->

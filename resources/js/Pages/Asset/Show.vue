@@ -10,12 +10,13 @@ import FiguresSection from '@/components/instrument/FiguresSection.vue';
 import HeroSection from '@/components/instrument/HeroSection.vue';
 import InstrumentChart from '@/components/instrument/InstrumentChart.vue';
 import PriceHistorySection from '@/components/instrument/PriceHistorySection.vue';
-import SectorsSection from '@/components/instrument/SectorsSection.vue';
+import SectorsSection from '@/components/SectorsSection.vue';
 import TransactionsSection from '@/components/transactions/TransactionsSection.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
 import type { AssetDividendHistory } from '@/lib/income';
 import type { Instrument, InstrumentAnalysis, PriceHistory, ValuationSeries } from '@/lib/instrument';
 import type { Performance } from '@/lib/performance';
+import { rowsFromWeights } from '@/lib/sector';
 import { useSnapshotStore } from '@/stores/snapshot';
 
 const props = defineProps<{
@@ -84,8 +85,8 @@ const analysis = aheadOfNetwork(
         <!-- Un secteur unique se lit en étiquette dans l'en-tête : sa section n'aurait qu'une ligne à 100 %. -->
         <SectorsSection
             v-if="props.instrument.sectors.length > 1"
-            :sectors="props.instrument.sectors"
-            :market-value="props.instrument.position?.marketValue ?? null"
+            section="sectors"
+            :rows="rowsFromWeights(props.instrument.sectors, props.instrument.position?.marketValue ?? null)"
         />
     </AppPage>
 

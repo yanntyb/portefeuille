@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { collapsedSectors, type SectorBreakdownRow } from '@/lib/sector';
+import { collapsedSectors, rowsFromShares, rowsFromSlices, rowsFromWeights, type SectorBreakdownRow } from '@/lib/sector';
 
 const row = (label: string, share: number, amount: number | null = null): SectorBreakdownRow => ({
     label,
@@ -69,5 +69,24 @@ describe('collapsedSectors', () => {
 
         expect(view.rows).toEqual([]);
         expect(view.hiddenCount).toBe(0);
+    });
+});
+
+describe('conversion vers les lignes de la liste sectorielle', () => {
+    it('répartit la valeur détenue sur des poids entre 0 et 1', () => {
+        expect(rowsFromWeights([{ label: 'Tech', weight: 0.25 }], 1000)).toEqual([
+            { label: 'Tech', share: 25, amount: 250 },
+        ]);
+    });
+
+    it('laisse le montant nul quand rien n\'est détenu', () => {
+        expect(rowsFromWeights([{ label: 'Tech', weight: 0.25 }], null)).toEqual([
+            { label: 'Tech', share: 25, amount: null },
+        ]);
+    });
+
+    it('lit une tranche déjà pesée, en pourcentage ou en part', () => {
+        expect(rowsFromSlices([{ label: 'Santé', value: 300, pct: 30 }])).toEqual([{ label: 'Santé', share: 30, amount: 300 }]);
+        expect(rowsFromShares([{ label: 'Actions', value: 600, share: 60 }])).toEqual([{ label: 'Actions', share: 60, amount: 600 }]);
     });
 });
