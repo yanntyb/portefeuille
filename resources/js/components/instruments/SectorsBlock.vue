@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Deferred } from '@inertiajs/vue3';
+import DeferredBlock from '@/components/DeferredBlock.vue';
 import SectorBreakdownList from '@/components/SectorBreakdownList.vue';
 import type { SectorBreakdownRow, SectorSlice } from '@/lib/sector';
 
@@ -26,18 +26,10 @@ const hasSectors = computed<boolean>(() => rows.value.length > 0);
             </p>
         </template>
 
-        <Deferred v-else data="sectorBreakdown">
+        <DeferredBlock v-else data="sectorBreakdown">
             <template #fallback>
                 <div class="h-[280px] w-full animate-pulse rounded-md bg-muted"></div>
             </template>
-
-            <template #rescue>
-                <p class="py-8 text-center text-sm text-muted-foreground">
-                    Données indisponibles hors-ligne.
-                </p>
-            </template>
-
-            <span />
-        </Deferred>
+        </DeferredBlock>
     </div>
 </template>

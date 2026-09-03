@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { Deferred } from '@inertiajs/vue3';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
+import DeferredBlock from '@/components/DeferredBlock.vue';
 import { gainClass, signedEur } from '@/lib/format';
 import type { IncomeOrigin, WealthIncome } from '@/lib/wealth';
 
@@ -68,21 +69,7 @@ const origins = computed<IncomeOrigin[]>(() => props.income?.origins ?? []);
             Aucun revenu pour l'instant.
         </p>
 
-        <!-- Un second `Deferred` sur la même prop : le pli seul distingue l'attente de l'indisponible. -->
-        <Deferred v-else data="income">
-            <template #fallback>
-                <div class="flex flex-col gap-2">
-                    <div v-for="n in 3" :key="n" class="h-8 w-full animate-pulse rounded-md bg-muted"></div>
-                </div>
-            </template>
-
-            <template #rescue>
-                <p class="py-8 text-center text-sm text-muted-foreground">
-                    Données indisponibles hors-ligne.
-                </p>
-            </template>
-
-            <span />
-        </Deferred>
+        <!-- Un second bloc différé sur la même prop : le pli seul distingue l'attente de l'indisponible. -->
+        <DeferredBlock v-else data="income" />
     </CollapsibleSection>
 </template>

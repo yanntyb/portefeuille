@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Deferred } from '@inertiajs/vue3';
+import DeferredBlock from '@/components/DeferredBlock.vue';
 import { eur } from '@/lib/format';
 import { annualIncomeBars, type AnnualIncome, type AnnualIncomeBar, type IncomeSummary } from '@/lib/income';
 
@@ -62,20 +62,6 @@ const hasIncome = computed<boolean>(() => (props.income?.totalReceived ?? 0) > 0
             </p>
         </template>
 
-        <Deferred v-else data="income">
-            <template #fallback>
-                <div class="flex flex-col gap-2">
-                    <div v-for="n in 3" :key="n" class="h-8 w-full animate-pulse rounded-md bg-muted"></div>
-                </div>
-            </template>
-
-            <template #rescue>
-                <p class="py-8 text-center text-sm text-muted-foreground">
-                    Données indisponibles hors-ligne.
-                </p>
-            </template>
-
-            <span />
-        </Deferred>
+        <DeferredBlock v-else data="income" />
     </section>
 </template>

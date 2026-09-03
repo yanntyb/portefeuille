@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Deferred } from '@inertiajs/vue3';
 import AnalysisRow from '@/components/instrument/AnalysisRow.vue';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
 import CorrelationInfoDialog from '@/components/CorrelationInfoDialog.vue';
+import DeferredBlock from '@/components/DeferredBlock.vue';
 import PerformanceBars from '@/components/PerformanceBars.vue';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
 import SectorsBlock from '@/components/instruments/SectorsBlock.vue';
@@ -114,21 +114,7 @@ const hasPerformances = computed<boolean>(() => (props.performances?.length ?? 0
             </template>
         </template>
 
-        <Deferred v-else data="basketAnalysis">
-            <template #fallback>
-                <div class="flex flex-col gap-2">
-                    <div v-for="n in 6" :key="n" class="h-6 w-full animate-pulse rounded-md bg-muted"></div>
-                </div>
-            </template>
-
-            <template #rescue>
-                <p class="py-8 text-center text-sm text-muted-foreground">
-                    Données indisponibles hors-ligne.
-                </p>
-            </template>
-
-            <span />
-        </Deferred>
+        <DeferredBlock v-else data="basketAnalysis" :lines="6" line-class="h-6" />
 
         <!-- Ce qui décrit la poche se lit d'abord, ce qu'elle a rapporté ensuite. -->
         <div class="flex flex-col gap-2">
@@ -152,21 +138,7 @@ const hasPerformances = computed<boolean>(() => (props.performances?.length ?? 0
                 </p>
             </template>
 
-            <Deferred v-else data="performances">
-                <template #fallback>
-                    <div class="flex flex-col gap-2">
-                        <div v-for="n in 5" :key="n" class="h-8 w-full animate-pulse rounded-md bg-muted"></div>
-                    </div>
-                </template>
-
-                <template #rescue>
-                    <p class="py-8 text-center text-sm text-muted-foreground">
-                        Données indisponibles hors-ligne.
-                    </p>
-                </template>
-
-                <span />
-            </Deferred>
+            <DeferredBlock v-else data="performances" :lines="5" />
         </div>
 
         <!-- La lecture la plus fine ferme la section : les secteurs que traverse la poche. -->

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Deferred } from '@inertiajs/vue3';
+import DeferredBlock from '@/components/DeferredBlock.vue';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
 import SectorBreakdownList from '@/components/SectorBreakdownList.vue';
 import type { SectorBreakdownRow } from '@/lib/sector';
@@ -29,20 +29,6 @@ const hasSectors = computed<boolean>(() => rows.value.length > 0);
             Pas encore de données sectorielles.
         </p>
 
-        <Deferred v-else data="sectors">
-            <template #fallback>
-                <div class="flex flex-col gap-2">
-                    <div v-for="n in 3" :key="n" class="h-8 w-full animate-pulse rounded-md bg-muted"></div>
-                </div>
-            </template>
-
-            <template #rescue>
-                <p class="py-8 text-center text-sm text-muted-foreground">
-                    Données indisponibles hors-ligne.
-                </p>
-            </template>
-
-            <span />
-        </Deferred>
+        <DeferredBlock v-else data="sectors" />
     </CollapsibleSection>
 </template>

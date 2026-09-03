@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Deferred } from '@inertiajs/vue3';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
+import DeferredBlock from '@/components/DeferredBlock.vue';
 import AddTransactionButton from '@/components/transactions/AddTransactionButton.vue';
 import TransactionYearList from '@/components/transactions/TransactionYearList.vue';
 import { transactionLabelOf } from '@/lib/instrument';
@@ -51,20 +51,6 @@ const dialog = useTransactionDialogStore();
             @delete="dialog.askDeleteLine($event, transactionLabelOf($event as NamedTransactionLine))"
         />
 
-        <Deferred v-else data="transactions">
-            <template #fallback>
-                <div class="flex flex-col gap-2">
-                    <div v-for="n in 3" :key="n" class="h-8 w-full animate-pulse rounded-md bg-muted"></div>
-                </div>
-            </template>
-
-            <template #rescue>
-                <p class="py-8 text-center text-sm text-muted-foreground">
-                    Données indisponibles hors-ligne.
-                </p>
-            </template>
-
-            <span />
-        </Deferred>
+        <DeferredBlock v-else data="transactions" />
     </CollapsibleSection>
 </template>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Deferred } from '@inertiajs/vue3';
 import { ChevronRight } from 'lucide-vue-next';
+import DeferredBlock from '@/components/DeferredBlock.vue';
 import { eur, frMonthYear } from '@/lib/format';
 import type { HeroMetaEntry } from '@/lib/instrument';
 import {
@@ -159,18 +159,6 @@ const amount = (value: number): string => eur(value, 0);
             </div>
         </template>
 
-        <Deferred v-else data="amortization">
-            <template #fallback>
-                <div class="flex flex-col gap-2">
-                    <div v-for="n in 6" :key="n" class="h-6 w-full animate-pulse rounded-md bg-muted"></div>
-                </div>
-            </template>
-
-            <template #rescue>
-                <p class="py-8 text-center text-sm text-muted-foreground">Données indisponibles hors-ligne.</p>
-            </template>
-
-            <span />
-        </Deferred>
+        <DeferredBlock v-else data="amortization" :lines="6" line-class="h-6" />
     </section>
 </template>

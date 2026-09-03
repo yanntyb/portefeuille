@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Deferred } from '@inertiajs/vue3';
 import AnalysisRow from '@/components/instrument/AnalysisRow.vue';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
+import DeferredBlock from '@/components/DeferredBlock.vue';
 import PerformanceBars from '@/components/PerformanceBars.vue';
 import PerformanceInfoDialog from '@/components/PerformanceInfoDialog.vue';
 import { analysisGroups, type AnalysisGroup } from '@/lib/instrumentAnalysis';
@@ -37,21 +37,7 @@ const hasPerformances = computed<boolean>(() => (props.performances?.length ?? 0
             </div>
         </template>
 
-        <Deferred v-else data="analysis">
-            <template #fallback>
-                <div class="flex flex-col gap-2">
-                    <div v-for="n in 8" :key="n" class="h-6 w-full animate-pulse rounded-md bg-muted"></div>
-                </div>
-            </template>
-
-            <template #rescue>
-                <p class="py-8 text-center text-sm text-muted-foreground">
-                    Données indisponibles hors-ligne.
-                </p>
-            </template>
-
-            <span />
-        </Deferred>
+        <DeferredBlock v-else data="analysis" :lines="8" line-class="h-6" />
 
         <!-- Les performances ferment la section : les repères décrivent la position, elles disent
              ce qu'elle a rapporté. -->

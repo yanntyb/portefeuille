@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Deferred } from '@inertiajs/vue3';
 import { AsyncBaseChart } from '@/components/AsyncBaseChart';
 import ChartSkeleton from '@/components/ChartSkeleton.vue';
+import DeferredBlock from '@/components/DeferredBlock.vue';
 import { buildWealthStackOption, type ZoomWindow } from '@/lib/chart';
 import { eur } from '@/lib/format';
 import type { ChartOption } from '@/lib/echarts';
@@ -42,20 +42,12 @@ const option = computed<ChartOption>(() => buildWealthStackOption({
             </p>
         </template>
 
-        <Deferred v-else data="series">
+        <DeferredBlock v-else data="series">
             <template #fallback>
                 <div class="px-6">
                     <ChartSkeleton />
                 </div>
             </template>
-
-            <template #rescue>
-                <p class="py-8 text-center text-sm text-muted-foreground">
-                    Données indisponibles hors-ligne.
-                </p>
-            </template>
-
-            <span />
-        </Deferred>
+        </DeferredBlock>
     </section>
 </template>

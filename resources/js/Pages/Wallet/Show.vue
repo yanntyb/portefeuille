@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Deferred, Head } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import AppBottomBar from '@/components/AppBottomBar.vue';
 import AppPage from '@/components/AppPage.vue';
 import AnalysisSection from '@/components/instruments/AnalysisSection.vue';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
+import DeferredBlock from '@/components/DeferredBlock.vue';
 import EvolutionSection from '@/components/instruments/EvolutionSection.vue';
 import InstrumentsSection from '@/components/instruments/InstrumentsSection.vue';
 import SectorBreakdownList from '@/components/SectorBreakdownList.vue';
@@ -85,21 +86,7 @@ const positionsLoaded = computed<boolean>(() => props.positions !== undefined &&
                 <SectorBreakdownList :rows="breakdownRows" />
             </template>
 
-            <Deferred v-else data="breakdown">
-                <template #fallback>
-                    <div class="flex flex-col gap-2">
-                        <div v-for="n in 3" :key="n" class="h-8 w-full animate-pulse rounded-md bg-muted"></div>
-                    </div>
-                </template>
-
-                <template #rescue>
-                    <p class="py-8 text-center text-sm text-muted-foreground">
-                        Données indisponibles hors-ligne.
-                    </p>
-                </template>
-
-                <span />
-            </Deferred>
+            <DeferredBlock v-else data="breakdown" />
         </CollapsibleSection>
 
         <!--

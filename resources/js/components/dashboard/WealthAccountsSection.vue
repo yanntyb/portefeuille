@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Deferred, Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
+import DeferredBlock from '@/components/DeferredBlock.vue';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
 import GainPill from '@/components/GainPill.vue';
 import { eur, pct } from '@/lib/format';
@@ -75,20 +76,6 @@ const age = (account: WealthAccount): string | null =>
             </p>
         </template>
 
-        <Deferred v-else data="accounts">
-            <template #fallback>
-                <div class="flex flex-col gap-2">
-                    <div v-for="n in 2" :key="n" class="h-16 w-full animate-pulse rounded-md bg-muted"></div>
-                </div>
-            </template>
-
-            <template #rescue>
-                <p class="py-8 text-center text-sm text-muted-foreground">
-                    Données indisponibles hors-ligne.
-                </p>
-            </template>
-
-            <span />
-        </Deferred>
+        <DeferredBlock v-else data="accounts" :lines="2" line-class="h-16" />
     </CollapsibleSection>
 </template>

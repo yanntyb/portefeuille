@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Deferred, Link, usePage } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { Search } from 'lucide-vue-next';
 import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
+import DeferredBlock from '@/components/DeferredBlock.vue';
 import InstrumentList from '@/components/InstrumentList.vue';
 import { buttonVariants } from '@/components/ui/button';
 import type { CatalogTrend } from '@/lib/catalog';
@@ -70,20 +71,6 @@ const rows = computed<InstrumentRow[]>(() => holdingRows(props.holdings, props.t
             </div>
         </template>
 
-        <Deferred v-else :data="props.deferKey ?? 'positions'">
-            <template #fallback>
-                <div class="flex flex-col gap-2">
-                    <div v-for="n in 3" :key="n" class="h-8 w-full animate-pulse rounded-md bg-muted"></div>
-                </div>
-            </template>
-
-            <template #rescue>
-                <p class="py-8 text-center text-sm text-muted-foreground">
-                    Données indisponibles hors-ligne.
-                </p>
-            </template>
-
-            <span />
-        </Deferred>
+        <DeferredBlock v-else :data="props.deferKey ?? 'positions'" />
     </CollapsibleSection>
 </template>
