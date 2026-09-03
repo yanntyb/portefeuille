@@ -125,7 +125,7 @@ use Illuminate\Support\Carbon;
  * Modifié une vingt-sixième fois : chaque enveloppe du tableau de bord gagne `cost` (le coût de
  * revient de ses positions) et `realizedGain` (le gain encaissé par ses ventes), les deux repères
  * que sa page affiche désormais sous son grand chiffre. Deux clés de plus par ligne d'`accounts`,
- * dans l'ordre de `PortfolioSummaryData` — `marketValue, cost, gain, gainPct, realizedGain` — et
+ * dans l'ordre de `PortfolioOverviewData` — `marketValue, cost, gain, gainPct, realizedGain` — et
  * rien d'autre ne bouge.
  */
 /**

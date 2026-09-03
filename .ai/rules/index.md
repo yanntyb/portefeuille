@@ -12,8 +12,8 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Contexts/Market/Jobs/** | .ai/rules/jobs.md |
 | resources/js/lib/chart*.ts | .ai/rules/lib.md |
 | app/Contexts/Market/** | .ai/rules/market.md |
-| app/Contexts/Portfolio/** | .ai/rules/portfolio.md |
 | app/Contexts/PortfolioView/** | .ai/rules/portfolio-view.md |
+| app/Contexts/Portfolio/** | .ai/rules/portfolio.md |
 | resources/js/pwa/** | .ai/rules/pwa.md |
 | app/Contexts/Market/Infrastructure/Python/** | .ai/rules/python.md |
 | app/Contexts/RealEstate/** | .ai/rules/real-estate.md |

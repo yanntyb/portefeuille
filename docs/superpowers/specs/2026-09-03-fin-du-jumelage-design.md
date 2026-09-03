@@ -301,8 +301,9 @@ Wealth (`PortfolioAccountsTest`), `GetWealthAccountsTest`, `tests/Unit/Portfolio
 attendues, groupes, `null` sur ressource étrangère ou inconnue, condition `hasSectors()` et gate
 dividendes.
 
-**Inchangés.** Les tests de contrôleurs (`AssetClassControllerTest`, `AssetControllerTest`,
-`AssetClassCatalogControllerTest`, ceux du tableau de bord) : le comportement HTTP ne change pas.
+**Inchangés.** Les tests de contrôleurs, sauf les cas « par leurs seuls ports » (trois dans
+`AssetClassControllerTest`, un dans `AssetControllerTest`) qui prouvaient l'isolation par port et
+partent avec lui.
 Les tests des actions de Portfolio, Valuation, Income.
 
 **`SnapshotInvariantTest`.** Hash mis à jour une fois. Entrée d'en-tête : « Modifié une vingtième

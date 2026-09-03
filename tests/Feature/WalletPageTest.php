@@ -83,7 +83,7 @@ it('résout les positions, la série et le journal quand leur groupe est demand�
         ->assertJsonPath('props.positions.0.assetId', $instrument->id)
         /**
          * Seul groupe non exercé ailleurs dans ce fichier : sans lui, une inversion d'arguments
-         * sur le chemin de la série (`ValuationPort::evolutionFor()`) ne serait détectée par aucun
+         * sur le chemin de la série (`BuildEvolutionSeries`) ne serait détectée par aucun
          * test bout en bout. Une fermeture et non un index fixe : l'ordre des labels n'est pas ce
          * qui est affirmé ici, seulement que le titre détenu vaut bien 1000 € en dernier point.
          */

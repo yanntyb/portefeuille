@@ -21,7 +21,7 @@ use JsonSerializable;
  * `cost` est le coût de revient des positions du compte, `realizedGain` le gain déjà encaissé par
  * ses ventes — lu sur les transactions, un actif soldé n'ayant plus de position à totaliser. Les
  * deux se lisent l'un sous l'autre avec `gain`, qui est le gain latent : ordre et vocabulaire de
- * `PortfolioSummaryData`, pour que les deux échelles se lisent pareil.
+ * `PortfolioOverviewData`, pour que les deux échelles se lisent pareil.
  */
 readonly class AccountLineData implements JsonSerializable
 {
