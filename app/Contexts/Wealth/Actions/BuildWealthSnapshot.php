@@ -2,48 +2,16 @@
 
 namespace App\Contexts\Wealth\Actions;
 
-use App\Contexts\Wealth\Datas\WealthAccountData;
-use App\Contexts\Wealth\Datas\WealthIncomeData;
-use App\Contexts\Wealth\Datas\WealthOverviewData;
-use App\Contexts\Wealth\Datas\WealthSectorData;
-use App\Contexts\Wealth\Datas\WealthSeriesData;
-use App\Contexts\Wealth\Datas\WealthTransactionLineData;
+use App\Contexts\Wealth\Pages\DashboardPage;
 
-/**
- * Part patrimoine de l'instantané hors-ligne : les six props du tableau de bord, y compris les
- * cinq qu'il diffère. Les mêmes actions que le contrôleur, donc jamais une composition parallèle
- * qui pourrait diverger de ce que la page affiche.
- */
+/** Le volet tableau de bord de l'instantané hors-ligne : la page, toutes sections résolues. */
 class BuildWealthSnapshot
 {
-    public function __construct(
-        private GetWealthOverview $overview,
-        private BuildWealthSeries $series,
-        private GetWealthIncome $income,
-        private GetWealthSectors $sectors,
-        private GetWealthTransactions $transactions,
-        private GetWealthAccounts $accounts,
-    ) {}
+    public function __construct(private DashboardPage $page) {}
 
-    /**
-     * @return array{
-     *     overview: WealthOverviewData,
-     *     series: WealthSeriesData,
-     *     income: WealthIncomeData,
-     *     sectors: list<WealthSectorData>,
-     *     transactions: list<WealthTransactionLineData>,
-     *     accounts: list<WealthAccountData>,
-     * }
-     */
+    /** @return array<string, mixed> */
     public function __invoke(int $userId): array
     {
-        return [
-            'overview' => ($this->overview)($userId),
-            'series' => ($this->series)($userId),
-            'income' => ($this->income)($userId),
-            'sectors' => ($this->sectors)($userId),
-            'transactions' => ($this->transactions)($userId),
-            'accounts' => ($this->accounts)($userId),
-        ];
+        return $this->page->for($userId)->resolve();
     }
 }
