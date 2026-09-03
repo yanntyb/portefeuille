@@ -67,8 +67,8 @@ describe('positions différées', () => {
         expect(host.querySelector('[data-instrument-empty]')).toBeNull();
     });
 
-    /** `holdings` vaut un tableau par défaut : la page d'exposition, qui sert `overview` en synchrone, n'a rien à passer. */
-    it('affiche la liste par défaut, sans que holdings soit fourni', async () => {
+    /** `holdings` par défaut est le tableau vide du harnais de test, pas une valeur posée par le composant : positions arrivées, aucune ligne. */
+    it('affiche le libellé vide quand les positions sont arrivées sans aucune ligne', async () => {
         const host = mountSection();
 
         host.querySelector<HTMLElement>('[data-section-toggle]')?.click();

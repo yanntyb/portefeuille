@@ -272,11 +272,14 @@ direct.
 **Une ventilation.** Les quatre `map` vers `SectorBreakdownRow` (`instrument/SectorsSection`,
 `instruments/SectorsBlock`, `dashboard/WealthSectorsSection`, `Wallet/Show` inline) deviennent un
 `SectorsSection.vue` qui reçoit des `SectorBreakdownRow[]`, et des convertisseurs nommés dans
-`lib/sector.ts` (`rowsFromWeights`, `rowsFromSlices`), testés là.
+`lib/sector.ts` (`rowsFromWeights`, `rowsFromSlices`), testés là. Le squelette du bloc sectoriel de
+l'analyse devient trois lignes, comme partout.
 
 **Dialecte unique du chargement.** `null` = pas encore arrivé, vide = rien à montrer. La prop
-`loaded` disparaît où `null` suffit. `rescuedProps` reste le seul signal hors-ligne, consommé par
-`DeferredBlock`. `Wallet/Show` est déjà sur `null` ; son commentaire de dix lignes tombe.
+`loaded` disparaît d'`InstrumentsSection` ; `ValueVsInvestedChart` la garde, un objet présent
+pouvant porter une série vide, ce que `null` ne dirait pas. `rescuedProps` reste le seul signal
+hors-ligne, consommé par `DeferredBlock`. `Wallet/Show` est déjà sur `null` ; son commentaire de
+dix lignes tombe.
 
 **Types TS rattrapés.** `PortfolioOverview` gagne `netContributions: number`, le type de
 `instrument.position` gagne `assetId: number`.

@@ -181,10 +181,10 @@ describe('page d\'une enveloppe', () => {
     });
 
     /**
-     * `positions` différée non arrivée : sans `loaded`, `InstrumentsSection` afficherait « Aucune
-     * position pour le moment » avant même d'avoir la réponse — la page affirmerait à tort qu'une
-     * enveloppe ne tient rien. `Deferred` est mocké à vide, donc rien ne doit apparaître ici tant
-     * que la prop n'est pas arrivée.
+     * `positions` différée non arrivée vaut `undefined`, que la page passe en `null` :
+     * `InstrumentsSection` montre alors le squelette et non « Aucune position pour le moment » —
+     * la page n'affirme pas à tort qu'une enveloppe ne tient rien. `Deferred` est mocké à vide,
+     * donc rien ne doit apparaître.
      */
     it('n\'affirme pas l\'absence de position tant qu\'elles ne sont pas arrivées', async () => {
         const host = mountPage({ positions: undefined });
