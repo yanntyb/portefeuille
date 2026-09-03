@@ -9,17 +9,13 @@ use App\Contexts\Income\Sources\Dividend\Infrastructure\PortfolioPositionHistory
 use App\Contexts\Income\Sources\Rent\Infrastructure\RealEstateRentSchedule;
 use App\Contexts\Income\Sources\Rent\RentIncomeSource;
 use App\Contexts\Market\Infrastructure\CacheMarketSyncState;
-use App\Contexts\Market\Infrastructure\DatabaseAssetPriceAdapter;
 use App\Contexts\Market\Infrastructure\EloquentDividendRepository;
 use App\Contexts\Market\Infrastructure\EloquentInstrumentRepository;
 use App\Contexts\Market\Infrastructure\EloquentPriceRepository;
 use App\Contexts\Market\Infrastructure\EloquentSectorRepository;
 use App\Contexts\Market\Infrastructure\YahooFinanceAdapter;
 use App\Contexts\Market\MarketProvider;
-use App\Contexts\Portfolio\Actions\GetCashMovements;
-use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
-use App\Contexts\Portfolio\Actions\GetPortfolioPositions;
-use App\Contexts\Portfolio\Actions\GetRealizedGains;
+use App\Contexts\Portfolio\PortfolioProvider;
 use App\Contexts\RealEstate\Infrastructure\LaravelRealEstateCache;
 use App\Contexts\RealEstate\RealEstateProvider;
 use App\Contexts\Valuation\Infrastructure\LaravelSeriesCache;
@@ -28,7 +24,6 @@ use App\Contexts\Valuation\Infrastructure\MarketPriceHistory;
 use App\Contexts\Valuation\Infrastructure\PortfolioTransactionHistory;
 use App\Contexts\Valuation\ValuationProvider;
 use App\Contexts\Wealth\Infrastructure\CashClass;
-use App\Contexts\Wealth\Infrastructure\PortfolioInvestedCapital;
 use App\Contexts\Wealth\Infrastructure\RealEstateClass;
 use App\Contexts\Wealth\WealthProvider;
 use App\Shared\Python\ProcessPythonRunner;
@@ -51,7 +46,6 @@ class AppServiceProvider extends ServiceProvider
             priceRepository: EloquentPriceRepository::class,
             sectorRepository: EloquentSectorRepository::class,
             instrumentProvider: YahooFinanceAdapter::class,
-            priceProvider: DatabaseAssetPriceAdapter::class,
             priceFeed: YahooFinanceAdapter::class,
             sectorProvider: YahooFinanceAdapter::class,
             dividendRepository: EloquentDividendRepository::class,
@@ -67,6 +61,8 @@ class AppServiceProvider extends ServiceProvider
             seriesCache: LaravelSeriesCache::class,
         );
 
+        PortfolioProvider::registers(app: $this->app);
+
         RealEstateProvider::registers(
             app: $this->app,
             cache: LaravelRealEstateCache::class,
@@ -79,32 +75,6 @@ class AppServiceProvider extends ServiceProvider
             positionHistory: PortfolioPositionHistory::class,
             rentSchedule: RealEstateRentSchedule::class,
         );
-
-        /** Une lecture du portefeuille par requête : les classes d'actif la partagent. */
-        $this->app->scoped(GetPortfolioOverview::class);
-
-        /**
-         * Une lecture des positions par requête : `PortfolioView` et `Income` l'appellent chacun une
-         * fois par position détenue en construisant l'instantané, sur le même principe que
-         * `GetPortfolioOverview`.
-         */
-        $this->app->scoped(GetPortfolioPositions::class);
-
-        /** Une lecture des ventes par requête : le gain réalisé se lit aux quatre expositions. */
-        $this->app->scoped(GetRealizedGains::class);
-
-        /**
-         * Une lecture des mouvements d'espèces par requête : `RecomputeCashDeposits` la relit à
-         * chaque transaction touchée, sur le même principe que `GetPortfolioOverview`.
-         */
-        $this->app->scoped(GetCashMovements::class);
-
-        /**
-         * Une répartition des apports nets par requête : le reliquat qu'une exposition libère en
-         * vendant se replace dans une autre, donc chaque classe a besoin de la photo globale et
-         * la referait sinon cinq fois par tableau de bord.
-         */
-        $this->app->scoped(PortfolioInvestedCapital::class);
 
         /** L'ordre décide de celui des lignes du tableau de bord et des bandes de son graphe. */
         WealthProvider::registers(

@@ -12,19 +12,16 @@ use App\Contexts\Market\Datas\SectorAllocationData;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
 use App\Contexts\Market\Infrastructure\Python\YahooScript;
-use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Ports\DividendFeedException;
 use App\Contexts\Market\Ports\DividendFeedPort;
 use App\Contexts\Market\Ports\InstrumentProviderPort;
 use App\Contexts\Market\Ports\PriceFeedException;
 use App\Contexts\Market\Ports\PriceFeedPort;
-use App\Contexts\Market\Ports\PriceProviderPort;
 use App\Contexts\Market\Ports\SectorProviderPort;
 use App\Shared\Python\PythonRunner;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 
-class YahooFinanceAdapter implements DividendFeedPort, InstrumentProviderPort, PriceFeedPort, PriceProviderPort, SectorProviderPort
+class YahooFinanceAdapter implements DividendFeedPort, InstrumentProviderPort, PriceFeedPort, SectorProviderPort
 {
     /**
      * The bulk fetch funnels the whole catalogue through a single Python process: one yfinance
@@ -38,11 +35,6 @@ class YahooFinanceAdapter implements DividendFeedPort, InstrumentProviderPort, P
     ) {}
 
     public function supportsInstruments(InstrumentType $type): bool
-    {
-        return $this->covers($type);
-    }
-
-    public function supportsPrices(InstrumentType $type): bool
     {
         return $this->covers($type);
     }
@@ -71,60 +63,6 @@ class YahooFinanceAdapter implements DividendFeedPort, InstrumentProviderPort, P
             InstrumentType::Crypto,
             InstrumentType::Commodity,
         ]);
-    }
-
-    public function getCurrentPrice(int $assetId): ?float
-    {
-        $asset = Instrument::query()->find($assetId);
-
-        if (! $asset || ! $asset->ticker) {
-            return null;
-        }
-
-        try {
-            $result = $this->python->run(YahooScript::Prices->path(), $this->window(
-                $asset->ticker,
-                now()->subYear()->format('Y-m-d'),
-                now()->format('Y-m-d'),
-            ));
-
-            if (! $result->ok() || empty($result->data)) {
-                return null;
-            }
-
-            $prices = $result->data;
-
-            return end($prices)['close'] ?? null;
-        } catch (\Exception) {
-            return null;
-        }
-    }
-
-    public function getPriceHistory(int $assetId, ?string $startDate = null, ?string $endDate = null): Collection
-    {
-        $asset = Instrument::query()->find($assetId);
-
-        if (! $asset || ! $asset->ticker) {
-            return collect();
-        }
-
-        $startDate ??= now()->subYear()->format('Y-m-d');
-        $endDate ??= now()->format('Y-m-d');
-
-        try {
-            $result = $this->python->run(
-                YahooScript::Prices->path(),
-                $this->window($asset->ticker, $startDate, $endDate),
-            );
-
-            if (! $result->ok()) {
-                return collect();
-            }
-
-            return collect($result->data ?? []);
-        } catch (\Exception) {
-            return collect();
-        }
     }
 
     public function findBySymbol(string $symbol, InstrumentType $type): ?InstrumentData

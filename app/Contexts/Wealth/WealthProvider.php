@@ -29,6 +29,13 @@ class WealthProvider extends ServiceProvider
      */
     public static function registers(Application $app, array $extra): void
     {
+        /**
+         * Une répartition des apports nets par requête : le reliquat qu'une exposition libère en
+         * vendant se replace dans une autre, donc chaque classe a besoin de la photo globale et
+         * la referait sinon cinq fois par tableau de bord.
+         */
+        $app->scoped(PortfolioInvestedCapital::class);
+
         $app->scoped(
             AssetClassRegistry::class,
             function (Application $app) use ($extra): AssetClassRegistry {

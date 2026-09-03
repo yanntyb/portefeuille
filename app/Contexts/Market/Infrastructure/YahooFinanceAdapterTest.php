@@ -9,7 +9,6 @@ use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Enums\Sector;
 use App\Contexts\Market\Infrastructure\Python\YahooScript;
 use App\Contexts\Market\Infrastructure\YahooFinanceAdapter;
-use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Ports\DividendFeedException;
 use App\Contexts\Market\Ports\PriceFeedException;
 use App\Shared\Python\FakePythonRunner;
@@ -18,7 +17,6 @@ use App\Shared\Python\PythonResult;
 use App\Shared\Python\PythonRunner;
 use Illuminate\Process\Exceptions\ProcessTimedOutException;
 use Illuminate\Process\ProcessResult;
-use Illuminate\Support\Collection;
 use Symfony\Component\Process\Exception\ProcessTimedOutException as SymfonyTimeoutException;
 use Symfony\Component\Process\Process;
 
@@ -67,8 +65,7 @@ it('feeds prices for every quoted type but bonds', function () {
 });
 
 it('covers the same types on the instrument and price providers', function (InstrumentType $type) {
-    expect($this->adapter->supportsInstruments($type))->toBe($this->adapter->supportsPriceFeed($type))
-        ->and($this->adapter->supportsPrices($type))->toBe($this->adapter->supportsPriceFeed($type));
+    expect($this->adapter->supportsInstruments($type))->toBe($this->adapter->supportsPriceFeed($type));
 })->with(InstrumentType::cases());
 
 it('only breaks down sectors for Stock and ETF', function () {
@@ -77,67 +74,6 @@ it('only breaks down sectors for Stock and ETF', function () {
         ->and($this->adapter->supportsSectors(InstrumentType::Crypto))->toBeFalse()
         ->and($this->adapter->supportsSectors(InstrumentType::Commodity))->toBeFalse()
         ->and($this->adapter->supportsSectors(InstrumentType::Bond))->toBeFalse();
-});
-
-it('returns null for the current price without a ticker', function () {
-    $instrument = Instrument::factory()->create(['ticker' => null]);
-
-    expect($this->adapter->getCurrentPrice($instrument->id))->toBeNull();
-});
-
-it('returns null for the current price of a non-existent asset', function () {
-    expect($this->adapter->getCurrentPrice(999))->toBeNull();
-});
-
-it('returns an empty history without a ticker', function () {
-    $instrument = Instrument::factory()->create(['ticker' => null]);
-
-    expect($this->adapter->getPriceHistory($instrument->id))
-        ->toBeInstanceOf(Collection::class)
-        ->toBeEmpty();
-});
-
-it('returns the latest close from a successful price fetch', function () {
-    $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
-    $this->python->withResult(YahooScript::Prices->path(), new PythonResult('ok', [
-        ['date' => '2026-01-01', 'close' => 10.0],
-        ['date' => '2026-01-02', 'close' => 20.5],
-    ]));
-
-    expect($this->adapter->getCurrentPrice($instrument->id))->toBe(20.5);
-});
-
-it('returns null for the current price on an error envelope', function () {
-    $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
-    $this->python->withResult(YahooScript::Prices->path(), new PythonResult('error', error: 'boom'));
-
-    expect($this->adapter->getCurrentPrice($instrument->id))->toBeNull();
-});
-
-it('returns null for the current price when data is empty', function () {
-    $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
-    $this->python->withResult(YahooScript::Prices->path(), new PythonResult('ok', []));
-
-    expect($this->adapter->getCurrentPrice($instrument->id))->toBeNull();
-});
-
-it('returns a populated history on a successful fetch', function () {
-    $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
-    $this->python->withResult(YahooScript::Prices->path(), new PythonResult('ok', [
-        ['date' => '2026-01-01', 'close' => 10.0],
-        ['date' => '2026-01-02', 'close' => 11.0],
-    ]));
-
-    expect($this->adapter->getPriceHistory($instrument->id))
-        ->toBeInstanceOf(Collection::class)
-        ->toHaveCount(2);
-});
-
-it('returns an empty history on an error envelope', function () {
-    $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
-    $this->python->withResult(YahooScript::Prices->path(), new PythonResult('error'));
-
-    expect($this->adapter->getPriceHistory($instrument->id))->toBeEmpty();
 });
 
 it('builds an InstrumentData from a search hit with its sectors', function () {
@@ -180,55 +116,12 @@ it('maps known sector keys and skips unknown ones', function () {
         ->and($allocations[1]->weight)->toBe(0.4);
 });
 
-it('swallows runner exceptions in getCurrentPrice', function () {
-    $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
-
-    expect(throwingAdapter()->getCurrentPrice($instrument->id))->toBeNull();
-});
-
-it('swallows runner exceptions in getPriceHistory', function () {
-    $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
-
-    expect(throwingAdapter()->getPriceHistory($instrument->id))->toBeEmpty();
-});
-
 it('swallows runner exceptions in findBySymbol', function () {
     expect(throwingAdapter()->findBySymbol('AAPL', InstrumentType::Stock))->toBeNull();
 });
 
 it('swallows runner exceptions in getSectorAllocations', function () {
     expect(throwingAdapter()->getSectorAllocations('AAPL', InstrumentType::ETF))->toBe([]);
-});
-
-it('includes the requested end date in the price history window', function () {
-    $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
-
-    $this->adapter->getPriceHistory($instrument->id, '2026-01-01', '2026-01-31');
-
-    expect($this->python->calls[0]['input'])->toBe([
-        'ticker' => 'AAPL',
-        'start_date' => '2026-01-01',
-        'end_date' => '2026-02-01',
-    ]);
-});
-
-it('includes today in the default price history window', function () {
-    $this->travelTo('2026-08-13 10:00:00');
-    $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
-
-    $this->adapter->getPriceHistory($instrument->id);
-
-    expect($this->python->calls[0]['input']['start_date'])->toBe('2025-08-13')
-        ->and($this->python->calls[0]['input']['end_date'])->toBe('2026-08-14');
-});
-
-it('includes today when fetching the current price', function () {
-    $this->travelTo('2026-08-13 10:00:00');
-    $instrument = Instrument::factory()->create(['ticker' => 'AAPL']);
-
-    $this->adapter->getCurrentPrice($instrument->id);
-
-    expect($this->python->calls[0]['input']['end_date'])->toBe('2026-08-14');
 });
 
 it('sends one bulk entry per request with an inclusive end date', function () {
