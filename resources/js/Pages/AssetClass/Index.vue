@@ -11,7 +11,7 @@ import ValuationSection from '@/components/instruments/ValuationSection.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
 import type { BasketAnalysis } from '@/lib/basketAnalysis';
 import type { CatalogTrend } from '@/lib/catalog';
-import type { NamedTransactionLine } from '@/lib/instrument';
+import type { TransactionLine } from '@/lib/instrument';
 import type { Performance } from '@/lib/performance';
 import type { EvolutionSeries, PortfolioOverview } from '@/lib/portfolio';
 import type { SectorSlice } from '@/lib/sector';
@@ -24,7 +24,7 @@ const props = defineProps<{
     evolutionSeries?: EvolutionSeries;
     performances?: Performance[];
     basketAnalysis?: BasketAnalysis;
-    transactions?: NamedTransactionLine[];
+    transactions?: TransactionLine[];
     /** Absente des expositions sans secteur : le serveur ne l'envoie pas. */
     sectorBreakdown?: SectorSlice[];
 }>();

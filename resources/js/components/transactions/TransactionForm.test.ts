@@ -527,6 +527,7 @@ describe('plafond d\'une vente', () => {
             id: 42,
             walletId: 3,
             assetId: 7,
+            assetName: 'ACME',
             date: '2026-03-04',
             isSell: true,
             typeLabel: 'Vente',
@@ -598,6 +599,7 @@ describe('mouvements d\'espèces', () => {
             id: 51,
             walletId: 3,
             assetId: 7,
+            assetName: 'ACME',
             date: '2026-03-04',
             isSell: false,
             typeLabel: 'Dividende',
@@ -723,6 +725,8 @@ describe('plafond d\'un retrait', () => {
         dialog.openEdit({
             id: 42,
             walletId: 3,
+            assetId: null,
+            assetName: null,
             date: '2026-03-04',
             isSell: false,
             typeLabel: 'Retrait',
@@ -748,6 +752,8 @@ describe('plafond d\'un retrait', () => {
         dialog.openEdit({
             id: 42,
             walletId: 3,
+            assetId: null,
+            assetName: null,
             date: '2026-03-04',
             isSell: false,
             typeLabel: 'Retrait',
@@ -822,6 +828,8 @@ describe('total vivant', () => {
         dialog.openEdit({
             id: 42,
             walletId: 3,
+            assetId: 7,
+            assetName: 'ACME',
             date: '2026-03-04',
             isSell: false,
             typeLabel: 'Achat',
@@ -861,6 +869,8 @@ describe('envoi', () => {
         dialog.openEdit({
             id: 42,
             walletId: 3,
+            assetId: 7,
+            assetName: 'ACME',
             date: '2026-03-04',
             isSell: true,
             typeLabel: 'Vente',

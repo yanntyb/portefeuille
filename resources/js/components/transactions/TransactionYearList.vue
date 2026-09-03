@@ -3,13 +3,7 @@ import { computed, ref } from 'vue';
 import { ChevronRight, Pencil, Trash2 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { eur, frDayMonth, signedEur } from '@/lib/format';
-import {
-    cashSignOf,
-    transactionYears,
-    type NamedTransactionLine,
-    type TransactionLine,
-    type TransactionYear,
-} from '@/lib/instrument';
+import { cashSignOf, transactionYears, type TransactionLine, type TransactionYear } from '@/lib/instrument';
 
 /**
  * Le corps commun des trois sections transactions : fiche actif, tableau de bord et page
@@ -57,7 +51,7 @@ const rowSpan = computed<string>(() => (!isNamed.value && props.editable ? 'col-
  * L'actif ne se lit que sur les lignes qui le portent : la variante `bare` n'en a aucun, et en
  * variante `named` un versement ou un retrait n'en porte pas non plus.
  */
-const assetNameOf = (line: TransactionLine): string | null => (line as NamedTransactionLine).assetName ?? null;
+const assetNameOf = (line: TransactionLine): string | null => line.assetName;
 
 /** Seuls un achat et une vente échangent une quantité contre un prix. */
 const isTrade = (line: TransactionLine): boolean => line.type === 'buy' || line.type === 'sell';

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { NamedTransactionLine } from '@/lib/instrument';
+import type { TransactionLine } from '@/lib/instrument';
 import {
     cashDeltaOf,
     draftFromLine,
@@ -111,7 +111,7 @@ describe('emptyDraft', () => {
 });
 
 describe('draftFromLine', () => {
-    const line: NamedTransactionLine = {
+    const line: TransactionLine = {
         id: 42,
         walletId: 3,
         date: '2026-03-04',
@@ -141,7 +141,7 @@ describe('draftFromLine', () => {
     });
 
     it('laisse l\'actif vide sur une ligne qui ne le nomme pas', () => {
-        const { assetId: _, assetName: __, ...bare } = line;
+        const bare: TransactionLine = { ...line, assetId: null, assetName: null };
 
         /** La fiche d'un actif impose le sien : elle le passe en surcharge. */
         expect(draftFromLine(bare).assetId).toBe('');
@@ -149,7 +149,7 @@ describe('draftFromLine', () => {
     });
 
     it('reprend le montant d\'un mouvement d\'espèces, quantité et prix laissés vides', () => {
-        const deposit: NamedTransactionLine = {
+        const deposit: TransactionLine = {
             ...line,
             assetId: null,
             assetName: null,

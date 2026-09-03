@@ -1,7 +1,7 @@
 import { createPinia } from 'pinia';
 import { describe, expect, it, vi } from 'vitest';
 import { createApp, nextTick } from 'vue';
-import type { WealthTransactionLine } from '@/lib/wealth';
+import type { TransactionLine } from '@/lib/instrument';
 
 /**
  * `Deferred` demande un routeur monté ; la section ne le rend que sans données, et les tests lui en
@@ -16,7 +16,7 @@ const { default: WealthTransactionsSection } = await import(
 );
 const { useTransactionDialogStore } = await import('@/stores/transactionDialog');
 
-const line = (overrides: Partial<WealthTransactionLine> = {}): WealthTransactionLine => ({
+const line = (overrides: Partial<TransactionLine> = {}): TransactionLine => ({
     id: 1,
     walletId: 3,
     date: '2026-03-04',
@@ -39,7 +39,7 @@ const line = (overrides: Partial<WealthTransactionLine> = {}): WealthTransaction
  * Pinia est nécessaire depuis que l'en-tête porte le bouton d'ajout, qui lit l'état du réseau et
  * celui de la modale.
  */
-function mountSection(transactions: WealthTransactionLine[]): HTMLElement {
+function mountSection(transactions: TransactionLine[]): HTMLElement {
     const host = document.createElement('div');
     document.body.append(host);
 

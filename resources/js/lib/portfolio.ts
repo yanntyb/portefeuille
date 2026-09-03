@@ -27,6 +27,8 @@ export interface PortfolioOverview {
     totalGainPct: number | null;
     /** Gain déjà encaissé sur l'exposition, ventes comprises sur les actifs soldés. */
     totalRealizedGain: number;
+    /** Apports nets du périmètre : versements moins retraits, ce à quoi l'investi se compare. */
+    netContributions: number;
     /**
      * Ce qui reste à replacer. Au tableau de bord, le solde d'espèces de l'utilisateur, toutes
      * enveloppes confondues ; sur une page d'exposition, le seul cash **d'origine** de celle-ci —

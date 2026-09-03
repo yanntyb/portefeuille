@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createApp, nextTick } from 'vue';
 import TransactionYearList from '@/components/transactions/TransactionYearList.vue';
-import type { NamedTransactionLine, TransactionLine } from '@/lib/instrument';
+import type { TransactionLine } from '@/lib/instrument';
 
-const line = (overrides: Partial<NamedTransactionLine> = {}): NamedTransactionLine => ({
+const line = (overrides: Partial<TransactionLine> = {}): TransactionLine => ({
     id: 1,
     walletId: 3,
     date: '2026-03-04',

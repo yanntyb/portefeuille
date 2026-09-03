@@ -3,13 +3,12 @@ import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
 import DeferredBlock from '@/components/DeferredBlock.vue';
 import AddTransactionButton from '@/components/transactions/AddTransactionButton.vue';
 import TransactionYearList from '@/components/transactions/TransactionYearList.vue';
-import { transactionLabelOf } from '@/lib/instrument';
-import type { NamedTransactionLine } from '@/lib/instrument';
+import { transactionLabelOf, type TransactionLine } from '@/lib/instrument';
 import { useTransactionDialogStore } from '@/stores/transactionDialog';
 
 const props = withDefaults(
     defineProps<{
-        transactions?: NamedTransactionLine[] | null;
+        transactions?: TransactionLine[] | null;
         /**
          * Ce que nomme `data-section` : l'état du pli est un `ref` local, rien n'est partagé entre
          * pages — c'est la lecture du DOM et les tests qui veulent savoir de quelle page il s'agit.
@@ -47,8 +46,8 @@ const dialog = useTransactionDialogStore();
             variant="named"
             :empty-label="props.emptyLabel"
             editable
-            @edit="dialog.openEdit($event as NamedTransactionLine)"
-            @delete="dialog.askDeleteLine($event, transactionLabelOf($event as NamedTransactionLine))"
+            @edit="dialog.openEdit($event)"
+            @delete="dialog.askDeleteLine($event, transactionLabelOf($event))"
         />
 
         <DeferredBlock v-else data="transactions" />

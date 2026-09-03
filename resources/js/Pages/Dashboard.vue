@@ -11,15 +11,9 @@ import WealthSummarySection from '@/components/dashboard/WealthSummarySection.vu
 import WealthTransactionsSection from '@/components/dashboard/WealthTransactionsSection.vue';
 import TransactionDialog from '@/components/transactions/TransactionDialog.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
+import type { TransactionLine } from '@/lib/instrument';
 import type { SyncState } from '@/lib/sync';
-import type {
-    WealthAccount,
-    WealthIncome,
-    WealthOverview,
-    WealthSector,
-    WealthSeries,
-    WealthTransactionLine,
-} from '@/lib/wealth';
+import type { WealthAccount, WealthIncome, WealthOverview, WealthSector, WealthSeries } from '@/lib/wealth';
 import { useSnapshotStore } from '@/stores/snapshot';
 
 const props = defineProps<{
@@ -28,7 +22,7 @@ const props = defineProps<{
     series?: WealthSeries;
     income?: WealthIncome;
     sectors?: WealthSector[];
-    transactions?: WealthTransactionLine[];
+    transactions?: TransactionLine[];
     accounts?: WealthAccount[];
 }>();
 

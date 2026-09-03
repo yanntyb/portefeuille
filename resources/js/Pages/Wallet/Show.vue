@@ -13,10 +13,11 @@ import TransactionDialog from '@/components/transactions/TransactionDialog.vue';
 import TransactionsSection from '@/components/instruments/TransactionsSection.vue';
 import WalletHeaderSection from '@/components/wallet/WalletHeaderSection.vue';
 import type { BasketAnalysis } from '@/lib/basketAnalysis';
+import type { TransactionLine } from '@/lib/instrument';
 import type { Performance } from '@/lib/performance';
 import type { EvolutionSeries, HoldingLine } from '@/lib/portfolio';
 import type { SectorBreakdownRow, SectorSlice } from '@/lib/sector';
-import type { WalletClassSlice, WealthAccount, WealthTransactionLine } from '@/lib/wealth';
+import type { WalletClassSlice, WealthAccount } from '@/lib/wealth';
 
 const props = defineProps<{
     account: WealthAccount;
@@ -26,7 +27,7 @@ const props = defineProps<{
     performances?: Performance[];
     basketAnalysis?: BasketAnalysis;
     sectorBreakdown?: SectorSlice[];
-    transactions?: WealthTransactionLine[];
+    transactions?: TransactionLine[];
 }>();
 
 /** Le courtier titre la page quand il est connu ; le nom du portefeuille sinon. */

@@ -1,10 +1,10 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { NamedTransactionLine } from '@/lib/instrument';
+import type { TransactionLine } from '@/lib/instrument';
 import { resetModalHistory } from '@/lib/modalHistory';
 import { useTransactionDialogStore } from '@/stores/transactionDialog';
 
-const line: NamedTransactionLine = {
+const line: TransactionLine = {
     id: 42,
     walletId: 3,
     date: '2026-03-04',

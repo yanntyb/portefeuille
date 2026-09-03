@@ -3,11 +3,10 @@ import CollapsibleSection from '@/components/instrument/CollapsibleSection.vue';
 import DeferredBlock from '@/components/DeferredBlock.vue';
 import AddTransactionButton from '@/components/transactions/AddTransactionButton.vue';
 import TransactionYearList from '@/components/transactions/TransactionYearList.vue';
-import { transactionLabelOf } from '@/lib/instrument';
-import type { WealthTransactionLine } from '@/lib/wealth';
+import { transactionLabelOf, type TransactionLine } from '@/lib/instrument';
 import { useTransactionDialogStore } from '@/stores/transactionDialog';
 
-const props = defineProps<{ transactions?: WealthTransactionLine[] | null }>();
+const props = defineProps<{ transactions?: TransactionLine[] | null }>();
 
 const dialog = useTransactionDialogStore();
 </script>
@@ -33,8 +32,8 @@ const dialog = useTransactionDialogStore();
             variant="named"
             empty-label="Aucune transaction pour l'instant."
             editable
-            @edit="dialog.openEdit($event as WealthTransactionLine)"
-            @delete="dialog.askDeleteLine($event, transactionLabelOf($event as WealthTransactionLine))"
+            @edit="dialog.openEdit($event)"
+            @delete="dialog.askDeleteLine($event, transactionLabelOf($event))"
         />
 
         <DeferredBlock v-else data="transactions" />

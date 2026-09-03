@@ -5,13 +5,13 @@ import {
     investedOf,
     transactionLabelOf,
     transactionYears,
-    type NamedTransactionLine,
     type Instrument,
     type InstrumentPosition,
     type TransactionLine,
 } from '@/lib/instrument';
 
 const position = (overrides: Partial<InstrumentPosition> = {}): InstrumentPosition => ({
+    assetId: 1,
     quantity: 10,
     avgCost: 80,
     marketValue: 1000,
@@ -79,6 +79,8 @@ const line = (overrides: Partial<TransactionLine> = {}): TransactionLine => ({
     id: 1,
     walletId: 3,
     date: '2026-03-12',
+    assetId: null,
+    assetName: null,
     isSell: false,
     typeLabel: 'Achat',
     type: 'buy',
@@ -146,7 +148,7 @@ describe('transactionLabelOf', () => {
     /** `toLocaleString` sépare par des espaces insécables : les normaliser garde le test lisible. */
     const plain = (value: string): string => value.replace(/[\s\u202f\u00a0]/g, ' ');
 
-    const named = (overrides: Partial<NamedTransactionLine> = {}): NamedTransactionLine => ({
+    const named = (overrides: Partial<TransactionLine> = {}): TransactionLine => ({
         ...line(),
         assetId: 7,
         assetName: 'Air Liquide',

@@ -1,6 +1,7 @@
 import { eur, frDate, frQuantity } from '@/lib/format';
 
 export interface InstrumentPosition {
+    assetId: number;
     quantity: number;
     avgCost: number | null;
     marketValue: number | null;
@@ -25,6 +26,13 @@ export interface TransactionLine {
      */
     walletId: number;
     date: string;
+    /**
+     * L'actif de la ligne, nul sur un versement ou un retrait qui n'en ont pas. Porté par toutes
+     * les pages depuis que le serveur sert un seul journal : hors de sa fiche, une quantité ne dit
+     * pas de quoi elle est la quantité.
+     */
+    assetId: number | null;
+    assetName: string | null;
     isSell: boolean;
     typeLabel: string;
     /** Distingue les cinq natures d'opération ; `isSell` reste pour ne trancher qu'achat/vente. */
@@ -42,19 +50,6 @@ export interface TransactionLine {
 }
 
 /**
- * Une opération qui nomme son actif : la ligne de la fiche, augmentée de ce qu'elle porte — hors
- * de sa fiche, une quantité ne dit pas de quoi elle est la quantité. Le tableau de bord et les
- * pages d'exposition mélangent plusieurs actifs, donc en dépendent tous les deux.
- *
- * Nullables : un versement ou un retrait n'a pas d'actif, et le tableau de bord les affiche quand
- * même — seule cette variante peut les porter, la page d'exposition restant scopée à une classe.
- */
-export interface NamedTransactionLine extends TransactionLine {
-    assetId: number | null;
-    assetName: string | null;
-}
-
-/**
  * De quelle opération il s'agit, en une phrase — ce que le volet de confirmation d'une suppression
  * récapitule.
  *
@@ -63,7 +58,7 @@ export interface NamedTransactionLine extends TransactionLine {
  * là où « Dividende 34,90 € » dit le fait. La quantité, quand elle existe, est formatée comme le
  * reste de l'écran — « de 2.5 » y traînait une écriture anglaise.
  */
-export const transactionLabelOf = (line: NamedTransactionLine): string =>
+export const transactionLabelOf = (line: TransactionLine): string =>
     line.assetName === null || line.quantity === 0
         ? `${line.typeLabel} ${eur(line.total)} du ${frDate(line.date)}`
         : `${line.typeLabel} de ${frQuantity(line.quantity)} ${line.assetName} du ${frDate(line.date)}`;
