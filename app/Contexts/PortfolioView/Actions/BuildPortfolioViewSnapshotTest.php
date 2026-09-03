@@ -25,11 +25,10 @@ it('porte la page liste et une fiche par position détenue', function () {
 });
 
 /**
- * `pagesFor()` appelle `GetInstrumentDetail` (donc `PortfolioOverviewPort::positionFor()`) et
- * `Income\...\PortfolioPositionHistory::positionFor()` une fois par position détenue. Sans la
- * mémoïsation de `GetPortfolioPositions` par utilisateur, chacun de ces appels relirait tout le
- * portefeuille et tous les derniers cours de l'utilisateur — un nombre de requêtes qui grossirait
- * avec le nombre de positions plutôt que de rester fixe.
+ * `AssetPage::for()` appelle `GetInstrumentDetail` (donc `GetPortfolioPositions`) une fois par
+ * position détenue. Sans la mémoïsation de `GetPortfolioPositions` par utilisateur, chacun de ces
+ * appels relirait tout le portefeuille et tous les derniers cours de l'utilisateur — un nombre de
+ * requêtes qui grossirait avec le nombre de positions plutôt que de rester fixe.
  *
  * Le nombre de requêtes vers `holdings_projection` doit rester à 3 quel que soit le nombre de
  * positions détenues : une par lecteur qui interroge ce projecteur une fois par instantané —

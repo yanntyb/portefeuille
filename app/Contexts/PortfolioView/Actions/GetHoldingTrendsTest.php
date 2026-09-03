@@ -5,10 +5,10 @@ use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
-use App\Contexts\PortfolioView\Actions\GetHoldingTrends;
-use App\Contexts\PortfolioView\Datas\HoldingTrendData;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Wallet;
+use App\Contexts\PortfolioView\Actions\GetHoldingTrends;
+use App\Contexts\PortfolioView\Datas\HoldingTrendData;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 

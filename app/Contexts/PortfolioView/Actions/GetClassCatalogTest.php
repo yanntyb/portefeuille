@@ -5,9 +5,9 @@ use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
-use App\Contexts\PortfolioView\Actions\GetClassCatalog;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Wallet;
+use App\Contexts\PortfolioView\Actions\GetClassCatalog;
 
 beforeEach(function (): void {
     $this->catalog = app(GetClassCatalog::class);

@@ -77,7 +77,7 @@ PortfolioView lit les deux.
 | `Pages/` (nouveau) | `AssetClassPage`, `AssetPage`, `WalletPage`. Un composeur par page, servi au contrôleur et au snapshot. |
 | `Actions/` | `GetClassCatalog`, `GetHoldingTrends`, `GetInstrumentDetail`, `BuildPortfolioViewSnapshot`, plus `BasketAnalysis` et `InstrumentAnalysis` déplacés depuis `Infrastructure/` : ce sont des calculs composés, pas des adaptateurs. |
 | `Services/` | `SparklineReducer`, `CorrelationWindow`, `PriceHistoryWindow`, plus `ClassBreakdown` (ex `PortfolioTotals::classBreakdownFor`, pur : `HoldingLineData[]` → `ClassSliceData[]`) et `ChartStep` (ex `ValuationHistory::stepFor`, pur : labels → `ValuationGranularity`). |
-| `Datas/` | 11 formes propres : `InstrumentDetailData`, `InstrumentMetaData`, `InstrumentSummaryData`, `CatalogLineData`, `HoldingTrendData`, `BasketAnalysisData`, `AnalysisInstrumentData`, `InstrumentAnalysisData`, `ClassSliceData`, `PriceHistoryData`, `SectorWeightData`. |
+| `Datas/` | 10 formes propres : `InstrumentDetailData`, `InstrumentSummaryData`, `CatalogLineData`, `HoldingTrendData`, `BasketAnalysisData`, `AnalysisInstrumentData`, `InstrumentAnalysisData`, `ClassSliceData`, `PriceHistoryData`, `SectorWeightData`. |
 
 Supprimés : `Ports/` (10 interfaces), `Infrastructure/` (10 adaptateurs), 20 Datas jumelles
 (`AccountRowData`, `AnalysisData`, `AssetLineData`, `AssetValuationData`,
@@ -98,7 +98,7 @@ Ce que chaque adaptateur devient :
 | `PortfolioSectors` | `GetSectorBreakdown` directement, rend `AllocationSliceData`. |
 | `PortfolioAccounts` | `GetAccountBreakdown($user, HoldingScope::ofWallet($id))`. |
 | `PortfolioTransactions` | `Portfolio\Actions\GetTransactionJournal`. |
-| `MarketData` | `InstrumentRepositoryContract`, `PriceRepositoryContract`, `SectorRepositoryContract` et les modèles Market, injectés dans les actions qui en ont besoin (`GetInstrumentDetail`, `GetClassCatalog`, `GetHoldingTrends`, `AssetPage`). Les Datas `InstrumentSummaryData`, `InstrumentMetaData`, `PriceHistoryData`, `SectorWeightData` restent à PortfolioView : Market n'a pas d'équivalent. |
+| `MarketData` | `InstrumentRepositoryContract`, `PriceRepositoryContract`, `SectorRepositoryContract` et les modèles Market, injectés dans les actions qui en ont besoin (`GetInstrumentDetail`, `GetClassCatalog`, `GetHoldingTrends`, `AssetPage`). Les Datas `InstrumentSummaryData`, `PriceHistoryData`, `SectorWeightData` restent à PortfolioView : Market n'a pas d'équivalent. |
 | `BasketAnalysis`, `InstrumentAnalysis` | Déplacés dans `Actions/`, même corps, dépendances directes au lieu des ports. |
 
 ### Wealth après
@@ -163,6 +163,9 @@ sont identiques à leurs jumelles.
 
 Le hash de `SnapshotInvariantTest` bouge une fois. Le front ne casse pas : une clé en plus est
 ignorée. Les types TS sont rattrapés en phase front.
+
+Le journal d'une fiche est désormais trié par date puis par id, comme les autres : deux
+opérations du même jour peuvent changer d'ordre.
 
 ### Trace après
 

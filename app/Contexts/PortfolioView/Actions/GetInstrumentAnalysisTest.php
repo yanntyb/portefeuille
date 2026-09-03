@@ -3,9 +3,9 @@
 use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
-use App\Contexts\PortfolioView\Actions\GetInstrumentAnalysis;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Wallet;
+use App\Contexts\PortfolioView\Actions\GetInstrumentAnalysis;
 use Illuminate\Support\Carbon;
 
 beforeEach(function () {

@@ -14,10 +14,11 @@ use Illuminate\Database\Eloquent\Builder;
  * Le journal d'opérations d'un porteur, la plus récente en tête, chaque ligne nommant son actif.
  *
  * Un seul site de lecture pour le tableau de bord, les expositions, les enveloppes et les fiches :
- * trois adaptateurs recopiaient cette requête. Le périmètre suit l'asymétrie de
- * `Valuation\Services\ScopedTransactions` : un filtre par classe écarte les mouvements sans actif
- * (un versement n'a pas de classe — le `whereIn` sur la jointure les élimine de lui-même), un filtre
- * par enveloppe les garde (le cash est tenu par wallet).
+ * trois adaptateurs recopiaient cette requête. Le périmètre est l'inverse de celui de la série
+ * (`Valuation\Services\ScopedTransactions`) sur la classe : la série garde les mouvements sans actif
+ * pour tenir le cash, le journal d'une exposition les écarte — un versement n'a pas de classe ; le
+ * `whereIn` sur la jointure les élimine de lui-même. Par enveloppe, les deux les gardent : le cash
+ * est tenu par wallet.
  */
 class GetTransactionJournal
 {

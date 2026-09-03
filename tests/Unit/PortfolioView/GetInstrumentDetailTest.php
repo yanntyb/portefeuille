@@ -5,10 +5,10 @@ use App\Contexts\Market\Enums\Sector;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Market\Models\SectorAllocation;
-use App\Contexts\PortfolioView\Actions\GetInstrumentDetail;
 use App\Contexts\Portfolio\Models\Holding;
 use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
+use App\Contexts\PortfolioView\Actions\GetInstrumentDetail;
 
 it('returns null for an unknown instrument', function () {
     $user = User::factory()->create();

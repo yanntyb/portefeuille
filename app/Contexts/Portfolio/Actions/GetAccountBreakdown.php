@@ -41,9 +41,9 @@ class GetAccountBreakdown
     ) {}
 
     /**
-     * @return list<AccountLineData>
-     *
      * Seule l'enveloppe du périmètre filtre : une ligne par compte n'a pas de classe.
+     *
+     * @return list<AccountLineData>
      */
     public function __invoke(User $user, ?HoldingScope $scope = null): array
     {

@@ -6,7 +6,7 @@ use JsonSerializable;
 
 /**
  * Les repères d'analyse d'une position : sa référence de prix, sa tendance, son excès et son
- * risque. Nom distinct d'`AnalysisData`, qui porte déjà l'analyse d'une exposition entière.
+ * risque. Nom distinct de `BasketAnalysisData`, l'analyse d'une poche.
  *
  * `price` est le dernier cours de la fenêtre lue, celui-là même auquel `pruGapPct` compare le prix
  * de revient : les deux doivent se lire l'un sous l'autre sans se contredire.
