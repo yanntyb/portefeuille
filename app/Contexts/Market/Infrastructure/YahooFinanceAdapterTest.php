@@ -64,7 +64,7 @@ it('feeds prices for every quoted type but bonds', function () {
         ->and($this->adapter->supportsPriceFeed(InstrumentType::Bond))->toBeFalse();
 });
 
-it('covers the same types on the instrument and price providers', function (InstrumentType $type) {
+it('covers the same types on the instrument provider and the price feed', function (InstrumentType $type) {
     expect($this->adapter->supportsInstruments($type))->toBe($this->adapter->supportsPriceFeed($type));
 })->with(InstrumentType::cases());
 

@@ -46,5 +46,11 @@ it('se résout vide sans porteur connu', function () {
     expect($props['overview']->totalValue)->toBe(0.0)
         ->and($props['overview']->classes)->toBe([])
         ->and($props['accounts'])->toBe([])
-        ->and($props['transactions'])->toBe([]);
+        ->and($props['transactions'])->toBe([])
+        ->and($props['series']->labels)->toBe([])
+        ->and($props['series']->classes)->toBe([])
+        ->and($props['series']->invested)->toBe([])
+        ->and($props['income']->monthlyTotal)->toBe(0.0)
+        ->and($props['income']->origins)->toBe([])
+        ->and($props['sectors'])->toBe([]);
 });
