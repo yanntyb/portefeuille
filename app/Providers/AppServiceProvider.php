@@ -20,17 +20,6 @@ use App\Contexts\Portfolio\Actions\GetCashMovements;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Actions\GetPortfolioPositions;
 use App\Contexts\Portfolio\Actions\GetRealizedGains;
-use App\Contexts\PortfolioView\Infrastructure\BasketAnalysis;
-use App\Contexts\PortfolioView\Infrastructure\IncomeTotals;
-use App\Contexts\PortfolioView\Infrastructure\InstrumentAnalysis;
-use App\Contexts\PortfolioView\Infrastructure\MarketData;
-use App\Contexts\PortfolioView\Infrastructure\PortfolioAccounts as PortfolioViewAccounts;
-use App\Contexts\PortfolioView\Infrastructure\PortfolioHoldings;
-use App\Contexts\PortfolioView\Infrastructure\PortfolioSectors;
-use App\Contexts\PortfolioView\Infrastructure\PortfolioTotals;
-use App\Contexts\PortfolioView\Infrastructure\PortfolioTransactions;
-use App\Contexts\PortfolioView\Infrastructure\ValuationHistory;
-use App\Contexts\PortfolioView\PortfolioViewProvider;
 use App\Contexts\RealEstate\Infrastructure\LaravelRealEstateCache;
 use App\Contexts\RealEstate\RealEstateProvider;
 use App\Contexts\Valuation\Infrastructure\LaravelSeriesCache;
@@ -83,20 +72,6 @@ class AppServiceProvider extends ServiceProvider
         RealEstateProvider::registers(
             app: $this->app,
             cache: LaravelRealEstateCache::class,
-        );
-
-        PortfolioViewProvider::registers(
-            app: $this->app,
-            marketData: MarketData::class,
-            holdings: PortfolioHoldings::class,
-            transactions: PortfolioTransactions::class,
-            sectorBreakdown: PortfolioSectors::class,
-            income: IncomeTotals::class,
-            portfolioOverview: PortfolioTotals::class,
-            valuation: ValuationHistory::class,
-            instrumentAnalysis: InstrumentAnalysis::class,
-            basketAnalysis: BasketAnalysis::class,
-            accounts: PortfolioViewAccounts::class,
         );
 
         IncomeProvider::registers(

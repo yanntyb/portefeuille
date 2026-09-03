@@ -4,11 +4,13 @@ use App\Contexts\Identity\Models\User;
 use App\Contexts\Market\Datas\HoldingScope;
 use App\Contexts\Market\Enums\AssetClass;
 use App\Contexts\Market\Enums\InstrumentType;
+use App\Contexts\Market\Models\Dividend;
 use App\Contexts\Market\Models\Instrument;
 use App\Contexts\Market\Models\Price;
 use App\Contexts\Portfolio\Actions\GetPortfolioOverview;
 use App\Contexts\Portfolio\Enums\AccountType;
 use App\Contexts\Portfolio\Models\Holding;
+use App\Contexts\Portfolio\Models\Transaction;
 use App\Contexts\Portfolio\Models\Wallet;
 use Illuminate\Support\Facades\DB;
 
@@ -225,4 +227,64 @@ it('rend deux lignes distinctes pour un même actif tenu dans deux enveloppes', 
     expect($holdings)->toHaveCount(2)
         ->and(array_map(fn ($line): int => $line->walletId, $holdings))
         ->toEqualCanonicalizing([$pea->id, $cto->id]);
+});
+
+/**
+ * `totalRealizedGain` se lit sur `GetRealizedGains`, qui ne connaît que les ventes : un
+ * détachement théorique (`Market\Dividend`, dérivé des positions détenues à l'ex-date) ne doit
+ * jamais s'y ajouter, même quand la position qu'il a effleurée a depuis été entièrement soldée et
+ * n'a donc plus de ligne `Holding` pour le porter.
+ */
+it('ignore le détachement théorique dans le gain réalisé, même sur une position entièrement soldée', function () {
+    $user = User::factory()->create();
+    $asset = Instrument::factory()->create(['ticker' => 'ACME', 'asset_class' => AssetClass::Equity]);
+    $wallet = Wallet::factory()->for($user)->create();
+
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'date' => '2026-01-01', 'quantity' => 10, 'unit_price' => 100, 'fees' => 0,
+    ]);
+    Transaction::factory()->sell()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'date' => '2026-02-01', 'quantity' => 10, 'unit_price' => 120, 'fees' => 0,
+    ]);
+    /** Dix titres détenus à cette date : un détachement théorique de 20 € (2 € × 10) à ignorer. */
+    Dividend::factory()->create([
+        'asset_id' => $asset->id,
+        'ex_date' => '2026-01-20',
+        'amount_per_share' => 2.0,
+    ]);
+
+    /** 200 € de plus-value de cession, et rien de plus, alors que la position n'existe plus. */
+    expect(app(GetPortfolioOverview::class)($user, HoldingScope::ofClasses([AssetClass::Equity]))->totalRealizedGain)->toBe(200.0);
+});
+
+/**
+ * `netContributions` porte ce que le porteur a réellement sorti de sa poche
+ * (`CashLedger::netContributions()`), et non le coût des titres : un rachat financé par une vente
+ * ne crée aucun apport nouveau, quand `totalCost` l'aurait compté une seconde fois.
+ */
+it('mesure l\'investi aux apports nets, pas au coût des titres', function () {
+    $user = User::factory()->create();
+    $asset = Instrument::factory()->create(['ticker' => 'ACME', 'asset_class' => AssetClass::Equity]);
+    $wallet = Wallet::factory()->for($user)->create();
+
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'date' => '2026-01-01', 'quantity' => 10, 'unit_price' => 100, 'fees' => 0,
+    ]);
+    Transaction::factory()->sell()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'date' => '2026-02-01', 'quantity' => 10, 'unit_price' => 120, 'fees' => 0,
+    ]);
+    Transaction::factory()->buy()->create([
+        'user_id' => $user->id, 'wallet_id' => $wallet->id, 'asset_id' => $asset->id,
+        'date' => '2026-03-01', 'quantity' => 10, 'unit_price' => 110, 'fees' => 0,
+    ]);
+
+    /**
+     * 1 000 € sortis de la poche, une seule fois : le rachat est financé par la vente, il ne
+     * crée aucun apport. L'ancien « coût des titres » aurait dit 1 100 €.
+     */
+    expect(app(GetPortfolioOverview::class)($user, HoldingScope::all())->netContributions)->toBe(1000.0);
 });
