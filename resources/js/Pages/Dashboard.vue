@@ -8,8 +8,8 @@ import WealthIncomeSection from '@/components/dashboard/WealthIncomeSection.vue'
 import WealthAccountsSection from '@/components/dashboard/WealthAccountsSection.vue';
 import WealthSectorsSection from '@/components/dashboard/WealthSectorsSection.vue';
 import WealthSummarySection from '@/components/dashboard/WealthSummarySection.vue';
-import WealthTransactionsSection from '@/components/dashboard/WealthTransactionsSection.vue';
 import TransactionDialog from '@/components/transactions/TransactionDialog.vue';
+import TransactionsSection from '@/components/transactions/TransactionsSection.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
 import type { TransactionLine } from '@/lib/instrument';
 import type { SyncState } from '@/lib/sync';
@@ -51,7 +51,7 @@ const accounts = aheadOfNetwork(() => props.accounts, () => snapshot.dashboard?.
         <WealthIncomeSection :income="income" />
 
         <!-- Ce que le patrimoine rapporte, puis ce qui l'a fait bouger. -->
-        <WealthTransactionsSection :transactions="transactions" />
+        <TransactionsSection :transactions="transactions" section="wealth-transactions" />
 
         <!-- Sous quel régime tout cela est tenu : la lecture par enveloppe, toutes classes
              confondues — un PEA tient des actions, un compte-titres tient le reste. -->

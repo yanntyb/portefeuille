@@ -6,7 +6,7 @@ import TransactionDialog from '@/components/transactions/TransactionDialog.vue';
 import AnalysisSection from '@/components/instruments/AnalysisSection.vue';
 import EvolutionSection from '@/components/instruments/EvolutionSection.vue';
 import InstrumentsSection from '@/components/instruments/InstrumentsSection.vue';
-import TransactionsSection from '@/components/instruments/TransactionsSection.vue';
+import TransactionsSection from '@/components/transactions/TransactionsSection.vue';
 import ValuationSection from '@/components/instruments/ValuationSection.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
 import type { BasketAnalysis } from '@/lib/basketAnalysis';
@@ -65,7 +65,7 @@ const sectorBreakdown = aheadOfNetwork(() => props.sectorBreakdown, () => cached
             :slices="sectorBreakdown"
         />
 
-        <TransactionsSection :transactions="transactions" />
+        <TransactionsSection :transactions="transactions" section="class-transactions" empty-label="Aucune transaction sur cette classe." />
     </AppPage>
 
     <AppBottomBar

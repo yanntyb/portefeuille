@@ -11,7 +11,7 @@ import HeroSection from '@/components/instrument/HeroSection.vue';
 import InstrumentChart from '@/components/instrument/InstrumentChart.vue';
 import PriceHistorySection from '@/components/instrument/PriceHistorySection.vue';
 import SectorsSection from '@/components/instrument/SectorsSection.vue';
-import TransactionsSection from '@/components/instrument/TransactionsSection.vue';
+import TransactionsSection from '@/components/transactions/TransactionsSection.vue';
 import { aheadOfNetwork } from '@/lib/aheadOfNetwork';
 import type { AssetDividendHistory } from '@/lib/income';
 import type { Instrument, InstrumentAnalysis, PriceHistory, ValuationSeries } from '@/lib/instrument';
@@ -74,8 +74,9 @@ const analysis = aheadOfNetwork(
 
         <TransactionsSection
             :transactions="props.instrument.transactions"
-            :asset-id="props.instrument.id"
-            :asset-name="props.instrument.name"
+            variant="bare"
+            empty-label="Aucune transaction sur cet actif."
+            :asset="{ id: props.instrument.id, name: props.instrument.name }"
         />
 
         <DividendsSection v-if="props.dividends && receipts.length" :dividends="props.dividends" />

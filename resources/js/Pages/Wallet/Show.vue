@@ -10,7 +10,7 @@ import EvolutionSection from '@/components/instruments/EvolutionSection.vue';
 import InstrumentsSection from '@/components/instruments/InstrumentsSection.vue';
 import SectorBreakdownList from '@/components/SectorBreakdownList.vue';
 import TransactionDialog from '@/components/transactions/TransactionDialog.vue';
-import TransactionsSection from '@/components/instruments/TransactionsSection.vue';
+import TransactionsSection from '@/components/transactions/TransactionsSection.vue';
 import WalletHeaderSection from '@/components/wallet/WalletHeaderSection.vue';
 import type { BasketAnalysis } from '@/lib/basketAnalysis';
 import type { TransactionLine } from '@/lib/instrument';
@@ -113,8 +113,7 @@ const positionsLoaded = computed<boolean>(() => props.positions !== undefined &&
             :transactions="props.transactions"
             section="wallet-transactions"
             empty-label="Aucune transaction sur cette enveloppe."
-            :wallet-id="props.account.walletId"
-            :wallet-name="title"
+            :wallet="{ id: props.account.walletId, name: title }"
         />
     </AppPage>
 

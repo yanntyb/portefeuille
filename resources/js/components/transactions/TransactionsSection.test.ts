@@ -11,9 +11,7 @@ vi.mock('@inertiajs/vue3', () => ({
     Deferred: { setup: () => () => null },
 }));
 
-const { default: WealthTransactionsSection } = await import(
-    '@/components/dashboard/WealthTransactionsSection.vue'
-);
+const { default: TransactionsSection } = await import('@/components/transactions/TransactionsSection.vue');
 const { useTransactionDialogStore } = await import('@/stores/transactionDialog');
 
 const line = (overrides: Partial<TransactionLine> = {}): TransactionLine => ({
@@ -39,11 +37,16 @@ const line = (overrides: Partial<TransactionLine> = {}): TransactionLine => ({
  * Pinia est nécessaire depuis que l'en-tête porte le bouton d'ajout, qui lit l'état du réseau et
  * celui de la modale.
  */
-function mountSection(transactions: TransactionLine[]): HTMLElement {
+function mountSection(transactions: TransactionLine[] | null, props: Record<string, unknown> = {}): HTMLElement {
     const host = document.createElement('div');
     document.body.append(host);
 
-    createApp(WealthTransactionsSection, { transactions }).use(createPinia()).mount(host);
+    createApp(TransactionsSection, {
+        transactions,
+        section: 'wealth-transactions',
+        emptyLabel: 'Aucune transaction pour l\'instant.',
+        ...props,
+    }).use(createPinia()).mount(host);
 
     return host;
 }
@@ -164,5 +167,38 @@ describe('bouton d\'ajout', () => {
          * changé et que chaque ajout ouvrirait une section par surprise.
          */
         expect(host.querySelector('[data-transaction-year]')).toBeNull();
+    });
+});
+
+describe('variante nue d\'une fiche', () => {
+    it('impose l\'actif de la fiche à la saisie et masque la colonne de l\'actif', async () => {
+        const host = mountSection([line()], {
+            variant: 'bare',
+            section: 'transactions',
+            asset: { id: 7, name: 'Bitcoin' },
+            emptyLabel: 'Aucune transaction sur cet actif.',
+        });
+
+        await click(host.querySelector('[data-section-toggle]'));
+        await click(host.querySelector('[data-transaction-year]'));
+
+        expect(host.querySelector('[data-transaction-asset]')).toBeNull();
+
+        await click(host.querySelector('[data-transaction-add]'));
+
+        const dialog = useTransactionDialogStore();
+        expect(dialog.mode).toBe('create');
+        expect(dialog.lockedAssetId).toBe(7);
+    });
+});
+
+describe('journal pas encore arrivé', () => {
+    it('ne dit rien : ni année, ni libellé vide, le squelette seul attend', async () => {
+        const host = mountSection(null);
+
+        await click(host.querySelector('[data-section-toggle]'));
+
+        expect(host.querySelector('[data-transaction-year]')).toBeNull();
+        expect(host.textContent).not.toContain('Aucune transaction');
     });
 });
